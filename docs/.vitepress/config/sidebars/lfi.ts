@@ -1,4 +1,5 @@
 import type { DefaultTheme } from 'vitepress'
+import { apiRef } from './shared'
 
 const BASE = '/tech/lfi-api-hub'
 const VERSION = 'v2.1'
@@ -75,13 +76,24 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
           { text: 'Requirements', link: `${BASE}/${VERSION}/banking/data-sharing/requirements` },
           { text: 'User Journeys', link: `${BASE}/${VERSION}/banking/data-sharing/user-journeys` },
           { text: 'API Guide', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide` },
+          {
+            text: 'API Reference',
+            collapsed: true,
+            items: [
+              apiRef('GET', '/accounts', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts`),
+              apiRef('GET', '/accounts/{AccountId}', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId`),
+              apiRef('GET', '/accounts/{AccountId}/balances', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-balances`),
+              apiRef('GET', '/accounts/{AccountId}/beneficiaries', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-beneficiaries`),
+              apiRef('GET', '/accounts/{AccountId}/direct-debits', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-direct-debits`),
+              apiRef('GET', '/customer', `${BASE}/${VERSION}/banking/data-sharing/open-api/customer`),
+              apiRef('GET', '/accounts/{AccountId}/customer', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-customer`),
+              apiRef('GET', '/accounts/{AccountId}/scheduled-payments', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-scheduled-payments`),
+              apiRef('GET', '/accounts/{AccountId}/standing-orders', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-standing-orders`),
+              apiRef('GET', '/accounts/{AccountId}/statements', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-statements`),
+              apiRef('GET', '/accounts/{AccountId}/transactions', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-transactions`),
+            ],
+          },
         ],
-      },
-      {
-        text: 'Service Initiation',
-        collapsed: true,
-        link: `${BASE}/banking/service-initiation/`,
-        items: [],
       },
     ],
   },

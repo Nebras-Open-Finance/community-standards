@@ -8,21 +8,9 @@ aside: false
 
 # Variable On-Demand — API Guide
 
-A Variable On-Demand consent authorises a TPP to initiate **multiple payments** at variable amounts over the lifetime of the consent. The user authorises once — setting a ceiling via `MaximumIndividualAmount` — and the TPP can then submit individual payments up to that cap on-demand, without requiring re-authorisation for each payment.
+A Variable On-Demand consent authorises a TPP to initiate **multiple payments** at variable amounts over the lifetime of the consent. The user authorises once — setting a ceiling on individual payments and optional period-based limits — and the TPP can then submit individual payments on-demand without requiring re-authorisation for each one.
 
 Common use cases include subscription billing with variable charges, metered service payments, and TPP-managed savings top-ups.
-
-## Key differences from Single Instant Payment
-
-| Aspect | Single Instant Payment | Variable On-Demand |
-|---|---|---|
-| `Type` | `SingleInstantPayment` | `VariableOnDemand` |
-| Amount at consent | Fixed — one exact amount | Not fixed — a maximum cap per payment |
-| Payments allowed | One | Many, until expiry or cap reached |
-| Consent after first payment | `Consumed` | Remains `Authorized` |
-| `ControlParameters` key | `SinglePayment` | `MultiPayment` |
-
----
 
 ## Prerequisites
 
@@ -35,166 +23,93 @@ Before initiating a Variable On-Demand payment, ensure the following requirement
   An active transport certificate must be issued and registered in the Trust Framework to establish secure **mTLS communication** with participating LFIs.
 
 - **Valid [Signing Certificate](../../../../../../trust-framework/certificates)**
-  An active signing certificate must be issued and registered in the Trust Framework for signing request objects and client assertions.
+  An active signing certificate must be issued and registered in the Trust Framework. This certificate is used to sign request objects and client assertions.
 
 - **Registration with the relevant [Authorisation Server](../../../../../../registration/api-guide)**
-  The application must be registered with the LFI's Authorization Server.
+  The application must be registered with the Authorisation Server of the LFI with which you intend to initiate payments.
+
+- **Understanding of the [FAPI Security Profile](../../../../../../security/fapi)** and **[Tokens & Assertions](../../../../../../security/tokens)**
+  You should understand how request object signing, client authentication, and access token validation underpin secure API interactions.
 
 - **Understanding of [Message Encryption](../../../../../../security/fapi/message-encryption)**
-  PII must be encrypted as a JWE and embedded in the consent. You will need the LFI's public encryption key from their JWKS.
+  PII (creditor name and account details) must be encrypted as a JWE before being embedded in the consent. You will need the LFI's public encryption key from their JWKS.
 
----
+## API Sequence Flow
+
+<APIFlowsVariableOnDemand/>
 
 ## <span style="color: #3b82f6; padding-right: 5px;">POST</span> `/par`
 
-### Step 1 - Encrypting PII
-
-PII encryption is identical to Single Instant Payment — serialize the creditor and risk data to JSON and encrypt it as a JWE using the LFI's public `enc` key.
-
-| Field | Type | Description | Example |
-|---|---|---|---|
-| `Initiation.Creditor[].Creditor.Name` | string | Full legal name of the recipient | `Ivan England` |
-| `Initiation.Creditor[].CreditorAccount.SchemeName` | enum | `IBAN` or `BBAN` | `IBAN` |
-| `Initiation.Creditor[].CreditorAccount.Identification` | string | Account identifier | `AE070331234567890123456` |
-| `Initiation.Creditor[].CreditorAccount.Name.en` | string | Account holder name (English) | `Ivan David England` |
-| `Risk.DebtorIndicators.UserName.en` | string | Display name of the paying user | `Ahmad Al Mansouri` |
-| `Risk.CreditorIndicators.IsCreditorConfirmed` | boolean | CoP result | `true` |
-| `Risk.CreditorIndicators.IsCreditorPrePopulated` | boolean | Whether TPP pre-filled creditor details | `false` |
-
-::: code-group
-
-```typescript [Node.js]
-import { importJWK, CompactEncrypt } from 'jose'
-
-async function encryptPII(pii: object, jwksUri: string): Promise<string> {
-  const { keys } = await fetch(jwksUri).then(r => r.json())
-  const encKeyJwk = keys.find((k: { use: string }) => k.use === 'enc')
-  if (!encKeyJwk) throw new Error('No encryption key (use: enc) found in JWKS')
-
-  const encKey = await importJWK(encKeyJwk, 'RSA-OAEP-256')
-
-  return new CompactEncrypt(new TextEncoder().encode(JSON.stringify(pii)))
-    .setProtectedHeader({ alg: 'RSA-OAEP-256', enc: 'A256GCM', kid: encKeyJwk.kid })
-    .encrypt(encKey)
-}
-
-const pii = {
-  Initiation: {
-    Creditor: [
-      {
-        Creditor: { Name: 'Ivan England' },
-        CreditorAccount: {
-          SchemeName: 'IBAN',
-          Identification: 'AE070331234567890123456',
-          Name: { en: 'Ivan David England' },
-        },
-      },
-    ],
-  },
-  Risk: {
-    DebtorIndicators: { UserName: { en: 'Ahmad Al Mansouri' } },
-    CreditorIndicators: {
-      IsCreditorConfirmed: true,
-      IsCreditorPrePopulated: false,
-    },
-  },
-}
-
-const encryptedPII = await encryptPII(pii, LFI_JWKS_URI)
-```
-
-```python [Python]
-import json, requests
-from jose import jwe
-
-def encrypt_pii(pii: dict, jwks_uri: str) -> str:
-    keys = requests.get(jwks_uri).json()["keys"]
-    enc_key = next((k for k in keys if k.get("use") == "enc"), None)
-    if not enc_key:
-        raise ValueError("No encryption key found in JWKS")
-    return jwe.encrypt(
-        json.dumps(pii).encode(),
-        enc_key,
-        algorithm="RSA-OAEP-256",
-        encryption="A256GCM",
-    ).decode()
-
-pii = {
-    "Initiation": {
-        "Creditor": [
-            {
-                "Creditor": {"Name": "Ivan England"},
-                "CreditorAccount": {
-                    "SchemeName": "IBAN",
-                    "Identification": "AE070331234567890123456",
-                    "Name": {"en": "Ivan David England"},
-                },
-            }
-        ]
-    },
-    "Risk": {
-        "DebtorIndicators": {"UserName": {"en": "Ahmad Al Mansouri"}},
-        "CreditorIndicators": {
-            "IsCreditorConfirmed": True,
-            "IsCreditorPrePopulated": False,
-        },
-    },
-}
-
-encrypted_pii = encrypt_pii(pii, LFI_JWKS_URI)
-```
-
-:::
-
-See [Message Encryption](/tech/tpp-standards/security/fapi/message-encryption) for full details.
-
----
+<!--@include: ../../_shared/step-1-encrypt-pii.md-->
 
 ### Step 2 - Constructing Authorization Details
 
-Construct `authorization_details` of type `urn:openfinanceuae:service-initiation-consent:v2.1`. The critical difference from Single Instant Payment is that `ControlParameters` uses `MultiPayment` with `Type: "VariableOnDemand"` — no fixed amount, but a maximum per-payment ceiling.
+With the encrypted PII ready, construct the `authorization_details` of type `urn:openfinanceuae:service-initiation-consent:v2.1`. The critical difference from Single Instant Payment is that `ControlParameters` uses `MultiPayment` with `Type: "VariableOnDemand"` — no fixed amount is set at consent time. Instead, limits are defined via cumulative caps and periodic controls.
 
 #### authorization_details
 
 | Field | Type | Description | Example |
-|---|---|---|---|
-| `type`* | enum | Must be `urn:openfinanceuae:service-initiation-consent:v2.1` | — |
-| `consent`* | object | Consent properties | — |
+|-------|------|------------|---------|
+| `type`* | enum | Must be `urn:openfinanceuae:service-initiation-consent:v2.1` | `urn:openfinanceuae:service-initiation-consent:v2.1` |
+| `consent`* | object | Consent properties agreed by the User with the TPP. *Described below* | — |
+| `subscription` | object | Optional subscription to Event Notifications via Webhook. *Described below* | — |
 
-#### consent | `authorization_details.consent`
+#### consent (Required) | `authorization_details.consent`
 
 | Field | Type | Description | Example |
-|---|---|---|---|
-| `ConsentId`* | string (uuid) | TPP-assigned unique consent ID | `b8f42378-10ac-46a1-8d20-4e020484216d` |
-| `IsSingleAuthorization`* | boolean | One authorizing party | `true` |
-| `ExpirationDateTime`* | date-time | Consent expiry (max 1 year) | `2027-03-02T00:00:00+00:00` |
-| `AuthorizationExpirationDateTime` | date-time | Deadline for user to authorize | `2026-03-03T10:00:00+00:00` |
+|-------|------|------------|---------|
+| `ConsentId`* | string (uuid) | Unique ID assigned by the TPP (1–128 chars) | `b8f42378-10ac-46a1-8d20-4e020484216d` |
+| `IsSingleAuthorization`* | boolean | Whether the payment requires only one authorizing party | `true` |
+| `ExpirationDateTime`* | date-time | Consent expiry (ISO 8601 with timezone, max 1 year) | `2027-03-02T00:00:00+00:00` |
+| `AuthorizationExpirationDateTime` | date-time | Deadline by which the user must authorize at the LFI | `2026-03-03T10:00:00+00:00` |
 | `BaseConsentId` | string (uuid) | Links to prior consent if renewing — see [Base Consent ID](/knowledge-base/articles/base-consent-id) | — |
-| `Permissions` | array\<enum\> | Optional account-reading permissions | `ReadAccountsBasic`, `ReadBalances` |
-| `ControlParameters`* | object | Payment schedule — **see below** | — |
-| `PersonalIdentifiableInformation`* | string (JWE) | Encrypted PII from Step 1 | `eyJhbGci...` |
+| `Permissions` | array\<enum\> | Optional access permissions granted alongside the payment consent | `ReadAccountsBasic`, `ReadBalances` |
+| `ControlParameters`* | object | Payment controls — **see below** | — |
+| `PersonalIdentifiableInformation`* | string (JWE) | Encrypted creditor and risk data — the `encryptedPII` string from Step 1 | `eyJhbGci...` |
 | `PaymentPurposeCode`* | string (3 chars) | AANI payment purpose code | `ACM` |
-| `DebtorReference` | string | Reference on debtor's statement | `Subscription` |
-| `CreditorReference` | string | Reference on creditor's statement | `Subscription` |
+| `DebtorReference` | string | Reference shown on the debtor's statement | `Subscription` |
+| `CreditorReference` | string | Reference shown on the creditor's statement | `Subscription` |
 
 #### ControlParameters — Variable On-Demand
 
-`ControlParameters.ConsentSchedule.MultiPayment` carries the schedule definition. For Variable On-Demand, set `Type` to `"VariableOnDemand"` and define the per-payment ceiling. The amount is **not fixed at consent time** — each `POST /payments` call specifies its own amount (up to `MaximumIndividualAmount`).
+`ControlParameters.ConsentSchedule.MultiPayment` carries the control definition. Set `Type` to `"VariableOnDemand"`. The amount is **not fixed at consent time** — each `POST /payments` call specifies its own amount, subject to the controls below.
 
-| Field | Type | Required | Description | Example |
-|---|---|---|---|---|
-| `Type`* | enum | ✅ | Must be `VariableOnDemand` | `VariableOnDemand` |
-| `MaximumIndividualAmount.Amount`* | string | ✅ | Maximum amount per single payment | `500.00` |
-| `MaximumIndividualAmount.Currency`* | string | ✅ | ISO 4217 currency code | `AED` |
-| `MaximumCumulativeAmount.Amount` | string | — | Optional total cap across all payments | `5000.00` |
-| `MaximumCumulativeAmount.Currency` | string | — | ISO 4217 currency code | `AED` |
-| `MaximumNumberOfPayments` | integer | — | Optional cap on number of payments | `20` |
+**Cumulative Control Parameters** — apply across the entire consent lifetime:
 
-::: warning MaximumIndividualAmount is a ceiling, not a fixed amount
-The user sees `MaximumIndividualAmount` on the bank's authorization screen. Each payment you later submit can be **any amount up to this value** — but the LFI will reject payments that exceed it.
+| Field | Required | Description | Example |
+|-------|----------|-------------|---------|
+| `MaximumCumulativeValueOfPayments.Amount` | No | Maximum total value of all payments over the consent lifetime | `10000.00` |
+| `MaximumCumulativeValueOfPayments.Currency` | No | ISO 4217 currency code | `AED` |
+| `MaximumCumulativeNumberOfPayments` | No | Maximum total number of payments over the consent lifetime | `50` |
+
+**Periodic Control Parameters** — apply per recurring period, defined inside `PeriodicSchedule`:
+
+| Field | Required | Description | Example |
+|-------|----------|-------------|---------|
+| `PeriodicSchedule.PeriodType` | Yes | The period length: `Day`, `Week`, `Month`, or `Year` | `Month` |
+| `PeriodicSchedule.PeriodStartDate` | Yes | The date from which the period starts. For `Day` and `Year`, this is when payments may begin | `2026-03-01` |
+| `PeriodicSchedule.Controls.MaximumIndividualAmount.Amount` | At least one of three | Maximum amount permitted per individual payment | `500.00` |
+| `PeriodicSchedule.Controls.MaximumIndividualAmount.Currency` | At least one of three | ISO 4217 currency code | `AED` |
+| `PeriodicSchedule.Controls.MaximumCumulativeValueOfPaymentsPerPeriod.Amount` | No | Maximum cumulative value of payments within the period. Must be greater than `MaximumIndividualAmount` when both are provided | `2000.00` |
+| `PeriodicSchedule.Controls.MaximumCumulativeValueOfPaymentsPerPeriod.Currency` | No | ISO 4217 currency code | `AED` |
+| `PeriodicSchedule.Controls.MaximumCumulativeNumberOfPaymentsPerPeriod` | No | Maximum number of payments within the period | `5` |
+
+::: warning At least one periodic control must be provided
+At least one of `MaximumIndividualAmount`, `MaximumCumulativeValueOfPaymentsPerPeriod`, or `MaximumCumulativeNumberOfPaymentsPerPeriod` must be present inside `PeriodicSchedule.Controls`. The cumulative and lifetime caps are independent of each other.
 :::
 
-#### Example authorization_details
+#### Permissions (Optional) | `authorization_details.consent.Permissions`
+
+Payment consents may optionally include account-reading permissions so the TPP can display debit account details and confirmation screens.
+
+| Permission | Description |
+|------------|-------------|
+| `ReadAccountsBasic` | List accounts and basic metadata |
+| `ReadAccountsDetail` | Read full account details |
+| `ReadBalances` | Read account balances |
+| `ReadRefundAccount` | Read account details for refund routing |
+
+#### Example request
 
 ```json
 "authorization_details": [
@@ -204,6 +119,9 @@ The user sees `MaximumIndividualAmount` on the bank's authorization screen. Each
       "ConsentId": "{{unique-guid}}",
       "IsSingleAuthorization": true,
       "ExpirationDateTime": "2027-03-02T00:00:00+00:00",
+
+      // Deadline for the user to authorize at the bank (optional)
+      // "AuthorizationExpirationDateTime": "2026-03-03T10:00:00+00:00",
 
       "Permissions": [
         "ReadAccountsBasic",
@@ -215,17 +133,27 @@ The user sees `MaximumIndividualAmount` on the bank's authorization screen. Each
         "ConsentSchedule": {
           "MultiPayment": {
             "Type": "VariableOnDemand",
-            "MaximumIndividualAmount": {
-              "Amount": "500.00",
-              "Currency": "AED"
-            },
-            // Optional caps:
-            // "MaximumCumulativeAmount": { "Amount": "5000.00", "Currency": "AED" },
-            // "MaximumNumberOfPayments": 20
+
+            // Optional consent-lifetime cumulative caps:
+            // "MaximumCumulativeValueOfPayments": { "Amount": "10000.00", "Currency": "AED" },
+            // "MaximumCumulativeNumberOfPayments": 50,
+
+            "PeriodicSchedule": {
+              "PeriodType": "Month",
+              "PeriodStartDate": "2026-03-01",
+              "Controls": {
+                // At least ONE of the following three must be provided:
+                "MaximumIndividualAmount": { "Amount": "500.00", "Currency": "AED" }
+                // Optional per-period caps:
+                // "MaximumCumulativeValueOfPaymentsPerPeriod": { "Amount": "2000.00", "Currency": "AED" },
+                // "MaximumCumulativeNumberOfPaymentsPerPeriod": 5
+              }
+            }
           }
         }
       },
 
+      // Encrypted PII from Step 1
       "PersonalIdentifiableInformation": "{{encryptedPII}}",
 
       "PaymentPurposeCode": "ACM",
@@ -236,11 +164,9 @@ The user sees `MaximumIndividualAmount` on the bank's authorization screen. Each
 ]
 ```
 
----
-
 ### Step 3 - Constructing the Request JWT
 
-Generate a PKCE code pair and build the Request JWT using `buildRequestJWT()` with scope `payments openid`.
+With your `authorization_details` ready, generate a PKCE code pair then use the [`buildRequestJWT()`](/tech/tpp-standards/security/fapi/request-jwt#building-the-request-jwt) helper, passing `payments openid` as the scope.
 
 ::: code-group
 
@@ -264,13 +190,21 @@ const authorizationDetails = [
         ConsentSchedule: {
           MultiPayment: {
             Type: 'VariableOnDemand',
-            MaximumIndividualAmount: { Amount: '500.00', Currency: 'AED' },
-            MaximumCumulativeAmount:  { Amount: '5000.00', Currency: 'AED' },
-            MaximumNumberOfPayments: 20,
+            PeriodicSchedule: {
+              PeriodType: 'Month',
+              PeriodStartDate: '2026-03-01',
+              Controls: {
+                MaximumIndividualAmount: { Amount: '500.00', Currency: 'AED' },
+                // MaximumCumulativeValueOfPaymentsPerPeriod: { Amount: '2000.00', Currency: 'AED' },
+                // MaximumCumulativeNumberOfPaymentsPerPeriod: 5,
+              },
+            },
+            // MaximumCumulativeValueOfPayments: { Amount: '10000.00', Currency: 'AED' },
+            // MaximumCumulativeNumberOfPayments: 50,
           },
         },
       },
-      PersonalIdentifiableInformation: encryptedPII,
+      PersonalIdentifiableInformation: encryptedPII,  // from Step 1
       PaymentPurposeCode: 'ACM',
       DebtorReference: 'Subscription',
       CreditorReference: 'Subscription',
@@ -285,206 +219,101 @@ const requestJWT = await buildRequestJWT({
 })
 ```
 
+```python [Python]
+import uuid
+from datetime import datetime, timezone, timedelta
+from pkce import generate_code_verifier, derive_code_challenge
+from request_jwt import build_request_jwt
+
+code_verifier  = generate_code_verifier()
+code_challenge = derive_code_challenge(code_verifier)
+
+authorization_details = [
+    {
+        "type": "urn:openfinanceuae:service-initiation-consent:v2.1",
+        "consent": {
+            "ConsentId": str(uuid.uuid4()),
+            "IsSingleAuthorization": True,
+            "ExpirationDateTime": (datetime.now(timezone.utc) + timedelta(days=365)).isoformat(),
+            "Permissions": ["ReadAccountsBasic", "ReadAccountsDetail", "ReadBalances"],
+            "ControlParameters": {
+                "ConsentSchedule": {
+                    "MultiPayment": {
+                        "Type": "VariableOnDemand",
+                        "PeriodicSchedule": {
+                            "PeriodType": "Month",
+                            "PeriodStartDate": "2026-03-01",
+                            "Controls": {
+                                "MaximumIndividualAmount": {"Amount": "500.00", "Currency": "AED"},
+                                # "MaximumCumulativeValueOfPaymentsPerPeriod": {"Amount": "2000.00", "Currency": "AED"},
+                                # "MaximumCumulativeNumberOfPaymentsPerPeriod": 5,
+                            },
+                        },
+                        # "MaximumCumulativeValueOfPayments": {"Amount": "10000.00", "Currency": "AED"},
+                        # "MaximumCumulativeNumberOfPayments": 50,
+                    }
+                }
+            },
+            "PersonalIdentifiableInformation": encrypted_pii,  # from Step 1
+            "PaymentPurposeCode": "ACM",
+            "DebtorReference": "Subscription",
+            "CreditorReference": "Subscription",
+        },
+    }
+]
+
+request_jwt = build_request_jwt(
+    scope="payments openid",
+    code_challenge=code_challenge,
+    authorization_details=authorization_details,
+)
+```
+
 :::
 
 ::: tip Store the code_verifier
-Save `codeVerifier` in your server-side session — you will need it in [Step 8](#step-8-post-token-authorization-code).
+Save `codeVerifier` in your server-side session or an `httpOnly` cookie — you will need it in [Step 8](#step-8-post-token-authorization-code) to exchange the authorization code for tokens.
 :::
 
----
+See [Preparing the Request JWT](/tech/tpp-standards/security/fapi/request-jwt) for the full JWT claim reference and PKCE helpers.
 
-### Step 4 - Creating a Client Assertion
+<!--@include: ../../_shared/step-4-client-assertion.md-->
 
-::: code-group
-
-```typescript [Node.js]
-import crypto from 'node:crypto'
-import { signJWT } from './sign-jwt'
-
-async function buildClientAssertion(): Promise<string> {
-  return signJWT({
-    iss: CLIENT_ID,
-    sub: CLIENT_ID,
-    aud: ISSUER,
-    jti: crypto.randomUUID(),
-  })
-}
-```
-
-:::
-
-See [Tokens & Assertions](/tech/tpp-standards/security/tokens#generating-a-client-assertion).
-
----
-
-### Step 5 - Sending the /par Request
-
-::: code-group
-
-```typescript [Node.js]
-const parResponse = await fetch(`${ISSUER}/par`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  body: new URLSearchParams({
-    request:               requestJWT,
-    client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
-    client_assertion:      await buildClientAssertion(),
-  }),
-  // agent: new https.Agent({ cert: transportCert, key: transportKey }),
-})
-
-const { request_uri, expires_in } = await parResponse.json()
-```
-
-```python [Python]
-import httpx
-
-par_response = httpx.post(
-    f"{ISSUER}/par",
-    data={
-        "request":               request_jwt,
-        "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-        "client_assertion":      build_client_assertion(),
-    },
-    # cert=("transport.crt", "transport.key"),
-)
-
-request_uri = par_response.json()["request_uri"]
-```
-
-:::
-
----
+<!--@include: ../../_shared/step-5-par-request.md-->
 
 ## Redirecting the User to the Bank
 
 ### Step 6 - Building the Authorization URL
 
-::: code-group
+The `authorization_endpoint` is found in the LFI's `.well-known/openid-configuration` — not constructed from the issuer URL directly.
 
-```typescript [Node.js]
-const AUTHORIZATION_ENDPOINT = discoveryDoc.authorization_endpoint
-
-const authCodeUrl =
-  `${AUTHORIZATION_ENDPOINT}?client_id=${CLIENT_ID}&response_type=code&scope=openid` +
-  `&request_uri=${encodeURIComponent(request_uri)}`
-
-window.location.href = authCodeUrl
-```
-
-```python [Python]
-import urllib.parse
-
-auth_code_url = (
-    f"{discovery_doc['authorization_endpoint']}"
-    f"?client_id={CLIENT_ID}&response_type=code&scope=openid"
-    f"&request_uri={urllib.parse.quote(request_uri)}"
-)
-```
-
-:::
+<!--@include: ../../_shared/step-6-redirect-code.md-->
 
 After redirecting, the user will see the bank's authorization screen showing:
-- The TPP name
-- `MaximumIndividualAmount` (e.g. "up to AED 500.00 per payment")
-- Optional cumulative cap and payment count limit
-- Expiry date of the consent
+
+- The TPP name and purpose
+- The `MaximumIndividualAmount` (e.g. "up to AED 500.00 per payment")
+- Any periodic caps (per-period value and count limits)
+- Any lifetime cumulative caps
+- The consent expiry date
 
 ::: tip User Journeys
-See [User Journeys](./user-journeys) for screen mockups of the Variable On-Demand authorization screens.
+See [User Journeys](./user-journeys) for screen mockups of the Variable On-Demand **Consent** and **Authorization** pages the user sees at the bank.
 :::
-
----
 
 ## Handling the Callback
 
-### Step 7 - Extracting the Authorization Code
-
-```
-https://yourapp.com/callback?code=fbe03604-...&state=d2fe5e2c-...&iss=https://auth1.altareq1.sandbox.apihub.openfinance.ae
-```
-
-::: code-group
-
-```typescript [Node.js]
-const params = new URLSearchParams(window.location.search)
-
-const code  = params.get('code')!
-const state = params.get('state')!
-const iss   = params.get('iss')!
-
-if (state !== storedState) throw new Error('State mismatch — possible CSRF attack')
-if (iss   !== ISSUER)      throw new Error(`Unexpected issuer: ${iss}`)
-```
-
-```python [Python]
-from urllib.parse import urlparse, parse_qs
-
-params = parse_qs(urlparse(callback_url).query)
-code  = params["code"][0]
-state = params["state"][0]
-iss   = params["iss"][0]
-
-if state != stored_state: raise ValueError("State mismatch")
-if iss   != ISSUER:       raise ValueError(f"Unexpected issuer: {iss}")
-```
-
-:::
-
----
+<!--@include: ../../_shared/step-7-callback.md-->
 
 ## Exchanging the Code for Tokens
 
-### Step 8 - POST /token (Authorization Code)
-
-::: code-group
-
-```typescript [Node.js]
-const tokenResponse = await fetch(`${ISSUER}/token`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  body: new URLSearchParams({
-    grant_type:            'authorization_code',
-    code,
-    redirect_uri:          REDIRECT_URI,
-    code_verifier:         codeVerifier,
-    client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
-    client_assertion:      await buildClientAssertion(),
-  }),
-  // agent: new https.Agent({ cert: transportCert, key: transportKey }),
-})
-
-const { access_token, refresh_token, expires_in } = await tokenResponse.json()
-```
-
-```python [Python]
-token_response = httpx.post(
-    f"{ISSUER}/token",
-    data={
-        "grant_type":            "authorization_code",
-        "code":                  code,
-        "redirect_uri":          REDIRECT_URI,
-        "code_verifier":         code_verifier,
-        "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-        "client_assertion":      build_client_assertion(),
-    },
-    # cert=("transport.crt", "transport.key"),
-)
-
-tokens        = token_response.json()
-access_token  = tokens["access_token"]
-refresh_token = tokens["refresh_token"]
-```
-
-:::
-
----
+<!--@include: ../../_shared/step-8-token-exchange.md-->
 
 ## Initiating Payments On-Demand
 
 ### Step 9 - POST /payments
 
-Unlike Single Instant Payment, this step can be called **multiple times** under the same consent. Each call specifies the actual amount for that payment — it must be ≤ `MaximumIndividualAmount`.
+Unlike Single Instant Payment, this step can be called **multiple times** under the same consent. Each call specifies the actual amount for that payment — it must be ≤ `MaximumIndividualAmount` and must not exceed any periodic or cumulative caps.
 
 ::: info Consent stays Authorized
 After each successful payment, the consent remains in the `Authorized` state (unless cumulative caps are reached or the consent expires). You do **not** need to re-initiate the authorization flow.
@@ -544,8 +373,8 @@ const { PaymentId: pay2 } = await initiateVariablePayment(refreshedToken, consen
 def initiate_variable_payment(
     access_token: str,
     consent_id: str,
-    amount: str,
-    encrypted_pii: str,
+    amount: str,          # must be ≤ MaximumIndividualAmount ('500.00')
+    encrypted_pii: str,   # same encrypted PII from Step 1
 ) -> dict:
     response = httpx.post(
         f"{LFI_API_BASE}/open-finance/v2.1/payments",
@@ -576,103 +405,25 @@ def initiate_variable_payment(
     )
     data = response.json()["Data"]
     return {"payment_id": data["PaymentId"], "status": data["Status"]}
+
+
+# First payment
+pay1 = initiate_variable_payment(access_token, consent_id, "149.99", encrypted_pii)
+
+# Second payment (days/weeks later using a refreshed access token)
+pay2 = initiate_variable_payment(refreshed_token, consent_id, "89.00", encrypted_pii)
 ```
 
 :::
 
 ::: warning Amount validation
-The LFI will reject a payment if `Instruction.Amount` exceeds `MaximumIndividualAmount` from the consent, or if `MaximumCumulativeAmount` or `MaximumNumberOfPayments` has already been reached.
+The LFI will reject a payment if `Instruction.Amount` exceeds `MaximumIndividualAmount`, or if any periodic or lifetime cumulative cap has already been reached.
 :::
 
-### Token refresh for subsequent payments
-
-The initial access token expires (typically after 10 minutes). For subsequent on-demand payments, use the `refresh_token` to obtain a new access token without re-involving the user:
-
-::: code-group
-
-```typescript [Node.js]
-const refreshResponse = await fetch(`${ISSUER}/token`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  body: new URLSearchParams({
-    grant_type:            'refresh_token',
-    refresh_token:         storedRefreshToken,
-    client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
-    client_assertion:      await buildClientAssertion(),
-  }),
-  // agent: new https.Agent({ cert: transportCert, key: transportKey }),
-})
-
-const { access_token: newToken, refresh_token: newRefresh } = await refreshResponse.json()
-// Update your stored tokens
-```
-
-:::
-
-See [Tokens & Assertions](/tech/tpp-standards/security/tokens) for refresh token lifetimes and rotation policy.
-
----
+<!--@include: ../../_shared/step-token-refresh.md-->
 
 ## Checking Payment Status
 
-### Step 10 - GET /payments/{PaymentId}
+<!--@include: ../../_shared/step-10-payment-status.md-->
 
-::: code-group
-
-```typescript [Node.js]
-const statusResponse = await fetch(
-  `${LFI_API_BASE}/open-finance/v2.1/payments/${paymentId}`,
-  {
-    headers: { Authorization: `Bearer ${access_token}` },
-    // agent: new https.Agent({ cert: transportCert, key: transportKey }),
-  }
-)
-
-const { Data: { Status, StatusUpdateDateTime } } = await statusResponse.json()
-```
-
-```python [Python]
-status_response = httpx.get(
-    f"{LFI_API_BASE}/open-finance/v2.1/payments/{payment_id}",
-    headers={"Authorization": f"Bearer {access_token}"},
-    # cert=("transport.crt", "transport.key"),
-)
-
-data   = status_response.json()["Data"]
-status = data["Status"]
-```
-
-:::
-
-| Status | Description |
-|---|---|
-| `Pending` | Payment received by LFI, awaiting processing |
-| `AcceptedSettlementInProcess` | Payment accepted and settlement is in progress |
-| `AcceptedSettlementCompleted` | Payment settled successfully |
-| `Rejected` | Payment rejected by the LFI or payment rail |
-
-See [GET /payments/{PaymentId}](/tech/tpp-standards/v2.1/banking/service-initiation/open-api/payments-PaymentId) for the full response schema.
-
----
-
-## Listing Payments Under a Consent
-
-To retrieve all payments submitted under a Variable On-Demand consent, use idempotency key listing:
-
-::: code-group
-
-```typescript [Node.js]
-const listResponse = await fetch(
-  `${LFI_API_BASE}/open-finance/v2.1/payments?consentId=${consentId}`,
-  {
-    headers: { Authorization: `Bearer ${access_token}` },
-    // agent: new https.Agent({ cert: transportCert, key: transportKey }),
-  }
-)
-
-const { Data: { Payment: payments } } = await listResponse.json()
-```
-
-:::
-
-See [GET /payments](/tech/tpp-standards/v2.1/banking/service-initiation/open-api/payments-idempotency) for the full reference.
+<!--@include: ../../_shared/step-list-payments.md-->

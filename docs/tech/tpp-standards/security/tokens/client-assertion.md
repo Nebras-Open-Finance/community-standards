@@ -4,58 +4,51 @@ next: false
 aside: false
 ---
 
-## Generating a Client Assertion
+# Client Assertion
 
-Every call to the `/token` endpoint must be accompanied by a **client assertion** — a short-lived, signed JWT that proves your application's identity to the Authorization Server. This replaces a client secret.
+A **client assertion** is a short-lived, signed JWT that your application presents to the Authorization Server to prove its identity. It takes the place of a static client secret, providing a stronger and more auditable form of client authentication.
 
-### Structure
+In UAE Open Finance, a client assertion is required on two endpoints:
 
-The client assertion is built from three parts:
+| Endpoint | Use |
+|----------|-----|
+| [`/token`](./open-api/token) | Exchanging an authorisation code for tokens, refreshing an access token, or obtaining a client credentials token |
+| [`/par`](../../v2.1/consent/open-api/par) | Submitting a Pushed Authorization Request to initiate a consent journey |
 
-```json
-{
-  "header": {
-    "alg": "PS256",
-    "kid": "{{kid-local}}"
-  },
-  "body": {
-    "aud": "{{issuer}}",
-    "exp": {{exp}},
-    "iss": "{{_clientId}}",
-    "sub": "{{_clientId}}",
-    "jti": "{{$guid}}",
-    "iat": {{nbf}}
-  },
-  "signingKeyPEM": "{{pem-local}}"
-}
-```
+Because each assertion is signed with your application's private key, the Authorization Server can verify it using your public key from the Trust Framework — without any shared secret ever leaving your system.
 
-### Claims
+::: info One assertion per request
+A client assertion must be freshly generated for every request. The `jti` claim (a unique UUID) ensures the Authorization Server can detect and reject replayed assertions.
+:::
 
-#### Header
+## Structure
+
+The client assertion is a signed JWT composed of a header and a set of claims:
+
+### Header
 
 | Field | Value | Description |
 |-------|-------|-------------|
-| `alg` | `PS256` | Algorithm used to sign the JWT. Required by the FAPI 2.0 security profile |
+| `alg` | `PS256` | The only algorithm supported by the UAE Open Finance FAPI profile |
 | `kid` | string | Key ID of your signing certificate, as registered in the Trust Framework |
 
-#### Body
+### Claims
 
 | Claim | Description | Example |
 |-------|-------------|---------|
-| `aud` | The Authorization Server's issuer URI — obtained from the `.well-known` discovery endpoint | `https://auth.[LFICode].apihub.openfinance.ae` |
+| `aud` | The Authorization Server's issuer URI — obtained from the [`.well-known`](../../trust-framework/well-known) discovery endpoint | `https://auth.[LFICode].apihub.openfinance.ae` |
 | `iss` | Your application's `client_id` from the Trust Framework | `a1b2c3d4-...` |
 | `sub` | Same as `iss` — your `client_id` | `a1b2c3d4-...` |
 | `iat` | Unix timestamp of when the JWT was issued | `1713196123` |
 | `exp` | Unix timestamp when the JWT expires. Keep this short — 5 minutes is standard | `1713196423` |
 | `jti` | A unique identifier (UUID) for this assertion. Prevents replay attacks | `f47ac10b-58cc-...` |
 
-#### Signing key
+::: tip Keep assertions short-lived
+Set `exp` to no more than 5 minutes after `iat`. Long-lived assertions increase the window of exposure if intercepted.
+:::
 
-| Field | Description |
-|-------|-------------|
-| `signingKeyPEM` | Your private signing key in PEM format, used to sign the JWT. Strip all whitespace and line breaks before use |
+## Signing the assertion
 
-### Signing the assertion
+Once the header and claims are assembled, sign the JWT as a JWS using the `PS256` algorithm and your private signing key.
 
-Once the structure is prepared, sign it as a JWS using the `PS256` algorithm and your private signing key. See [Message Signing (JWS)](/tech/tpp-standards/security/fapi/message-signing) for the signing helper and full code examples in TypeScript and Python.
+See [Message Signing (JWS)](../fapi/message-signing) for the signing helper and full code examples in TypeScript and Python.

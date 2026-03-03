@@ -38,137 +38,7 @@ Before initiating a Single Instant Payment, ensure the following requirements ar
 
 ## <span style="color: #3b82f6; padding-right: 5px;">POST</span> `/par`
 
-### Step 1 - Encrypting PII
-
-Before constructing the `authorization_details`, the **Personal Identifiable Information (PII)** — creditor name, IBAN, and risk indicators — must be encrypted as a JWE using the LFI's public encryption key. This prevents the Authorization Server from reading sensitive payment details in transit.
-
-#### PII Structure
-
-| Field | Type | Description | Example |
-|-------|------|-------------|---------|
-| `Initiation` | object | Creditor identification details. *Described below* | — |
-| `Risk` | object | Risk and fraud indicators for the payment. *Described below* | — |
-
-#### Initiation | `Initiation.Creditor[]`
-
-| Field | Type | Description | Example |
-|-------|------|-------------|---------|
-| `Creditor.Name` | string | Full legal name of the payment recipient | `Ivan England` |
-| `CreditorAccount.SchemeName` | enum | Account scheme — `IBAN` or `BBAN` | `IBAN` |
-| `CreditorAccount.Identification` | string | Account identifier in the chosen scheme | `AE070331234567890123456` |
-| `CreditorAccount.Name.en` | string | Account holder name (English) | `Ivan David England` |
-| `CreditorAccount.Name.ar` | string | Account holder name (Arabic, optional) | — |
-
-#### Risk | `Risk`
-
-| Field | Type | Description | Example |
-|-------|------|-------------|---------|
-| `DebtorIndicators.UserName.en` | string | Display name of the paying user | `Ahmad Al Mansouri` |
-| `CreditorIndicators.IsCreditorConfirmed` | boolean | Whether the creditor identity was confirmed by Confirmation of Payee | `true` |
-| `CreditorIndicators.IsCreditorPrePopulated` | boolean | Whether the creditor details were pre-filled by the TPP rather than entered by the user | `true` |
-
-#### Encrypting the PII
-
-Serialize the PII object to JSON and encrypt it as a JWE using the LFI's public encryption key. Use the [`encryptRequestObject()`](/tech/tpp-standards/security/fapi/message-encryption#step-3-encrypt-the-payload) helper from the Message Encryption page — the only difference is that the payload is a JSON string rather than a signed JWT:
-
-::: code-group
-
-```typescript [Node.js]
-import { importJWK, CompactEncrypt } from 'jose'
-
-/**
- * Encrypt PII as a JWE using the LFI's public encryption key.
- * Fetch the LFI's JWKS URI from their .well-known/openid-configuration.
- */
-async function encryptPII(pii: object, jwksUri: string): Promise<string> {
-  const { keys } = await fetch(jwksUri).then(r => r.json())
-  const encKeyJwk = keys.find((k: { use: string }) => k.use === 'enc')
-  if (!encKeyJwk) throw new Error('No encryption key (use: enc) found in JWKS')
-
-  const encKey = await importJWK(encKeyJwk, 'RSA-OAEP-256')
-
-  return new CompactEncrypt(new TextEncoder().encode(JSON.stringify(pii)))
-    .setProtectedHeader({
-      alg: 'RSA-OAEP-256',
-      enc: 'A256GCM',
-      kid: encKeyJwk.kid,
-    })
-    .encrypt(encKey)
-}
-
-const pii = {
-  Initiation: {
-    Creditor: [
-      {
-        Creditor: { Name: 'Ivan England' },
-        CreditorAccount: {
-          SchemeName: 'IBAN',
-          Identification: 'AE070331234567890123456',
-          Name: { en: 'Ivan David England' },
-        },
-      },
-    ],
-  },
-  Risk: {
-    DebtorIndicators: { UserName: { en: 'Ahmad Al Mansouri' } },
-    CreditorIndicators: {
-      IsCreditorConfirmed: true,
-      IsCreditorPrePopulated: true,
-    },
-  },
-}
-
-const encryptedPII = await encryptPII(pii, LFI_JWKS_URI)
-// encryptedPII is a compact JWE string — embed it in authorization_details below
-```
-
-```python [Python]
-import json
-import requests
-from jose import jwe
-
-def encrypt_pii(pii: dict, jwks_uri: str) -> str:
-    keys = requests.get(jwks_uri).json()["keys"]
-    enc_key = next((k for k in keys if k.get("use") == "enc"), None)
-    if not enc_key:
-        raise ValueError("No encryption key (use: enc) found in JWKS")
-
-    return jwe.encrypt(
-        json.dumps(pii).encode(),
-        enc_key,
-        algorithm="RSA-OAEP-256",
-        encryption="A256GCM",
-    ).decode()
-
-pii = {
-    "Initiation": {
-        "Creditor": [
-            {
-                "Creditor": {"Name": "Ivan England"},
-                "CreditorAccount": {
-                    "SchemeName": "IBAN",
-                    "Identification": "AE070331234567890123456",
-                    "Name": {"en": "Ivan David England"},
-                },
-            }
-        ]
-    },
-    "Risk": {
-        "DebtorIndicators": {"UserName": {"en": "Ahmad Al Mansouri"}},
-        "CreditorIndicators": {
-            "IsCreditorConfirmed": True,
-            "IsCreditorPrePopulated": True,
-        },
-    },
-}
-
-encrypted_pii = encrypt_pii(pii, LFI_JWKS_URI)
-# encrypted_pii is a compact JWE string — embed it in authorization_details below
-```
-
-:::
-
-See [Message Encryption](/tech/tpp-standards/security/fapi/message-encryption) for details on fetching the LFI's JWKS and selecting the correct encryption key.
+<!--@include: ../_shared/step-1-encrypt-pii.md-->
 
 ### Step 2 - Constructing Authorization Details
 
@@ -306,6 +176,46 @@ const requestJWT = await buildRequestJWT({
 })
 ```
 
+```python [Python]
+import uuid
+from datetime import datetime, timezone, timedelta
+from pkce import generate_code_verifier, derive_code_challenge
+from request_jwt import build_request_jwt
+
+code_verifier  = generate_code_verifier()
+code_challenge = derive_code_challenge(code_verifier)
+
+authorization_details = [
+    {
+        "type": "urn:openfinanceuae:service-initiation-consent:v2.1",
+        "consent": {
+            "ConsentId": str(uuid.uuid4()),
+            "IsSingleAuthorization": True,
+            "ExpirationDateTime": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat(),
+            "Permissions": ["ReadAccountsBasic", "ReadAccountsDetail", "ReadBalances", "ReadRefundAccount"],
+            "ControlParameters": {
+                "ConsentSchedule": {
+                    "SinglePayment": {
+                        "Type": "SingleInstantPayment",
+                        "Amount": {"Amount": "100.00", "Currency": "AED"},
+                    }
+                }
+            },
+            "PersonalIdentifiableInformation": encrypted_pii,  # from Step 1
+            "PaymentPurposeCode": "ACM",
+            "DebtorReference": "Invoice 1234",
+            "CreditorReference": "Invoice 1234",
+        },
+    }
+]
+
+request_jwt = build_request_jwt(
+    scope="payments openid",
+    code_challenge=code_challenge,
+    authorization_details=authorization_details,
+)
+```
+
 :::
 
 ::: tip Store the code_verifier
@@ -314,80 +224,9 @@ Save `codeVerifier` in your server-side session or an `httpOnly` cookie — you 
 
 See [Preparing the Request JWT](/tech/tpp-standards/security/fapi/request-jwt) for the full JWT claim reference and PKCE helpers.
 
-### Step 4 - Creating a Client Assertion
+<!--@include: ../_shared/step-4-client-assertion.md-->
 
-Use the [`signJWT()`](/tech/tpp-standards/security/fapi/message-signing#signing-a-jwt) helper to build a client assertion proving your application's identity:
-
-::: code-group
-
-```typescript [Node.js]
-import crypto from 'node:crypto'
-import { signJWT } from './sign-jwt'
-
-const CLIENT_ID = process.env.CLIENT_ID!
-const ISSUER    = process.env.AUTHORIZATION_SERVER_ISSUER!
-
-async function buildClientAssertion(): Promise<string> {
-  return signJWT({
-    iss: CLIENT_ID,
-    sub: CLIENT_ID,
-    aud: ISSUER,
-    jti: crypto.randomUUID(),
-  })
-}
-```
-
-:::
-
-See [Tokens & Assertions](/tech/tpp-standards/security/tokens#generating-a-client-assertion) for the full claims reference.
-
-### Step 5 - Sending the /par Request
-
-::: code-group
-
-```typescript [Node.js]
-const parResponse = await fetch(`${ISSUER}/par`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  body: new URLSearchParams({
-    request:               requestJWT,
-    client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
-    client_assertion:      await buildClientAssertion(),
-  }),
-  // agent: new https.Agent({ cert: transportCert, key: transportKey }),
-})
-
-const { request_uri, expires_in } = await parResponse.json()
-```
-
-```python [Python]
-import httpx
-
-par_response = httpx.post(
-    f"{ISSUER}/par",
-    data={
-        "request":               request_jwt,
-        "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-        "client_assertion":      build_client_assertion(),
-    },
-    # cert=("transport.crt", "transport.key"),
-)
-
-data        = par_response.json()
-request_uri = data["request_uri"]
-expires_in  = data["expires_in"]
-```
-
-:::
-
-::: info mTLS transport certificate
-You must present your **transport certificate** on every connection to the Authorization Server and resource APIs. See [Certificates](/tech/tpp-standards/trust-framework/certificates).
-:::
-
-| Field | Description | Example |
-|-------|-------------|---------|
-| `request_uri` | Single-use reference to your pushed authorization request | `urn:ietf:params:oauth:request-uri:bwc4JDpSd7` |
-| `expires_in` | Seconds until the `request_uri` expires — redirect the user before this window closes | `90` |
+<!--@include: ../_shared/step-5-par-request.md-->
 
 ## Redirecting the User to the Bank
 
@@ -395,35 +234,7 @@ You must present your **transport certificate** on every connection to the Autho
 
 The `authorization_endpoint` is found in the LFI's `.well-known/openid-configuration` — not constructed from the issuer URL directly.
 
-::: code-group
-
-```typescript [Node.js]
-// authorization_endpoint from .well-known/openid-configuration
-// e.g. 'https://auth1.altareq1.sandbox.apihub.openfinance.ae/authorize'
-const AUTHORIZATION_ENDPOINT = discoveryDoc.authorization_endpoint
-
-const authCodeUrl = `${AUTHORIZATION_ENDPOINT}?client_id=${CLIENT_ID}&response_type=code&scope=openid&request_uri=${encodeURIComponent(request_uri)}`
-
-window.location.href = authCodeUrl
-// or server-side: res.redirect(authCodeUrl)
-```
-
-```python [Python]
-import urllib.parse
-
-AUTHORIZATION_ENDPOINT = discovery_doc["authorization_endpoint"]
-
-auth_code_url = (
-    f"{AUTHORIZATION_ENDPOINT}"
-    f"?client_id={CLIENT_ID}"
-    f"&response_type=code"
-    f"&scope=openid"
-    f"&request_uri={urllib.parse.quote(request_uri)}"
-)
-# redirect the user to auth_code_url
-```
-
-:::
+<!--@include: ../_shared/step-6-redirect-code.md-->
 
 ::: tip User Journeys
 See [User Journeys](./user-journeys) for screen mockups of the **Consent** and **Authorization** pages the user sees at the bank, including an interactive form where you can edit the consent JSON and PII and preview the resulting UI.
@@ -437,92 +248,11 @@ After redirecting, the user will:
 
 ## Handling the Callback
 
-### Step 7 - Extracting the Authorization Code
-
-After the user approves, the bank redirects to your `redirect_uri`:
-
-```
-https://yourapp.com/callback?code=fbe03604-baf2-4220-b7dd-05b14de19e5c&state=d2fe5e2c-77cd-4788-b0ef-7cf0fc8a3e54&iss=https://auth1.altareq1.sandbox.apihub.openfinance.ae
-```
-
-::: code-group
-
-```typescript [Node.js]
-const params = new URLSearchParams(window.location.search)
-
-const code  = params.get('code')!
-const state = params.get('state')!
-const iss   = params.get('iss')!
-
-if (state !== storedState) throw new Error('State mismatch — possible CSRF attack')
-if (iss !== ISSUER)        throw new Error(`Unexpected issuer: ${iss}`)
-```
-
-```python [Python]
-from urllib.parse import urlparse, parse_qs
-
-params = parse_qs(urlparse(callback_url).query)
-code  = params["code"][0]
-state = params["state"][0]
-iss   = params["iss"][0]
-
-if state != stored_state: raise ValueError("State mismatch — possible CSRF attack")
-if iss != ISSUER:         raise ValueError(f"Unexpected issuer: {iss}")
-```
-
-:::
-
-See [Handling Authorization Callbacks](/tech/tpp-standards/security/fapi/handling-callback) for a full guide on state validation, issuer verification, and replay prevention.
+<!--@include: ../_shared/step-7-callback.md-->
 
 ## Exchanging the Code for Tokens
 
-### Step 8 - POST /token (Authorization Code)
-
-::: code-group
-
-```typescript [Node.js]
-const tokenResponse = await fetch(`${ISSUER}/token`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  body: new URLSearchParams({
-    grant_type:            'authorization_code',
-    code,
-    redirect_uri:          REDIRECT_URI,
-    code_verifier:         codeVerifier,            // from Step 3
-    client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
-    client_assertion:      await buildClientAssertion(),
-  }),
-  // agent: new https.Agent({ cert: transportCert, key: transportKey }),
-})
-
-const { access_token, refresh_token, expires_in } = await tokenResponse.json()
-```
-
-```python [Python]
-token_response = httpx.post(
-    f"{ISSUER}/token",
-    data={
-        "grant_type":            "authorization_code",
-        "code":                  code,
-        "redirect_uri":          REDIRECT_URI,
-        "code_verifier":         code_verifier,     # from Step 3
-        "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-        "client_assertion":      build_client_assertion(),
-    },
-    # cert=("transport.crt", "transport.key"),
-)
-
-tokens        = token_response.json()
-access_token  = tokens["access_token"]
-refresh_token = tokens["refresh_token"]
-expires_in    = tokens["expires_in"]    # 600 — access token lasts 10 minutes
-```
-
-:::
-
-::: tip Token storage
-Never store tokens in `localStorage`. Use `httpOnly` cookies or a server-side session store. See [Tokens & Assertions](/tech/tpp-standards/security/tokens) for the full token lifecycle.
-:::
+<!--@include: ../_shared/step-8-token-exchange.md-->
 
 ## Creating the Payment
 

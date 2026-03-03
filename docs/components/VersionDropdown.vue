@@ -10,7 +10,9 @@ const VERSIONS = ['v2.1']
 
 const currentVersion = 'v2.1'
 
-const showVersion = route.path.startsWith('/tech/tpp-standards/') || route.path.startsWith('/tech/lfi-api-hub/')
+const showVersion = computed(() =>
+  route.path.startsWith('/tech/tpp-standards/') || route.path.startsWith('/tech/lfi-api-hub/')
+)
 
 const isOpen = ref(false)
 const dropdownEl = ref<HTMLElement | null>(null)

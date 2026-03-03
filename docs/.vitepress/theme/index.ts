@@ -19,6 +19,8 @@ import EditableJson from '../../components/EditableJson.vue'
 import APIFlowsRegistration from '../../components/APIFlows/TPPRegistration.vue'
 import APIFlowsBankDataSharing from '../../components/APIFlows/BankDataSharing.vue'
 import APIFlowsSingleInstantPayment from '../../components/APIFlows/SingleInstantPayment.vue'
+import APIFlowsVariableOnDemand from '../../components/APIFlows/VariableOnDemand.vue'
+import APIFlowsFixedOnDemand from '../../components/APIFlows/FixedOnDemand.vue'
 import APIFlowsConsentFlow from '../../components/APIFlows/ConsentFlow.vue'
 
 // UIs
@@ -52,6 +54,8 @@ export default {
     app.component('APIFlowsRegistration', APIFlowsRegistration)
     app.component('APIFlowsBankDataSharing', APIFlowsBankDataSharing)
     app.component('APIFlowsSingleInstantPayment', APIFlowsSingleInstantPayment)
+    app.component('APIFlowsVariableOnDemand', APIFlowsVariableOnDemand)
+    app.component('APIFlowsFixedOnDemand', APIFlowsFixedOnDemand)
     app.component('APIFlowsConsentFlow', APIFlowsConsentFlow)
 
     // UI
