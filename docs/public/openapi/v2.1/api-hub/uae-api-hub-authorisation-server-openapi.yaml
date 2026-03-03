@@ -1,0 +1,592 @@
+openapi: 3.0.1
+servers:
+  - url: https://<your-ozone-hh-server>
+info:
+  title: Headless Heimdall APIs
+  contact:
+    name: Ozone Financial Technology Limited
+  description: >
+    This document provides an API description in [OpenAPI](https://spec.openapis.org/oas/v3.0.1.html) for the "Headless
+    Heimdall" or Authorization Server APIs.
+
+
+    This document provides the OpenAPI description for the APIs provided by Headless Heimdall.
+
+
+    These APIs are implemented by Ozone and should be called by the financial institution at the end of their
+    authorization journeys.
+
+
+    The interface allows an financial institution to develop the user interface for customers without having to deal
+    with the complexities of OpenID Connect (OIDC) and the FAPI 2.0 Security Profile and without having to gain a
+    thorough understanding of the constraints placed by FAPI.
+
+
+    The interface consists of three operations, which are called when User authentication is initiated and after it is
+    completed.
+
+
+    > Please note that where an operation name is used it references the `operationId` value for a given endpoint and
+    HTTP method.
+
+
+    Initiating Authorization is supported by the `getAuth` operation:
+
+
+    - The `getAuth` operation (`get /auth`) should be called by the financial
+      institution at the beginning of an authorization code grant. This is typically
+      immediately after it receives an authorization request from a TPP.
+
+
+    Completing Authorization is supported by the  `doConfirm` and `doFail` operations:
+
+
+    - The `doConfirm` operation (`post /auth/{interactionId}/doConfirm`)  should be
+      called by the financial institution to notify Heimdall that an interaction has
+      completed successfully.
+
+
+    - The `doFail` operation (`post /auth/{interactionId}/doFail`) operation should be
+      called by the financial institution to notify Heimdall that the interaction has
+      failed.
+
+
+    ### Versioning
+
+    The `version` property implements the following pattern
+    `{standards-major}.{standards-minor}.{ozone-connect-version}`, where:
+
+
+    * `standards-major` is the major version of the latest UAE standard that the API description implements.
+
+
+    * `standards-minor` is the minor version of the latest UAE standard that the API description implements.
+
+
+    * `ozone-connect-version` is the version of the Ozone Connect API description.
+
+
+    So, for example, `v2.0.1` indicates the first version of the Ozone Connect API description that implements the UAE
+    standard version 2.0.
+
+
+    **Please adhere to the deprecated flags in your implementation. Do not implement deprecated properties when**
+    **implementing new functionality.**
+
+
+    **Please use the OpenAPI description document attached to the page if you reading this in Confluence to check**
+    **for deprecated properties.**
+
+    ### v2.1.2
+
+    * Changed description of RAR objects to clarify expected usage.
+  version: v2.1.2
+tags:
+  - name: Initiate Authorization
+    description: Operations that support initiating the authorization of a User
+  - name: Complete Authorization
+    description: Operations that support completing the authorization of a User, indicating either success or failure
+  - name: health-check
+    description: Operations that support checking the health of the API Hub
+security:
+  - {}
+  - OzoneConnectJwtAuth: []
+paths:
+  /auth:
+    get:
+      tags:
+        - Initiate Authorization
+      summary: Initiate an authorisation interaction
+      operationId: getAuth
+      description: >
+        The `getAuth` operation should be called by the financial institution at the beginning of the
+
+        interaction. The operation validates all the parameters that are passed to it to ensure that the
+
+        authorization request is FAPI compliant and has only the client_id` and `redirect_uri` parameters.
+
+
+        The operation responds with one of the three outcomes:
+
+
+        - __Success__: The operation returns a status 200. The body contains a JSON object with the
+
+        interaction and all the query parameters extracted from the OIDC request object.
+
+
+        - __Non-redirectable failure__: This indicates a failure where validation of the OIDC Client
+
+        failed. The financial institution should render an error page and end the interaction.
+
+
+        - __Redirectable failure__: This indicates a failure where the OIDC client has been validated
+
+        but validation of the parameters of the Authorization Request failed. The operation therefore
+
+        responds with a 303 redirect, which the financial institution must use to redirect the User **without
+        modification**.
+
+
+        ### Processing a success response
+
+
+        There are two properties in the success response that financial institutions are likely to be interested in:
+
+
+        - `interaction.interactionId`: The interaction identifier that should be used with
+
+        subsequent calls to Headless Heimdall when this authorization request is completed by the financial institution.
+
+
+        - `tpp.directoryRecord`: Where Ozone is integrated with a Directory Service, this contains a record
+
+        of the TPP record as held on the directory. The structure of the record will depend on the directory. Directory
+        record as held by Ozone in base 64 encoded format.
+
+
+        ### Parameters
+
+
+        When calling this API, the financial institution must pass on **all the query parameters or hash parameters**
+        received from the TPP
+
+        in the authorization request. The FAPI 2.0 Security Profile states that a Client will **_only_** send the
+        `client_id` and `request_uri` values, as
+
+        specified by the [Profile](https://openid.bitbucket.io/fapi/fapi-2_0-security-profile.html#section-5.3.3.2-2.6).
+        However, Heimdall is
+
+        the authoritative source for making that decision, hence all query parameters must be passed on. No query
+        parameters are therefore
+
+        defined here as a result.
+      responses:
+        '200':
+          description: |
+            This indicates that the parameters were successfully validated.
+
+            The financial institution should continue with the next stages of the interaction, using the `interactionId`
+            as the unique identifier with which to track the interaction with the User
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSuccessResponse'
+        '303':
+          description: |
+            This indicates that the parameters were not successfully verified.
+
+            However, there were no indications that the request originated from an invalid client.
+
+            The financial institution should respond to the customer with a redirect to the URI returned by the API
+            (including the query or hash parameters included in the URL)
+        '400':
+          description: |
+            This indicates that the parameters were not successfully verified.
+
+            Heimdall could not verify that the request originated from a valid client.
+
+            The financial institution should render an error page and __must not__ redirect back to the TPP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+  /auth/{interactionId}/doConfirm:
+    post:
+      operationId: doConfirm
+      tags:
+        - Complete Authorization
+      summary: End an authorisation interaction with a success response
+      description: >
+        The `doConfirm` operation should be called by the financial institution once the
+
+        user interaction has been completed and the resource owner has authorized
+
+        access. This operation updates the interaction state and generates an OIDC
+
+        Authorization Code value - `code` - and the rest of the response that should be
+
+        returned to the TPP.
+
+
+        When supported by Security Profile the financial institution can specify the
+
+        set of claims to be added to the ID Token. Heimdall creates an ID Token with
+
+        these claims along with any claims required by FAPI and OIDC. Please note that
+
+        under the FAPI 2.0 Security Profile ID Tokens are not supported in the front
+
+        channel, and therefore will not be returned to the Client as the result of an
+
+        interaction. Please refer to the [Security
+        Profile](https://openid.bitbucket.io/fapi/fapi-2_0-security-profile.html#table-1)
+
+        for more details.
+
+
+        Heimdall returns a 303 with a redirect uri. This resource owner should be
+
+        redirected to this URI.
+
+
+        ### Parameters
+
+
+        The request body can contain an arbitrary set of
+
+        `application/x-www-form-urlencoded` name-value pairs. These are added by
+
+        Heimdall to the ID Token. The claim name is set to the parameter name and the
+
+        claim value to the parameter value.
+
+
+        Claim names prefixed by `heimdall.` act as control parameters for the tokens
+
+        that are produced. These claims are not added to the ID Token.
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              description: >-
+                Where supported, allows a financial institution to send parameters that control the lifetime of Access
+                Tokens and availability of Refresh Tokens. These features are not supported for the UAE Open Finance
+                Framework. Financial institutions can, however, add claims that will be included in an ID Token, which
+                can be requested by a TPP dependent on the OAuth scope granted by the User.
+              type: object
+      parameters:
+        - $ref: '#/components/parameters/InteractionId'
+      responses:
+        '303':
+          description: |
+            A redirect URI that contains an authorization code along with additional
+            parameters as required by OIDC.
+
+            If an internal error occurs during processing of the request an `error` and
+            `error_description` parameters will be returned.
+
+            The redirect URI must be returned to the User to redirect them back to the TPP.
+  /auth/{interactionId}/doFail:
+    post:
+      operationId: doFail
+      tags:
+        - Complete Authorization
+      summary: End an authorisation interaction with a failure response
+      description: |
+        The `doFail` operation should be called by the financial institution once the
+        User interaction has been completed and has resulted in a failure to grant
+        access to the TPP. Examples failure scenarios include:
+
+        * The User does not authenticate successfully.
+
+        * The User declines the authorisation of consent.
+
+        The `doFail` operation updates the interaction state, generates an OIDC `error`
+        and returns the rest of the response that should be returned to the TPP.
+
+        The financial institution can specify the `error` and `error_description` as
+        x-www-form-urlencoded parameters. If `error` and `error_description` omitted
+        then default values will be returned in the redirect URI.
+
+        Heimdall returns a 303 with a redirect URI, which should be sent to the
+        User to redirect them to the TPP.
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                error:
+                  type: string
+                  description: |
+                    An OAuth2.0 or OIDC error
+                error_description:
+                  type: string
+      parameters:
+        - $ref: '#/components/parameters/InteractionId'
+      responses:
+        '303':
+          description: |
+            A redirect URI that contains the parameters required to indicate the error to
+            the TPP.
+
+            If an internal error occurs during processing of the request an `error` and
+            `error_description` parameters will be returned.
+
+            The redirect URI must be returned to the User to redirect them back to the TPP.
+  /hello-mtls:
+    get:
+      operationId: helloMtls
+      tags:
+        - health-check
+      summary: check connectivity including mtls and provides information about the client cert that the server received
+      description: >-
+        This health check is used to check that the end-to-end network connectivity is working as expected including
+        mutual tls. This health check endpoint assists in debugging mutual tls client issues. The health check returns
+        information about the client certificate and the issuer of the client certificate that the server received.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckCertResponse'
+components:
+  schemas:
+    InteractionId:
+      description: >-
+        Unique identifier for the interaction with the User. Please note that this identifier may not be returned with
+        errors from the `get /auth` operation as the interaction may not have been initiated due to an invalid request.
+      type: string
+    AuthSuccessResponse:
+      type: object
+      properties:
+        interaction:
+          description: The properties of a successfully initiated interaction
+          type: object
+          properties:
+            interactionId:
+              $ref: '#/components/schemas/InteractionId'
+            params:
+              description: >-
+                Query parameters unbundled from the original authorization request, including query parameters, hash
+                parameters, and properties of the JWT-Secured Authorization Request (JAR) sent in the Pushed
+                Authorization Request.
+              type: object
+              properties:
+                client_id:
+                  description: >-
+                    The `client_id` value that the caller claims to have. At this stage, Heimdall has verified that the
+                    `client_id` exists.
+                  type: string
+                response_type:
+                  description: >-
+                    The request grant type. This will default to `code` for the CBUAE release as per the constraints of
+                    the FAPI 2.0 Security Profile
+                  type: string
+                  enum:
+                    - code
+                scope:
+                  type: string
+                request:
+                  type: string
+                scopes:
+                  description: The requested scopes in the Authorization Request
+                  type: array
+                  items:
+                    type: string
+                claims:
+                  description: The requested claims in the Authorization Request.
+                  type: object
+                login_hint:
+                  description: >-
+                    The value of the `login_hint` parameter sent in the Pushed Authorization request. This value is
+                    expected to be encrypted as a JWE.
+                  type: string
+            claims:
+              type: object
+            status:
+              type: string
+            consentId:
+              type: string
+              description: An identifier for consent
+              deprecated: true
+            consentIdsList:
+              type: array
+              description: >
+                Consent Ids associated with the interaction.
+
+                Rich Authorization Requests (RAR) can contain multiple consent payloads. At the time of writing, however
+                only a single RAR is supported in a Pushed Authorization Request.
+              items:
+                type: string
+        tpp:
+          $ref: '#/components/schemas/tpp'
+    AuthErrorResponse:
+      description: Provides details of the authorization error. Includes OAuth 2.0 error properties
+      type: object
+      required:
+        - error
+        - error_description
+      properties:
+        noRedirect:
+          description: >-
+            An indicator that defines whether the End User should be redirected back to the Client due to the error.
+            Please note that relates to an earlier release and Heimdall and is therefore deprecated for the CBUAE
+            implementation.
+          type: boolean
+          deprecated: true
+        error:
+          description: The error code as defined by [RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1)
+          type: string
+        error_description:
+          description: >-
+            The error description as defined by [RFC
+            6749](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1)
+          type: string
+        interactionId:
+          $ref: '#/components/schemas/InteractionId'
+    tpp:
+      description: >-
+        The TPP record as held by Ozone. If Ozone TPP Connect has been integrated into a directory, the
+        `directoryRecord` provides the TPP's directory record as held by Ozone in base 64 encoded format.
+      type: object
+      required:
+        - clientId
+        - orgId
+        - softwareStatementId
+        - tppId
+        - tppName
+        - decodedSsa
+      properties:
+        clientId:
+          description: The client identifier for the TPP as issued by the Trust Framework
+          type: string
+          pattern: ^.*[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+        tppId:
+          description: The identifier used by the API Hub to uniquely identify the TPP
+          type: string
+        tppName:
+          description: The TPP name recorded in the Trust Framework
+          type: string
+        obieTppId:
+          description: The UK market TPP identifier. This property is not used for CBUAE and is therefore marked as deprecated.
+          type: string
+          deprecated: true
+        softwareStatementId:
+          description: The software statement identifier for the Client.
+          type: string
+        obieSoftwareStatementId:
+          description: >-
+            The UK market software statement identifier. This property is not used for CBUAE and is therefore marked as
+            deprecated.
+          type: string
+          deprecated: true
+        obieSoftwareStatementName:
+          description: >-
+            The UK market software statement name. This property is not used for CBUAE and is therefore marked as
+            deprecated.
+          type: string
+          deprecated: true
+        directoryRecord:
+          type: string
+          description: >-
+            The latest copy of the TPP directory record retrieve from the CBUAE Trust Framework directory, encoded as a
+            Base 64 string
+          format: base64
+        ssa:
+          description: >-
+            The encoded Software Statement Assertion. This property is not used for CBUAE and is therefore marked as
+            deprecated.
+          type: string
+          deprecated: true
+        decodedSsa:
+          $ref: '#/components/schemas/softwareStatementProperties'
+        orgId:
+          description: The organization identifier for the TPP
+          type: string
+          pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+    softwareStatementProperties:
+      description: |
+        The decoded software statement retrieved from the Trust Framework that provides
+        the properties of the Client.
+
+        Please note:
+
+          - The JSON payload will contain other properties in addition to those listed
+            here. The properties listed here are considered most relevant for activities
+            such as TPP logo retrieval and JWS verification.
+          - The content reflects elements of discovery metadata, which in generally
+            defined as a file rather than an API. Providing constraints such as
+            `minLength` and `maxLength` is impractical in this context
+
+        The full software statement record is also available in the Trust Framework.
+        Please also refer the Registration Framework page in the CBUAE standards for
+        additional guidance on these properties.
+      type: object
+      properties:
+        redirect_uris:
+          description: The redirect URIs registered by the TPP at the Trust Framework
+          type: array
+          items:
+            type: string
+        client_name:
+          description: Name of the Client to be presented to the End-User.
+          type: string
+        client_uri:
+          description: URL of the home page of the Client.
+          type: string
+        logo_uri:
+          description: URL of the Client logo.
+          type: string
+        jwks_uri:
+          description: URL of the Client JSON Web Key Set (JWKS) at the Trust Framework.
+          type: string
+        client_id:
+          description: Unique Client Identifier.
+          type: string
+        roles:
+          description: The roles under which the organization is registered at the Trust Framework.
+          type: array
+          items:
+            type: string
+        sector_identifier_uri:
+          description: >-
+            URL using the https scheme to be used in calculating Pseudonymous Identifiers by the OP. Allows redirect URI
+            values to be grouped, easing registration management.
+          type: string
+        application_type:
+          description: Client application type.
+          type: string
+        organisation_id:
+          description: Organization identifier for organization that owns the Client.
+          type: string
+    HealthCheckCertResponse:
+      type: object
+      properties:
+        connectionEstablished:
+          type: boolean
+        mtlsStatus:
+          type: string
+          enum:
+            - established
+            - not-established
+        hostName:
+          type: string
+        clientCertificate:
+          type: object
+          properties:
+            subject:
+              type: string
+            issuer:
+              type: string
+          required:
+            - subject
+            - issuer
+      required:
+        - connectionEstablished
+        - mtlsStatus
+        - hostName
+        - clientCertificate
+  parameters:
+    InteractionId:
+      name: interactionId
+      description: Unique identifier for the interaction with the User
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/InteractionId'
+  securitySchemes:
+    OzoneConnectJwtAuth:
+      description: |
+        Communications between the API Hub and the LFI Ozone Connect implementation are
+        secured using the "JWT Auth" mechanism, where the Client presents a signed JSON
+        Web Token as a credential.
+
+        The Server MUST verify the signature in order to authenticate the Client.
+
+        Please note that the value of the `scheme` parameter is not a registered HTTP
+        Authentication Scheme, to indicate it is specific to Ozone Connect. Please
+        refer to API Hub documentation for further details.
+      type: http
+      scheme: Ozone-Connect-JWT-Auth

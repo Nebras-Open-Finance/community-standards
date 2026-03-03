@@ -1,0 +1,4678 @@
+openapi: 3.0.1
+servers:
+  - url: https://<your-ozone-connect-server>
+info:
+  title: Ozone Connect - Bank Service Initiation APIs
+  description: >
+    This document provides an API description in [OpenAPI](https://spec.openapis.org/oas/v3.0.1.html)
+
+    for Bank Service Initiation APIs for Ozone Connect.
+
+
+    These APIs should be implemented by a Financial Institution so that Ozone can deliver Service Initiation
+    capabilities to TPPs
+
+
+    ### Versioning
+
+
+    The `version` property implements the following pattern
+    `{standards-major}.{standards-minor}.{ozone-connect-version}`, where:
+
+
+    * `standards-major` is the major version of the latest UAE standard that the API description implements.
+
+    * `standards-minor` is the minor version of the latest UAE standard that the API description implements.
+
+    * `ozone-connect-version` is the version of the Ozone Connect API description.
+
+
+    So, for example, `v2.0.1` indicates the first version of the Ozone Connect API description that implements the UAE
+    standard version 2.0.
+
+    ### v2.1.4
+
+
+    * Changed PII Schema Objects to align with split domestic and international payment PII introduced to v2.1.
+
+
+    ### v2.1.3
+
+
+    * Added `AccountId` to Account Opening operation responses
+
+
+    ### v2.1.2
+
+
+    * Removed AccountNumber from `get /payment-consents/{ConsentId}/refund` SchemeName values.
+
+
+    ### v2.1.1
+
+
+    * Added `emirates_id` to `DocumentEvidenceDetails`
+
+
+    * Changed loan to finance for all Schema Objects names and object descriptions.
+
+
+    * Changed CreditorReference and DebtorReference objects to remove pattern.
+
+
+    * Changed CreditorReference, DebtorReference, and Reference objects to reduce maximum length to 35 characters.
+
+
+  version: v2.1.4
+tags:
+  - name: Payments
+    description: APIs that should be implemented by Financial Institutions to expose Service Initiation capability to 
+      TPPs.
+  - name: Accounts
+    description: Open an LFI account to complete an FX transaction
+  - name: FX Quotes
+    description: Operations to create foreign exchange quotes at a given LFI
+security:
+  - {}
+  - OzoneConnectApiKey: []
+  - OzoneConnectClientCredentials:
+      - placeholder
+  - OzoneConnectJwtAuth: []
+paths:
+  /payments:
+    post:
+      tags:
+        - Payments
+      summary: Make a payment
+      description: >
+        This API is called by Ozone Connect to instruct a Financial Institution to initiate a payment once it has
+        received a payment
+
+        instruction from a TPP that has passed all local validations.
+
+
+        The Financial Institution must process the payment and indicate a failure response (if the payment fails
+        technical validation) or a
+
+        success response (if the payment passes technical validation and is submitted to the payment rails for
+        processing)
+
+
+        The Financial Institution must generate a unique `PaymentId` that can be sent on to the TPP as a reference for
+        the payment.
+
+
+        If the underlying consent has been patched with a `bankConnectToken`, then the token is passed in as the
+        authorization header.
+      operationId: makePayment
+      parameters:
+        - $ref: '#/components/parameters/providerId'
+        - $ref: '#/components/parameters/aspspId'
+        - $ref: '#/components/parameters/callerOrgId'
+        - $ref: '#/components/parameters/callerClientId'
+        - $ref: '#/components/parameters/callerSoftwareStatementId'
+        - $ref: '#/components/parameters/apiUri'
+        - $ref: '#/components/parameters/apiOperation'
+        - $ref: '#/components/parameters/consentId'
+        - $ref: '#/components/parameters/callerInteractionId'
+        - $ref: '#/components/parameters/ozoneInteractionId'
+        - $ref: '#/components/parameters/psuIdentifier'
+      security:
+        - {}
+        - OzoneConnectApiKey: []
+        - OzoneConnectClientCredentials:
+            - placeholder
+        - OzoneConnectJwtAuth: []
+        - OzoneConnectServiceInitiationToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentPostRequest'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AEPaymentIdResponse'
+        '400':
+          $ref: '#/components/responses/error400Response'
+        '403':
+          $ref: '#/components/responses/error403Response'
+        '409':
+          $ref: '#/components/responses/error409Response'
+        '500':
+          $ref: '#/components/responses/error500Response'
+        default:
+          $ref: '#/components/responses/errorResponse'
+  /payments/{paymentId}:
+    get:
+      operationId: getPayment
+      tags:
+        - Payments
+      summary: Get a payment
+      description: |
+        Ozone can call this API from Financial Institutions to retrieve payment information.
+      parameters:
+        - $ref: '#/components/parameters/providerId'
+        - $ref: '#/components/parameters/aspspId'
+        - $ref: '#/components/parameters/callerOrgId'
+        - $ref: '#/components/parameters/callerClientId'
+        - $ref: '#/components/parameters/callerSoftwareStatementId'
+        - $ref: '#/components/parameters/apiUri'
+        - $ref: '#/components/parameters/apiOperation'
+        - $ref: '#/components/parameters/consentId'
+        - $ref: '#/components/parameters/callerInteractionId'
+        - $ref: '#/components/parameters/ozoneInteractionId'
+        - $ref: '#/components/parameters/psuIdentifier'
+        - $ref: '#/components/parameters/paymentId'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AEPaymentIdResponse'
+        '400':
+          $ref: '#/components/responses/error400Response'
+        '403':
+          $ref: '#/components/responses/error403Response'
+        '500':
+          $ref: '#/components/responses/error500Response'
+        default:
+          $ref: '#/components/responses/errorResponse'
+  /payments/{paymentId}/report-file:
+    get:
+      tags:
+        - Payments
+      summary: report file for bulk payments
+      description: |
+        This API is called by Ozone Bank Connect to get a report file for a set of bulk payments
+      operationId: reportFile
+      parameters:
+        - $ref: '#/components/parameters/providerId'
+        - $ref: '#/components/parameters/aspspId'
+        - $ref: '#/components/parameters/callerOrgId'
+        - $ref: '#/components/parameters/callerClientId'
+        - $ref: '#/components/parameters/callerSoftwareStatementId'
+        - $ref: '#/components/parameters/apiUri'
+        - $ref: '#/components/parameters/apiOperation'
+        - $ref: '#/components/parameters/consentId'
+        - $ref: '#/components/parameters/callerInteractionId'
+        - $ref: '#/components/parameters/ozoneInteractionId'
+        - $ref: '#/components/parameters/psuIdentifier'
+        - $ref: '#/components/parameters/paymentId'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            '*/*':
+              schema:
+                type: string
+                description: Any content type.
+        '400':
+          $ref: '#/components/responses/error400Response'
+        '403':
+          $ref: '#/components/responses/error403Response'
+        '500':
+          $ref: '#/components/responses/error500Response'
+        default:
+          $ref: '#/components/responses/errorResponse'
+  /payment-consents:
+    post:
+      tags:
+        - Payments
+      summary: Create a payment consent for file payment operations
+      description: |
+        This operation allows a consent to be created for Bulk/Batch payment operations 
+        **ONLY**. This is supported due to the ordering of Bulk/Batch payment 
+        instructions, where the Pushed Authorization Request is submitted and 
+        the payment file is then uploaded before Authentication and Authorization 
+        takes place. Creating the consent at the LFI allows the payment file data to
+        be validated on receipt.
+
+        Please note that the Consent Manager API continues to be the source-of-truth for 
+        all consent types.
+      operationId: createBulkBatchPaymentConsent
+      requestBody:
+        description: Properties of the file payment consent.
+        content:
+          application/json:
+            schema:
+              description: The properties of a file payment consent
+              type: object
+              required:
+                - consentId
+                - request
+              properties:
+                consentId:
+                  $ref: '#/components/schemas/AEConsentId'
+                request:
+                  $ref: '#/components/schemas/AEFilePaymentConsent'
+      parameters:
+        - $ref: '#/components/parameters/providerId'
+        - $ref: '#/components/parameters/aspspId'
+        - $ref: '#/components/parameters/callerOrgId'
+        - $ref: '#/components/parameters/callerClientId'
+        - $ref: '#/components/parameters/callerSoftwareStatementId'
+        - $ref: '#/components/parameters/apiUri'
+        - $ref: '#/components/parameters/apiOperation'
+        - $ref: '#/components/parameters/consentId'
+        - $ref: '#/components/parameters/callerInteractionId'
+        - $ref: '#/components/parameters/ozoneInteractionId'
+        - $ref: '#/components/parameters/psuIdentifier'
+      responses:
+        '201':
+          description: File payment consent successfully created
+        '400':
+          $ref: '#/components/responses/error400Response'
+        '403':
+          $ref: '#/components/responses/error403Response'
+        '500':
+          $ref: '#/components/responses/error500Response'
+        default:
+          $ref: '#/components/responses/errorResponse'
+  /payment-consents/{consentId}/file:
+    post:
+      tags:
+        - Payments
+      summary: Submit payment instruction file for bulk/batch payments
+      description: >-
+        This operation allows a Bulk/Batch payment file to be transmitted to the LFI. The data herein will be encoded
+        according to the format already supported by the LFI, with the API Hub acting as a passthrough.
+      operationId: createBulkBatchPaymentInstructionFile
+      requestBody:
+        description: File containing payment instructions in LFI prescribed format
+        content:
+          '*/*':
+            schema:
+              type: string
+      parameters:
+        - $ref: '#/components/parameters/providerId'
+        - $ref: '#/components/parameters/aspspId'
+        - $ref: '#/components/parameters/callerOrgId'
+        - $ref: '#/components/parameters/callerClientId'
+        - $ref: '#/components/parameters/callerSoftwareStatementId'
+        - $ref: '#/components/parameters/apiUri'
+        - $ref: '#/components/parameters/apiOperation'
+        - $ref: '#/components/parameters/consentId'
+        - $ref: '#/components/parameters/callerInteractionId'
+        - $ref: '#/components/parameters/ozoneInteractionId'
+        - $ref: '#/components/parameters/psuIdentifier'
+        - name: consentId
+          in: path
+          schema:
+            type: string
+          required: true
+          description: |
+            Identifies the consent by an id
+      responses:
+        '204':
+          description: File uploaded successfully
+        '400':
+          $ref: '#/components/responses/error400Response'
+        '403':
+          $ref: '#/components/responses/error403Response'
+        '500':
+          $ref: '#/components/responses/error500Response'
+        default:
+          $ref: '#/components/responses/errorResponse'
+  /payment-consents/{consentId}/refund:
+    get:
+      tags:
+        - Payments
+      summary: Retrieve Refund Account Details for a Payment Consent
+      description: |
+        Ozone can call this API from Financial Institutions to retrieve payment information.
+      operationId: getRefund
+      parameters:
+        - $ref: '#/components/parameters/providerId'
+        - $ref: '#/components/parameters/aspspId'
+        - $ref: '#/components/parameters/callerOrgId'
+        - $ref: '#/components/parameters/callerClientId'
+        - $ref: '#/components/parameters/callerSoftwareStatementId'
+        - $ref: '#/components/parameters/apiUri'
+        - $ref: '#/components/parameters/apiOperation'
+        - $ref: '#/components/parameters/consentId'
+        - $ref: '#/components/parameters/callerInteractionId'
+        - $ref: '#/components/parameters/ozoneInteractionId'
+        - $ref: '#/components/parameters/psuIdentifier'
+        - name: consentId
+          in: path
+          schema:
+            type: string
+          required: true
+          description: |
+            Identifies the consent by an id
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundGetResponse'
+        '400':
+          $ref: '#/components/responses/error400Response'
+        '403':
+          $ref: '#/components/responses/error403Response'
+        '500':
+          $ref: '#/components/responses/error500Response'
+        default:
+          $ref: '#/components/responses/errorResponse'
+  /accounts:
+    post:
+      operationId: CreateAccount_create
+      summary: Create an account
+      description: |-
+        Create an Account based on data shared from the LFI. The response provides
+        an account identifier that can be used to retrieve the account details when
+        the provisioning process is complete.
+
+        Invoking this operation is driven by the User sharing with the TPP whether they
+        already hold an account with a given LFI. There is no expectation that the TPP
+        will automatically discover whether an account at this stage in the design as
+        this could compromise data being provided by LFI with the quote.
+      parameters:
+        - $ref: '#/components/parameters/providerId'
+        - $ref: '#/components/parameters/callerOrgId'
+        - $ref: '#/components/parameters/callerClientId'
+        - $ref: '#/components/parameters/callerSoftwareStatementId'
+        - $ref: '#/components/parameters/apiUri'
+        - $ref: '#/components/parameters/apiOperation'
+        - $ref: '#/components/parameters/callerInteractionId'
+        - $ref: '#/components/parameters/ozoneInteractionId'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AECreateAccountResponseBody1'
+        '400':
+          $ref: '#/components/responses/error400Response'
+        '403':
+          $ref: '#/components/responses/error403Response'
+        '409':
+          $ref: '#/components/responses/error409Response'
+        '500':
+          $ref: '#/components/responses/error500Response'
+        default:
+          $ref: '#/components/responses/errorResponse'
+      tags:
+        - Accounts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AECreateAccountRequestBody1'
+        description: Request body for creating a new account
+  /accounts/{AccountId}/status:
+    get:
+      operationId: Account_read
+      summary: Retrieve the status of an account opening request
+      description: >
+        Retrieve the status of a account opening request based on a given account identifier. The response provides the
+        status of the account and, when opened, the account details so the TPP can stage a payment for a given FX 
+        transaction to be executed.
+
+        A TPP will require the explicit consent of the User to see all account details, as implemented in Bank Data
+        Sharing.
+
+        An Access Token granted for account opening operation does not have the relevant scope to retrieve the full
+        account details.
+      parameters:
+        - $ref: '#/components/parameters/providerId'
+        - $ref: '#/components/parameters/callerOrgId'
+        - $ref: '#/components/parameters/callerClientId'
+        - $ref: '#/components/parameters/callerSoftwareStatementId'
+        - $ref: '#/components/parameters/apiUri'
+        - $ref: '#/components/parameters/apiOperation'
+        - $ref: '#/components/parameters/callerInteractionId'
+        - $ref: '#/components/parameters/ozoneInteractionId'
+        - $ref: '#/components/parameters/AccountId'
+      responses:
+        '200':
+          description: The request has succeeded.
+          headers:
+            x-fapi-interaction-id:
+              required: false
+              description: An RFC4122 UID used as a correlation ID.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AEReadAccountResponseBody1'
+        '400':
+          $ref: '#/components/responses/error400Response'
+        '403':
+          $ref: '#/components/responses/error403Response'
+        '409':
+          $ref: '#/components/responses/error409Response'
+        '500':
+          $ref: '#/components/responses/error500Response'
+        default:
+          $ref: '#/components/responses/errorResponse'
+      tags:
+        - Accounts
+  /fx-quotes:
+    post:
+      operationId: CreateFxQuote_create
+      summary: Create an FX quote
+      description: |-
+        Create an FX quote based on a given currency pair. 
+
+        The User may already have a relationship with a given LFI. The TPP can 
+        therefore include party data in the request to help the LFI correlate the User
+        with an existing account or relationship. Including party data is optional but
+        will allow contractual or pre-agreed rates to be generated by the LFI to help
+        provide an informed choice to the User.
+
+        If a User selects a quote from an LFI that they do not have a relationship with
+        the TPP will be able to use the Account Opening API to initiate the creation of
+        a new account for User.
+      parameters:
+        - $ref: '#/components/parameters/providerId'
+        - $ref: '#/components/parameters/callerOrgId'
+        - $ref: '#/components/parameters/callerClientId'
+        - $ref: '#/components/parameters/callerSoftwareStatementId'
+        - $ref: '#/components/parameters/apiUri'
+        - $ref: '#/components/parameters/apiOperation'
+        - $ref: '#/components/parameters/callerInteractionId'
+        - $ref: '#/components/parameters/ozoneInteractionId'
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          headers:
+            x-fapi-interaction-id:
+              required: false
+              description: An RFC4122 UID used as a correlation ID.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AECreateFxQuoteResponseBody1'
+        '204':
+          description: The LFI did not respond with a quote as the requested currency requirements could not be fulfilled.
+        '400':
+          $ref: '#/components/responses/error400Response'
+        '403':
+          $ref: '#/components/responses/error403Response'
+        '409':
+          $ref: '#/components/responses/error409Response'
+        '500':
+          $ref: '#/components/responses/error500Response'
+        default:
+          $ref: '#/components/responses/errorResponse'
+      tags:
+        - FX Quotes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AECreateFxQuoteRequestBody1'
+        description: FX Quote Request
+  /fx-quotes/{FxQuoteId}:
+    get:
+      operationId: FxQuote_read
+      summary: Retrieve an FX quote
+      description: |-
+        Retrieve an FX quote based on a given quote identifier. The quote will include
+        all the details submitted in the quote request together with the status of the
+        quote.
+      parameters:
+        - $ref: '#/components/parameters/providerId'
+        - $ref: '#/components/parameters/callerOrgId'
+        - $ref: '#/components/parameters/callerClientId'
+        - $ref: '#/components/parameters/callerSoftwareStatementId'
+        - $ref: '#/components/parameters/apiUri'
+        - $ref: '#/components/parameters/apiOperation'
+        - $ref: '#/components/parameters/callerInteractionId'
+        - $ref: '#/components/parameters/ozoneInteractionId'
+        - $ref: '#/components/parameters/FxQuoteId'
+      responses:
+        '200':
+          description: The request has succeeded.
+          headers:
+            x-fapi-interaction-id:
+              required: false
+              description: An RFC4122 UID used as a correlation ID.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AEReadFxQuoteResponseBody1'
+        '400':
+          $ref: '#/components/responses/error400Response'
+        '403':
+          $ref: '#/components/responses/error403Response'
+        '409':
+          $ref: '#/components/responses/error409Response'
+        '500':
+          $ref: '#/components/responses/error500Response'
+        default:
+          $ref: '#/components/responses/errorResponse'
+      tags:
+        - FX Quotes
+    patch:
+      operationId: FxQuote_patch
+      summary: Update an FX quote status
+      description: |-
+        Update the status of a quote to Accepted as an indicator that the User has 
+        accepted the quote and will proceed with the FX trade. Completion of the trade 
+        is reliant on a funding account being available, which may require the creation 
+        of a new account at the LFI to complete the trade. The TPP will invoke the 
+        Account Opening API to initiate the creation of a new account for the User, 
+        sending the party data they previously retrieved through Bank Data Sharing or
+        that the User shared with the TPP manually.
+            
+        If the User does not have an account with the LFI they will indicate this to the 
+        TPP, who will optionally invoke the Account Opening API to initiate the creation
+        of a new account for the User, sending User agreed through an existing consent 
+        to the LFI.
+      parameters:
+        - $ref: '#/components/parameters/providerId'
+        - $ref: '#/components/parameters/callerOrgId'
+        - $ref: '#/components/parameters/callerClientId'
+        - $ref: '#/components/parameters/callerSoftwareStatementId'
+        - $ref: '#/components/parameters/apiUri'
+        - $ref: '#/components/parameters/apiOperation'
+        - $ref: '#/components/parameters/callerInteractionId'
+        - $ref: '#/components/parameters/ozoneInteractionId'
+        - $ref: '#/components/parameters/FxQuoteId'
+      responses:
+        '204':
+          description: No content
+          headers:
+            x-fapi-interaction-id:
+              required: false
+              description: An RFC4122 UID used as a correlation ID.
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/error400Response'
+        '403':
+          $ref: '#/components/responses/error403Response'
+        '409':
+          $ref: '#/components/responses/error409Response'
+        '500':
+          $ref: '#/components/responses/error500Response'
+        default:
+          $ref: '#/components/responses/errorResponse'
+      tags:
+        - FX Quotes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AEUpdateFxQuoteRequestBody1'
+        description: FX Quote Request
+components:
+  responses:
+    error400Response:
+      description: Operation failed due to a invalid request parameter
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error400'
+    error403Response:
+      description: Operation failed as access to the requested resource is forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error403'
+    error409Response:
+      description: Operation failed due to a conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error409'
+    error500Response:
+      description: Operation failed due to an internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error500'
+    errorResponse:
+      description: Default error response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              errorCode:
+                description: >-
+                  Error code identifying the problem that occurred. Should be implemented based on guidance in standards
+                  and API Hub documentation, but custom error code lists maintained for backwards compatibility with
+                  v1.2.
+                type: string
+              errorMessage:
+                $ref: '#/components/schemas/ErrorMessage'
+  schemas:
+    PaymentPostRequest:
+      description: The properties of a payment request
+      type: object
+      properties:
+        requestUrl:
+          type: string
+          description: |
+            The (Ozone) URL at which the TPP requested for the payment
+        paymentType:
+          $ref: '#/components/schemas/PaymentType'
+        request:
+          $ref: '#/components/schemas/AEPaymentAndFilePaymentRequest'
+        requestHeaders:
+          $ref: '#/components/schemas/PaymentRequestHeaders'
+        tpp:
+          $ref: '#/components/schemas/tpp'
+        supplementaryInformation:
+          $ref: '#/components/schemas/SupplementaryInformation'
+      required:
+        - paymentType
+        - request
+        - requestHeaders
+        - tpp
+      additionalProperties: false
+    AEPaymentAndFilePaymentRequest:
+      description: The payment request body as received from the TPP
+      oneOf:
+        - $ref: '#/components/schemas/AEPaymentRequest'
+        - $ref: '#/components/schemas/AEFilePaymentRequest'
+    AEPaymentRequest:
+      description: |
+        Payment Request Schema
+      type: object
+      additionalProperties: false
+      required:
+        - Data
+      properties:
+        Data:
+          description: Primary data for the request
+          type: object
+          additionalProperties: false
+          required:
+            - ConsentId
+            - Instruction
+            - PaymentPurposeCode
+            - OpenFinanceBilling
+          properties:
+            ConsentId:
+              $ref: '#/components/schemas/AEConsentId'
+            Instruction:
+              type: object
+              additionalProperties: false
+              required:
+                - Amount
+              description: >-
+                The Initiation payload is sent by the initiating party to the LFI. It is used to request movement of
+                funds from the debtor account to a creditor for a single payment.
+              properties:
+                Amount:
+                  description: The Currency and Amount relating to the Payment
+                  type: object
+                  required:
+                    - Amount
+                    - Currency
+                  properties:
+                    Amount:
+                      $ref: '#/components/schemas/AEActiveOrHistoricAmount'
+                    Currency:
+                      $ref: '#/components/schemas/AEActiveOrHistoricCurrencyCode'
+            CurrencyRequest:
+              description: >-
+                The details of the non-local currency or FX request that has been agreed between the User and the TPP.
+                The requested ChargeBearer and ExchangeRateInformation are included in this object may be overwritten by
+                the LFI in the returned Consent object.
+              type: object
+              additionalProperties: false
+              required:
+                - ExtendedPurpose
+                - CurrencyOfTransfer
+              properties:
+                InstructionPriority:
+                  description: >-
+                    Indicator of the urgency or order of importance that the instructing party would like the instructed
+                    party to apply to the processing of the instruction.
+                  type: string
+                  enum:
+                    - Normal
+                    - Urgent
+                ExtendedPurpose:
+                  description: Specifies the purpose of an international payment.
+                  type: string
+                  minLength: 1
+                  maxLength: 140
+                ChargeBearer:
+                  $ref: '#/components/schemas/AEChargeBearerType1Code'
+                CurrencyOfTransfer:
+                  description: >-
+                    Specifies the currency of the to be transferred amount, which is different from the currency of the
+                    debtor's account.
+                  type: string
+                  pattern: ^[A-Z]{3,3}$
+                DestinationCountryCode:
+                  description: >-
+                    Country in which Credit Account is domiciled. Code to identify a country, a dependency, or another
+                    area of particular geopolitical interest, on the basis of country names obtained from the United
+                    Nations (ISO 3166, Alpha-2 code).
+                  type: string
+                  pattern: '[A-Z]{2,2}'
+                ExchangeRateInformation:
+                  type: object
+                  additionalProperties: false
+                  required:
+                    - UnitCurrency
+                    - RateType
+                  description: Provides details on the currency exchange rate and contract.
+                  properties:
+                    UnitCurrency:
+                      description: >-
+                        Currency in which the rate of exchange is expressed in a currency exchange. In the example 1GBP
+                        = xxxCUR, the unit currency is GBP.
+                      type: string
+                      pattern: ^[A-Z]{3,3}$
+                    ExchangeRate:
+                      description: >-
+                        The factor used for conversion of an amount from one currency to another. This reflects the
+                        price at which one currency was bought with another currency.
+                      type: number
+                    RateType:
+                      description: Specifies the type used to complete the currency exchange.
+                      type: string
+                      enum:
+                        - Actual
+                        - Agreed
+                        - Indicative
+                    ContractIdentification:
+                      description: >-
+                        Unique and unambiguous reference to the foreign exchange contract agreed between the initiating
+                        party/creditor and the debtor agent.
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+            FxQuoteId:
+              $ref: '#/components/schemas/FxQuoteId'
+            PersonalIdentifiableInformation:
+              description: >-
+                Personal Identifiable Information, represented in both encoded and decoded form using a `anyOf`, to help
+                implementers readily understand both the structure and serialized form of the property. Schema Objects
+                are provided for both Domestic and International payments.
+
+
+                **Implementations MUST reflect the AEJWEPaymentPII Schema Object structure and the notes provided on**
+                **implementing a JWS and JWE.**
+
+
+                **The decoded form AEPaymentPII is for guidance on content only.**
+              anyOf:
+                - $ref: '#/components/schemas/AEBankServiceInitiation.AEDomesticPaymentPIIProperties'
+                - $ref: '#/components/schemas/AEBankServiceInitiation.AEInternationalPaymentPIIProperties'
+                - $ref: '#/components/schemas/AEJWEPaymentPII'
+            PaymentPurposeCode:
+              $ref: '#/components/schemas/AEPaymentPurposeCode'
+            DebtorReference:
+              $ref: '#/components/schemas/AEDebtorReference'
+            CreditorReference:
+              $ref: '#/components/schemas/AECreditorReference'
+            OpenFinanceBilling:
+              $ref: '#/components/schemas/AEServiceInitiationOpenFinancePaymentBilling'
+    AEServiceInitiationOpenFinancePaymentBilling:
+      type: object
+      required:
+        - Type
+      properties:
+        Type:
+          enum:
+            - Collection
+            - LargeValueCollection
+            - PushP2P
+            - PullP2P
+            - Me2Me
+          description: The type payment for billing
+          type: string
+        MerchantId:
+          description: MerchantId
+          type: string
+          minLength: 8
+          maxLength: 20
+      description: Billing parameters specified by the TPP for a payment initiation
+      additionalProperties: false
+    AEServiceInitiationOpenFinancePaymentBillingGet:
+      type: object
+      required:
+        - Type
+      properties:
+        NumberOfSuccessfulTransactions:
+          type: integer
+          description: |
+            Number of individual transactions successfully executed by the LFI.
+            This is returned by the LFI after the file is fully processed.
+        Type:
+          enum:
+            - Collection
+            - LargeValueCollection
+            - PushP2P
+            - PullP2P
+            - Me2Me
+          description: The type payment for billing
+          type: string
+        MerchantId:
+          description: MerchantId
+          type: string
+          minLength: 8
+          maxLength: 20
+      description: Billing parameters specified by the TPP for a payment initiation
+      additionalProperties: false
+    AEJWEPaymentPII:
+      type: string
+      description: >
+        A JSON Web Encryption (JWE) object, which encapsulates a JWS. The value is a compact serialization of a JWE,
+        which is a string consisting of five base64url-encoded parts joined by dots. 
+
+        It encapsulates encrypted content using JSON data structures. The decrypted JWS content has the structure of the
+        AEPaymentPII schema.
+      example: eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00ifQ....
+    AEBankServiceInitiationRichAuthorizationRequests.AECreditorAgentProperties:
+      type: object
+      required:
+        - SchemeName
+        - Identification
+      properties:
+        SchemeName:
+          type: string
+          description: >
+            The identification scheme for uniquely identifying the Agent.
+
+            * BICFI: The BIC/SWIFT Code
+
+            * Other: Identifier based on non-SWIFT payment system or local market scheme.
+          enum:
+            - BICFI
+            - Other
+        Identification:
+          description: Identifier that can be the BIC/SWIFT code or target payment scheme identifier.
+          type: string
+        Name:
+          description: Name by which an agent is known and which is usually used to identify that agent.
+          type: string
+          minLength: 1
+          maxLength: 140
+        PostalAddress:
+          $ref: '#/components/schemas/AEAddress'
+      description: >-
+        Properties of the Creditor Agent, which provides information on the Financial Institution that holds the
+        Creditor Account.
+      additionalProperties: false
+    AEAddress:
+      description: One-or-more addresses related to a given subject.
+      type: array
+      minItems: 1
+      items:
+        description: Address properties based on ISO 20022 `PostalAddress27` definition
+        type: object
+        required:
+          - AddressType
+          - AddressLine
+          - Country
+        properties:
+          AddressType:
+            description: The type of address.
+            type: string
+            enum:
+              - Billing
+              - Business
+              - Correspondence
+              - DeliveryTo
+              - MailTo
+              - POBox
+              - Postal
+              - Permanent
+              - Residential
+              - Statement
+              - Other
+          AddressLine:
+            description: >-
+              Information that locates and identifies a specific address for a transaction entry, that is presented in
+              free format text.
+            type: array
+            minItems: 1
+            maxItems: 7
+            items:
+              type: string
+              minLength: 1
+              maxLength: 70
+          BuildingNumber:
+            description: The unit, apartment, or villa number within a building or community
+            type: string
+            minLength: 1
+            maxLength: 16
+          BuildingName:
+            description: Name of the building or house.
+            type: string
+            minLength: 1
+            maxLength: 140
+          Floor:
+            description: Floor or storey within a building.
+            type: string
+            minLength: 1
+            maxLength: 70
+          StreetName:
+            description: The name of the street or road where the property is located.
+            type: string
+            minLength: 1
+            maxLength: 140
+          DistrictName:
+            description: The district, community, or neighbourhood where the property is located.
+            type: string
+            minLength: 1
+            maxLength: 140
+          PostBox:
+            description: The P.O. Box number assigned to the recipient for mail delivery.
+            type: string
+            minLength: 1
+            maxLength: 16
+          TownName:
+            description: Name of a built-up area, such as a town or city.
+            type: string
+            minLength: 1
+            maxLength: 140
+          CountrySubDivision:
+            description: >-
+              Country subdivision, such as state or province. Where the address is in the UAE this is the Emirate where
+              the address is registered.
+            anyOf:
+              - type: string
+                enum:
+                  - AbuDhabi
+                  - Ajman
+                  - Dubai
+                  - Fujairah
+                  - RasAlKhaimah
+                  - Sharjah
+                  - UmmAlQuwain
+              - type: string
+          Country:
+            description: The country associated with the address, represented using the ISO 3166-1 alpha-2 country code.
+            type: string
+            pattern: ^[A-Z]{2}$
+        additionalProperties: false
+    AEDebtorIndicators:
+      type: object
+      description: |
+        Debtor (User) Indicators
+      properties:
+        Authentication:
+          type: object
+          description: The authentication method used by the User to access their account with the TPP
+          properties:
+            AuthenticationChannel:
+              description: Channel on which the User was authenticated
+              type: string
+              enum:
+                - App
+                - Web
+            PossessionFactor:
+              type: object
+              description: The User's possession, that only the User possesses
+              properties:
+                IsUsed:
+                  type: boolean
+                Type:
+                  type: string
+                  enum:
+                    - FIDO2SecurityKey
+                    - Passkey
+                    - OTPDevice
+                    - OTPApp
+                    - SMSOTP
+                    - EmailOTP
+                    - PushNotification
+                    - WebauthnToken
+                    - SecureEnclaveKey
+                    - HardwareOTPKey
+                    - TrustedDevice
+                    - Other
+            KnowledgeFactor:
+              type: object
+              description: The User's knowledge, that only the User knows
+              properties:
+                IsUsed:
+                  type: boolean
+                Type:
+                  type: string
+                  enum:
+                    - PIN
+                    - Password
+                    - SecurityQuestion
+                    - SMSOTP
+                    - EmailOTP
+                    - OTPPush
+                    - Other
+            InherenceFactor:
+              type: object
+              description: The User's inherance, that is unique to the User's physical characteristics
+              properties:
+                IsUsed:
+                  type: boolean
+                Type:
+                  type: string
+                  enum:
+                    - Biometric
+                    - Fingerprint
+                    - FaceRecognition
+                    - IrisScan
+                    - VoiceRecognition
+                    - FIDOBiometric
+                    - DeviceBiometrics
+                    - Other
+            ChallengeOutcome:
+              type: string
+              description: >-
+                The result of multi-factor authentication performed by the TPP, with NotPerformed indication the User
+                was not required to authenticate before consenting to the requested payment
+              enum:
+                - Pass
+                - Fail
+                - NotPerformed
+            AuthenticationFlow:
+              type: string
+              enum:
+                - MFA
+                - Other
+            AuthenticationValue:
+              type: string
+              description: Cryptographic proof of authentication where supported by the device and protocol.
+            ChallengeDateTime:
+              type: string
+              format: date-time
+        UserName:
+          type: object
+          description: The Name of the User initiating the Payment
+          properties:
+            en:
+              type: string
+              description: English value of the string
+            ar:
+              type: string
+              description: Arabic value of the string
+        GeoLocation:
+          type: object
+          description: GPS to identify and track the whereabouts of the connected electronic device.
+          required:
+            - Latitude
+            - Longitude
+          properties:
+            Latitude:
+              type: string
+              description: latitude
+            Longitude:
+              type: string
+              description: longitude
+        DeviceInformation:
+          type: object
+          description: Detailed device information
+          properties:
+            DeviceId:
+              type: string
+              description: IMEISV number of the connected electronic device
+            AlternativeDeviceId:
+              type: string
+              description: Alternative identifier for the connected electronic device
+            DeviceOperatingSystem:
+              type: string
+              description: Device operating system
+            DeviceOperatingSystemVersion:
+              type: string
+              description: Device operating system version
+            DeviceBindingId:
+              type: string
+              description: An identifier that associates a device uniquely with a specific application
+            LastBindingDateTime:
+              type: string
+              format: date-time
+              description: Date and time when the device was last bound to the application
+            BindingDuration:
+              type: string
+              format: duration
+              description: ISO 8601 duration since device was last bound (e.g., P30D for 30 days)
+            BindingStatus:
+              type: string
+              description: Current status of the device binding
+              enum:
+                - Active
+                - Expired
+                - Revoked
+                - Suspended
+            DeviceType:
+              type: string
+              description: Type of device used
+              enum:
+                - Mobile
+                - Desktop
+                - Tablet
+                - Wearable
+                - Other
+            DeviceManufacturer:
+              type: object
+              properties:
+                Model:
+                  type: string
+                  description: Device model name
+                  maxLength: 50
+                Manufacturer:
+                  type: string
+                  description: Device manufacturer
+                  maxLength: 50
+            DeviceLanguage:
+              type: string
+              description: Device language
+            DeviceLocalDateTime:
+              type: string
+              description: Device local time
+            ConnectionType:
+              type: string
+              description: Type of connection to the internet
+              enum:
+                - WiFi
+                - Cellular
+                - Other
+            ScreenInformation:
+              type: object
+              properties:
+                PixelDensity:
+                  type: number
+                  description: Screen pixel density
+                Orientation:
+                  type: string
+                  enum:
+                    - Portrait
+                    - Landscape
+            BatteryStatus:
+              type: object
+              properties:
+                Level:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+                IsCharging:
+                  type: boolean
+            TouchSupport:
+              type: object
+              properties:
+                Supported:
+                  type: boolean
+                MaxTouchPoints:
+                  type: integer
+                  minimum: 0
+            MotionSensors:
+              type: object
+              properties:
+                Status:
+                  type: string
+                  enum:
+                    - InMotion
+                    - Stationary
+                Accelerometer:
+                  type: boolean
+                Gyroscope:
+                  type: boolean
+            DeviceEnvironmentContext:
+              type: array
+              description: List of device environment context
+              items:
+                type: string
+                enum:
+                  - VPNDetected
+                  - EmulatorDetected
+        BiometricCapabilities:
+          type: object
+          description: Device biometric capabilities
+          properties:
+            SupportsBiometric:
+              type: boolean
+              description: Whether device supports biometric authentication
+            BiometricTypes:
+              type: array
+              description: Types of biometric authentication supported
+              items:
+                type: string
+                enum:
+                  - Fingerprint
+                  - FacialRecognition
+                  - Iris
+                  - VoicePrint
+                  - Other
+        AppInformation:
+          type: object
+          description: Mobile application specific information
+          properties:
+            AppVersion:
+              type: string
+              description: Version of the mobile application
+            PackageName:
+              type: string
+              description: Application package identifier
+            BuildNumber:
+              type: string
+              description: Application build number
+        BrowserInformation:
+          type: object
+          description: Browser-specific information
+          properties:
+            UserAgent:
+              type: string
+              description: Complete browser user agent string
+            IsCookiesEnabled:
+              type: boolean
+              description: Whether cookies are enabled in the browser
+            AvailableFonts:
+              type: array
+              description: List of available fonts
+              items:
+                type: string
+            Plugins:
+              type: array
+              description: List of installed browser plugins
+              items:
+                type: string
+            PixelRatio:
+              type: number
+              description: Device pixel ratio for scaling
+        UserBehavior:
+          type: object
+          description: User behavior indicators
+          properties:
+            ScrollBehavior:
+              type: object
+              properties:
+                Direction:
+                  type: string
+                  enum:
+                    - Up
+                    - Down
+                    - Both
+                Speed:
+                  type: number
+                  description: Average scroll speed in pixels per second
+                Frequency:
+                  type: number
+                  description: Number of scroll events per minute
+        AccountRiskIndicators:
+          type: object
+          description: Risk indicators related to the account
+          properties:
+            UserOnboardingDateTime:
+              type: string
+              format: date-time
+              description: The exact date and time when the User account was activated with the TPP.
+            LastAccountChangeDate:
+              type: string
+              format: date
+              description: Date that the User's account was last changed
+            LastPasswordChangeDate:
+              type: string
+              format: date
+              description: Date of the last password change by the User
+            SuspiciousActivity:
+              type: string
+              description: Indicates any suspicious activity associated with the account
+              enum:
+                - NoSuspiciousActivity
+                - SuspiciousActivityDetected
+            TransactionHistory:
+              type: object
+              properties:
+                LastDay:
+                  type: integer
+                  description: Total transactions made by the account in the last 24 hours
+                  minimum: 0
+                LastYear:
+                  type: integer
+                  description: Total transactions made by the account in the past year
+                  minimum: 0
+        SupplementaryData:
+          type: object
+          description: >
+            Additional information that cannot be captured in the structured fields and/or any other specific block
+
+            This may include information that is not available in the structured fields, such as a user's behavioural
+            data
+
+            like their typing speed and typing patterns.
+          properties: {}
+    AETransactionIndicators:
+      type: object
+      description: |
+        Transaction Indicators
+      properties:
+        IsCustomerPresent:
+          description: This field differentiates between automatic and manual payment initiation.
+          type: boolean
+        IsContractPresent:
+          description: Indicates if the Creditor has a contractual relationship with the TPP.
+          type: boolean
+        Channel:
+          description: Where the payment has been initiated from.
+          type: string
+          enum:
+            - Web
+            - Mobile
+        ChannelType:
+          type: string
+          description: The channel through which the transaction is being conducted
+          enum:
+            - ECommerce
+            - InStore
+            - InApp
+            - Telephone
+            - Mail
+            - RecurringPayment
+            - Other
+        SubChannelType:
+          type: string
+          description: More specific classification of the transaction channel
+          enum:
+            - WebBrowser
+            - MobileApp
+            - SmartTV
+            - WearableDevice
+            - POSTerminal
+            - ATM
+            - KioskTerminal
+            - Other
+        PaymentProcess:
+          type: object
+          description: Metrics related to the payment process duration and attempts
+          properties:
+            TotalDuration:
+              type: integer
+              description: Total time in seconds from payment initiation to completion
+              minimum: 0
+            CurrentSessionAttempts:
+              type: integer
+              description: Number of payment attempts in the current session
+              minimum: 1
+            CurrentSessionFailedAttempts:
+              type: integer
+              description: Number of failed payment attempts in the current session
+              minimum: 0
+            Last24HourAttempts:
+              type: integer
+              description: Number of payment attempts in the last 24 hours
+              minimum: 0
+            Last24HourFailedAttempts:
+              type: integer
+              description: Number of failed payment attempts in the last 24 hours
+              minimum: 0
+        MerchantRisk:
+          type: object
+          description: Risk indicator details provided by the merchant
+          properties:
+            DeliveryTimeframe:
+              type: string
+              description: Timeframe for the delivery of purchased items
+              enum:
+                - ElectronicDelivery
+                - SameDayShipping
+                - OvernightShipping
+                - MoreThan1DayShipping
+            ReorderItemsIndicator:
+              type: string
+              description: Indicates if the transaction is a reorder
+              enum:
+                - FirstTimeOrder
+                - Reorder
+            PreOrderPurchaseIndicator:
+              type: string
+              description: Indicates if this is a pre-ordered item
+              enum:
+                - MerchandiseAvailable
+                - FutureAvailability
+            IsGiftCardPurchase:
+              type: boolean
+              description: Indicates if the transaction includes a gift card
+            IsDeliveryAddressMatchesBilling:
+              type: boolean
+              description: Indicates if delivery address matches billing address
+            AddressMatchLevel:
+              type: string
+              description: Level of match between delivery and billing addresses
+              enum:
+                - FullMatch
+                - PartialMatch
+                - NoMatch
+                - NotApplicable
+        SupplementaryData:
+          type: object
+          description: |
+            Additional information that cannot be captured in the structured fields and/or any other specific block
+          properties: {}
+    AECreditorIndicators:
+      type: object
+      description: |
+        Creditor Indicators
+      properties:
+        AccountType:
+          $ref: '#/components/schemas/AEAccountTypeCode'
+        IsCreditorPrePopulated:
+          $ref: '#/components/schemas/AEIsCreditorPrePopulated'
+        TradingName:
+          $ref: '#/components/schemas/AETradingName'
+        IsVerifiedByTPP:
+          $ref: '#/components/schemas/AEIsVerifiedbyTPP'
+        AdditionalAccountHolderIdentifiers:
+          $ref: '#/components/schemas/AEAdditionalAccountHolderIdentifiers'
+        MerchantDetails:
+          type: object
+          description: >
+            Details of the Merchant involved in the transaction.
+
+            Merchant Details are specified only for those merchant categories that are generally expected to originate
+            retail financial transactions
+          properties:
+            MerchantId:
+              description: MerchantId
+              type: string
+              minLength: 8
+              maxLength: 20
+            MerchantName:
+              description: Name by which the merchant is known.
+              type: string
+              minLength: 1
+              maxLength: 350
+            MerchantSICCode:
+              description: >
+                SIC code stands for standard industrial classification (SIC) code.
+
+                This four digit-number identifies a very specific short descriptor of the type of business a company is
+                engaged in.
+
+                SIC can be obtained from the Chamber of Commerce.
+              type: string
+              minLength: 3
+              maxLength: 4
+            MerchantCategoryCode:
+              description: >
+                Category code values are used to enable the classification of merchants into specific categories based
+                on the type of business, trade or services supplied. 
+
+                Category code conforms to ISO 18245, related to the type of services or goods the merchant provides for
+                the transaction.
+              type: string
+              minLength: 3
+              maxLength: 4
+          additionalProperties: false
+        IsCreditorConfirmed:
+          description: Creditor account details have been confirmed successfully using Confirmation of Payee
+          type: boolean
+        SupplementaryData:
+          type: object
+          description: |
+            Additional information that cannot be captured in the structured fields and/or any other specific block
+          properties: {}
+    AEAccountTypeCode:
+      type: string
+      enum:
+        - Retail
+        - SME
+        - Corporate
+      description: Specifies the type of account (Retail, SME or Corporate).
+    AEIsCreditorPrePopulated:
+      description: Is Creditor populated
+      type: boolean
+    AEIsVerifiedbyTPP:
+      description: The TPP has onboarded the Creditor
+      type: boolean
+    AEAdditionalAccountHolderIdentifiers:
+      type: array
+      items:
+        type: object
+        description: Provides the details to identify an account.
+        required:
+          - SchemeName
+          - Identification
+        properties:
+          SchemeName:
+            $ref: '#/components/schemas/AERiskExternalAccountIdentificationCode'
+          Identification:
+            $ref: '#/components/schemas/AEIdentification'
+          Name:
+            $ref: '#/components/schemas/AEName'
+        additionalProperties: false
+    AERiskExternalAccountIdentificationCode:
+      description: Name of the identification scheme, in a coded form as published in an external list.
+      type: string
+      enum:
+        - EmiratesID
+        - TradeLicenceNumber
+    AEBankServiceInitiationRichAuthorizationRequests.AECreditorExternalAccountIdentificationCode:
+      type: string
+      enum:
+        - IBAN
+        - AccountNumber
+      description: >-
+        Name of the identification scheme, in a coded form as published in an external list. For international payments
+        TPP may use `IBAN`, but must use `AccountNumber` where a local scheme is used to identify the Creditor Account.
+    AEIdentification:
+      description: |
+        Identification for the account assigned by the LFI based on the Account Scheme Name. 
+        This identification is known by the User account owner.
+      type: string
+      minLength: 1
+    AETradingName:
+      type: object
+      description: |
+        The Trading Brand Name (if applicable) for the Creditor. 
+        Applicable to Payments.
+      properties:
+        en:
+          type: string
+          description: English value of the string
+          maxLength: 70
+        ar:
+          type: string
+          description: Arabic value of the string
+          maxLength: 70
+      additionalProperties: false
+    AERisk:
+      additionalProperties: false
+      description: >
+        The Risk section is sent by the TPP to the LFI. It is used to specify additional details for risk/fraud scoring
+        regarding Payments.
+      type: object
+      properties:
+        DebtorIndicators:
+          $ref: '#/components/schemas/AEDebtorIndicators'
+        DestinationDeliveryAddress:
+          type: object
+          description: |
+            Destination Delivery Address
+          properties:
+            RecipientType:
+              type: string
+              description: The recipient of the goods whether an individual or a corporation.
+              enum:
+                - Individual
+                - Corporate
+            RecipientName:
+              type: object
+              description: The name of the recipient of the goods, whether an individual or a corporation.
+              properties:
+                en:
+                  type: string
+                  description: English value of the string
+                ar:
+                  type: string
+                  description: Arabic value of the string
+            NationalAddress:
+              $ref: '#/components/schemas/AEAddress'
+        TransactionIndicators:
+          $ref: '#/components/schemas/AETransactionIndicators'
+        CreditorIndicators:
+          $ref: '#/components/schemas/AECreditorIndicators'
+    AEConsentId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      description: Unique identification assigned by the TPP to identify the consent resource.
+    AEFilePaymentRequest:
+      description: |
+        File Payment Request Schema
+      type: object
+      additionalProperties: false
+      required:
+        - Data
+      properties:
+        Data:
+          description: Primary data for the request
+          type: object
+          additionalProperties: false
+          required:
+            - ConsentId
+            - PaymentPurposeCode
+          properties:
+            ConsentId:
+              $ref: '#/components/schemas/AEConsentId'
+            Instruction:
+              $ref: '#/components/schemas/AEFilePaymentConsent'
+            PaymentPurposeCode:
+              $ref: '#/components/schemas/AEPaymentPurposeCode'
+            DebtorReference:
+              $ref: '#/components/schemas/AEDebtorReference'
+    AEFilePaymentConsent:
+      type: object
+      description: |
+        A file based payment consent.
+        A Consent definition for defining Multi Payments
+      required:
+        - FileType
+        - FileHash
+        - NumberOfTransactions
+        - ControlSum
+      properties:
+        FileType:
+          $ref: '#/components/schemas/AEFileType'
+        FileHash:
+          $ref: '#/components/schemas/AEFileHash'
+        FileReference:
+          $ref: '#/components/schemas/AEReference'
+        NumberOfTransactions:
+          $ref: '#/components/schemas/AEFileNumberOfTransactions'
+        ControlSum:
+          $ref: '#/components/schemas/AEControlSum'
+        RequestedExecutionDate:
+          $ref: '#/components/schemas/AERequestedExecutionDate'
+      additionalProperties: false
+    AERequestedExecutionDate:
+      description: >
+        The date when the TPP expects the LFI to execute the payment.
+
+        The date must be in the future and cannot be on the same day or a day in the past.
+
+        The maximum date in the future that can be specified is 1 year from the day of the consent of the User to the
+        TPP.
+
+        All dates in the JSON payloads are represented in ISO 8601 date format.
+      type: string
+      format: date
+    AEFileNumberOfTransactions:
+      type: integer
+      description: |
+        Number of individual transactions contained in the payment information group.
+    AEControlSum:
+      description: |
+        Total of all individual amounts included in the group, irrespective of currencies.
+      type: string
+      pattern: ^\d{1,16}\.\d{2}$
+      example: '100.00'
+    AEReference:
+      description: |
+        A reason or reference in relation to a payment.
+        Reason or reference for the beneficiary regarding the Payment
+      type: string
+      minLength: 1
+      maxLength: 35
+    AEFileType:
+      type: string
+      description: Specifies the payment file type
+      minLength: 1
+      maxLength: 40
+    AEFileHash:
+      type: string
+      description: A base64 encoding of a SHA256 hash of the file to be uploaded.
+      minLength: 1
+      maxLength: 44
+    AECreditorReference:
+      description: A Creditor Reference is a note for a given Creditor or Creditor LFI that supports reconciliation of 
+        a given payment instruction.
+      type: string
+      minLength: 1
+      maxLength: 35
+    AEPaymentInstruction:
+      type: object
+      additionalProperties: false
+      required:
+        - Amount
+      description: >-
+        The Initiation payload is sent by the initiating party to the LFI. It is used to request movement of funds from
+        the debtor account to a creditor for a single payment.
+      properties:
+        Amount:
+          $ref: '#/components/schemas/AEActiveCurrencyAmount'
+    PaymentType:
+      type: string
+      description: |
+        The type of the payment that is being created.
+
+        Each LFI's instance may support a different set of payment types
+        depending on the standards supported.
+
+        For example,
+
+          - cbuae-payment (Single Instant Payment, Multi Payment - Fixed and Variable Recurring Payment, Future Dated Payment etc)
+          - cbuae-file-payment
+    PaymentRequestHeaders:
+      type: object
+      description: |
+        The entire set of HTTP request headers that was received by Ozone from the TPP
+    tpp:
+      description: >-
+        The TPP record as held by Ozone. If Ozone TPP Connect has been integrated into a directory, the
+        `directoryRecord` provides the TPP's directory record as held by Ozone in base 64 encoded format.
+      type: object
+      required:
+        - clientId
+        - orgId
+        - softwareStatementId
+        - tppId
+        - tppName
+        - decodedSsa
+      properties:
+        clientId:
+          description: The client identifier for the TPP as issued by the Trust Framework
+          type: string
+          pattern: ^.*[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+        tppId:
+          description: The identifier used by the API Hub to uniquely identify the TPP
+          type: string
+        tppName:
+          description: The TPP name recorded in the Trust Framework
+          type: string
+        obieTppId:
+          description: The UK market TPP identifier. This property is not used for CBUAE and is therefore marked as deprecated.
+          type: string
+          deprecated: true
+        softwareStatementId:
+          description: The software statement identifier for the Client.
+          type: string
+        obieSoftwareStatementId:
+          description: >-
+            The UK market software statement identifier. This property is not used for CBUAE and is therefore marked as
+            deprecated.
+          type: string
+          deprecated: true
+        obieSoftwareStatementName:
+          description: >-
+            The UK market software statement name. This property is not used for CBUAE and is therefore marked as
+            deprecated.
+          type: string
+          deprecated: true
+        directoryRecord:
+          type: string
+          description: >-
+            The latest copy of the TPP directory record retrieve from the CBUAE Trust Framework directory, encoded as a
+            Base 64 string
+          format: base64
+        ssa:
+          description: >-
+            The encoded Software Statement Assertion. This property is not used for CBUAE and is therefore marked as
+            deprecated.
+          type: string
+          deprecated: true
+        decodedSsa:
+          $ref: '#/components/schemas/softwareStatementProperties'
+        orgId:
+          description: The organization identifier for the TPP
+          type: string
+          pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+    softwareStatementProperties:
+      description: |
+        The decoded software statement retrieved from the Trust Framework that provides 
+        the properties of the Client.
+
+        Please note:
+
+          - The JSON payload will contain other properties in addition to those listed 
+            here. The properties listed here are considered most relevant for activities 
+            such as TPP logo retrieval and JWS verification.
+          - The content reflects elements of discovery metadata, which in generally
+            defined as a file rather than an API. Providing constraints such as
+            `minLength` and `maxLength` is impractical in this context
+
+        The full software statement record is also available in the Trust Framework. 
+        Please also refer the Registration Framework page in the CBUAE standards for
+        additional guidance on these properties.
+      type: object
+      properties:
+        redirect_uris:
+          description: The redirect URIs registered by the TPP at the Trust Framework
+          type: array
+          items:
+            type: string
+        client_name:
+          description: Name of the Client to be presented to the End-User.
+          type: string
+        client_uri:
+          description: URL of the home page of the Client.
+          type: string
+        logo_uri:
+          description: URL of the Client logo.
+          type: string
+        jwks_uri:
+          description: URL of the Client JSON Web Key Set (JWKS) at the Trust Framework.
+          type: string
+        client_id:
+          description: Unique Client Identifier.
+          type: string
+        roles:
+          description: The roles under which the organization is registered at the Trust Framework.
+          type: array
+          items:
+            type: string
+        sector_identifier_uri:
+          description: >-
+            URL using the https scheme to be used in calculating Pseudonymous Identifiers by the OP. Allows redirect URI
+            values to be grouped, easing registration management.
+          type: string
+        application_type:
+          description: Client application type.
+          type: string
+        organisation_id:
+          description: Organization identifier for organization that owns the Client.
+          type: string
+    SupplementaryInformation:
+      type: object
+      description: |
+        The `SupplementaryInformation` object may have arbitrary custom fields that a Financial Institution may use
+    AEPaymentIdResponse:
+      description: |
+        The payment response to be passed on to the TPP.
+
+        The structure of this response is aligned to the structure of the response for the CBUAE payment initiation API.
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          description: >-
+            Required fields are common for all the payments including file payment. Apart from that,
+            paymentTransactionId is required for all payments except file payments
+          additionalProperties: false
+          required:
+            - id
+            - status
+            - statusUpdateDateTime
+            - creationDateTime
+            - paymentPurposeCode
+          properties:
+            id:
+              description: An API specific unique identification as assigned by the LFI to identify the domestic Payment resource.
+              type: string
+            consentId:
+              description: Unique identification assigned by the TPP to identify the consent resource.
+              type: string
+            paymentTransactionId:
+              description: >
+                This is an end-to-end identifier that is generated by the underlying payment rails when it is sent from
+                an Originating LFI to a Receiving LFI.
+
+                For IPP transactions, this is the IPP generated identifier.
+
+
+                This property is not the same as the `transactionId` in the Bank Data Sharing Transactions API.
+
+
+                The `paymentTransactionId` must be populated if the payment is processed by the LFI, and updated at the
+                Consent Manager Payment Log API using the `patch` operation.
+              type: string
+            status:
+              description: >
+                Specifies the status of the payment information group
+
+                * Pending: Payment initiation or individual transaction included in the payment initiation is pending.
+                Further checks and status update will be performed.
+
+                * Rejected: The payment initiation has been rejected
+
+                * AcceptedSettlementCompleted: Settlement of the Debtor's account has been completed
+
+                * AcceptedCreditSettlementCompleted: When the Creditor account has been credited with the funds of the
+                payment initiated via the TPP
+
+                * AcceptedWithoutPosting:  When the Recipient Bank has accepted the payment but has not applied the
+                credit to the Creditor account yet.
+              type: string
+              enum:
+                - Pending
+                - AcceptedSettlementCompleted
+                - AcceptedCreditSettlementCompleted
+                - AcceptedWithoutPosting
+                - Rejected
+                - Received
+            statusUpdateDateTime:
+              description: Date and time at which the resource status was updated.
+              type: string
+              format: date-time
+            rejectReasonCode:
+              items:
+                description: Rejection Reason
+                type: object
+                required:
+                  - code
+                  - message
+                additionalProperties: false
+                properties:
+                  code:
+                    description: >
+                      Rejected Reason Code is a namespaced rejection reason code. The first part of the code is the
+                      namespace, which is the name of the organisation or system (e.g., AANI) that is rejecting the
+                      payment, and the second part is the specific rejection reason code for the originating
+                      organisation or system.
+
+                      Payments that are rejected by AANI will have the AANI prefix, followed by the specific ANNI reason
+                      code.
+
+
+                      The Payment resouce is updated with the rejection reason code if a Rejected payment is initially
+                      created in a Pending state. 
+
+                      If the Payment resource is rejected, and no Payment resource is created - a 4xx HTTP status code
+                      is returned to the TPP with the appropriate Error Response.
+                    type: string
+                    pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+                  message:
+                    description: Message
+                    type: string
+              type: array
+              minItems: 1
+            creationDateTime:
+              description: Date and time at which the message was created.
+              type: string
+              format: date-time
+            charges:
+              $ref: '#/components/schemas/AECharges'
+            exchangeRate:
+              $ref: '#/components/schemas/AEExchangeRateInformation'
+            currencyRequest:
+              $ref: '#/components/schemas/AECurrencyRequest'
+            instruction:
+              $ref: '#/components/schemas/AEPaymentInstruction'
+            paymentPurposeCode:
+              $ref: '#/components/schemas/AEPaymentPurposeCode'
+            debtorReference:
+              $ref: '#/components/schemas/AEDebtorReference'
+            openFinanceBilling:
+              $ref: '#/components/schemas/AEServiceInitiationOpenFinancePaymentBillingGet'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    AECharges:
+      description: List of charges associated with the payment request
+      type: array
+      items:
+        type: object
+        additionalProperties: false
+        description: |
+          Set of elements used to provide details of a charge for the payment initiation.
+          * For Payments, these Charges are on the Debtor.
+        required:
+          - chargeBearer
+          - type
+          - amount
+        properties:
+          chargeBearer:
+            $ref: '#/components/schemas/AEChargeBearerType1Code'
+          type:
+            $ref: '#/components/schemas/AEExternalPaymentChargeTypeCode'
+          amount:
+            $ref: '#/components/schemas/AEActiveCurrencyAmount'
+    AEChargeBearerType1Code:
+      description: Specifies which party/parties will bear the charges associated with the processing of the payment transaction.
+      type: string
+      enum:
+        - BorneByCreditor
+        - BorneByDebtor
+        - Shared
+    AEExternalPaymentChargeTypeCode:
+      description: Charge type, in a coded form.
+      type: string
+      enum:
+        - VAT
+        - Fees
+    AEActiveCurrencyAmount:
+      description: The Currency and Amount relating to the Payment
+      type: object
+      required:
+        - amount
+        - currency
+      properties:
+        amount:
+          $ref: '#/components/schemas/AEActiveOrHistoricAmount'
+        currency:
+          $ref: '#/components/schemas/AEActiveOrHistoricCurrencyCode'
+    AEActiveOrHistoricAmount:
+      description: >-
+        A number of monetary units specified in an active currency where the unit of currency is explicit and compliant
+        with ISO 4217.
+      type: string
+      pattern: ^\d{1,16}\.\d{2}$
+      example: '100.00'
+    AEActiveOrHistoricCurrencyCode:
+      description: >-
+        A 3 character alphabetic code allocated to a currency under an international currency identification scheme, as
+        described in the latest edition of the international standard ISO 4217 'Codes for the representation of
+        currencies and funds'.
+      type: string
+      pattern: ^[A-Z]{3,3}$
+      example: AED
+    AEExchangeRateInformation:
+      type: object
+      additionalProperties: false
+      required:
+        - unitCurrency
+        - exchangeRate
+        - rateType
+      description: Further detailed information on the exchange rate that has been used in the payment transaction.
+      properties:
+        unitCurrency:
+          description: >-
+            Currency in which the rate of exchange is expressed in a currency exchange. In the example 1GBP = xxxCUR,
+            the unit currency is GBP.
+          type: string
+          pattern: ^[A-Z]{3,3}$
+        exchangeRate:
+          description: >-
+            The factor used for conversion of an amount from one currency to another. This reflects the price at which
+            one currency was bought with another currency.
+          type: number
+        rateType:
+          description: Specifies the type used to complete the currency exchange.
+          type: string
+          enum:
+            - Actual
+            - Agreed
+            - Indicative
+        contractIdentification:
+          description: >-
+            Unique and unambiguous reference to the foreign exchange contract agreed between the initiating
+            party/creditor and the debtor agent.
+          type: string
+          minLength: 1
+          maxLength: 256
+        expirationDateTime:
+          description: >-
+            Specified date and time the exchange rate agreement will expire.All dates in the JSON payloads are
+            represented in ISO 8601 date-time format. 
+
+            All date-time fields in responses must include the timezone. An example is below:
+
+            2017-04-05T10:43:07+00:00
+          type: string
+          format: date-time
+    AECurrencyRequest:
+      description: >
+        The details of the non-local currency or FX request that has been agreed between the User and the TPP.
+
+        The requested ChargeBearer and ExchangeRateInformation are included in this object may be overwritten by the LFI
+        in the returned Consent object.
+      type: object
+      additionalProperties: false
+      required:
+        - currencyOfTransfer
+      properties:
+        instructionPriority:
+          description: >-
+            Indicator of the urgency or order of importance that the instructing party would like the instructed party
+            to apply to the processing of the instruction.
+          type: string
+          enum:
+            - Normal
+            - Urgent
+        extendedPurpose:
+          description: Specifies the purpose of an international payment.
+          type: string
+          minLength: 1
+          maxLength: 140
+        chargeBearer:
+          $ref: '#/components/schemas/AEChargeBearerType1Code'
+        currencyOfTransfer:
+          description: >-
+            Specifies the currency of the to be transferred amount, which is different from the currency of the debtor's
+            account.
+          type: string
+          pattern: ^[A-Z]{3,3}$
+        destinationCountryCode:
+          description: >-
+            Country in which Credit Account is domiciled. Code to identify a country, a dependency, or another area of
+            particular geopolitical interest, on the basis of country names obtained from the United Nations (ISO 3166,
+            Alpha-2 code).
+          type: string
+          pattern: '[A-Z]{2,2}'
+        exchangeRateInformation:
+          type: object
+          additionalProperties: false
+          required:
+            - unitCurrency
+            - rateType
+          description: Provides details on the currency exchange rate and contract.
+          properties:
+            unitCurrency:
+              description: >-
+                Currency in which the rate of exchange is expressed in a currency exchange. In the example 1GBP =
+                xxxCUR, the unit currency is GBP.
+              type: string
+              pattern: ^[A-Z]{3,3}$
+            exchangeRate:
+              description: >-
+                The factor used for conversion of an amount from one currency to another. This reflects the price at
+                which one currency was bought with another currency.
+              type: number
+            rateType:
+              description: Specifies the type used to complete the currency exchange.
+              type: string
+              enum:
+                - Actual
+                - Agreed
+                - Indicative
+            contractIdentification:
+              description: >-
+                Unique and unambiguous reference to the foreign exchange contract agreed between the initiating
+                party/creditor and the debtor agent.
+              type: string
+              minLength: 1
+              maxLength: 256
+        fxQuoteId:
+          $ref: '#/components/schemas/FxQuoteId'
+    AEPaymentPurposeCode:
+      description: >-
+        A category code that relates to the type of services or goods that corresponds to the underlying purpose of the
+        payment. The code must conform to the published AANI payment purpose code list.
+      type: string
+      minLength: 1
+      maxLength: 4
+      pattern: ^[A-Z]{3}$
+    AEDebtorReference:
+      description: A Debtor Reference is a note is for the reference of a given User that may be available as 
+        additional information in relation to a given payment instruction.
+      type: string
+      minLength: 1
+      maxLength: 35
+    RefundGetResponse:
+      description: >-
+        Response to a request to the Debtor details for a given payment, in order to initiate a refund. Requires the
+        consent of the Debtor to be retrieved, enforced at the API Hub.
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/RefundGetResponseBody'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    RefundGetResponseBody:
+      description: Primary data for the response
+      type: object
+      required:
+        - refundAccount
+      properties:
+        consentId:
+          description: |
+            Unique identification assigned by the TPP to identify the consent resource.
+          type: string
+          minLength: 1
+          maxLength: 128
+        refundAccount:
+          $ref: '#/components/schemas/AEDebtorAccount'
+    AEDebtorAccount:
+      description: Unambiguous identification of the account of the debtor to which a debit entry will be made.
+      type: object
+      required:
+        - schemeName
+        - identification
+        - name
+      properties:
+        schemeName:
+          description: Name of the identification scheme, in a coded form as published in an external list.
+          type: string
+          enum:
+            - IBAN
+        identification:
+          description: |
+            Identification for the account assigned by the LFI based on the Account Scheme Name.
+            This identification is known by the User account owner.
+          type: string
+          minLength: 1
+        name:
+          $ref: '#/components/schemas/AEName'
+    AEName:
+      type: object
+      description: |
+        The Account Holder Name is the name or names of the Account owner(s) represented at the account level
+      properties:
+        en:
+          type: string
+          description: English value of the string
+          maxLength: 70
+        ar:
+          type: string
+          description: Arabic value of the string
+          maxLength: 70
+      additionalProperties: false
+    Meta:
+      description: Metadata relevant to the resource.
+      type: object
+      additionalProperties: false
+    ErrorMessage:
+      description: Message describing what problem has occurred
+      type: string
+    Error400:
+      description: Default error response payload structure for Ozone Connect
+      type: object
+      required:
+        - errorCode
+        - errorMessage
+      properties:
+        errorCode:
+          description: >-
+            Error code identifying the problem that occurred. This may either be one of the prescribed Error Code(s) or
+            a namespaced Error Code where the namespace is the system or organisation that has responded with the error,
+            and the code is the code specific to the system or organisation. organisation or system.
+
+            LFIs should implement error codes based on the prescribed codes or guidance in the standards, with
+            non-specific codes maintained for backward compatibility with version 1.2.
+          anyOf:
+            - type: string
+              enum:
+                - Consent.Invalid
+                - Consent.BusinessRuleViolation
+                - Consent.FailsControlParameters
+                - Consent.InvalidUserIdentifier
+                - JWS.InvalidSignature
+                - JWS.Malformed
+                - JWS.InvalidClaim
+                - JWS.InvalidHeader
+                - JWE.DecryptionError
+                - JWE.InvalidHeader
+                - GenericRecoverableError
+                - GenericError
+                - Event.UnexpectedEvent
+                - Body.InvalidFormat
+                - Resource.InvalidFormat
+            - type: string
+              pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+            - type: string
+        errorMessage:
+          $ref: '#/components/schemas/ErrorMessage'
+    Error403:
+      description: >-
+        Error code identifying the problem that occurred. The first part of the code is the namespace, which is the name
+        of the organisation or system that is rejecting the payment, and the second part is the specific rejection
+        reason code for the originating organisation or system.
+
+        LFIs should implement error codes based on the prescribed codes or guidance in the standards, with non-specific
+        codes maintained for backward compatibility with version 1.2.
+      type: object
+      required:
+        - errorCode
+        - errorMessage
+      properties:
+        errorCode:
+          description: >-
+            Error code identifying the problem that occurred. This may either be one of the prescribed Error Code(s) or
+            a namespaced Error Code where the namespace is the system or organisation that has responded with the error,
+            and the code is the code specific to the system or organisation.
+          anyOf:
+            - type: string
+              enum:
+                - AccessToken.InvalidScope
+                - Consent.TransientAccountAccessFailure
+                - Consent.AccountTemporarilyBlocked
+                - Consent.PermanentAccountAccessFailure
+                - GenericRecoverableError
+                - GenericError
+            - type: string
+              pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+            - type: string
+        errorMessage:
+          $ref: '#/components/schemas/ErrorMessage'
+    Error409:
+      description: >-
+        Error code identifying the problem that occurred. The first part of the code is the namespace, which is the name
+        of the organisation or system that is rejecting the payment, and the second part is the specific rejection
+        reason code for the originating organisation or system.
+      type: object
+      required:
+        - errorCode
+        - errorMessage
+      properties:
+        errorCode:
+          description: >-
+            Error code identifying the problem that occurred. This may either be one of the prescribed Error Code(s) or
+            a namespaced Error Code where the namespace is the system or organisation that has responded with the error,
+            and the code is the code specific to the system or organisation.
+          anyOf:
+            - type: string
+              enum:
+                - GenericRecoverableError
+                - GenericError
+            - type: string
+              pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+            - type: string
+        errorMessage:
+          type: string
+          description: Message describing what problem has occurred
+    Error500:
+      description: >-
+        Error code identifying the problem that occurred. The first part of the code is the namespace, which is the name
+        of the organisation or system that is rejecting the payment, and the second part is the specific rejection
+        reason code for the originating organisation or system.
+
+        LFIs should implement error codes based on the prescribed codes or guidance in the standards, with non-specific
+        codes maintained for backward compatibility with version 1.2.
+      type: object
+      required:
+        - errorCode
+        - errorMessage
+      properties:
+        errorCode:
+          description: >-
+            Error code identifying the problem that occurred. This may either be one of the prescribed Error Code(s) or
+            a namespaced Error Code where the namespace is the system or organisation that has responded with the error,
+            and the code is the code specific to the system or organisation.
+          anyOf:
+            - type: string
+              enum:
+                - GenericRecoverableError
+                - GenericError
+            - type: string
+              pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+            - type: string
+        errorMessage:
+          $ref: '#/components/schemas/ErrorMessage'
+    AECreateAccountResponseBody1:
+      type: object
+      required:
+        - data
+        - links
+      properties:
+        data:
+          $ref: '#/components/schemas/AccountOpeningServiceInitiation.AEAccount'
+        links:
+          $ref: '#/components/schemas/AEAccountOpeningLinks1'
+
+    AEAccountOpeningCompletedStatusCode:
+      type: string
+      enum:
+        - Completed
+
+    AEAccountOpeningStatusUpdateDateTime:
+      type: string
+      format: date-time
+      description: The date and time the opening status was last updated.
+
+    AEAccountOpeningStatusCodes:
+      type: string
+      enum:
+        - Pending
+        - AwaitingUserInput
+        - AwaitingLFIProcesses
+        - Rejected
+
+    AccountOpeningServiceInitiation.AEAccount:
+      anyOf:
+        - type: object
+          properties:
+            AccountId:
+              $ref: '#/components/schemas/AEAccountIdType'
+            OpeningStatusUpdateDateTime:
+              $ref: '#/components/schemas/AEAccountOpeningStatusUpdateDateTime'
+            OpeningStatus:
+              allOf:
+                - $ref: '#/components/schemas/AEAccountOpeningStatusCodes'
+              description: >
+                The status of the opening of the account, based on progress at the LFI, prior to the account being
+                created
+
+
+                The values are defined as follows:
+
+
+                * Pending: This is the initial state for the resource. The account is pending opening, based on LFI
+                processes being completed.
+
+                * AwaitingUserInput: The account opening process has started and input is required from the User to
+                progress the application.
+
+                * AwaitingLFIProcesses: The account opening process has started and is awaiting the completion of LFI
+                processes.
+
+                * Rejected: The account opening has been rejected by the LFI due to insufficient data or failure to
+                validate the User data.
+            AdditionalStatusInformation:
+              type: string
+              minLength: 1
+              maxLength: 1000
+              description: >-
+                Additional information provided to the TPP by the LFI that qualifies the status, including next steps
+                such as where further information is required, or reasons for rejection.
+          required:
+            - AccountId
+            - OpeningStatusUpdateDateTime
+            - OpeningStatus
+          additionalProperties: false
+          title: Incomplete Status
+        - type: object
+          properties:
+            AccountId:
+              $ref: '#/components/schemas/AEAccountIdType'
+            Currency:
+              allOf:
+                - $ref: '#/components/schemas/UAEAccountInformationAPI.ActiveOrHistoricCurrencyCode_0'
+              description: Currency of the account.
+            AccountIdentifiers:
+              type: array
+              items:
+                type: object
+                properties:
+                  SchemeName:
+                    type: string
+                    enum:
+                      - IBAN
+                    description: >-
+                      Name of the identification scheme for the account. Encoded with allowable values published in an
+                      external list.
+                  Identification:
+                    $ref: '#/components/schemas/UAEAccountInformationAPI.Identification_0'
+                  Name:
+                    $ref: '#/components/schemas/UAEAccountInformationAPI.Name_0'
+                required:
+                  - SchemeName
+                  - Identification
+                additionalProperties: false
+              minItems: 1
+              description: Identification of the account at the LFI, which must be an IBAN in the Open Finance Framework.
+            Servicer:
+              type: object
+              properties:
+                SchemeName:
+                  allOf:
+                    - $ref: '#/components/schemas/UAEAccountInformationAPI.AEExternalFinancialInstitutionIdentificationCode'
+                  description: The scheme name that identifies the LFI, which can be `BICFI` (SWIFT code) or `Other`
+                Identification:
+                  allOf:
+                    - $ref: '#/components/schemas/UAEAccountInformationAPI.Identification_1'
+                  description: The LFI identification value.
+              required:
+                - SchemeName
+                - Identification
+              description: >-
+                Account-holding LFI identification, provided where this cannot be deterministically correlated using the
+                IBAN.
+              additionalProperties: false
+            OpeningStatusUpdateDateTime:
+              $ref: '#/components/schemas/AEAccountOpeningStatusUpdateDateTime'
+            OpeningStatus:
+              allOf:
+                - $ref: '#/components/schemas/AEAccountOpeningCompletedStatusCode'
+              description: The account has been created, and the values for executing the FX transaction are now available.
+            CreationDateTime:
+              $ref: '#/components/schemas/CreationDateTime'
+          required:
+            - AccountId
+            - Currency
+            - AccountIdentifiers
+            - OpeningStatusUpdateDateTime
+            - OpeningStatus
+            - CreationDateTime
+          additionalProperties: false
+          title: Completed Status
+      description: >-
+        The account status object, which includes the account properties and the status of the account opening process.
+        The 
+
+        properties of the account share the same structure as the Bank Data Sharing API description, in an effort to
+        maintain 
+
+        consistency with other open finance APIs, but are reduced to ensure only the data required to execute an FX
+
+        transaction are provided.
+
+
+        A TPP must request access through Bank Data Sharing to be provided with all details of the account.
+
+    AEAccountIdType:
+      type: string
+      minLength: 1
+      maxLength: 40
+      description: >-
+        A unique and immutable identifier produced by the LFI to identify the account resource. This identifier has no
+        meaning to the account owner.
+
+    UAEAccountInformationAPI.ActiveOrHistoricCurrencyCode_0:
+      type: string
+      pattern: ^[A-Z]{3,3}$
+      description: >-
+        Identification of the currency in which the account is held. A code allocated to a currency under an
+        international currency identification scheme, as described in the latest edition of the international standard
+        ISO 4217 'Codes for the representation of currencies and funds'.
+    UAEAccountInformationAPI.AEExternalAccountIdentificationCode:
+      type: string
+      enum:
+        - IBAN
+        - AccountNumber
+        - MaskedPAN
+        - MortgageReference
+        - FinanceReference
+      description: Name of the identification scheme for the account. Encoded with allowable values published in an external list.
+    UAEAccountInformationAPI.Identification_0:
+      type: string
+      minLength: 1
+      maxLength: 400
+      description: >-
+        Identification for the account assigned by the LFI based on the Account Scheme Name. This identification is
+        known by the User 1 account owner. For IBAN, refer to the ISO Standard 13616.
+    UAEAccountInformationAPI.Name_0:
+      type: string
+      minLength: 1
+      maxLength: 70
+      description: >-
+        The account name is the name or names of the User 1 account owner(s) represented at an account level, as
+        displayed by the LFI's online channels. Note: The account name is not the product name or the nickname of the
+        account.
+    UAEAccountInformationAPI.AEExternalFinancialInstitutionIdentificationCode:
+      type: string
+      enum:
+        - BICFI
+        - Other
+      description: >-
+        * /accounts resource
+
+        The name of the identification scheme for the LFI as the account services provider. Encoded with allowable value
+        as published in an external list.
+
+
+        * /beneficiaries resource
+
+        Refers to the Financial Institution that manages the account on behalf of the Beneficiary party, managing
+        registration, booking of entries on the account, calculating balances on the account and providing information
+        about the account. This is the servicing Financial Institution of the Beneficiary account.
+
+
+        * /scheduled-payments resource
+
+        Refers to the identification scheme for uniquely identifying the Creditor Agent.
+
+
+        * /standing-orders resource
+
+        Refers to the identification scheme for uniquely identifying the Creditor Agent.
+
+
+        * /transactions resource
+
+        Refers to the identification scheme for uniquely identifying the Creditor Agent.
+    UAEAccountInformationAPI.Identification_1:
+      type: string
+      minLength: 1
+      maxLength: 35
+      description: >-
+        * /accounts resource
+
+        Unique and unambiguous identification of the LFI as the account servicing institution for the Open Banking
+        Services.
+
+
+        * /beneficiaries resource
+
+        Unique and unambiguous identification of the Creditor Agency as the servicing institution of the Beneficiary.
+
+
+        * /scheduled-payments resource
+
+        Unique and unambiguous identification of the LFI as the account servicing institution for the Open Banking
+        Services.
+
+
+        * /standing-orders resource
+
+        Unique and unambiguous identification of the LFI as the account servicing institution for the Open Banking
+        Services.
+
+
+        * /transactions resource
+
+        Unique and unambiguous identification of the LFI as the account servicing institution for the Open Banking
+        Services.
+
+
+        *  Notes:
+
+        Based on the value of the field **SchemeName**, this entry may be :
+
+        * BICFI: The BIC/SWIFT Code
+
+        * Other: Identifier based on non-SWIFT payment system or local market scheme.
+    CreationDateTime:
+      type: string
+      format: date-time
+      description: The resource creation date and time.
+    AEAccountOpeningLinks1:
+      type: object
+      required:
+        - Self
+      properties:
+        Self:
+          $ref: '#/components/schemas/Self'
+        AccountOpeningRedirectUrl:
+          type: string
+          format: uri
+          description: >-
+            A redirect URL provided by the LFI to complete the FX trade. The TPP must redirect the User to this URL.
+
+            The URL is optional as the LFI may have all required information through party data to complete account
+            creation.
+    Self:
+      type: string
+      format: uri
+      description: A link to the current resource
+    AECreateAccountRequestBody1:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          allOf:
+            - $ref: '#/components/schemas/AccountOpeningServiceInitiation.AEAccountOpeningRequest'
+          description: Properties of the accepted quote. The request will be rejected if the account opening request is replayed.
+    AccountOpeningServiceInitiation.AEAccountOpeningRequest:
+      type: object
+      properties:
+        LinkedOperations:
+          type: object
+          properties:
+            FxQuoteId:
+              allOf:
+                - $ref: '#/components/schemas/FxServiceInitiation.FxQuoteIdType'
+              description: The quote identifier returned by the LFI in the FX Quote.
+          required:
+            - FxQuoteId
+          minProperties: 1
+          description: >-
+            Operations that are linked to the account opening request, such as an accepted FX quote where no settlement
+            account is available at the LFI for the deposit of a funding payment. 
+
+
+            At least one property must be supplied, or the property omitted.
+        Account:
+          allOf:
+            - $ref: '#/components/schemas/UAEAccountInformationAPI.AECashAccount6_1'
+          description: Details of the bank account details shared from the LFI through a data sharing consent with the TPP.
+        Party:
+          $ref: '#/components/schemas/AEIdentityAssurance'
+        DataSharingAudit:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountOpeningServiceInitiation.AEAccountOpeningDataSharingAudit'
+          description: List of changes to account data shared with TPP made by User.
+          example:
+            - JSONPath: $.Data.Party.GivenName
+              Action: Updated
+              OriginalValue: Harold
+            - JSONPath: $.Data.Party.FamilyName
+              Action: Updated
+              OriginalValue: Smith
+      description: |-
+        Request body for creating a new account based on a quote and shared user data.
+
+        PartyData is optional as LFI can support manual data entry by the User when they 
+        use the LFI user interface.
+    FxServiceInitiation.FxQuoteIdType:
+      type: string
+      minLength: 1
+      maxLength: 128
+      format: uuid
+    UAEAccountInformationAPI.AECashAccount6_1:
+      type: object
+      properties:
+        SchemeName:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.AEExternalAccountIdentificationCode'
+        Identification:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.Identification_0'
+        Name:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.Name_0'
+      description: >-
+        Account details of the Debtor in case the transaction is a Credit transaction.
+
+
+        These are optional because there are situations where this cannot be populated for the following Credit
+        transactions
+
+        - cash deposits (no creditor account/agent)
+
+        - cheques and DDs may not have this information at least during the process of clearing and sometimes (e.g. for
+        agency banks) may not be reconciled ever
+
+        - some corner situations with international payments
+
+        - for refunds with card payments  (instead merchant information fields should be populated)
+    AEIdentityAssurance:
+      type: object
+      required:
+        - Claims
+      properties:
+        Verification:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.VerifiedClaimVerification'
+        Claims:
+          oneOf:
+            - $ref: '#/components/schemas/UAEAccountInformationAPI.Claims'
+            - $ref: '#/components/schemas/UAEAccountInformationAPI.CorporateClaims'
+          description: >-
+            Standard Claims:
+
+            [https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims](https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims)
+
+            IdentityAssurance Claims:
+
+            [https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#name-claims](https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#name-claims)
+      description: >-
+        Verified identity assurance data and claims. Data can collected from LFIs under Data Sharing consent or provided
+        manually by the TPP using data collected from the User.
+    UAEAccountInformationAPI.VerifiedClaimVerification:
+      type: object
+      required:
+        - TrustFramework
+      properties:
+        TrustFramework:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.TrustFrameworkCode'
+        AssuranceLevel:
+          type: string
+          description: >-
+            Determines the assurance level associated with the User in the respective VerifiedClaims. The value range
+            depends on the respective TrustFramework value.
+
+            Assurance Level:
+            [https://bitbucket.org/openid/ekyc-ida/wiki/identifiers](https://bitbucket.org/openid/ekyc-ida/wiki/identifiers)
+        AssuranceProcess:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.AssuranceProcess'
+        Time:
+          description: >-
+            Representing the date and time when the identity verification process took place. All dates in the JSON
+            payloads are represented in ISO 8601 date-time format. All date-time fields in responses must include the
+            timezone. An example is below: 2017-04-05T10:43:07+00:00
+        VerificationProcess:
+          type: string
+          description: >-
+            Unique reference to the identity verification process as performed by the OP. Used for identifying and
+            retrieving details in case of disputes or audits. Presence of this element might be required for certain
+            trust frameworks.
+        Evidence:
+          anyOf:
+            - $ref: '#/components/schemas/UAEAccountInformationAPI.AEPartyIdentityEvidenceTypeDocument'
+            - $ref: '#/components/schemas/UAEAccountInformationAPI.AEPartyIdentityEvidenceTypeElectronicRecord'
+          description: >-
+            The type of evidence allowed for providing verification.
+
+            OpenID Connect for Identity Assurance 1.0:
+            [https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#name-evidence-element](https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#name-evidence-element)
+      description: >-
+        Verification
+
+        [https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#name-verification-element](https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#name-verification-element)
+    UAEAccountInformationAPI.TrustFrameworkCode:
+      type: string
+      enum:
+        - Undefined
+      description: >-
+        Identifies the trust framework used for verification. This consists of a set of rules and standards and sets out
+        requirements so that organisations know what ‘good’ identity verification looks like.
+
+        Trust Frameworks:
+        [https://bitbucket.org/openid/ekyc-ida/wiki/identifiers](https://bitbucket.org/openid/ekyc-ida/wiki/identifiers)
+    UAEAccountInformationAPI.AssuranceProcess:
+      type: object
+      required:
+        - Policy
+        - Procedure
+        - AssuranceDetails
+      properties:
+        Policy:
+          type: string
+          description: Representing the standard or policy that was followed.
+        Procedure:
+          type: string
+          description: Representing a specific procedure from the policy that was followed.
+        AssuranceDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/UAEAccountInformationAPI.AssuranceDetails'
+      description: >-
+        Determines the assurance process that was followed. This reflects how the evidence meets the requirements of the
+        TrustFramework and AssuranceLevel. The factual record of the evidence and the procedures followed are recorded
+        in the evidence element, this element is used to cross reference the evidence to the AssuranceLevel followed
+
+        OpenID Connect for Identity Assurance 1.0:
+        [https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#name-verification-element](https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#name-verification-element)
+    UAEAccountInformationAPI.AssuranceDetails:
+      type: object
+      required:
+        - AssuranceType
+        - AssuranceClassification
+        - EvidenceRef
+      properties:
+        AssuranceType:
+          type: string
+          description: String denoting which part of the assurance_process the evidence fulfils
+        AssuranceClassification:
+          type: string
+          description: String reflecting how the evidence has been classified or measured as required by the TrustFramework
+        EvidenceRef:
+          type: array
+          items:
+            $ref: '#/components/schemas/UAEAccountInformationAPI.EvidenceRef'
+      description: Denoting the details about how the evidence complies with the policy
+    UAEAccountInformationAPI.EvidenceRef:
+      type: object
+      required:
+        - Txn
+        - EvidenceMetadata
+      properties:
+        Txn:
+          type: string
+          description: Identifier referring to the txn used in the CheckDetails.
+        EvidenceMetadata:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.EvidenceMetadata'
+      description: Evidence being referred to
+    UAEAccountInformationAPI.EvidenceMetadata:
+      type: object
+      required:
+        - EvidenceClassification
+      properties:
+        EvidenceClassification:
+          type: string
+      description: >-
+        Object indicating any meta data about the evidence that is required by the AssuranceProcess in order to
+        demonstrate compliance with the TrustFramework. It has the following sub-elements
+    UAEAccountInformationAPI.Claims:
+      type: object
+      required:
+        - IdentityType
+        - FullName
+        - GivenName
+        - Surname
+        - EmiratesId
+        - EmiratesIdExpiryDate
+        - ResidentialAddress
+      properties:
+        IdentityType:
+          type: string
+          enum:
+            - Person
+        FullName:
+          type: string
+          description: >-
+            The full name of the account holder, as it appears on the account, as a single string. Used where LFIs hold
+            the account name as a single value.
+        GivenName:
+          type: string
+          description: >-
+            Given name of the Party. Given name (also called forename) is used to differentiate from the surname or
+            family name.
+        Surname:
+          type: string
+          description: Surname of the Party
+        MiddleName:
+          type: string
+          description: Middle name of the Party
+        Nickname:
+          type: string
+          description: Nickname of the Party
+        EmiratesId:
+          type: string
+          description: Emirates ID number of the Party
+        EmiratesIdExpiryDate:
+          type: string
+          format: date
+          description: Emirates ID card expiry date
+        DateOfBirth:
+          type: string
+          format: date
+          description: Date of birth of the Party
+        SourceOfIncome:
+          type: string
+        Salary:
+          type: number
+        Nationality:
+          type: string
+        ResidentialAddress:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.AEPartyPostalAddress'
+        MobileNumber:
+          type: string
+        Email:
+          type: string
+        MaritalStatus:
+          type: string
+        Salutation:
+          type: string
+        Language:
+          type: string
+        EmployerName:
+          type: string
+        EmploymentSinceDate:
+          type: string
+          format: date
+        PowerofAttorney:
+          type: boolean
+        SalaryTransfer:
+          type: boolean
+        Profession:
+          type: string
+        UpdatedAt:
+          type: string
+          format: date-time
+          description: The date and time at which the claims were last updated, in ISO 8601 format
+      description: >-
+        Standard Claims:
+
+        [https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims](https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims)
+
+        IdentityAssurance Claims:
+
+        [https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#name-claims](https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#name-claims)
+
+        An LFI MUST provide both GivenName and Surname for a Retail customer
+    UAEAccountInformationAPI.AEPartyPostalAddress:
+      type: object
+      required:
+        - AddressLine
+        - Country
+      properties:
+        AddressType:
+          type: string
+          enum:
+            - Billing
+            - Business
+            - Correspondence
+            - DeliveryTo
+            - MailTo
+            - POBox
+            - Postal
+            - Permanent
+            - Residential
+            - Statement
+            - Other
+          description: The type of address. Omitted if type not held.
+        AddressLine:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          maxItems: 7
+          description: >-
+            Information that locates and identifies a specific address for a transaction entry, that is presented in
+            free format text.
+        BuildingNumber:
+          type: string
+          minLength: 1
+          maxLength: 16
+          description: The unit, apartment, or villa number within a building or community
+        BuildingName:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: Name of the building or house.
+        Floor:
+          description: Floor or storey within a building.
+          type: string
+          minLength: 1
+          maxLength: 70
+        StreetName:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: The name of the street or road where the property is located.
+        DistrictName:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: The district, community, or neighbourhood where the property is located.
+        PostBox:
+          type: string
+          minLength: 1
+          maxLength: 16
+          description: The P.O. Box number assigned to the recipient for mail delivery.
+        TownName:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: Name of a built-up area, such as a town or city.
+        CountrySubDivision:
+          type: string
+          enum:
+            - AbuDhabi
+            - Ajman
+            - Dubai
+            - Fujairah
+            - RasAlKhaimah
+            - Sharjah
+            - UmmAlQuwain
+          description: Country subdivision, such as state or province. This is the Emirate where the address is registered.
+        Country:
+          type: string
+          pattern: ^[A-Z]{2}$
+          description: The country associated with the address, represented using the ISO 3166-1 alpha-2 country code.
+    UAEAccountInformationAPI.CorporateClaims:
+      type: object
+      required:
+        - IdentityType
+      properties:
+        IdentityType:
+          type: string
+          enum:
+            - Business
+        BusinessName:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: The name of the business
+        TradeLicenceNumber:
+          type: string
+          description: Trade License Number of the business.
+        TaxIdentificationNumber:
+          type: string
+          description: The tax identification number or VAT number for the company.
+        DateOfIncorporation:
+          type: string
+          format: date
+          description: The date the company was legally incorporated.
+        CountryOfIncorporation:
+          type: string
+          description: The country where the company is incorporated.
+        CorporateAddress:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.AEPostalAddress'
+        CorporateContactEmail:
+          type: string
+          format: email
+          description: The primary email address for corporate communications.
+        CorporateContactPhoneNumber:
+          type: string
+          description: The primary phone number for corporate communications.
+        Industry:
+          type: string
+          description: The industry or sector in which the company operates.
+        CompanyWebsite:
+          type: string
+          format: uri
+          description: The official website of the company.
+      description: Standard claims for corporate or SME entities.
+    AccountOpeningServiceInitiation.AEAccountOpeningDataSharingAudit:
+      type: object
+      required:
+        - JSONPath
+        - Action
+      properties:
+        JSONPath:
+          type: string
+          description: The JSONPath expression pointing to the data that has been changed in the original shared data payload.
+          example: $.Data.Party.EmiratesId
+        Action:
+          type: string
+          enum:
+            - Added
+            - Updated
+            - Removed
+          description: The action that was taken by the User
+        OriginalValue:
+          type: string
+          description: >-
+            The original value that was shared through Bank Data Sharing. Only applies if the Action is Updated or
+            Removed.
+      description: >-
+        Provides an audit trail of changes made by a User to the data shared from the LFI through Bank Data Sharing.
+
+
+        Each element in the array is a JSONPath expression that points to the data that has been changed and the
+        original value supplied through data sharing.
+
+
+        TPP must adhere to [RFC 9535](https://datatracker.ietf.org/doc/html/rfc9535) when constructing JSON Path
+        expressions. This value can be omitted when no changes are made by the User.
+    AccountOpeningServiceInitiation.AEAccountIdType:
+      type: string
+      minLength: 1
+      maxLength: 40
+      description: >-
+        A unique and immutable identifier produced by the LFI to identify the account resource.This identifier has no
+        meaning to the account owner (User 1).
+    AEReadAccountResponseBody1:
+      type: object
+      required:
+        - data
+        - links
+      properties:
+        data:
+          $ref: '#/components/schemas/AccountOpeningServiceInitiation.AEAccount'
+        links:
+          $ref: '#/components/schemas/AEAccountOpeningLinks1'
+    AECreateFxQuoteResponseBody1:
+      type: object
+      required:
+        - data
+        - links
+      properties:
+        data:
+          $ref: '#/components/schemas/FxServiceInitiation.AEFxQuoteProperties'
+        links:
+          type: object
+          properties:
+            LiabilityPolicy:
+              allOf:
+                - $ref: '#/components/schemas/Uri'
+              description: Link to liability policy, provided by LFI for display to the User.
+            RefundCancellationPolicy:
+              allOf:
+                - $ref: '#/components/schemas/Uri'
+              description: Link to refund and cancellation policy, provided by LFI for display to the User.
+          required:
+            - LiabilityPolicy
+            - RefundCancellationPolicy
+          description: Links to information associated with the quote response.
+    FxServiceInitiation.AEFxQuoteProperties:
+      type: object
+      required:
+        - FxQuoteId
+        - QuoteReference
+        - BuyAmount
+        - SellAmount
+        - UnitCurrency
+        - QuotedCurrency
+        - RateType
+        - ExchangeRate
+        - UserIdentificationStatus
+        - ExpirationDateTime
+        - Commission
+      properties:
+        FxQuoteId:
+          allOf:
+            - $ref: '#/components/schemas/FxServiceInitiation.FxQuoteIdType'
+          description: The unique identifier for the quote.
+        QuoteReference:
+          allOf:
+            - $ref: '#/components/schemas/AEQuoteReferenceType'
+          description: The unique quote reference number generated by the TPP for tracking a quote across multiple LFIs.
+        BuyAmount:
+          allOf:
+            - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveCurrencyAmount'
+          description: The amount of the currency being bought.
+        SellAmount:
+          allOf:
+            - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveCurrencyAmount'
+          description: The amount of the currency being sold.
+        UnitCurrency:
+          allOf:
+            - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveOrHistoricCurrencyCode'
+          description: >-
+            Currency in which the rate of exchange is expressed in a currency exchange. In the example 1AED = xxxCUR,
+            the unit currency is AED. This equates to the "sell" side of the currency exchange.
+        QuotedCurrency:
+          allOf:
+            - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveOrHistoricCurrencyCode'
+          description: >-
+            Currency into which the base currency is converted, in a currency exchange. This equates to the "buy" side
+            of the currency exchange.
+        RateType:
+          type: string
+          enum:
+            - Actual
+            - Agreed
+            - Indicative
+          description: Specifies the type used to complete the currency exchange.
+        ExchangeRate:
+          type: number
+          description: >-
+            The factor used for conversion of an amount from one currency to another. This reflects the price at which
+            one currency was bought with another currency.
+        UserIdentificationStatus:
+          type: string
+          enum:
+            - UserIdentified
+            - UserNotIdentified
+            - AccountOpeningNotSupported
+          description: >-
+            Status of User identification based on supplied Party data. The status code values are defined as follows:
+
+
+            * UserIdentified: The User has been identified by the LFI based on the supplied Party data.
+
+            * UserNotIdentified: The User has not been identified by the LFI based on the supplied Party data. The User
+            may be able to open an account at the LFI when data requirements are Completed.
+
+            * AccountOpeningNotSupported: The User has not been identified and the LFI does not support account opening
+            based on the supplied Party data.
+
+
+            Please note that there is no status code associated with a User logging into the LFI at this stage as this
+            will be completed after the quote has been accepted and consent for the trade is granted through Bank
+            Service Initiation.
+        Charges:
+          type: array
+          items:
+            $ref: '#/components/schemas/FxServiceInitiation.AECharges'
+          description: The charges associated with the request currency exchange.
+        FundingAccount:
+          $ref: '#/components/schemas/FxServiceInitiation.AEFxFundingAccountProperties'
+        FundingAccountBalance:
+          type: array
+          items:
+            $ref: '#/components/schemas/UAEAccountInformationAPI.AEBalance'
+          minItems: 1
+          description: >-
+            The balance of the funding account, if available. This will only be provided if the value of
+            `UserIdentificationStatus` is `UserIdentified`.
+
+
+            The model for balances is based on Bank Data Sharing, and multiple balances will therefore be returned. How
+            balances are displayed to the User is at the discretion of the TPP.
+        ExpirationDateTime:
+          allOf:
+            - $ref: '#/components/schemas/AEOpenFinanceFrameworkDateTime'
+          description: The quote expiration data and time.
+        Commission:
+          type: object
+          properties:
+            CommissionAmount:
+              allOf:
+                - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveCurrencyAmount'
+              description: The commission payable for the FX Service Initiation trade.
+            PaymentMethod:
+              type: string
+              enum:
+                - DirectToTPP
+                - ThroughAPIHub
+              description: >-
+                The method to be used to pay the commission to the TPP if the User elects to proceed with the
+                application and successfully completes the trade.
+          required:
+            - CommissionAmount
+            - PaymentMethod
+          description: >-
+            The commission amount, calculated based on the quoted currency exchange. This value may be subject to change
+            based on the fulfillment value.
+    AEQuoteReferenceType:
+      type: string
+      minLength: 1
+      maxLength: 37
+    FxServiceInitiation.AECharges:
+      type: object
+      required:
+        - ChargeBearer
+        - Type
+        - Amount
+      properties:
+        ChargeBearer:
+          $ref: '#/components/schemas/UAEPaymentAPI.AEChargeBearerType1Code'
+        Type:
+          $ref: '#/components/schemas/UAEPaymentAPI.AEExternalPaymentChargeTypeCode'
+        Amount:
+          $ref: '#/components/schemas/UAEPaymentAPI.AEActiveCurrencyAmount'
+        Description:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: Description of the charge, for display to the User to help explain why the charge is levied.
+    UAEPaymentAPI.AEChargeBearerType1Code:
+      type: string
+      enum:
+        - BorneByCreditor
+        - BorneByDebtor
+        - Shared
+      description: Specifies which party/parties will bear the charges associated with the processing of the payment transaction.
+    UAEPaymentAPI.AEExternalPaymentChargeTypeCode:
+      type: string
+      enum:
+        - VAT
+        - Fees
+      description: Charge type, in a coded form.
+    FxServiceInitiation.AEFxFundingAccountProperties:
+      type: object
+      properties:
+        CreditorAgent:
+          $ref: '#/components/schemas/UAEPaymentAPI.AECreditorAgent'
+        Creditor:
+          type: object
+          properties:
+            Name:
+              type: string
+              minLength: 1
+              maxLength: 140
+            PostalAddress:
+              $ref: '#/components/schemas/AEAddress'
+        CreditorAccount:
+          $ref: '#/components/schemas/UAEPaymentAPI.AECreditorAccount'
+        PaymentReference:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: Payment reference for the remittance to fund the currency account for completing the trade.
+      description: >-
+        Destination account for funding the currency account to complete the trade.
+
+
+        Creditor Account properties may not be available at quote if account opening is required so this is marked as
+        optional.
+    UAEPaymentAPI.AECreditorAgent:
+      type: object
+      required:
+        - SchemeName
+        - Identification
+      properties:
+        SchemeName:
+          description: |
+            The identification scheme for uniquely identifying the Agent.
+
+            * BICFI: The BIC/SWIFT Code
+            * Other: Identifier based on non-SWIFT payment system or local market scheme.
+          type: string
+          enum:
+            - BICFI
+            - Other
+        Identification:
+          description: Identifier that can be the BIC/SWIFT code or target payment scheme identifier.
+          type: string
+        Name:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: Name by which an agent is known and which is usually used to identify that agent.
+        PostalAddress:
+          $ref: '#/components/schemas/AEAddress'
+      description: Refers to the Financial Institution.
+
+    UAEPaymentAPI.AECreditorExternalAccountIdentificationCode:
+      type: string
+      enum:
+        - IBAN
+        - AccountNumber
+      description: Name of the identification scheme, in a coded form as published in an external list.
+    UAEPaymentAPI.AEIdentification:
+      type: string
+      minLength: 1
+      description: |-
+        Identification for the account assigned by the LFI based on the Account Scheme Name.
+        This identification is known by the User account owner.
+    AEBankServiceInitiationRichAuthorizationRequests.AEName:
+      type: object
+      properties:
+        en:
+          type: string
+          maxLength: 70
+          description: English value of the string
+        ar:
+          type: string
+          maxLength: 70
+          description: Arabic value of the string
+      description: The Account Holder Name is the name or names of the Account owner(s) represented at the account level
+      additionalProperties: false
+    UAEPaymentAPI.AETradingName:
+      type: object
+      properties:
+        en:
+          type: string
+          maxLength: 70
+          description: English value of the string
+        ar:
+          type: string
+          maxLength: 70
+          description: Arabic value of the string
+      description: |-
+        The Trading Brand Name (if applicable) for the Creditor.
+        Applicable to Payments.
+    UAEAccountInformationAPI.AEBalance:
+      type: object
+      required:
+        - CreditDebitIndicator
+        - Type
+        - DateTime
+        - Amount
+      properties:
+        CreditDebitIndicator:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.AECreditDebitCode_2'
+        Type:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.AEBalanceTypeCode'
+        DateTime:
+          type: string
+          format: date-time
+          description: >-
+            Indicates the date (and time) that the account balance was checked.All dates in the JSON payloads are
+            represented in ISO 8601 date-time format. All date-time fields in responses must include the timezone. An
+            example is below: 2017-04-05T10:43:07+00:00
+        Amount:
+          type: object
+          properties:
+            Amount:
+              $ref: '#/components/schemas/UAEAccountInformationAPI.AEActiveCurrencyAndAmount_SimpleType'
+            Currency:
+              $ref: '#/components/schemas/UAEAccountInformationAPI.ActiveOrHistoricCurrencyCode_1'
+          required:
+            - Amount
+            - Currency
+          description: Amount of money of the cash balance.
+        CreditLine:
+          type: array
+          items:
+            type: object
+            properties:
+              Included:
+                type: boolean
+              Type:
+                type: string
+                enum:
+                  - Available
+                  - Credit
+                  - Emergency
+                  - Pre-Agreed
+                  - Temporary
+              Amount:
+                type: object
+                properties:
+                  Amount:
+                    $ref: '#/components/schemas/UAEAccountInformationAPI.AEActiveCurrencyAndAmount_SimpleType'
+                  Currency:
+                    $ref: '#/components/schemas/UAEAccountInformationAPI.ActiveOrHistoricCurrencyCode_1'
+                required:
+                  - Amount
+                  - Currency
+            required:
+              - Included
+              - Type
+              - Amount
+      description: Set of elements used to define the balance details.
+    UAEAccountInformationAPI.AECreditDebitCode_2:
+      type: string
+      enum:
+        - Credit
+        - Debit
+      description: >-
+        Indicates whether the balance of the account is a credit or a debit balance. Encoded with allowable values:
+        'Credit', 'Debit' Usage: A zero balance is considered to be a credit balance.
+    UAEAccountInformationAPI.AEBalanceTypeCode:
+      type: string
+      enum:
+        - ClosingAvailable
+        - ClosingBooked
+        - ClosingCleared
+        - Expected
+        - ForwardAvailable
+        - Information
+        - InterimAvailable
+        - InterimBooked
+        - InterimCleared
+        - OpeningAvailable
+        - OpeningBooked
+        - OpeningCleared
+        - PreviouslyClosedBooked
+      description: >-
+        The type of balance for the account.
+
+        Encoded with allowable values of:
+
+        * 'ClosingAvailable' - end of day balance specifying the amount available to User 1 to withdraw or use.
+
+        * 'ClosingBooked' - end of day balance including value of payments for cheques or payments which have not been
+        cleared yet.
+
+        * 'ClosingCleared' - end of day balance including value of payments for cheques or payments which have been
+        cleared.
+
+        * 'Expected' - intra day balance including value of payments for cheques or payments which have been cleared.
+
+        * 'ForwardAvailable' - intraday balance specifying the amount available to User 1 to withdraw or use considering
+        forward dated payments or other intraday payments or cheques that will be clearing to the account.
+
+        * 'Information' - TBC.
+
+        * 'InterimAvailable' - intraday balance specifying the amount available to User 1 to withdraw or use (most
+        probably real-time.'InterimBooked' - intraday balance including value of payments for cheques or payments which
+        have not been cleared yet.
+
+        * 'InterimCleared' - intraday balance including value of payments for cheques or payments which have been
+        cleared (probably real-time).
+
+        * 'OpeningAvailable' - start of day balance specifying the amount available to User 1 to withdraw or use.
+
+        * 'OpeningBooked' - start of day balance including value of payments for cheques or payments which have not been
+        cleared yet.
+
+        * 'OpeningCleared' - start of day balance including value of payments for cheques or payments which have been
+        cleared.
+
+        * 'PreviouslyClosedBooked' -TBC.
+
+
+        Note: LFIs support different types for presenting account balance, so this list is used to support different LFI
+        systems in UAE.
+    UAEAccountInformationAPI.AEActiveCurrencyAndAmount_SimpleType:
+      type: string
+      pattern: ^\\d{1,13}$|^\\d{1,13}\\.\\d{1,5}$
+      description: >-
+        A number of monetary units specified in an active currency where the unit of currency is explicit and compliant
+        with ISO 4217.
+    UAEAccountInformationAPI.ActiveOrHistoricCurrencyCode_1:
+      type: string
+      pattern: ^[A-Z]{3,3}$
+      description: >-
+        A 3 character alphabetic code allocated to a currency under an international currency identification scheme, as
+        described in the latest edition of the international standard ISO 4217 'Codes for the representation of
+        currencies and funds'.
+    AEOpenFinanceFrameworkDateTime:
+      type: string
+      format: date-time
+    Uri:
+      type: string
+      format: uri
+    AECreateFxQuoteRequestBody1:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/FxServiceInitiation.AEFxQuoteRequestProperties'
+      description: Request body for creating a new FX quote
+    FxServiceInitiation.AEFxQuoteRequestProperties:
+      type: object
+      required:
+        - QuoteReference
+        - TransactionType
+        - UnitCurrency
+        - QuotedCurrency
+        - TradeAmount
+      properties:
+        QuoteReference:
+          allOf:
+            - $ref: '#/components/schemas/AEQuoteReferenceType'
+          description: The unique quote reference number generated by the TPP for tracking a quote across multiple LFIs.
+        TransactionType:
+          type: string
+          enum:
+            - Spot
+            - Remittance
+            - SpotAndRemittance
+          description: >-
+            The trade type, with the following values supported:
+
+
+            * `Spot`: A currency exchange at market rates, deposited at a settlement account at the LFI. Any remittance
+            information provided will be ignored.
+
+            * `Remittance`: A same-currency remittance, executed with existing funds held by the User. Remittance
+            information must be provided.
+
+            * `SpotAndRemittance`: A currency exchange plus remittance, with the remittance based on provided payout
+            details.
+
+
+            Where the trade type is `Remittance` the buy and sell amount must still be provided.
+        UnitCurrency:
+          allOf:
+            - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveOrHistoricCurrencyCode'
+          description: >-
+            Currency in which the rate of exchange is expressed in a currency exchange. In the example 1AED = xxxCUR,
+            the unit currency is AED. This equates to the "sell" side of the currency exchange.
+        QuotedCurrency:
+          allOf:
+            - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveOrHistoricCurrencyCode'
+          description: >-
+            Currency into which the base currency is converted, in a currency exchange. This equates to the "buy" side
+            of the currency exchange.
+        TradeAmount:
+          allOf:
+            - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveCurrencyAmount'
+          description: >-
+            The requested currency amount, qualified with the correct currency. The currency must match either the
+            `UnitCurrency` or `QuotedCurrency`.
+        ContractIdentification:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: >-
+            Unique and unambiguous reference to the foreign exchange contract agreed between the initiating
+            party/creditor and the debtor agent.
+        Party:
+          $ref: '#/components/schemas/AEIdentityAssurance'
+        RemittanceInformation:
+          $ref: '#/components/schemas/FxServiceInitiation.AEFxQuoteRemittanceInformation'
+      description: >-
+        A foreign exchange request based on a given currency pair. 
+
+
+        The buy or sell amount is stated in the TradeAmount property, which is qualified with the currency code, and
+        must be correlated with the `UnitCurrency` or `QuotedCurrency` values. 
+    FxServiceInitiation.AEFxQuoteRemittanceInformation:
+      type: object
+      required:
+        - CreditorAccount
+        - CreditorReference
+        - ExtendedPurpose
+      properties:
+        CreditorAgent:
+          type: array
+          items:
+            $ref: '#/components/schemas/UAEPaymentAPI.AECreditorAgent'
+          minItems: 1
+          description: >-
+            Creditor Agent, which can be zero or more based on specific requirements for target market. Can be omitted
+            if no Creditor Agent required.
+        Creditor:
+          type: object
+          properties:
+            Name:
+              type: string
+              minLength: 1
+              maxLength: 140
+            PostalAddress:
+              $ref: '#/components/schemas/AEAddress'
+        CreditorAccount:
+          $ref: '#/components/schemas/UAEPaymentAPI.AECreditorAccount'
+        CreditorReference:
+          $ref: '#/components/schemas/UAEPaymentAPI.AEReference'
+        DebtorReference:
+          $ref: '#/components/schemas/UAEPaymentAPI.AEReference'
+        ExtendedPurpose:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: Specifies the purpose of an international payment.
+        InstructionPriority:
+          type: string
+          enum:
+            - Normal
+            - Urgent
+          description: >-
+            Indicator of the urgency or order of importance that the instructing party would like the instructed party
+            to apply to the processing of the instruction.
+        PaymentAmount:
+          allOf:
+            - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveCurrencyAmount'
+          description: >-
+            The remittance payment amount. This value is required where:
+
+
+            * The `QuoteType` value is `Remittance` i.e. the quote is for a same-currency payout, with no trading
+            element.
+
+            * There is an expectation that the buy side amount will differ from the required remittance amount.
+
+
+            The provision of this value ensures that charges associated with remittance can be accurately calculated.
+        PaymentDate:
+          type: string
+          format: date
+          description: >-
+            Payment is required for a specific date in the future. 
+
+
+            If `PaymentDate` is omitted then the remittance will be sent as soon as the trade is executed and funds are
+            available.
+      description: >-
+        Provides remittance information for the quote, to allow the LFI to calculate charges accurately.
+
+
+        The CreditorAccount is required as this will contain the destination account for the remittance. All other
+        values are optional.
+
+
+        If the quote does include a remittance element then this data is omitted.
+    UAEPaymentAPI.AEReference:
+      type: string
+      minLength: 1
+      maxLength: 35
+      description: A reason or reference in relation to a payment.
+    AEReadFxQuoteResponseBody1:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/FxServiceInitiation.AEFxQuote'
+    FxServiceInitiation.AEFxQuote:
+      type: object
+      required:
+        - FxQuoteId
+        - QuoteReference
+        - BuyAmount
+        - SellAmount
+        - UnitCurrency
+        - QuotedCurrency
+        - RateType
+        - ExchangeRate
+        - UserIdentificationStatus
+        - ExpirationDateTime
+        - Commission
+        - QuoteStatus
+        - CreationDateTime
+        - StatusUpdateDateTime
+      properties:
+        FxQuoteId:
+          allOf:
+            - $ref: '#/components/schemas/FxServiceInitiation.FxQuoteIdType'
+          description: The unique identifier for the quote.
+        QuoteReference:
+          allOf:
+            - $ref: '#/components/schemas/AEQuoteReferenceType'
+          description: The unique quote reference number generated by the TPP for tracking a quote across multiple LFIs.
+        BuyAmount:
+          allOf:
+            - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveCurrencyAmount'
+          description: The amount of the currency being bought.
+        SellAmount:
+          allOf:
+            - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveCurrencyAmount'
+          description: The amount of the currency being sold.
+        UnitCurrency:
+          allOf:
+            - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveOrHistoricCurrencyCode'
+          description: >-
+            Currency in which the rate of exchange is expressed in a currency exchange. In the example 1AED = xxxCUR,
+            the unit currency is AED. This equates to the "sell" side of the currency exchange.
+        QuotedCurrency:
+          allOf:
+            - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveOrHistoricCurrencyCode'
+          description: >-
+            Currency into which the base currency is converted, in a currency exchange. This equates to the "buy" side
+            of the currency exchange.
+        RateType:
+          type: string
+          enum:
+            - Actual
+            - Agreed
+            - Indicative
+          description: Specifies the type used to complete the currency exchange.
+        ExchangeRate:
+          type: number
+          description: >-
+            The factor used for conversion of an amount from one currency to another. This reflects the price at which
+            one currency was bought with another currency.
+        UserIdentificationStatus:
+          type: string
+          enum:
+            - UserIdentified
+            - UserNotIdentified
+            - AccountOpeningNotSupported
+          description: >-
+            Status of User identification based on supplied Party data. The status code values are defined as follows:
+
+
+            * UserIdentified: The User has been identified by the LFI based on the supplied Party data.
+
+            * UserNotIdentified: The User has not been identified by the LFI based on the supplied Party data. The User
+            may be able to open an account at the LFI when data requirements are Completed.
+
+            * AccountOpeningNotSupported: The User has not been identified and the LFI does not support account opening
+            based on the supplied Party data.
+
+
+            Please note that there is no status code associated with a User logging into the LFI at this stage as this
+            will be completed after the quote has been accepted and consent for the trade is granted through Bank
+            Service Initiation.
+        Charges:
+          type: array
+          items:
+            $ref: '#/components/schemas/FxServiceInitiation.AECharges'
+          description: The charges associated with the request currency exchange.
+        FundingAccount:
+          $ref: '#/components/schemas/FxServiceInitiation.AEFxFundingAccountProperties'
+        FundingAccountBalance:
+          type: array
+          items:
+            $ref: '#/components/schemas/UAEAccountInformationAPI.AEBalance'
+          minItems: 1
+          description: >-
+            The balance of the funding account, if available. This will only be provided if the value of
+            `UserIdentificationStatus` is `UserIdentified`.
+
+
+            The model for balances is based on Bank Data Sharing, and multiple balances will therefore be returned. How
+            balances are displayed to the User is at the discretion of the TPP.
+        ExpirationDateTime:
+          allOf:
+            - $ref: '#/components/schemas/AEOpenFinanceFrameworkDateTime'
+          description: The quote expiration data and time.
+        Commission:
+          type: object
+          properties:
+            CommissionAmount:
+              allOf:
+                - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveCurrencyAmount'
+              description: The commission payable for the FX Service Initiation trade.
+            PaymentMethod:
+              type: string
+              enum:
+                - DirectToTPP
+                - ThroughAPIHub
+              description: >-
+                The method to be used to pay the commission to the TPP if the User elects to proceed with the
+                application and successfully completes the trade.
+          required:
+            - CommissionAmount
+            - PaymentMethod
+          description: >-
+            The commission amount, calculated based on the quoted currency exchange. This value may be subject to change
+            based on the fulfillment value.
+        ContractIdentification:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: >-
+            Unique and unambiguous reference to the foreign exchange contract agreed between the initiating
+            party/creditor and the debtor agent.
+        Party:
+          $ref: '#/components/schemas/AEIdentityAssurance'
+        QuoteStatus:
+          allOf:
+            - $ref: '#/components/schemas/FxServiceInitiation.AEFxQuoteStatusCodes'
+          description: >-
+            The status of the quote. Please refer to guidance in the business rules on the quote status model.
+
+
+            The LFI is responsible for updating the statue to Completed and returning relevant information based on the
+            finalized value.
+        PromotionalMessage:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: >-
+            Promotional message provided by the LFI for marketing purposes to the User, that can be displayed by the
+            TPP.
+        ComplianceMessage:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Compliance message provided by LFI to be shown to the User on progressing the quote.
+        FulfillmentAmount:
+          type: object
+          properties:
+            BuyAmount:
+              allOf:
+                - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveCurrencyAmount'
+              description: The amount of the currency being bought.
+            SellAmount:
+              allOf:
+                - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveCurrencyAmount'
+              description: The amount of the currency being sold.
+            ExchangeRate:
+              type: number
+              description: >-
+                The factor used for conversion of an amount from one currency to another. This reflects the price at
+                which one currency was bought with another currency.
+          required:
+            - BuyAmount
+            - SellAmount
+            - ExchangeRate
+          description: >-
+            The fulfillment value of the quote, based the completed execution of the trade by the LFI.
+
+
+            This value is only provided when the quote status is Completed and the exchange rate and amount values
+            differ from the original quote.
+
+
+            Both the buy and sell side amounts are provided for ease of use.
+        CreationDateTime:
+          allOf:
+            - $ref: '#/components/schemas/CreationDateTime'
+          description: The date and time when the  quote was created.
+        StatusUpdateDateTime:
+          allOf:
+            - $ref: '#/components/schemas/AEOpenFinanceFrameworkDateTime'
+          description: The data and time the  quote was last updated.
+    FxServiceInitiation.AEFxQuoteStatusCodes:
+      type: string
+      enum:
+        - Accepted
+        - AccountOpened
+        - Actioned
+        - Available
+        - Cancelled
+        - Completed
+        - Expired
+        - Funded
+        - Rejected
+    AEUpdateFxQuoteRequestBody1:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          properties:
+            QuoteReference:
+              allOf:
+                - $ref: '#/components/schemas/AEQuoteReferenceType'
+              description: The unique quote reference number generated by the TPP for tracking a quote across multiple LFIs.
+            QuoteStatus:
+              type: string
+              enum:
+                - Accepted
+              description: The quote status. Only `Accepted` is valid.
+            Trade:
+              type: object
+              properties:
+                SellAmount:
+                  allOf:
+                    - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveCurrencyAmount'
+                  description: The amount of the currency being sold.
+                BuyAmount:
+                  allOf:
+                    - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveCurrencyAmount'
+                  description: The amount of the currency being bought.
+                Charges:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/FxServiceInitiation.AECharges'
+                  description: The charges associated with the request currency exchange.
+              required:
+                - SellAmount
+                - BuyAmount
+              description: Quote properties. This must be replayed **exactly** as quoted to TPP and displayed to the User.
+            Commission:
+              type: object
+              properties:
+                CommissionAmount:
+                  allOf:
+                    - $ref: '#/components/schemas/UAEPaymentAPI.AEActiveCurrencyAmount'
+                  description: The total monetary value of the commission paid to the TPP if the User proceeds with the FX quote
+                PaymentMethod:
+                  type: string
+                  enum:
+                    - DirectToTPP
+                    - ThroughAPIHub
+                  description: >-
+                    The method to be used to pay the commission to the TPP if the User elects to proceed with the
+                    application and successfully completes the trade.
+              required:
+                - CommissionAmount
+                - PaymentMethod
+              description: Details of commission. This must be replayed **exactly** as quoted to TPP.
+          required:
+            - QuoteReference
+            - QuoteStatus
+            - Trade
+            - Commission
+          description: >-
+            Properties of the accepted quote. Must be supplied when accepting the quote, but can be omitted when
+            managing Webhook subscriptions.
+    FxQuoteId:
+      description: >-
+        Required where the consent or payment initiation request relates to a previously quoted FX trade. The TPP must
+        provide the `QuoteId` value where a long-lived consent exists, meaning that each payment initiation request will
+        relate to a different `QuoteId` value.
+      allOf:
+        - $ref: '#/components/schemas/FxServiceInitiation.FxQuoteIdType'
+    UAEAccountInformationAPI.AEPartyCalendarType:
+      type: string
+      enum:
+        - IslamicCalendar
+        - GregorianCalendar
+      description: |-
+        The type of calendar used for the date of issuance and date of expiry in the document evidence
+        Allowable values:
+        "Islamic Calendar"
+        "Gregorian Calendar"
+        Both calendars must follow YYYY-MM-DD
+    UAEAccountInformationAPI.AEPartyIdentityCheckDetail:
+      type: object
+      properties:
+        CheckMethod:
+          type: string
+          description: >-
+            Identifes the method used by PASP for checking the evidence for verification
+
+            String representing the check done, this includes processes such as checking the authenticity of the
+            document, or verifying the user's biometric against an identity document.
+        Organization:
+          type: string
+          description: >-
+            String denoting the legal entity that performed the check. This SHOULD be included if the OP did not perform
+            the check itself
+        Txn:
+          type: string
+          description: >-
+            Identifier referring to the identity verification transaction. The OP MUST ensure that this is present when
+            EvidenceRef element is used. The OP MUST ensure that the transaction identifier can be resolved into
+            transaction details during an audit
+        Time:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.ISODateTime'
+      description: >-
+        Identifes the method used by PASP for checking the evidence for verification.
+
+        Representing the checks done in relation to the evidence
+
+        OpenID Connect for Identity Assurance 1.0:
+        [https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#name-evidence-element](https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#name-evidence-element)
+    UAEAccountInformationAPI.AEPartyIdentityEvidenceAttachment:
+      type: object
+      required:
+        - Desc
+        - ContentType
+        - Content
+        - Txn
+      properties:
+        Desc:
+          type: string
+          description: Description of the document. This can be the filename or just an explanation of the content.
+        ContentType:
+          type: string
+          description: Content (MIME) type of the document
+        Content:
+          type: string
+          description: Base64 encoded representation of the document content
+        Txn:
+          type: string
+          description: Identifier referring to the transaction
+    UAEAccountInformationAPI.AEPartyIdentityEvidenceAttachments:
+      type: object
+      required:
+        - AEPartyIdentityEvidenceAttachments
+      properties:
+        AEPartyIdentityEvidenceAttachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/UAEAccountInformationAPI.AEPartyIdentityEvidenceAttachment'
+          description: >-
+            Attachments
+
+            [https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#name-attachments](https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#name-attachments)
+    UAEAccountInformationAPI.AEPartyIdentityEvidenceTypeDocument:
+      type: object
+      properties:
+        Type:
+          description: The type of evidence allowed for providing verification.
+        CheckDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/UAEAccountInformationAPI.AEPartyIdentityCheckDetail'
+        Verifier:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.DocumentEvidenceVerifier'
+        Time:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.ISODateTime'
+        DocumentDetails:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.DocumentEvidenceDetails'
+        Attachments:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.AEPartyIdentityEvidenceAttachments'
+      description: >-
+        Document Evidence
+
+        [https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#name-evidence-type-document](https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#name-evidence-type-document)
+    UAEAccountInformationAPI.AEPartyIdentityEvidenceTypeElectronicRecord:
+      type: object
+      properties:
+        Type:
+          description: The type of evidence allowed for providing verification.
+        CheckDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/UAEAccountInformationAPI.AEPartyIdentityCheckDetail'
+        Time:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.ISODateTime'
+        Record:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.ElectronicRecordProperties'
+        Attachments:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.AEPartyIdentityEvidenceAttachments'
+      description: >-
+        Electronic Record Evidence
+
+        [https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#name-evidence-type-electronic_re](https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#name-evidence-type-electronic_re)
+    UAEAccountInformationAPI.AEPostalAddress:
+      type: object
+      required:
+        - AddressLine
+        - Country
+      properties:
+        AddressType:
+          type: string
+          enum:
+            - Billing
+            - Business
+            - Correspondence
+            - DeliveryTo
+            - MailTo
+            - POBox
+            - Postal
+            - Permanent
+            - Residential
+            - Statement
+            - Other
+          description: The type of address. Omitted if type not held.
+        AddressLine:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          maxItems: 7
+          description: >-
+            Information that locates and identifies a specific address for a transaction entry, that is presented in
+            free format text.
+        BuildingNumber:
+          type: string
+          minLength: 1
+          maxLength: 16
+          description: The unit, apartment, or villa number within a building or community
+        BuildingName:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: Name of the building or house.
+        Floor:
+          description: Floor or storey within a building.
+          type: string
+          minLength: 1
+          maxLength: 70
+        StreetName:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: The name of the street or road where the property is located.
+        DistrictName:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: The district, community, or neighbourhood where the property is located.
+        PostBox:
+          type: string
+          minLength: 1
+          maxLength: 16
+          description: The P.O. Box number assigned to the recipient for mail delivery.
+        TownName:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: Name of a built-up area, such as a town or city.
+        CountrySubDivision:
+          type: string
+          enum:
+            - AbuDhabi
+            - Ajman
+            - Dubai
+            - Fujairah
+            - RasAlKhaimah
+            - Sharjah
+            - UmmAlQuwain
+          description: Country subdivision, such as state or province. This is the Emirate where the address is registered.
+        Country:
+          type: string
+          pattern: ^[A-Z]{2}$
+          description: The country associated with the address, represented using the ISO 3166-1 alpha-2 country code.
+      description: Address properties based on ISO 20022 `PostalAddress27` definition
+    UAEAccountInformationAPI.DocumentEvidenceDetails:
+      type: object
+      properties:
+        Type:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.DocumentEvidenceDetailsType'
+        DocumentNumber:
+          type: string
+          description: The unique id number in the evidence used for verification checking
+        PersonalNumber:
+          type: string
+          description: >-
+            An identifier that is assigned to the End-User and is not limited to being used in one document, for example
+            a national identification number, personal identity number, citizen number, social security number, driver
+            number, account number, customer number, licensee number, etc
+        SerialNumber:
+          type: string
+          description: >-
+            An identifier/number that identifies the document irrespective of any personalization information (this
+            usually only applies to physical artifacts and is present before personalization).
+        CalendarType:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.AEPartyCalendarType'
+        DateOfIssuance:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.ISODateTime'
+        DateOfExpiry:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.ISODateTime'
+        Issuer:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.DocumentEvidenceDetailsIssuer'
+      description: Representing the document used to perform the identity verification.
+    UAEAccountInformationAPI.DocumentEvidenceDetailsIssuer:
+      type: object
+      required:
+        - Name
+        - Address
+        - CountryCode
+        - Jurisdiction
+      properties:
+        Name:
+          type: string
+          description: Designation of the issuer of the document.
+        Address:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.AEPostalAddress'
+        CountryCode:
+          description: String denoting the country or supranational organization that issued the document as ISO 3166
+        Jurisdiction:
+          type: string
+          description: >-
+            String containing the name of the region(s)/state(s)/province(s)/municipality(ies) that issuer has
+            jurisdiction over (if this information is not common knowledge or derivable from the address)
+      description: Containing information about the issuer of this document.
+    UAEAccountInformationAPI.DocumentEvidenceDetailsType:
+      type: string
+      enum:
+        - passport
+        - driving_permit
+        - idcard
+        - residence_permit
+        - emirates_id
+      description: >-
+        The type of document used for evidence checking
+
+        [https://bitbucket.org/openid/ekyc-ida/wiki/identifiers](https://bitbucket.org/openid/ekyc-ida/wiki/identifiers)
+    UAEAccountInformationAPI.DocumentEvidenceVerifier:
+      type: object
+      required:
+        - Organization
+      properties:
+        Organization:
+          type: string
+          description: String denoting the organization which performed the verification on behalf of the OP.
+        Txn:
+          type: string
+          description: >-
+            Identifier referring to the identity verification transaction. The OP MUST ensure that the transaction
+            identifier can be resolved into transaction details during an audit.
+      description: >-
+        Denoting the legal entity that performed the identity verification. This object SHOULD be included if the OP did
+        not perform the identity verification itself. This object is retained for backward compatibility, implementers
+        are recommended to use CheckDetails & Organization instead
+    UAEAccountInformationAPI.ElectronicRecordProperties:
+      type: object
+      required:
+        - Type
+        - PersonalNumber
+        - CalendarType
+        - CreatedAt
+        - DateOfExpiry
+        - Source
+      properties:
+        Type:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.ElectronicRecordType'
+        PersonalNumber:
+          type: string
+          description: >-
+            String representing an identifier that is assigned to the User and is not limited to being used in one
+            record, for example a national identification number, personal identity number, citizen number, social
+            security number, driver number, account number, customer number, licensee number, etc.
+        CalendarType:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.AEPartyCalendarType'
+        CreatedAt:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.ISODateTime'
+        DateOfExpiry:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.ISODateTime'
+        Source:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.ElectronicRecordSourceProperties'
+      description: Representing the record used to perform the identity verification.
+    UAEAccountInformationAPI.ElectronicRecordSourceProperties:
+      type: object
+      required:
+        - Name
+        - Address
+        - CountryCode
+        - Jurisdiction
+      properties:
+        Name:
+          type: string
+          description: Designation of the source of the electronic_record
+        Address:
+          $ref: '#/components/schemas/UAEAccountInformationAPI.AEPostalAddress'
+        CountryCode:
+          description: String denoting the country or supranational organization that issued the evidence as ISO 3166
+        Jurisdiction:
+          type: string
+          description: >-
+            String containing the name of the region(s) / state(s) / province(s) / municipality(ies) that source has
+            jurisdiction over (if it's not common knowledge or derivable from the address)
+      description: Information about the source of this record
+    UAEAccountInformationAPI.ElectronicRecordType:
+      type: string
+      enum:
+        - bank_account
+        - mortgage_account
+        - finance_account
+      description: String denoting the type of electronic record
+    UAEAccountInformationAPI.ISODateTime:
+      type: string
+      format: date-time
+      description: |-
+        All dates in the JSON payloads are represented in ISO 8601 date-time format.
+        All date-time fields in responses must include the timezone. An example is below:
+        2017-04-05T10:43:07+00:00
+    UAEPaymentAPI.AEActiveCurrencyAmount:
+      type: object
+      required:
+        - Amount
+        - Currency
+      properties:
+        Amount:
+          $ref: '#/components/schemas/UAEPaymentAPI.AEActiveOrHistoricAmount'
+        Currency:
+          $ref: '#/components/schemas/UAEPaymentAPI.AEActiveOrHistoricCurrencyCode'
+      description: The Currency and Amount relating to the Payment
+    UAEPaymentAPI.AEActiveOrHistoricAmount:
+      type: string
+      pattern: ^\d{1,16}\.\d{2}$
+      description: >-
+        A number of monetary units specified in an active currency where the unit of currency is explicit and compliant
+        with ISO 4217.
+    UAEPaymentAPI.AEActiveOrHistoricCurrencyCode:
+      type: string
+      pattern: ^[A-Z]{3,3}$
+      description: >-
+        A 3 character alphabetic code allocated to a currency under an international currency identification scheme, as
+        described in the latest edition of the international standard ISO 4217 'Codes for the representation of
+        currencies and funds'.
+    UAEPaymentAPI.AECreditorAccount:
+      type: object
+      required:
+        - SchemeName
+        - Identification
+        - Name
+        - Type
+      properties:
+        SchemeName:
+          $ref: '#/components/schemas/UAEPaymentAPI.AECreditorExternalAccountIdentificationCode'
+        Identification:
+          $ref: '#/components/schemas/UAEPaymentAPI.AEIdentification'
+        Name:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEName'
+        TradingName:
+          $ref: '#/components/schemas/UAEPaymentAPI.AETradingName'
+        Type:
+          type: string
+          enum:
+            - Individual
+            - Merchant
+            - Business
+            - Charity
+            - GovernmentBody
+            - Other
+          description: The Creditor (Payee) Type, based on an allowed list.
+      description: Unambiguous identification of the account of the creditor to which a credit entry will be posted.
+
+    AEBankServiceInitiationRichAuthorizationRequests.AECreditorProperties:
+      type: object
+      properties:
+        Name:
+          type: string
+          minLength: 1
+          maxLength: 140
+        PostalAddress:
+          $ref: '#/components/schemas/AEAddress'
+      description: Party to which an amount of money is due.
+      additionalProperties: false
+
+    AEBankServiceInitiationRichAuthorizationRequests.AEIdentification:
+      type: string
+      minLength: 1
+      description: |-
+        Identification for the account assigned by the LFI based on the Account Scheme Name.
+        This identification is known by the User account owner.
+
+    AEBankServiceInitiationRichAuthorizationRequests.AETradingName:
+      type: object
+      properties:
+        en:
+          type: string
+          maxLength: 70
+          description: English value of the string
+        ar:
+          type: string
+          maxLength: 70
+          description: Arabic value of the string
+      description: |-
+        The Trading Brand Name (if applicable) for the Creditor.
+        Applicable to Payments.
+      additionalProperties: false
+
+    AEBankServiceInitiationRichAuthorizationRequests.AECreditorAccountTypeCodes:
+      type: string
+      enum:
+        - Individual
+        - Merchant
+        - Business
+        - Charity
+        - GovernmentBody
+        - Other
+      description: The Creditor (Payee) Type, based on an allowed list. This value is populated by TPPs to inform the 
+        User of the type of Creditor being authorized, which facilitates providing information during the Consent 
+        journey.
+
+    AEBankServiceInitiationRichAuthorizationRequests.AEDomesticCreditorAccountProperties:
+      type: object
+      required:
+        - SchemeName
+        - Identification
+        - Name
+      properties:
+        SchemeName:
+          type: string
+          enum:
+            - IBAN
+          description: Domestic payment scheme, restricted to `IBAN`
+        Identification:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEIdentification'
+        Name:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEName'
+        TradingName:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AETradingName'
+        Type:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AECreditorAccountTypeCodes'
+      description: Unambiguous identification of the account of the creditor to which a credit entry will be posted.
+      additionalProperties: false
+
+    AEBankServiceInitiationRichAuthorizationRequests.AEDomesticCreditor:
+      type: object
+      required:
+        - CreditorAccount
+      properties:
+        CreditorAgent:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AECreditorAgentProperties'
+        Creditor:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AECreditorProperties'
+        CreditorAccount:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEDomesticCreditorAccountProperties'
+        ConfirmationOfPayeeResponse:
+          type: string
+          pattern: ^.+\..+\..+$
+          description: |-
+            Response from Confirmation of Payee operation, when executed for the Creditor Account.
+
+            This is JSON Web Signature returned by the Payee Confirmation operation at the Confirmation of Payee API.
+
+            The value must be the full JWS string, including the header and signature, without decoding to an object.
+
+            If Confirmation of Payee is not performed this property can be omitted
+      description: Identification elements for a Creditor for a domestic payment instruction.
+      additionalProperties: false
+
+    AEBankServiceInitiationRichAuthorizationRequests.AEInternationalCreditorAccountProperties:
+      type: object
+      required:
+        - SchemeName
+        - Identification
+        - Name
+      properties:
+        SchemeName:
+          $ref: >-
+            #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AECreditorExternalAccountIdentificationCode
+        Identification:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEIdentification'
+        Name:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEName'
+        TradingName:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AETradingName'
+        Type:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AECreditorAccountTypeCodes'
+      description: Unambiguous identification of the account of the creditor to which a credit entry will be posted.
+      additionalProperties: false
+
+    AEBankServiceInitiationRichAuthorizationRequests.AEInternationalCreditor:
+      type: object
+      required:
+        - CreditorAccount
+      properties:
+        CreditorAgent:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AECreditorAgentProperties'
+        Creditor:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AECreditorProperties'
+        CreditorAccount:
+          $ref: >-
+            #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEInternationalCreditorAccountProperties
+      description: >-
+        Identification elements for a Creditor for an international payment instruction. Please note that Confirmation
+        of Payee is **NOT** required or expected for International Payments, as non-domestic Creditor accounts are not
+        supported.
+      additionalProperties: false
+
+    AEBankServiceInitiation.AEDomesticPaymentPIIProperties:
+      title: Domestic Payment PII Schema Object
+      type: object
+      additionalProperties: false
+      description: Elements of Personal Identifiable Information data
+      properties:
+        Initiation:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEDomesticCreditor'
+        Risk:
+          $ref: '#/components/schemas/AERisk'
+
+    AEBankServiceInitiation.AEInternationalPaymentPIIProperties:
+      title: International Payment PII Schema Object
+      type: object
+      properties:
+        Initiation:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEInternationalCreditor'
+        Risk:
+          $ref: '#/components/schemas/AERisk'
+      additionalProperties: false
+
+  parameters:
+    providerId:
+      name: o3-provider-id
+      in: header
+      schema:
+        type: string
+      required: true
+      description: Identifier for the Financial Institution that the request is targeted to
+    aspspId:
+      name: o3-aspsp-id
+      in: header
+      schema:
+        type: string
+      required: true
+      deprecated: true
+      description: >-
+        Identifier for the financial institution that the request is targeted to. This header is deprecated and will be
+        removed in a future version of Ozone Connect. Use `o3-provider-id` instead.
+    callerOrgId:
+      name: o3-caller-org-id
+      in: header
+      schema:
+        type: string
+      required: true
+      description: An identifier for the organization calling the API
+    callerClientId:
+      name: o3-caller-client-id
+      in: header
+      schema:
+        type: string
+      required: true
+      description: An identifier for the OIDC clientId calling the API
+    callerSoftwareStatementId:
+      name: o3-caller-software-statement-id
+      in: header
+      schema:
+        type: string
+      required: true
+      description: An identifier for the software statement calling the API
+    apiUri:
+      name: o3-api-uri
+      in: header
+      schema:
+        type: string
+      required: true
+      description: The parameterised URL of the API being called by the caller
+    apiOperation:
+      name: o3-api-operation
+      in: header
+      schema:
+        type: string
+      required: true
+      description: The API operation carried out by the caller (e.g. GET, POST, PUT, DELETE, PATCH)
+    consentId:
+      name: o3-consent-id
+      in: header
+      schema:
+        type: string
+      required: true
+      description: The consentId for which this call is being made
+    callerInteractionId:
+      name: o3-caller-interaction-id
+      in: header
+      schema:
+        type: string
+      required: false
+      description: The interaction ID passed in by the caller, if any
+    ozoneInteractionId:
+      name: o3-ozone-interaction-id
+      in: header
+      schema:
+        type: string
+      required: true
+      description: >-
+        An interaction ID generated by Ozone if the caller did not send in one. If the callerInteractionId is specified,
+        this takes the same value.
+    psuIdentifier:
+      name: o3-psu-identifier
+      in: header
+      schema:
+        type: string
+      required: true
+      description: A Base64 encoded representation of the psuIdentifier JSON object.
+    paymentId:
+      name: paymentId
+      description: The identifier for a given payment instruction
+      in: path
+      required: true
+      schema:
+        type: string
+    AccountId:
+      name: AccountId
+      in: path
+      required: true
+      description: Unique identifier for a given account opening instance
+      schema:
+        $ref: '#/components/schemas/AccountOpeningServiceInitiation.AEAccountIdType'
+    FxQuoteId:
+      name: FxQuoteId
+      in: path
+      required: true
+      description: Unique identifier for a given FX quote
+      schema:
+        $ref: '#/components/schemas/FxServiceInitiation.FxQuoteIdType'
+  securitySchemes:
+    OzoneConnectApiKey:
+      description: >-
+        Communications between the API Hub and the LFI Ozone Connect implementation are secured using an API Key, which
+        is a secret shared between the API Hub and the LFI.
+      type: apiKey
+      in: header
+      name: Authorization
+    OzoneConnectClientCredentials:
+      type: oauth2
+      description: >
+        Communications between the API Hub and the LFI Ozone Connect implementation are secured using a Client
+        Credentials grant type.
+
+
+        LFIs must host an OAuth 2.0 Authorization Server to utilise this security pattern. Scope values are set during
+        the onboarding process, and represented by a placeholder in this API description.
+      flows:
+        clientCredentials:
+          tokenUrl: https://example.lfi.ae/token
+          scopes:
+            placeholder: Placeholder for scopes, which are set by the LFI during onboarding
+    OzoneConnectJwtAuth:
+      description: >
+        Communications between the API Hub and the LFI Ozone Connect implementation are secured using the "JWT Auth"
+        mechanism, where the Client presents a signed JSON Web Token as a credential.
+
+
+        The Server MUST verify the signature in order to authenticate the Client.
+
+
+        Please note that the value of the `scheme` parameter is not a registered HTTP Authentication Scheme, to indicate
+        it is specific to Ozone Connect. Please refer to API Hub documentation for further details.
+      type: http
+      scheme: Ozone-Connect-JWT-Auth
+    OzoneConnectServiceInitiationToken:
+      description: >
+        Communications between the API Hub and the LFI Ozone Connect implementation are secured using a Service
+        Initiation Token.
+
+
+        The API Hub will set an Access Token based on a value set by the LFI, which has been patched onto the associated
+        consent. The value will be transmitted in the `Authorization` header, which is represented as a `Bearer` in this
+        Security Scheme Object.
+      type: http
+      scheme: Bearer

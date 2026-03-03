@@ -1,0 +1,116 @@
+.homepage {
+  background-color: white;
+  color: black;
+}
+
+
+.actor {
+  fill: rgba(0, 200, 175, 0.4) !important;
+  font-size: 1.5rem !important;
+  stroke-width: 0px !important;
+}
+
+.diagram-wrapper {
+  width: 100%;
+  max-width: 1100px;
+  margin: 40px auto;
+  border-radius: 24px;
+}
+
+.mermaid-container {
+  border-radius: 16px;
+  overflow: auto;
+}
+
+.mermaid-container svg {
+  max-width: 100% !important;
+  height: auto !important;
+  background: transparent !important;
+}
+
+
+.section-heading {
+  font-size: 3.75rem;
+  line-height: 4rem;
+  font-weight: 600;
+  margin: 2rem 0;
+  width: 100%;
+  text-align: left;
+  opacity: 80%;
+}
+
+.section-subheading {
+  font-size: 2.25rem;
+  line-height: 2.75rem;
+  font-weight: 500;
+  margin: 2rem 0;
+  width: 100%;
+  text-align: left;
+  opacity: 80%;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+  margin-bottom: 4rem;
+  margin-top: 4rem;
+}
+
+.section {
+  z-index: 10;
+  padding-top: 150px;
+  padding-left: 100px;
+  padding-right: 100px;
+  padding-bottom: 200px;
+}
+
+
+.VPSidebarItem .text {
+  font-size: 0.75rem !important;
+}
+
+span[data-v-cf6e7c5e] {
+  display: none !important;
+}
+
+@media (min-width: 1660px) {
+    .VPNavBar.has-sidebar .title[data-v-cf6e7c5e] {
+         padding-left: calc((100% - 1440px)/2 - 64px) !important;
+       idth: calc(350px - 64px) !important;
+    }
+}
+
+@media (min-width: 1660px) {
+.VPSidebar {
+  padding-left: calc((100% - 1440px)/2 - 64px) !important;
+}
+}
+
+@media (min-width: 1440px) {
+    .group[data-v-8b980502] {
+        width: calc(350px - 64px) !important;
+    }
+}
+
+/* .VPNavBarTitle {
+  display: none !important;
+} */
+
+/* HTTP method badges in sidebar API reference items */
+.http-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  font-family: var(--vp-font-family-mono);
+}
+
+.http-path {
+  font-size: 0.65rem;
+  font-family: var(--vp-font-family-mono);
+}
+
+.http-get    { color: #16a34a; }
+.http-post   { color: #3b82f6; }
+.http-put    { color: #8b5cf6; }
+.http-patch  { color: #f59e0b; }
+.http-delete { color: #ef4444; }

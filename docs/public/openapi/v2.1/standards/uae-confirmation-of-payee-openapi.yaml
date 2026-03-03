@@ -1,0 +1,829 @@
+openapi: 3.0.0
+info:
+  title: UAE Confirmation of Payee API
+  description: '## UAE Open Finance Confirmation of Payee API Specification'
+  version: v2.1
+tags:
+  - name: Confirmation Operations
+    description: Payee confirmation operations and resources
+  - name: Discovery Operations
+    description: Discovery operations and resources
+paths:
+  /confirmation:
+    post:
+      operationId: ConfirmationOfPayeeConfirmation_signedConfirmationRequest
+      summary: Confirm the account details are correct based on the parameters supplied
+      description: >-
+        Provide the properties that can be used to verify the payee account.
+            
+        An empty response will be returned if the Payee account holder has opted-out of the Confirmation of Payee
+        service.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/x-customer-user-agent'
+        - $ref: '#/components/parameters/x-fapi-auth-date'
+        - $ref: '#/components/parameters/x-fapi-customer-ip-address'
+        - $ref: '#/components/parameters/x-fapi-interaction-id'
+      responses:
+        '200':
+          description: Confirmation of Payee operation completed with name matching result
+          headers:
+            x-fapi-interaction-id:
+              required: false
+              description: An RFC4122 UID used as a correlation ID.
+              schema:
+                type: string
+          content:
+            application/jwt:
+              schema:
+                $ref: '#/components/schemas/NameConfirmationResponseBodySigned'
+        '204':
+          description: Account holder has opted-out of Confirmation of Payee and no data is returned
+          headers:
+            x-fapi-interaction-id:
+              required: false
+              description: An RFC4122 UID used as a correlation ID.
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/400Error'
+        '401':
+          $ref: '#/components/responses/401Error'
+        '403':
+          $ref: '#/components/responses/403Error'
+        '404':
+          $ref: '#/components/responses/404Error'
+        '405':
+          $ref: '#/components/responses/405Error'
+        '406':
+          $ref: '#/components/responses/406Error'
+        '415':
+          $ref: '#/components/responses/415Error'
+        '429':
+          $ref: '#/components/responses/429Error'
+        '500':
+          $ref: '#/components/responses/500Error'
+      tags:
+        - Confirmation Operations
+      requestBody:
+        required: true
+        content:
+          application/jwt:
+            schema:
+              $ref: '#/components/schemas/NameConfirmationRequestBodySigned'
+      security:
+        - TPPOAuth2Security:
+            - confirmation-of-payee
+  /discovery:
+    post:
+      operationId: ConfirmationOfPayeeDiscovery_signedDiscoveryRequest
+      summary: Discover the LFI that will confirm the payee attributes
+      description: >-
+        Before a Confirmation of Payee (CoP) operation takes place the TPP will need to resolve the LFI that will
+        service the account properties request. This requirement is based on the separation of concerns implemented in
+        the OFP, which ensures that the APIs for a given LFI are always physically separated.
+
+
+        The TPP will call this endpoint with the Creditor Account IBAN, which will be used to resolve the correct URL
+        with which to make the CoP operation.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/x-customer-user-agent'
+        - $ref: '#/components/parameters/x-fapi-auth-date'
+        - $ref: '#/components/parameters/x-fapi-customer-ip-address'
+        - $ref: '#/components/parameters/x-fapi-interaction-id'
+      responses:
+        '200':
+          description: The request has succeeded.
+          headers:
+            x-fapi-interaction-id:
+              required: false
+              description: An RFC4122 UID used as a correlation ID.
+              schema:
+                type: string
+          content:
+            application/jwt:
+              schema:
+                $ref: '#/components/schemas/DiscoverConfirmationSourceResponseBodySigned'
+        '400':
+          $ref: '#/components/responses/400Error'
+        '401':
+          $ref: '#/components/responses/401Error'
+        '403':
+          $ref: '#/components/responses/403Error'
+        '404':
+          $ref: '#/components/responses/404Error'
+        '405':
+          $ref: '#/components/responses/405Error'
+        '406':
+          $ref: '#/components/responses/406Error'
+        '415':
+          $ref: '#/components/responses/415Error'
+        '429':
+          $ref: '#/components/responses/429Error'
+        '500':
+          $ref: '#/components/responses/500Error'
+      tags:
+        - Discovery Operations
+      requestBody:
+        required: true
+        content:
+          application/jwt:
+            schema:
+              $ref: '#/components/schemas/DiscoverConfirmationSourceRequestBodySigned'
+      security:
+        - TPPOAuth2Security:
+            - confirmation-of-payee
+components:
+  parameters:
+    Authorization:
+      name: authorization
+      in: header
+      required: true
+      description: An Access Token as per https://tools.ietf.org/html/rfc6750
+      schema:
+        type: string
+    x-customer-user-agent:
+      name: x-customer-user-agent
+      in: header
+      required: false
+      description: Indicates the user-agent that the User is using.
+      schema:
+        type: string
+    x-fapi-auth-date:
+      name: x-fapi-auth-date
+      in: header
+      required: false
+      description: |-
+        The time when the User last logged in with the TPP. 
+        All dates in the HTTP headers are represented as RFC 7231 Full Dates. An example is below: 
+        Sun, 10 Sep 2017 19:43:31 UTC
+      schema:
+        type: string
+        pattern: >-
+          ^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}
+          \d{2}:\d{2}:\d{2} (GMT|UTC)$
+    x-fapi-customer-ip-address:
+      name: x-fapi-customer-ip-address
+      in: header
+      required: false
+      description: The User's IP address if the User is currently logged in with the TPP.
+      schema:
+        type: string
+    x-fapi-interaction-id:
+      name: x-fapi-interaction-id
+      in: header
+      required: false
+      description: An RFC4122 UID used as a correlation ID.
+      schema:
+        type: string
+  schemas:
+    AEAccountConfirmationRequest:
+      type: object
+      required:
+        - Data
+      properties:
+        Data:
+          $ref: '#/components/schemas/AEAccountConfirmationRequestProperties'
+      additionalProperties: false
+    AEAccountConfirmationRequestProperties:
+      type: object
+      required:
+        - SchemeName
+        - Identification
+        - Name
+      properties:
+        SchemeName:
+          type: string
+          enum:
+            - IBAN
+          description: Name of the identification scheme, in a coded form as published in an external list.
+        Identification:
+          type: string
+          minLength: 1
+          maxLength: 34
+          description: >-
+            Identification for the account assigned by the LFI based on the Account Scheme Name, as understood by the
+            Debtor.
+        Name:
+          $ref: '#/components/schemas/AEAccountNameConfirmationProperties'
+      description: Properties to request a the Confirmation of Payee
+      additionalProperties: false
+    AEAccountConfirmationResponse:
+      type: object
+      required:
+        - Data
+        - Links
+        - Meta
+      properties:
+        Data:
+          $ref: '#/components/schemas/AEAccountConfirmationResponseProperties'
+        Links:
+          $ref: '#/components/schemas/LinksSelf'
+        Meta:
+          $ref: '#/components/schemas/Meta'
+      additionalProperties: false
+    AEAccountConfirmationResponseProperties:
+      type: object
+      required:
+        - NameMatchIndicator
+      properties:
+        NameMatchIndicator:
+          $ref: '#/components/schemas/AEAccountNameMatchIndicators'
+        MaskedName:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: >-
+            The masked matched account name. This is provided to allow the User to review the account name return from
+            the Confirmation operation.
+      additionalProperties: false
+    AEAccountNameConfirmationProperties:
+      oneOf:
+        - $ref: '#/components/schemas/AEPersonalAccountNameConfirmationProperties'
+        - $ref: '#/components/schemas/AEBusinessAccountNameConfirmationProperties'
+    AEAccountNameMatchIndicators:
+      type: string
+      enum:
+        - ConfirmationOfPayee.Yes
+        - ConfirmationOfPayee.Partial
+        - ConfirmationOfPayee.No
+      description: Indicator for whether the payee name is matched with the account name held at the LFI
+    AEBusinessAccountNameConfirmationProperties:
+      type: object
+      required:
+        - BusinessName
+      properties:
+        BusinessName:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: The business name of the account holder, as understood by the Debtor
+      description: The properties required to verify a business account
+      additionalProperties: false
+    AEConfirmationDiscoveryRequest:
+      type: object
+      required:
+        - Data
+      properties:
+        Data:
+          $ref: '#/components/schemas/AEConfirmationOfPayeeCreditorAccount'
+      additionalProperties: false
+    AEConfirmationDiscoveryResponse:
+      type: object
+      required:
+        - Data
+        - Links
+        - Meta
+      properties:
+        Data:
+          $ref: '#/components/schemas/AEConfirmationSourceProperties'
+        Links:
+          $ref: '#/components/schemas/LinksSelf'
+        Meta:
+          $ref: '#/components/schemas/Meta'
+      additionalProperties: false
+    AEConfirmationOfPayeeCreditorAccount:
+      type: object
+      required:
+        - SchemeName
+        - Identification
+      properties:
+        SchemeName:
+          type: string
+          enum:
+            - IBAN
+          description: Name of the identification scheme, in a coded form as published in an external list.
+        Identification:
+          type: string
+          minLength: 1
+          maxLength: 34
+          description: >-
+            Identification for the account assigned by the LFI based on the Account Scheme Name, as understood by the
+            Debtor.
+      additionalProperties: false
+    AEConfirmationSourceProperties:
+      type: object
+      required:
+        - DiscoveryEndpointUrl
+        - ResourceServerUrl
+      properties:
+        DiscoveryEndpointUrl:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: >-
+            Discovery or .well-known endpoint hosted at the API Hub that provides the information to request an Access
+            Token from the target LFI Authorisation Server.
+        ResourceServerUrl:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Resource Server URL at which the Confirmation of Payee operation should be invoked
+      additionalProperties: false
+    AECustomErrorCode:
+      type: string
+      pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+    AEError400:
+      anyOf:
+        - $ref: '#/components/schemas/AEError400Codes'
+        - $ref: '#/components/schemas/AECustomErrorCode'
+    AEError400Codes:
+      type: string
+      enum:
+        - Consent.Invalid
+        - Consent.BusinessRuleViolation
+        - Consent.FailsControlParameters
+        - Consent.InvalidUserIdentifier
+        - JWS.InvalidSignature
+        - JWS.Malformed
+        - JWS.InvalidClaim
+        - JWS.InvalidHeader
+        - JWS.InvalidPayload
+        - JWE.DecryptionError
+        - JWE.InvalidHeader
+        - GenericRecoverableError
+        - GenericError
+        - Event.UnexpectedEvent
+        - Body.InvalidFormat
+        - Resource.InvalidFormat
+    AEError400ResponseBody:
+      type: object
+      required:
+        - Errors
+      properties:
+        Errors:
+          type: array
+          items:
+            type: object
+            properties:
+              Code:
+                $ref: '#/components/schemas/AEError400'
+              Message:
+                type: string
+                minLength: 1
+                maxLength: 500
+                description: >-
+                  A description of the error that occurred. e.g., 'A mandatory field isn't supplied' or
+                  'RequestedExecutionDateTime must be in future'
+
+                  UAEOF doesn't standardise this field
+              Path:
+                type: string
+                minLength: 1
+                maxLength: 500
+                description: >-
+                  Recommended but optional reference to the JSON Path of the field with error, e.g.,
+                  $.Data.Initiation.InstructedAmount.Currency
+              Url:
+                type: string
+                description: URL to help remediate the problem, or provide more information, or to API Reference, or help etc
+            required:
+              - Code
+              - Message
+            additionalProperties: false
+          minItems: 1
+      description: An array of detail error codes, and messages, and URLs to documentation to help remediation.
+      additionalProperties: false
+    AEError400ResponseBodySigned:
+      type: object
+      required:
+        - iss
+        - exp
+        - nbf
+        - message
+      properties:
+        iss:
+          type: string
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1)'
+        exp:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4)'
+        nbf:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5)'
+        aud:
+          type: array
+          items:
+            type: string
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3)'
+        iat:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6)'
+        message:
+          $ref: '#/components/schemas/AEError400ResponseBody'
+      additionalProperties: false
+    AEError403:
+      anyOf:
+        - $ref: '#/components/schemas/AEError403Codes'
+        - $ref: '#/components/schemas/AECustomErrorCode'
+    AEError403Codes:
+      type: string
+      enum:
+        - AccessToken.InvalidScope
+        - Consent.TransientAccountAccessFailure
+        - Consent.AccountTemporarilyBlocked
+        - Consent.PermanentAccountAccessFailure
+        - GenericRecoverableError
+        - GenericError
+    AEError403ResponseBody:
+      type: object
+      required:
+        - Errors
+      properties:
+        Errors:
+          type: array
+          items:
+            type: object
+            properties:
+              Code:
+                $ref: '#/components/schemas/AEError403'
+              Message:
+                type: string
+                minLength: 1
+                maxLength: 500
+                description: >-
+                  A description of the error that occurred. e.g., 'A mandatory field isn't supplied' or
+                  'RequestedExecutionDateTime must be in future'
+
+                  UAEOF doesn't standardise this field
+              Path:
+                type: string
+                minLength: 1
+                maxLength: 500
+                description: >-
+                  Recommended but optional reference to the JSON Path of the field with error, e.g.,
+                  $.Data.Initiation.InstructedAmount.Currency
+              Url:
+                type: string
+                description: URL to help remediate the problem, or provide more information, or to API Reference, or help etc
+            required:
+              - Code
+              - Message
+            additionalProperties: false
+          minItems: 1
+      description: An array of detail error codes, and messages, and URLs to documentation to help remediation.
+      additionalProperties: false
+    AEError403ResponseBodySigned:
+      type: object
+      required:
+        - iss
+        - exp
+        - nbf
+        - message
+      properties:
+        iss:
+          type: string
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1)'
+        exp:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4)'
+        nbf:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5)'
+        aud:
+          type: array
+          items:
+            type: string
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3)'
+        iat:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6)'
+        message:
+          $ref: '#/components/schemas/AEError403ResponseBody'
+      additionalProperties: false
+    AEError500:
+      anyOf:
+        - $ref: '#/components/schemas/AEErrorGenericCodes'
+        - $ref: '#/components/schemas/AECustomErrorCode'
+    AEError500ResponseBody:
+      type: object
+      required:
+        - Errors
+      properties:
+        Errors:
+          type: array
+          items:
+            type: object
+            properties:
+              Code:
+                $ref: '#/components/schemas/AEError500'
+              Message:
+                type: string
+                minLength: 1
+                maxLength: 500
+                description: >-
+                  A description of the error that occurred. e.g., 'A mandatory field isn't supplied' or
+                  'RequestedExecutionDateTime must be in future'
+
+                  UAEOF doesn't standardise this field
+              Path:
+                type: string
+                minLength: 1
+                maxLength: 500
+                description: >-
+                  Recommended but optional reference to the JSON Path of the field with error, e.g.,
+                  $.Data.Initiation.InstructedAmount.Currency
+              Url:
+                type: string
+                description: URL to help remediate the problem, or provide more information, or to API Reference, or help etc
+            required:
+              - Code
+              - Message
+            additionalProperties: false
+          minItems: 1
+      description: An array of detail error codes, and messages, and URLs to documentation to help remediation.
+      additionalProperties: false
+    AEError500ResponseBodySigned:
+      type: object
+      required:
+        - iss
+        - exp
+        - nbf
+        - message
+      properties:
+        iss:
+          type: string
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1)'
+        exp:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4)'
+        nbf:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5)'
+        aud:
+          type: array
+          items:
+            type: string
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3)'
+        iat:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6)'
+        message:
+          $ref: '#/components/schemas/AEError500ResponseBody'
+      additionalProperties: false
+    AEErrorGenericCodes:
+      type: string
+      enum:
+        - GenericRecoverableError
+        - GenericError
+    AEPersonalAccountNameConfirmationProperties:
+      type: object
+      required:
+        - FullName
+      properties:
+        FullName:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: The full name of the account holder, as understood by the Debtor
+        GivenName:
+          type: string
+          minLength: 1
+          maxLength: 70
+          description: The given or first name of the account holder, as understood by the Debtor
+        LastName:
+          type: string
+          minLength: 1
+          maxLength: 70
+          description: The family or surname of the account holder, as understood by the Debtor
+      description: The properties required to verify a personal account
+      additionalProperties: false
+    DiscoverConfirmationSourceRequestBodySigned:
+      type: object
+      required:
+        - iss
+        - exp
+        - nbf
+        - message
+      properties:
+        iss:
+          type: string
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1)'
+        exp:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4)'
+        nbf:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5)'
+        aud:
+          type: array
+          items:
+            type: string
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3)'
+        iat:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6)'
+        message:
+          $ref: '#/components/schemas/AEConfirmationDiscoveryRequest'
+      additionalProperties: false
+    DiscoverConfirmationSourceResponseBodySigned:
+      type: object
+      required:
+        - iss
+        - exp
+        - nbf
+        - message
+      properties:
+        iss:
+          type: string
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1)'
+        exp:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4)'
+        nbf:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5)'
+        aud:
+          type: array
+          items:
+            type: string
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3)'
+        iat:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6)'
+        message:
+          $ref: '#/components/schemas/AEConfirmationDiscoveryResponse'
+      additionalProperties: false
+    LinksSelf:
+      type: object
+      required:
+        - Self
+      properties:
+        Self:
+          $ref: '#/components/schemas/Self'
+      description: Links relevant to the resource
+      additionalProperties: false
+    Meta:
+      type: object
+      description: Metadata relevant to the resource
+      additionalProperties: false
+    NameConfirmationRequestBodySigned:
+      type: object
+      required:
+        - iss
+        - exp
+        - nbf
+        - message
+      properties:
+        iss:
+          type: string
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1)'
+        exp:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4)'
+        nbf:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5)'
+        aud:
+          type: array
+          items:
+            type: string
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3)'
+        iat:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6)'
+        message:
+          $ref: '#/components/schemas/AEAccountConfirmationRequest'
+      additionalProperties: false
+    NameConfirmationResponseBodySigned:
+      type: object
+      required:
+        - iss
+        - exp
+        - nbf
+        - message
+      properties:
+        iss:
+          type: string
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1)'
+        exp:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4)'
+        nbf:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5)'
+        aud:
+          type: array
+          items:
+            type: string
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3)'
+        iat:
+          type: number
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6)'
+        message:
+          $ref: '#/components/schemas/AEAccountConfirmationResponse'
+      additionalProperties: false
+    Self:
+      type: string
+      format: uri
+      description: A link to the current resource
+  securitySchemes:
+    TPPOAuth2Security:
+      type: oauth2
+      description: >-
+        TPP confidential client authorization with the LFI to stage a consent. **Please refer to [OpenID FAPI Security
+        Profile 1.0 -Part 2
+        Advanced](https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server) - 5.2.2 point 14 -
+        shall authenticate the confidential client using one of the following methods private_key_jwt and [OpenID
+        Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) 9. Client
+        Authentication private_key_jwt**
+      flows:
+        clientCredentials:
+          tokenUrl: https://authserver.example/token
+          scopes:
+            openid: Activates OpenID Connect Support
+            confirmation-of-payee: Right to invoke a Confirmation of Payee operation
+  responses:
+    400Error:
+      description: Bad request
+      headers:
+        x-fapi-interaction-id:
+          required: true
+          description: An RFC4122 UID used as a correlation id.
+          schema:
+            type: string
+      content:
+        application/jwt:
+          schema:
+            $ref: '#/components/schemas/AEError400ResponseBodySigned'
+    401Error:
+      description: Unauthorized
+      headers:
+        x-fapi-interaction-id:
+          required: true
+          description: An RFC4122 UID used as a correlation id.
+          schema:
+            type: string
+    403Error:
+      description: Forbidden
+      headers:
+        x-fapi-interaction-id:
+          required: true
+          description: An RFC4122 UID used as a correlation id.
+          schema:
+            type: string
+      content:
+        application/jwt:
+          schema:
+            $ref: '#/components/schemas/AEError403ResponseBodySigned'
+    404Error:
+      description: Not found
+      headers:
+        x-fapi-interaction-id:
+          required: true
+          description: An RFC4122 UID used as a correlation id.
+          schema:
+            type: string
+    405Error:
+      description: Method Not Allowed
+      headers:
+        x-fapi-interaction-id:
+          required: true
+          description: An RFC4122 UID used as a correlation id.
+          schema:
+            type: string
+    406Error:
+      description: Not Acceptable
+      headers:
+        x-fapi-interaction-id:
+          required: true
+          description: An RFC4122 UID used as a correlation id.
+          schema:
+            type: string
+    415Error:
+      description: Unsupported Media Type
+      headers:
+        x-fapi-interaction-id:
+          required: true
+          description: An RFC4122 UID used as a correlation id.
+          schema:
+            type: string
+    429Error:
+      description: Too Many Requests
+      headers:
+        x-fapi-interaction-id:
+          required: true
+          description: An RFC4122 UID used as a correlation id.
+          schema:
+            type: string
+        retry-after:
+          required: true
+          description: Number in seconds to wait
+          schema:
+            type: integer
+            format: int64
+    500Error:
+      description: Internal Server Error
+      headers:
+        x-fapi-interaction-id:
+          required: true
+          description: An RFC4122 UID used as a correlation id.
+          schema:
+            type: string
+      content:
+        application/jwt:
+          schema:
+            $ref: '#/components/schemas/AEError500ResponseBodySigned'
+servers:
+  - url: /open-finance/confirmation-of-payee/v2.1

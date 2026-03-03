@@ -1,0 +1,250 @@
+openapi: 3.0.3
+info:
+  title: Open Finance Directory API
+  version: 1.0.0
+  description: API for retrieving registered Open Finance participants.
+
+servers:
+  - url: https://data.directory.openfinance.ae
+    description: Production server
+  - url: https://data.sandbox.directory.openfinance.ae
+    description: Sandbox server
+
+paths:
+  /participants:
+    get:
+      summary: List participants
+      operationId: getParticipants
+      tags:
+        - Participants
+      responses:
+        '200':
+          description: Successful response – list of participant organisations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Organisation'
+
+components:
+  schemas:
+
+    Organisation:
+      type: object
+      properties:
+        OrganisationId:
+          type: string
+          format: uuid
+        Status:
+          type: string
+          enum: [Active, Inactive]
+        OrganisationName:
+          type: string
+        CreatedOn:
+          type: string
+          format: date-time
+        LegalEntityName:
+          type: string
+        CountryOfRegistration:
+          type: string
+          enum: [AE]
+        CompanyRegister:
+          type: string
+          nullable: true
+        Tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+        Flags:
+          type: object
+          additionalProperties: true
+        Size:
+          type: string
+          enum: [LFI]
+        TaxRegistrationNumber:
+          type: string
+          nullable: true
+        RegistrationNumber:
+          type: string
+          nullable: true
+        RegistrationId:
+          type: string
+          nullable: true
+        RegisteredName:
+          type: string
+        AddressLine1:
+          type: string
+          nullable: true
+        AddressLine2:
+          type: string
+          nullable: true
+        City:
+          type: string
+          nullable: true
+        Postcode:
+          type: string
+          nullable: true
+        Country:
+          type: string
+          enum: [AE]
+        ParentOrganisationReference:
+          type: string
+          nullable: true
+        AuthorisationServers:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthorisationServer'
+        OrgDomainClaims:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrgDomainClaim'
+        OrgDomainRoleClaims:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrgDomainRoleClaim'
+
+    AuthorisationServer:
+      type: object
+      properties:
+        AuthorisationServerId:
+          type: string
+          format: uuid
+        OrganisationId:
+          type: string
+          format: uuid
+        CustomerFriendlyName:
+          type: string
+        CustomerFriendlyDescription:
+          type: string
+          nullable: true
+        CustomerFriendlyLogoUri:
+          type: string
+          format: uri
+          nullable: true
+        Issuer:
+          type: string
+          format: uri
+        OpenIDDiscoveryDocument:
+          type: string
+          format: uri
+          nullable: true
+        Status:
+          type: string
+          enum: [Active, Inactive]
+        CreatedAt:
+          type: string
+          format: date-time
+        SupportsCiba:
+          type: boolean
+        SupportsDCR:
+          type: boolean
+        SupportsRedirect:
+          type: boolean
+        ApiResources:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiResource'
+        Flags:
+          type: object
+          properties:
+            AccountType:
+              type: array
+              items:
+                type: string
+                enum: [Retail, SME, Corporate]
+
+    ApiResource:
+      type: object
+      properties:
+        ApiResourceId:
+          type: string
+          format: uuid
+        ApiVersion:
+          type: string
+        ApiFamilyType:
+          type: string
+          enum:
+            - account-information
+            - payment
+            - confirmation
+            - product
+            - insurance
+            - atm
+        Status:
+          type: string
+          enum: [Active, Inactive]
+        CertificationStatus:
+          type: string
+          enum: [Self-Certified]
+        FamilyComplete:
+          type: boolean
+        ApiDiscoveryEndpoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiDiscoveryEndpoint'
+
+    ApiDiscoveryEndpoint:
+      type: object
+      properties:
+        ApiDiscoveryId:
+          type: string
+          format: uuid
+        ApiEndpoint:
+          type: string
+          format: uri
+
+    OrgDomainClaim:
+      type: object
+      properties:
+        AuthorisationDomainName:
+          type: string
+        AuthorityName:
+          type: string
+        RegistrationId:
+          type: string
+          nullable: true
+        Status:
+          type: string
+          enum: [Active, Inactive]
+
+    OrgDomainRoleClaim:
+      type: object
+      properties:
+        AuthorisationDomainRoleIdentifier:
+          type: string
+          format: uuid
+        Status:
+          type: string
+          enum: [Active, Inactive]
+        AuthorisationDomain:
+          type: string
+        Role:
+          type: string
+          enum:
+            - ISP
+            - LFI
+            - BSIP
+            - BDSP
+        RegistrationId:
+          type: string
+          nullable: true
+        RoleType:
+          type: string
+          enum: [Federation]
+        Exclusive:
+          type: boolean
+        UniqueTechnicalIdentifiers:
+          type: array
+          items:
+            type: string
+          nullable: true
+        Authorisations:
+          type: array
+          items:
+            type: object
+        Metadata:
+          type: array
+          items:
+            type: object

@@ -1,0 +1,139 @@
+openapi: 3.1.0
+info:
+  title: UAE Onboarding API
+  description: '## UAE Open Finance Onboarding API Specification'
+  version: v1.0-rc2
+tags:
+  - name: TPP Onboarding
+    description: Onboard a TPP at the OFP for a given LFI
+paths:
+  /tpp-registration:
+    post:
+      tags:
+        - TPP Onboarding
+      operationId: TppOnboarding_create
+      summary: Onboard a TPP with a given LFI
+      description: >-
+        Allows a TPP to onboard with a given LFI. This is a one-off operation
+        that is invoked the first time a TPP accesses the LFI.
+
+
+        An empty request body is submitted to the operation. The OFP will
+        introspect the TPP client certificate to extract the TPP ID, and use
+        this to complete onboarding at the Trust Framework.
+
+
+        Once the operation is complete the TPP will be able to call the LFI
+        APIs.
+      parameters:
+        - $ref: '#/components/parameters/x-fapi-interaction-id'
+      responses:
+        '204':
+          description: The onboarding operation completed successfully
+          headers:
+            x-fapi-interaction-id:
+              required: false
+              description: An RFC4122 UID used as a correlation id.
+              schema:
+                type: string
+        default:
+          description: >-
+            An unexpected error response, optionally including a response
+            payload depending on the HTTP return code
+          headers:
+            x-fapi-interaction-id:
+              required: true
+              description: An RFC4122 UID used as a correlation id.
+              schema:
+                type: string
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/DefaultError'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DefaultError'
+      security:
+        - MutualTLS: []
+components:
+  parameters:
+    x-fapi-interaction-id:
+      name: x-fapi-interaction-id
+      in: header
+      required: false
+      description: An RFC4122 UID used as a correlation id.
+      schema:
+        type: string
+  schemas:
+    AEError:
+      type: object
+      required:
+        - Code
+        - Message
+      properties:
+        Code:
+          allOf:
+            - $ref: '#/components/schemas/AEErrorCode'
+          description: Low level textual error code, e.g., UAEOF.Field.Missing
+        Message:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: >-
+            A description of the error that occurred. e.g., 'A mandatory field
+            isn't supplied' or 'RequestedExecutionDateTime must be in future'
+
+            UAEOF doesn't standardise this field
+        Path:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: >-
+            Recommended but optional reference to the JSON Path of the field
+            with error, e.g., Data.Initiation.InstructedAmount.Currency
+        Url:
+          type: string
+          description: >-
+            URL to help remediate the problem, or provide more information, or
+            to API Reference, or help etc
+      description: Error
+    AEErrorCode:
+      type: string
+      enum:
+        - AccessToken.Unauthorized
+        - AccessToken.InvalidScope
+        - Consent.Revoked
+        - Consent.TransientAccountAccessFailure
+        - Consent.AccountTemporarilyBlocked
+        - Consent.PermanentAccountAccessFailure
+        - Consent.Invalid
+        - JWS.InvalidSignature
+        - JWS.Malformed
+        - JWS.InvalidClaim
+        - JWS.InvalidHeader
+        - GenericRecoverableError
+        - GenericError
+        - JWE.DecryptionError
+        - JWE.InvalidHeader
+        - Event.UnexpectedEvent
+        - Body.InvalidFormat
+        - Resource.InvalidResourceId
+        - Resource.InvalidFormat
+        - Consent.BusinessRuleViolation
+    DefaultError:
+      type: object
+      properties:
+        Errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/AEError'
+          minItems: 1
+  securitySchemes:
+    MutualTLS:
+      description: >-
+        Operation requires Mutual TLS for client authentication. Note connecting
+        using MTLS does not preclude other security mechanisms such as
+        certificate-bound access tokens.
+      type: mutualTLS
+servers:
+  - url: /open-finance/onboarding/v1.0-rc2

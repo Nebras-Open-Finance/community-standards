@@ -1,0 +1,35 @@
+{
+  "name": "community-specs",
+  "version": "1.0.0",
+  "description": "Community-driven, experimental documentation and reference material for the UAE Open Finance standards. This repository is not official and is used to gather suggestions, trial modern documentation tooling and explore improvements to the Open Finance specifications.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev:docs": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:serve": "vitepress serve docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlTareq-OpenFinance/community-specs.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AlTareq-OpenFinance/community-specs/issues"
+  },
+  "homepage": "https://github.com/AlTareq-OpenFinance/community-specs#readme",
+  "devDependencies": {
+    "@redocly/cli": "^2.20.0",
+    "concurrently": "^9.2.1",
+    "vitepress": "^1.6.4",
+    "vue": "^3.5.27"
+  },
+  "dependencies": {
+    "axios": "^1.13.4",
+    "chart.js": "^4.5.1",
+    "mermaid": "^11.12.3",
+    "yaml": "^2.8.2"
+  }
+}

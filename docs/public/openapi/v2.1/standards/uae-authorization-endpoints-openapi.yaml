@@ -1,0 +1,3165 @@
+openapi: 3.0.0
+info:
+  title: UAE Authorization Endpoints API
+  description: >-
+    ## UAE Open Finance Authorization Endpoints Specification
+
+
+    This API description provides the API descriptions for two OAuth 2.0 operations included in the FAPI 2.0 Security
+    Profile:
+
+
+    * [Pushed Authorization Requests](https://datatracker.ietf.org/doc/html/rfc9126), which implement [Rich
+    Authorization Requests](https://datatracker.ietf.org/doc/html/rfc9396) (RAR) payloads to provide Consent for a given
+    use case.
+
+
+    * Token operations that provide details of the RAR associated with a given Access Token request.
+
+
+    Please note that the Authorization Request is provided as a plain JSON object, which only describes the payload of a
+    signed JSON Web Token (JWS).
+
+
+    Users of this API description must ensure they implement the Authorization Request as a JWS, encoding the payload as
+    described by [RFC 7515](https://datatracker.ietf.org/doc/html/rfc7515) and reflecting the requirements of the API
+    Security Profile for the UAE Open Finance Framework.
+  version: v2.1
+tags:
+  - name: Pushed Authorization Requests
+    description: Operations to support Pushed Authorization Requests (PAR)
+  - name: Token Endpoint
+    description: Operations for creating OAuth 2.0 Access Tokens
+paths:
+  /par:
+    post:
+      operationId: CreatePushedAuthorizationRequestV21
+      summary: Pushed Authorization Request endpoint
+      description: >-
+        Submit a Rich Authorization Request (RAR) to the Pushed Authorization Request (PAR) Endpoint, as defined in [RFC
+        9126](https://datatracker.ietf.org/doc/html/rfc9126).
+
+
+        The `application/json` Content Type is included in the Request Body for tooling compatibility, but requests
+        **MUST** be sent using the Content Type `application/x-www-form-urlencoded`.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AEPushedAuthorizationRequests.AEPushedAuthorizationResponseBody'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthBadRequestErrorResponse'
+        '405':
+          description: Method Not Allowed
+        '413':
+          description: Content Too Large
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              required: true
+              description: Number in seconds to wait
+              schema:
+                type: integer
+                format: int64
+      tags:
+        - Pushed Authorization Requests
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AEPushedAuthorizationRequestsV21.PushedAuthorizationRequestBody'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AEPushedAuthorizationRequestsV21.PushedAuthorizationRequestBody'
+  /token:
+    post:
+      operationId: CreateAccessTokenRequestV21
+      summary: Obtain an Access Token
+      description: >-
+        Request an Access Token based on a given grant type, indicated by `grant_type` and request payload properties.
+
+
+        Response provides information on the original Rich Authorization Request (RAR) as described in [RFC
+        9396](https://datatracker.ietf.org/doc/html/rfc9396).
+
+
+        The `application/json` Content Type is included in the Request Body for tooling compatibility, but requests
+        **MUST** be sent using the Content Type `application/x-www-form-urlencoded`.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AEAuthorizationEndpointsV21.AEAuthorizationCodeGrantTokenResponseProperties'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthBadRequestErrorResponse'
+      tags:
+        - Token Endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - $ref: '#/components/schemas/AuthorizationCodeGrantTokenRequestProperties'
+                - $ref: '#/components/schemas/RefreshTokenGrantTokenRequestProperties'
+          application/x-www-form-urlencoded:
+            schema:
+              anyOf:
+                - $ref: '#/components/schemas/AuthorizationCodeGrantTokenRequestProperties'
+                - $ref: '#/components/schemas/RefreshTokenGrantTokenRequestProperties'
+components:
+  schemas:
+    AEAdditionalAccountHolderIdentifiers:
+      type: array
+      items:
+        type: object
+        properties:
+          SchemeName:
+            $ref: >-
+              #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AERiskExternalAccountIdentificationCode
+          Identification:
+            $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEIdentification'
+          Name:
+            $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEName'
+        required:
+          - SchemeName
+          - Identification
+        additionalProperties: false
+    AEAddress:
+      type: array
+      items:
+        type: object
+        properties:
+          AddressType:
+            type: string
+            enum:
+              - Billing
+              - Business
+              - Correspondence
+              - DeliveryTo
+              - MailTo
+              - POBox
+              - Postal
+              - Permanent
+              - Residential
+              - Statement
+              - Other
+          AddressLine:
+            type: array
+            items:
+              type: string
+            minItems: 1
+            maxItems: 7
+          BuildingNumber:
+            type: string
+            minLength: 1
+            maxLength: 16
+          BuildingName:
+            type: string
+            minLength: 1
+            maxLength: 140
+          Floor:
+            type: string
+            minLength: 1
+            maxLength: 70
+          StreetName:
+            type: string
+            minLength: 1
+            maxLength: 140
+          DistrictName:
+            type: string
+            minLength: 1
+            maxLength: 140
+          PostBox:
+            type: string
+            minLength: 1
+            maxLength: 16
+          TownName:
+            type: string
+            minLength: 1
+            maxLength: 140
+          CountrySubDivision:
+            anyOf:
+              - type: string
+                enum:
+                  - AbuDhabi
+                  - Ajman
+                  - Dubai
+                  - Fujairah
+                  - RasAlKhaimah
+                  - Sharjah
+                  - UmmAlQuwain
+              - type: string
+          Country:
+            type: string
+            pattern: ^[A-Z]{2}$
+        required:
+          - AddressType
+          - AddressLine
+          - Country
+        additionalProperties: false
+      minItems: 1
+      description: One-or-more addresses related to a given subject.
+    AEAuthorizationEndpointsV21.AEAuthorizationCodeGrantTokenResponseProperties:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - expires_in
+        - authorization_details
+      properties:
+        access_token:
+          type: string
+          description: >-
+            [OAuth 2.0 Access Token](https://datatracker.ietf.org/doc/html/rfc6749#section-1.4) issued through
+            Authorization Code grant.
+        token_type:
+          type: string
+          enum:
+            - Bearer
+          description: Access Token type.
+        expires_in:
+          type: integer
+          description: Validity period of Access Token in seconds.
+        scope:
+          type: string
+          description: >-
+            [Access Token Scope](https://datatracker.ietf.org/doc/html/rfc6749#section-3.3) as sent in Authorization
+            Request and granted by the End User.
+        state:
+          type: string
+          description: >-
+            OAuth 2.0 `state` value, provided as a means to support integrity checking by the Client under FAPI 2.0.
+            Omitted from Refresh Token Grant.
+        refresh_token:
+          type: string
+          description: >-
+            [OAuth 2.0 Refresh Token](https://datatracker.ietf.org/doc/html/rfc6749#section-1.5). Omitted from responses
+            where not supported by a given consent type.
+        id_token:
+          type: string
+          description: OpenID Connect ID Token, returned where applicable to requested scope and supported flows.
+        authorization_details:
+          type: array
+          items:
+            $ref: '#/components/schemas/AEAuthorizationEndpointsV21.AELodgedAuthorizationDetailsTypes'
+          minItems: 1
+          description: Authorization details are sent in the Pushed Authorization Request
+      additionalProperties: false
+    AEAuthorizationEndpointsV21.AEBankDataSharingLodgedAuthorizationDetailsProperties:
+      type: object
+      required:
+        - type
+        - consent
+      properties:
+        type:
+          type: string
+          enum:
+            - urn:openfinanceuae:account-access-consent:v2.1
+        consent:
+          $ref: '#/components/schemas/AEConsentStatus.AEBankDataSharingConsentPropertiesV21'
+      description: Bank Data Sharing Consent
+      additionalProperties: false
+    AEAuthorizationEndpointsV21.AEBankServiceInitiationLodgedAuthorizationDetailsProperties:
+      type: object
+      required:
+        - type
+        - consent
+      properties:
+        type:
+          type: string
+          enum:
+            - urn:openfinanceuae:service-initiation-consent:v2.1
+        consent:
+          $ref: '#/components/schemas/AEBankServiceInitiationConsentStatusV21.AEBankServiceInitiationConsentProperties'
+      description: Bank Service Initiation Consent
+      additionalProperties: false
+    AEAuthorizationEndpointsV21.AEInsuranceDataSharingLodgedAuthorizationDetailsProperties:
+      type: object
+      required:
+        - type
+        - consent
+      properties:
+        type:
+          type: string
+          enum:
+            - urn:openfinanceuae:insurance-consent:v2.1
+        consent:
+          $ref: '#/components/schemas/AEInsurance.AEReadInsuranceConsent1'
+      description: Insurance Data Sharing Consent
+      additionalProperties: false
+    AEAuthorizationEndpointsV21.AELodgedAuthorizationDetailsTypes:
+      oneOf:
+        - $ref: '#/components/schemas/AEAuthorizationEndpointsV21.AEBankDataSharingLodgedAuthorizationDetailsProperties'
+        - $ref: '#/components/schemas/AEAuthorizationEndpointsV21.AEBankServiceInitiationLodgedAuthorizationDetailsProperties'
+        - $ref: '#/components/schemas/AEAuthorizationEndpointsV21.AEInsuranceDataSharingLodgedAuthorizationDetailsProperties'
+      discriminator:
+        propertyName: type
+        mapping:
+          urn:openfinanceuae:account-access-consent:v2.1: '#/components/schemas/AEAuthorizationEndpointsV21.AEBankDataSharingLodgedAuthorizationDetailsProperties'
+          urn:openfinanceuae:service-initiation-consent:v2.1: '#/components/schemas/AEAuthorizationEndpointsV21.AEBankServiceInitiationLodgedAuthorizationDetailsProperties'
+          urn:openfinanceuae:insurance-consent:v2.1: '#/components/schemas/AEAuthorizationEndpointsV21.AEInsuranceDataSharingLodgedAuthorizationDetailsProperties'
+    AEBankDataSharing.AEExternalAccountSubTypeCode:
+      type: string
+      enum:
+        - CurrentAccount
+        - Savings
+        - CreditCard
+        - Mortgage
+        - Finance
+      description: |-
+        Specifies the sub type of account (product family group). Supported values:
+
+        * CurrentAccount
+
+        * Savings
+
+        * CreditCard
+
+        * Mortgage
+
+        * Finance
+    AEBankDataSharing.AEExternalAccountTypeCode:
+      type: string
+      enum:
+        - Retail
+        - SME
+        - Corporate
+      description: Specifies the type of account (Retail, SME or Corporate).
+    AEBankDataSharingRichAuthorizationRequests.AEBankDataSharingConsentPermissionCodes:
+      type: string
+      enum:
+        - ReadAccountsBasic
+        - ReadAccountsDetail
+        - ReadBalances
+        - ReadBeneficiariesBasic
+        - ReadBeneficiariesDetail
+        - ReadFXTransactionsBasic
+        - ReadFXTransactionsDetail
+        - ReadFXRemittanceCharges
+        - ReadTransactionsBasic
+        - ReadTransactionsDetail
+        - ReadProduct
+        - ReadScheduledPaymentsBasic
+        - ReadScheduledPaymentsDetail
+        - ReadDirectDebits
+        - ReadStandingOrdersBasic
+        - ReadStandingOrdersDetail
+        - ReadStatements
+        - ReadPartyUser
+        - ReadPartyUserIdentity
+        - ReadParty
+        - ReadProductFinanceRates
+      description: The permission codes available to the TPP for Bank Data Sharing and agreed with the User.
+    AEBankDataSharingRichAuthorizationRequests.AEBankDataSharingFromDate:
+      type: string
+      format: date
+      description: >-
+        Specified start date for the transaction or statement query period.
+
+
+        If this is not populated, the start date will be open ended, and data will be returned from the earliest
+        available transaction or statement.
+
+
+        All dates in the JSON payloads are represented in ISO 8601 date format.  For example: 2025-01-01
+    AEBankDataSharingRichAuthorizationRequests.AEBankDataSharingToDate:
+      type: string
+      format: date
+      description: >-
+        Specified end date for the transaction or statement query period.
+
+
+        If this is not populated, the end date will be open ended, and data will be returned to the latest available
+        transaction or the last statement generated.
+
+
+        All dates in the JSON payloads are represented in ISO 8601 date format.  For example: 2025-12-31    
+    AEBankDataSharingRichAuthorizationRequests.OnBehalfOf:
+      type: object
+      properties:
+        TradingName:
+          type: string
+          description: Trading Name
+        LegalName:
+          type: string
+          description: Legal Name
+        IdentifierType:
+          type: string
+          enum:
+            - Other
+          description: Identifier Type
+        Identifier:
+          type: string
+          description: Identifier
+      description: On Behalf Of
+      additionalProperties: false
+    AEBankDataSharingRichAuthorizationRequestsV21.AEBankDataSharingAuthorizationDetailsProperties:
+      type: object
+      required:
+        - type
+        - consent
+      properties:
+        type:
+          type: string
+          enum:
+            - urn:openfinanceuae:account-access-consent:v2.1
+          description: >-
+            The Rich Authorization Request type, as defined by [RFC
+            9396](https://datatracker.ietf.org/doc/html/rfc9396#section-2-2.2).
+        consent:
+          type: object
+          properties:
+            ConsentId:
+              $ref: '#/components/schemas/AEConsentId'
+            BaseConsentId:
+              $ref: '#/components/schemas/AEBaseConsentId'
+            Permissions:
+              type: array
+              items:
+                $ref: >-
+                  #/components/schemas/AEBankDataSharingRichAuthorizationRequests.AEBankDataSharingConsentPermissionCodes
+              minItems: 1
+            ExpirationDateTime:
+              $ref: '#/components/schemas/AEPushedAuthorizationRequests.AEConsentExpirationDateTime'
+            FromDate:
+              $ref: '#/components/schemas/AEBankDataSharingRichAuthorizationRequests.AEBankDataSharingFromDate'
+            ToDate:
+              $ref: '#/components/schemas/AEBankDataSharingRichAuthorizationRequests.AEBankDataSharingToDate'
+            AccountType:
+              type: array
+              items:
+                $ref: '#/components/schemas/AEBankDataSharing.AEExternalAccountTypeCode'
+            AccountSubType:
+              type: array
+              items:
+                $ref: '#/components/schemas/AEBankDataSharing.AEExternalAccountSubTypeCode'
+              description: Account Sub Types permitted under the consent.
+            OnBehalfOf:
+              $ref: '#/components/schemas/AEBankDataSharingRichAuthorizationRequests.OnBehalfOf'
+            OpenFinanceBilling:
+              $ref: '#/components/schemas/AEBankDataSharingRichAuthorizationRequestsV21.AEBankDataSharingOpenFinanceBilling'
+          required:
+            - ConsentId
+            - Permissions
+            - ExpirationDateTime
+            - OpenFinanceBilling
+          description: Properties of the consent agreed by the User with the TPP.
+          additionalProperties: false
+        subscription:
+          type: object
+          properties:
+            Webhook:
+              type: object
+              properties:
+                Url:
+                  type: string
+                  description: The TPP Callback URL being registered with the LFI
+                IsActive:
+                  type: boolean
+                  description: >-
+                    The TPP specifying whether the LFI should send (IsActive true) or not send (IsActive false) Webhook
+                    Notifications to the TPP's Webhook URL
+              required:
+                - Url
+                - IsActive
+              description: Properties of the TPP Webhook and the state of the subscription.
+              additionalProperties: false
+          required:
+            - Webhook
+          description: Optional subscription to Event Notifications, to be sent to the TPP Webhook registered at the API Hub.
+          additionalProperties: false
+      description: >-
+        Properties for creating a consent object for the first time a User consents to TPP access to account information
+        data
+      additionalProperties: false
+      title: Bank Data Sharing Consent
+    AEBankDataSharingRichAuthorizationRequestsV21.AEBankDataSharingOpenFinanceBilling:
+      type: object
+      required:
+        - UserType
+        - Purpose
+      properties:
+        UserType:
+          type: string
+          enum:
+            - Retail
+            - SME
+            - Corporate
+          description: Type of User.
+        Purpose:
+          type: string
+          enum:
+            - AccountAggregation
+            - RiskAssessment
+            - TaxFiling
+            - Onboarding
+            - Verification
+            - QuoteComparison
+            - BudgetingAnalysis
+            - FinancialAdvice
+            - AuditReconciliation
+          description: Purpose of data sharing request.
+      description: Billing parameters specified by the TPP.
+      additionalProperties: false
+    AEBankServiceInitiation.AEChargeBearerType1Code:
+      type: string
+      enum:
+        - BorneByCreditor
+        - BorneByDebtor
+        - Shared
+      description: Specifies which party/parties will bear the charges associated with the processing of the payment transaction.
+    AEBankServiceInitiation.AECharges:
+      type: object
+      required:
+        - ChargeBearer
+        - Type
+        - Amount
+      properties:
+        ChargeBearer:
+          $ref: '#/components/schemas/AEBankServiceInitiation.AEChargeBearerType1Code'
+        Type:
+          $ref: '#/components/schemas/AEBankServiceInitiation.AEExternalPaymentChargeTypeCode'
+        Amount:
+          $ref: '#/components/schemas/AEStandardModels.AEActiveCurrencyAmount'
+      description: Charges related to the consented payment instruction.
+      additionalProperties: false
+    AEBankServiceInitiation.AECreditorReference:
+      type: string
+      minLength: 1
+      maxLength: 35
+      description: >-
+        A Creditor Reference is a note for a given Creditor or Creditor LFI that supports reconciliation of a given
+        payment instruction.
+    AEBankServiceInitiation.AECurrencyRequest:
+      type: object
+      required:
+        - ExtendedPurpose
+        - CurrencyOfTransfer
+      properties:
+        InstructionPriority:
+          allOf:
+            - $ref: '#/components/schemas/AEBankServiceInitiation.AEInstructionPriority'
+          description: >-
+            Indicator of the urgency or order of importance that the instructing party would like the instructed party
+            to apply to the processing of the instruction.
+        ExtendedPurpose:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: Specifies the purpose of an international payment.
+        ChargeBearer:
+          $ref: '#/components/schemas/AEBankServiceInitiation.AEChargeBearerType1Code'
+        CurrencyOfTransfer:
+          type: string
+          pattern: ^[A-Z]{3,3}$
+          description: >-
+            Specifies the currency of the to be transferred amount, which is different from the currency of the debtor's
+            account.
+        DestinationCountryCode:
+          type: string
+          pattern: '[A-Z]{2,2}'
+          description: >-
+            Country in which Credit Account is domiciled. Code to identify a country, a dependency, or another area of
+            particular geopolitical interest, on the basis of country names obtained from the United Nations (ISO 3166,
+            Alpha-2 code).
+        ExchangeRateInformation:
+          $ref: '#/components/schemas/AEBankServiceInitiation.AEExchangeRateInformation'
+        FxQuoteId:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: >-
+            Required where the consent or payment initiation request relates to a previously quoted FX trade. The TPP
+            must provide the `QuoteId` value where the payment type is a single instant payment, or omit and provide in
+            the payment initiation request where a long-lived consent exists.
+      description: >-
+        The details of the non-local currency or FX request that has been agreed between the User and the TPP. The
+        requested ChargeBearer and ExchangeRateInformation included in this object may be superseded by updated
+        information supplied by the LFI.
+      additionalProperties: false
+    AEBankServiceInitiation.AEDebtorReference:
+      type: string
+      minLength: 1
+      maxLength: 35
+      description: >-
+        A Debtor Reference is a note is for the reference of a given User that may be available as additional
+        information in relation to a given payment instruction.
+    AEBankServiceInitiation.AEExchangeRateInformation:
+      type: object
+      required:
+        - UnitCurrency
+        - RateType
+      properties:
+        UnitCurrency:
+          type: string
+          pattern: ^[A-Z]{3,3}$
+          description: >-
+            Currency in which the rate of exchange is expressed in a currency exchange. In the example 1GBP = xxxCUR,
+            the unit currency is GBP.
+        ExchangeRate:
+          type: number
+          description: >-
+            The factor used for conversion of an amount from one currency to another. This reflects the price at which
+            one currency was bought with another currency.
+        RateType:
+          $ref: '#/components/schemas/AEBankServiceInitiation.AERateType'
+        ContractIdentification:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: >-
+            Unique and unambiguous reference to the foreign exchange contract agreed between the initiating
+            party/creditor and the debtor agent.
+      description: Provides details on the currency exchange rate and contract.
+      additionalProperties: false
+    AEBankServiceInitiation.AEExternalPaymentChargeTypeCode:
+      type: string
+      enum:
+        - VAT
+        - Fees
+      description: Charge type, in a coded form.
+    AEBankServiceInitiation.AEInstructionPriority:
+      type: string
+      enum:
+        - Normal
+        - Urgent
+      description: >-
+        Indicator of the urgency or order of importance that the instructing party would like the instructed party to
+        apply to the processing of the instruction.
+    AEBankServiceInitiation.AEPaymentPurposeCode:
+      type: string
+      minLength: 1
+      maxLength: 3
+      pattern: ^[A-Z]{3}$
+      description: >-
+        A category code that relates to the type of services or goods that corresponds to the underlying purpose of the
+        payment. The code must conform to the published AANI payment purpose code list.
+    AEBankServiceInitiation.AERateType:
+      type: string
+      enum:
+        - Actual
+        - Agreed
+        - Indicative
+      description: Specifies the type used to complete the currency exchange.
+    AEBankServiceInitiation.AEReference:
+      type: string
+      minLength: 1
+      maxLength: 35
+      description: A reason or reference in relation to a payment.
+    AEBankServiceInitiationConsentStatusV21.AEBankServiceInitiationConsentProperties:
+      type: object
+      required:
+        - Data
+        - Links
+      properties:
+        Data:
+          type: object
+          properties:
+            ConsentId:
+              $ref: '#/components/schemas/AEPushedAuthorizationRequests.AEConsentId'
+            BaseConsentId:
+              $ref: '#/components/schemas/AEPushedAuthorizationRequests.AEBaseConsentId'
+            IsSingleAuthorization:
+              $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.IsSingleAuthorization'
+            AuthorizationExpirationDateTime:
+              $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AuthorizationExpirationDateTime'
+            Permissions:
+              type: array
+              items:
+                $ref: >-
+                  #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationConsentPermissionCodes
+              description: Permission codes granted by the User to the TPP, allowing the TPP to check execute a balance check.
+            ExpirationDateTime:
+              $ref: '#/components/schemas/AEPushedAuthorizationRequests.AEConsentExpirationDateTime'
+            Status:
+              $ref: '#/components/schemas/AEConsentStatus.AEConsentStatusCodes'
+            RevokedBy:
+              $ref: '#/components/schemas/AEConsentStatus.AERevokedByCodes'
+            CreationDateTime:
+              $ref: '#/components/schemas/AECreationDateTime'
+            StatusUpdateDateTime:
+              $ref: '#/components/schemas/AEStatusUpdateDateTime'
+            Charges:
+              type: array
+              items:
+                $ref: '#/components/schemas/AEBankServiceInitiation.AECharges'
+              minItems: 1
+            ExchangeRate:
+              $ref: '#/components/schemas/AEConsentStatus.AEExchangeRateInformation'
+            CurrencyRequest:
+              $ref: '#/components/schemas/AEBankServiceInitiation.AECurrencyRequest'
+            ControlParameters:
+              $ref: >-
+                #/components/schemas/AEBankServiceInitiationRichAuthorizationRequestsV21.AEBankServiceInitiationControlParametersProperties
+            DebtorReference:
+              $ref: '#/components/schemas/AEBankServiceInitiation.AEDebtorReference'
+            CreditorReference:
+              $ref: '#/components/schemas/AEBankServiceInitiation.AECreditorReference'
+            PaymentPurposeCode:
+              $ref: '#/components/schemas/AEBankServiceInitiation.AEPaymentPurposeCode'
+            SponsoredTPPInformation:
+              $ref: '#/components/schemas/AEPushedAuthorizationRequests.AESponsoredTPPInformation'
+            PaymentConsumption:
+              $ref: '#/components/schemas/AEConsentStatus.AEPaymentConsumption'
+            OpenFinanceBilling:
+              $ref: '#/components/schemas/AEConsentStatus.AEBankServiceInitiationOpenFinanceBilling'
+          required:
+            - ConsentId
+            - ExpirationDateTime
+            - Status
+            - CreationDateTime
+            - StatusUpdateDateTime
+            - ControlParameters
+            - PaymentPurposeCode
+          additionalProperties: false
+        Subscription:
+          $ref: '#/components/schemas/AEStandardModels.AEEventNotification'
+        Links:
+          $ref: '#/components/schemas/AEConsentStatus.AELinksRelatedPayment'
+        Meta:
+          $ref: '#/components/schemas/AEConsentStatus.AEMetaMultiAuthorization'
+      description: Status of the Authorization Request, qualified with additional information held by the API Hub.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEActiveOrHistoricAmount:
+      type: string
+      pattern: ^\d{1,16}\.\d{2}$
+      description: >-
+        A number of monetary units specified in an active currency where the unit of currency is explicit and compliant
+        with ISO 4217.
+      example: '100.00'
+    AEBankServiceInitiationRichAuthorizationRequests.AEActiveOrHistoricCurrencyCode:
+      type: string
+      pattern: ^[A-Z]{3,3}$
+      description: >-
+        A 3 character alphabetic code allocated to a currency under an international currency identification scheme, as
+        described in the latest edition of the international standard ISO 4217 'Codes for the representation of
+        currencies and funds'.
+    AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationConsentPermissionCodes:
+      type: string
+      enum:
+        - ReadAccountsBasic
+        - ReadAccountsDetail
+        - ReadBalances
+        - ReadRefundAccount
+    AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationDebtorAccountProperties:
+      type: object
+      required:
+        - SchemeName
+        - Identification
+      properties:
+        SchemeName:
+          type: string
+          enum:
+            - IBAN
+          description: Scheme name for the Debtor Account. The Debtor Account must be an IBAN.
+        Identification:
+          type: string
+          minLength: 1
+          description: The Identification of the Debtor Account.
+        Name:
+          type: object
+          properties:
+            en:
+              type: string
+              maxLength: 70
+            ar:
+              type: string
+              maxLength: 70
+          minProperties: 1
+          description: The Debtor Account, which can be provided in both English and Arabic. Omitted if not held by the TPP.
+          additionalProperties: false
+      description: >-
+        Details of the Debtor Account when provided at the TPP. Omitted if not available at the TPP or the User chooses
+        to select the Debtor Account at the LFI.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationFilePaymentConsent:
+      type: object
+      required:
+        - FileType
+        - FileHash
+        - NumberOfTransactions
+        - ControlSum
+      properties:
+        FileType:
+          type: string
+          minLength: 1
+          maxLength: 40
+          description: Specifies the payment file type
+        FileHash:
+          type: string
+          minLength: 1
+          maxLength: 44
+          description: A base64 encoding of a SHA256 hash of the file to be uploaded.
+        FileReference:
+          $ref: '#/components/schemas/AEBankServiceInitiation.AEReference'
+        NumberOfTransactions:
+          type: integer
+          description: Number of individual transactions contained in the payment information group.
+        ControlSum:
+          type: string
+          pattern: ^\d{1,16}\.\d{2}$
+          description: Total of all individual amounts included in the group, irrespective of currencies.
+        RequestedExecutionDate:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AERequestedExecutionDate'
+      description: Bulk/Batch Control Parameters.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationFixedDefinedSchedule:
+      type: object
+      required:
+        - Type
+        - Schedule
+      properties:
+        Type:
+          type: string
+          enum:
+            - FixedDefinedSchedule
+          description: The Periodic Schedule Type
+        Schedule:
+          type: array
+          items:
+            $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationFixedSchedule'
+          minItems: 1
+          maxItems: 53
+      description: Payment Schedule denoting a list of pre-defined future dated payments all with fixed amounts and dates.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationFixedOnDemand:
+      type: object
+      required:
+        - Type
+        - PeriodType
+        - PeriodStartDate
+        - Amount
+        - Controls
+      properties:
+        Type:
+          type: string
+          enum:
+            - FixedOnDemand
+        PeriodType:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEPeriodType'
+        PeriodStartDate:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEPeriodStartDate'
+        Amount:
+          $ref: '#/components/schemas/AEStandardModels.AEAmountAndCurrency'
+        Controls:
+          type: object
+          properties:
+            MaximumCumulativeValueOfPaymentsPerPeriod:
+              $ref: >-
+                #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEPeriodTypeMaximumCumulativeValueOfPayments
+            MaximumCumulativeNumberOfPaymentsPerPeriod:
+              type: integer
+          minProperties: 1
+          description: Controls that apply to the payment schedule.
+          additionalProperties: false
+      description: >-
+        Payment Controls that apply to all payment instructions in a given period under this payment consent. The
+        payments for this consent may be executed on any date, as long as they are within the Controls for a PeriodType
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationFixedPeriodicSchedule:
+      type: object
+      required:
+        - Type
+        - PeriodType
+        - PeriodStartDate
+        - Amount
+      properties:
+        Type:
+          type: string
+          enum:
+            - FixedPeriodicSchedule
+        PeriodType:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEPeriodType'
+        PeriodStartDate:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEPeriodStartDate'
+        Amount:
+          $ref: '#/components/schemas/AEStandardModels.AEAmountAndCurrency'
+      description: >-
+        Payment Controls that apply to all payment instructions in a given period under this payment consent. The
+        payments for this consent must be executed only on the PeriodStartDate, and dates recurring based on the
+        PeriodType.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationFixedSchedule:
+      type: object
+      required:
+        - PaymentExecutionDate
+        - Amount
+      properties:
+        PaymentExecutionDate:
+          type: string
+          format: date
+          description: |-
+            Used to specify the expected payment execution date/time.
+            All dates in the JSON payloads are represented in ISO 8601 date format, for example is: 2023-04-05
+        Amount:
+          $ref: '#/components/schemas/AEStandardModels.AEAmountAndCurrency'
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationLongLivedPaymentConsent:
+      type: object
+      required:
+        - PeriodicSchedule
+      properties:
+        MaximumCumulativeValueOfPayments:
+          allOf:
+            - $ref: >-
+                #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEPeriodTypeMaximumCumulativeValueOfPayments
+          description: >-
+            The maximum cumulative value of all successful payment rails executions under the Consent.
+
+            Each successful payment rails execution amount (related to the Consent) is added to the total cumulative
+            value of the Consent which cannot exceed the maximum value agreed with the User at the point of consent.
+        MaximumCumulativeNumberOfPayments:
+          type: integer
+          description: >-
+            The maximum cumulative number of all successful payment rails executions under the Consent.
+
+            Each successful payment rails execution (related to the Consent) is added to the total cumulative number of
+            payments for the Consent which cannot exceed the maximum value agreed with the User at the point of
+            consent.    
+        PeriodicSchedule:
+          $ref: >-
+            #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationLongLivedPaymentConsentPeriodicSchedule
+      description: A Consent definition for defining Multi Payments
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationLongLivedPaymentConsentPeriodicSchedule:
+      oneOf:
+        - $ref: >-
+            #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationVariableOnDemand
+        - $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationFixedOnDemand'
+        - $ref: >-
+            #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationVariablePeriodicSchedule
+        - $ref: >-
+            #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationFixedPeriodicSchedule
+        - $ref: >-
+            #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationVariableDefinedSchedule
+        - $ref: >-
+            #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationFixedDefinedSchedule
+      discriminator:
+        propertyName: Type
+        mapping:
+          FixedDefinedSchedule: >-
+            #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationFixedDefinedSchedule
+          VariableDefinedSchedule: >-
+            #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationVariableDefinedSchedule
+          FixedPeriodicSchedule: >-
+            #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationFixedPeriodicSchedule
+          VariablePeriodicSchedule: >-
+            #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationVariablePeriodicSchedule
+          FixedOnDemand: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationFixedOnDemand'
+          VariableOnDemand: >-
+            #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationVariableOnDemand
+      description: The definition for a schedule
+    AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationSingleInstantPayment:
+      type: object
+      required:
+        - Type
+        - Amount
+      properties:
+        Type:
+          type: string
+          enum:
+            - SingleInstantPayment
+          description: The Payment Type
+        Amount:
+          $ref: '#/components/schemas/AEStandardModels.AEAmountAndCurrency'
+      description: >-
+        A single immediate payment consent that MUST be used for a single payment which will be initiated immediately
+        after User authorization at the LFI.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationSponsoredTPPInformation:
+      type: object
+      required:
+        - Name
+        - Identification
+      properties:
+        Name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: The Sponsored TPP Name
+        Identification:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: The Sponsored TPP Identification
+      description: |-
+        The Sponsored TPP is:
+
+        * A TPP that itself has no direct Open Banking API integrations.
+
+        * A TPP that is using the integration of another TPP that does have direct Open Banking API integrations.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationVariableDefinedSchedule:
+      type: object
+      required:
+        - Type
+        - Schedule
+      properties:
+        Type:
+          type: string
+          enum:
+            - VariableDefinedSchedule
+          description: The Periodic Schedule Type
+        Schedule:
+          type: array
+          items:
+            $ref: >-
+              #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationVariableSchedule
+          minItems: 1
+          maxItems: 53
+      description: Payment Schedule denoting a list of pre-defined future dated payments all with variable amounts and dates.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationVariableOnDemand:
+      type: object
+      required:
+        - Type
+        - PeriodType
+        - PeriodStartDate
+        - Controls
+      properties:
+        Type:
+          type: string
+          enum:
+            - VariableOnDemand
+        PeriodType:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEPeriodType'
+        PeriodStartDate:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEPeriodStartDate'
+        Controls:
+          type: object
+          properties:
+            MaximumIndividualAmount:
+              $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEMaximumIndividualAmount'
+            MaximumCumulativeValueOfPaymentsPerPeriod:
+              $ref: >-
+                #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEPeriodTypeMaximumCumulativeValueOfPayments
+            MaximumCumulativeNumberOfPaymentsPerPeriod:
+              type: integer
+          minProperties: 1
+          additionalProperties: false
+      description: >-
+        Payment Controls that apply to all payment instructions in a given period under this payment consent. The
+        payments for this consent may be executed on any date, as long as they are within the Controls for a PeriodType.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationVariablePeriodicSchedule:
+      type: object
+      required:
+        - Type
+        - PeriodType
+        - PeriodStartDate
+        - MaximumIndividualAmount
+      properties:
+        Type:
+          type: string
+          enum:
+            - VariablePeriodicSchedule
+        PeriodType:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEPeriodType'
+        PeriodStartDate:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEPeriodStartDate'
+        MaximumIndividualAmount:
+          allOf:
+            - $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEMaximumIndividualAmount'
+          description: This is the Maximum amount a variable payment can take per period.
+      description: >-
+        Payment Controls that apply to all payment instructions in a given period under this payment consent. The
+        payments for this consent must be executed only on the PeriodStartDate, and dates recurring based on the
+        PeriodType.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationVariableSchedule:
+      type: object
+      required:
+        - PaymentExecutionDate
+        - MaximumIndividualAmount
+      properties:
+        PaymentExecutionDate:
+          type: string
+          format: date
+          description: >-
+            Used to specify the expected payment execution date/time. All dates in the JSON payloads are represented in
+            ISO 8601 date format. An example is: 2023-04-05
+        MaximumIndividualAmount:
+          allOf:
+            - $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEMaximumIndividualAmount'
+          description: This is the Maximum amount a variable payment can take per period.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AECreditorAccountTypeCodes:
+      type: string
+      enum:
+        - Individual
+        - Merchant
+        - Business
+        - Charity
+        - GovernmentBody
+        - Other
+      description: >-
+        The Creditor (Payee) Type, based on an allowed list. This value is populated by TPPs to inform the User of the
+        type of Creditor being authorized, which facilitates providing information during the Consent journey.
+    AEBankServiceInitiationRichAuthorizationRequests.AECreditorAgentProperties:
+      type: object
+      required:
+        - SchemeName
+        - Identification
+      properties:
+        SchemeName:
+          type: string
+          enum:
+            - BICFI
+            - Other
+        Identification:
+          type: string
+        Name:
+          type: string
+          minLength: 1
+          maxLength: 140
+        PostalAddress:
+          $ref: '#/components/schemas/AEAddress'
+      description: >-
+        Properties of the Creditor Agent, which provides information on the Financial Institution that holds the
+        Creditor Account.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AECreditorExternalAccountIdentificationCode:
+      type: string
+      enum:
+        - IBAN
+        - AccountNumber
+      description: >-
+        Name of the identification scheme, in a coded form as published in an external list. For international payments
+        TPP may use `IBAN`, but must use `AccountNumber` where a local scheme is used to identify the Creditor Account.
+    AEBankServiceInitiationRichAuthorizationRequests.AECreditorIndicators:
+      type: object
+      properties:
+        AccountType:
+          type: string
+          enum:
+            - CurrentAccount
+            - Savings
+            - CreditCard
+            - Mortgage
+            - Finance
+        IsCreditorPrePopulated:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEIsCreditorPrePopulated'
+        TradingName:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AETradingName'
+        IsVerifiedByTPP:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEIsVerifiedbyTPP'
+        AdditionalAccountHolderIdentifiers:
+          $ref: '#/components/schemas/AEAdditionalAccountHolderIdentifiers'
+        MerchantDetails:
+          type: object
+          properties:
+            MerchantId:
+              type: string
+              minLength: 8
+              maxLength: 20
+            MerchantName:
+              type: string
+              minLength: 1
+              maxLength: 350
+            MerchantSICCode:
+              type: string
+              minLength: 3
+              maxLength: 4
+            MerchantCategoryCode:
+              type: string
+              minLength: 3
+              maxLength: 4
+          description: >-
+            Details of the Merchant involved in the transaction.
+
+            Merchant Details are specified only for those merchant categories that are generally expected to originate
+            retail financial transactions
+          additionalProperties: false
+        IsCreditorConfirmed:
+          type: boolean
+          description: Creditor account details have been confirmed successfully using Confirmation of Payee
+        SupplementaryData:
+          type: object
+          description: Additional information that cannot be captured in the structured fields and/or any other specific block
+          additionalProperties: false
+      description: Creditor Indicators
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AECreditorProperties:
+      type: object
+      properties:
+        Name:
+          type: string
+          minLength: 1
+          maxLength: 140
+        PostalAddress:
+          $ref: '#/components/schemas/AEAddress'
+      description: Party to which an amount of money is due.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEDebtorIndicators:
+      type: object
+      properties:
+        Authentication:
+          type: object
+          properties:
+            AuthenticationChannel:
+              type: string
+              enum:
+                - App
+                - Web
+            PossessionFactor:
+              type: object
+              properties:
+                IsUsed:
+                  type: boolean
+                Type:
+                  type: string
+                  enum:
+                    - FIDO2SecurityKey
+                    - Passkey
+                    - OTPDevice
+                    - OTPApp
+                    - SMSOTP
+                    - EmailOTP
+                    - PushNotification
+                    - WebauthnToken
+                    - SecureEnclaveKey
+                    - HardwareOTPKey
+                    - TrustedDevice
+                    - Other
+              additionalProperties: false
+            KnowledgeFactor:
+              type: object
+              properties:
+                IsUsed:
+                  type: boolean
+                Type:
+                  type: string
+                  enum:
+                    - PIN
+                    - Password
+                    - SecurityQuestion
+                    - SMSOTP
+                    - EmailOTP
+                    - OTPPush
+                    - Other
+              additionalProperties: false
+            InherenceFactor:
+              type: object
+              properties:
+                IsUsed:
+                  type: boolean
+                Type:
+                  type: string
+                  enum:
+                    - Biometric
+                    - Fingerprint
+                    - FaceRecognition
+                    - IrisScan
+                    - VoiceRecognition
+                    - FIDOBiometric
+                    - DeviceBiometrics
+                    - Other
+              additionalProperties: false
+            ChallengeOutcome:
+              type: string
+              enum:
+                - Pass
+                - Fail
+                - NotPerformed
+            AuthenticationFlow:
+              type: string
+              enum:
+                - MFA
+                - Other
+            AuthenticationValue:
+              type: string
+            ChallengeDateTime:
+              type: string
+              format: date-time
+          description: The authentication method used by the User to access their account with the TPP
+          additionalProperties: false
+        UserName:
+          type: object
+          properties:
+            en:
+              type: string
+            ar:
+              type: string
+          description: The Name of the User initiating the Payment
+          additionalProperties: false
+        GeoLocation:
+          type: object
+          properties:
+            Latitude:
+              type: string
+            Longitude:
+              type: string
+          required:
+            - Latitude
+            - Longitude
+          description: GPS to identify and track the whereabouts of the connected electronic device.
+          additionalProperties: false
+        DeviceInformation:
+          type: object
+          properties:
+            DeviceId:
+              type: string
+            AlternativeDeviceId:
+              type: string
+            DeviceOperatingSystem:
+              type: string
+            DeviceOperatingSystemVersion:
+              type: string
+            DeviceBindingId:
+              type: string
+            LastBindingDateTime:
+              type: string
+              format: date-time
+            BindingDuration:
+              type: string
+              format: duration
+            BindingStatus:
+              type: string
+              enum:
+                - Active
+                - Expired
+                - Revoked
+                - Suspended
+            DeviceType:
+              type: string
+              enum:
+                - Mobile
+                - Desktop
+                - Tablet
+                - Wearable
+                - Other
+            DeviceManufacturer:
+              type: object
+              properties:
+                Model:
+                  type: string
+                  maxLength: 50
+                Manufacturer:
+                  type: string
+                  maxLength: 50
+              additionalProperties: false
+            DeviceLanguage:
+              type: string
+            DeviceLocalDateTime:
+              type: string
+            ConnectionType:
+              type: string
+              enum:
+                - WiFi
+                - Cellular
+                - Other
+            ScreenInformation:
+              type: object
+              properties:
+                PixelDensity:
+                  type: number
+                Orientation:
+                  type: string
+                  enum:
+                    - Portrait
+                    - Landscape
+              additionalProperties: false
+            BatteryStatus:
+              type: object
+              properties:
+                Level:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+                IsCharging:
+                  type: boolean
+              additionalProperties: false
+            TouchSupport:
+              type: object
+              properties:
+                Supported:
+                  type: boolean
+                MaxTouchPoints:
+                  type: integer
+                  minimum: 0
+              additionalProperties: false
+            MotionSensors:
+              type: object
+              properties:
+                Status:
+                  type: string
+                  enum:
+                    - InMotion
+                    - Stationary
+                Accelerometer:
+                  type: boolean
+                Gyroscope:
+                  type: boolean
+              additionalProperties: false
+            DeviceEnvironmentContext:
+              type: array
+              items:
+                type: string
+                enum:
+                  - VPNDetected
+                  - EmulatorDetected
+          description: Detailed device information
+          additionalProperties: false
+        BiometricCapabilities:
+          type: object
+          properties:
+            SupportsBiometric:
+              type: boolean
+            BiometricTypes:
+              type: array
+              items:
+                type: string
+                enum:
+                  - Fingerprint
+                  - FacialRecognition
+                  - Iris
+                  - VoicePrint
+                  - Other
+          description: Device biometric capabilities
+          additionalProperties: false
+        AppInformation:
+          type: object
+          properties:
+            AppVersion:
+              type: string
+            PackageName:
+              type: string
+            BuildNumber:
+              type: string
+          description: Mobile application specific information
+          additionalProperties: false
+        BrowserInformation:
+          type: object
+          properties:
+            UserAgent:
+              type: string
+            IsCookiesEnabled:
+              type: boolean
+            AvailableFonts:
+              type: array
+              items:
+                type: string
+            Plugins:
+              type: array
+              items:
+                type: string
+            PixelRatio:
+              type: number
+          description: Browser-specific information
+          additionalProperties: false
+        UserBehavior:
+          type: object
+          properties:
+            ScrollBehavior:
+              type: object
+              properties:
+                Direction:
+                  type: string
+                  enum:
+                    - Up
+                    - Down
+                    - Both
+                Speed:
+                  type: number
+                Frequency:
+                  type: number
+              additionalProperties: false
+          description: User behavior indicators
+          additionalProperties: false
+        AccountRiskIndicators:
+          type: object
+          properties:
+            UserOnboardingDateTime:
+              type: string
+              format: date-time
+            LastAccountChangeDate:
+              type: string
+              format: date
+            LastPasswordChangeDate:
+              type: string
+              format: date
+            SuspiciousActivity:
+              type: string
+              enum:
+                - NoSuspiciousActivity
+                - SuspiciousActivityDetected
+            TransactionHistory:
+              type: object
+              properties:
+                LastDay:
+                  type: integer
+                  minimum: 0
+                LastYear:
+                  type: integer
+                  minimum: 0
+              additionalProperties: false
+          description: Risk indicators related to the account
+          additionalProperties: false
+        SupplementaryData:
+          type: object
+          description: >-
+            Additional information that cannot be captured in the structured fields and/or any other specific block
+
+            This may include information that is not available in the structured fields, such as a user's behavioural
+            data
+
+            like their typing speed and typing patterns.
+          additionalProperties: false
+      description: Debtor (User) Indicators
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEDomesticCreditor:
+      type: object
+      required:
+        - CreditorAccount
+      properties:
+        CreditorAgent:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AECreditorAgentProperties'
+        Creditor:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AECreditorProperties'
+        CreditorAccount:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEDomesticCreditorAccountProperties'
+        ConfirmationOfPayeeResponse:
+          type: string
+          pattern: ^.+\..+\..+$
+          description: |-
+            Response from Confirmation of Payee operation, when executed for the Creditor Account.
+
+            This is JSON Web Signature returned by the Payee Confirmation operation at the Confirmation of Payee API.
+
+            The value must be the full JWS string, including the header and signature, without decoding to an object.
+
+            If Confirmation of Payee is not performed this property can be omitted
+      description: Identification elements for a Creditor for a domestic payment instruction.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEDomesticCreditorAccountProperties:
+      type: object
+      required:
+        - SchemeName
+        - Identification
+        - Name
+      properties:
+        SchemeName:
+          type: string
+          enum:
+            - IBAN
+          description: Domestic payment scheme, restricted to `IBAN`
+        Identification:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEIdentification'
+        Name:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEName'
+        TradingName:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AETradingName'
+        Type:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AECreditorAccountTypeCodes'
+      description: Unambiguous identification of the account of the creditor to which a credit entry will be posted.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEDomesticPaymentPII:
+      type: object
+      properties:
+        Initiation:
+          type: object
+          properties:
+            DebtorAccount:
+              $ref: >-
+                #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationDebtorAccountProperties
+            Creditor:
+              type: array
+              items:
+                $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEDomesticCreditor'
+              minItems: 1
+              description: List of Creditors for a domestic payment consent.
+          description: >-
+            The Initiation payload is sent by the initiating party to the LFI. It is used to request movement of funds
+            from the Debtor Account to a Creditor for one-or-more domestic payments.
+          additionalProperties: false
+        Risk:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AERisk'
+      description: Elements of Personal Identifiable Information for a Domestic Payment.
+      additionalProperties: false
+      title: Domestic Payment PII Schema Object
+    AEBankServiceInitiationRichAuthorizationRequests.AEIdentification:
+      type: string
+      minLength: 1
+      description: |-
+        Identification for the account assigned by the LFI based on the Account Scheme Name.
+        This identification is known by the User account owner.
+    AEBankServiceInitiationRichAuthorizationRequests.AEInternationalCreditor:
+      type: object
+      required:
+        - CreditorAccount
+      properties:
+        CreditorAgent:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AECreditorAgentProperties'
+        Creditor:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AECreditorProperties'
+        CreditorAccount:
+          $ref: >-
+            #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEInternationalCreditorAccountProperties
+      description: >-
+        Identification elements for a Creditor for an international payment instruction. Please note that Confirmation
+        of Payee is **NOT** required or expected for International Payments, as non-domestic Creditor accounts are not
+        supported.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEInternationalCreditorAccountProperties:
+      type: object
+      required:
+        - SchemeName
+        - Identification
+        - Name
+        - Type
+      properties:
+        SchemeName:
+          $ref: >-
+            #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AECreditorExternalAccountIdentificationCode
+        Identification:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEIdentification'
+        Name:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEName'
+        TradingName:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AETradingName'
+        Type:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AECreditorAccountTypeCodes'
+      description: Unambiguous identification of the account of the creditor to which a credit entry will be posted.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEInternationalPaymentPII:
+      type: object
+      properties:
+        Initiation:
+          type: object
+          properties:
+            DebtorAccount:
+              $ref: >-
+                #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationDebtorAccountProperties
+            Creditor:
+              type: array
+              items:
+                $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEInternationalCreditor'
+              minItems: 1
+              description: >-
+                List of Creditors for an international payment consent. Please note that the `ConfirmationOfPayee`
+                property is **excluded** from this object as Confirmation of Payee is not expected for international
+                payments.
+          description: >-
+            The Initiation payload is sent by the initiating party to the LFI. It is used to request movement of funds
+            from the Debtor Account to a Creditor for one-or-more international payments.
+          additionalProperties: false
+        Risk:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AERisk'
+      description: Elements of Personal Identifiable Information for an International Payment.
+      additionalProperties: false
+      title: International Payment PII Schema Object
+    AEBankServiceInitiationRichAuthorizationRequests.AEIsCreditorPrePopulated:
+      type: boolean
+      description: Is Creditor populated
+    AEBankServiceInitiationRichAuthorizationRequests.AEIsVerifiedbyTPP:
+      type: boolean
+      description: The TPP has onboarded the Creditor
+    AEBankServiceInitiationRichAuthorizationRequests.AEJWEPaymentPII:
+      type: string
+      description: >-
+        A JSON Web Encryption (JWE) object, which encapsulates a JWS. The value is a compact serialization of a JWE,
+        which is a string consisting of five base64url-encoded parts joined by dots. It encapsulates encrypted content
+        using JSON data structures.
+
+        The decrypted JWS content has the structure of the AEPaymentPII schema.
+      title: Encrypted PII Object
+    AEBankServiceInitiationRichAuthorizationRequests.AEMaximumIndividualAmount:
+      type: object
+      required:
+        - Amount
+        - Currency
+      properties:
+        Amount:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEActiveOrHistoricAmount'
+        Currency:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEActiveOrHistoricCurrencyCode'
+      description: This is the Maximum amount a variable payment can take per period.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEName:
+      type: object
+      properties:
+        en:
+          type: string
+          maxLength: 70
+          description: English value of the string
+        ar:
+          type: string
+          maxLength: 70
+          description: Arabic value of the string
+      description: The Account Holder Name is the name or names of the Account owner(s) represented at the account level
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AEPeriodStartDate:
+      type: string
+      format: date
+      description: Specifies the start date of when a payment schedule begins.
+    AEBankServiceInitiationRichAuthorizationRequests.AEPeriodType:
+      type: string
+      enum:
+        - Day
+        - Week
+        - Month
+        - Year
+      description: >-
+        |Period Type|Description|
+
+        |-----------|-----------|
+
+        |Day|A continuous period of time, consisting of 24 consecutive hours, starting from midnight (00:00:00) and
+        finishing at 23:59:59 of the same day. |
+
+        |Week|A continuous period of time, consisting of seven consecutive days, starting from midnight (00:00:00) and
+        finishing at 23:59:59 of the 7th day. |
+
+        |Month|A continuous period of time starting from midnight (00:00:00) of the first day of a month and finishing
+        at 23:59:59 of the last day of that month.|
+
+        |Year|A continuous period of time, consisting of 12 months.|
+    AEBankServiceInitiationRichAuthorizationRequests.AEPeriodTypeMaximumCumulativeValueOfPayments:
+      type: object
+      required:
+        - Amount
+        - Currency
+      properties:
+        Amount:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEActiveOrHistoricAmount'
+        Currency:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEActiveOrHistoricCurrencyCode'
+      description: The maximum cumulative payment value of all payment initiations per Period Type.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AERequestedExecutionDate:
+      type: string
+      format: date
+      description: >-
+        The date when the TPP expects the LFI to execute the payment.
+
+        The date must be in the future and cannot be on the same day or a day in the past.
+
+        The maximum date in the future that can be specified is 1 year from the day of the consent of the User to the
+        TPP.
+
+        All dates in the JSON payloads are represented in ISO 8601 date format.
+    AEBankServiceInitiationRichAuthorizationRequests.AERisk:
+      type: object
+      properties:
+        DebtorIndicators:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEDebtorIndicators'
+        DestinationDeliveryAddress:
+          type: object
+          properties:
+            RecipientType:
+              type: string
+              enum:
+                - Individual
+                - Corporate
+            RecipientName:
+              type: object
+              properties:
+                en:
+                  type: string
+                ar:
+                  type: string
+              additionalProperties: false
+            NationalAddress:
+              $ref: '#/components/schemas/AEAddress'
+          description: Destination Delivery Address
+          additionalProperties: false
+        TransactionIndicators:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AETransactionIndicators'
+        CreditorIndicators:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AECreditorIndicators'
+      description: >-
+        The Risk section is sent by the TPP to the LFI. It is used to specify additional details for risk/fraud scoring
+        regarding Payments.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AERiskExternalAccountIdentificationCode:
+      type: string
+      enum:
+        - EmiratesID
+        - TradeLicenceNumber
+      description: Name of the identification scheme, in a coded form as published in an external list.
+    AEBankServiceInitiationRichAuthorizationRequests.AETradingName:
+      type: object
+      properties:
+        en:
+          type: string
+          maxLength: 70
+          description: English value of the string
+        ar:
+          type: string
+          maxLength: 70
+          description: Arabic value of the string
+      description: |-
+        The Trading Brand Name (if applicable) for the Creditor.
+        Applicable to Payments.
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AETransactionIndicators:
+      type: object
+      properties:
+        IsCustomerPresent:
+          type: boolean
+          description: This field differentiates between automatic and manual payment initiation.
+        IsContractPresent:
+          type: boolean
+          description: Indicates if the Creditor has a contractual relationship with the TPP.
+        Channel:
+          type: string
+          enum:
+            - Web
+            - Mobile
+          description: Where the payment has been initiated from.
+        ChannelType:
+          type: string
+          enum:
+            - ECommerce
+            - InStore
+            - InApp
+            - Telephone
+            - Mail
+            - RecurringPayment
+            - Other
+          description: The channel through which the transaction is being conducted
+        SubChannelType:
+          type: string
+          enum:
+            - WebBrowser
+            - MobileApp
+            - SmartTV
+            - WearableDevice
+            - POSTerminal
+            - ATM
+            - KioskTerminal
+            - Other
+          description: More specific classification of the transaction channel
+        PaymentProcess:
+          type: object
+          properties:
+            TotalDuration:
+              type: integer
+              minimum: 0
+            CurrentSessionAttempts:
+              type: integer
+              minimum: 1
+            CurrentSessionFailedAttempts:
+              type: integer
+              minimum: 0
+            Last24HourAttempts:
+              type: integer
+              minimum: 0
+            Last24HourFailedAttempts:
+              type: integer
+              minimum: 0
+          description: Metrics related to the payment process duration and attempts
+          additionalProperties: false
+        MerchantRisk:
+          type: object
+          properties:
+            DeliveryTimeframe:
+              type: string
+              enum:
+                - ElectronicDelivery
+                - SameDayShipping
+                - OvernightShipping
+                - MoreThan1DayShipping
+            ReorderItemsIndicator:
+              type: string
+              enum:
+                - FirstTimeOrder
+                - Reorder
+            PreOrderPurchaseIndicator:
+              type: string
+              enum:
+                - MerchandiseAvailable
+                - FutureAvailability
+            IsGiftCardPurchase:
+              type: boolean
+            IsDeliveryAddressMatchesBilling:
+              type: boolean
+            AddressMatchLevel:
+              type: string
+              enum:
+                - FullMatch
+                - PartialMatch
+                - NoMatch
+                - NotApplicable
+          description: Risk indicator details provided by the merchant
+          additionalProperties: false
+        SupplementaryData:
+          type: object
+          description: Additional information that cannot be captured in the structured fields and/or any other specific block
+          additionalProperties: false
+      description: Transaction Indicators
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequests.AuthorizationExpirationDateTime:
+      type: string
+      format: date-time
+      description: The date and time by which a Consent (in AwaitingAuthorization status) must be Authorized by the User.
+    AEBankServiceInitiationRichAuthorizationRequests.IsSingleAuthorization:
+      type: boolean
+      description: Specifies to the LFI that the consent authorization must be completed by a single authorizer at the LFI.
+    AEBankServiceInitiationRichAuthorizationRequestsV21.AEBankServiceInitiationAuthorizationDetailsProperties:
+      type: object
+      required:
+        - type
+        - consent
+      properties:
+        type:
+          type: string
+          enum:
+            - urn:openfinanceuae:service-initiation-consent:v2.1
+          description: >-
+            The Rich Authorization Request type, as defined by [RFC
+            9396](https://datatracker.ietf.org/doc/html/rfc9396#section-2-2.2).
+        consent:
+          allOf:
+            - $ref: >-
+                #/components/schemas/AEBankServiceInitiationRichAuthorizationRequestsV21.AEBankServiceInitiationConsentProperties
+          description: Properties of the consent agreed by the User with the TPP.
+        subscription:
+          type: object
+          properties:
+            Webhook:
+              type: object
+              properties:
+                Url:
+                  type: string
+                  description: The TPP Callback URL being registered with the LFI
+                IsActive:
+                  type: boolean
+                  description: >-
+                    The TPP specifying whether the LFI should send (IsActive true) or not send (IsActive false) Webhook
+                    Notifications to the TPP's Webhook URL
+              required:
+                - Url
+                - IsActive
+              description: Properties of the TPP Webhook and the state of the subscription.
+              additionalProperties: false
+          required:
+            - Webhook
+          description: Optional subscription to Event Notifications, to be sent to the TPP Webhook registered at the API Hub.
+          additionalProperties: false
+      description: A Rich Authorization Request object for a Bank Service Initiation Consent.
+      additionalProperties: false
+      title: Bank Service Initiation Consent
+    AEBankServiceInitiationRichAuthorizationRequestsV21.AEBankServiceInitiationConsentProperties:
+      type: object
+      required:
+        - PersonalIdentifiableInformation
+        - ControlParameters
+        - ConsentId
+        - ExpirationDateTime
+        - PaymentPurposeCode
+      properties:
+        PersonalIdentifiableInformation:
+          anyOf:
+            - $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEDomesticPaymentPII'
+            - $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEInternationalPaymentPII'
+            - $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEJWEPaymentPII'
+          description: >-
+            Personal Identifiable Information, represented in both encoded and decoded form using a `oneOf`.
+
+
+            Implementers **MUST** adhere to the Schema Object provided in `AEPaymentPII` when creating the object to be
+            signed and encrypted through a JWS and JWE.
+
+
+            Debtor and Creditor information **MUST** be set according to the rules for the payment type being
+            instructed.
+
+
+            The encrypted form of the object is provided by the `AEJWEPaymentPII` Schema Object, which **MUST** be used
+            when invoking the PAR operation.
+        ControlParameters:
+          allOf:
+            - $ref: >-
+                #/components/schemas/AEBankServiceInitiationRichAuthorizationRequestsV21.AEBankServiceInitiationControlParametersProperties
+          description: Control Parameters set the overall rules for the Payment Schedule.
+        ConsentId:
+          $ref: '#/components/schemas/AEConsentId'
+        BaseConsentId:
+          $ref: '#/components/schemas/AEBaseConsentId'
+        IsSingleAuthorization:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.IsSingleAuthorization'
+        AuthorizationExpirationDateTime:
+          $ref: '#/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AuthorizationExpirationDateTime'
+        ExpirationDateTime:
+          type: string
+          format: date-time
+          description: |-
+            Specified date and time the consent will expire.
+
+            All dates in the JSON payloads are represented in ISO 8601 date-time format.
+            All date-time fields in responses must include the timezone. An example is :2023-04-05T10:43:07+00:00
+        Permissions:
+          type: array
+          items:
+            $ref: >-
+              #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationConsentPermissionCodes
+          description: >-
+            Specifies the permitted Bank Data Sharing permissions, which is the data clusters being consented by the
+            User, and requested for authorization with the LFI. Allows TPPs to check the User balance at the payment
+            account.
+        CurrencyRequest:
+          allOf:
+            - $ref: '#/components/schemas/AEBankServiceInitiation.AECurrencyRequest'
+          description: 'Currency request '
+        DebtorReference:
+          $ref: '#/components/schemas/AEBankServiceInitiation.AEDebtorReference'
+        CreditorReference:
+          $ref: '#/components/schemas/AEBankServiceInitiation.AECreditorReference'
+        PaymentPurposeCode:
+          $ref: '#/components/schemas/AEBankServiceInitiation.AEPaymentPurposeCode'
+        SponsoredTPPInformation:
+          $ref: >-
+            #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationSponsoredTPPInformation
+      additionalProperties: false
+    AEBankServiceInitiationRichAuthorizationRequestsV21.AEBankServiceInitiationControlParametersProperties:
+      type: object
+      properties:
+        IsDelegatedAuthentication:
+          type: boolean
+          description: >-
+            Indicates whether the all payment controls will be defined and managed by the TPP under the Payment with
+            Delegated Authentication capability
+        ConsentSchedule:
+          type: object
+          properties:
+            SinglePayment:
+              $ref: >-
+                #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationSingleInstantPayment
+            MultiPayment:
+              $ref: >-
+                #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationLongLivedPaymentConsent
+            FilePayment:
+              $ref: >-
+                #/components/schemas/AEBankServiceInitiationRichAuthorizationRequests.AEBankServiceInitiationFilePaymentConsent
+          description: |2-
+              The various payment types that can be initiated:
+
+              * A Single Payment
+
+              * A Multi-Payment
+              
+              * A Combined Payment (one SinglePayment and one MultiPayment)
+          additionalProperties: false
+      additionalProperties: false
+    AEBaseConsentId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      format: uuid
+      description: A base consent identifier that links to other consent resources
+    AEConsentId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      format: uuid
+      description: Unique identifier for a given consent resource
+    AEConsentStatus.AEBankDataSharingConsentPropertiesV21:
+      type: object
+      required:
+        - Data
+        - Links
+      properties:
+        Data:
+          type: object
+          properties:
+            ConsentId:
+              $ref: '#/components/schemas/AEPushedAuthorizationRequests.AEConsentId'
+            BaseConsentId:
+              $ref: '#/components/schemas/AEPushedAuthorizationRequests.AEBaseConsentId'
+            CreationDateTime:
+              $ref: '#/components/schemas/AEConsentStatus.AECreationDateTime'
+            Status:
+              $ref: '#/components/schemas/AEConsentStatus.AEConsentStatusCodes'
+            StatusUpdateDateTime:
+              $ref: '#/components/schemas/AEConsentStatus.AEStatusUpdateDateTime'
+            Permissions:
+              type: array
+              items:
+                $ref: >-
+                  #/components/schemas/AEBankDataSharingRichAuthorizationRequests.AEBankDataSharingConsentPermissionCodes
+              minItems: 1
+            ExpirationDateTime:
+              $ref: '#/components/schemas/AEPushedAuthorizationRequests.AEConsentExpirationDateTime'
+            TransactionFromDateTime:
+              type: string
+              format: date-time
+              description: '**DEPRECATED AT V2.1, REPLACED BY `FromDate`**'
+              deprecated: true
+            TransactionToDateTime:
+              type: string
+              format: date-time
+              description: '**DEPRECATED AT V2.1, REPLACED BY `ToDate`**'
+              deprecated: true
+            FromDate:
+              $ref: '#/components/schemas/AEBankDataSharingRichAuthorizationRequests.AEBankDataSharingFromDate'
+            ToDate:
+              $ref: '#/components/schemas/AEBankDataSharingRichAuthorizationRequests.AEBankDataSharingToDate'
+            AccountType:
+              type: array
+              items:
+                $ref: '#/components/schemas/AEBankDataSharing.AEExternalAccountTypeCode'
+            AccountSubType:
+              type: array
+              items:
+                $ref: '#/components/schemas/AEBankDataSharing.AEExternalAccountSubTypeCode'
+              description: Account Sub Types permitted under the consent.
+            OnBehalfOf:
+              $ref: '#/components/schemas/AEBankDataSharingRichAuthorizationRequests.OnBehalfOf'
+            OpenFinanceBilling:
+              $ref: '#/components/schemas/AEConsentStatus.AEBankDataSharingOpenFinanceBilling'
+            RevokedBy:
+              $ref: '#/components/schemas/AEConsentStatus.AERevokedByCodes'
+          required:
+            - ConsentId
+            - CreationDateTime
+            - Status
+            - StatusUpdateDateTime
+            - Permissions
+            - ExpirationDateTime
+            - OpenFinanceBilling
+          additionalProperties: false
+        Subscription:
+          $ref: '#/components/schemas/AEStandardModels.AEEventNotification'
+        Links:
+          $ref: '#/components/schemas/AEStandardModels.AELinksSelf'
+        Meta:
+          $ref: '#/components/schemas/AEStandardModels.AEMeta'
+      additionalProperties: false
+    AEConsentStatus.AEBankDataSharingOpenFinanceBilling:
+      type: object
+      required:
+        - UserType
+        - Purpose
+      properties:
+        IsLargeCorporate:
+          type: boolean
+          description: Customer has more than 100 million AED turnover.
+        UserType:
+          type: string
+          enum:
+            - Retail
+            - SME
+            - Corporate
+          description: Type of Customer.
+        Purpose:
+          type: string
+          enum:
+            - AccountAggregation
+            - RiskAssessment
+            - TaxFiling
+            - Onboarding
+            - Verification
+            - QuoteComparison
+            - BudgetingAnalysis
+            - FinancialAdvice
+            - AuditReconciliation
+          description: Purpose of data sharing request.
+      description: Billing parameters specified by the TPP.
+      additionalProperties: false
+    AEConsentStatus.AEBankServiceInitiationOpenFinanceBilling:
+      type: object
+      properties:
+        IsLargeCorporate:
+          type: boolean
+          description: Customer has more than 100 million AED turnover.
+      description: Billing parameters specified by the LFI.
+      additionalProperties: false
+    AEConsentStatus.AEConsentStatusCodes:
+      type: string
+      enum:
+        - AwaitingAuthorization
+        - Authorized
+        - Rejected
+        - Revoked
+        - Expired
+        - Consumed
+        - Suspended
+      description: |2-
+         Specifies the status of a consent.
+         
+         | Consent Status| State Type| Description|
+         |---------------|-----------|------|
+         | AwaitingAuthorization | Pending | The consent is awaiting authorization.|
+         | Authorized | In Use | The consent has been successfully authorized.|
+         | Rejected | Terminal | The unauthorized consent has been rejected at the LFI.|
+         | Revoked | Terminal | The consent has been revoked at the TPP or LFI.|
+         | Expired | Terminal | The consent is now expired.|
+         | Consumed | Terminal | The consented action(s) have either been completed successfully.|
+         | Suspended | In Use | The consent has been suspended, pending further enquiries.|
+    AEConsentStatus.AECreationDateTime:
+      type: string
+      format: date-time
+      description: >-
+        Date and time at which the Consent was created. All dates in the JSON payloads are represented in ISO 8601
+        date-time format.
+
+
+        All date-time fields in responses must include the timezone, for example: 2023-04-05T10:43:07+00:00
+    AEConsentStatus.AEExchangeRateInformation:
+      type: object
+      required:
+        - UnitCurrency
+        - RateType
+      properties:
+        UnitCurrency:
+          type: string
+          pattern: ^[A-Z]{3,3}$
+          description: >-
+            Currency in which the rate of exchange is expressed in a currency exchange. In the example 1GBP = xxxCUR,
+            the unit currency is GBP.
+        ExchangeRate:
+          type: number
+          description: >-
+            The factor used for conversion of an amount from one currency to another. This reflects the price at which
+            one currency was bought with another currency.
+        RateType:
+          $ref: '#/components/schemas/AEBankServiceInitiation.AERateType'
+        ContractIdentification:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: >-
+            Unique and unambiguous reference to the foreign exchange contract agreed between the initiating
+            party/creditor and the debtor agent.
+        ExpirationDateTime:
+          type: string
+          format: date-time
+          description: >-
+            Specified date and time the exchange rate agreement will expire. All dates in the JSON payloads are
+            represented in ISO 8601 date-time format.
+
+
+            All date-time fields in responses must include the timezone, for example: 2017-04-05T10:43:07+00:00
+      description: >-
+        Further detailed information on the exchange rate that has been used in the payment transaction - returned by
+        the LFI.
+      additionalProperties: false
+    AEConsentStatus.AELinksRelatedPayment:
+      type: object
+      required:
+        - Self
+        - Related
+      properties:
+        Self:
+          type: string
+          format: url
+        Related:
+          type: array
+          items:
+            type: string
+          description: >-
+            A link to the related payments resource:
+
+
+            - For a Single Payment, this Array must have 1 entry, associated with the Single Payment resource created
+            against this consent.
+
+            - For Multi-Payment, this Array will have 1 or more entries of all the Payment resources created against
+            this Consent.
+      description: Links relevant to the consent.
+      additionalProperties: false
+    AEConsentStatus.AEMetaMultiAuthorization:
+      type: object
+      properties:
+        MultipleAuthorizers:
+          type: object
+          properties:
+            TotalRequired:
+              type: integer
+              description: The total number of Authorizers required to process the request.
+            Authorizations:
+              type: array
+              items:
+                type: object
+                properties:
+                  AuthorizerId:
+                    type: string
+                    description: Authorizer identifier, as assigned by the LFI.
+                  AuthorizerType:
+                    type: string
+                    description: The Type of Authorizer. For example, Financial, Management, etc.
+                  AuthorizationDate:
+                    type: string
+                    format: date-time
+                    description: |2-
+                        The date and of when the Authorization occurred. All dates in the JSON payloads are represented in ISO 8601 date-time format. 
+                        
+                        All date-time fields in responses must include the timezone for example: 2023-04-05T10:43:07+00:00      
+                  AuthorizationStatus:
+                    type: string
+                    enum:
+                      - Pending
+                      - Approved
+                      - Rejected
+                    description: The Status reflecting the Authorizer's final decision regarding the request.
+                additionalProperties: false
+          description: Multiple Authorizers Schema
+          additionalProperties: false
+      description: >-
+        Meta Data with Multi-Authorization relevant to the payload.
+
+        For a payment, it represents any Authorizers within the LFI domain that are involved in approving the payment
+        request.
+      additionalProperties: false
+    AEConsentStatus.AEPaymentConsumption:
+      type: object
+      required:
+        - CumulativeNumberOfPayments
+        - CumulativeValueOfPayments
+      properties:
+        CumulativeNumberOfPayments:
+          type: integer
+          description: >-
+            The cumulative number of payment instructions initiated under the consent schedule, excluding instructions
+            in a Rejected state.
+        CumulativeValueOfPayments:
+          allOf:
+            - $ref: '#/components/schemas/AEStandardModels.AEAmountAndCurrency'
+          description: >-
+            The cumulative value of payment instructions initiated under the consent schedule, excluding instructions in
+            a Rejected state. A number of monetary units specified in an active currency where the unit of currency is
+            explicit and compliant with ISO 4217.
+        CumulativeNumberOfPaymentsInCurrentPeriod:
+          type: integer
+          description: >-
+            The cumulative number of payment instructions in the current period initiated under the consent schedule,
+            excluding instructions in a Rejected state.
+        CumulativeValueOfPaymentsInCurrentPeriod:
+          allOf:
+            - $ref: '#/components/schemas/AEStandardModels.AEAmountAndCurrency'
+          description: >-
+            The cumulative value of payment instructions in the current period initiated under the consent schedule,
+            excluding instructions in a Rejected state. A number of monetary units specified in an active currency where
+            the unit of currency is explicit and compliant with ISO 4217.
+      description: Data to track the consumption of Payments in relation to an authorized Consent Schedule
+      additionalProperties: false
+    AEConsentStatus.AERevokedByCodes:
+      type: string
+      enum:
+        - LFI
+        - TPP
+        - LFI.InitiatedByUser
+        - TPP.InitiatedByUser
+      description: |-
+        Denotes the Identifier of the revocation.
+
+        | Identifier| Description|
+        |-----------|------------|
+        | LFI | Revoked by LFI without User initiation|
+        | TPP | Revoked by TPP without User initiation|
+        | LFI.InitiatedByUser | Initiated by User via the LFI|
+        | TPP.InitiatedByUser | Initiated by User via the TPP|
+    AEConsentStatus.AEStatusUpdateDateTime:
+      type: string
+      format: date-time
+      description: >-
+        Date and time at which the resource status was updated. All dates in the JSON payloads are represented in ISO
+        8601 date-time format.
+
+
+        All date-time fields in responses must include the timezone, for example: 2023-04-05T10:43:07+00:00
+    AEConsentStatusCode:
+      type: string
+      enum:
+        - Authorized
+        - AwaitingAuthorization
+        - Rejected
+        - Revoked
+        - Expired
+        - Suspended
+    AECreationDateTime:
+      type: object
+      required:
+        - CreationDateTime
+      properties:
+        CreationDateTime:
+          type: string
+          format: date-time
+          description: >-
+            Date and time at which the resource was created. All dates in the JSON payloads are represented in ISO 8601
+            date-time format.
+
+            All date-time fields in responses must include the timezone, as shown in this example:
+            2017-04-05T10:43:07+00:00
+      additionalProperties: false
+    AEInsurance.AEConsentPermissionCodes:
+      type: string
+      enum:
+        - ReadInsurancePolicies
+        - ReadCustomerBasic
+        - ReadCustomerDetail
+        - ReadCustomerPaymentDetails
+        - ReadInsuranceProduct
+        - ReadCustomerClaims
+        - ReadInsurancePremium
+    AEInsurance.AEConsentPermissions:
+      type: object
+      required:
+        - InsuranceType
+        - Permissions
+      properties:
+        InsuranceType:
+          type: string
+          enum:
+            - Employment
+            - Health
+            - Home
+            - Life
+            - Motor
+            - Renters
+            - Travel
+          description: The insurance sector to which the permissions relate.
+        Permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AEInsurance.AEConsentPermissionCodes'
+          minItems: 1
+          description: The data clusters requested by the TPP.
+      additionalProperties: false
+    AEInsurance.AEInsuranceOpenFinanceBillingPurposeProperties:
+      type: object
+      required:
+        - Purpose
+      properties:
+        Purpose:
+          type: string
+          enum:
+            - AccountAggregation
+            - RiskAssessment
+            - PremiumHistory
+            - ClaimHistory
+            - Onboarding
+            - Verification
+            - QuoteComparison
+            - FinancialAdvice
+            - Other
+          description: Purpose of data sharing request.
+      additionalProperties: false
+    AEInsurance.AEReadInsuranceConsent1:
+      type: object
+      required:
+        - Data
+        - Links
+        - Meta
+      properties:
+        Data:
+          $ref: '#/components/schemas/AEInsurance.AEReadInsuranceConsent1Properties'
+        Subscription:
+          $ref: '#/components/schemas/EventNotification'
+        Links:
+          $ref: '#/components/schemas/LinksSelf'
+        Meta:
+          $ref: '#/components/schemas/Meta'
+      additionalProperties: false
+    AEInsurance.AEReadInsuranceConsent1Properties:
+      type: object
+      required:
+        - ConsentId
+        - Permissions
+        - ExpirationDateTime
+        - OpenFinanceBilling
+        - CreationDateTime
+        - Status
+        - StatusUpdateDateTime
+      properties:
+        ConsentId:
+          $ref: '#/components/schemas/uuid'
+        BaseConsentId:
+          $ref: '#/components/schemas/uuid'
+        Permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AEInsurance.AEConsentPermissions'
+          minItems: 1
+          description: >-
+            Specifies the permitted insurance policy data types.
+
+            This is a list of the data groups being consented by the User, and requested for authorization with the
+            LFI.    
+        ExpirationDateTime:
+          type: string
+          format: date-time
+          description: >-
+            Specified date and time the permissions will expire.
+
+            If this is not populated, the permissions will be open ended.All dates in the JSON payloads are represented
+            in ISO 8601 date-time format. 
+
+            All date-time fields in responses must include the timezone. An example is below:
+
+            2017-04-05T10:43:07+00:00
+        OnBehalfOf:
+          $ref: '#/components/schemas/AEOnBehalfOf'
+        OpenFinanceBilling:
+          type: object
+          properties:
+            IsLargeCorporate:
+              type: boolean
+              description: Customer has more than 100 million AED turnover
+            Purpose:
+              type: string
+              enum:
+                - AccountAggregation
+                - RiskAssessment
+                - PremiumHistory
+                - ClaimHistory
+                - Onboarding
+                - Verification
+                - QuoteComparison
+                - FinancialAdvice
+                - Other
+              description: Purpose of data sharing request.
+          required:
+            - Purpose
+          additionalProperties: false
+        CreationDateTime:
+          type: string
+          format: date-time
+          description: >-
+            Date and time at which the resource was created. All dates in the JSON payloads are represented in ISO 8601
+            date-time format.
+
+            All date-time fields in responses must include the timezone, as shown in this example:
+            2017-04-05T10:43:07+00:00
+        Status:
+          allOf:
+            - $ref: '#/components/schemas/AEConsentStatusCode'
+          description: Specifies the status of consent resource in code form.
+        StatusUpdateDateTime:
+          type: string
+          format: date-time
+          description: >-
+            Date and time at which the account resource status was updated. All dates in the JSON payloads are
+            represented in ISO 8601 date-time format.
+
+            All date-time fields in responses must include the timezone, as shown in this example:
+            2017-04-05T10:43:07+00:00
+        RevokedBy:
+          allOf:
+            - $ref: '#/components/schemas/AEInsurance.AERevokedByCode'
+          description: Denotes the Identifier of the revocation.
+      additionalProperties: false
+    AEInsurance.AERevokedByCode:
+      type: string
+      enum:
+        - LFI
+        - TPP
+        - LFI.InitiatedByUser
+        - TPP.InitiatedByUser
+    AEInsuranceDataSharingRichAuthorizationRequestsV21.AEInsuranceDataSharingAuthorizationDetailsProperties:
+      type: object
+      required:
+        - type
+        - consent
+      properties:
+        type:
+          type: string
+          enum:
+            - urn:openfinanceuae:insurance-consent:v2.1
+          description: >-
+            The Rich Authorization Request type, as defined by [RFC
+            9396](https://datatracker.ietf.org/doc/html/rfc9396#section-2-2.2).
+        consent:
+          type: object
+          properties:
+            ConsentId:
+              $ref: '#/components/schemas/uuid'
+            BaseConsentId:
+              $ref: '#/components/schemas/uuid'
+            Permissions:
+              type: array
+              items:
+                $ref: '#/components/schemas/AEInsurance.AEConsentPermissions'
+              minItems: 1
+              description: >-
+                The permissions codes available to TPPs. Codes are qualified by insurance type which allows multiple
+                sets of permissions to be selected in each consent.
+            OpenFinanceBilling:
+              allOf:
+                - $ref: '#/components/schemas/AEInsurance.AEInsuranceOpenFinanceBillingPurposeProperties'
+              description: Billing parameters specified by the TPP.
+            ExpirationDateTime:
+              type: string
+              format: date-time
+              description: |-
+                Specified date and time the permissions will expire.
+                All date-time fields in responses must include the timezone. An example is below:
+                2017-04-05T10:43:07+00:00
+            OnBehalfOf:
+              $ref: '#/components/schemas/AEOnBehalfOf'
+          required:
+            - ConsentId
+            - Permissions
+            - OpenFinanceBilling
+            - ExpirationDateTime
+          description: Properties of the consent agreed by the User with the TPP.
+          additionalProperties: false
+        subscription:
+          type: object
+          properties:
+            Webhook:
+              type: object
+              properties:
+                Url:
+                  type: string
+                  description: The TPP Callback URL being registered with the LFI
+                IsActive:
+                  type: boolean
+                  description: >-
+                    The TPP specifying whether the LFI should send (IsActive true) or not send (IsActive false) Webhook
+                    Notifications to the TPP's Webhook URL
+              required:
+                - Url
+                - IsActive
+              description: Properties of the TPP Webhook and the state of the subscription.
+              additionalProperties: false
+          required:
+            - Webhook
+          description: Optional subscription to Event Notifications, to be sent to the TPP Webhook registered at the API Hub.
+          additionalProperties: false
+      description: >-
+        Properties for creating a consent object for the first time a User consents to TPP access to insurance data or
+        services
+      additionalProperties: false
+      title: Insurance Data Sharing Consent
+    AEOnBehalfOf:
+      type: object
+      properties:
+        TradingName:
+          type: string
+          description: Trading Name
+        LegalName:
+          type: string
+          description: Legal Name
+        IdentifierType:
+          allOf:
+            - $ref: '#/components/schemas/AEOnBehalfOfIdentifierType'
+          description: Identifier Type
+        Identifier:
+          type: string
+          description: Identifier
+      additionalProperties: false
+    AEOnBehalfOfIdentifierType:
+      type: string
+      enum:
+        - Other
+    AEPushedAuthorizationRequests.AEBaseConsentId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      description: >-
+        The original ConsentId assigned by the TPP.
+
+        It is used by the TPP for updating/renewing parameters associated with long-lived consents.
+
+        It must be provided when long-lived consent parameters are updated/renewed for a current consent that has not
+        yet finished.
+    AEPushedAuthorizationRequests.AEConsentExpirationDateTime:
+      type: string
+      format: date-time
+      description: |-
+        Specified date and time the consent will expire.
+
+        All dates in the JSON payloads are represented in ISO 8601 date-time format.
+
+        All date-time fields in responses must include the timezone, for example: 2023-04-05T10:43:07+00:00
+    AEPushedAuthorizationRequests.AEConsentId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      description: Unique identification assigned by the TPP to identify the Consent.
+    AEPushedAuthorizationRequests.AEPushedAuthorizationResponseBody:
+      type: object
+      required:
+        - request_uri
+        - expires_in
+      properties:
+        request_uri:
+          type: string
+          description: The request URI corresponding to the authorization request posted
+        expires_in:
+          type: integer
+          description: A JSON number that represents the lifetime of the request URI in seconds as a positive integer
+      additionalProperties: false
+    AEPushedAuthorizationRequests.AESponsoredTPPInformation:
+      type: object
+      required:
+        - Name
+        - Identification
+      properties:
+        Name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: The Sponsored TPP Name
+        Identification:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: The Sponsored TPP Identification
+      description: |-
+        The Sponsored TPP is:
+
+        - A TPP that itself has no direct Open Banking API integrations.
+
+        - A TPP that is using the integration of another TPP that does have direct Open Finance API integrations.
+      additionalProperties: false
+    AEPushedAuthorizationRequestsV21.AEPushedAuthorizationRequestAuthorizationDetailTypes:
+      anyOf:
+        - $ref: >-
+            #/components/schemas/AEBankDataSharingRichAuthorizationRequestsV21.AEBankDataSharingAuthorizationDetailsProperties
+        - $ref: >-
+            #/components/schemas/AEBankServiceInitiationRichAuthorizationRequestsV21.AEBankServiceInitiationAuthorizationDetailsProperties
+        - $ref: >-
+            #/components/schemas/AEInsuranceDataSharingRichAuthorizationRequestsV21.AEInsuranceDataSharingAuthorizationDetailsProperties
+    AEPushedAuthorizationRequestsV21.PushedAuthorizationRequestBody:
+      type: object
+      required:
+        - client_assertion_type
+        - client_assertion
+        - request
+      properties:
+        client_assertion_type:
+          type: string
+          enum:
+            - urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+          description: >-
+            Client Assertion using JWT Authentication, as described by [RFC
+            7523](https://datatracker.ietf.org/doc/html/rfc7523#section-2.2)
+        client_assertion:
+          type: string
+          description: private_key_jwt client assertion
+        request:
+          type: object
+          properties:
+            authorization_details:
+              type: array
+              items:
+                $ref: >-
+                  #/components/schemas/AEPushedAuthorizationRequestsV21.AEPushedAuthorizationRequestAuthorizationDetailTypes
+              minItems: 1
+              maxItems: 1
+            iss:
+              type: string
+              description: >-
+                The Issuer claim for the JWT, as described in [RFC
+                7519](https://tools.ietf.org/html/rfc7519#section-4.1.1)
+            aud:
+              type: string
+              description: >-
+                The Audience claim for the JWT, as described in [RFC
+                7519](https://tools.ietf.org/html/rfc7519#section-4.1.3)
+
+
+                This value is constrained to a single `string` value, as prescribed by [FAPI 2.0 Security
+                Profile](https://openid.net/specs/fapi-2_0-security-profile-ID2.html#section-5.3.2.1-2.5.1).
+            exp:
+              type: number
+              description: >-
+                The Expiration Time claim for the JWT, as described in [RFC
+                7519](https://tools.ietf.org/html/rfc7519#section-4.1.4)
+            nbf:
+              type: number
+              description: >-
+                The Not Before claim for the JWT, as described in [RFC
+                7519](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5) and expanded in the FAPI 2.0 Security
+                Profile.
+            client_id:
+              type: string
+              description: The OAuth 2.0 Client ID of the Client, as set in the Open Finance Trust Framework (OFTF).
+            response_type:
+              type: string
+              enum:
+                - code
+              description: >-
+                The OAuth 2.0 response type requested by the Client. This defaults to 'code', as per the FAPI 2.0
+                Security Profile, as only Authorization Code Flow is supported.
+            redirect_uri:
+              type: string
+              format: uri
+              description: >-
+                The OAuth 2.0 redirect URI of the Client, as set in the Open Finance Trust Framework. This **MUST**
+                match a redirect URI value registered at the OFTF.
+            scope:
+              type: string
+              description: >-
+                The OAuth 2.0 scope requested by the Client. This **MUST** match one-or-more scope values provided in
+                the API descriptions for the Open Finance Standards.
+            state:
+              type: string
+              description: >-
+                The OAuth 2.0 state value requested by the Client, as described in [RFC
+                6749](https://tools.ietf.org/html/rfc6749#section-4.1.1).
+            nonce:
+              type: string
+              description: >-
+                Nonce value as described in [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html)
+                and expanded in the FAPI 2.0 Security Profile.
+            max_age:
+              type: integer
+              description: >-
+                Maximum Authentication Age as described in [OpenID Connect
+                Core](https://openid.net/specs/openid-connect-core-1_0.html).
+            login_hint:
+              oneOf:
+                - type: string
+                - $ref: '#/components/schemas/AESecurityProfile.AELoginHintJwePayload'
+              description: |-
+                Optional parameter that can be used to send the User's Emirates ID or Trade
+                License Number as an encrypted JSON Web Token (JWE). This mechanism is
+                provided to allow LFIs to correlate the User identity, and therefore the
+                features of their account, prior to the User being redirected to the LFI's
+                authentication page.
+
+                The value **MUST** be a JWE, encrypted with the target LFI's public key
+                with the User identifier set as the JWE. The payload MUST be a JSON object
+                created based on the Schema Object `AELoginHintJwePayload`. This JSON
+                object will form the basis of the data contained in the JWE, and should
+                be signed with the TPP signing key to create a JSON Web Signature.
+
+                Please note that, as per OpenID Connect Core, `login_hint` is used for
+                discovery and is supported to provide hints to the LFI on the User
+                identity and therefore the data or services supported at the LFI.
+                `login_hint` **MUST NOT** be used to bypass authentication of the User, nor
+                should a request be rejected if `login_hint` is not provided.
+
+                The `type` value of the `login_hint` property is shown as a `string` due
+                to the limitations of the OpenAPI specification in cross-referencing a
+                Schema Object that is also a JSON Web Token, as there is no deterministic
+                mechanism to display the underlying structure of the JWE payload.
+                This property is therefore represented in both encoded and decoded
+                form in the API description using a `oneOf`, to help implementers readily
+                understand both the structure and serialized form of the property.
+
+                **Please ensure your implementation reflects the AELoginHintJwePayload Schema**
+                **Object structure and any notes provided on implementing a JWS and JWE**
+            code_challenge:
+              type: string
+              description: >-
+                Code challenge as described in [RFC 7636](https://www.rfc-editor.org/rfc/rfc7636.html#section-4.3),
+                which implements the Proof Key for Code Exchange (PKCE) extension to OAuth 2.0. PKCE is mandated by the
+                FAPI 2.0 Security Profile.
+            code_challenge_method:
+              type: string
+              enum:
+                - S256
+              description: >-
+                Code challenge method as described in [RFC
+                7636](https://www.rfc-editor.org/rfc/rfc7636.html#section-4.3), which implements the Proof Key for Code
+                Exchange (PKCE) extension to OAuth 2.0. PKCE is mandated by the FAPI 2.0 Security Profile, which
+                prescribes the use of the `S256` method.
+          required:
+            - authorization_details
+            - iss
+            - exp
+            - nbf
+            - client_id
+            - response_type
+            - redirect_uri
+            - scope
+            - code_challenge
+            - code_challenge_method
+          description: >
+            Authorization Request for a Rich Authorization Request (RAR) objects that encapsulate the consent agreed
+            between the TPP and the User.
+
+
+            Only a single RAR may be submitted at v2.1 of the Open Finance Standards.      
+
+
+            This object defines the required JSON Web Token (JWT) payload. This **does not** represent a correctly
+            serialized JWT, but provides a Schema Object that correctly defines the supported RARs.
+          additionalProperties: false
+      additionalProperties: false
+    AESecurityProfile.AELoginHintJwePayload:
+      type: object
+      required:
+        - Type
+        - Identification
+      properties:
+        Type:
+          type: string
+          enum:
+            - EmiratesID
+            - TradeLicenseNumber
+          description: The identification type, which can either be `EmiratesID` or `TradeLicenseNumber`
+        Identification:
+          type: string
+          description: The identification number value
+      description: Provides the structure of the payload for the JWE used in the `login_hint` parameter
+      additionalProperties: false
+    AEStandardModels.AEActiveCurrencyAmount:
+      type: object
+      required:
+        - Amount
+        - Currency
+      properties:
+        Amount:
+          $ref: '#/components/schemas/AEStandardModels.AEActiveOrHistoricAmount'
+        Currency:
+          $ref: '#/components/schemas/AEStandardModels.AEActiveOrHistoricCurrencyCode'
+      description: An Amount qualified by an active Currency.
+      additionalProperties: false
+    AEStandardModels.AEActiveOrHistoricAmount:
+      type: string
+      pattern: ^\d{1,16}\.\d{2}$
+      description: >-
+        A number of monetary units specified in an active currency where the unit of currency is explicit and compliant
+        with ISO 4217.
+      example: '100.00'
+    AEStandardModels.AEActiveOrHistoricCurrencyCode:
+      type: string
+      pattern: ^[A-Z]{3,3}$
+      description: >-
+        A 3 character alphabetic code allocated to a currency under an international currency identification scheme, as
+        described in the latest edition of the international standard ISO 4217 'Codes for the representation of
+        currencies and funds'.
+    AEStandardModels.AEAmountAndCurrency:
+      type: object
+      required:
+        - Currency
+        - Amount
+      properties:
+        Currency:
+          $ref: '#/components/schemas/AEStandardModels.AEActiveOrHistoricCurrencyCode'
+        Amount:
+          $ref: '#/components/schemas/AEStandardModels.AEActiveOrHistoricAmount'
+      description: An Amount qualified by Currency
+      additionalProperties: false
+    AEStandardModels.AEEventNotification:
+      type: object
+      required:
+        - Webhook
+      properties:
+        Webhook:
+          type: object
+          properties:
+            Url:
+              type: string
+            IsActive:
+              type: boolean
+          description: A Webhook Schema
+          additionalProperties: false
+      description: A Webhook Subscription Schema
+      additionalProperties: false
+    AEStandardModels.AELinksSelf:
+      type: object
+      required:
+        - Self
+      properties:
+        Self:
+          $ref: '#/components/schemas/AEStandardModels.AESelfLink'
+      description: Links relevant to the resource
+      additionalProperties: false
+    AEStandardModels.AEMeta:
+      type: object
+      description: Metadata relevant to the resource
+      additionalProperties: false
+    AEStandardModels.AESelfLink:
+      type: string
+      format: uri
+      description: A link to the current resource
+    AEStatusUpdateDateTime:
+      type: object
+      required:
+        - StatusUpdateDateTime
+      properties:
+        StatusUpdateDateTime:
+          type: string
+          format: date-time
+          description: >-
+            Date and time at which the account resource status was updated. All dates in the JSON payloads are
+            represented in ISO 8601 date-time format.
+
+            All date-time fields in responses must include the timezone, as shown in this example:
+            2017-04-05T10:43:07+00:00
+      additionalProperties: false
+    AEWebhook:
+      type: object
+      required:
+        - IsActive
+      properties:
+        Url:
+          type: string
+          pattern: ^https:\/\/.+
+          description: >-
+            The registered Webhook URL at which event notifications will be received. Required on first registration of
+            the Webhook.
+        IsActive:
+          type: boolean
+          description: >-
+            Indicator for whether event notifications should be sent to the TPP. When true event notifications will be
+            sent to the registered URL.
+      description: A Webhook Subscription Schema
+      additionalProperties: false
+    AuthorizationCodeGrantTokenRequestProperties:
+      type: object
+      required:
+        - client_id
+        - client_assertion_type
+        - client_assertion
+        - code_verifier
+        - grant_type
+        - code
+        - redirect_uri
+      properties:
+        client_id:
+          type: string
+          description: The OAuth 2.0 Client ID of the Client, as set in the Open Finance Trust Framework (OFTF).
+        client_assertion_type:
+          type: string
+          enum:
+            - urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+          description: >-
+            Client Assertion using JWT Authentication, as described by [RFC
+            7523](https://datatracker.ietf.org/doc/html/rfc7523#section-2.2)
+        client_assertion:
+          type: string
+          description: private_key_jwt client assertion
+        code_verifier:
+          type: string
+          description: >-
+            Code verifier value, created for Proof of Key Code Exchange correlating with value sent with Authorization
+            Request.
+        grant_type:
+          type: string
+          enum:
+            - authorization_code
+          description: The grant type, which must be set to `authorization_code`.
+        code:
+          type: string
+          description: The authorization code received by the TPP from the Authorization Server.
+        redirect_uri:
+          type: string
+          format: uri
+          description: >-
+            The OAuth 2.0 redirect URI of the Client, as set in the Open Finance Trust Framework. This **MUST** match a
+            redirect URI value registered at the OFTF.
+        scope:
+          type: string
+          description: >-
+            [Access Token Scope](https://datatracker.ietf.org/doc/html/rfc6749#section-3.3) as sent in Authorization
+            Request and granted by the End User.
+      additionalProperties: false
+    EventNotification:
+      type: object
+      required:
+        - Webhook
+      properties:
+        Webhook:
+          allOf:
+            - $ref: '#/components/schemas/AEWebhook'
+          description: Properties of the Webhook registered to receive event notifications related to entity status.
+      additionalProperties: false
+    LinksSelf:
+      type: object
+      required:
+        - Self
+      properties:
+        Self:
+          $ref: '#/components/schemas/Self'
+      description: Links relevant to the resource
+      additionalProperties: false
+    Meta:
+      type: object
+      description: Metadata relevant to the resource
+      additionalProperties: false
+    OAuthBadRequestErrorResponse:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/OAuthErrorResponse'
+      description: Bad Request
+      additionalProperties: false
+    OAuthErrorCodes:
+      type: string
+      enum:
+        - invalid_request
+        - invalid_client
+        - invalid_grant
+        - unauthorized_client
+        - unsupported_grant_type
+        - invalid_scope
+      description: Status code corresponding to error condition to be returned to the client
+    OAuthErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          $ref: '#/components/schemas/OAuthErrorCodes'
+        error_description:
+          type: string
+          description: Description of the error providing additional information
+        error_uri:
+          type: string
+          description: A URI identifying a human-readable web page with information about the error
+      description: Error returned from endpoints compliant with security profile
+      additionalProperties: false
+    RefreshTokenGrantTokenRequestProperties:
+      type: object
+      required:
+        - client_id
+        - client_assertion_type
+        - client_assertion
+        - grant_type
+        - refresh_token
+      properties:
+        client_id:
+          type: string
+          description: The OAuth 2.0 Client ID of the Client, as set in the Open Finance Trust Framework (OFTF).
+        client_assertion_type:
+          type: string
+          enum:
+            - urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+          description: >-
+            Client Assertion using JWT Authentication, as described by [RFC
+            7523](https://datatracker.ietf.org/doc/html/rfc7523#section-2.2)
+        client_assertion:
+          type: string
+          description: private_key_jwt client assertion
+        grant_type:
+          type: string
+          enum:
+            - refresh_token
+          description: The grant type, which must be set to `refresh_token`.
+        refresh_token:
+          type: string
+          description: >-
+            [OAuth 2.0 Refresh Token](https://datatracker.ietf.org/doc/html/rfc6749#section-1.5). Omitted from responses
+            where not supported by a given consent type.
+        scope:
+          type: string
+          description: Access Token scope. Omitted if not required.
+      additionalProperties: false
+    Self:
+      type: string
+      format: uri
+      description: A link to the current resource
+    uuid:
+      type: string
+      minLength: 1
+      maxLength: 128
+      format: uuid
+      description: >-
+        A unique identifier, which may be a UUID. `format: uuid` is provided as a hint to OpenAPI parsers, but LFIs can
+        implement a unique identification mechanism of their choosing.
+servers:
+  - url: /open-finance/auth/v2.1
