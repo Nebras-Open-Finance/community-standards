@@ -76,16 +76,6 @@ With the encrypted PII ready, construct the `authorization_details` of type `urn
 | `Amount.Amount`* | string | Payment amount (decimal, max 2 d.p.) | `100.00` |
 | `Amount.Currency`* | string | ISO 4217 currency code | `AED` |
 
-#### Permissions (Optional) | `authorization_details.consent.Permissions`
-
-Payment consents may optionally include account-reading permissions so the TPP can display debit account details and confirmation screens.
-
-| Permission | Description |
-|------------|-------------|
-| `ReadAccountsBasic` | List accounts and basic metadata |
-| `ReadAccountsDetail` | Read full account details |
-| `ReadBalances` | Read account balances |
-| `ReadRefundAccount` | Read account details for refund routing |
 
 #### Example request
 
@@ -134,6 +124,10 @@ Payment consents may optionally include account-reading permissions so the TPP c
 ### Step 3 - Constructing the Request JWT
 
 With your `authorization_details` ready, generate a PKCE code pair then use the [`buildRequestJWT()`](/tech/tpp-standards/security/fapi/request-jwt#building-the-request-jwt) helper, passing `payments openid` as the scope.
+
+::: warning Scope change required when using Permissions
+If your consent includes `ReadAccountsBasic`, `ReadAccountsDetail`, or `ReadBalances`, you must change the scope to `accounts payments openid`. Without the `accounts` scope the issued token will not grant access to the account endpoints. See [Account Permissions in a Payment Consent](/knowledge-base/articles/payment-account-permissions).
+:::
 
 ::: code-group
 

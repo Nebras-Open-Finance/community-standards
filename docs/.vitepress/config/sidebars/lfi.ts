@@ -95,6 +95,23 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
           },
         ],
       },
+      {
+        text: 'Confirmation of Payee',
+        collapsed: true,
+        link: `${BASE}/${VERSION}/banking/confirmation-of-payee/`,
+        items: [
+          { text: 'Requirements', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/requirements` },
+          { text: 'User Journeys', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/user-journeys` },
+          { text: 'API Guide', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/api-guide` },
+          {
+            text: 'API Reference',
+            collapsed: true,
+            items: [
+              apiRef('POST', '/customers/action/cop-query', `${BASE}/${VERSION}/banking/confirmation-of-payee/open-api/cop-query`)
+            ],
+          },
+        ],
+      },
     ],
   },
 

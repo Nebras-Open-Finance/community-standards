@@ -14,8 +14,8 @@
             style="font-size: xx-large; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
             API</h2>
 
-      <div style="display: flex; margin-bottom: 3rem;">
-        <div style="width: 45%; margin-right: auto">
+      <div class="chart-row">
+        <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
             API Volumes</h4>
@@ -24,7 +24,7 @@
           <APIVolBarChart />
         </div>
 
-        <div style="width: 45%; margin-left: auto">
+        <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; text-align: left; font-weight: 500;">
             API Vol by Bank</h4>
@@ -35,8 +35,8 @@
 
 
 
-      <div style="display: flex; margin-bottom: 3rem;">
-        <div style="width: 45%; margin-right: auto">
+      <div class="chart-row">
+        <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
             API Response Times</h4>
@@ -45,7 +45,7 @@
           <APIResponseBarChart />
         </div>
 
-        <div style="width: 45%; margin-left: auto">
+        <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; text-align: left; font-weight: 500;">
             API Error Rates</h4>
@@ -56,8 +56,8 @@
       </div>
 
 
-      <div style="display: flex; margin-bottom: 3rem;">
-        <div style="width: 45%; margin-right: auto">
+      <div class="chart-row">
+        <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
             API Volume by Family</h4>
@@ -67,7 +67,7 @@
 
         </div>
 
-        <div style="width: 45%; margin-left: auto">
+        <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; text-align: left; font-weight: 500;">
             API Volume by Endpoint (Data Sharing)</h4>
@@ -77,8 +77,8 @@
         </div>
       </div>
 
-      <div style="display: flex; margin-bottom: 3rem;">
-        <div style="width: 45%; margin-right: auto">
+      <div class="chart-row">
+        <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
             API Volume by TPP</h4>
@@ -95,8 +95,8 @@
             style="font-size: xx-large; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
             Payments</h2>
 
-      <div style="display: flex; margin-bottom: 3rem;">
-        <div style="width: 45%; margin-right: auto">
+      <div class="chart-row">
+        <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
             Payment Volumes (Amount)</h4>
@@ -105,7 +105,7 @@
           <PaymentVolAmountBarChart />
         </div>
 
-        <div style="width: 45%; margin-left: auto">
+        <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; text-align: left; font-weight: 500;">
             Payment Volumes (Count)</h4>
@@ -114,8 +114,8 @@
         </div>
       </div>
 
-      <div style="display: flex; margin-bottom: 3rem;">
-        <div style="width: 45%; margin-right: auto">
+      <div class="chart-row">
+        <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
             Payment Volumes By Bank (Amount)</h4>
@@ -124,7 +124,7 @@
           <PaymentVolAmountByBankBarChart />
         </div>
 
-        <div style="width: 45%; margin-left: auto">
+        <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; text-align: left; font-weight: 500;">
              Payment Volumes By Bank (Count)</h4>
@@ -133,8 +133,8 @@
         </div>
       </div>
 
-      <div style="display: flex; margin-bottom: 3rem;">
-        <div style="width: 45%; margin-right: auto">
+      <div class="chart-row">
+        <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
             Payment Success Rate By Bank</h4>
@@ -143,7 +143,7 @@
           <PaymentSuccessByBankBarChart />
         </div>
 
-        <div style="width: 45%; margin-left: auto">
+        <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; text-align: left; font-weight: 500;">
              Average Payment Amount By Bank</h4>
@@ -222,5 +222,41 @@ import PaymentAverageByBankBarChart from './Charts/PaymentAverageByBankBarChart.
   padding-left: 100px;
   padding-right: 100px;
   padding-bottom: 200px;
+}
+
+.chart-row {
+  display: flex;
+  margin-bottom: 3rem;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.chart-col {
+  width: 45%;
+  min-width: 0;
+}
+
+/* ─── Tablet: stack chart pairs ─────────────────────────── */
+@media (max-width: 1024px) {
+  .chart-row {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .chart-col {
+    width: 100%;
+  }
+}
+
+/* ─── Mobile ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .section-4 {
+    transform: none;
+    clip-path: none;
+    padding-top: 3rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    padding-bottom: 3rem;
+  }
 }
 </style>

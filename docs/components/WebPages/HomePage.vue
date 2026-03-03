@@ -44,9 +44,9 @@
         Technology Architecture & Overview
       </div>
 
-      <div style="display: flex;">
+      <div class="arch-row">
 
-        <div style="margin-top: 50px;">
+        <div class="arch-text">
           <p class="section-description">
             At the core of the system is the <strong>Directory</strong>, known as the
             <a class="link" href="tech/trust-framework/">Trust Framework</a>. It serves as the
@@ -66,7 +66,7 @@
 
         </div>
 
-        <pre style="margin-left: 10%;">
+        <pre class="arch-diagram">
 +======================================================================+
 |                  AlTareq Trust Framework (Directory)                 |
 |----------------------------------------------------------------------|
@@ -320,8 +320,8 @@
         Metrics & Monitoring
       </div>
 
-            <div style="display: flex; margin-bottom: 3rem;">
-        <div style="width: 45%; margin-right: auto">
+            <div class="chart-row">
+        <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
             API Volumes</h4>
@@ -330,7 +330,7 @@
           <APIVolBarChart />
         </div>
 
-        <div style="width: 45%; margin-left: auto">
+        <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; text-align: left; font-weight: 500;">
             API Vol by Bank</h4>
@@ -341,8 +341,8 @@
 
 
 
-      <div style="display: flex; margin-bottom: 3rem;">
-        <div style="width: 45%; margin-right: auto">
+      <div class="chart-row">
+        <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
             API Response Times</h4>
@@ -351,7 +351,7 @@
           <APIResponseBarChart />
         </div>
 
-        <div style="width: 45%; margin-left: auto">
+        <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; text-align: left; font-weight: 500;">
             API Error Rates</h4>
@@ -706,5 +706,139 @@ import APIErrorRatesBarChart from './Charts/APIErrorRatesBarChart.vue'
   height: 28px;
   fill: currentColor;
   /* match text color */
+}
+
+/* Architecture section */
+.arch-row {
+  display: flex;
+  gap: 2rem;
+}
+
+.arch-text {
+  margin-top: 50px;
+  flex: 1;
+  min-width: 0;
+}
+
+.arch-diagram {
+  margin-left: 5%;
+  overflow-x: auto;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  align-self: flex-start;
+  margin-top: 50px;
+}
+
+/* Metrics chart rows */
+.chart-row {
+  display: flex;
+  margin-bottom: 3rem;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.chart-col {
+  width: 45%;
+  min-width: 0;
+}
+
+/* ─── Tablet: stack graphs & chart pairs ─────────────────── */
+@media (max-width: 1024px) {
+  .chart-row {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .chart-col {
+    width: 100%;
+  }
+
+  .graph-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+/* ─── Mobile ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .section-hero {
+    height: auto;
+    min-height: 100vh;
+    clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 8vh), 0% 100%);
+  }
+
+  .hero-main {
+    position: static;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    padding: 7rem 1.5rem 3rem;
+    text-align: center;
+  }
+
+  .image-main {
+    max-width: 110px;
+  }
+
+  .divider {
+    display: none;
+  }
+
+  .hero-text {
+    max-width: 100%;
+    text-align: center;
+  }
+
+  .section-2 {
+    transform: none;
+    clip-path: none;
+    padding-top: 3rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    padding-bottom: 3rem;
+  }
+
+  .section-3 {
+    transform: none;
+    clip-path: none;
+    padding-top: 3rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    padding-bottom: 3rem;
+  }
+
+  .section-4 {
+    transform: none;
+    clip-path: none;
+    padding-top: 3rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    padding-bottom: 3rem;
+  }
+
+  .section-5 {
+    transform: none;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+  }
+
+  .arch-row {
+    flex-direction: column;
+  }
+
+  .arch-diagram {
+    margin-left: 0;
+    margin-top: 1rem;
+    font-size: 0.5rem;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
+  .stats-section {
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 </style>

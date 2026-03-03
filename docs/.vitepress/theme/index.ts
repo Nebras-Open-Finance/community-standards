@@ -22,6 +22,7 @@ import APIFlowsSingleInstantPayment from '../../components/APIFlows/SingleInstan
 import APIFlowsVariableOnDemand from '../../components/APIFlows/VariableOnDemand.vue'
 import APIFlowsFixedOnDemand from '../../components/APIFlows/FixedOnDemand.vue'
 import APIFlowsConsentFlow from '../../components/APIFlows/ConsentFlow.vue'
+import APIFlowsConfirmationOfPayee from '../../components/APIFlows/ConfirmationOfPayee.vue'
 
 // UIs
 import ConsentBankDataSharing from '../../components/ConsentPages/ConsentBankDataSharing.vue'
@@ -57,6 +58,7 @@ export default {
     app.component('APIFlowsVariableOnDemand', APIFlowsVariableOnDemand)
     app.component('APIFlowsFixedOnDemand', APIFlowsFixedOnDemand)
     app.component('APIFlowsConsentFlow', APIFlowsConsentFlow)
+    app.component('APIFlowsConfirmationOfPayee', APIFlowsConfirmationOfPayee)
 
     // UI
     app.component('ConsentBankDataSharing', ConsentBankDataSharing)

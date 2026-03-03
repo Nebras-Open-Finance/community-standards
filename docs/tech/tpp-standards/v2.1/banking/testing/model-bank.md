@@ -23,14 +23,8 @@ The `.well-known` endpoint for the Model Bank is:
 
 `https://auth1.altareq1.sandbox.apihub.openfinance.ae/.well-known/openid-configuration`
 
-## Certificate & Key
 
-This endpoint uses **mutual TLS (mTLS)** with transport-level certificates.
-
-- `--cert`: Path to your **transport** client certificate (`.pem`)
-- `--key`: Path to your **transport** private key (`.key`)
-
-The well-known document exposes the following key endpoints and values:
+The `.well-known` endpoint exposes the following critical information values:
 
 | Field | Value |
 |-------|-------|
