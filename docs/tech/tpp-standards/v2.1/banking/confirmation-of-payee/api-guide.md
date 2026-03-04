@@ -33,7 +33,9 @@ Before calling the CoP API, ensure the following requirements are met:
 
 ## API Sequence Flow
 
-<APIFlowsConfirmationOfPayee/>
+<APIFlowViewer title="Confirmation of Payee API Flow">
+  <APIFlowsConfirmationOfPayee/>
+</APIFlowViewer>
 
 ## Step 1 — Discover the LFI
 

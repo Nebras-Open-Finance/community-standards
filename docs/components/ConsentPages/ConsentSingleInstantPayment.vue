@@ -161,6 +161,20 @@
                                             [Your LFI]
                                         </div>
                                 </div>
+                                <template v-if="show_payer_information && sharedState?.pii?.Initiation?.DebtorAccount?.Identification">
+                                    <div class="consent-page-account-subtext-container-2">
+                                        <div class="consent-page-account-subtext-part">Name</div>
+                                        <div class="consent-page-account-amount">
+                                            {{ sharedState?.pii?.Initiation?.DebtorAccount?.Name?.en || sharedState?.pii?.Initiation?.DebtorAccount?.Name?.ar }}
+                                        </div>
+                                    </div>
+                                    <div class="consent-page-account-subtext-container-2">
+                                        <div class="consent-page-account-subtext-part">IBAN</div>
+                                        <div class="consent-page-account-amount-iban">
+                                            {{ sharedState?.pii?.Initiation?.DebtorAccount?.Identification?.match(/.{1,4}/g)?.join(" ") }}
+                                        </div>
+                                    </div>
+                                </template>
 
                 </div>
 
@@ -207,64 +221,7 @@
 
 
 
-                <div class="consent-page-text-frame-2">
-                <div class="consent-page-text-bottom">
-                   <div
-  v-if="
-    (sharedState?.value?.consent?.Permissions?.includes('ReadAccountsBasic') ||
-     sharedState?.value?.consent?.Permissions?.includes('ReadAccountsDetail')) &&
-    !sharedState?.value?.consent?.Permissions?.includes('ReadBalances') &&
-    !sharedState?.value?.consent?.Permissions?.includes('ReadRefundAccount')
-  "
->
-  You also grant us permission to access your account details before making the payment.
-</div>
-
-<div
-  v-else-if="
-    (sharedState?.value?.consent?.Permissions?.includes('ReadAccountsBasic') ||
-     sharedState?.value?.consent?.Permissions?.includes('ReadAccountsDetail')) &&
-    sharedState?.value?.consent?.Permissions?.includes('ReadBalances') &&
-    !sharedState?.value?.consent?.Permissions?.includes('ReadRefundAccount')
-  "
->
-  You also grant us permission to access your account details and balance before making the payment.
-</div>
-
-<div
-  v-else-if="
-    sharedState?.value?.consent?.Permissions?.includes('ReadRefundAccount') &&
-    !sharedState?.value?.consent?.Permissions?.includes('ReadAccountsBasic') &&
-    !sharedState?.value?.consent?.Permissions?.includes('ReadAccountsDetail') &&
-    !sharedState?.value?.consent?.Permissions?.includes('ReadBalances')
-  "
->
- You also grant us permission to access your account details in order to process a refund.
-</div>
-
-<div
-  v-else-if="
-    (sharedState?.value?.consent?.Permissions?.includes('ReadAccountsBasic') ||
-     sharedState?.value?.consent?.Permissions?.includes('ReadAccountsDetail')) &&
-    sharedState?.value?.consent?.Permissions?.includes('ReadRefundAccount') &&
-    !sharedState?.value?.consent?.Permissions?.includes('ReadBalances')
-  "
->
-   You also grant us permission to access your account details before making the payment, as well as to process refunds.
-</div>
-
-<div
-  v-else-if="
-    (sharedState?.value?.consent?.Permissions?.includes('ReadAccountsBasic') ||
-     sharedState?.value?.consent?.Permissions?.includes('ReadAccountsDetail')) &&
-    sharedState?.value?.consent?.Permissions?.includes('ReadBalances') &&
-    sharedState?.value?.consent?.Permissions?.includes('ReadRefundAccount')
-  "
->
-  You also grant us permission to access your account details and balance before making the payment, as well as to process refunds.
-</div>
-                </div>
-                </div>
+                <PaymentConsentPermissionsText />
 
 
         <div class="consent-page-button-with-description">
@@ -355,8 +312,7 @@ const show_payer_information = ref(true)
     align-items: center;
     padding: 0px;
     gap: 24px;
-    transform: scale(0.6);
-    transform-origin: top left;
+    zoom: 0.6;
 
     width: 372px;
     /* height: 1023px; */
@@ -1183,7 +1139,6 @@ flex-grow: 0;
 
     /* Inside auto layout */
     flex: none;
-    order: 1;
     flex-grow: 0;
 }
 
@@ -1259,7 +1214,7 @@ flex-grow: 0;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    padding: 16px 12px;
+    padding: 12px 12px;
     gap: 12px;
 
     width: 316px;

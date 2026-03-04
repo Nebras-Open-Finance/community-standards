@@ -23,6 +23,7 @@ Customise the `authorization_details` object below and watch the **Consent** and
   <EditableJson spec="/openapi/v2.1/standards/uae-authorization-endpoints-openapi.yaml"
     schemaName="AEBankDataSharingRichAuthorizationRequestsV21.AEBankDataSharingAuthorizationDetailsProperties"
     :initialData="initialFormData"
+    :customValidator="myCustomValidator"
   />
 </div>
 
@@ -31,6 +32,55 @@ Customise the `authorization_details` object below and watch the **Consent** and
 
 <script setup>
 import { ref } from 'vue'
+
+
+const myCustomValidator = (value) => {
+if (
+  (() => {
+    const expiration = new Date(value.consent.ExpirationDateTime);
+    const now = new Date();
+    const oneYearFromNow = new Date();
+    oneYearFromNow.setFullYear(now.getFullYear() + 1);
+
+    return expiration <= now || expiration >= oneYearFromNow;
+  })()
+) {
+  return "consent.ExpirationDateTime cannot be in the past and must be less than a year in the future.";
+} else if (
+  (() => {
+    const perms = value.consent?.Permissions || [];
+
+    const dependentPermissions = [
+      "ReadBalances",
+      "ReadBeneficiariesBasic",
+      "ReadBeneficiariesDetail",
+      "ReadTransactionsBasic",
+      "ReadTransactionsDetail",
+      "ReadProduct",
+      "ReadScheduledPaymentsBasic",
+      "ReadScheduledPaymentsDetail",
+      "ReadDirectDebits",
+      "ReadStandingOrdersBasic",
+      "ReadStandingOrdersDetail",
+      "ReadStatements",
+      "ReadProductFinanceRates"
+    ];
+
+    const hasDependentPermission = dependentPermissions.some(p =>
+      perms.includes(p)
+    );
+
+    const hasAccountPermission =
+      perms.includes("ReadAccountsBasic") ||
+      perms.includes("ReadAccountsDetail");
+
+    return hasDependentPermission && !hasAccountPermission;
+  })()
+) {
+  return "ReadAccountsBasic or ReadAccountsDetail must be provided when permissions that require an accountId are included.";
+}
+  return null
+}
 
 const initialFormData = ref({
                 "type": "urn:openfinanceuae:account-access-consent:v2.1",
@@ -88,8 +138,6 @@ const initialFormData = ref({
 </script>
 
 
-### Simulated User Accounts
-
 Configure the mock accounts the authenticated user holds at their bank. Only accounts whose type matches the `AccountSubType` filter in `authorization_details` above will appear on the Authorisation Page.
 
 <AccountEditor />
@@ -115,7 +163,7 @@ Changes made above are immediately reflected in both panels.
 
 ## Permissions and Data Access
 
-The table below describes what each permission grants access to. This is the same text shown to users on the Consent Page when they expand each data category.
+The table below outlines the text displayed to users on the Consent Page when they expand each data category associated with the consent permissions.
 
 <PermissionsReference />
 

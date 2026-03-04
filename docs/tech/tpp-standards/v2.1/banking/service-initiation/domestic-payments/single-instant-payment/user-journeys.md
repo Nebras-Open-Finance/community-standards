@@ -5,34 +5,64 @@ aside: false
 ---
 
 
-# Domestic Payments - Single Instant Payment - User Experience
-
-- AEBankServiceInitiationRichAuthorizationRequestsV21.AEBankServiceInitiationAuthorizationDetailsProperties from [/par](../../../../consent/open-api/par)
+# Single Instant Payment - User Experience
 
 
-<EditableJson
-  spec="/openapi/v2.1/standards/uae-authorization-endpoints-openapi.yaml"
-  schemaName="AEBankServiceInitiationRichAuthorizationRequestsV21.AEBankServiceInitiationAuthorizationDetailsProperties"
-  :excludedFields="['consent.PersonalIdentifiableInformation']"
-  :initialData="initialFormDataSIP"
-  :customValidator="myCustomValidator" 
-/>
+## Interactive Demo
 
+Customise the request body fields below and watch the **Consent** and **Authorisation** page previews update live.
 
-- AEBankServiceInitiationRichAuthorizationRequests.AEDomesticPaymentPII from [/par](../../../../consent/open-api/par)
-
-<EditableJson spec="/openapi/v2.1/standards/uae-authorization-endpoints-openapi.yaml"
-  schemaName="AEBankServiceInitiationRichAuthorizationRequests.AEDomesticPaymentPII"
-  :initialData="initialFormDataPII"
-  stateField="pii"
+<div style="border: 1px solid #bfdbfe; border-radius: 10px; overflow: hidden; margin: 1.5rem 0; box-shadow: 0 2px 8px rgba(0,39,127,0.06);">
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 1rem; background: rgba(0,39,127,0.04); border-bottom: 1px solid #bfdbfe; flex-wrap: wrap; gap: 0.5rem;">
+    <div style="display: flex; align-items: center; gap: 0.6rem;">
+      <span style="font-size: 0.72rem; font-weight: 700; color: rgba(0,39,127,0.8); letter-spacing: 0.07em; text-transform: uppercase;">domestic_payment_pii</span>
+      <span style="font-size: 0.7rem; color: rgba(0,39,127,0.45);">PAR request body field</span>
+    </div>
+    <a href="/tech/tpp-standards/v2.1/consent/open-api/par" style="font-size: 0.75rem; color: rgba(0,39,127,0.6); text-decoration: none; display: flex; align-items: center; gap: 3px;">View PAR endpoint ↗</a>
+  </div>
+  <EditableJson spec="/openapi/v2.1/standards/uae-authorization-endpoints-openapi.yaml"
+    schemaName="AEBankServiceInitiationRichAuthorizationRequests.AEDomesticPaymentPII"
+    :initialData="initialFormDataPII"
+    stateField="pii"
+    :customValidator="myPIICustomValidator"
   />
+</div>
 
 
-
+<div style="border: 1px solid #bfdbfe; border-radius: 10px; overflow: hidden; margin: 1.5rem 0; box-shadow: 0 2px 8px rgba(0,39,127,0.06);">
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 1rem; background: rgba(0,39,127,0.04); border-bottom: 1px solid #bfdbfe; flex-wrap: wrap; gap: 0.5rem;">
+    <div style="display: flex; align-items: center; gap: 0.6rem;">
+      <span style="font-size: 0.72rem; font-weight: 700; color: rgba(0,39,127,0.8); letter-spacing: 0.07em; text-transform: uppercase;">authorization_details</span>
+      <span style="font-size: 0.7rem; color: rgba(0,39,127,0.45);">PAR request body field</span>
+    </div>
+    <a href="/tech/tpp-standards/v2.1/consent/open-api/par" style="font-size: 0.75rem; color: rgba(0,39,127,0.6); text-decoration: none; display: flex; align-items: center; gap: 3px;">View PAR endpoint ↗</a>
+  </div>
+  <EditableJson
+    spec="/openapi/v2.1/standards/uae-authorization-endpoints-openapi.yaml"
+    schemaName="AEBankServiceInitiationRichAuthorizationRequestsV21.AEBankServiceInitiationAuthorizationDetailsProperties"
+    :excludedFields="['consent.PersonalIdentifiableInformation']"
+    :initialData="initialFormDataSIP"
+    :customValidator="myCustomValidator"
+  />
+</div>
 
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { useSharedState } from '../../../../../../../components/Composables/useSharedState.ts'
+import { purposeCodes } from '../../../../../../../components/Composables/aaniPaymentCodes.ts'
+
+const { sharedState } = useSharedState()
+
+const simulateDuplicatePayment = ref(false)
+watch(simulateDuplicatePayment, (val) => {
+  sharedState.value.simulatedBehaviour = { ...sharedState.value.simulatedBehaviour, duplicatePaymentAlert: val }
+}, { immediate: true })
+
+const simulatePaymentLimitExceeded = ref(false)
+watch(simulatePaymentLimitExceeded, (val) => {
+  sharedState.value.simulatedBehaviour = { ...sharedState.value.simulatedBehaviour, paymentLimitExceeded: val }
+}, { immediate: true })
 
 const myCustomValidator = (value) => {
   if (
@@ -46,78 +76,194 @@ const myCustomValidator = (value) => {
   ) {
     return "consent.ControlParameters.ConsentSchedule.SinglePayment.Type must be 'SingleInstantPayment'"
   }
+  
+  if (
+    (() => {
+      const expiration = new Date(value.consent.ExpirationDateTime);
+      const now = new Date();
+      const oneYearFromNow = new Date();
+      oneYearFromNow.setFullYear(now.getFullYear() + 1);
+
+      return expiration <= now || expiration >= oneYearFromNow;
+    })()
+  ) {
+    return "consent.ExpirationDateTime cannot be in the past and must be less than a year in the future.";
+  }
+
+  if (value.consent.PaymentPurposeCode && !purposeCodes[value.consent.PaymentPurposeCode]) {
+    return `consent.PaymentPurposeCode '${value.consent.PaymentPurposeCode}' is not a valid purpose code`
+  }
+
+  const perms = value.consent.Permissions || []
+  if (perms.includes('ReadBalances') && !perms.includes('ReadAccountsBasic') && !perms.includes('ReadAccountsDetail')) {
+    return "consent.Permissions: ReadBalances requires ReadAccountsBasic or ReadAccountsDetail"
+  }
+
+  if (value.consent.AuthorizationExpirationDateTime) {
+    const authExpiry = new Date(value.consent.AuthorizationExpirationDateTime)
+    const now = new Date()
+    if (authExpiry < now) {
+      return "consent.AuthorizationExpirationDateTime must not be in the past"
+    }
+    if (value.consent.ExpirationDateTime && authExpiry > new Date(value.consent.ExpirationDateTime)) {
+      return "consent.AuthorizationExpirationDateTime must not be after consent.ExpirationDateTime"
+    }
+  }
+
   return null
 }
 
 const initialFormDataSIP = ref({
-                "type": "urn:openfinanceuae:service-initiation-consent:v2.1",
-                "consent": {
-                    "ConsentId": "b8f42378-10ac-46a1-8d20-4e020484216d",
-                    "IsSingleAuthorization": true,
-                    "ExpirationDateTime": "2026-12-25T23:00:00.000Z",
-                    "BaseConsentId": "b9f42378-10ac-46a1-8d20-4e020484216d",
-                    "AuthorizationExpirationDateTime": "2026-12-25T23:00:00.000Z",
-                    "Permissions": ["ReadAccountsBasic", "ReadAccountsDetail", "ReadBalances", "ReadRefundAccount"],
-                    "ControlParameters": {
-                        "ConsentSchedule": {
-                            "SinglePayment": {
-                                "Type": "SingleInstantPayment",
-                                "Amount": {
-                                    "Amount": "100.00",
-                                    "Currency": "AED"
-                                }
-                            }
-                        }
-                    },
-                    "PaymentPurposeCode": "ACM",
-                    "DebtorReference": "Test Purchase",
-                    "CreditorReference": "Test Purchase"
-                },
-                "subscription": {
-                    "Webhook": {
-                        "Url": "https://webhook.site/mock-event-receiver",
-                        "IsActive": false
-                    }
-                }
-            })
-
-  const initialFormDataPII = ref(
-    {"Initiation": {
-            "Creditor": [
-                {
-                    "Creditor": {
-                        "Name": "Ivan England"
-                    },
-                    "CreditorAccount": {
-                        "SchemeName": "IBAN",
-                        "Identification": "AE070331234567890123456",
-                        "Name": {
-                            "en": "Ivan David England"
-                        }
-                    }
-                }
-            ]
-        },
-        "Risk": {
-            "DebtorIndicators": {
-                "UserName": {
-                    "en": "xx"
-                } 
-            },
-            "CreditorIndicators": {
-                "IsCreditorConfirmed": true,
-                "IsCreditorPrePopulated": true
-            }
+  "type": "urn:openfinanceuae:service-initiation-consent:v2.1",
+  "consent": {
+    "ConsentId": "b8f42378-10ac-46a1-8d20-4e020484216d",
+    "IsSingleAuthorization": true,
+    "ExpirationDateTime": "2026-12-25T23:00:00.000Z",
+    "BaseConsentId": "b9f42378-10ac-46a1-8d20-4e020484216d",
+    "AuthorizationExpirationDateTime": "2026-12-25T23:00:00.000Z",
+    "Permissions": ["ReadAccountsBasic", "ReadAccountsDetail", "ReadBalances", "ReadRefundAccount"],
+    "ControlParameters": {
+      "ConsentSchedule": {
+        "SinglePayment": {
+          "Type": "SingleInstantPayment",
+          "Amount": {
+            "Amount": "100.00",
+            "Currency": "AED"
+          }
         }
-        })      
+      }
+    },
+    "PaymentPurposeCode": "ACM",
+    "DebtorReference": "Test Purchase",
+    "CreditorReference": "Test Purchase"
+  },
+  "subscription": {
+    "Webhook": {
+      "Url": "https://webhook.site/mock-event-receiver",
+      "IsActive": false
+    }
+  }
+})
+
+const myPIICustomValidator = (value) => {
+  if (
+   !value.Initiation.Creditor     
+    ) {
+    return "value.Initiation.Creditor is required for Type 'SingleInstantPayment'"
+
+  }    
+  else if (
+    value.Initiation.Creditor.length > 1
+    ) {
+    return "Only a single Creditor is required for Type 'SingleInstantPayment'"
+  }
+  return null
+}
+
+const initialFormDataPII = ref({
+  "Initiation": {
+     "DebtorAccount": {
+       "SchemeName": "IBAN",
+       "Identification": "AE070331234567890123456",
+       "Name": {
+         "en": "Mohammed Al Rashidi",
+       }
+     },
+    "Creditor": [
+      {
+        "Creditor": {
+          "Name": "Ivan England"
+        },
+        "CreditorAccount": {
+          "SchemeName": "IBAN",
+          "Identification": "AE070331234567890123456",
+          "Name": {
+            "en": "Ivan David England"
+          }
+        }
+      }
+    ]
+  },
+  "Risk": {
+    "CreditorIndicators": {
+      "MerchantDetails": {
+        "MerchantName": "Al Noor General"
+      }
+    }
+  }
+})
 </script>
 
 
-### UI - User has Current Account And Savings Account
-
-<div style="display: flex; justify-content: space-between; align-items: flex-start;">
-
-
-<ConsentSingleInstantPayment />
-<AuthorizationSingleInstantPayment />
+<div style="border: 1px solid #bfdbfe; border-radius: 10px; overflow: hidden; margin: 1.5rem 0; box-shadow: 0 2px 8px rgba(0,39,127,0.06);">
+  <div style="display: flex; align-items: center; padding: 0.65rem 1rem; background: rgba(0,39,127,0.04); border-bottom: 1px solid #bfdbfe;">
+    <span style="font-size: 0.72rem; font-weight: 700; color: rgba(0,39,127,0.8); letter-spacing: 0.07em; text-transform: uppercase;">Simulated Accounts Behaviour</span>
+  </div>
+  <div style="padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.75rem;">
+    <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.85rem; color: #1a202c; user-select: none;">
+      <input type="checkbox" v-model="simulateDuplicatePayment" style="width: 15px; height: 15px; cursor: pointer; accent-color: rgba(0,39,127,0.7);" />
+      <span>Duplicate Payment Alert</span>
+    </label>
+    <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.85rem; color: #1a202c; user-select: none;">
+      <input type="checkbox" v-model="simulatePaymentLimitExceeded" style="width: 15px; height: 15px; cursor: pointer; accent-color: rgba(0,39,127,0.7);" />
+      <span>Payment Limit Exceeded</span>
+    </label>
+  </div>
 </div>
+
+### Live UI Preview
+
+Changes made above are immediately reflected in both panels.
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.25rem;">
+  <div style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem;">
+    <div style="width: 100%; text-align: center; padding: 0.45rem 0.75rem; background: rgba(0,39,127,0.05); border-radius: 7px; border: 1px solid rgba(0,39,127,0.12); box-sizing: border-box;">
+      <div style="font-size: 0.85rem; font-weight: 600; color: #1a202c; margin-top: 2px;">TPP · Consent Page</div>
+    </div>
+    <ConsentSingleInstantPayment />
+  </div>
+  <div style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem;">
+    <div style="width: 100%; text-align: center; padding: 0.45rem 0.75rem; background: rgba(0,192,167,0.07); border-radius: 7px; border: 1px solid rgba(0,192,167,0.28); box-sizing: border-box;">
+      <div style="font-size: 0.85rem; font-weight: 600; color: #1a202c; margin-top: 2px;">LFI · Authorisation Page</div>
+    </div>
+    <AuthorizationSingleInstantPayment />
+  </div>
+</div>
+
+
+### Permissions and Data Access
+
+The table below describes the text shown to users on the Consent Page.
+
+<ServiceInitiationPermissionText />
+
+
+## Example Journeys
+
+#### Example 1 - User selects account at LFI
+
+<ImageViewer
+  src="/images/user-experience/single-instant-payment/1.png"
+  alt="single-instant-payment-journey"
+/>
+
+#### Example 2 - User selects account at TPP (duplicate payment warning)
+
+<ImageViewer
+  src="/images/user-experience/single-instant-payment/2.png"
+  alt="single-instant-payment-journey"
+/>
+
+#### Example 3 - User selects account at TPP (overdraft warning)
+
+<ImageViewer
+  src="/images/user-experience/single-instant-payment/3.png"
+  alt="single-instant-payment-journey"
+/>
+
+#### Example 4 - User selects account at LFI (merchant details passed in by TPP)
+
+<ImageViewer
+  src="/images/user-experience/single-instant-payment/4.png"
+  alt="single-instant-payment-journey"
+/>

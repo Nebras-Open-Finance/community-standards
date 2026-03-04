@@ -36,7 +36,9 @@ Before initiating a Variable On-Demand payment, ensure the following requirement
 
 ## API Sequence Flow
 
-<APIFlowsVariableOnDemand/>
+<APIFlowViewer title="Variable On-Demand API Flow">
+  <APIFlowsVariableOnDemand/>
+</APIFlowViewer>
 
 ## <span style="color: #3b82f6; padding-right: 5px;">POST</span> `/par`
 

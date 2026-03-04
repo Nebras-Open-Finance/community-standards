@@ -46,8 +46,10 @@ This is the endpoint your TPP will use to register the application with.
 
 
 ## API Sequence Flow
+<APIFlowViewer title="TPP Registration API Flow">
+  <APIFlowsRegistration/>
+</APIFlowViewer>
 
-<APIFlowsRegistration/>
 
 
 ## <span style="color: #3b82f6; padding-right: 5px;">POST</span> `/tpp-registration`

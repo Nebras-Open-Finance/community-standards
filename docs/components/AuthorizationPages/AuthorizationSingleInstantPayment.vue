@@ -67,7 +67,11 @@
                 <div class="auth-page-text-header">
                     Confirm Payment Details
                     <div class="auth-page-text-header-sub">
-                        [TPP trading name]  needs your permission  to make the payment below:
+                        [TPP trading name] needs your permission
+                        <template v-if="sharedState?.pii?.Risk?.CreditorIndicators?.MerchantDetails?.MerchantName">
+                            on-behalf of {{ sharedState.pii.Risk.CreditorIndicators.MerchantDetails.MerchantName }}
+                        </template>
+                        to make the payment below:
                     </div>
                 </div>
                 <div class="auth-page-accounts-section">
@@ -92,7 +96,7 @@
                                         </defs>
                                     </svg>
                                     <div class="auth-page-account-amount">
-                                        100
+                                        {{ sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.SinglePayment?.Amount?.Amount }}
                                     </div>
 
                                 </div>
@@ -104,7 +108,7 @@
                                 <div class="auth-page-account-subtext-part">Payee Name</div>
                                 <div class="auth-page-account-amount-container">
                                     <div class="auth-page-account-amount">
-                                        MERCHANT
+                                        {{ sharedState?.pii?.Initiation?.Creditor[0]?.Creditor?.Name || sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Name?.en || sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Name?.ar }}
                                     </div>
 
                                 </div>
@@ -116,7 +120,7 @@
                                 <div class="auth-page-account-subtext-part">IBAN</div>
                                 <div class="auth-page-account-amount-container">
                                     <div class="auth-page-account-amount">
-                                        AE07 0331 2345 6789 0123 456
+                                        {{ sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Identification?.match(/.{1,4}/g)?.join(" ") }}
                                     </div>
 
                                 </div>
@@ -128,7 +132,7 @@
                                 <div class="auth-page-account-subtext-part">Payment Reference</div>
                                 <div class="auth-page-account-amount-container">
                                     <div class="auth-page-account-amount">
-                                        Test Purchase
+                                        {{ sharedState?.value?.consent?.DebtorReference }}
                                     </div>
 
                                 </div>
@@ -141,7 +145,7 @@
                                 <div class="auth-page-account-subtext-part">Payment Purpose</div>
                                 <div class="auth-page-account-amount-container">
                                     <div class="auth-page-account-amount">
-                                        Order 1234
+                                        {{ getPurposeDescription(sharedState?.value?.consent?.PaymentPurposeCode) }}
                                     </div>
 
                                 </div>
@@ -163,9 +167,72 @@
         <div  class="auth-page-text-frame">
             <div class="auth-page-text-inner-frame">
                 <div class="auth-page-text-header">
-                    Please select the account to pay from
+                    {{ sharedState?.pii?.Initiation?.DebtorAccount?.Identification ? 'Account selected for the payment' : 'Please select the account to pay from' }}
                 </div>
                 <div class="auth-page-accounts-section">
+                    <div v-if="sharedState?.pii?.Initiation?.DebtorAccount?.Identification" class="auth-page-account-card">
+                        <div class="auth-page-account-title">
+                            <div class="auth-page-account-title-text">
+                                Current Account
+                            </div>
+                        </div>
+                        <div class="auth-page-account-subtext-container">
+                            <div class="auth-page-account-subtext-container-2">
+                                <div class="auth-page-account-subtext">{{ sharedState?.pii?.Initiation?.DebtorAccount?.Identification?.match(/.{1,4}/g)?.join(" ") }}</div>
+
+                            </div>
+                            <div class="auth-page-account-subtext-container-2">
+                                <div class="auth-page-account-subtext-part">Balance</div>
+                                <div class="auth-page-account-amount-container">
+                                    <svg width="13" height="10" viewBox="0 0 13 10" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <g clip-path="url(#clip0_5197_11097)">
+                                            <path
+                                                d="M12.926 4.81517L12.8277 4.735C12.6689 4.60135 12.48 4.53454 12.2759 4.53454H11.2176C11.2327 4.6949 11.2403 4.85527 11.2403 5.02899C11.2403 5.20271 11.2327 5.36307 11.2176 5.53012H11.9357C12.48 5.53012 12.926 5.98448 12.926 6.55242V6.80633L12.8277 6.71947C12.6689 6.59251 12.48 6.5257 12.2759 6.5257H11.0588C10.4768 8.77749 8.44345 10.0002 5.23841 10.0002H1.1263C1.1263 10.0002 1.68566 9.61933 1.68566 8.34313V6.5257H0.997795C0.445983 6.5257 0 6.06466 0 5.50339V5.24949L0.105827 5.32967C0.257007 5.45662 0.445983 5.53012 0.650077 5.53012H1.68566V4.53454H0.997795C0.445983 4.53454 0 4.0735 0 3.51223V3.25833L0.105827 3.34519C0.257007 3.47214 0.445983 3.53896 0.650077 3.53896H1.68566V1.79502C1.68566 0.478721 1.1263 0.0644531 1.1263 0.0644531H5.23841C8.35274 0.0644531 10.439 1.27385 11.0513 3.53896H11.9357C12.48 3.53896 12.926 3.99332 12.926 4.56127V4.81517ZM5.08724 0.558902H3.37134V3.53896H9.13888C8.74581 1.46762 7.40786 0.558902 5.08724 0.558902ZM9.27494 5.02899C9.27494 4.85527 9.26738 4.6949 9.25982 4.53454H3.37134V5.53012H9.25982C9.26738 5.36307 9.27494 5.20271 9.27494 5.02899ZM3.37134 9.49907H5.10235C7.55904 9.44564 8.76849 8.40327 9.13888 6.5257H3.37134V9.49907Z"
+                                                fill="#616786" />
+                                        </g>
+                                        <defs>
+                                            <clipPath id="clip0_5197_11097">
+                                                <rect width="13" height="10" fill="white" />
+                                            </clipPath>
+                                        </defs>
+                                    </svg>
+                                    <div class="auth-page-account-amount">
+                                        5,000
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <div class="auth-page-account-subtext-container-2">
+                                <div class="auth-page-account-subtext-part">Overdraft</div>
+                                <div class="auth-page-account-amount-container">
+                                    <svg width="13" height="10" viewBox="0 0 13 10" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <g clip-path="url(#clip0_5197_11097)">
+                                            <path
+                                                d="M12.926 4.81517L12.8277 4.735C12.6689 4.60135 12.48 4.53454 12.2759 4.53454H11.2176C11.2327 4.6949 11.2403 4.85527 11.2403 5.02899C11.2403 5.20271 11.2327 5.36307 11.2176 5.53012H11.9357C12.48 5.53012 12.926 5.98448 12.926 6.55242V6.80633L12.8277 6.71947C12.6689 6.59251 12.48 6.5257 12.2759 6.5257H11.0588C10.4768 8.77749 8.44345 10.0002 5.23841 10.0002H1.1263C1.1263 10.0002 1.68566 9.61933 1.68566 8.34313V6.5257H0.997795C0.445983 6.5257 0 6.06466 0 5.50339V5.24949L0.105827 5.32967C0.257007 5.45662 0.445983 5.53012 0.650077 5.53012H1.68566V4.53454H0.997795C0.445983 4.53454 0 4.0735 0 3.51223V3.25833L0.105827 3.34519C0.257007 3.47214 0.445983 3.53896 0.650077 3.53896H1.68566V1.79502C1.68566 0.478721 1.1263 0.0644531 1.1263 0.0644531H5.23841C8.35274 0.0644531 10.439 1.27385 11.0513 3.53896H11.9357C12.48 3.53896 12.926 3.99332 12.926 4.56127V4.81517ZM5.08724 0.558902H3.37134V3.53896H9.13888C8.74581 1.46762 7.40786 0.558902 5.08724 0.558902ZM9.27494 5.02899C9.27494 4.85527 9.26738 4.6949 9.25982 4.53454H3.37134V5.53012H9.25982C9.26738 5.36307 9.27494 5.20271 9.27494 5.02899ZM3.37134 9.49907H5.10235C7.55904 9.44564 8.76849 8.40327 9.13888 6.5257H3.37134V9.49907Z"
+                                                fill="#616786" />
+                                        </g>
+                                        <defs>
+                                            <clipPath id="clip0_5197_11097">
+                                                <rect width="13" height="10" fill="white" />
+                                            </clipPath>
+                                        </defs>
+                                    </svg>
+                                    <div class="auth-page-account-amount">
+                                        1,500
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <template v-else>
                     <div class="auth-page-account-card" style="cursor: pointer;" @click="selected = 'current_account'">
                         <div class="auth-page-account-title">
                             <div class="auth-page-account-title-text">
@@ -280,11 +347,12 @@
 
                         </div>
                     </div>
+                    </template>
 
                 </div>
 
             </div>
-            
+
 
 
         </div>
@@ -311,24 +379,46 @@
                 </div>
                 </div>
 
-                <div class="auth-page-warning">
+                <div v-if="isOverdraft" class="auth-page-warning">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 7.75V13" stroke="#FD6436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                     <path d="M21.0802 8.58003V15.42C21.0802 16.54 20.4802 17.58 19.5102 18.15L13.5702 21.58C12.6002 22.14 11.4002 22.14 10.4202 21.58L4.48016 18.15C3.51016 17.59 2.91016 16.55 2.91016 15.42V8.58003C2.91016 7.46003 3.51016 6.41999 4.48016 5.84999L10.4202 2.42C11.3902 1.86 12.5902 1.86 13.5702 2.42L19.5102 5.84999C20.4802 6.41999 21.0802 7.45003 21.0802 8.58003Z" stroke="#FD6436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                     <path d="M12 16.2V16.2999" stroke="#FD6436" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                     <div class="auth-page-warning-text">
-                        This payment wil take your selected account into unarranged overdraft. 
-                        <br><br>
-                        To avoid interest charges and overdraft fees, please repay the unarranged overdraft by the end of day.
-
+                        This payment will take your selected account into an overdraft/unarranged overdraft.
                     </div>
-
                 </div>
 
-        <div class="auth-page-text-frame-2">
+                <div v-if="sharedState?.simulatedBehaviour?.duplicatePaymentAlert && !isOverdraft" class="auth-page-warning">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 7.75V13" stroke="#FD6436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M21.0802 8.58003V15.42C21.0802 16.54 20.4802 17.58 19.5102 18.15L13.5702 21.58C12.6002 22.14 11.4002 22.14 10.4202 21.58L4.48016 18.15C3.51016 17.59 2.91016 16.55 2.91016 15.42V8.58003C2.91016 7.46003 3.51016 6.41999 4.48016 5.84999L10.4202 2.42C11.3902 1.86 12.5902 1.86 13.5702 2.42L19.5102 5.84999C20.4802 6.41999 21.0802 7.45003 21.0802 8.58003Z" stroke="#FD6436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 16.2V16.2999" stroke="#FD6436" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <div class="auth-page-warning-text">
+                        Duplicate Payment Alert
+                        <br><br>
+                        Our systems indicate that you have already made a payment of the same amount to this beneficiary in the last 24 hours. Please check and ensure that you are not making a duplicate payment.
+                    </div>
+                </div>
+
+                <div v-if="sharedState?.simulatedBehaviour?.paymentLimitExceeded && !isOverdraft" class="auth-page-warning">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 7.75V13" stroke="#FD6436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M21.0802 8.58003V15.42C21.0802 16.54 20.4802 17.58 19.5102 18.15L13.5702 21.58C12.6002 22.14 11.4002 22.14 10.4202 21.58L4.48016 18.15C3.51016 17.59 2.91016 16.55 2.91016 15.42V8.58003C2.91016 7.46003 3.51016 6.41999 4.48016 5.84999L10.4202 2.42C11.3902 1.86 12.5902 1.86 13.5702 2.42L19.5102 5.84999C20.4802 6.41999 21.0802 7.45003 21.0802 8.58003Z" stroke="#FD6436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 16.2V16.2999" stroke="#FD6436" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <div class="auth-page-warning-text">
+                        Payment limit exceeded
+                        <br><br>
+                        The amount exceeds the payment limit you've set on your account. You may need to change your settings or try a smaller amount.
+                    </div>
+                </div>
+
+        <div v-if="authPermissionText" class="auth-page-text-frame-2">
                 <div class="auth-page-text-bottom">
-                    You also allow us to check the available funds before making a payment
+                    {{ authPermissionText }}
                 </div>
                 </div>
 
@@ -486,13 +576,27 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useSharedState } from '../Composables/useSharedState.ts'
+import { getPurposeDescription } from '../Composables/aaniPaymentCodes.ts'
+import { getAuthPaymentPermissionText } from '../Composables/serviceInitiationPermissionDescriptions.ts'
 
 const { sharedState } = useSharedState()
 
 const selected = ref(null)
 const selected_add_to_trusted = ref(false)
+
+const authPermissionText = computed(() =>
+    getAuthPaymentPermissionText(sharedState?.value?.value?.consent?.Permissions)
+)
+
+const isOverdraft = computed(() => {
+    const amount = parseFloat(sharedState?.value?.value?.consent?.ControlParameters?.ConsentSchedule?.SinglePayment?.Amount?.Amount || 0)
+    if (sharedState?.value?.pii?.Initiation?.DebtorAccount?.Identification) return amount > 5000
+    if (selected.value === 'savings_account') return amount > 25000
+    if (selected.value === 'current_account') return amount > 5000
+    return false
+})
 </script>
 
 <style scoped>
@@ -506,8 +610,7 @@ const selected_add_to_trusted = ref(false)
     align-items: center;
     padding: 0px;
     gap: 24px;
-    transform: scale(0.6);
-    transform-origin: top left;
+    zoom: 0.6;
 
     width: 372px;
     /* height: 1023px; */
@@ -1029,7 +1132,7 @@ flex-grow: 0;
 
     /* Inside auto layout */
     flex: none;
-    order: 2;
+    order: 4;
     flex-grow: 0;
 }
 
@@ -1172,7 +1275,7 @@ flex-grow: 0;
     border-radius: 0px;
 
     flex: none;
-    order: 3;
+    order: 5;
     flex-grow: 0;
 }
 

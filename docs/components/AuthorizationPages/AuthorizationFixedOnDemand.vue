@@ -164,21 +164,8 @@
 
                         <div class="auth-page-account-subtext-container">
 
-                                                    <div class="auth-page-account-subtext-container-2">
-                                    <div class="auth-page-account-subtext-part">First Payment Date</div>
-                                        <div class="auth-page-account-amount">
-                                            {{formatDate(sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.PeriodStartDate)}}
-                                        </div>
-                                </div>
-                                                                <div class="auth-page-account-subtext-container-2">
-                                    <div class="auth-page-account-subtext-part">Expiry Date</div>
-                                        <div class="auth-page-account-amount">
-                                            {{formatDate(sharedState?.value?.consent?.ExpirationDateTime)}}
-                                        </div>
-                                </div>
-
-                                <div class="auth-page-account-subtext-container-2">
-                                    <div class="auth-page-account-subtext-part">Max per Payment</div>
+                                                            <div class="auth-page-account-subtext-container-2">
+                                    <div class="auth-page-account-subtext-part">Amount</div>
  <div class="auth-page-account-amount-container">
                                     <svg width="13" height="10" viewBox="0 0 13 10" fill="none"
                                         xmlns="http://www.w3.org/2000/svg">
@@ -194,12 +181,27 @@
                                         </defs>
                                     </svg>
                                     <div class="auth-page-account-amount">
-                                        {{sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Controls?.MaximumIndividualAmount?.Amount }}
+                                        {{sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Amount?.Amount }}
                                     </div>
 
                                 </div>
                                 
                                 </div>
+
+                                                    <div class="auth-page-account-subtext-container-2">
+                                    <div class="auth-page-account-subtext-part">First Payment Date</div>
+                                        <div class="auth-page-account-amount">
+                                            {{formatDate(sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.PeriodStartDate)}}
+                                        </div>
+                                </div>
+                                                                <div class="auth-page-account-subtext-container-2">
+                                    <div class="auth-page-account-subtext-part">Expiry Date</div>
+                                        <div class="auth-page-account-amount">
+                                            {{formatDate(sharedState?.value?.consent?.ExpirationDateTime)}}
+                                        </div>
+                                </div>
+
+
 
 
                                                                 <div v-if="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeNumberOfPayments" class="auth-page-account-subtext-container-2">

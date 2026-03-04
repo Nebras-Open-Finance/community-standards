@@ -36,6 +36,17 @@ const form = ref({})
 const errors = ref([])
 const jsonInput = ref('')
 
+const toastMessage = ref('')
+const toastShowing = ref(false)
+let toastTimer = null
+function addError(msg) {
+  errors.value.push(msg)
+  toastMessage.value = msg
+  toastShowing.value = true
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => { toastShowing.value = false }, 2000)
+}
+
 /** Resolve $ref schemas recursively */
 function resolveSchema(schema) {
   if (!schema) return schema
@@ -93,13 +104,13 @@ function removeProperties(schema, paths) {
     let current = schema
     for (let i = 0; i < parts.length - 1; i++) {
       if (current.type !== 'object' || !current.properties) {
-        errors.value.push(`Cannot traverse non-object at ${parts.slice(0, i + 1).join('.')}`)
+        addError(`Cannot traverse non-object at ${parts.slice(0, i + 1).join('.')}`)
         return
       }
       current = current.properties[parts[i]]
     }
     if (current.type !== 'object' || !current.properties) {
-      errors.value.push(`Cannot remove from non-object at ${pathStr}`)
+      addError(`Cannot remove from non-object at ${pathStr}`)
       return
     }
     const last = parts[parts.length - 1]
@@ -296,7 +307,7 @@ async function loadSpec() {
     const maybeSchema = spec.value?.components?.schemas?.[props.schemaName]
 
     if (!maybeSchema) {
-      errors.value.push(`Schema ${props.schemaName} not found`)
+      addError(`Schema ${props.schemaName} not found`)
       return
     }
 
@@ -307,15 +318,17 @@ async function loadSpec() {
     const validationError = validateAgainstSchema(merged, rootSchema.value)
     const customError = props.customValidator(merged) // Use the prop function
     if (validationError || customError) {
-      errors.value.push(`Initial data validation error: ${validationError || customError}. Using defaults.`)
+      addError(`Initial data validation error: ${validationError || customError}. Using defaults.`)
       form.value = defaults
     } else {
       form.value = merged
     }
   } catch (err) {
-    errors.value.push(String(err))
+    addError(String(err))
   }
 }
+
+let suppressNextStateUpdate = false
 
 /** Update form from edited JSON */
 function updateFromJson() {
@@ -324,13 +337,15 @@ function updateFromJson() {
     const validationError = validateAgainstSchema(newObj, rootSchema.value)
     const customError = props.customValidator(newObj) // Use the prop function
     if (validationError || customError) {
-      errors.value.push(`Validation error: ${validationError || customError}`)
+      addError(`Validation error: ${validationError || customError}`)
+      suppressNextStateUpdate = true
       jsonInput.value = JSON.stringify(form.value, null, 2)
     } else {
       form.value = newObj
     }
   } catch (e) {
-    errors.value.push('Invalid JSON—reverting changes.')
+    addError('Invalid JSON—reverting changes.')
+    suppressNextStateUpdate = true
     jsonInput.value = JSON.stringify(form.value, null, 2)
   }
 }
@@ -340,9 +355,17 @@ watch(form, () => {
   jsonInput.value = JSON.stringify(form.value, null, 2)
 }, { deep: true })
 
-// Inject jsonInput to sharedState
+// Inject jsonInput to sharedState (skip when jsonInput is being reverted by validation failure)
 watch(jsonInput, (newValue) => {
-  updateField(props.stateField, newValue)
+  if (suppressNextStateUpdate) {
+    suppressNextStateUpdate = false
+    return
+  }
+  try {
+    updateField(props.stateField, newValue)
+  } catch (e) {
+    // Invalid JSON during mid-edit typing, skip state update
+  }
 })
 
 // Load spec initially
@@ -355,11 +378,7 @@ watchEffect(() => {
 
 <template>
   <div class="editor" style="position: relative;">
-
-    <!-- Show any errors -->
-    <div style="color: red; font-size: large; position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);" v-if="errors.length">
-        {{ errors[errors.length -1] }}
-    </div>
+    <div class="ej-toast" :class="{ 'ej-toast--visible': toastShowing }">{{ toastMessage }}</div>
 
     <!-- Editable JSON (updates on blur) -->
     <textarea
@@ -368,11 +387,30 @@ watchEffect(() => {
       style="width: 100%; min-height: 300px; font-size: 12px; line-height: 15px; background: #f4f4f4; padding: 1rem; font-family: monospace; overflow-x: auto;"
     ></textarea>
   </div>
-
 </template>
 
 <style scoped>
 .field {
   margin-bottom: 1rem;
+}
+.ej-toast {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(185, 28, 28, 0.92);
+  color: #fff;
+  padding: 0.55rem 1.1rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 9999;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.ej-toast--visible {
+  opacity: 1;
 }
 </style>

@@ -36,7 +36,9 @@ Before initiating a Fixed On-Demand payment, ensure the following requirements a
 
 ## API Sequence Flow
 
-<APIFlowsFixedOnDemand/>
+<APIFlowViewer title="Fixed On-Demand API Flow">
+  <APIFlowsFixedOnDemand/>
+</APIFlowViewer>
 
 ## <span style="color: #3b82f6; padding-right: 5px;">POST</span> `/par`
 

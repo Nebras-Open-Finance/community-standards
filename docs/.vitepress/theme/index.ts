@@ -10,6 +10,7 @@ import KnowledgeBasePage from '../../components/WebPages/KnowledgeBasePage.vue'
 
 //components
 import ImageViewer from '../../components/ImageViewer.vue'
+import APIFlowViewer from '../../components/APIFlowViewer.vue'
 import AccountEditor from '../../components/AccountEditor.vue'
 import RedocWrapper from '../../components/RedocWrapper.vue'
 import Carousel from '../../components/Carousel.vue'
@@ -30,12 +31,17 @@ import APIFlowsConfirmationOfPayee from '../../components/APIFlows/ConfirmationO
 import ConsentBankDataSharing from '../../components/ConsentPages/ConsentBankDataSharing.vue'
 import ConsentSingleInstantPayment from '../../components/ConsentPages/ConsentSingleInstantPayment.vue'
 import ConsentVariableOnDemand from '../../components/ConsentPages/ConsentVariableOnDemand.vue'
+import ConsentFixedOnDemand from '../../components/ConsentPages/ConsentFixedOnDemand.vue'
 
 import AuthorizationBankDataSharing from '../../components/AuthorizationPages/AuthorizationBankDataSharing.vue'
 import AuthorizationSingleInstantPayment from '../../components/AuthorizationPages/AuthorizationSingleInstantPayment.vue'
 import AuthorizationVariableOnDemand from '../../components/AuthorizationPages/AuthorizationVariableOnDemand.vue'
+import AuthorizationFixedOnDemand from '../../components/AuthorizationPages/AuthorizationFixedOnDemand.vue'
+
 
 import PermissionsReference from '../../components/PermissionsReference.vue'
+import ServiceInitiationPermissionText from '../../components/ServiceInitiationPermissionText.vue'
+import PaymentConsentPermissionsText from '../../components/ConsentPages/PaymentConsentPermissionsText.vue'
 
 
 export default {
@@ -50,6 +56,7 @@ export default {
 
     //components
     app.component('ImageViewer', ImageViewer)
+    app.component('APIFlowViewer', APIFlowViewer)
     app.component('AccountEditor', AccountEditor)
     app.component('RedocWrapper', RedocWrapper)
     app.component('Carousel', Carousel)
@@ -70,13 +77,17 @@ export default {
     app.component('ConsentBankDataSharing', ConsentBankDataSharing)
     app.component('ConsentSingleInstantPayment', ConsentSingleInstantPayment)
     app.component('ConsentVariableOnDemand', ConsentVariableOnDemand)
+    app.component('ConsentFixedOnDemand', ConsentFixedOnDemand)
 
     app.component('AuthorizationBankDataSharing', AuthorizationBankDataSharing)
     app.component('AuthorizationSingleInstantPayment', AuthorizationSingleInstantPayment)
     app.component('AuthorizationVariableOnDemand', AuthorizationVariableOnDemand)
+    app.component('AuthorizationFixedOnDemand', AuthorizationFixedOnDemand)
 
     app.component('PermissionsReference', PermissionsReference)
-    
+    app.component('ServiceInitiationPermissionText', ServiceInitiationPermissionText)
+    app.component('PaymentConsentPermissionsText', PaymentConsentPermissionsText)
+
   }
 }
 

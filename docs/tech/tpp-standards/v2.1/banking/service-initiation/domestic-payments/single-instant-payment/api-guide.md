@@ -34,7 +34,9 @@ Before initiating a Single Instant Payment, ensure the following requirements ar
 
 ## API Sequence Flow
 
-<APIFlowsSingleInstantPayment/>
+<APIFlowViewer title="Single Instant Payment API Flow">
+  <APIFlowsSingleInstantPayment/>
+</APIFlowViewer>
 
 ## <span style="color: #3b82f6; padding-right: 5px;">POST</span> `/par`
 
@@ -341,45 +343,3 @@ The response contains:
 
 See the [POST /payments](/tech/tpp-standards/v2.1/banking/service-initiation/open-api/payments) API reference for the full request and response schema.
 
-## Checking Payment Status
-
-### Step 10 - GET /payments/{PaymentId}
-
-Poll the payment status using the `PaymentId` returned in Step 9:
-
-::: code-group
-
-```typescript [Node.js]
-const statusResponse = await fetch(
-  `${LFI_API_BASE}/open-finance/v2.1/payments/${paymentId}`,
-  {
-    headers: { Authorization: `Bearer ${access_token}` },
-    // agent: new https.Agent({ cert: transportCert, key: transportKey }),
-  }
-)
-
-const { Data: { Status, StatusUpdateDateTime } } = await statusResponse.json()
-```
-
-```python [Python]
-status_response = httpx.get(
-    f"{LFI_API_BASE}/open-finance/v2.1/payments/{payment_id}",
-    headers={"Authorization": f"Bearer {access_token}"},
-    # cert=("transport.crt", "transport.key"),
-)
-
-data                   = status_response.json()["Data"]
-status                 = data["Status"]
-status_update_datetime = data["StatusUpdateDateTime"]
-```
-
-:::
-
-| Status | Description |
-|--------|-------------|
-| `Pending` | Payment received by LFI, awaiting processing |
-| `AcceptedSettlementInProcess` | Payment accepted and settlement is in progress |
-| `AcceptedSettlementCompleted` | Payment settled successfully |
-| `Rejected` | Payment rejected by the LFI or payment rail |
-
-See the [GET /payments/{PaymentId}](/tech/tpp-standards/v2.1/banking/service-initiation/open-api/payments-PaymentId) API reference for the full response schema and all possible status values.

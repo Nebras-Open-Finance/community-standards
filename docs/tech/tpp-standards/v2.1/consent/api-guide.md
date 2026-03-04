@@ -21,7 +21,9 @@ Consents are created through the **Pushed Authorization Request** flow ([FAPI 2.
 
 ## API Sequence Flow
 
-<APIFlowsConsentFlow/>
+<APIFlowViewer title="Consent Flow">
+  <APIFlowsConsentFlow/>
+</APIFlowViewer>
 
 ## The Consent Flow
 

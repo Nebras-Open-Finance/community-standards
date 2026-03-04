@@ -33,7 +33,9 @@ Before creating a Bank Data Sharing consent, ensure the following requirements a
 
 ## API Sequence Flow
 
-<APIFlowsBankDataSharing/>
+<APIFlowViewer title="Bank Data Sharing API Flow">
+  <APIFlowsBankDataSharing/>
+</APIFlowViewer>
 
 ## <span style="color: #3b82f6; padding-right: 5px;">POST</span> `/par`
 
