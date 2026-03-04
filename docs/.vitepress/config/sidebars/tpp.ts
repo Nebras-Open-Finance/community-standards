@@ -206,6 +206,16 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
             ],
           },
           {
+            text: 'Personal Identifiable Information',
+            collapsed: true,
+            link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/`,
+            items: [
+              { text: 'Debtor Account', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/debtor-account` },
+              { text: 'Creditor', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/creditor` },
+              { text: 'Risk', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/risk` },
+            ],
+          },
+          {
             text: 'API Reference',
             collapsed: true,
             items: [

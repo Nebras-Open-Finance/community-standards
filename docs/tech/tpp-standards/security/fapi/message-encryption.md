@@ -10,10 +10,6 @@ A **JWE** (JSON Web Encryption — [RFC 7516](https://datatracker.ietf.org/doc/h
 
 In UAE Open Finance, encryption is used to protect the **Request Object** sent to `/par`. When enabled, the signed JWT (JWS) is wrapped inside an encrypted envelope (JWE), producing a **Nested JWT** — a structure that is both signed and encrypted.
 
-::: info When is encryption required?
-Check the LFI's `.well-known` endpoint for the `request_object_encryption_alg_values_supported` field. If present and non-empty, the LFI expects encrypted request objects.
-:::
-
 ## Structure of an Encrypted JWT
 
 A compact-serialised JWE consists of five base64url-encoded parts joined by `.`:

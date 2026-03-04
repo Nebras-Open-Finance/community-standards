@@ -23,7 +23,7 @@
       <template v-if="filteredArticles.length > 0">
         <div class="card-grid">
           <a v-for="article in filteredArticles" :key="article.link" :href="article.link" class="kb-card">
-            <span class="kb-card-category">{{ article.category }}</span>
+            <span v-if="article.category" class="kb-card-category">{{ article.category }}</span>
             <h3 class="kb-card-title">{{ article.title }}</h3>
             <p class="kb-card-desc">{{ article.description }}</p>
             <span class="kb-card-arrow">Read article →</span>
@@ -42,18 +42,9 @@
 <script setup>
 import { ref, computed } from 'vue'
 import PageHeader from './Components/PageHeader.vue'
+import { data as articles } from '../../knowledge-base/articles.data.ts'
 
 const query = ref('')
-
-const articles = [
-  {
-    title: 'Base Consent ID (consentGroupId)',
-    description:
-      'How to use a Base Consent ID to link related consents across continuation, re-establishment, and permission expansion — and why the LFI enforces user identity consistency across the chain.',
-    link: '/knowledge-base/articles/base-consent-id',
-    category: 'Consent',
-  },
-]
 
 const filteredArticles = computed(() => {
   const q = query.value.trim().toLowerCase()

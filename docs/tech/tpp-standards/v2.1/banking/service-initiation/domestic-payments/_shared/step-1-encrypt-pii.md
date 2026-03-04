@@ -1,35 +1,22 @@
 ### Step 1 - Encrypting PII
 
-Before constructing the `authorization_details`, the **Personal Identifiable Information (PII)** — creditor name, IBAN, and risk indicators — must be encrypted as a JWE using the LFI's public encryption key. This prevents the Authorization Server from reading sensitive payment details in transit.
+The `consent.PersonalIdentifiableInformation` property in the `authorization_details` carries sensitive payment data — creditor account details, debtor information, and risk indicators. Because consents are stored centrally at Nebras, this data is encrypted end-to-end so that no intermediate party can read it.
 
-#### PII Structure
+The schema defines `PersonalIdentifiableInformation` as a `oneOf` with three variants:
 
-| Field | Type | Description | Example |
-|-------|------|-------------|---------|
-| `Initiation` | object | Creditor identification details. *Described below* | — |
-| `Risk` | object | Risk and fraud indicators for the payment. *Described below* | — |
+| Variant | Form | Notes |
+|---------|------|-------|
+| **Domestic Payment PII Schema Object** | object | Unencrypted form — shows the PII structure for domestic payments. For reference only. |
+| **International Payment PII Schema Object** | object | Unencrypted form — shows the PII structure for international payments. For reference only. |
+| **Encrypted PII Object** (`AEJWEPaymentPII`) | string | Compact JWE string. **MUST** be used when invoking the PAR operation. |
 
-#### Initiation | `Initiation.Creditor[]`
+Implementers **MUST** adhere to the decoded PII schema when building the object before encryption. Debtor and Creditor information **MUST** be set according to the rules for the payment type being instructed — see [Personal Identifiable Information](../../../personal-identifiable-information/) for the complete schema reference and creditor models.
 
-| Field | Type | Description | Example |
-|-------|------|-------------|---------|
-| `Creditor.Name` | string | Full legal name of the payment recipient | `Ivan England` |
-| `CreditorAccount.SchemeName` | enum | Account scheme — `IBAN` or `BBAN` | `IBAN` |
-| `CreditorAccount.Identification` | string | Account identifier in the chosen scheme | `AE070331234567890123456` |
-| `CreditorAccount.Name.en` | string | Account holder name (English) | `Ivan David England` |
-| `CreditorAccount.Name.ar` | string | Account holder name (Arabic, optional) | — |
-
-#### Risk | `Risk`
-
-| Field | Type | Description | Example |
-|-------|------|-------------|---------|
-| `DebtorIndicators.UserName.en` | string | Display name of the paying user | `Ahmad Al Mansouri` |
-| `CreditorIndicators.IsCreditorConfirmed` | boolean | Whether the creditor identity was confirmed by Confirmation of Payee | `true` |
-| `CreditorIndicators.IsCreditorPrePopulated` | boolean | Whether the creditor details were pre-filled by the TPP rather than entered by the user | `true` |
+The PII object is serialized to JSON, signed as a JWS using your signing key, and then encrypted as a JWE using the LFI's public encryption key — producing the `AEJWEPaymentPII` compact string embedded as `PersonalIdentifiableInformation` in the consent.
 
 #### Encrypting the PII
 
-Serialize the PII object to JSON and encrypt it as a JWE using the LFI's public encryption key. Use the [`encryptRequestObject()`](/tech/tpp-standards/security/fapi/message-encryption#step-3-encrypt-the-payload) helper from the Message Encryption page — the only difference is that the payload is a JSON string rather than a signed JWT:
+Build the PII object according to the schema, then encrypt it as a JWE using the LFI's public encryption key:
 
 ::: code-group
 

@@ -431,3 +431,29 @@ A `PARTIAL_MATCH` or `NO_MATCH` should be surfaced to the payer before initiatin
 :::
 
 See the [POST /confirmation](./open-api/confirmation) API reference for the full request and response schema.
+
+## Using the CoP Response in a Payment Consent
+
+Where Confirmation of Payee has been performed for a creditor, include the **full raw JWS response string** returned by the `/confirmation` endpoint in the `ConfirmationOfPayeeResponse` field of the creditor entry inside the payment consent PII.
+
+```json
+{
+  "Initiation": {
+    "Creditor": [
+      {
+        "Creditor": { "Name": "Ibrahim Al Suwaidi" },
+        "CreditorAccount": {
+          "SchemeName": "IBAN",
+          "Identification": "AE070331234567890123456",
+          "Name": { "en": "Ibrahim Al Suwaidi" }
+        },
+        "ConfirmationOfPayeeResponse": "eyJhbGci..."   // full JWS string from Step 4
+      }
+    ]
+  }
+}
+```
+
+This gives the LFI confidence that the creditor account details have been verified before the payment consent was created. The value must be the complete compact JWS string — do not decode it to an object before embedding.
+
+See [Creditor](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/creditor) for the full PII creditor schema and the creditor models (single, multiple, and open beneficiary).
