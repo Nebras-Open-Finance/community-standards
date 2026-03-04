@@ -9,6 +9,8 @@ import MetricsPage from '../../components/WebPages/MetricsPage.vue'
 import KnowledgeBasePage from '../../components/WebPages/KnowledgeBasePage.vue'
 
 //components
+import ImageViewer from '../../components/ImageViewer.vue'
+import AccountEditor from '../../components/AccountEditor.vue'
 import RedocWrapper from '../../components/RedocWrapper.vue'
 import Carousel from '../../components/Carousel.vue'
 import ProtectedPageWrapper from '../../components/ProtectedPageWrapper.vue'
@@ -33,6 +35,8 @@ import AuthorizationBankDataSharing from '../../components/AuthorizationPages/Au
 import AuthorizationSingleInstantPayment from '../../components/AuthorizationPages/AuthorizationSingleInstantPayment.vue'
 import AuthorizationVariableOnDemand from '../../components/AuthorizationPages/AuthorizationVariableOnDemand.vue'
 
+import PermissionsReference from '../../components/PermissionsReference.vue'
+
 
 export default {
   extends: DefaultTheme,
@@ -45,6 +49,8 @@ export default {
     app.component('KnowledgeBasePage', KnowledgeBasePage)
 
     //components
+    app.component('ImageViewer', ImageViewer)
+    app.component('AccountEditor', AccountEditor)
     app.component('RedocWrapper', RedocWrapper)
     app.component('Carousel', Carousel)
     app.component('ProtectedPageWrapper', ProtectedPageWrapper)
@@ -68,6 +74,8 @@ export default {
     app.component('AuthorizationBankDataSharing', AuthorizationBankDataSharing)
     app.component('AuthorizationSingleInstantPayment', AuthorizationSingleInstantPayment)
     app.component('AuthorizationVariableOnDemand', AuthorizationVariableOnDemand)
+
+    app.component('PermissionsReference', PermissionsReference)
     
   }
 }

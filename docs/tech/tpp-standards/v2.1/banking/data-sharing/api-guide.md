@@ -358,8 +358,8 @@ auth_code_url = (
 
 :::
 
-::: tip User Journeys
-See [User Journeys](./user-journeys) for screen mockups of the **Consent** and **Authorization** pages the user sees at the bank, including an interactive example where you can edit the consent JSON and preview the resulting UI.
+::: tip User Experience
+See [User Experience](./user-journeys) for screen mockups of the **Consent** and **Authorization** pages the user sees at the bank, including an interactive example where you can edit the consent JSON and preview the resulting UI.
 :::
 
 After redirecting, the user will:

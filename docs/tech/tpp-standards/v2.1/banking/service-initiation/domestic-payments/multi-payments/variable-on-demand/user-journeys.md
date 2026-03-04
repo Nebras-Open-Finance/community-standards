@@ -5,7 +5,7 @@ aside: false
 ---
 
 
-# Domestic Payments - Variable On Demand - User Journeys
+# Domestic Payments - Variable On Demand - User Experience
 
 - AEBankServiceInitiationRichAuthorizationRequestsV21.AEBankServiceInitiationAuthorizationDetailsProperties from [/par](../../../../../consent/open-api/par)
 

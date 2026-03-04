@@ -5,42 +5,26 @@ aside: false
 ---
 
 
-# Bank Data Sharing - User Journeys
+# Bank Data Sharing - User Experience
 
 
-## Consent Journey Example
+## Interactive Demo
 
-Bank Data Sharing allows a user to consent to sharing specific elements of their banking data through **Open Finance**. As outlined in the [API Guide](./api-guide) and [requirements](./requirements), the user follows a structured journey:
+Customise the `authorization_details` object below and watch the **Consent** and **Authorisation** page previews update live. Try changing permissions, account types, date ranges, or the TPP name to see how the pages respond.
 
-1. **Consent Page**  
-   The user is presented with a **Consent page** summarizing the details of the data they are about to share. Once the user provides consent, the **TPP stages the consent**, making it ready for user authorization.
-
-2. **Redirect to LFI**  
-   The user is redirected to the **LFI** to:
-   - **Authenticate** with their bank.  
-   - **Authorize** the previously staged consent object.  
-
-   Upon authorization, the consent is confirmed, and the authorization process is finalized. The user is then redirected back to the TPP.
-
-3. **Access to Banking Data**  
-   Once the consent is in the **`authorized`** state, the TPP can access the user’s banking data according to the consent details specified by the user.
-
-### Example Journey
-
-<br>
-
-<img src="/images/journeys/data-sharing.png" alt="bank-data-sharing-journey" />
-
-
-## Consent Pages
-
-- AEBankDataSharingRichAuthorizationRequestsV21.AEBankDataSharingAuthorizationDetailsProperties from [/par](../../../../consent/open-api/par)
-
-
-<EditableJson spec="/openapi/v2.1/standards/uae-authorization-endpoints-openapi.yaml"
-  schemaName="AEBankDataSharingRichAuthorizationRequestsV21.AEBankDataSharingAuthorizationDetailsProperties"
-  :initialData="initialFormData"
+<div style="border: 1px solid #bfdbfe; border-radius: 10px; overflow: hidden; margin: 1.5rem 0; box-shadow: 0 2px 8px rgba(0,39,127,0.06);">
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 1rem; background: rgba(0,39,127,0.04); border-bottom: 1px solid #bfdbfe; flex-wrap: wrap; gap: 0.5rem;">
+    <div style="display: flex; align-items: center; gap: 0.6rem;">
+      <span style="font-size: 0.72rem; font-weight: 700; color: rgba(0,39,127,0.8); letter-spacing: 0.07em; text-transform: uppercase;">authorization_details</span>
+      <span style="font-size: 0.7rem; color: rgba(0,39,127,0.45);">PAR request body field</span>
+    </div>
+    <a href="/tech/tpp-standards/v2.1/consent/open-api/par" style="font-size: 0.75rem; color: rgba(0,39,127,0.6); text-decoration: none; display: flex; align-items: center; gap: 3px;">View PAR endpoint ↗</a>
+  </div>
+  <EditableJson spec="/openapi/v2.1/standards/uae-authorization-endpoints-openapi.yaml"
+    schemaName="AEBankDataSharingRichAuthorizationRequestsV21.AEBankDataSharingAuthorizationDetailsProperties"
+    :initialData="initialFormData"
   />
+</div>
 
 
 
@@ -104,10 +88,56 @@ const initialFormData = ref({
 </script>
 
 
-### UI - User has Current Account And Savings Account
+### Simulated User Accounts
 
-<div style="display: flex; justify-content: space-between; align-items: flex-start;">
-<ConsentBankDataSharing />
-<AuthorizationBankDataSharing />
+Configure the mock accounts the authenticated user holds at their bank. Only accounts whose type matches the `AccountSubType` filter in `authorization_details` above will appear on the Authorisation Page.
+
+<AccountEditor />
+
+### Live UI Preview
+
+Changes made above are immediately reflected in both panels.
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.25rem;">
+  <div style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem;">
+    <div style="width: 100%; text-align: center; padding: 0.45rem 0.75rem; background: rgba(0,39,127,0.05); border-radius: 7px; border: 1px solid rgba(0,39,127,0.12); box-sizing: border-box;">
+      <div style="font-size: 0.85rem; font-weight: 600; color: #1a202c; margin-top: 2px;">TPP · Consent Page</div>
+    </div>
+    <ConsentBankDataSharing />
+  </div>
+  <div style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem;">
+    <div style="width: 100%; text-align: center; padding: 0.45rem 0.75rem; background: rgba(0,192,167,0.07); border-radius: 7px; border: 1px solid rgba(0,192,167,0.28); box-sizing: border-box;">
+      <div style="font-size: 0.85rem; font-weight: 600; color: #1a202c; margin-top: 2px;">LFI · Authorisation Page</div>
+    </div>
+    <AuthorizationBankDataSharing />
+  </div>
 </div>
 
+## Permissions and Data Access
+
+The table below describes what each permission grants access to. This is the same text shown to users on the Consent Page when they expand each data category.
+
+<PermissionsReference />
+
+## Example Journeys
+
+#### Example 1 - Current and Savings Account
+
+<ImageViewer
+  src="/images/user-experience/data-sharing/1.png"
+  alt="bank-data-sharing-journey"
+/>
+
+#### Example 2 - Current Account, Savings Account, Credit Card, Mortgage & Auto Finance
+
+<ImageViewer
+  src="/images/user-experience/data-sharing/2.png"
+  alt="bank-data-sharing-journey"
+/>
+
+#### Example 3 - Current Account, Current Account (USD) & Current Account (INR)
+
+<ImageViewer
+  src="/images/user-experience/data-sharing/3.png"
+  alt="bank-data-sharing-journey"
+/>

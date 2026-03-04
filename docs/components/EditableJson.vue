@@ -354,10 +354,10 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div class="editor">
+  <div class="editor" style="position: relative;">
 
     <!-- Show any errors -->
-    <div style="color: red; font-size: small;" v-if="errors.length">
+    <div style="color: red; font-size: large; position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);" v-if="errors.length">
         {{ errors[errors.length -1] }}
     </div>
 

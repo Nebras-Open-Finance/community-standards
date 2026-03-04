@@ -291,8 +291,8 @@ After redirecting, the user will see the bank's authorization screen showing:
 - Any lifetime cumulative caps
 - The consent expiry date
 
-::: tip User Journeys
-See [User Journeys](./user-journeys) for screen mockups of the Fixed On-Demand **Consent** and **Authorization** pages the user sees at the bank.
+::: tip User Experience
+See [User Experience](./user-journeys) for screen mockups of the Fixed On-Demand **Consent** and **Authorization** pages the user sees at the bank.
 :::
 
 ## Handling the Callback

@@ -62,139 +62,44 @@
                 </div>
             </div>
         </div>
-        <div v-if="!sharedState?.value?.consent?.AccountSubType || sharedState?.value?.consent?.AccountSubType.includes('CurrentAccount') || sharedState?.value?.consent?.AccountSubType.includes('Savings')" class="auth-page-text-frame">
+        <div v-if="visibleAccounts.length > 0" class="auth-page-text-frame">
             <div class="auth-page-text-inner-frame">
                 <div class="auth-page-text-header">
                     Select account(s) to share information with {{ sharedState?.value?.consent?.OnBehalfOf?.TradingName ||
                     '[TPP Trading Name]'}}
                 </div>
                 <div class="auth-page-accounts-section">
-                    <div v-if="!sharedState?.value?.consent?.AccountSubType || sharedState?.value?.consent?.AccountSubType.includes('CurrentAccount')" class="auth-page-account-card" @click="selected_current_account = !selected_current_account">
+                    <div v-for="account in visibleAccounts" :key="account.id" class="auth-page-account-card" @click="toggleSelected(account.id)">
                         <div class="auth-page-account-title">
-                            <div class="auth-page-account-title-text">
-                                Current Account
-                            </div>
+                            <div class="auth-page-account-title-text">{{ typeLabel(account) }}</div>
                             <div class="auth-page-account-checkbox">
-                                <div class="auth-page-account-checkbox-inactive"
-                                    :class="{ 'is-active': selected_current_account }">
-
-
-                                    <svg class="auth-page-account-checkbox-check" width="12" height="9"
-                                        viewBox="0 0 12 9" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path
-                                            d="M4.16667 8.68333L0 4.51667L1.175 3.34167L4.16667 6.325L10.4917 0L11.6667 1.18333L4.16667 8.68333Z"
-                                            fill="white" />
-                                    </svg>
-
-
+                                <div class="auth-page-account-checkbox-inactive" :class="{ 'is-active': selectedAccounts[account.id] }">
+                                    <svg class="auth-page-account-checkbox-check" width="12" height="9" viewBox="0 0 12 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.16667 8.68333L0 4.51667L1.175 3.34167L4.16667 6.325L10.4917 0L11.6667 1.18333L4.16667 8.68333Z" fill="white"/></svg>
                                 </div>
                             </div>
                         </div>
                         <div class="auth-page-account-subtext-container">
                             <div class="auth-page-account-subtext-container-2">
-                                <div class="auth-page-account-subtext">AE07 0331 2345 6123 4567 890</div>
-
+                                <div class="auth-page-account-subtext">{{ getAccountRef(account) }}</div>
                             </div>
                             <div class="auth-page-account-subtext-container-2">
-                                <div class="auth-page-account-subtext-part">Balance</div>
+                                <div class="auth-page-account-subtext-part">{{ balanceLabel(account.type) }}</div>
                                 <div class="auth-page-account-amount-container">
-                                    <svg width="13" height="10" viewBox="0 0 13 10" fill="none"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <g clip-path="url(#clip0_5197_11097)">
-                                            <path
-                                                d="M12.926 4.81517L12.8277 4.735C12.6689 4.60135 12.48 4.53454 12.2759 4.53454H11.2176C11.2327 4.6949 11.2403 4.85527 11.2403 5.02899C11.2403 5.20271 11.2327 5.36307 11.2176 5.53012H11.9357C12.48 5.53012 12.926 5.98448 12.926 6.55242V6.80633L12.8277 6.71947C12.6689 6.59251 12.48 6.5257 12.2759 6.5257H11.0588C10.4768 8.77749 8.44345 10.0002 5.23841 10.0002H1.1263C1.1263 10.0002 1.68566 9.61933 1.68566 8.34313V6.5257H0.997795C0.445983 6.5257 0 6.06466 0 5.50339V5.24949L0.105827 5.32967C0.257007 5.45662 0.445983 5.53012 0.650077 5.53012H1.68566V4.53454H0.997795C0.445983 4.53454 0 4.0735 0 3.51223V3.25833L0.105827 3.34519C0.257007 3.47214 0.445983 3.53896 0.650077 3.53896H1.68566V1.79502C1.68566 0.478721 1.1263 0.0644531 1.1263 0.0644531H5.23841C8.35274 0.0644531 10.439 1.27385 11.0513 3.53896H11.9357C12.48 3.53896 12.926 3.99332 12.926 4.56127V4.81517ZM5.08724 0.558902H3.37134V3.53896H9.13888C8.74581 1.46762 7.40786 0.558902 5.08724 0.558902ZM9.27494 5.02899C9.27494 4.85527 9.26738 4.6949 9.25982 4.53454H3.37134V5.53012H9.25982C9.26738 5.36307 9.27494 5.20271 9.27494 5.02899ZM3.37134 9.49907H5.10235C7.55904 9.44564 8.76849 8.40327 9.13888 6.5257H3.37134V9.49907Z"
-                                                fill="#616786" />
-                                        </g>
-                                        <defs>
-                                            <clipPath id="clip0_5197_11097">
-                                                <rect width="13" height="10" fill="white" />
-                                            </clipPath>
-                                        </defs>
-                                    </svg>
-                                    <div class="auth-page-account-amount">
-                                        5,000
-                                    </div>
-
+                                    <svg v-if="!currencySymbol(account)" width="13" height="10" viewBox="0 0 13 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.926 4.81517L12.8277 4.735C12.6689 4.60135 12.48 4.53454 12.2759 4.53454H11.2176C11.2327 4.6949 11.2403 4.85527 11.2403 5.02899C11.2403 5.20271 11.2327 5.36307 11.2176 5.53012H11.9357C12.48 5.53012 12.926 5.98448 12.926 6.55242V6.80633L12.8277 6.71947C12.6689 6.59251 12.48 6.5257 12.2759 6.5257H11.0588C10.4768 8.77749 8.44345 10.0002 5.23841 10.0002H1.1263C1.1263 10.0002 1.68566 9.61933 1.68566 8.34313V6.5257H0.997795C0.445983 6.5257 0 6.06466 0 5.50339V5.24949L0.105827 5.32967C0.257007 5.45662 0.445983 5.53012 0.650077 5.53012H1.68566V4.53454H0.997795C0.445983 4.53454 0 4.0735 0 3.51223V3.25833L0.105827 3.34519C0.257007 3.47214 0.445983 3.53896 0.650077 3.53896H1.68566V1.79502C1.68566 0.478721 1.1263 0.0644531 1.1263 0.0644531H5.23841C8.35274 0.0644531 10.439 1.27385 11.0513 3.53896H11.9357C12.48 3.53896 12.926 3.99332 12.926 4.56127V4.81517ZM5.08724 0.558902H3.37134V3.53896H9.13888C8.74581 1.46762 7.40786 0.558902 5.08724 0.558902ZM9.27494 5.02899C9.27494 4.85527 9.26738 4.6949 9.25982 4.53454H3.37134V5.53012H9.25982C9.26738 5.36307 9.27494 5.20271 9.27494 5.02899ZM3.37134 9.49907H5.10235C7.55904 9.44564 8.76849 8.40327 9.13888 6.5257H3.37134V9.49907Z" fill="#616786"/></svg>
+                                    <span v-else class="auth-page-account-currency-symbol">{{ currencySymbol(account) }}</span>
+                                    <div class="auth-page-account-amount">{{ account.balance.toLocaleString() }}</div>
                                 </div>
-
                             </div>
-
-                            <div class="auth-page-account-subtext-container-2">
-                                <div class="auth-page-account-subtext-part">Overdraft</div>
+                            <div v-if="account.secondary != null" class="auth-page-account-subtext-container-2">
+                                <div class="auth-page-account-subtext-part">{{ secondaryLabel(account.type) }}</div>
                                 <div class="auth-page-account-amount-container">
-                                    <svg width="13" height="10" viewBox="0 0 13 10" fill="none"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <g clip-path="url(#clip0_5197_11097)">
-                                            <path
-                                                d="M12.926 4.81517L12.8277 4.735C12.6689 4.60135 12.48 4.53454 12.2759 4.53454H11.2176C11.2327 4.6949 11.2403 4.85527 11.2403 5.02899C11.2403 5.20271 11.2327 5.36307 11.2176 5.53012H11.9357C12.48 5.53012 12.926 5.98448 12.926 6.55242V6.80633L12.8277 6.71947C12.6689 6.59251 12.48 6.5257 12.2759 6.5257H11.0588C10.4768 8.77749 8.44345 10.0002 5.23841 10.0002H1.1263C1.1263 10.0002 1.68566 9.61933 1.68566 8.34313V6.5257H0.997795C0.445983 6.5257 0 6.06466 0 5.50339V5.24949L0.105827 5.32967C0.257007 5.45662 0.445983 5.53012 0.650077 5.53012H1.68566V4.53454H0.997795C0.445983 4.53454 0 4.0735 0 3.51223V3.25833L0.105827 3.34519C0.257007 3.47214 0.445983 3.53896 0.650077 3.53896H1.68566V1.79502C1.68566 0.478721 1.1263 0.0644531 1.1263 0.0644531H5.23841C8.35274 0.0644531 10.439 1.27385 11.0513 3.53896H11.9357C12.48 3.53896 12.926 3.99332 12.926 4.56127V4.81517ZM5.08724 0.558902H3.37134V3.53896H9.13888C8.74581 1.46762 7.40786 0.558902 5.08724 0.558902ZM9.27494 5.02899C9.27494 4.85527 9.26738 4.6949 9.25982 4.53454H3.37134V5.53012H9.25982C9.26738 5.36307 9.27494 5.20271 9.27494 5.02899ZM3.37134 9.49907H5.10235C7.55904 9.44564 8.76849 8.40327 9.13888 6.5257H3.37134V9.49907Z"
-                                                fill="#616786" />
-                                        </g>
-                                        <defs>
-                                            <clipPath id="clip0_5197_11097">
-                                                <rect width="13" height="10" fill="white" />
-                                            </clipPath>
-                                        </defs>
-                                    </svg>
-                                    <div class="auth-page-account-amount">
-                                        1,500
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div v-if="!sharedState?.value?.consent?.AccountSubType || sharedState?.value?.consent?.AccountSubType.includes('Savings')" class="auth-page-account-card" @click="selected_savings_account = !selected_savings_account">
-                        <div class="auth-page-account-title">
-                            <div class="auth-page-account-title-text">
-                                Savings
-                            </div>
-                            <div class="auth-page-account-checkbox">
-                                <div class="auth-page-account-checkbox-inactive" :class="{ 'is-active': selected_savings_account }">
- <svg class="auth-page-account-checkbox-check" width="12" height="9"
-                                        viewBox="0 0 12 9" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path
-                                            d="M4.16667 8.68333L0 4.51667L1.175 3.34167L4.16667 6.325L10.4917 0L11.6667 1.18333L4.16667 8.68333Z"
-                                            fill="white" />
-                                    </svg>
+                                    <svg v-if="!currencySymbol(account)" width="13" height="10" viewBox="0 0 13 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.926 4.81517L12.8277 4.735C12.6689 4.60135 12.48 4.53454 12.2759 4.53454H11.2176C11.2327 4.6949 11.2403 4.85527 11.2403 5.02899C11.2403 5.20271 11.2327 5.36307 11.2176 5.53012H11.9357C12.48 5.53012 12.926 5.98448 12.926 6.55242V6.80633L12.8277 6.71947C12.6689 6.59251 12.48 6.5257 12.2759 6.5257H11.0588C10.4768 8.77749 8.44345 10.0002 5.23841 10.0002H1.1263C1.1263 10.0002 1.68566 9.61933 1.68566 8.34313V6.5257H0.997795C0.445983 6.5257 0 6.06466 0 5.50339V5.24949L0.105827 5.32967C0.257007 5.45662 0.445983 5.53012 0.650077 5.53012H1.68566V4.53454H0.997795C0.445983 4.53454 0 4.0735 0 3.51223V3.25833L0.105827 3.34519C0.257007 3.47214 0.445983 3.53896 0.650077 3.53896H1.68566V1.79502C1.68566 0.478721 1.1263 0.0644531 1.1263 0.0644531H5.23841C8.35274 0.0644531 10.439 1.27385 11.0513 3.53896H11.9357C12.48 3.53896 12.926 3.99332 12.926 4.56127V4.81517ZM5.08724 0.558902H3.37134V3.53896H9.13888C8.74581 1.46762 7.40786 0.558902 5.08724 0.558902ZM9.27494 5.02899C9.27494 4.85527 9.26738 4.6949 9.25982 4.53454H3.37134V5.53012H9.25982C9.26738 5.36307 9.27494 5.20271 9.27494 5.02899ZM3.37134 9.49907H5.10235C7.55904 9.44564 8.76849 8.40327 9.13888 6.5257H3.37134V9.49907Z" fill="#616786"/></svg>
+                                    <span v-else class="auth-page-account-currency-symbol">{{ currencySymbol(account) }}</span>
+                                    <div class="auth-page-account-amount">{{ account.secondary.toLocaleString() }}</div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="auth-page-account-subtext-container">
-                            <div class="auth-page-account-subtext-container-2">
-                                <div class="auth-page-account-subtext">AE07 0331 2345 6123 4567 891</div>
-
-                            </div>
-                            <div class="auth-page-account-subtext-container-2">
-                                <div class="auth-page-account-subtext-part">Balance</div>
-                                <div class="auth-page-account-amount-container">
-                                    <svg width="13" height="10" viewBox="0 0 13 10" fill="none"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <g clip-path="url(#clip0_5197_11097)">
-                                            <path
-                                                d="M12.926 4.81517L12.8277 4.735C12.6689 4.60135 12.48 4.53454 12.2759 4.53454H11.2176C11.2327 4.6949 11.2403 4.85527 11.2403 5.02899C11.2403 5.20271 11.2327 5.36307 11.2176 5.53012H11.9357C12.48 5.53012 12.926 5.98448 12.926 6.55242V6.80633L12.8277 6.71947C12.6689 6.59251 12.48 6.5257 12.2759 6.5257H11.0588C10.4768 8.77749 8.44345 10.0002 5.23841 10.0002H1.1263C1.1263 10.0002 1.68566 9.61933 1.68566 8.34313V6.5257H0.997795C0.445983 6.5257 0 6.06466 0 5.50339V5.24949L0.105827 5.32967C0.257007 5.45662 0.445983 5.53012 0.650077 5.53012H1.68566V4.53454H0.997795C0.445983 4.53454 0 4.0735 0 3.51223V3.25833L0.105827 3.34519C0.257007 3.47214 0.445983 3.53896 0.650077 3.53896H1.68566V1.79502C1.68566 0.478721 1.1263 0.0644531 1.1263 0.0644531H5.23841C8.35274 0.0644531 10.439 1.27385 11.0513 3.53896H11.9357C12.48 3.53896 12.926 3.99332 12.926 4.56127V4.81517ZM5.08724 0.558902H3.37134V3.53896H9.13888C8.74581 1.46762 7.40786 0.558902 5.08724 0.558902ZM9.27494 5.02899C9.27494 4.85527 9.26738 4.6949 9.25982 4.53454H3.37134V5.53012H9.25982C9.26738 5.36307 9.27494 5.20271 9.27494 5.02899ZM3.37134 9.49907H5.10235C7.55904 9.44564 8.76849 8.40327 9.13888 6.5257H3.37134V9.49907Z"
-                                                fill="#616786" />
-                                        </g>
-                                        <defs>
-                                            <clipPath id="clip0_5197_11097">
-                                                <rect width="13" height="10" fill="white" />
-                                            </clipPath>
-                                        </defs>
-                                    </svg>
-                                    <div class="auth-page-account-amount">
-                                        25,000
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-
                         </div>
                     </div>
-
                 </div>
 
                 <div class="auth-page-text-inner-frame-2">
@@ -692,7 +597,7 @@
 
 
 
-        <div v-if="!sharedState?.value?.consent?.AccountSubType || sharedState?.value?.consent?.AccountSubType.includes('CurrentAccount') || sharedState?.value?.consent?.AccountSubType.includes('Savings')" class="auth-page-button-with-description">
+        <div v-if="visibleAccounts.length > 0" class="auth-page-button-with-description">
             <div class="auth-page-button">
                 <div class="auth-page-button-text-section">
                     <svg class="auth-page-button-icon" width="22" height="23" viewBox="0 0 22 23" fill="none"
@@ -823,7 +728,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import { useSharedState } from '../Composables/useSharedState.ts'
 import { formatDateTime as formatDate } from '../Composables/formatDate.ts'
 
@@ -838,8 +743,58 @@ const show_product_info = ref(false)
 const show_parties = ref(false)
 const show_finance_rates = ref(false)
 
-const selected_current_account = ref(false)
-const selected_savings_account = ref(false)
+// --- Dynamic accounts ---
+const DEFAULT_ACCOUNTS = [
+  { id: 1, type: 'CurrentAccount', iban: 'AE07 0331 2345 6123 4567 890', balance: 5000, secondary: 1500, currency: 'AED' },
+  { id: 2, type: 'Savings',        iban: 'AE07 0331 2345 6123 4567 891', balance: 25000, secondary: null, currency: 'AED' },
+]
+const TYPE_LABELS = {
+  CurrentAccount: 'Current Account',
+  Savings: 'Savings',
+  CreditCard: 'Credit Card',
+  Mortgage: 'Mortgage',
+  Finance: 'Finance',
+}
+const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', INR: '₹', SAR: '﷼' }
+function currencySymbol(account) {
+  return CURRENCY_SYMBOLS[account.currency] ?? null
+}
+function typeLabel(account) {
+  const base = TYPE_LABELS[account.type] || account.type
+  if (account.type === 'CreditCard' && account.cardName) return `${base} | ${account.cardName}`
+  if ((account.type === 'CurrentAccount' || account.type === 'Savings') && account.currency && account.currency !== 'AED') return `${base} (${account.currency})`
+  return base
+}
+function balanceLabel(type) {
+  if (type === 'Mortgage' || type === 'Finance' || type === 'CreditCard') return 'Outstanding'
+  return 'Balance'
+}
+function secondaryLabel(type) {
+  if (type === 'CurrentAccount') return 'Overdraft'
+  if (type === 'CreditCard') return 'Available'
+  return null
+}
+function getAccountRef(account) {
+  switch (account.type) {
+    case 'CurrentAccount':
+    case 'Savings':    return account.iban || ''
+    case 'CreditCard': return account.maskedPan || ''
+    case 'Mortgage':   return account.mortgageRef || ''
+    case 'Finance':    return account.financeRef || ''
+    default: return ''
+  }
+}
+
+const selectedAccounts = reactive({})
+const accounts = computed(() => sharedState.value?.accounts || DEFAULT_ACCOUNTS)
+const visibleAccounts = computed(() => {
+  const subtypes = sharedState.value?.value?.consent?.AccountSubType
+  if (!subtypes) return accounts.value
+  return accounts.value.filter(a => subtypes.includes(a.type))
+})
+function toggleSelected(id) {
+  selectedAccounts[id] = !selectedAccounts[id]
+}
 </script>
 
 <style scoped>
@@ -853,8 +808,7 @@ const selected_savings_account = ref(false)
     align-items: center;
     padding: 0px;
     gap: 24px;
-    transform: scale(0.6);
-    transform-origin: top left;
+    zoom: 0.6;
 
     width: 372px;
     /* height: 1023px; */
@@ -1545,7 +1499,10 @@ height: 14.7px; */
     margin-right: auto;
     margin-top: 0;
     margin-bottom: 0;
-    width: 113px;
+    max-width: 215px;
+    white-space: nowrap;       
+    overflow: hidden;         
+    text-overflow: ellipsis;   
     height: 17px;
 
     font-family: 'Poppins';
@@ -1727,6 +1684,15 @@ top: 22%;
     order: 0;
     flex-grow: 0;
 
+}
+
+.auth-page-account-currency-symbol {
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 120%;
+    color: #616786;
 }
 
 .auth-page-account-amount {

@@ -74,7 +74,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         link: `${BASE}/${VERSION}/banking/data-sharing/`,
         items: [
           { text: 'Requirements', link: `${BASE}/${VERSION}/banking/data-sharing/requirements` },
-          { text: 'User Journeys', link: `${BASE}/${VERSION}/banking/data-sharing/user-journeys` },
+          { text: 'User Experience', link: `${BASE}/${VERSION}/banking/data-sharing/user-journeys` },
           { text: 'API Guide', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide` },
           {
             text: 'API Reference',
@@ -101,7 +101,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         link: `${BASE}/${VERSION}/banking/confirmation-of-payee/`,
         items: [
           { text: 'Requirements', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/requirements` },
-          { text: 'User Journeys', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/user-journeys` },
+          { text: 'User Experience', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/user-journeys` },
           { text: 'API Guide', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/api-guide` },
           {
             text: 'API Reference',

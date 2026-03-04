@@ -230,8 +230,8 @@ The `authorization_endpoint` is found in the LFI's `.well-known/openid-configura
 
 <!--@include: ../_shared/step-6-redirect-code.md-->
 
-::: tip User Journeys
-See [User Journeys](./user-journeys) for screen mockups of the **Consent** and **Authorization** pages the user sees at the bank, including an interactive form where you can edit the consent JSON and PII and preview the resulting UI.
+::: tip User Experience
+See [User Experience](./user-journeys) for screen mockups of the **Consent** and **Authorization** pages the user sees at the bank, including an interactive form where you can edit the consent JSON and PII and preview the resulting UI.
 :::
 
 After redirecting, the user will:

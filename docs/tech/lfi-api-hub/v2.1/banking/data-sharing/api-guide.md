@@ -132,7 +132,7 @@ Your CMI must clearly display:
 | **Authorize / Cancel buttons** | Clear, prominent actions |
 
 ::: tip
-See [User Journeys](./user-journeys) for screen design requirements and the Consumer Duty obligations for CMI presentation.
+See [User Experience](./user-journeys) for screen design requirements and the Consumer Duty obligations for CMI presentation.
 :::
 
 ---

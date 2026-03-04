@@ -7,7 +7,7 @@ const VERSION = 'v2.1'
 function multiPaymentItems(base: string): DefaultTheme.SidebarItem[] {
   return [
     { text: 'Requirements', link: `${base}/requirements` },
-    { text: 'User Journeys', link: `${base}/user-journeys` },
+    { text: 'User Experience', link: `${base}/user-journeys` },
     { text: 'API Guide', link: `${base}/api-guide` },
   ]
 }
@@ -157,7 +157,7 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
         link: `${BASE}/${VERSION}/banking/data-sharing`,
         items: [
           { text: 'Requirements', link: `${BASE}/${VERSION}/banking/data-sharing/requirements` },
-          { text: 'User Journeys', link: `${BASE}/${VERSION}/banking/data-sharing/user-journeys` },
+          { text: 'User Experience', link: `${BASE}/${VERSION}/banking/data-sharing/user-journeys` },
           { text: 'API Guide', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide` },
           {
             text: 'API Reference',
@@ -232,7 +232,7 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
         collapsed: true,
         items: [
           { text: 'Requirements', link: `${BASE}/${VERSION}/requirements` },
-          { text: 'User Journeys', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/user-journeys` },
+          { text: 'User Experience', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/user-journeys` },
           { text: 'API Guide', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/api-guide` },
           {
             text: 'API Reference',
@@ -249,7 +249,7 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
         collapsed: true,
         items: [
           { text: 'Requirements', link: `${BASE}/${VERSION}/banking/products-leads/requirements` },
-          { text: 'User Journeys', link: `${BASE}/${VERSION}/banking/products-leads/user-journeys` },
+          { text: 'User Experience', link: `${BASE}/${VERSION}/banking/products-leads/user-journeys` },
           { text: 'API Guide', link: `${BASE}/${VERSION}/banking/products-leads/api-guide` },
           {
             text: 'API Reference',

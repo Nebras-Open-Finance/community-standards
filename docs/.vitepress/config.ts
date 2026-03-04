@@ -21,7 +21,7 @@ export default defineConfig({
   themeConfig: {
     siteTitle: false,
     nav: [
-      { text: 'Protocol & Policy', link: '/policy' },
+      { text: 'Policies', link: '/policy' },
       {
         text: 'Developer Docs',
         items: [

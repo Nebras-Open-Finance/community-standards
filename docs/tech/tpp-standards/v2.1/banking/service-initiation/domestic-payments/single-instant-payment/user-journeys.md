@@ -5,7 +5,7 @@ aside: false
 ---
 
 
-# Domestic Payments - Single Instant Payment - User Journeys
+# Domestic Payments - Single Instant Payment - User Experience
 
 - AEBankServiceInitiationRichAuthorizationRequestsV21.AEBankServiceInitiationAuthorizationDetailsProperties from [/par](../../../../consent/open-api/par)
 

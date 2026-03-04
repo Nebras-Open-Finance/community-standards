@@ -37,7 +37,7 @@ You will find:
 - API specifications  
 - Security profiles  
 - Integration flows  
-- User journeys
+- User Experience
 - Tools to help you integrate
 
 
