@@ -10,7 +10,6 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
   {
     text: 'Trust Framework (Directory)',
     collapsed: true,
-    link: `${BASE}/trust-framework/`,
     items: [
       {
         text: 'Onboarding',
@@ -35,7 +34,6 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
   {
     text: 'Onboarding to the API Hub',
     collapsed: true,
-    link: `${BASE}/onboarding/`,
     items: [
       { text: 'Overview of the API Hub', link: `${BASE}/onboarding/` },
       { text: 'Prerequisites', link: `${BASE}/onboarding/prerequisites` },
@@ -48,7 +46,6 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
   {
     text: 'Admin Portal',
     collapsed: true,
-    link: '/tech/lfi-api-hub/admin-portal',
     items: [
       { text: 'TPP Activation', link: '/tech/lfi-api-hub/admin-portal/tpp-activation' },
     ],
@@ -58,7 +55,6 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
   {
     text: 'Consent',
     collapsed: true,
-    link: `${BASE}/consent/`,
     items: [],
   },
 
@@ -66,7 +62,6 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
   {
     text: 'Banking',
     collapsed: true,
-    link: `${BASE}/${VERSION}/banking/`,
     items: [
       {
         text: 'Data Sharing',

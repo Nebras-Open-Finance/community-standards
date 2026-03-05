@@ -66,21 +66,19 @@
             <div class="auth-page-text-inner-frame">
                 <div class="auth-page-text-header">
                     Flexi-Pay Setup
-                    <div class="auth-page-text-header-sub">
+                    <div v-if="sharedState?.pii?.Initiation?.Creditor?.length" class="auth-page-text-header-sub">
                         [TPP trading name] needs your permission to make payment(s) from your account within the payment rules below:
+                    </div>
+                    <div v-else class="auth-page-text-header-sub">
+                        [TPP trading name] needs your permission to make payments from your account under the rules below. They will process payments in line with your agreement and are responsible for selecting the beneficiaries.
                     </div>
                 </div>
                 <div class="auth-page-accounts-section">
-                    <div class="auth-page-account-card" v-if="!sharedState?.pii?.Initiation?.Creditor">
-                        <div class="auth-page-account-header-2">Permission to control and make payments</div>
-                        <div class="auth-page-no-creditor-text">
-                            By granting permission, you authorize [TPP trading name] to make payments from your account under your agreement with them and the rules set out below. [TPP trading name] is responsible for selecting the beneficiaries who will receive the payments.
-                        </div>
-                    </div>
 
-                    <div class="auth-page-account-card" v-else>
+                    <div class="auth-page-account-card">
 
-                        <div class="auth-page-account-header-2">Who you’re paying</div>
+                        <div v-if="sharedState?.pii?.Initiation?.Creditor?.length" class="auth-page-account-header-2">Who you’re paying</div>
+                        <div v-else class="auth-page-account-header-2">Payment Details</div>
 
 
                         <div class="auth-page-account-subtext-container">
@@ -178,7 +176,7 @@
                                 </div>
 
                                 <div class="auth-page-account-subtext-container-2">
-                                    <div class="auth-page-account-subtext-part">Max per Payment</div>
+                                    <div class="auth-page-account-subtext-part">{{ primaryAmountLabel }}</div>
  <div class="auth-page-account-amount-container">
                                     <svg width="13" height="10" viewBox="0 0 13 10" fill="none"
                                         xmlns="http://www.w3.org/2000/svg">
@@ -194,7 +192,7 @@
                                         </defs>
                                     </svg>
                                     <div class="auth-page-account-amount">
-                                        {{sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Controls?.MaximumIndividualAmount?.Amount }}
+                                        {{ primaryAmount }}
                                     </div>
 
                                 </div>
@@ -630,6 +628,9 @@ const { sharedState } = useSharedState()
 const selected = ref(null)
 const benefListOpen = ref(true)
 
+const periodicSchedule = computed(() => sharedState?.value?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule)
+const primaryAmountLabel = computed(() => periodicSchedule.value?.Controls?.MaximumIndividualAmount ? 'Max per Payment' : 'Amount')
+const primaryAmount = computed(() => periodicSchedule.value?.Controls?.MaximumIndividualAmount?.Amount ?? periodicSchedule.value?.Amount?.Amount)
 const authPermissionText = computed(() =>
     getAuthPaymentPermissionText(sharedState?.value?.value?.consent?.Permissions)
 )
@@ -1116,7 +1117,6 @@ flex-grow: 0;
 
 .auth-page-text-header-sub {
 width: 292px;
-height: 38px;
 
 font-family: 'Poppins';
 font-style: normal;

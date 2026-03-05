@@ -22,21 +22,25 @@ import EditableJson from '../../components/EditableJson.vue'
 import APIFlowsRegistration from '../../components/APIFlows/TPPRegistration.vue'
 import APIFlowsBankDataSharing from '../../components/APIFlows/BankDataSharing.vue'
 import APIFlowsSingleInstantPayment from '../../components/APIFlows/SingleInstantPayment.vue'
-import APIFlowsVariableOnDemand from '../../components/APIFlows/VariableOnDemand.vue'
-import APIFlowsFixedOnDemand from '../../components/APIFlows/FixedOnDemand.vue'
+import APIFlowsOnDemand from '../../components/APIFlows/OnDemand.vue'
+import APIFlowsPeriodicSchedule from '../../components/APIFlows/PeriodicSchedule.vue'
+import APIFlowsDefinedSchedule from '../../components/APIFlows/DefinedSchedule.vue'
 import APIFlowsConsentFlow from '../../components/APIFlows/ConsentFlow.vue'
 import APIFlowsConfirmationOfPayee from '../../components/APIFlows/ConfirmationOfPayee.vue'
 
 // UIs
 import ConsentBankDataSharing from '../../components/ConsentPages/ConsentBankDataSharing.vue'
 import ConsentSingleInstantPayment from '../../components/ConsentPages/ConsentSingleInstantPayment.vue'
-import ConsentVariableOnDemand from '../../components/ConsentPages/ConsentVariableOnDemand.vue'
-import ConsentFixedOnDemand from '../../components/ConsentPages/ConsentFixedOnDemand.vue'
+import ConsentOnDemand from '../../components/ConsentPages/ConsentOnDemand.vue'
+import ConsentPeriodicSchedule from '../../components/ConsentPages/ConsentPeriodicSchedule.vue'
+import ConsentDefinedSchedule from '../../components/ConsentPages/ConsentDefinedSchedule.vue'
+
 
 import AuthorizationBankDataSharing from '../../components/AuthorizationPages/AuthorizationBankDataSharing.vue'
 import AuthorizationSingleInstantPayment from '../../components/AuthorizationPages/AuthorizationSingleInstantPayment.vue'
-import AuthorizationVariableOnDemand from '../../components/AuthorizationPages/AuthorizationVariableOnDemand.vue'
-import AuthorizationFixedOnDemand from '../../components/AuthorizationPages/AuthorizationFixedOnDemand.vue'
+import AuthorizationOnDemand from '../../components/AuthorizationPages/AuthorizationOnDemand.vue'
+import AuthorizationPeriodicSchedule from '../../components/AuthorizationPages/AuthorizationPeriodicSchedule.vue'
+import AuthorizationDefinedSchedule from '../../components/AuthorizationPages/AuthorizationDefinedSchedule.vue'
 
 
 import PermissionsReference from '../../components/PermissionsReference.vue'
@@ -68,21 +72,25 @@ export default {
     app.component('APIFlowsRegistration', APIFlowsRegistration)
     app.component('APIFlowsBankDataSharing', APIFlowsBankDataSharing)
     app.component('APIFlowsSingleInstantPayment', APIFlowsSingleInstantPayment)
-    app.component('APIFlowsVariableOnDemand', APIFlowsVariableOnDemand)
-    app.component('APIFlowsFixedOnDemand', APIFlowsFixedOnDemand)
+    app.component('APIFlowsOnDemand', APIFlowsOnDemand)
+    app.component('APIFlowsPeriodicSchedule', APIFlowsPeriodicSchedule)
+    app.component('APIFlowsDefinedSchedule', APIFlowsDefinedSchedule)
     app.component('APIFlowsConsentFlow', APIFlowsConsentFlow)
     app.component('APIFlowsConfirmationOfPayee', APIFlowsConfirmationOfPayee)
 
     // UI
     app.component('ConsentBankDataSharing', ConsentBankDataSharing)
     app.component('ConsentSingleInstantPayment', ConsentSingleInstantPayment)
-    app.component('ConsentVariableOnDemand', ConsentVariableOnDemand)
-    app.component('ConsentFixedOnDemand', ConsentFixedOnDemand)
+    app.component('ConsentOnDemand', ConsentOnDemand)
+    app.component('ConsentPeriodicSchedule', ConsentPeriodicSchedule)
+    app.component('ConsentDefinedSchedule', ConsentDefinedSchedule)
 
     app.component('AuthorizationBankDataSharing', AuthorizationBankDataSharing)
     app.component('AuthorizationSingleInstantPayment', AuthorizationSingleInstantPayment)
-    app.component('AuthorizationVariableOnDemand', AuthorizationVariableOnDemand)
-    app.component('AuthorizationFixedOnDemand', AuthorizationFixedOnDemand)
+    app.component('AuthorizationOnDemand', AuthorizationOnDemand)
+    app.component('AuthorizationPeriodicSchedule', AuthorizationPeriodicSchedule)
+    app.component('AuthorizationDefinedSchedule', AuthorizationDefinedSchedule)
+
 
     app.component('PermissionsReference', PermissionsReference)
     app.component('ServiceInitiationPermissionText', ServiceInitiationPermissionText)

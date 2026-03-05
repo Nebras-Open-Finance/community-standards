@@ -37,7 +37,7 @@ Before initiating a Fixed On-Demand payment, ensure the following requirements a
 ## API Sequence Flow
 
 <APIFlowViewer title="Fixed On-Demand API Flow">
-  <APIFlowsFixedOnDemand/>
+  <APIFlowsOnDemand/>
 </APIFlowViewer>
 
 ## <span style="color: #3b82f6; padding-right: 5px;">POST</span> `/par`
@@ -416,8 +416,3 @@ The LFI will reject a payment if `Instruction.Amount` does not exactly match the
 
 <!--@include: ../../_shared/step-token-refresh.md-->
 
-## Checking Payment Status
-
-<!--@include: ../../_shared/step-10-payment-status.md-->
-
-<!--@include: ../../_shared/step-list-payments.md-->

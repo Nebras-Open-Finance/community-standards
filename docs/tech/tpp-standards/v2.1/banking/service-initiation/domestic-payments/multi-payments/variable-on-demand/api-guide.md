@@ -37,7 +37,7 @@ Before initiating a Variable On-Demand payment, ensure the following requirement
 ## API Sequence Flow
 
 <APIFlowViewer title="Variable On-Demand API Flow">
-  <APIFlowsVariableOnDemand/>
+  <APIFlowsOnDemand/>
 </APIFlowViewer>
 
 ## <span style="color: #3b82f6; padding-right: 5px;">POST</span> `/par`
@@ -419,8 +419,3 @@ The LFI will reject a payment if `Instruction.Amount` exceeds `MaximumIndividual
 
 <!--@include: ../../_shared/step-token-refresh.md-->
 
-## Checking Payment Status
-
-<!--@include: ../../_shared/step-10-payment-status.md-->
-
-<!--@include: ../../_shared/step-list-payments.md-->

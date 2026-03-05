@@ -161,13 +161,30 @@ Changes made above are immediately reflected in both panels.
   </div>
 </div>
 
-## Permissions and Data Access
+## UI Behaviour Driven by API Fields
+
+### Permissions and Data Access
 
 The table below outlines the text displayed to users on the Consent Page when they expand each data category associated with the consent permissions.
 
 <PermissionsReference />
 
-## Example Journeys
+
+### Account Sub Type Filtering
+
+The `AccountSubType` field in `authorization_details` acts as a filter, controlling which of the user's accounts are presented for selection on the LFI Authorisation Page.
+
+| `AccountSubType` | LFI Authorisation Page Behaviour |
+|---|---|
+| **Provided** | Only accounts whose sub-type matches one of the specified values are shown. If the user holds no accounts of the requested sub-type, the LFI returns an error and the authorisation flow cannot proceed. |
+| **Not provided** | All of the user's available accounts are shown for selection, regardless of account type. |
+
+::: tip
+Use `AccountSubType` to restrict access to specific account types (e.g. `Mortgage`). Omit it to allow selection from all account types.
+:::
+
+
+## Example User Journeys
 
 #### Example 1 - Current and Savings Account
 

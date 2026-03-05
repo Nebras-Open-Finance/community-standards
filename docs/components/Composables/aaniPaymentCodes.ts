@@ -106,5 +106,5 @@ export type PurposeCode = keyof typeof purposeCodes
 export function getPurposeDescription(code?: string): string {
   if (!code) return "Unknown code"
   const upperCode = code.toUpperCase() as PurposeCode
-  return purposeCodes[upperCode] ?? "Unknown code"
+  return `${purposeCodes[upperCode] ?? "Unknown code"} (${code})`;
 }

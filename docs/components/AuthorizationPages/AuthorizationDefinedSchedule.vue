@@ -65,74 +65,75 @@
         <div class="auth-page-text-frame">
             <div class="auth-page-text-inner-frame">
                 <div class="auth-page-text-header">
-                    Confirm Payment Details
-                    <div class="auth-page-text-header-sub">
-                        [TPP trading name] needs your permission
-                        <template v-if="sharedState?.pii?.Risk?.CreditorIndicators?.MerchantDetails?.MerchantName">
-                            on-behalf of {{ sharedState.pii.Risk.CreditorIndicators.MerchantDetails.MerchantName }}
-                        </template>
-                        to make the payment below:
+                    Flexi-Pay Setup
+                    <div v-if="sharedState?.pii?.Initiation?.Creditor?.length" class="auth-page-text-header-sub">
+                        [TPP trading name] needs your permission to make payment(s) from your account within the payment rules below:
+                    </div>
+                    <div v-else class="auth-page-text-header-sub">
+                        [TPP trading name] needs your permission to make payments from your account under the rules below. They will process payments in line with your agreement and are responsible for selecting the beneficiaries.
                     </div>
                 </div>
                 <div class="auth-page-accounts-section">
-                    <div  class="auth-page-account-card" >
+
+                    <div class="auth-page-account-card">
+
+                        <div v-if="sharedState?.pii?.Initiation?.Creditor?.length" class="auth-page-account-header-2">Who you’re paying</div>
+                        <div v-else class="auth-page-account-header-2">Payment Details</div>
+
 
                         <div class="auth-page-account-subtext-container">
 
-                            <div class="auth-page-account-subtext-container-2">
-                                <div class="auth-page-account-subtext-part">Amount</div>
-                                <div class="auth-page-account-amount-container">
-                                    <svg width="13" height="10" viewBox="0 0 13 10" fill="none"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <g clip-path="url(#clip0_5197_11097)">
-                                            <path
-                                                d="M12.926 4.81517L12.8277 4.735C12.6689 4.60135 12.48 4.53454 12.2759 4.53454H11.2176C11.2327 4.6949 11.2403 4.85527 11.2403 5.02899C11.2403 5.20271 11.2327 5.36307 11.2176 5.53012H11.9357C12.48 5.53012 12.926 5.98448 12.926 6.55242V6.80633L12.8277 6.71947C12.6689 6.59251 12.48 6.5257 12.2759 6.5257H11.0588C10.4768 8.77749 8.44345 10.0002 5.23841 10.0002H1.1263C1.1263 10.0002 1.68566 9.61933 1.68566 8.34313V6.5257H0.997795C0.445983 6.5257 0 6.06466 0 5.50339V5.24949L0.105827 5.32967C0.257007 5.45662 0.445983 5.53012 0.650077 5.53012H1.68566V4.53454H0.997795C0.445983 4.53454 0 4.0735 0 3.51223V3.25833L0.105827 3.34519C0.257007 3.47214 0.445983 3.53896 0.650077 3.53896H1.68566V1.79502C1.68566 0.478721 1.1263 0.0644531 1.1263 0.0644531H5.23841C8.35274 0.0644531 10.439 1.27385 11.0513 3.53896H11.9357C12.48 3.53896 12.926 3.99332 12.926 4.56127V4.81517ZM5.08724 0.558902H3.37134V3.53896H9.13888C8.74581 1.46762 7.40786 0.558902 5.08724 0.558902ZM9.27494 5.02899C9.27494 4.85527 9.26738 4.6949 9.25982 4.53454H3.37134V5.53012H9.25982C9.26738 5.36307 9.27494 5.20271 9.27494 5.02899ZM3.37134 9.49907H5.10235C7.55904 9.44564 8.76849 8.40327 9.13888 6.5257H3.37134V9.49907Z"
-                                                fill="#616786" />
-                                        </g>
-                                        <defs>
-                                            <clipPath id="clip0_5197_11097">
-                                                <rect width="13" height="10" fill="white" />
-                                            </clipPath>
-                                        </defs>
-                                    </svg>
-                                    <div class="auth-page-account-amount">
-                                        {{ sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.SinglePayment?.Amount?.Amount }}
+
+
+                                <template v-if="(sharedState?.pii?.Initiation?.Creditor?.length ?? 0) === 1">
+                                    <div class="auth-page-account-subtext-container-2">
+                                        <div class="auth-page-account-subtext-part">Payee Name</div>
+                                        <div class="auth-page-account-amount-container">
+                                            <div class="auth-page-account-amount">
+                                                {{ sharedState?.pii?.Initiation?.Creditor[0]?.Creditor?.Name || sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Name?.en || sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Name?.ar }}
+                                            </div>
+                                        </div>
                                     </div>
-
-                                </div>
-
-                            </div>
-
-
-                                                        <div class="auth-page-account-subtext-container-2">
-                                <div class="auth-page-account-subtext-part">Payee Name</div>
-                                <div class="auth-page-account-amount-container">
-                                    <div class="auth-page-account-amount">
-                                        {{ sharedState?.pii?.Initiation?.Creditor[0]?.Creditor?.Name || sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Name?.en || sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Name?.ar }}
+                                    <div class="auth-page-account-subtext-container-2">
+                                        <div class="auth-page-account-subtext-part">IBAN</div>
+                                        <div class="auth-page-account-amount-container">
+                                            <div class="auth-page-account-amount-iban">
+                                                {{ sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Identification?.match(/.{1,4}/g)?.join(" ") }}
+                                            </div>
+                                        </div>
                                     </div>
+                                </template>
 
-                                </div>
-
-                            </div>
-
-                            
-                            <div class="auth-page-account-subtext-container-2">
-                                <div class="auth-page-account-subtext-part">IBAN</div>
-                                <div class="auth-page-account-amount-container">
-                                    <div class="auth-page-account-amount">
-                                        {{ sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Identification?.match(/.{1,4}/g)?.join(" ") }}
+                                <template v-else-if="(sharedState?.pii?.Initiation?.Creditor?.length ?? 0) > 1">
+                                    <div class="benef-drop">
+                                        <div class="benef-card">
+                                            <div class="benef-drop-header" @click="benefListOpen = !benefListOpen">
+                                                <span class="benef-drop-label">Beneficiary List</span>
+                                                <svg class="benef-drop-arrow" :class="{ 'benef-drop-arrow-collapsed': !benefListOpen }" width="8" height="13" viewBox="0 0 8 13" fill="none" xmlns="http://www.w3.org/2000/svg" style="cursor:pointer;">
+                                                    <path d="M1 1L7 6.5L1 12" stroke="#0C1441" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                            </div>
+                                            <div v-if="benefListOpen" class="benef-drop-items">
+                                                <div v-for="(creditor, idx) in sharedState?.pii?.Initiation?.Creditor" :key="idx" class="benef-item">
+                                                    <div class="benef-text-line benef-text-line-center">
+                                                        <span class="benef-name">{{ creditor?.Creditor?.Name || creditor?.CreditorAccount?.Name?.en || creditor?.CreditorAccount?.Name?.ar }}</span>
+                                                    </div>
+                                                    <div class="benef-text-line">
+                                                        <span class="benef-iban-label">IBAN</span>
+                                                        <span class="benef-iban">{{ creditor?.CreditorAccount?.Identification?.match(/.{1,4}/g)?.join(" ") }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-
-                                </div>
-
-                            </div>
+                                </template>
 
 
                             <div class="auth-page-account-subtext-container-2">
                                 <div class="auth-page-account-subtext-part">Payment Reference</div>
                                 <div class="auth-page-account-amount-container">
                                     <div class="auth-page-account-amount">
-                                        {{ sharedState?.value?.consent?.DebtorReference }}
+                                        {{sharedState?.value?.consent?.DebtorReference }}
                                     </div>
 
                                 </div>
@@ -151,6 +152,87 @@
                                 </div>
 
                             </div>
+
+                        </div>
+                    </div>
+                                        <div  class="auth-page-account-card" >
+
+                        <div class="auth-page-account-header-2">Payment schedule</div>
+
+
+                        <div class="auth-page-account-subtext-container">
+
+                                <div class="schedule-list">
+                                    <div v-for="(item, idx) in visibleSchedule" :key="idx" :class="scheduleType === 'variable' ? 'schedule-item-variable' : 'schedule-item'">
+                                        <template v-if="scheduleType === 'variable'">
+                                            <div class="schedule-item-variable-row">
+                                                <div class="schedule-item-label">Date</div>
+                                                <div class="schedule-item-date">{{ formatDate(item.PaymentExecutionDate) }}</div>
+                                            </div>
+                                            <div class="schedule-item-variable-row">
+                                                <div class="schedule-item-label">Max Payment Amount</div>
+                                                <div class="auth-page-account-amount-container">
+                                                    <svg width="13" height="10" viewBox="0 0 13 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <g clip-path="url(#clip0_sched_auth)">
+                                                            <path d="M12.926 4.81517L12.8277 4.735C12.6689 4.60135 12.48 4.53454 12.2759 4.53454H11.2176C11.2327 4.6949 11.2403 4.85527 11.2403 5.02899C11.2403 5.20271 11.2327 5.36307 11.2176 5.53012H11.9357C12.48 5.53012 12.926 5.98448 12.926 6.55242V6.80633L12.8277 6.71947C12.6689 6.59251 12.48 6.5257 12.2759 6.5257H11.0588C10.4768 8.77749 8.44345 10.0002 5.23841 10.0002H1.1263C1.1263 10.0002 1.68566 9.61933 1.68566 8.34313V6.5257H0.997795C0.445983 6.5257 0 6.06466 0 5.50339V5.24949L0.105827 5.32967C0.257007 5.45662 0.445983 5.53012 0.650077 5.53012H1.68566V4.53454H0.997795C0.445983 4.53454 0 4.0735 0 3.51223V3.25833L0.105827 3.34519C0.257007 3.47214 0.445983 3.53896 0.650077 3.53896H1.68566V1.79502C1.68566 0.478721 1.1263 0.0644531 1.1263 0.0644531H5.23841C8.35274 0.0644531 10.439 1.27385 11.0513 3.53896H11.9357C12.48 3.53896 12.926 3.99332 12.926 4.56127V4.81517ZM5.08724 0.558902H3.37134V3.53896H9.13888C8.74581 1.46762 7.40786 0.558902 5.08724 0.558902ZM9.27494 5.02899C9.27494 4.85527 9.26738 4.6949 9.25982 4.53454H3.37134V5.53012H9.25982C9.26738 5.36307 9.27494 5.20271 9.27494 5.02899ZM3.37134 9.49907H5.10235C7.55904 9.44564 8.76849 8.40327 9.13888 6.5257H3.37134V9.49907Z" fill="#616786" />
+                                                        </g>
+                                                        <defs><clipPath id="clip0_sched_auth"><rect width="13" height="10" fill="white" /></clipPath></defs>
+                                                    </svg>
+                                                    <div class="auth-page-account-amount">{{ item.MaximumIndividualAmount?.Amount }}</div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <template v-else>
+                                            <div class="schedule-item-date">{{ formatDate(item.PaymentExecutionDate) }}</div>
+                                            <div class="auth-page-account-amount-container">
+                                                <svg width="13" height="10" viewBox="0 0 13 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <g clip-path="url(#clip0_sched_auth)">
+                                                        <path d="M12.926 4.81517L12.8277 4.735C12.6689 4.60135 12.48 4.53454 12.2759 4.53454H11.2176C11.2327 4.6949 11.2403 4.85527 11.2403 5.02899C11.2403 5.20271 11.2327 5.36307 11.2176 5.53012H11.9357C12.48 5.53012 12.926 5.98448 12.926 6.55242V6.80633L12.8277 6.71947C12.6689 6.59251 12.48 6.5257 12.2759 6.5257H11.0588C10.4768 8.77749 8.44345 10.0002 5.23841 10.0002H1.1263C1.1263 10.0002 1.68566 9.61933 1.68566 8.34313V6.5257H0.997795C0.445983 6.5257 0 6.06466 0 5.50339V5.24949L0.105827 5.32967C0.257007 5.45662 0.445983 5.53012 0.650077 5.53012H1.68566V4.53454H0.997795C0.445983 4.53454 0 4.0735 0 3.51223V3.25833L0.105827 3.34519C0.257007 3.47214 0.445983 3.53896 0.650077 3.53896H1.68566V1.79502C1.68566 0.478721 1.1263 0.0644531 1.1263 0.0644531H5.23841C8.35274 0.0644531 10.439 1.27385 11.0513 3.53896H11.9357C12.48 3.53896 12.926 3.99332 12.926 4.56127V4.81517ZM5.08724 0.558902H3.37134V3.53896H9.13888C8.74581 1.46762 7.40786 0.558902 5.08724 0.558902ZM9.27494 5.02899C9.27494 4.85527 9.26738 4.6949 9.25982 4.53454H3.37134V5.53012H9.25982C9.26738 5.36307 9.27494 5.20271 9.27494 5.02899ZM3.37134 9.49907H5.10235C7.55904 9.44564 8.76849 8.40327 9.13888 6.5257H3.37134V9.49907Z" fill="#616786" />
+                                                    </g>
+                                                    <defs><clipPath id="clip0_sched_auth"><rect width="13" height="10" fill="white" /></clipPath></defs>
+                                                </svg>
+                                                <div class="auth-page-account-amount">{{ item.Amount?.Amount }}</div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <button v-if="visibleCount < schedule.length" class="schedule-show-more" @click="visibleCount += 5">
+                                        Show {{ Math.min(5, schedule.length - visibleCount) }} more
+                                    </button>
+                                </div>
+
+
+                                                                <div v-if="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeNumberOfPayments" class="auth-page-account-subtext-container-2">
+                                    <div class="auth-page-account-subtext-part">Total Number of Payments allowed</div>
+ <div class="auth-page-account-amount-container">
+                                    <div class="auth-page-account-amount">
+                                        {{sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeNumberOfPayments }}
+                                    </div>
+
+                                </div>
+                                </div>
+
+                                                                                                <div v-if="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments" class="auth-page-account-subtext-container-2">
+                                    <div class="auth-page-account-subtext-part">Total Value allowed</div>
+ <div class="auth-page-account-amount-container">
+     <svg width="13" height="10" viewBox="0 0 13 10" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <g clip-path="url(#clip0_5197_11097)">
+                                            <path
+                                                d="M12.926 4.81517L12.8277 4.735C12.6689 4.60135 12.48 4.53454 12.2759 4.53454H11.2176C11.2327 4.6949 11.2403 4.85527 11.2403 5.02899C11.2403 5.20271 11.2327 5.36307 11.2176 5.53012H11.9357C12.48 5.53012 12.926 5.98448 12.926 6.55242V6.80633L12.8277 6.71947C12.6689 6.59251 12.48 6.5257 12.2759 6.5257H11.0588C10.4768 8.77749 8.44345 10.0002 5.23841 10.0002H1.1263C1.1263 10.0002 1.68566 9.61933 1.68566 8.34313V6.5257H0.997795C0.445983 6.5257 0 6.06466 0 5.50339V5.24949L0.105827 5.32967C0.257007 5.45662 0.445983 5.53012 0.650077 5.53012H1.68566V4.53454H0.997795C0.445983 4.53454 0 4.0735 0 3.51223V3.25833L0.105827 3.34519C0.257007 3.47214 0.445983 3.53896 0.650077 3.53896H1.68566V1.79502C1.68566 0.478721 1.1263 0.0644531 1.1263 0.0644531H5.23841C8.35274 0.0644531 10.439 1.27385 11.0513 3.53896H11.9357C12.48 3.53896 12.926 3.99332 12.926 4.56127V4.81517ZM5.08724 0.558902H3.37134V3.53896H9.13888C8.74581 1.46762 7.40786 0.558902 5.08724 0.558902ZM9.27494 5.02899C9.27494 4.85527 9.26738 4.6949 9.25982 4.53454H3.37134V5.53012H9.25982C9.26738 5.36307 9.27494 5.20271 9.27494 5.02899ZM3.37134 9.49907H5.10235C7.55904 9.44564 8.76849 8.40327 9.13888 6.5257H3.37134V9.49907Z"
+                                                fill="#616786" />
+                                        </g>
+                                        <defs>
+                                            <clipPath id="clip0_5197_11097">
+                                                <rect width="13" height="10" fill="white" />
+                                            </clipPath>
+                                        </defs>
+                                    </svg>
+                                    <div class="auth-page-account-amount">
+                                        {{sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments?.Amount }}
+                                    </div>
+
+                                </div>
+                                </div>
 
                         </div>
                     </div>
@@ -179,17 +261,13 @@
                         <div class="auth-page-account-subtext-container">
                             <div class="auth-page-account-subtext-container-2">
                                 <div class="auth-page-account-subtext">{{ sharedState?.pii?.Initiation?.DebtorAccount?.Identification?.match(/.{1,4}/g)?.join(" ") }}</div>
-
                             </div>
                             <div class="auth-page-account-subtext-container-2">
                                 <div class="auth-page-account-subtext-part">Balance</div>
                                 <div class="auth-page-account-amount-container">
-                                    <svg width="13" height="10" viewBox="0 0 13 10" fill="none"
-                                        xmlns="http://www.w3.org/2000/svg">
+                                    <svg width="13" height="10" viewBox="0 0 13 10" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <g clip-path="url(#clip0_5197_11097)">
-                                            <path
-                                                d="M12.926 4.81517L12.8277 4.735C12.6689 4.60135 12.48 4.53454 12.2759 4.53454H11.2176C11.2327 4.6949 11.2403 4.85527 11.2403 5.02899C11.2403 5.20271 11.2327 5.36307 11.2176 5.53012H11.9357C12.48 5.53012 12.926 5.98448 12.926 6.55242V6.80633L12.8277 6.71947C12.6689 6.59251 12.48 6.5257 12.2759 6.5257H11.0588C10.4768 8.77749 8.44345 10.0002 5.23841 10.0002H1.1263C1.1263 10.0002 1.68566 9.61933 1.68566 8.34313V6.5257H0.997795C0.445983 6.5257 0 6.06466 0 5.50339V5.24949L0.105827 5.32967C0.257007 5.45662 0.445983 5.53012 0.650077 5.53012H1.68566V4.53454H0.997795C0.445983 4.53454 0 4.0735 0 3.51223V3.25833L0.105827 3.34519C0.257007 3.47214 0.445983 3.53896 0.650077 3.53896H1.68566V1.79502C1.68566 0.478721 1.1263 0.0644531 1.1263 0.0644531H5.23841C8.35274 0.0644531 10.439 1.27385 11.0513 3.53896H11.9357C12.48 3.53896 12.926 3.99332 12.926 4.56127V4.81517ZM5.08724 0.558902H3.37134V3.53896H9.13888C8.74581 1.46762 7.40786 0.558902 5.08724 0.558902ZM9.27494 5.02899C9.27494 4.85527 9.26738 4.6949 9.25982 4.53454H3.37134V5.53012H9.25982C9.26738 5.36307 9.27494 5.20271 9.27494 5.02899ZM3.37134 9.49907H5.10235C7.55904 9.44564 8.76849 8.40327 9.13888 6.5257H3.37134V9.49907Z"
-                                                fill="#616786" />
+                                            <path d="M12.926 4.81517L12.8277 4.735C12.6689 4.60135 12.48 4.53454 12.2759 4.53454H11.2176C11.2327 4.6949 11.2403 4.85527 11.2403 5.02899C11.2403 5.20271 11.2327 5.36307 11.2176 5.53012H11.9357C12.48 5.53012 12.926 5.98448 12.926 6.55242V6.80633L12.8277 6.71947C12.6689 6.59251 12.48 6.5257 12.2759 6.5257H11.0588C10.4768 8.77749 8.44345 10.0002 5.23841 10.0002H1.1263C1.1263 10.0002 1.68566 9.61933 1.68566 8.34313V6.5257H0.997795C0.445983 6.5257 0 6.06466 0 5.50339V5.24949L0.105827 5.32967C0.257007 5.45662 0.445983 5.53012 0.650077 5.53012H1.68566V4.53454H0.997795C0.445983 4.53454 0 4.0735 0 3.51223V3.25833L0.105827 3.34519C0.257007 3.47214 0.445983 3.53896 0.650077 3.53896H1.68566V1.79502C1.68566 0.478721 1.1263 0.0644531 1.1263 0.0644531H5.23841C8.35274 0.0644531 10.439 1.27385 11.0513 3.53896H11.9357C12.48 3.53896 12.926 3.99332 12.926 4.56127V4.81517ZM5.08724 0.558902H3.37134V3.53896H9.13888C8.74581 1.46762 7.40786 0.558902 5.08724 0.558902ZM9.27494 5.02899C9.27494 4.85527 9.26738 4.6949 9.25982 4.53454H3.37134V5.53012H9.25982C9.26738 5.36307 9.27494 5.20271 9.27494 5.02899ZM3.37134 9.49907H5.10235C7.55904 9.44564 8.76849 8.40327 9.13888 6.5257H3.37134V9.49907Z" fill="#616786" />
                                         </g>
                                         <defs>
                                             <clipPath id="clip0_5197_11097">
@@ -197,23 +275,15 @@
                                             </clipPath>
                                         </defs>
                                     </svg>
-                                    <div class="auth-page-account-amount">
-                                        5,000
-                                    </div>
-
+                                    <div class="auth-page-account-amount">5,000</div>
                                 </div>
-
                             </div>
-
                             <div class="auth-page-account-subtext-container-2">
                                 <div class="auth-page-account-subtext-part">Overdraft</div>
                                 <div class="auth-page-account-amount-container">
-                                    <svg width="13" height="10" viewBox="0 0 13 10" fill="none"
-                                        xmlns="http://www.w3.org/2000/svg">
+                                    <svg width="13" height="10" viewBox="0 0 13 10" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <g clip-path="url(#clip0_5197_11097)">
-                                            <path
-                                                d="M12.926 4.81517L12.8277 4.735C12.6689 4.60135 12.48 4.53454 12.2759 4.53454H11.2176C11.2327 4.6949 11.2403 4.85527 11.2403 5.02899C11.2403 5.20271 11.2327 5.36307 11.2176 5.53012H11.9357C12.48 5.53012 12.926 5.98448 12.926 6.55242V6.80633L12.8277 6.71947C12.6689 6.59251 12.48 6.5257 12.2759 6.5257H11.0588C10.4768 8.77749 8.44345 10.0002 5.23841 10.0002H1.1263C1.1263 10.0002 1.68566 9.61933 1.68566 8.34313V6.5257H0.997795C0.445983 6.5257 0 6.06466 0 5.50339V5.24949L0.105827 5.32967C0.257007 5.45662 0.445983 5.53012 0.650077 5.53012H1.68566V4.53454H0.997795C0.445983 4.53454 0 4.0735 0 3.51223V3.25833L0.105827 3.34519C0.257007 3.47214 0.445983 3.53896 0.650077 3.53896H1.68566V1.79502C1.68566 0.478721 1.1263 0.0644531 1.1263 0.0644531H5.23841C8.35274 0.0644531 10.439 1.27385 11.0513 3.53896H11.9357C12.48 3.53896 12.926 3.99332 12.926 4.56127V4.81517ZM5.08724 0.558902H3.37134V3.53896H9.13888C8.74581 1.46762 7.40786 0.558902 5.08724 0.558902ZM9.27494 5.02899C9.27494 4.85527 9.26738 4.6949 9.25982 4.53454H3.37134V5.53012H9.25982C9.26738 5.36307 9.27494 5.20271 9.27494 5.02899ZM3.37134 9.49907H5.10235C7.55904 9.44564 8.76849 8.40327 9.13888 6.5257H3.37134V9.49907Z"
-                                                fill="#616786" />
+                                            <path d="M12.926 4.81517L12.8277 4.735C12.6689 4.60135 12.48 4.53454 12.2759 4.53454H11.2176C11.2327 4.6949 11.2403 4.85527 11.2403 5.02899C11.2403 5.20271 11.2327 5.36307 11.2176 5.53012H11.9357C12.48 5.53012 12.926 5.98448 12.926 6.55242V6.80633L12.8277 6.71947C12.6689 6.59251 12.48 6.5257 12.2759 6.5257H11.0588C10.4768 8.77749 8.44345 10.0002 5.23841 10.0002H1.1263C1.1263 10.0002 1.68566 9.61933 1.68566 8.34313V6.5257H0.997795C0.445983 6.5257 0 6.06466 0 5.50339V5.24949L0.105827 5.32967C0.257007 5.45662 0.445983 5.53012 0.650077 5.53012H1.68566V4.53454H0.997795C0.445983 4.53454 0 4.0735 0 3.51223V3.25833L0.105827 3.34519C0.257007 3.47214 0.445983 3.53896 0.650077 3.53896H1.68566V1.79502C1.68566 0.478721 1.1263 0.0644531 1.1263 0.0644531H5.23841C8.35274 0.0644531 10.439 1.27385 11.0513 3.53896H11.9357C12.48 3.53896 12.926 3.99332 12.926 4.56127V4.81517ZM5.08724 0.558902H3.37134V3.53896H9.13888C8.74581 1.46762 7.40786 0.558902 5.08724 0.558902ZM9.27494 5.02899C9.27494 4.85527 9.26738 4.6949 9.25982 4.53454H3.37134V5.53012H9.25982C9.26738 5.36307 9.27494 5.20271 9.27494 5.02899ZM3.37134 9.49907H5.10235C7.55904 9.44564 8.76849 8.40327 9.13888 6.5257H3.37134V9.49907Z" fill="#616786" />
                                         </g>
                                         <defs>
                                             <clipPath id="clip0_5197_11097">
@@ -221,14 +291,9 @@
                                             </clipPath>
                                         </defs>
                                     </svg>
-                                    <div class="auth-page-account-amount">
-                                        1,500
-                                    </div>
-
+                                    <div class="auth-page-account-amount">1,500</div>
                                 </div>
-
                             </div>
-
                         </div>
                     </div>
 
@@ -347,8 +412,8 @@
 
                         </div>
                     </div>
-                    </template>
 
+                    </template>
                 </div>
 
             </div>
@@ -358,63 +423,6 @@
         </div>
 
 
-        <div class="auth-page-text-frame-2">
-                <div class="auth-page-text-bottom" style="display: flex; cursor: pointer;" @click="selected_add_to_trusted = !selected_add_to_trusted">
-                     <div class="auth-page-account-checkbox">
-                                <div class="auth-page-account-checkbox-inactive"
-                                    :class="{ 'is-active': selected_add_to_trusted }">
-
-
-                                    <svg class="auth-page-account-checkbox-check" width="12" height="9"
-                                        viewBox="0 0 12 9" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path
-                                            d="M4.16667 8.68333L0 4.51667L1.175 3.34167L4.16667 6.325L10.4917 0L11.6667 1.18333L4.16667 8.68333Z"
-                                            fill="white" />
-                                    </svg>
-
-
-                                </div>
-                            </div>
-                    Add person to my list of Trusted Payees
-                </div>
-                </div>
-
-                <div v-if="isOverdraft && !sharedState?.simulatedBehaviour?.paymentLimitExceeded" class="auth-page-warning">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 7.75V13" stroke="#FD6436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M21.0802 8.58003V15.42C21.0802 16.54 20.4802 17.58 19.5102 18.15L13.5702 21.58C12.6002 22.14 11.4002 22.14 10.4202 21.58L4.48016 18.15C3.51016 17.59 2.91016 16.55 2.91016 15.42V8.58003C2.91016 7.46003 3.51016 6.41999 4.48016 5.84999L10.4202 2.42C11.3902 1.86 12.5902 1.86 13.5702 2.42L19.5102 5.84999C20.4802 6.41999 21.0802 7.45003 21.0802 8.58003Z" stroke="#FD6436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M12 16.2V16.2999" stroke="#FD6436" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <div class="auth-page-warning-text">
-                        This payment will take your selected account into an overdraft/unarranged overdraft.
-                    </div>
-                </div>
-
-                <div v-if="sharedState?.simulatedBehaviour?.duplicatePaymentAlert && !isOverdraft && !sharedState?.simulatedBehaviour?.paymentLimitExceeded" class="auth-page-warning">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 7.75V13" stroke="#FD6436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M21.0802 8.58003V15.42C21.0802 16.54 20.4802 17.58 19.5102 18.15L13.5702 21.58C12.6002 22.14 11.4002 22.14 10.4202 21.58L4.48016 18.15C3.51016 17.59 2.91016 16.55 2.91016 15.42V8.58003C2.91016 7.46003 3.51016 6.41999 4.48016 5.84999L10.4202 2.42C11.3902 1.86 12.5902 1.86 13.5702 2.42L19.5102 5.84999C20.4802 6.41999 21.0802 7.45003 21.0802 8.58003Z" stroke="#FD6436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M12 16.2V16.2999" stroke="#FD6436" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <div class="auth-page-warning-text">
-                        Duplicate Payment Alert
-                        <br><br>
-                        Our systems indicate that you have already made a payment of the same amount to this beneficiary in the last 24 hours. Please check and ensure that you are not making a duplicate payment.
-                    </div>
-                </div>
-
-                <div v-if="sharedState?.simulatedBehaviour?.paymentLimitExceeded" class="auth-page-warning">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 7.75V13" stroke="#FD6436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M21.0802 8.58003V15.42C21.0802 16.54 20.4802 17.58 19.5102 18.15L13.5702 21.58C12.6002 22.14 11.4002 22.14 10.4202 21.58L4.48016 18.15C3.51016 17.59 2.91016 16.55 2.91016 15.42V8.58003C2.91016 7.46003 3.51016 6.41999 4.48016 5.84999L10.4202 2.42C11.3902 1.86 12.5902 1.86 13.5702 2.42L19.5102 5.84999C20.4802 6.41999 21.0802 7.45003 21.0802 8.58003Z" stroke="#FD6436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M12 16.2V16.2999" stroke="#FD6436" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <div class="auth-page-warning-text">
-                        Payment limit exceeded
-                        <br><br>
-                        The amount exceeds the payment limit you've set on your account. You may need to change your settings or try a smaller amount.
-                    </div>
-                </div>
 
         <div v-if="authPermissionText" class="auth-page-text-frame-2">
                 <div class="auth-page-text-bottom">
@@ -497,7 +505,7 @@
                     </svg>
 
                     <div class="auth-page-button-text">
-                        Pay using AlTareq
+                        Authorize using AlTareq
                     </div>
                 </div>
             </div>
@@ -579,24 +587,23 @@
 import { ref, computed } from 'vue'
 import { useSharedState } from '../Composables/useSharedState.ts'
 import { getPurposeDescription } from '../Composables/aaniPaymentCodes.ts'
+import { formatDate } from '../Composables/formatDate.ts'
 import { getAuthPaymentPermissionText } from '../Composables/serviceInitiationPermissionDescriptions.ts'
 
 const { sharedState } = useSharedState()
 
-const selected = ref(null)
-const selected_add_to_trusted = ref(false)
+const props = defineProps({ scheduleType: { type: String, default: 'variable' } })
+const scheduleType = computed(() => props.scheduleType)
 
+const selected = ref(null)
+const benefListOpen = ref(true)
+
+const schedule = computed(() => sharedState?.value?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Schedule ?? [])
+const visibleCount = ref(5)
+const visibleSchedule = computed(() => schedule.value.slice(0, visibleCount.value))
 const authPermissionText = computed(() =>
     getAuthPaymentPermissionText(sharedState?.value?.value?.consent?.Permissions)
 )
-
-const isOverdraft = computed(() => {
-    const amount = parseFloat(sharedState?.value?.value?.consent?.ControlParameters?.ConsentSchedule?.SinglePayment?.Amount?.Amount || 0)
-    if (sharedState?.value?.pii?.Initiation?.DebtorAccount?.Identification) return amount > 5000
-    if (selected.value === 'savings_account') return amount > 25000
-    if (selected.value === 'current_account') return amount > 5000
-    return false
-})
 </script>
 
 <style scoped>
@@ -705,6 +712,28 @@ height: 14.7px; */
     align-self: stretch;
     flex-grow: 0;
     position: relative;
+}
+
+.auth-page-account-header-2 {
+    /* width: 272px;
+height: 14px; */
+
+font-family: 'Poppins';
+font-style: normal;
+font-weight: 600;
+font-size: 12px;
+line-height: 120%;
+/* or 14px */
+letter-spacing: -0.01em;
+
+color: #0C1441;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
 }
 
 .auth-page-date-text {
@@ -1058,7 +1087,6 @@ flex-grow: 0;
 
 .auth-page-text-header-sub {
 width: 292px;
-height: 38px;
 
 font-family: 'Poppins';
 font-style: normal;
@@ -1132,7 +1160,7 @@ flex-grow: 0;
 
     /* Inside auto layout */
     flex: none;
-    order: 4;
+    order: 2;
     flex-grow: 0;
 }
 
@@ -1275,7 +1303,7 @@ flex-grow: 0;
     border-radius: 0px;
 
     flex: none;
-    order: 5;
+    order: 3;
     flex-grow: 0;
 }
 
@@ -1614,8 +1642,11 @@ top: 20%;
 }
 
 .auth-page-account-amount {
-    /* Amount */
-
+margin-left: auto;
+max-width: 140px;
+ white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
     height: 14px;
 
     font-family: 'Poppins';
@@ -1633,6 +1664,33 @@ top: 20%;
     flex: none;
     order: 1;
     flex-grow: 0;
+}
+
+.auth-page-account-amount-iban {
+margin-left: auto;
+max-width: 180px;
+ white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+height: 14px;
+
+font-family: 'Poppins';
+font-style: normal;
+font-weight: 300;
+font-size: 12px;
+line-height: 120%;
+/* or 14px */
+text-align: right;
+letter-spacing: -0.01em;
+
+color: #616786;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
 }
 
 .auth-page-button {
@@ -1935,5 +1993,201 @@ top: 20%;
     flex: none;
     order: 0;
     flex-grow: 0;
+}
+
+.auth-page-no-creditor-text {
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 300;
+    font-size: 12px;
+    line-height: 160%;
+    letter-spacing: -0.01em;
+    color: #616786;
+    width: 272px;
+}
+
+.benef-drop {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 24px;
+    width: 272px;
+}
+
+.benef-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 10px;
+    width: 272px;
+    align-self: stretch;
+    margin-bottom: 10px;
+}
+
+.benef-drop-header {
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0px;
+    gap: 14px;
+    width: 272px;
+    height: 34px;
+    align-self: stretch;
+}
+
+.benef-drop-label {
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 120%;
+    letter-spacing: -0.01em;
+    color: #616786;
+}
+
+.benef-drop-arrow {
+    transition: transform 0.2s ease;
+    transform: rotate(90deg);
+}
+
+.benef-drop-arrow-collapsed {
+    transform: rotate(0deg);
+}
+
+.benef-drop-items {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 10px;
+    width: 272px;
+    align-self: stretch;
+}
+
+.benef-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 10px;
+    width: 272px;
+    align-self: stretch;
+}
+
+.benef-text-line {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0px;
+    width: 272px;
+    align-self: stretch;
+}
+
+.benef-text-line-center {
+    align-items: center;
+}
+
+.benef-name {
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 300;
+    font-size: 12px;
+    line-height: 120%;
+    letter-spacing: -0.01em;
+    color: #616786;
+}
+
+.benef-iban-label {
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 300;
+    font-size: 12px;
+    line-height: 120%;
+    letter-spacing: -0.01em;
+    color: #616786;
+}
+
+.benef-iban {
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 300;
+    font-size: 12px;
+    line-height: 120%;
+    text-align: right;
+    letter-spacing: -0.01em;
+    color: #616786;
+}
+
+.schedule-list {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 0px;
+    gap: 10px;
+    width: 100%;
+    border-radius: 6px;
+    flex: none;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.schedule-item {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.schedule-item-date {
+    font-size: 12px;
+    color: #616786;
+    font-weight: 400;
+}
+
+.schedule-item-variable {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    padding: 0 4px;
+}
+
+.schedule-item-variable-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.schedule-item-label {
+    font-size: 12px;
+    color: #616786;
+    font-weight: 400;
+}
+
+.schedule-show-more {
+    background: none;
+    border: none;
+    padding: 2px 4px;
+    font-size: 11px;
+    color: #36BFD4;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    align-self: flex-start;
+}
+
+.schedule-totals-gap {
+    height: 8px;
+    width: 100%;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    margin: 2px 0;
 }
 </style>

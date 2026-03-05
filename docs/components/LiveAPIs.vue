@@ -91,138 +91,229 @@ const toggleService = (service) => {
 
 <template>
   <div v-if="lfis.length > 0" class="lfi-list">
+    <p class="lfi-intro">The following LFIs currently offer live Open Finance banking services:</p>
 
-    <h2>Production Services Overview</h2>
-    The following LFIs currently offer live Open Finance banking services:
-    <div v-for="org in lfis" :key="org.orgName" class="org">
-      <div v-for="server in org?.servers" :key="server.name" class="server-card">
-        <div class="server-header" @click="toggleServer(server)">
-          <img :src="server.logo" alt="" class="server-logo" loading="lazy" />
-          <h3 class="server-name">{{ org.orgName }} ({{ server.flags.AccountType.join(', ') }})</h3>
-          <span class="toggle-icon" :class="{ 'is-open': server.expanded }">></span>
-        </div>
-        <div v-if="server.expanded" class="server-content">
-          <div v-for="(versions, key) in server.services" :key="key" class="service">
-            <div class="service-header">
-              {{ key }}
-            </div>
+    <div class="lfi-table">
+      <div class="lfi-table-header">
+        <span>Institution</span>
+        <span>Account Type</span>
+        <span>Services</span>
+        <span>Versions</span>
+      </div>
 
-            <div v-for="service in versions" :key="service.version">
-              <div class="service-header" @click="toggleService(service)">
-                v{{ service.version }}
-                <span class="toggle-icon" :class="{ 'is-open': service.expanded }">></span>
+      <template v-for="org in lfis" :key="org.orgName">
+        <template v-for="server in org.servers" :key="server.name">
+          <div class="lfi-row" @click="toggleServer(server)" :class="{ 'is-expanded': server.expanded }">
+            <span class="lfi-institution">
+              <img :src="server.logo" alt="" class="server-logo" loading="lazy" />
+              <span class="server-name">{{ org.orgName }}</span>
+            </span>
+            <span class="lfi-account-type">
+              <span v-for="t in server.flags.AccountType" :key="t" class="badge badge-type">{{ t }}</span>
+            </span>
+            <span class="lfi-services">
+              <span v-for="(_, key) in server.services" :key="key" class="badge badge-service">{{ key }}</span>
+            </span>
+            <span class="lfi-versions">
+              <span v-for="v in [...new Set(Object.values(server.services).flat().map(s => s.version))].sort()" :key="v" class="badge badge-version">v{{ v }}</span>
+            </span>
+            <span class="toggle-icon" :class="{ 'is-open': server.expanded }">›</span>
+          </div>
+
+          <div v-if="server.expanded" class="lfi-detail">
+            <div v-for="(versions, key) in server.services" :key="key" class="detail-service">
+              <div class="detail-service-name">{{ key }}</div>
+              <div v-for="service in versions" :key="service.version" class="detail-version">
+                <div class="detail-version-header" @click.stop="toggleService(service)">
+                  <span>v{{ service.version }}</span>
+                  <span class="toggle-icon small" :class="{ 'is-open': service.expanded }">›</span>
+                </div>
+                <ul v-if="service.expanded" class="endpoints">
+                  <li v-for="ep in service.endpoints" :key="ep"><code>{{ ep }}</code></li>
+                </ul>
               </div>
-
-              <ul v-if="service.expanded" class="endpoints">
-                <li v-for="ep in service.endpoints" :key="ep">
-                  <code>{{ ep }}</code>
-                </li>
-              </ul>
             </div>
           </div>
-        </div>
-      </div>
+        </template>
+      </template>
     </div>
   </div>
 </template>
 
 <style scoped>
-.lfi-list {
-  display: flex;
-  flex-direction: column;
+.lfi-intro {
+  font-size: 0.9rem;
+  color: var(--vp-c-text-2);
+  margin-bottom: 0.75rem;
 }
 
-.org-name {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.server-card {
-  border-radius: 12px;
+.lfi-table {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
   overflow: hidden;
-  transition: all 0.2s;
+  font-size: 0.85rem;
 }
 
-.server-header {
+.lfi-table-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr 3rem 1.5rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--vp-c-bg-soft);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--vp-c-text-2);
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.lfi-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr 3rem 1.5rem;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--vp-c-divider);
+  transition: background 0.15s;
+  gap: 0.5rem;
+}
+
+.lfi-row:last-child {
+  border-bottom: none;
+}
+
+.lfi-row:hover,
+.lfi-row.is-expanded {
+  background: var(--vp-c-bg-soft);
+}
+
+.lfi-institution {
   display: flex;
   align-items: center;
-  padding: 1rem 1.5rem;
-  cursor: pointer;
-  gap: 1rem;
-}
-
-.server-header:hover {
-  background: var(--vp-c-bg);
+  gap: 0.5rem;
 }
 
 .server-logo {
-  height: 48px;
-  width: auto;
+  height: 24px;
+  width: 24px;
   object-fit: contain;
   border-radius: 4px;
-}
-
-.is-open {
-  transform: rotate(90deg);
+  flex-shrink: 0;
 }
 
 .server-name {
-  flex: 1;
-  font-size: 1.1rem;
-  margin: 0;
+  font-weight: 500;
+  color: var(--vp-c-text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lfi-account-type,
+.lfi-services {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.badge-type {
+  background: var(--vp-c-indigo-soft);
+  color: var(--vp-c-indigo-1);
+}
+
+.badge-service {
+  background: var(--vp-c-green-soft);
+  color: var(--vp-c-green-1);
+}
+
+.lfi-versions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+}
+
+.badge-version {
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  border: 1px solid var(--vp-c-divider);
+  font-weight: 400;
 }
 
 .toggle-icon {
-  font-size: 1.2rem;
-  transition: transform 0.2s;
+  font-size: 1rem;
+  transition: transform 0.15s;
+  color: var(--vp-c-text-3);
+  justify-self: end;
 }
 
-.server-content {
-  padding: 1rem 1.5rem;
+.toggle-icon.small {
+  font-size: 0.85rem;
+}
+
+.toggle-icon.is-open {
+  transform: rotate(90deg);
+}
+
+.lfi-detail {
+  padding: 0.5rem 0.75rem 0.75rem 3rem;
+  background: var(--vp-c-bg-soft);
+  border-bottom: 1px solid var(--vp-c-divider);
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 1rem;
 }
 
-.service {
-  border-top: 1px solid var(--vp-c-divider);
+.detail-service {
+  min-width: 200px;
 }
 
-.service-header {
+.detail-service-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--vp-c-text-2);
+  margin-bottom: 0.25rem;
+}
+
+.detail-version-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 0;
+  gap: 0.25rem;
   cursor: pointer;
-  font-weight: 600;
-  color: var(--vp-c-text-1);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--vp-c-brand);
+  padding: 0.15rem 0;
 }
 
-.service-header:hover {
-  color: var(--vp-c-brand);
+.detail-version-header:hover {
+  color: var(--vp-c-brand-dark);
 }
 
 .endpoints {
   list-style: none;
   padding: 0;
-  margin: 0;
-  font-size: small;
-  border-radius: 8px;
-  overflow: hidden;
+  margin: 0.25rem 0 0 0;
 }
 
 .endpoints li {
-  padding: 0.5rem 1rem;
-  border-bottom: 1px solid var(--vp-c-divider);
+  padding: 0.15rem 0;
   word-break: break-all;
-}
-
-.endpoints li:last-child {
-  border-bottom: none;
 }
 
 .endpoints code {
   font-family: var(--vp-font-family-mono);
+  font-size: 0.72rem;
   color: var(--vp-code-color);
 }
 </style>

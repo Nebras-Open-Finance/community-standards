@@ -16,13 +16,14 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
   {
     text: 'Trust Framework (Directory)',
     collapsed: true,
-    link: `${BASE}/trust-framework/`,
     items: [
+      { text: 'Overview', link: `${BASE}/trust-framework/` },
       {
         text: 'Onboarding',
         collapsed: true,
         link: `${BASE}/trust-framework/onboarding/`,
         items: [
+          { text: 'Overview', link: `${BASE}/trust-framework/onboarding/` },
           { text: 'Roles in the Trust Framework', link: `${BASE}/trust-framework/roles/` },
         ],
       },
@@ -31,11 +32,13 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
         collapsed: true,
         link: `${BASE}/trust-framework/application`,
         items: [
+          { text: 'Overview', link: `${BASE}/trust-framework/application` },
           { text: 'Handling Redirect URIs', link: `${BASE}/trust-framework/redirect-uri/` },
           {
             text: 'Keys and Certificates',
             link: `${BASE}/trust-framework/certificates/`,
             items: [
+              { text: 'Overview', link: `${BASE}/trust-framework/certificates/` },
               { text: 'Certificates with a SAN', link: `${BASE}/trust-framework/certificates-san/` },
             ],
           },
@@ -149,13 +152,14 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
   {
     text: 'Banking',
     collapsed: true,
-    link: `${BASE}/${VERSION}/banking`,
     items: [
+      { text: 'Overview', link: `${BASE}/${VERSION}/banking` },
       {
         text: 'Data Sharing',
         collapsed: true,
         link: `${BASE}/${VERSION}/banking/data-sharing`,
         items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/banking/data-sharing` },
           { text: 'Requirements', link: `${BASE}/${VERSION}/banking/data-sharing/requirements` },
           { text: 'User Experience', link: `${BASE}/${VERSION}/banking/data-sharing/user-journeys` },
           { text: 'API Guide', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide` },
@@ -210,6 +214,7 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
             collapsed: true,
             link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/`,
             items: [
+              { text: 'Overview', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/` },
               { text: 'Debtor Account', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/debtor-account` },
               { text: 'Creditor', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/creditor` },
               { text: 'Risk', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/risk` },

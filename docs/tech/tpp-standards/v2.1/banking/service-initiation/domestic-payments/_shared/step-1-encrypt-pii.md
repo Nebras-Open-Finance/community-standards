@@ -10,7 +10,11 @@ The schema defines `PersonalIdentifiableInformation` as a `oneOf` with three var
 | **International Payment PII Schema Object** | object | Unencrypted form — shows the PII structure for international payments. For reference only. |
 | **Encrypted PII Object** (`AEJWEPaymentPII`) | string | Compact JWE string. **MUST** be used when invoking the PAR operation. |
 
-Implementers **MUST** adhere to the decoded PII schema when building the object before encryption. Debtor and Creditor information **MUST** be set according to the rules for the payment type being instructed — see [Personal Identifiable Information](../../../personal-identifiable-information/) for the complete schema reference and creditor models.
+::: warning Domestic Payment PII Schema Object must be strictly followed
+The object you encrypt **MUST** conform exactly to the **Domestic Payment PII Schema Object**. Field names, nesting, and data types are validated by the LFI after decryption — any deviation will result in payment rejection. Do not add undocumented fields or omit required ones.
+
+See [Personal Identifiable Information](../../../personal-identifiable-information/) for the complete field reference, required vs optional fields, and creditor models for each domestic payment type.
+:::
 
 The PII object is serialized to JSON, signed as a JWS using your signing key, and then encrypted as a JWE using the LFI's public encryption key — producing the `AEJWEPaymentPII` compact string embedded as `PersonalIdentifiableInformation` in the consent.
 
