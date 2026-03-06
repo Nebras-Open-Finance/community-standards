@@ -10,6 +10,10 @@ The Open Finance Banking Data Sharing capabilities enable secure, consent-driven
 
 All data access operates under explicit customer consent, with granular permission scopes, strict expiry controls, and full auditability.
 
+::: info Required role: BDSP
+Access to the Bank Data Sharing APIs requires the **BDSP** (Bank Data Sharing Provider) role. This role must be assigned to your application in the Trust Framework before making any account information requests. See [Roles](/tech/tpp-standards/trust-framework/roles) for the full list of scopes and grant types this role permits.
+:::
+
 <LiveAPIs families="['account-information']" />
 
 

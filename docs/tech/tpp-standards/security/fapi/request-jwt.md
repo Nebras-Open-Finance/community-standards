@@ -6,9 +6,13 @@ aside: false
 
 # Preparing the Request JWT
 
-To send a [/par](../../consent/open-api/par) request, you must first construct a signed **Request JWT** (also called a Request Object or JAR — JWT Authorization Request). This JWT is a signed package of all authorization parameters, proving they came from your registered application and haven't been tampered with.
+To send a [/par](../../v2.1/consent/open-api/par) request, you must first construct a signed **Request JWT** (also called a Request Object or JAR — JWT Authorization Request). This JWT is a signed package of all authorization parameters, proving they came from your registered application and haven't been tampered with.
 
 <img src="/images/journeys/par_spotlight-request.png" alt="Request JWT highlighted in the PAR flow" />
+
+::: tip Strict claim rules
+For a precise per-claim reference covering `aud`, `exp`/`nbf` lifetime windows, clock skew, and the difference between the Request Object and Client Assertion, see [JWT Claim Rules](./jwt-claims).
+:::
 
 ## Header
 

@@ -9,7 +9,7 @@ The **Base Consent ID** (`consentGroupId`) serves as a persistent reference that
 
 This is used to enable a more coherent and user-friendly presentation of consent within **Consent Management Interfaces (CMIs)** provided by both TPPs and LFIs.
 
----
+
 
 ## When Should a Base Consent ID Be Used?
 
@@ -23,7 +23,7 @@ To maintain continuity, the TPP should set the **original `ConsentId`** as the `
 If the original consent already had a `BaseConsentId`, the TPP **must reuse that same `BaseConsentId`**, not the immediate prior `ConsentId`. This ensures the entire chain of consents is consistently linked.
 :::
 
----
+
 
 ### Consent Re-establishment After Revocation
 
@@ -31,7 +31,7 @@ If a user **revokes** consent and later wants to re-establish access to the TPP'
 
 As with consent continuation, the TPP should reference the original `ConsentId` as the `BaseConsentId` — or, if applicable, reuse the existing `BaseConsentId` — to maintain the logical association.
 
----
+
 
 ### Consent Update (Permission Expansion)
 
@@ -41,13 +41,13 @@ Suppose a user originally grants consent with specific permissions (e.g., `ReadA
 2. Revoke the old consent.
 3. Link the new consent to the original one by referencing the appropriate `BaseConsentId`.
 
----
+
 
 ### User Identity Consistency
 
 It is assumed that all consents linked via a `BaseConsentId` are associated with the **same end user**. Therefore, if during authentication the LFI determines that the `userId` associated with a newly submitted consent **differs** from the user who authorised the previous consent in the chain, the LFI **should reject** the new consent.
 
----
+
 
 ## Summary
 

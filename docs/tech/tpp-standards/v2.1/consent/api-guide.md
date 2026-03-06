@@ -10,7 +10,7 @@ aside: false
 
 In UAE Open Finance, a **Consent** is a structured, user-authorized agreement that grants a TPP specific rights to access data or initiate payments on a user's behalf. All API access is consent-bound — you cannot call a resource endpoint without a valid, authorized consent.
 
-Consents are created through the **Pushed Authorization Request** flow ([FAPI 2.0 PAR](../security/fapi)). Rather than creating a consent resource directly, the TPP embeds the consent definition inside a signed Request JWT and pushes it to the Authorization Server. The user then authenticates at the LFI and explicitly authorizes the consent.
+Consents are created through the **Pushed Authorization Request** flow ([FAPI 2.0 PAR](../../security/fapi)). Rather than creating a consent resource directly, the TPP embeds the consent definition inside a signed Request JWT and pushes it to the Authorization Server. The user then authenticates at the LFI and explicitly authorizes the consent.
 
 ## Consent Types
 
@@ -261,5 +261,5 @@ if status != "Authorized":
 See [GET /payment-consents/{ConsentId}](/tech/tpp-standards/v2.1/consent/open-api/payment-consents-ConsentId) for the full response schema.
 
 ::: info Consent States
-A consent moves through a defined lifecycle — `AwaitingAuthorization` → `Authorized` → `Consumed` / `Expired` / `Revoked`. See [Consent States](./consent-states) for the full state machine and transition rules.
+A consent moves through a defined lifecycle — `AwaitingAuthorization` → `Authorized` → `Consumed` / `Expired` / `Revoked`. See [Consent Overview](./index) for the full state machine and transition rules.
 :::

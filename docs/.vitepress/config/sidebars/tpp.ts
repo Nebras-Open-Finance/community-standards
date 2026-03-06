@@ -114,9 +114,9 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
     text: 'Consent',
     collapsed: true,
     items: [
-      { text: 'Overview', link: `${BASE}/${VERSION}/consent/overview` },
+      { text: 'Overview', link: `${BASE}/${VERSION}/consent/` },
+      { text: 'Requirements', link: `${BASE}/${VERSION}/consent/requirements` },
       { text: 'API Guide', link: `${BASE}/${VERSION}/consent/api-guide` },
-      { text: 'Consent States', link: `${BASE}/${VERSION}/consent/consent-states` },
       { text: 'Consent Management Interface', link: `${BASE}/${VERSION}/consent/consent-management-interface` },
       {
         text: 'API Reference',
@@ -190,6 +190,14 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
             text: 'Domestic Payments',
             collapsed: true,
             items: [
+               {
+                text: 'Overview',
+                collapsed: true,
+                items: [
+                  { text: 'Payment Rails', link: `${BASE}/${VERSION}/banking/service-initiation/domestic-payments/overview/payment-rails` },
+                  { text: 'Payment Status', link: `${BASE}/${VERSION}/banking/service-initiation/domestic-payments/overview/payment-status` },
+                ],
+              },
               {
                 text: 'Single Instant Payment',
                 collapsed: true,
@@ -212,7 +220,6 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
           {
             text: 'Personal Identifiable Information',
             collapsed: true,
-            link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/`,
             items: [
               { text: 'Overview', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/` },
               { text: 'Debtor Account', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/debtor-account` },
@@ -236,6 +243,7 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
         text: 'Confirmation of Payee',
         collapsed: true,
         items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/banking/confirmation-of-payee` },
           { text: 'Requirements', link: `${BASE}/${VERSION}/requirements` },
           { text: 'User Experience', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/user-journeys` },
           { text: 'API Guide', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/api-guide` },
@@ -249,31 +257,43 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
           },
         ],
       },
-      {
-        text: 'Products and Leads',
-        collapsed: true,
-        items: [
-          { text: 'Requirements', link: `${BASE}/${VERSION}/banking/products-leads/requirements` },
-          { text: 'User Experience', link: `${BASE}/${VERSION}/banking/products-leads/user-journeys` },
-          { text: 'API Guide', link: `${BASE}/${VERSION}/banking/products-leads/api-guide` },
-          {
-            text: 'API Reference',
-            collapsed: true,
-            items: [
-              apiRef('GET', '/products', `${BASE}/${VERSION}/banking/products-leads/open-api/products`),
-              apiRef('POST', '/leads', `${BASE}/${VERSION}/banking/products-leads/open-api/leads `),
-            ],
-          },
-        ],
-      },
-      {
-        text: 'Testing',
-        collapsed: true,
-        items: [
-          { text: 'AlTareq Model Bank', link: `${BASE}/${VERSION}/banking/testing/model-bank` },
-          { text: 'Postman', link: `${BASE}/${VERSION}/banking/testing/postman` }
-        ],
-      },
+      // {
+      //   text: 'Products and Leads',
+      //   collapsed: true,
+      //   items: [
+      //     { text: 'Requirements', link: `${BASE}/${VERSION}/banking/products-leads/requirements` },
+      //     { text: 'User Experience', link: `${BASE}/${VERSION}/banking/products-leads/user-journeys` },
+      //     { text: 'API Guide', link: `${BASE}/${VERSION}/banking/products-leads/api-guide` },
+      //     {
+      //       text: 'API Reference',
+      //       collapsed: true,
+      //       items: [
+      //         apiRef('GET', '/products', `${BASE}/${VERSION}/banking/products-leads/open-api/products`),
+      //         apiRef('POST', '/leads', `${BASE}/${VERSION}/banking/products-leads/open-api/leads `),
+      //       ],
+      //     },
+      //   ],
+      // },
     ],
   },
+
+  {
+    text: 'Testing & Certification',
+    collapsed: true,
+    items: [
+      { text: 'Overview', link: `${BASE}/testing-certification/overview` },
+      { text: 'Readiness Checklist', link: `${BASE}/testing-certification/readiness-checklist` },
+      {
+        text: 'Functional Evidence',
+        collapsed: true,
+        items: [
+          { text: 'Bank Data Sharing', link: `${BASE}/testing-certification/functional` },
+        ],
+      },
+      { text: 'User Experience Evidence', link: `${BASE}/testing-certification/user-experience` },
+      { text: 'FAPI Conformance', link: `${BASE}/testing-certification/fapi` },
+      { text: 'Security Validation', link: `${BASE}/testing-certification/security-validation` },
+    ],
+  },
+    { text: 'Production Live Proving', link: `${BASE}/testing-certification/production-proving` },
 ]

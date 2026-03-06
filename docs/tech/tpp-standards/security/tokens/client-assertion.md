@@ -21,6 +21,10 @@ Because each assertion is signed with your application's private key, the Author
 A client assertion must be freshly generated for every request. The `jti` claim (a unique UUID) ensures the Authorization Server can detect and reject replayed assertions.
 :::
 
+::: tip Strict claim rules
+For a complete per-claim reference — including the exact `aud` value, `jti` uniqueness requirements, `exp`/`iat` lifetime window, and a side-by-side comparison with the Request Object — see [JWT Claim Rules](../fapi/jwt-claims).
+:::
+
 ## Structure
 
 The client assertion is a signed JWT composed of a header and a set of claims:
@@ -45,6 +49,10 @@ The client assertion is a signed JWT composed of a header and a set of claims:
 
 ::: tip Keep assertions short-lived
 Set `exp` to no more than 5 minutes after `iat`. Long-lived assertions increase the window of exposure if intercepted.
+:::
+
+::: tip Testing client assertions on the sandbox
+The sandbox provides **O3 Utility endpoints** that accept your private key and return a ready-made client assertion JWT — useful for confirming your key setup is correct before writing your own signing code. See [O3 Sandbox Utilities](../fapi/o3-utils#example-2-o3-util-prepare-private-key-jwt-for-par-end-point).
 :::
 
 ## Signing the assertion

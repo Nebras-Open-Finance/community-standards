@@ -9,7 +9,7 @@ description: "When to populate OnBehalfOf in PAR requests, which consent types s
 
 For **Bank Service Initiation (payment) PARs**, `OnBehalfOf` is not used. For payment initiation the recipient of the funds is represented via the creditor fields — specifically the encrypted `consent.PersonalIdentifiableInformation.Initiation.Creditor.Name` data field.
 
----
+
 
 ## When to Use OnBehalfOf
 
@@ -20,7 +20,7 @@ Populate `OnBehalfOf` when the caller (TPP) is requesting authorisation for **ba
 
 If the TPP is representing itself (no other regulated entity is involved), `OnBehalfOf` is not required.
 
----
+
 
 ## The OnBehalfOf Object
 
@@ -40,7 +40,7 @@ If the TPP is representing itself (no other regulated entity is involved), `OnBe
 | `IdentifierType` | Identifier scheme — currently `"Other"` in the published schema. |
 | `Identifier` | The identifier value for the represented entity. |
 
----
+
 
 ## Where OnBehalfOf Appears
 
@@ -50,7 +50,7 @@ If the TPP is representing itself (no other regulated entity is involved), `OnBe
 | Insurance Data Sharing | Yes | References a common `AEOnBehalfOf` object — same intent and fields. |
 | Bank Service Initiation (payments) | **No** | Not used. Merchant identity is carried via the creditor fields in the payment consent. |
 
----
+
 
 ## Payment Consents: Use Creditor Fields Instead
 
@@ -79,7 +79,7 @@ When `MerchantName` is not present, the standard wording is shown:
 
 This allows TPPs acting as a payment facilitator or aggregator on behalf of a sub-merchant to surface that merchant's identity clearly to the user at the point of authorisation.
 
----
+
 
 ## Examples
 
@@ -132,7 +132,7 @@ Use the creditor fields to identify the payment recipient — not `OnBehalfOf`:
 In production, `PersonalIdentifiableInformation` is a JWE encrypted with the LFI's encryption key. The structure above shows the decrypted payload for illustration.
 :::
 
----
+
 
 ## Implementation Checklist
 

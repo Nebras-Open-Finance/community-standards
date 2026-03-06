@@ -110,7 +110,7 @@
                                     <div class="auth-page-account-amount">
                                         {{ sharedState?.pii?.Initiation?.Creditor[0]?.Creditor?.Name || sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Name?.en || sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Name?.ar }}
                                     </div>
-
+                                    <slot name="cop-icon" />
                                 </div>
 
                             </div>
@@ -144,7 +144,7 @@
                             <div class="auth-page-account-subtext-container-2">
                                 <div class="auth-page-account-subtext-part">Payment Purpose</div>
                                 <div class="auth-page-account-amount-container">
-                                    <div class="auth-page-account-amount">
+                                    <div class="auth-page-account-amount" style="width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                         {{ getPurposeDescription(sharedState?.value?.consent?.PaymentPurposeCode) }}
                                     </div>
 
@@ -162,7 +162,7 @@
 
         </div>
 
-
+        <slot name="cop-warning" />
 
         <div  class="auth-page-text-frame">
             <div class="auth-page-text-inner-frame">
@@ -996,7 +996,6 @@ height: 14.7px; */
 
     /* Inside auto layout */
     flex: none;
-    order: 1;
     flex-grow: 0;
 }
 
@@ -1584,14 +1583,13 @@ top: 20%;
     /* Auto layout */
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: right;
     align-items: center;
     padding: 0px;
     gap: 4px;
 
     margin-left: auto;
     height: 14px;
-
 
     /* Inside auto layout */
     flex: none;
@@ -1625,7 +1623,6 @@ top: 20%;
     line-height: 120%;
     /* or 14px */
     letter-spacing: -0.01em;
-
     color: #616786;
 
 

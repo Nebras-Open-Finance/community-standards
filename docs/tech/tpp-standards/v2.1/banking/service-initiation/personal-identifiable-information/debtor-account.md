@@ -6,9 +6,15 @@ aside: false
 
 # Debtor Account
 
-`Initiation.DebtorAccount` is an **optional** field in the PII object. It is used when the TPP already knows which account the user wants to pay from — for example, because the user selected it within the TPP's own application.
+::: info POST /par only
+`Initiation.DebtorAccount` is only present in the PII submitted at `POST /par` (consent staging). It is **not part of the `POST /payments` PII schema**.
 
-When provided, the LFI will pre-select this account on their authorization screen. When omitted, the user chooses their account directly at the LFI during authorization.
+At payment time, the debtor account has already been determined: the user selected and authorised it during the consent flow at the LFI. There is no mechanism to change or re-specify the debtor account at `POST /payments`.
+:::
+
+`Initiation.DebtorAccount` is an **optional** field in the consent PII. It is used when the TPP already knows which account the user wants to pay from — for example, because the user selected it within the TPP's own application before being redirected to the LFI.
+
+When provided, the LFI will pre-select this account on their authorisation screen. When omitted, the user chooses their account directly at the LFI during authorisation.
 
 ## Schema
 
@@ -23,6 +29,8 @@ When provided, the LFI will pre-select this account on their authorization scree
 
 ## Example
 
+POST /par PII with `DebtorAccount` provided:
+
 ```json
 {
   "Initiation": {
@@ -34,7 +42,7 @@ When provided, the LFI will pre-select this account on their authorization scree
         "ar": "أحمد المنصوري"
       }
     },
-    "Creditor": [ ... ]
+    "Creditor": [ ... ]   // see Creditor page
   },
   "Risk": { ... }
 }

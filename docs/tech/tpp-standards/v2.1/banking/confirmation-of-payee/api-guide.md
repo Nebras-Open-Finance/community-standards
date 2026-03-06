@@ -415,22 +415,60 @@ result        = json.loads(base64.urlsafe_b64decode(payload_b64 + "=="))
 
 The LFI returns a signed JWT. Decode the payload to read the match result:
 
-| Field | Description | Example |
-|-------|-------------|---------|
-| `Data.MatchResult` | Whether the name matches the account holder | `MATCH`, `PARTIAL_MATCH`, `NO_MATCH`, `CANNOT_MATCH` |
-| `Data.SchemeName` | The scheme name from the request | `IBAN` |
-| `Data.Identification` | The IBAN from the request | `AE070331234567890123456` |
+| Field | Type | Description |
+|-------|------|-------------|
+| `Data.NameMatchIndicator` | string | The result of the name match check — see enum below |
+| `Data.MaskedName` | string | The account holder's name, partially masked. Returned on `ConfirmationOfPayee.Partial` and `ConfirmationOfPayee.No` |
 
-| `MatchResult` | Meaning |
-|--------------|---------|
-| `MATCH` | Name and account match — safe to proceed |
-| `PARTIAL_MATCH` | Partial match — the LFI may provide a suggested name |
-| `NO_MATCH` | Name does not match the account |
-| `CANNOT_MATCH` | LFI could not perform the check (e.g. account not found, unavailable) |
+| `NameMatchIndicator` | Meaning |
+|---------------------|---------|
+| `ConfirmationOfPayee.Yes` | Name and account match — safe to proceed |
+| `ConfirmationOfPayee.Partial` | Name partially matches — present the `MaskedName` to the payer |
+| `ConfirmationOfPayee.No` | Name does not match — present the `MaskedName` to the payer |
 
-::: warning Proceed with caution on non-MATCH results
-A `PARTIAL_MATCH` or `NO_MATCH` should be surfaced to the payer before initiating a payment. Proceeding without informing the user may increase the risk of authorised push payment fraud.
+::: warning Proceed with caution on non-Yes results
+A `ConfirmationOfPayee.Partial` or `ConfirmationOfPayee.No` result must be surfaced to the payer — along with the `MaskedName` — before initiating a payment. Proceeding without informing the user may increase the risk of authorised push payment fraud.
 :::
+
+### Decoding the JWS
+
+The `/confirmation` response body is a compact JWS — three base64url-encoded segments separated by `.`:
+
+```
+<header>.<payload>.<signature>
+```
+
+Verify the signature using the LFI's public key, then base64url-decode the payload:
+
+```typescript
+function decodeJwsPayload(jws: string) {
+  const [, payloadB64] = jws.split('.')
+  const json = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'))
+  return JSON.parse(json)
+}
+```
+
+The decoded payload contains a `message` object with the CoP result under `message.Data`:
+
+```json
+{
+  "iss": "https://rs1.altareq1.sandbox.apihub.openfinance.ae",
+  "aud": ["https://tpp.example.com"],
+  "iat": 1713196200,
+  "nbf": 1713196200,
+  "exp": 1713196500,
+  "message": {
+    "Data": {
+      "NameMatchIndicator": "ConfirmationOfPayee.Partial",
+      "MaskedName": "Ibrahim Al S*****"
+    },
+    "Links": {
+      "Self": "https://rs1.altareq1.sandbox.apihub.openfinance.ae/open-finance/confirmation-of-payee/v2.1/confirmation"
+    },
+    "Meta": {}
+  }
+}
+```
 
 See the [POST /confirmation](./open-api/confirmation) API reference for the full request and response schema.
 
@@ -459,3 +497,5 @@ Where Confirmation of Payee has been performed for a creditor, include the **ful
 This gives the LFI confidence that the creditor account details have been verified before the payment consent was created. The value must be the complete compact JWS string — do not decode it to an object before embedding.
 
 See [Creditor](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/creditor) for the full PII creditor schema and the creditor models (single, multiple, and open beneficiary).
+
+See [Confirmation of Payee — User Experience](/tech/tpp-standards/v2.1/banking/confirmation-of-payee/user-journeys) for consent and authorisation page examples across different match results.

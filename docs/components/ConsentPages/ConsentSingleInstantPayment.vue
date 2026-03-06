@@ -208,6 +208,7 @@
                                              {{sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Identification.match(/.{1,4}/g).join(" ") }}
                                         </div>
                                 </div>
+                                <slot name="cop-result" />
 
                 </div>
 

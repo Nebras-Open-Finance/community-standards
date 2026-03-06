@@ -7,7 +7,7 @@ description: "How to use ReadAccountsBasic, ReadAccountsDetail, and ReadBalances
 
 A payment consent can optionally include a small set of account-reading permissions. This allows a TPP to read the payer's account details and balance using the **same access token** issued for the payment — without creating a separate [Bank Data Sharing](../../tech/tpp-standards/v2.1/banking/data-sharing/api-guide) consent.
 
----
+
 
 ## Why Include These Permissions?
 
@@ -19,7 +19,7 @@ During a payment flow the TPP typically needs to:
 
 Without these permissions the TPP only receives a payment access token that is scoped to initiate and track the payment — it cannot call any account endpoints.
 
----
+
 
 ## Available Permissions
 
@@ -33,7 +33,7 @@ These three permissions are the only account-reading permissions available on a 
 
 `ReadRefundAccount` is a fourth permission on a payment consent. It unlocks `GET /payment-consents/{ConsentId}/refund` and is used to retrieve account details for routing a refund — it is not an account-reading permission in the same sense.
 
----
+
 
 ## Impact on Scope
 
@@ -48,7 +48,7 @@ Including any of the three permissions above **changes the required scope** in t
 If account-reading permissions are present in `authorization_details` but `accounts` is omitted from the scope, the Authorization Server will issue a token that cannot call the account endpoints — your `GET /accounts` calls will return `403 Forbidden`.
 :::
 
----
+
 
 ## Requesting the Permissions
 
@@ -87,7 +87,7 @@ const requestJWT = await buildRequestJWT({
 })
 ```
 
----
+
 
 ## Calling the Account Endpoints
 
@@ -127,7 +127,7 @@ const { Data: { Balance } } = await fetch(
 // Balance[0].CreditDebitIndicator — 'Credit' or 'Debit'
 ```
 
----
+
 
 ## Relationship to Bank Data Sharing
 

@@ -7,6 +7,6 @@ aside: false
 # Retrieve Bank Data Sharing Consent by ConsentId
 <RedocWrapper 
     spec="/openapi/v2.1/standards/uae-account-information-openapi.yaml" 
-    filterPath="/participants"
+    filterPath="/account-access-consents/{ConsentId}"
     filterMethod="get"
  />

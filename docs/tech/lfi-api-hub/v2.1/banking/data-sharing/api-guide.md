@@ -13,7 +13,7 @@ This guide walks through the Bank Data Sharing flow from the **LFI's perspective
 2. **Consent Manager integration** — retrieving consent details from the Hub and updating consent state
 3. **Resource Server** — serving account data in response to proxied Hub requests
 
----
+
 
 ## Flow Overview
 
@@ -41,7 +41,7 @@ TPP                    Hub (Ozone)              LFI Auth Server       LFI Resour
  |<── accounts data ────────|<── accounts data ────────────────────────────────|
 ```
 
----
+
 
 ## Step 1 — Receiving the Authorization Request
 
@@ -67,7 +67,7 @@ The `request_uri` was issued by the Hub's PAR endpoint and contains a reference 
 The Hub's authorization server integration handles the PAR validation step if you are using the Hub-hosted authorization server option. If you run your own authorization server, you will need to integrate with the Hub's PAR store via the API Hub Authorization Server API.
 :::
 
----
+
 
 ## Step 2 — Retrieving the Consent
 
@@ -114,7 +114,7 @@ The response contains everything you need to render the consent screen:
 }
 ```
 
----
+
 
 ## Step 3 — Presenting the Consent Screen
 
@@ -135,7 +135,7 @@ Your CMI must clearly display:
 See [User Experience](./user-journeys) for screen design requirements and the Consumer Duty obligations for CMI presentation.
 :::
 
----
+
 
 ## Step 4 — User Decision: PATCH /consent/{consentId}
 
@@ -186,7 +186,7 @@ const patchResponse = await fetch(
 )
 ```
 
----
+
 
 ## Step 5 — Completing the Flow
 
@@ -244,7 +244,7 @@ res.redirect(redirectUrl)
 Always redirect the user after calling `/doconfirm` or `/dofail`. Leaving the user on the consent screen without redirecting will result in a broken TPP experience.
 :::
 
----
+
 
 ## Step 6 — Serving Resource API Requests
 

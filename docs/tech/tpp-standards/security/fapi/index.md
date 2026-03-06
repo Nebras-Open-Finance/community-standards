@@ -53,4 +53,5 @@ This ensures that even a stolen access token cannot be used without the correspo
 | [Message Signing](./message-signing) | How to sign JWTs using PS256 — used for request objects and client assertions |
 | [Message Encryption](./message-encryption) | How to encrypt a request object using the LFI's public key |
 | [Preparing the Request JWT](./request-jwt) | Full structure of the signed JWT sent to `/par` |
+| [JWT Claim Rules](./jwt-claims) | Strict per-claim reference for both the Request Object and Client Assertion — `aud`, `jti`, lifetime windows, and common rejection causes |
 | [Scopes](./scopes) | All OAuth 2.0 scopes available in UAE Open Finance |

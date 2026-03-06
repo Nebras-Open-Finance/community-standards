@@ -34,18 +34,25 @@ import ConsentSingleInstantPayment from '../../components/ConsentPages/ConsentSi
 import ConsentOnDemand from '../../components/ConsentPages/ConsentOnDemand.vue'
 import ConsentPeriodicSchedule from '../../components/ConsentPages/ConsentPeriodicSchedule.vue'
 import ConsentDefinedSchedule from '../../components/ConsentPages/ConsentDefinedSchedule.vue'
+import ConsentSIPCOP from '../../components/ConsentPages/ConsentSIPCOP.vue'
 
+// Certification Docs
+import ReadinessChecklistDownload from '../../components/CertificationDocuments/ReadinessChecklistDownload.vue'
+import FunctionalEvidenceDownload from '../../components/CertificationDocuments/FunctionalEvidenceDownload.vue'
 
 import AuthorizationBankDataSharing from '../../components/AuthorizationPages/AuthorizationBankDataSharing.vue'
 import AuthorizationSingleInstantPayment from '../../components/AuthorizationPages/AuthorizationSingleInstantPayment.vue'
 import AuthorizationOnDemand from '../../components/AuthorizationPages/AuthorizationOnDemand.vue'
 import AuthorizationPeriodicSchedule from '../../components/AuthorizationPages/AuthorizationPeriodicSchedule.vue'
 import AuthorizationDefinedSchedule from '../../components/AuthorizationPages/AuthorizationDefinedSchedule.vue'
+import AuthorizationSIPCOP from '../../components/AuthorizationPages/AuthorizationSIPCOP.vue'
 
 
 import PermissionsReference from '../../components/PermissionsReference.vue'
 import ServiceInitiationPermissionText from '../../components/ServiceInitiationPermissionText.vue'
 import PaymentConsentPermissionsText from '../../components/ConsentPages/PaymentConsentPermissionsText.vue'
+import COPPiiBlock from '../../components/COPPiiBlock.vue'
+
 
 
 export default {
@@ -95,6 +102,11 @@ export default {
     app.component('PermissionsReference', PermissionsReference)
     app.component('ServiceInitiationPermissionText', ServiceInitiationPermissionText)
     app.component('PaymentConsentPermissionsText', PaymentConsentPermissionsText)
+    app.component('COPPiiBlock', COPPiiBlock)
+    app.component('ConsentSIPCOP', ConsentSIPCOP)
+    app.component('AuthorizationSIPCOP', AuthorizationSIPCOP)
+    app.component('ReadinessChecklistDownload', ReadinessChecklistDownload)
+    app.component('FunctionalEvidenceDownload', FunctionalEvidenceDownload)
 
   }
 }

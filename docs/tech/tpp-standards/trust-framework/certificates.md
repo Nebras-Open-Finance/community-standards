@@ -48,6 +48,7 @@ Keys and certificates within the Trust Framework (TF) must meet the following re
   - **C** → Country — must be set to `AE` (United Arab Emirates)
   - **O** → Organization — must equal the Organization’s legal name in the Trust Framework
   - **OU** → Organizational Unit — must equal the Organization’s ID in the Trust Framework
+  - **CN** → Common Name — must equal the application’s **Client ID** (the UUID assigned by the Trust Framework when the application was created)
 
 
 ### Generating the Private Key and CSR
@@ -68,7 +69,7 @@ openssl req -new -newkey rsa:2048 -nodes \
   -sha256
 ```
 
-Replace `LegalName`, `OrganizationId`, and `UUID` with the values of your organisation within the TrustFramework. Equivalent cryptographic tools may be used, provided all requirements above are met.
+Replace `LegalName` and `OrganizationId` with your organisation's details from the Trust Framework. Replace `UUID` with your application's **Client ID** — the UUID assigned when the application was created (see [Creating an Application](./application#your-client-id)). Equivalent cryptographic tools may be used, provided all requirements above are met.
 
 The .csr file (Certificate Signing Request) must be uploaded to the TF.
 The .key file (Private Key) must be kept *secure and must never be shared*. More information on private key handling and security requirements can be found [here](/policy/secure-management)
@@ -84,58 +85,79 @@ The .key file (Private Key) must be kept *secure and must never be shared*. More
 <script setup>
 const images =  [
   {
-    src: new URL('/images/raidiam/generate-transport-certificate/1.PNG', import.meta.url).href,
+    src: new URL('/images/raidiam/generate-transport-certificate/1.png', import.meta.url).href,
     alt: 'Step 1',
     title: 'Within your application click App Certificates'
   },
     {
-    src: new URL('/images/raidiam/generate-transport-certificate/2.PNG', import.meta.url).href,
+    src: new URL('/images/raidiam/generate-transport-certificate/2.png', import.meta.url).href,
     alt: 'Step 2',
     title: 'Click +New Certificate'
   },
     {
-    src: new URL('/images/raidiam/generate-transport-certificate/3.PNG', import.meta.url).href,
+    src: new URL('/images/raidiam/generate-transport-certificate/3.png', import.meta.url).href,
     alt: 'Step 3',
     title: 'Select the Certificate you are intending to generate.',
     tagline: `Transport, Signing or Encryption`
   },
     {
-    src: new URL('/images/raidiam/generate-transport-certificate/4.PNG', import.meta.url).href,
+    src: new URL('/images/raidiam/generate-transport-certificate/4.png', import.meta.url).href,
     alt: 'Step 4',
     title: 'Create a script to generate your private key (.key) and CSR',
     tagline: `The OpenSSL script provided in this directory is intended for demonstration and testing purposes only. In production environments, private key generation and CSR creation are expected to be performed within the LFI’s Hardware Security Module (HSM) or an equivalent secure key management infrastructure, in accordance with the institution’s security policies.`
   },
     {
-    src: new URL('/images/raidiam/generate-transport-certificate/5.PNG', import.meta.url).href,
+    src: new URL('/images/raidiam/generate-transport-certificate/5.png', import.meta.url).href,
     alt: 'Step 5',
     title: 'Generate you CSR',
     tagline: `The OpenSSL script provided in this directory is intended for demonstration and testing purposes only. In production environments, private key generation and CSR creation are expected to be performed within the LFI’s Hardware Security Module (HSM) or an equivalent secure key management infrastructure, in accordance with the institution’s security policies.`
   },
     {
-    src: new URL('/images/raidiam/generate-transport-certificate/6.PNG', import.meta.url).href,
+    src: new URL('/images/raidiam/generate-transport-certificate/6.png', import.meta.url).href,
     alt: 'Step 6',
     title: 'CSR Generated'
   },
     {
-    src: new URL('/images/raidiam/generate-transport-certificate/7.PNG', import.meta.url).href,
+    src: new URL('/images/raidiam/generate-transport-certificate/7.png', import.meta.url).href,
     alt: 'Step 7',
     title: 'Upload your CSR'
   },
       {
-    src: new URL('/images/raidiam/generate-transport-certificate/8.PNG', import.meta.url).href,
+    src: new URL('/images/raidiam/generate-transport-certificate/8.png', import.meta.url).href,
     alt: 'Step 8',
     title: 'Upload the .CSR file'
   },
         {
-    src: new URL('/images/raidiam/generate-transport-certificate/9.PNG', import.meta.url).href,
+    src: new URL('/images/raidiam/generate-transport-certificate/9.png', import.meta.url).href,
     alt: 'Step 9',
     title: 'Your certificate is generated and ready to be downloaded'
   },
   
   {
-    src: new URL('/images/raidiam/generate-transport-certificate/10.PNG', import.meta.url).href,
+    src: new URL('/images/raidiam/generate-transport-certificate/10.png', import.meta.url).href,
     alt: 'Step 10',
     title: 'You now have the certificate (.PEM) and Key (.Key) pair',
   },
+
+    {
+    src: new URL('/images/raidiam/generate-transport-certificate/11.png', import.meta.url).href,
+    alt: 'Step 11',
+    title: 'You can find and copy the Key Id (kid) here',
+  },
 ]
 </script>
+
+## Finding Your Key ID (kid)
+
+Once your certificate is issued, the Trust Framework assigns it a **Key ID (`kid`)**. This value must be included in the `kid` header of every JWT signed with the corresponding private key — including Client Assertions and PAR Request JWTs.
+
+<ImageViewer
+  src="/images/raidiam/generate-transport-certificate/11.png"
+  alt="Key ID (kid) location on the certificate detail page in the Trust Framework"
+/>
+
+::: tip Where to find it later
+Your `kid` is always visible on the certificate detail page. Navigate to your Application → App Certificates → select the certificate. Copy the Key ID exactly as shown — it is case-sensitive.
+:::
+
+You will need a separate `kid` for each certificate type (Transport, Signing, Encryption). When signing JWTs, always use the `kid` of your **Signing** certificate. See [Message Signing](../security/fapi/message-signing) for how this value is used in the JWT header.

@@ -30,8 +30,11 @@ sequenceDiagram
     TPP->>+Hub: POST /token (authorization_code + code_verifier)
     Hub-->>-TPP: {access_token + refresh_token}
 
-    TPP->>+Hub: GET /account-access-consents/{ConsentId}
-    Note right of TPP: or GET /payment-consents/{ConsentId}
+    alt Bank Data Sharing
+        TPP->>+Hub: GET /account-access-consents/{ConsentId}
+    else Bank Service Initiation
+        TPP->>+Hub: GET /payment-consents/{ConsentId}
+    end
     Hub->>LFI: GET /consents/{consentId}
     LFI-->>Hub: 200 {Status: Authorized}
     Hub-->>-TPP: 200 {Status: Authorized}

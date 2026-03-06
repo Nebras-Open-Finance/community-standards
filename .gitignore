@@ -1,3 +1,7 @@
+# Certificates & Confluence for testing
+certs/
+confluence/
+
 # Logs
 logs
 *.log

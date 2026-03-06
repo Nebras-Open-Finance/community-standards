@@ -13,7 +13,7 @@ A **JWS** (JSON Web Signature — [RFC 7515](https://datatracker.ietf.org/doc/ht
 
 In UAE Open Finance, signing is required whenever your application sends a JWT to an Authorization Server:
 
-- The **Request Object** sent to [/par](../../consent/open-api/par)
+- The **Request Object** sent to [/par](../../v2.1/consent/open-api/par)
 - The **Client Assertion** sent to [/token](../tokens/open-api/token)
 
 ## Structure of a Signed JWT
@@ -38,7 +38,7 @@ base64url(header) . base64url(payload) . base64url(signature)
 | `alg` | `PS256` | RSA-PSS with SHA-256. The only algorithm supported by the UAE Open Finance FAPI profile |
 | `kid` | string | The Key ID of your signing certificate, as registered in the Trust Framework |
 
-Your `kid` is the thumbprint of your signing certificate. You can find it in your application's JWKS in the [Trust Framework directory](../../trust-framework/api-discovery).
+Your `kid` is assigned by the Trust Framework when your signing certificate is issued. Find it on the certificate detail page: Application → App Certificates → select the certificate. See [Finding Your Key ID](../../trust-framework/certificates#finding-your-key-id-kid) for a screenshot.
 
 ### Payload
 
@@ -136,6 +136,10 @@ Some environments require the PEM key to have no line breaks when passed as an e
 ```bash
 awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' signing.key
 ```
+:::
+
+::: tip Testing signing on the sandbox
+The sandbox provides **O3 Utility endpoints** that accept your private key and return ready-made signed JWTs — useful for validating your signing setup before writing your own code. See [O3 Sandbox Utilities](./o3-utils).
 :::
 
 ## Verifying a Signature

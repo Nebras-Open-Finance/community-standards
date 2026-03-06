@@ -146,6 +146,10 @@ def encrypt_request_object(signed_jwt: str, jwks_uri: str) -> str:
 
 :::
 
+::: tip Testing encryption on the sandbox
+The sandbox provides an **O3 Utility endpoint** that accepts your private key and JWKS URL and returns a ready-made encrypted PII token — useful for validating your payload structure before writing your own encryption code. See [O3 Sandbox Utilities](./o3-utils#example-1-o3-util-prepare-encrypted-pii).
+:::
+
 ## Producing a Nested JWT (Signed + Encrypted)
 
 A Nested JWT is a JWS wrapped inside a JWE. The complete flow is:

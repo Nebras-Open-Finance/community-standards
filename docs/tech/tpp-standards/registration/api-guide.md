@@ -73,7 +73,13 @@ This endpoint uses **mutual TLS (mTLS)** with transport-level certificates. Make
 - `--key`: Path to your **transport** private key (`.key`)
 
 
-Once the registration is successful, you will receive a **204 No Content** response. This indicates that your application is registered the server.
+Once the registration is successful, you will receive a **204 No Content** response. This indicates that your application is registered with the server.
+
+::: info Your Client ID is not returned here
+`POST /tpp-registration` returns no body. Your `ClientId` is the UUID assigned to your application when it was created in the Trust Framework Directory — it is not issued by this endpoint. Find it on the application detail page: Organisation → Applications → select your application. See [Creating an Application](../trust-framework/application#your-client-id) for a screenshot.
+
+You will need this value as `client_id`, `iss`, and `sub` in all Client Assertions and Request JWTs.
+:::
 
 
 ## Activation

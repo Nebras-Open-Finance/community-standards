@@ -34,14 +34,14 @@ LFIs achieve dual-running by:
 
 - Deploying two active versions of their API Hub implementation simultaneously (e.g., V1.x and V2.0)
 - Routing incoming API requests to the correct implementation based on the version identifier present in the request, typically via:
-  - The URL path (e.g., `/v1/` vs `/v2/`)
+  - The URL path (e.g., `/v1.2/` vs `/v2.1/`)
   - An API version header
 - Ensuring each implementation is independently maintained and supported, with no cross-version dependencies that could cause instability
 
 Both implementations must remain fully functional and compliant with their respective standards throughout the dual-running period.
 
 ::: tip Example
-An LFI running V1.2 and V2.0 simultaneously would route a request to `https://api.bank.ae/open-finance/v1/accounts` to the V1.2 implementation, and a request to `https://api.bank.ae/open-finance/v2/accounts` to the V2.0 implementation.
+An LFI running V1.2 and V2.1 simultaneously would route a request to `https://api.bank.ae/open-finance/v1.2/accounts` to the V1.2 implementation, and a request to `https://api.bank.ae/open-finance/v2.1/accounts` to the V2.1 implementation.
 :::
 
 ## Deprecation Process
@@ -95,7 +95,7 @@ After this 12-month period, and once Nebras confirms that no active consents rem
 | Restriction of new consents on prior version (Nebras approval required) | Month 5+ |
 | Prior version sunset (all prior version consents expired) | Up to Month 17+ |
 
----
+
 
 ## Nebras-Managed Deprecation
 

@@ -13,7 +13,7 @@ In UAE Open Finance, your application uses two types of OAuth 2.0 bearer tokens 
 | **Access token** | Authorises individual API requests | 10 minutes |
 | **Refresh token** | Obtains new access tokens without re-authorising the customer | Duration of the consent |
 
----
+
 
 ## Access Tokens
 
@@ -30,7 +30,7 @@ Access tokens expire after **10 minutes**. Once expired, any API call using that
 Check the `expires_in` field returned by the `/token` endpoint (value: `600` seconds). Track the issue time and proactively refresh before the window closes rather than waiting for a 401.
 :::
 
----
+
 
 ## Refresh Tokens
 
