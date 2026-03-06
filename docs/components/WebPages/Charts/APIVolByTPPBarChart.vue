@@ -52,7 +52,7 @@ const selectedMonth = ref(getFallbackMonth())
 // Load JSON
 const loadData = async () => {
   try {
-    const response = await fetch('/api/aggregated-api-log-1nov-22feb.json')
+    const response = await fetch('/api/aggregated-api-log.json')
     rawData.value = await response.json()
 
     // Set to the latest month that has open-finance data
@@ -79,7 +79,7 @@ const getFilteredData = () => {
     if (!item.url || !item.url.startsWith('open-finance/')) return false
 
     const monthKey = parseMonthKey(item.Date)
-    return monthKey === selectedMonth.value
+    return !selectedMonth.value || monthKey === selectedMonth.value
   })
 }
 
@@ -168,7 +168,7 @@ watch(selectedMonth, updateChart)
 
 <style scoped>
 .chart-card {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.9);
   padding: 1.5rem;
   border-radius: 16px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.08);

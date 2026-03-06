@@ -8,7 +8,6 @@ prev: false
 ## Applies to:
 
 - **Nebras**
-- **Ozone API Hub**
 
 
 ## Purpose

@@ -18,6 +18,7 @@ import ProtectedPageWrapper from '../../components/ProtectedPageWrapper.vue'
 import LiveAPIs from '../../components/LiveAPIs.vue'
 import EditableJson from '../../components/EditableJson.vue'
 import ErrataNotice from '../../components/ErrataNotice.vue'
+import TPPPostmanScriptBuilder from '../../components/TPPPostmanScriptBuilder.vue'
 
 
 // API Flows
@@ -77,6 +78,7 @@ export default {
     app.component('LiveAPIs', LiveAPIs)
     app.component('EditableJson', EditableJson)
     app.component('ErrataNotice', ErrataNotice)
+    app.component('TPPPostmanScriptBuilder', TPPPostmanScriptBuilder)
 
     // API Flows
     app.component('APIFlowsRegistration', APIFlowsRegistration)

@@ -4,6 +4,7 @@ export const policySidebar: DefaultTheme.SidebarItem[] = [
   { text: 'Open License and Contribution Agreement', link: '/policy/open-license-contribution-agreement' },
   { text: 'Secure Management of Keys and Credentials', link: '/policy/secure-management' },
   { text: 'Version Management', link: '/policy/version-management' },
+  { text: 'Changes to Published Documentation', link: '/policy/changes-to-published-content' },
   { text: 'Major Version Deprecation', link: '/policy/lfi-deprecation' },
 ]
 

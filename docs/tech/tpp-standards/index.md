@@ -40,4 +40,5 @@ You will find:
 - User Experience
 - Tools to help you integrate
 
+Start here: **[TPP Sandbox Quickstart](./getting-started)**
 

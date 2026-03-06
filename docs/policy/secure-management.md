@@ -9,7 +9,8 @@ prev: false
 
 - **Licensed Financial Institutions (LFIs)**
 - **Third-Party Providers (TPPs)**
-- **Ozone API Hub** 
+- **API Hub** 
+- **Trust Framework** 
 
 ## Purpose
 This document establishes **mandatory and recommended practices** for the secure management of cryptographic keys and credentials within the **UAE Open Finance ecosystem**.  

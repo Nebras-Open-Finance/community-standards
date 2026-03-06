@@ -14,6 +14,17 @@ function multiPaymentItems(base: string): DefaultTheme.SidebarItem[] {
 
 export const tppSidebar: DefaultTheme.SidebarItem[] = [
   {
+    text: 'Getting Started',
+    collapsed: true,
+    items: [
+      { text: 'TPP Sandbox Quickstart', link: `${BASE}/getting-started` }
+    ],
+  },
+
+  // { text: 'Postman', link: `${BASE}/${VERSION}/banking/testing/postman` },
+  { text: 'Model Bank', link: `${BASE}/${VERSION}/banking/testing/model-bank` },
+
+  {
     text: 'Trust Framework (Directory)',
     collapsed: true,
     items: [

@@ -40,7 +40,7 @@ const selectedMonth = ref(getLastMonth())
 
 // Load JSON
 const loadData = async () => {
-  const response = await fetch('/api/payment-log-1nov-22feb.json')
+  const response = await fetch('/api/payment-log.json')
   rawData.value = await response.json()
   updateChart()
 }
@@ -50,7 +50,7 @@ const getFilteredData = () =>
   rawData.value.filter(item => {
     if (!item.Date) return false
     const monthKey = item.Date.slice(6, 10) + '-' + item.Date.slice(3, 5)
-    return monthKey === selectedMonth.value
+    return !selectedMonth.value || monthKey === selectedMonth.value
   })
 
 // Compute average payment amount per LFI
@@ -129,7 +129,7 @@ watch(selectedMonth, updateChart)
 
 <style scoped>
 .chart-card {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.9);
   padding: 1.5rem;
   border-radius: 16px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.08);

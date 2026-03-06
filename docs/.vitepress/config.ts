@@ -3,10 +3,11 @@ import { tppSidebar } from './config/sidebars/tpp'
 import { lfiSidebar } from './config/sidebars/lfi'
 import { policySidebar, processesSidebar } from './config/sidebars/policy'
 import { kbSidebar } from './config/sidebars/kb'
+import { erratasSidebar } from './config/sidebars/erratas'
 
 export default defineConfig({
   title: 'UAE Open Finance',
-  ignoreDeadLinks: true, // <-- temporary
+  // ignoreDeadLinks: true, // <-- temporary
   description: 'Community-driven, experimental Open Finance documentation',
   appearance: false,
   head: [['link', { rel: 'icon', href: '/fav.ico' }]],
@@ -28,6 +29,7 @@ export default defineConfig({
           { text: 'Technology Architecture & Overview', link: '/tech/overview' },
           { text: 'TPP – Open Finance Standards', link: '/tech/tpp-standards/' },
           { text: 'LFI – API Hub Integration', link: '/tech/lfi-api-hub/' },
+          { text: 'Erratas', link: '/erratas/' },
           { text: 'Knowledge Base', link: '/knowledge-base/' },
         ],
       },
@@ -52,7 +54,9 @@ export default defineConfig({
       '/tech/lfi-api-hub': lfiSidebar,
       '/policy': policySidebar,
       '/processes': processesSidebar,
+      '/erratas': erratasSidebar,
       '/knowledge-base': kbSidebar,
     },
   },
 })
+

@@ -1,6 +1,7 @@
 # Certificates & Confluence for testing
 certs/
 confluence/
+internal_helpers/
 
 # Logs
 logs

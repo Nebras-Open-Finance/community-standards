@@ -93,7 +93,7 @@ onMounted(loadData)
 
 <style scoped>
 .chart-card {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.9);
   padding: 1.5rem;
   border-radius: 16px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.08);

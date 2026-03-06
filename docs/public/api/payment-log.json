@@ -5940,36 +5940,6 @@
     "Count": 5
   },
   {
-    "Date": "22/02/2026",
-    "LFI": "uae-mashrt",
-    "TPP": "LEAN TECH",
-    "paymentPurposeCode": null,
-    "paymentConsentType": "VariableOnDemand",
-    "status": "AcceptedWithoutPosting",
-    "amount": 7.67,
-    "Count": 1
-  },
-  {
-    "Date": "22/02/2026",
-    "LFI": "uae-adibrt",
-    "TPP": "LEAN TECH",
-    "paymentPurposeCode": null,
-    "paymentConsentType": "VariableOnDemand",
-    "status": "AcceptedCreditSettlementCompleted",
-    "amount": 3.19,
-    "Count": 1
-  },
-  {
-    "Date": "22/02/2026",
-    "LFI": "uae-wioretail",
-    "TPP": "LEAN TECH",
-    "paymentPurposeCode": null,
-    "paymentConsentType": "VariableOnDemand",
-    "status": "AcceptedSettlementCompleted",
-    "amount": 10.13,
-    "Count": 1
-  },
-  {
     "Date": "21/02/2026",
     "LFI": "uae-dibrt",
     "TPP": "LEAN TECH",
@@ -8270,36 +8240,6 @@
     "Count": 1
   },
   {
-    "Date": "22/02/2026",
-    "LFI": "uae-fabretail",
-    "TPP": "LEAN TECH",
-    "paymentPurposeCode": null,
-    "paymentConsentType": "VariableOnDemand",
-    "status": "AcceptedSettlementCompleted",
-    "amount": 7.42,
-    "Count": 1
-  },
-  {
-    "Date": "22/02/2026",
-    "LFI": "uae-cbdrt",
-    "TPP": "LEAN TECH",
-    "paymentPurposeCode": null,
-    "paymentConsentType": "VariableOnDemand",
-    "status": "AcceptedSettlementCompleted",
-    "amount": 3.12,
-    "Count": 1
-  },
-  {
-    "Date": "22/02/2026",
-    "LFI": "uae-adcbrt",
-    "TPP": "LEAN TECH",
-    "paymentPurposeCode": null,
-    "paymentConsentType": "VariableOnDemand",
-    "status": "AcceptedSettlementCompleted",
-    "amount": 4.23,
-    "Count": 1
-  },
-  {
     "Date": "21/02/2026",
     "LFI": "uae-fabretail",
     "TPP": "LEAN TECH",
@@ -8457,26 +8397,6 @@
     "paymentConsentType": "SingleInstantPayment",
     "status": "AcceptedSettlementCompleted",
     "amount": 5,
-    "Count": 1
-  },
-  {
-    "Date": "22/02/2026",
-    "LFI": "uae-dibrt",
-    "TPP": "LEAN TECH",
-    "paymentPurposeCode": null,
-    "paymentConsentType": "SingleInstantPayment",
-    "status": "Pending",
-    "amount": 3.04,
-    "Count": 1
-  },
-  {
-    "Date": "22/02/2026",
-    "LFI": "uae-dibrt",
-    "TPP": "LEAN TECH",
-    "paymentPurposeCode": null,
-    "paymentConsentType": "VariableOnDemand",
-    "status": "Pending",
-    "amount": 4.43,
     "Count": 1
   },
   {
@@ -8797,6 +8717,1536 @@
     "paymentConsentType": "VariableOnDemand",
     "status": "AcceptedSettlementCompleted",
     "amount": 1,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adcbrt",
+    "Date": "22/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 9.22,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adcbrt",
+    "Date": "22/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 4.23,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adcbrt",
+    "Date": "23/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 16.68,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-adcbrt",
+    "Date": "23/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 4.35,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adcbrt",
+    "Date": "24/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 5.97,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adcbrt",
+    "Date": "24/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 5.22,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adcbrt",
+    "Date": "24/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 1.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adcbrt",
+    "Date": "25/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 5.15,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adcbrt",
+    "Date": "25/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 3.76,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adcbrt",
+    "Date": "25/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 8.0,
+    "Count": 8
+  },
+  {
+    "LFI": "uae-adcbrt",
+    "Date": "26/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 1.19,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adcbrt",
+    "Date": "26/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 313.0,
+    "Count": 7
+  },
+  {
+    "LFI": "uae-adcbrt",
+    "Date": "27/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 9.18,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adcbrt",
+    "Date": "27/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 1.39,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adcbrt",
+    "Date": "27/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 13.6,
+    "Count": 10
+  },
+  {
+    "LFI": "uae-adcbrt",
+    "Date": "28/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 9.04,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adcbrt",
+    "Date": "28/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 2.4,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adcbrt",
+    "Date": "28/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 2.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adibrt",
+    "Date": "22/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedCreditSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 3.19,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adibrt",
+    "Date": "23/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedCreditSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 4.0,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-adibrt",
+    "Date": "24/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedCreditSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 7.34,
+    "Count": 4
+  },
+  {
+    "LFI": "uae-adibrt",
+    "Date": "25/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedCreditSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 4.73,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adibrt",
+    "Date": "25/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedCreditSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 28.68,
+    "Count": 13
+  },
+  {
+    "LFI": "uae-adibrt",
+    "Date": "26/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedCreditSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 13.59,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-adibrt",
+    "Date": "26/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedCreditSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 12.0,
+    "Count": 3
+  },
+  {
+    "LFI": "uae-adibrt",
+    "Date": "27/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedCreditSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 5.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adibrt",
+    "Date": "27/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 9.3,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adibrt",
+    "Date": "27/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedCreditSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 7.13,
+    "Count": 5
+  },
+  {
+    "LFI": "uae-adibrt",
+    "Date": "27/02/2026",
+    "TPP": "Spare Technologies",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 320.0,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-adibrt",
+    "Date": "28/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedCreditSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 9.29,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-adibrt",
+    "Date": "28/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedCreditSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 3.0,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-adibrt",
+    "Date": "01/03/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedCreditSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 4.2,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-adibrt",
+    "Date": "01/03/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 1.1,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "22/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 3.12,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "23/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 6.77,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "23/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 2.76,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "23/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 11.0,
+    "Count": 3
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "24/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 3.96,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "24/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 11.0,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "24/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 18.0,
+    "Count": 8
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "25/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 8.69,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "25/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 11.0,
+    "Count": 11
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "26/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 9.95,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "26/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 21.0,
+    "Count": 3
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "27/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 3.15,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "27/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 21.31,
+    "Count": 12
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "28/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 3.6,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "28/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 7.89,
+    "Count": 4
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "01/03/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 7.72,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "02/03/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 5.76,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "03/03/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 8.62,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-cbdrt",
+    "Date": "05/03/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 4.63,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-dibrt",
+    "Date": "22/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "Pending",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 3.04,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-dibrt",
+    "Date": "22/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "Pending",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 4.43,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-dibrt",
+    "Date": "23/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 3.46,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-dibrt",
+    "Date": "23/02/2026",
+    "TPP": "NymCard",
+    "paymentPurposeCode": null,
+    "status": "AcceptedCreditSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 1.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-dibrt",
+    "Date": "24/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 7.37,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-dibrt",
+    "Date": "24/02/2026",
+    "TPP": "NymCard",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 1.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-dibrt",
+    "Date": "25/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 10.02,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-dibrt",
+    "Date": "26/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 10.54,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-dibrt",
+    "Date": "26/02/2026",
+    "TPP": "NymCard",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableDefinedSchedule",
+    "amount": 1.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-dibrt",
+    "Date": "27/02/2026",
+    "TPP": "NymCard",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableDefinedSchedule",
+    "amount": 1.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-dibrt",
+    "Date": "27/02/2026",
+    "TPP": "NymCard",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariablePeriodicSchedule",
+    "amount": 1.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-enbdx",
+    "Date": "23/02/2026",
+    "TPP": "NymCard",
+    "paymentPurposeCode": null,
+    "status": "Pending",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 2.0,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "22/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 150.0,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "22/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 7.42,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "23/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 400.0,
+    "Count": 5
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "23/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 8.24,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "23/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 6.0,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "24/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 11195.0,
+    "Count": 8
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "24/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 2.91,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "24/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 4.0,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "24/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 10.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "25/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 7040.0,
+    "Count": 11
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "25/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 46.8,
+    "Count": 5
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "25/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 1.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "25/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 20.0,
+    "Count": 7
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "26/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 18945.0,
+    "Count": 9
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "26/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 11.85,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "26/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 12.0,
+    "Count": 3
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "27/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 15983.0,
+    "Count": 9
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "27/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 1.64,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "27/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 24.5,
+    "Count": 13
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "28/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 14228.0,
+    "Count": 8
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "28/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 2.3,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "28/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 9.0,
+    "Count": 7
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "01/03/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 10628.0,
+    "Count": 7
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "01/03/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 4.1,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "01/03/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 5.0,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "01/03/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 5.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "02/03/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 3200.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-fabretail",
+    "Date": "02/03/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "Rejected",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 1.64,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "22/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 9.22,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "22/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 7.67,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "23/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 47.33,
+    "Count": 3
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "23/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 7.27,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "23/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 1.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "23/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 3.0,
+    "Count": 3
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "24/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 1135.14,
+    "Count": 8
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "24/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 1.23,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "24/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "Pending",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 4000.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "24/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 2.05,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "24/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 21.19,
+    "Count": 10
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "24/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "Pending",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 1.05,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "24/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "Pending",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 10.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "24/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "Rejected",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 18.0,
+    "Count": 13
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "25/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 6385.45,
+    "Count": 7
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "25/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 2.18,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "25/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 1.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "25/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 211.38,
+    "Count": 13
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "25/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "Rejected",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 34.72,
+    "Count": 9
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "26/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 7563.99,
+    "Count": 7
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "26/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 9.17,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "26/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 42.82,
+    "Count": 9
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "26/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "Rejected",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 17.0,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "27/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 2107.18,
+    "Count": 6
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "27/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 3.49,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "27/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 117.13,
+    "Count": 29
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "27/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "Pending",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 6.41,
+    "Count": 4
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "27/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "Rejected",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 10.94,
+    "Count": 10
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "28/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 17160.67,
+    "Count": 5
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "28/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 6.33,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "28/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 122.49,
+    "Count": 14
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "28/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "Pending",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 1.11,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "28/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "Rejected",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 14.37,
+    "Count": 8
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "01/03/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 24754.64,
+    "Count": 7
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "01/03/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 2.24,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "01/03/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 2.1,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "02/03/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 2003.92,
+    "Count": 4
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "02/03/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 7.43,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "02/03/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 4020.0,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "05/03/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 10.87,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "05/03/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 1.51,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-mashrt",
+    "Date": "05/03/2026",
+    "TPP": "Spare Technologies",
+    "paymentPurposeCode": null,
+    "status": "AcceptedWithoutPosting",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 2.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "22/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 10.13,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "23/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 1.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "23/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 9.43,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "24/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 6.05,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "24/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 2.0,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "25/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 2.63,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "25/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 100.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "25/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 5.0,
+    "Count": 5
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "25/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "Pending",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 1.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "27/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 30.0,
+    "Count": 4
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "27/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 43.0,
+    "Count": 5
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "27/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "Pending",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 49999.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "27/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 3.0,
+    "Count": 3
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "28/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "SingleInstantPayment",
+    "amount": 1.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "28/02/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 16.6,
+    "Count": 2
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "28/02/2026",
+    "TPP": "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 1.0,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "01/03/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 4.74,
+    "Count": 1
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "02/03/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "AcceptedSettlementCompleted",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 22.36,
+    "Count": 3
+  },
+  {
+    "LFI": "uae-wioretail",
+    "Date": "03/03/2026",
+    "TPP": "LEAN TECH",
+    "paymentPurposeCode": null,
+    "status": "Pending",
+    "paymentConsentType": "VariableOnDemand",
+    "amount": 5.0,
     "Count": 1
   }
 ]
