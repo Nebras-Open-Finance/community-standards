@@ -17,6 +17,8 @@ import Carousel from '../../components/Carousel.vue'
 import ProtectedPageWrapper from '../../components/ProtectedPageWrapper.vue'
 import LiveAPIs from '../../components/LiveAPIs.vue'
 import EditableJson from '../../components/EditableJson.vue'
+import ErrataNotice from '../../components/ErrataNotice.vue'
+
 
 // API Flows
 import APIFlowsRegistration from '../../components/APIFlows/TPPRegistration.vue'
@@ -74,6 +76,7 @@ export default {
     app.component('ProtectedPageWrapper', ProtectedPageWrapper)
     app.component('LiveAPIs', LiveAPIs)
     app.component('EditableJson', EditableJson)
+    app.component('ErrataNotice', ErrataNotice)
 
     // API Flows
     app.component('APIFlowsRegistration', APIFlowsRegistration)
