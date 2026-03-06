@@ -6,7 +6,7 @@ import { kbSidebar } from './config/sidebars/kb'
 
 export default defineConfig({
   title: 'UAE Open Finance',
-//   ignoreDeadLinks: true, // <-- temporary
+  ignoreDeadLinks: true, // <-- temporary
   description: 'Community-driven, experimental Open Finance documentation',
   appearance: false,
   head: [['link', { rel: 'icon', href: '/fav.ico' }]],
