@@ -63,11 +63,12 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
     text: 'Banking',
     collapsed: true,
     items: [
+      { text: 'Overview', link: `${BASE}/${VERSION}/banking` },
       {
         text: 'Data Sharing',
         collapsed: true,
-        link: `${BASE}/${VERSION}/banking/data-sharing/`,
         items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/banking/data-sharing` },
           { text: 'Requirements', link: `${BASE}/${VERSION}/banking/data-sharing/requirements` },
           { text: 'User Experience', link: `${BASE}/${VERSION}/banking/data-sharing/user-journeys` },
           { text: 'API Guide', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide` },
@@ -91,10 +92,32 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         ],
       },
       {
+        text: 'Service Initiation',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/banking/service-initiation` },
+          { text: 'Requirements', link: `${BASE}/${VERSION}/banking/service-initiation/requirements` },
+          { text: 'User Experience', link: `${BASE}/${VERSION}/banking/service-initiation/user-journeys` },
+          { text: 'API Guide', link: `${BASE}/${VERSION}/banking/service-initiation/api-guide` },
+          {
+            text: 'API Reference',
+            collapsed: true,
+            items: [
+              apiRef('POST', '/payments', `${BASE}/${VERSION}/banking/service-initiation/open-api/payments`),
+              apiRef('GET', '/payments/{paymentId}', `${BASE}/${VERSION}/banking/service-initiation/open-api/payments-PaymentId`),
+              apiRef('GET', '/payment-consents/{consentId}/refund', `${BASE}/${VERSION}/banking/service-initiation/open-api/payment-consents-ConsentId-refund`),
+              apiRef('POST', '/payment-consents', `${BASE}/${VERSION}/banking/service-initiation/open-api/payment-consents`),
+              apiRef('POST', '/payment-consents/{consentId}/file', `${BASE}/${VERSION}/banking/service-initiation/open-api/payment-consents-ConsentId-file`),
+              apiRef('GET', '/payments/{paymentId}/report-file', `${BASE}/${VERSION}/banking/service-initiation/open-api/payments-PaymentId-report-file`)
+            ],
+          },
+        ],
+      },
+            {
         text: 'Confirmation of Payee',
         collapsed: true,
-        link: `${BASE}/${VERSION}/banking/confirmation-of-payee/`,
         items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/banking/confirmation-of-payee` },
           { text: 'Requirements', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/requirements` },
           { text: 'User Experience', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/user-journeys` },
           { text: 'API Guide', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/api-guide` },

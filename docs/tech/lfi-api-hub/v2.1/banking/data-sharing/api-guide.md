@@ -7,7 +7,7 @@ prev: false
 
 # API Guide — Bank Data Sharing (LFI)
 
-This guide walks through the Bank Data Sharing flow from the **LFI's perspective**. The Hub (Ozone Connect) routes all TPP requests to your systems — your responsibilities are:
+This guide walks through the Bank Data Sharing flow from the **LFI's perspective**. The API Hub (Ozone Connect) routes all TPP requests to your systems — your responsibilities are:
 
 1. **Authorization Server** — receiving the user redirect, authenticating the user, and presenting the consent screen
 2. **Consent Manager integration** — retrieving consent details from the Hub and updating consent state
@@ -18,7 +18,7 @@ This guide walks through the Bank Data Sharing flow from the **LFI's perspective
 ## Flow Overview
 
 ```
-TPP                    Hub (Ozone)              LFI Auth Server       LFI Resource Server
+TPP                    API Hub (Ozone)              LFI Auth Server       LFI Resource Server
  |                          |                          |                       |
  |── POST /par ────────────>|                          |                       |
  |<── request_uri ──────────|                          |                       |

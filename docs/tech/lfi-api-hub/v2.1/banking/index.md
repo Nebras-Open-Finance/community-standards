@@ -13,5 +13,6 @@ This section covers the LFI's obligations and implementation guide for the banki
 |---|---|
 | [Data Sharing](./data-sharing/) | Account information, balances, transactions, and related data |
 | [Service Initiation](./service-initiation/) | Domestic payment initiation flows |
+| [Confirmation of Payee](./confirmation-of-payee/) | Verification of payee details before initiating a payment |
 
 All banking APIs are accessed by TPPs through the Hub. The Hub authenticates and authorizes each request before proxying it to the LFI's resource server.
