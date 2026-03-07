@@ -138,23 +138,24 @@
             <div class="consent-management-status" :class="statusClass(connection.status)">{{ connection.status }}</div>
 
             <div class="consent-management-connection-name">[LFI {{ connection.lfiDigit }}]</div>
-            <div class="consent-management-connection-count">{{ accountCountLabel(connection.connectedAccountNumber) }}</div>
+            <div class="consent-management-connection-count">
+              {{ connectionCountLabel(connection) }}
+            </div>
             <div
               v-for="(line, lineIndex) in connectionMetaLines(connection)"
               :key="`${connection.lfiDigit}-${connection.type}-${index}-${lineIndex}`"
               :class="[
                 'consent-management-connection-meta',
-                { 'consent-management-connection-meta-amount': line.type === 'amount' }
+                { 'consent-management-connection-meta-row': line.type !== 'text' }
               ]"
             >
               <template v-if="line.type === 'amount'">
-                <span>{{ line.label }}</span>
-                <div class="consent-page-account-amount-container">
-                  <svg width="13" height="10" viewBox="0 0 13 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12.926 4.81517L12.8277 4.735C12.6689 4.60135 12.48 4.53454 12.2759 4.53454H11.2176C11.2327 4.6949 11.2403 4.85527 11.2403 5.02899C11.2403 5.20271 11.2327 5.36307 11.2176 5.53012H11.9357C12.48 5.53012 12.926 5.98448 12.926 6.55242V6.80633L12.8277 6.71947C12.6689 6.59251 12.48 6.5257 12.2759 6.5257H11.0588C10.4768 8.77749 8.44345 10.0002 5.23841 10.0002H1.1263C1.1263 10.0002 1.68566 9.61933 1.68566 8.34313V6.5257H0.997795C0.445983 6.5257 0 6.06466 0 5.50339V5.24949L0.105827 5.32967C0.257007 5.45662 0.445983 5.53012 0.650077 5.53012H1.68566V4.53454H0.997795C0.445983 4.53454 0 4.0735 0 3.51223V3.25833L0.105827 3.34519C0.257007 3.47214 0.445983 3.53896 0.650077 3.53896H1.68566V1.79502C1.68566 0.478721 1.1263 0.0644531 1.1263 0.0644531H5.23841C8.35274 0.0644531 10.439 1.27385 11.0513 3.53896H11.9357C12.48 3.53896 12.926 3.99332 12.926 4.56127V4.81517ZM5.08724 0.558902H3.37134V3.53896H9.13888C8.74581 1.46762 7.40786 0.558902 5.08724 0.558902ZM9.27494 5.02899C9.27494 4.85527 9.26738 4.6949 9.25982 4.53454H3.37134V5.53012H9.25982C9.26738 5.36307 9.27494 5.20271 9.27494 5.02899ZM3.37134 9.49907H5.10235C7.55904 9.44564 8.76849 8.40327 9.13888 6.5257H3.37134V9.49907Z" fill="#616786" />
-                  </svg>
-                  <div class="consent-page-account-amount">{{ formatAmount(line.amount) }}</div>
-                </div>
+                <span class="consent-management-connection-meta-label">{{ line.label }}</span>
+                <DirhamAmount :amount="formatAmount(line.amount)" />
+              </template>
+              <template v-else-if="line.type === 'labelValue'">
+                <span class="consent-management-connection-meta-label">{{ line.label }}:</span>
+                <span class="consent-management-connection-meta-value">{{ line.value }}</span>
               </template>
               <template v-else>
                 {{ line.text }}
@@ -164,7 +165,11 @@
             <button class="consent-management-manage-button" type="button">Manage</button>
           </div>
           <div v-if="displayedConnections.length === 0" class="consent-management-empty-state">
-            No consents in this tab.
+            No connections yet
+            <br/> <br/>
+            You don’t have any consents in this tab.
+             <br/> <br/>
+            Connect an account to get started.
           </div>
         </div>
       </div>
@@ -179,6 +184,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import { useSharedState } from '../Composables/useSharedState.ts'
+import DirhamAmount from './DirhamAmount.vue'
 
 const { sharedState } = useSharedState()
 const activeTab = ref('current')
@@ -225,6 +231,7 @@ const defaultConnections = [
   {
     lfiDigit: 1,
     connectedAccountNumber: 2,
+    maskedIban: 'AE** **** **** **** 0123 456',
     type: 'Data Sharing',
     lastDataReceived: 'Last data received 30/09/2024',
     expiry: 'Connection expires 30/03/2025',
@@ -235,6 +242,7 @@ const defaultConnections = [
   {
     lfiDigit: 2,
     connectedAccountNumber: 1,
+    maskedIban: 'AE** **** **** **** 9876 543',
     type: 'Single Instant Payment',
     lastDataReceived: 'Last data received 16/12/2024',
     expiry: 'Connection expires 15/12/2025',
@@ -329,6 +337,10 @@ function normalizeConnection(connection, fallback) {
     ? connection.expiry
     : fallback.expiry
 
+  const maskedIban = typeof connection?.maskedIban === 'string'
+    ? connection.maskedIban
+    : fallback.maskedIban
+
   return {
     lfiDigit,
     connectedAccountNumber,
@@ -337,7 +349,8 @@ function normalizeConnection(connection, fallback) {
     lastDataReceived,
     expiry,
     paymentDate,
-    paymentAmount: normalizedPaymentAmount
+    paymentAmount: normalizedPaymentAmount,
+    maskedIban
   }
 }
 
@@ -418,29 +431,41 @@ function accountCountLabel(count) {
   return count === 1 ? '1 Account Connected' : `${count} Accounts Connected`
 }
 
+function isPaymentType(type) {
+  if (type === 'Single Instant Payment') return true
+  return isMultiPaymentType(type)
+}
+
+function connectionCountLabel(connection) {
+  if (isPaymentType(connection.type)) {
+    if (connection.status === 'AwaitingAuthorization') return '\u00a0'
+    if (connection.maskedIban) return connection.maskedIban
+    return '\u00a0'
+  }
+  return accountCountLabel(connection.connectedAccountNumber)
+}
+
 function connectionMetaLines(connection) {
   if (connection.type === 'Single Instant Payment') {
     return [
-      { type: 'text', text: 'Consent type: Single Payment' },
-      { type: 'text', text: `Payment Date: ${connection.paymentDate}` },
-      { type: 'amount', label: 'Payment Amount:', amount: connection.paymentAmount }
+      { type: 'labelValue', label: 'Consent Type', value: 'Single Payment' },
+      { type: 'labelValue', label: 'Payment Date', value: normalizeDate(connection.paymentDate) },
+      { type: 'amount', label: 'Payment Amount', amount: connection.paymentAmount }
     ]
   }
 
   if (isMultiPaymentType(connection.type)) {
-    const consentTypeLine = 'Consent Type: Flexi Pay'
-
     return [
-      { type: 'text', text: consentTypeLine },
+      { type: 'labelValue', label: 'Consent Type', value: 'Flexi Pay' },
       { type: 'amount', label: 'Total paid to date', amount: connection.paymentAmount },
-      { type: 'text', text: MULTI_PAYMENT_EXPIRY }
+      { type: 'labelValue', label: 'Connection expires', value: normalizeDate(connection.expiry) }
     ]
   }
 
   return [
-    { type: 'text', text: `Consent type: ${connection.type}` },
-    { type: 'text', text: connection.lastDataReceived },
-    { type: 'text', text: connection.expiry }
+    { type: 'labelValue', label: 'Consent Type', value: connection.type },
+    { type: 'labelValue', label: 'Last data received', value: normalizeDate(connection.lastDataReceived) },
+    { type: 'labelValue', label: 'Connection expires', value: normalizeDate(connection.expiry) }
   ]
 }
 
@@ -844,7 +869,7 @@ function statusClass(status) {
 }
 
 .consent-management-empty-state {
-  padding: 12px 0;
+  padding: 72px 0;
   text-align: center;
   font-family: 'Poppins';
   font-weight: 400;
@@ -920,20 +945,22 @@ function statusClass(status) {
 }
 
 .consent-management-connection-count {
-  margin-top: 6px;
+  margin-top: 8px;
+  margin-bottom: 6px;
   font-family: 'Poppins';
   font-weight: 300;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 120%;
   letter-spacing: -0.01em;
   color: #0b1340;
+  font-style: italic;
 }
 
 .consent-management-connection-meta {
   margin-top: 8px;
   font-family: 'Poppins';
   font-weight: 300;
-  font-size: 12px;
+  font-size: 11px;
   line-height: 120%;
   letter-spacing: -0.01em;
   color: #616786;
@@ -942,27 +969,28 @@ function statusClass(status) {
 .consent-management-connection-meta-amount {
   display: flex;
   align-items: center;
+  column-gap: 8px;
 }
 
-.consent-page-account-amount-container {
-  display: inline-flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 0;
-  gap: 4px;
-  margin-left: auto;
-  height: 14px;
+.consent-management-connection-meta-row {
+  display: flex;
+  /* flex-direction: column; */
+  width: 200px;
+  align-items: flex-start;
+  row-gap: 4px;
 }
 
-.consent-page-account-amount {
-  font-family: 'Poppins';
-  font-style: normal;
-  font-weight: 300;
-  font-size: 12px;
-  line-height: 120%;
-  letter-spacing: -0.01em;
+.consent-management-connection-meta-row :deep(.dirham-amount) {
+  font-size: 11px;
+}
+
+.consent-management-connection-meta-label {
   color: #616786;
+}
+
+.consent-management-connection-meta-value {
+  color: #0b1340;
+  margin-left: auto;
 }
 
 .consent-management-manage-button {
@@ -980,7 +1008,7 @@ function statusClass(status) {
   line-height: 160%;
   letter-spacing: -0.01em;
   color: #232b53;
-  cursor: default;
+  cursor: pointer;
 }
 
 .consent-management-footer {
@@ -1001,6 +1029,6 @@ function statusClass(status) {
   font-size: 16px;
   line-height: 100%;
   letter-spacing: -0.03em;
-  cursor: default;
+  cursor: pointer;
 }
 </style>

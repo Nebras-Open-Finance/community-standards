@@ -99,15 +99,10 @@
                                     </div>
 
                                     <div class="consent-page-title-text-2">
-
-                                        <svg width="13" height="10" viewBox="0 0 13 10" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path
-                                                d="M12.926 4.75072L12.8277 4.67054C12.6689 4.5369 12.48 4.47009 12.2759 4.47009H11.2176C11.2327 4.63045 11.2403 4.79081 11.2403 4.96453C11.2403 5.13826 11.2327 5.29862 11.2176 5.46566H11.9357C12.48 5.46566 12.926 5.92002 12.926 6.48797V6.74188L12.8277 6.65502C12.6689 6.52806 12.48 6.46124 12.2759 6.46124H11.0588C10.4768 8.71303 8.44345 9.93575 5.23841 9.93575H1.1263C1.1263 9.93575 1.68566 9.55488 1.68566 8.27868V6.46124H0.997795C0.445983 6.46124 0 6.00021 0 5.43894V5.18503L0.105827 5.26522C0.257007 5.39216 0.445983 5.46566 0.650077 5.46566H1.68566V4.47009H0.997795C0.445983 4.47009 0 4.00904 0 3.44778V3.19388L0.105827 3.28074C0.257007 3.40769 0.445983 3.47451 0.650077 3.47451H1.68566V1.73057C1.68566 0.414268 1.1263 0 1.1263 0H5.23841C8.35274 0 10.439 1.20939 11.0513 3.47451H11.9357C12.48 3.47451 12.926 3.92887 12.926 4.49681V4.75072ZM5.08724 0.494449H3.37134V3.47451H9.13888C8.74581 1.40316 7.40786 0.494449 5.08724 0.494449ZM9.27494 4.96453C9.27494 4.79081 9.26738 4.63045 9.25982 4.47009H3.37134V5.46566H9.25982C9.26738 5.29862 9.27494 5.13826 9.27494 4.96453ZM3.37134 9.43461H5.10235C7.55904 9.38119 8.76849 8.33881 9.13888 6.46124H3.37134V9.43461Z"
-                                                fill="#0C1441" />
-                                        </svg>
-
-                                        {{ sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.SinglePayment?.Amount?.Amount }}
+                                        <DirhamAmount
+                                            iconColor="#0C1441"
+                                            :amount="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.SinglePayment?.Amount?.Amount"
+                                        />
                                     </div>
 
 
@@ -295,6 +290,7 @@
 import { ref } from 'vue'
 import { useSharedState } from '../Composables/useSharedState.ts'
 import { getPurposeDescription } from '../Composables/aaniPaymentCodes.ts'
+import DirhamAmount from './DirhamAmount.vue'
 
 const { sharedState } = useSharedState()
 

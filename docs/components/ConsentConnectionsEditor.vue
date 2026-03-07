@@ -36,6 +36,10 @@ function isSingleInstantPayment(type) {
   return type === 'Single Instant Payment'
 }
 
+function isMultiPayment(type) {
+  return type.startsWith('Multi Payment')
+}
+
 function getFallbackStatusForType(type) {
   if (isSingleInstantPayment(type)) return 'AwaitingAuthorization'
   return 'Authorized'
@@ -50,10 +54,24 @@ function normalizeStatusForType(type, status) {
 
 function onTypeChanged(consent) {
   consent.status = normalizeStatusForType(consent.type, consent.status)
+  ensureMaskedIban(consent)
 }
 
 function isStatusDisabled(consentType, status) {
   return isSingleInstantPayment(consentType) && status === 'Authorized'
+}
+
+function generateMaskedIban(seed) {
+  const suffix = String(seed).padStart(6, '0').slice(-6)
+  return `AE** **** **** **** ${suffix.slice(0, 3)} ${suffix.slice(3)}`
+}
+
+function ensureMaskedIban(consent) {
+  if (isSingleInstantPayment(consent.type) || isMultiPayment(consent.type)) {
+    if (!consent.maskedIban) consent.maskedIban = generateMaskedIban(consent.id ?? Math.random() * 999999)
+  } else {
+    consent.maskedIban = undefined
+  }
 }
 
 let nextId = 8
@@ -61,10 +79,10 @@ const consents = ref([
   { id: 1, status: 'Authorized', lfiDigit: randomLfiDigit(), type: 'Data Sharing' },
   { id: 2, status: 'Revoked', lfiDigit: randomLfiDigit(), type: 'Data Sharing' },
   { id: 3, status: 'Expired', lfiDigit: randomLfiDigit(), type: 'Data Sharing' },
-  { id: 4, status: 'AwaitingAuthorization', lfiDigit: randomLfiDigit(), type: 'Single Instant Payment' },
-  { id: 5, status: 'Consumed', lfiDigit: randomLfiDigit(), type: 'Single Instant Payment' },
-  { id: 6, status: 'Authorized', lfiDigit: randomLfiDigit(), type: 'Multi Payment (VariableOnDemand)' },
-  { id: 7, status: 'Suspended', lfiDigit: randomLfiDigit(), type: 'Multi Payment (FixedOnDemand)' }
+  { id: 4, status: 'AwaitingAuthorization', lfiDigit: randomLfiDigit(), type: 'Single Instant Payment', maskedIban: generateMaskedIban(4) },
+  { id: 5, status: 'Consumed', lfiDigit: randomLfiDigit(), type: 'Single Instant Payment', maskedIban: generateMaskedIban(5) },
+  { id: 6, status: 'Authorized', lfiDigit: randomLfiDigit(), type: 'Multi Payment (VariableOnDemand)', maskedIban: generateMaskedIban(6) },
+  { id: 7, status: 'Suspended', lfiDigit: randomLfiDigit(), type: 'Multi Payment (FixedOnDemand)', maskedIban: generateMaskedIban(7) }
 ])
 
 function addConsent() {
@@ -87,12 +105,14 @@ watch(
   (val) => {
     for (const consent of val) {
       consent.status = normalizeStatusForType(consent.type, consent.status)
+      ensureMaskedIban(consent)
     }
 
     const payload = val.map(item => ({
       status: item.status,
       lfiDigit: Number(item.lfiDigit),
-      type: item.type
+      type: item.type,
+      maskedIban: item.maskedIban
     }))
     updateField('consentConnections', JSON.stringify(payload))
   },
