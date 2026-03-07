@@ -11,8 +11,6 @@ prev: false
 - **Licensed Financial Institutions (LFIs)**
 - **Third-Party Providers (TPPs)**
 - **System Integrators and Technology Service Providers**
-- **Implementers of the UAE Open Finance Standards**
-- **Working Group Members and Contributors**
 
 ## Purpose
 

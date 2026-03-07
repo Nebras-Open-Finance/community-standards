@@ -8,6 +8,7 @@ prev: false
 ## Applies to:
 
 - **Licensed Financial Institutions (LFIs)**
+- **System Integrators and Technology Service Providers**
 - **Nebras**
 
 ## Purpose

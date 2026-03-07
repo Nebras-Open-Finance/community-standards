@@ -9,6 +9,7 @@ prev: false
 
 - **Licensed Financial Institutions (LFIs)**
 - **Third-Party Providers (TPPs)**
+- **System Integrators and Technology Service Providers**
 - **API Hub** 
 - **Trust Framework** 
 

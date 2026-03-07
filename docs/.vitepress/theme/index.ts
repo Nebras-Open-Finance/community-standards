@@ -12,6 +12,7 @@ import KnowledgeBasePage from '../../components/WebPages/KnowledgeBasePage.vue'
 import ImageViewer from '../../components/ImageViewer.vue'
 import APIFlowViewer from '../../components/APIFlowViewer.vue'
 import AccountEditor from '../../components/AccountEditor.vue'
+import ConsentConnectionsEditor from '../../components/ConsentConnectionsEditor.vue'
 import RedocWrapper from '../../components/RedocWrapper.vue'
 import Carousel from '../../components/Carousel.vue'
 import ProtectedPageWrapper from '../../components/ProtectedPageWrapper.vue'
@@ -38,6 +39,7 @@ import ConsentOnDemand from '../../components/ConsentPages/ConsentOnDemand.vue'
 import ConsentPeriodicSchedule from '../../components/ConsentPages/ConsentPeriodicSchedule.vue'
 import ConsentDefinedSchedule from '../../components/ConsentPages/ConsentDefinedSchedule.vue'
 import ConsentSIPCOP from '../../components/ConsentPages/ConsentSIPCOP.vue'
+import ConsentManagementConnections from '../../components/ConsentPages/ConsentManagementConnections.vue'
 
 // Certification Docs
 import ReadinessChecklistDownload from '../../components/CertificationDocuments/ReadinessChecklistDownload.vue'
@@ -72,6 +74,7 @@ export default {
     app.component('ImageViewer', ImageViewer)
     app.component('APIFlowViewer', APIFlowViewer)
     app.component('AccountEditor', AccountEditor)
+    app.component('ConsentConnectionsEditor', ConsentConnectionsEditor)
     app.component('RedocWrapper', RedocWrapper)
     app.component('Carousel', Carousel)
     app.component('ProtectedPageWrapper', ProtectedPageWrapper)
@@ -96,6 +99,7 @@ export default {
     app.component('ConsentOnDemand', ConsentOnDemand)
     app.component('ConsentPeriodicSchedule', ConsentPeriodicSchedule)
     app.component('ConsentDefinedSchedule', ConsentDefinedSchedule)
+    app.component('ConsentManagementConnections', ConsentManagementConnections)
 
     app.component('AuthorizationBankDataSharing', AuthorizationBankDataSharing)
     app.component('AuthorizationSingleInstantPayment', AuthorizationSingleInstantPayment)
