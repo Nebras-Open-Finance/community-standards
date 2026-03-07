@@ -9,7 +9,7 @@ aside: false
 
 # Activating a TPP
 
-After a TPP has registered with an you after the `/tpp-registration` endpoint is called successfully (for detail how a TPP registers this please see [Registration API Guide](/tpp/tech-standards/registration/api-guide)).
+After a TPP has registered with an you after the `/tpp-registration` endpoint is called successfully (for detail how a TPP registers this please see [Registration API Guide](/tech/tpp-standards/registration/api-guide)).
 
 The TPP is not automatically granted access. The LFI must activate the TPP within their API Hub Admin Portal for access to be granted. 
 
