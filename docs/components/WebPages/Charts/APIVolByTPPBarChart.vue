@@ -17,13 +17,26 @@ import {
   Chart,
   BarController,
   BarElement,
+  LineController,
+  LineElement,
+  PointElement,
   CategoryScale,
   LinearScale,
   Tooltip,
   Legend
 } from 'chart.js'
 
-Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
+Chart.register(
+  BarController,
+  BarElement,
+  LineController,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend
+)
 
 const canvasRef = ref(null)
 let chartInstance = null
@@ -83,9 +96,18 @@ const getFilteredData = () => {
   })
 }
 
-// Group by Tpp (sorted by volume descending)
-const buildGroupedByTpp = (data) => {
-  const map = {}
+const getApiFamily = (url) => {
+  if (!url || !url.startsWith('open-finance/')) return 'other'
+  const parts = url.split('/')
+  if (parts.length > 1) return parts[1]
+  return 'other'
+}
+
+// Group by TPP and API family (stacked)
+const buildStackedByTppFamily = (data) => {
+  const tpps = new Set()
+  const families = new Set()
+  const bucket = {}
 
   // Map of TPP replacements
   const tppMap = {
@@ -94,54 +116,69 @@ const buildGroupedByTpp = (data) => {
   }
 
   data.forEach(item => {
-    let key = item.Tpp
-    if (!key || key.toUpperCase() === 'UNKNOWN') return  // skip Unknown
+    let tpp = item.Tpp
+    if (!tpp || tpp.toUpperCase() === 'UNKNOWN') return
+    if (tppMap[tpp]) tpp = tppMap[tpp]
 
-    // Apply replacements
-    if (tppMap[key]) key = tppMap[key]
-
+    const family = getApiFamily(item.url)
     const value = Number(item.Volume) || 0
-    map[key] = (map[key] || 0) + value
+
+    tpps.add(tpp)
+    families.add(family)
+
+    if (!bucket[tpp]) bucket[tpp] = {}
+    bucket[tpp][family] = (bucket[tpp][family] || 0) + value
   })
 
-  const sorted = Object.entries(map).sort((a, b) => b[1] - a[1])
-  return {
-    labels: sorted.map(([k]) => k),
-    values: sorted.map(([, v]) => v)
-  }
+  const labels = Array.from(tpps).sort()
+  const familyList = Array.from(families).sort()
+
+  const palette = [
+    '#4F46E5',
+    '#10B981',
+    '#F59E0B',
+    '#3B82F6',
+    '#EC4899',
+    '#8B5CF6',
+    '#F97316',
+    '#14B8A6'
+  ]
+
+  const datasets = familyList.map((fam, idx) => ({
+    label: fam,
+    data: labels.map(tpp => bucket[tpp]?.[fam] || 0),
+    backgroundColor: palette[idx % palette.length],
+    borderColor: palette[idx % palette.length],
+    borderWidth: 1,
+    borderRadius: 8,
+    maxBarThickness: 50,
+    stack: 'families'
+  }))
+
+  return { labels, datasets }
 }
 
 // Create / update chart
 const updateChart = () => {
   const filtered = getFilteredData()
-  const { labels, values } = buildGroupedByTpp(filtered)
+  const { labels, datasets } = buildStackedByTppFamily(filtered)
 
   if (chartInstance) {
     chartInstance.data.labels = labels
-    chartInstance.data.datasets[0].data = values
+    chartInstance.data.datasets = datasets
     chartInstance.update()
   } else {
     chartInstance = new Chart(canvasRef.value, {
       type: 'bar',
       data: {
         labels,
-        datasets: [
-          {
-            label: 'Open Finance API Calls',
-            data: values,
-            backgroundColor: '#4F46E5',
-            borderColor: '#4338CA',
-            borderWidth: 2,
-            borderRadius: 8,
-            maxBarThickness: 50
-          }
-        ]
+        datasets
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { display: false },
+          legend: { display: true, position: 'bottom' },
           tooltip: {
             callbacks: {
               label: ctx => `${ctx.parsed.y.toLocaleString()} calls`
@@ -150,10 +187,12 @@ const updateChart = () => {
         },
         scales: {
           y: {
+            stacked: true,
             beginAtZero: true,
             title: { display: true, text: 'Total API Calls' }
           },
           x: {
+            stacked: true,
             title: { display: true, text: 'TPP' }
           }
         }

@@ -10,39 +10,40 @@ sequenceDiagram
     participant Hub as API Hub
     participant LFI as LFI
 
-    Note over TPP: Encrypt PII (creditor name + IBAN)
-    Note over TPP: Construct Authorization Details
-    Note over TPP: Construct Request JWT (payments openid)
-    Note over TPP: Create Client Assertion
-    TPP->>+Hub: POST /par (urn:openfinanceuae:service-initiation-consent:v2.1)
+    Note over TPP: Construct Authorization Details (IsSingleAuthorization=false)
+    TPP->>+Hub: POST /par (service-initiation-consent)
     opt Config-dependent
         Hub->>+LFI: POST /consents/action/validate
         Hub->>+LFI: POST /consents/event/post
     end
-    Hub-->>-TPP: 200 {request_uri + expires_in}
+    Hub-->>-TPP: 200 {request_uri, expires_in}
 
-    TPP-->>LFI: Redirect customer to LFI Auth URL
+    TPP-->>LFI: Redirect user to LFI Auth URL
 
     LFI->>+Hub: GET /auth
     LFI->>Hub: GET /consents/{consentId}
-    Note left of LFI: User authenticates & authorizes payment
-    LFI->>Hub: PATCH /consent/{consentId}
+    Note over LFI: User 1 authenticates & authorizes consent
+
+    LFI->>Hub: PATCH /consents/{consentId}\\nStatus=AwaitingAuthorization\\nMeta.MultipleAuthorizers
     LFI->>Hub: POST /auth/{interactionId}/doConfirm
+    LFI-->>TPP: Redirect to callback (code, state, iss)
 
-    LFI-->>TPP: Redirect to TPP callback with code + state + iss
+    TPP->>+Hub: POST /token (code + code_verifier)
+    Hub-->>-TPP: {access_token + refresh_token + consent Status=AwaitingAuthorization}
 
-    TPP->>+Hub: POST /token (authorization_code + code_verifier)
-    Hub-->>-TPP: {access_token + refresh_token}
+    loop Additional authorizers
+        alt Approval
+            LFI->>Hub: PATCH /consents/{consentId}\\nupdate Authorizations[]
+        else Rejection
+            LFI->>Hub: PATCH /consents/{consentId}\\nStatus=Rejected
+        end
+    end
 
+    Hub-->>TPP: Event / GET /payment-consents/{ConsentId}\\nStatus=Authorized
     TPP->>+Hub: POST /payments
     Hub->>LFI: POST /payments
     LFI-->>Hub: 200 {PaymentId}
     Hub-->>-TPP: 200 {PaymentId, Status: Pending}
-
-    TPP->>+Hub: GET /payments/{paymentId}
-    Hub->>LFI: GET /payments/{paymentId}
-    LFI-->>Hub: 200 {Status: AcceptedSettlementCompleted}
-    Hub-->>-TPP: 200 {Status: AcceptedSettlementCompleted}
 `
 
 onMounted(async () => {
@@ -65,7 +66,7 @@ onMounted(async () => {
 
   if (mermaidContainer.value) {
     try {
-      const { svg } = await mermaid.render('sip-diagram', mermaidDefinition)
+      const { svg } = await mermaid.render('multi-auth-diagram', mermaidDefinition)
       mermaidContainer.value.innerHTML = svg
     } catch (err) {
       console.error(err)

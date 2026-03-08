@@ -17,15 +17,22 @@ import {
   Chart,
   BarController,
   BarElement,
+  LineController,
+  LineElement,
+  PointElement,
   CategoryScale,
   LinearScale,
   Tooltip,
   Legend
 } from 'chart.js'
+import { sortLfis, formatLfiLabel } from './chartHelpers'
 
 Chart.register(
   BarController,
   BarElement,
+  LineController,
+  LineElement,
+  PointElement,
   CategoryScale,
   LinearScale,
   Tooltip,
@@ -120,7 +127,7 @@ const getFilteredData = () => {
    BUILD AVERAGES
    executionTime is already TOTAL
 ========================= */
-const buildAverages = (data) => {
+const buildVolumeAndErrorRates = (data) => {
   const map = {}
 
   data.forEach(item => {
@@ -129,28 +136,24 @@ const buildAverages = (data) => {
     const errors = Number(item.Error) || 0
 
     if (!map[key]) {
-      map[key] = {
-        totalVolume: 0,   // ✅ YOU WERE MISSING THIS
-        totalErrors: 0
-      }
+      map[key] = { totalVolume: 0, totalErrors: 0 }
     }
 
     map[key].totalVolume += volume
     map[key].totalErrors += errors
   })
 
-  const entries = Object.entries(map)
-    .map(([lfi, stats]) => ({
-      lfi,
-      avg: stats.totalVolume
-        ? (stats.totalErrors / stats.totalVolume) * 100 // ✅ make it %
-        : 0
-    }))
-    .sort((a, b) => b.avg - a.avg)
+  const sortedLfis = sortLfis(Object.keys(map))
+  const entries = sortedLfis.map(lfi => ({
+    lfi,
+    volume: map[lfi].totalVolume,
+    errorRate: map[lfi].totalVolume ? (map[lfi].totalErrors / map[lfi].totalVolume) * 100 : 0
+  }))
 
   return {
-    labels: entries.map(e => e.lfi),
-    values: entries.map(e => e.avg)
+    labels: entries.map(e => formatLfiLabel(e.lfi)),
+    volumes: entries.map(e => e.volume),
+    rates: entries.map(e => Number(e.errorRate.toFixed(2)))
   }
 }
 
@@ -165,7 +168,7 @@ const createChart = () => {
   }
 
   const filtered = getFilteredData()
-  const { labels, values } = buildAverages(filtered)
+  const { labels, volumes, rates } = buildVolumeAndErrorRates(filtered)
 
   chartInstance = new Chart(canvasRef.value, {
     type: 'bar',
@@ -173,13 +176,28 @@ const createChart = () => {
       labels,
       datasets: [
         {
-          label: 'Error Rate (%)',
-          data: values,
+          type: 'bar',
+          label: 'API Calls',
+          data: volumes,
           backgroundColor: '#4F46E5',
           borderColor: '#4338CA',
-          borderWidth: 2,
+          borderWidth: 1,
           borderRadius: 8,
-          maxBarThickness: 50
+          maxBarThickness: 50,
+          yAxisID: 'yVolume'
+        },
+        {
+          type: 'line',
+          label: 'Error Rate (%)',
+          data: rates,
+          borderColor: '#EF4444',
+          backgroundColor: '#EF444455',
+          borderWidth: 2,
+          tension: 0.25,
+          pointRadius: 4,
+          pointBackgroundColor: '#EF4444',
+          yAxisID: 'yRate',
+          fill: false
         }
       ]
     },
@@ -187,19 +205,33 @@ const createChart = () => {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: { display: true, position: 'bottom' },
         tooltip: {
           callbacks: {
-            label: ctx => `${ctx.parsed.y.toFixed(0)} %`
+            label: ctx => {
+              if (ctx.dataset.type === 'line') {
+                return `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} %`
+              }
+              return `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} calls`
+            }
           }
         }
       },
       scales: {
-        y: {
+        yVolume: {
           beginAtZero: true,
           title: {
             display: true,
-            text: 'Error Rate (%)'
+            text: 'API Calls'
+          }
+        },
+        yRate: {
+          beginAtZero: true,
+          position: 'right',
+          grid: { drawOnChartArea: false },
+          title: { display: true, text: 'Error Rate (%)' },
+          ticks: {
+            callback: value => `${value}%`
           }
         },
         x: {
@@ -223,10 +255,11 @@ const updateChart = () => {
   }
 
   const filtered = getFilteredData()
-  const { labels, values } = buildAverages(filtered)
+  const { labels, volumes, rates } = buildVolumeAndErrorRates(filtered)
 
   chartInstance.data.labels = labels
-  chartInstance.data.datasets[0].data = values
+  chartInstance.data.datasets[0].data = volumes
+  chartInstance.data.datasets[1].data = rates
   chartInstance.update()
 }
 

@@ -17,13 +17,27 @@ import {
   Chart,
   BarController,
   BarElement,
+  LineController,
+  LineElement,
+  PointElement,
   CategoryScale,
   LinearScale,
   Tooltip,
   Legend
 } from 'chart.js'
+import { sortLfis, formatLfiLabel, getStatusBucket } from './chartHelpers'
 
-Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
+Chart.register(
+  BarController,
+  BarElement,
+  LineController,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend
+)
 
 const canvasRef = ref(null)
 let chartInstance = null
@@ -37,14 +51,6 @@ const getLastMonth = () => {
 }
 
 const selectedMonth = ref(getLastMonth())
-
-const getStatusBucket = (status) => {
-  const normalized = String(status || '').toLowerCase()
-
-  if (normalized.includes('pending') || normalized.includes('received')) return 'pending'
-  if (normalized.includes('rejected')) return 'rejected'
-  return 'successful'
-}
 
 // Load JSON
 const loadData = async () => {
@@ -61,31 +67,32 @@ const getFilteredData = () =>
     return !selectedMonth.value || monthKey === selectedMonth.value
   })
 
-// Sum amount per LFI by status bucket
-const buildAmountsByLFI = data => {
+// Compute successful counts and average payment amount per LFI (successful only)
+const buildSuccessMetricsByLFI = data => {
   const map = {}
 
   data.forEach(item => {
+    if (getStatusBucket(item.status) !== 'successful') return
+
     const key = item.LFI || 'Unknown'
     if (key.toUpperCase() === 'UNKNOWN') return
 
     const amount = Number(item.amount) || 0
-    const bucket = getStatusBucket(item.status)
+    const count = Number(item.Count) || 0
+    if (!map[key]) map[key] = { totalAmount: 0, totalCount: 0 }
 
-    if (!map[key]) {
-      map[key] = { pending: 0, rejected: 0, successful: 0 }
-    }
-
-    map[key][bucket] += amount
+    map[key].totalAmount += amount
+    map[key].totalCount += count
   })
 
-  const labels = Object.keys(map).sort()
-  return {
-    labels,
-    pendingValues: labels.map(k => map[k].pending),
-    rejectedValues: labels.map(k => map[k].rejected),
-    successfulValues: labels.map(k => map[k].successful)
-  }
+  const ordered = sortLfis(Object.keys(map))
+  const counts = ordered.map(k => map[k].totalCount)
+  const avgs = ordered.map(k => {
+    const entry = map[k]
+    return entry.totalCount > 0 ? entry.totalAmount / entry.totalCount : 0
+  })
+
+  return { labels: ordered.map(formatLfiLabel), counts, avgs }
 }
 
 // Create / update chart
@@ -93,7 +100,7 @@ const updateChart = () => {
   if (chartInstance) chartInstance.destroy()
 
   const filtered = getFilteredData()
-  const { labels, pendingValues, rejectedValues, successfulValues } = buildAmountsByLFI(filtered)
+  const { labels, counts, avgs } = buildSuccessMetricsByLFI(filtered)
 
   chartInstance = new Chart(canvasRef.value, {
     type: 'bar',
@@ -101,25 +108,26 @@ const updateChart = () => {
       labels,
       datasets: [
         {
-          label: 'Pending',
-          data: pendingValues,
-          backgroundColor: 'rgba(245, 158, 11, 0.75)',
+          type: 'bar',
+          label: 'Successful Payments (Count)',
+          data: counts,
+          backgroundColor: 'rgba(79, 70, 229, 0.6)',
           borderRadius: 8,
-          maxBarThickness: 50
+          maxBarThickness: 50,
+          yAxisID: 'yCount'
         },
         {
-          label: 'Rejected',
-          data: rejectedValues,
-          backgroundColor: 'rgba(239, 68, 68, 0.75)',
-          borderRadius: 8,
-          maxBarThickness: 50
-        },
-        {
-          label: 'Successful',
-          data: successfulValues,
-          backgroundColor: 'rgba(16, 185, 129, 0.75)',
-          borderRadius: 8,
-          maxBarThickness: 50
+          type: 'line',
+          label: 'Avg Payment Amount (AED)',
+          data: avgs,
+          borderColor: '#10B981',
+          backgroundColor: '#10B98155',
+          borderWidth: 2,
+          tension: 0.25,
+          pointRadius: 4,
+          pointBackgroundColor: '#10B981',
+          yAxisID: 'yAmount',
+          fill: false
         }
       ]
     },
@@ -127,22 +135,34 @@ const updateChart = () => {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: true },
+        legend: { display: true, position: 'bottom' },
         tooltip: {
           callbacks: {
-            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`
+            label: ctx => {
+              if (ctx.dataset.type === 'line') {
+                return `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} AED`
+              }
+              return `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}`
+            }
           }
         }
       },
       scales: {
-        y: {
-          stacked: true,
+        yCount: {
           beginAtZero: true,
-          title: { display: true, text: 'Amount (AED)' }
+          title: { display: true, text: 'Count (#) - Successful' }
+        },
+        yAmount: {
+          beginAtZero: true,
+          position: 'right',
+          grid: { drawOnChartArea: false },
+          title: { display: true, text: 'Average Payment Amount (AED)' },
+          ticks: {
+            callback: value => `${value} AED`
+          }
         },
         x: {
-          stacked: true,
-          title: { display: true, text: 'LFI' }
+          title: { display: true, text: 'Bank (LFI)' }
         }
       }
     }
@@ -172,4 +192,3 @@ watch(selectedMonth, updateChart)
   height: 320px;
 }
 </style>
-

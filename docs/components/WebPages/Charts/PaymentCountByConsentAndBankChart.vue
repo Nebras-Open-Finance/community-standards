@@ -22,6 +22,7 @@ import {
   Tooltip,
   Legend
 } from 'chart.js'
+import { sortLfis, formatLfiLabel } from './chartHelpers'
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
 
@@ -29,7 +30,17 @@ const canvasRef = ref(null)
 let chartInstance = null
 const rawData = ref([])
 
-// default to last month
+const palette = [
+  '#4F46E5',
+  '#10B981',
+  '#F59E0B',
+  '#3B82F6',
+  '#EC4899',
+  '#8B5CF6',
+  '#F97316',
+  '#14B8A6'
+]
+
 const getLastMonth = () => {
   const d = new Date()
   d.setMonth(d.getMonth() - 1)
@@ -38,14 +49,12 @@ const getLastMonth = () => {
 
 const selectedMonth = ref(getLastMonth())
 
-// Load JSON
 const loadData = async () => {
   const response = await fetch('/api/payment-log.json')
   rawData.value = await response.json()
   updateChart()
 }
 
-// Filter by selected month (DD/MM/YYYY → YYYY-MM)
 const getFilteredData = () =>
   rawData.value.filter(item => {
     if (!item.Date) return false
@@ -53,60 +62,67 @@ const getFilteredData = () =>
     return !selectedMonth.value || monthKey === selectedMonth.value
   })
 
-// Sum amount per LFI
-const buildAmountsByLFI = data => {
+const buildCountsByLFIConsent = data => {
   const map = {}
+  const consentSet = new Set()
+
   data.forEach(item => {
-    const key = item.LFI || 'Unknown'
-    if (key.toUpperCase() === 'UNKNOWN') return // skip unknown
-    const amount = Number(item.Count) || 0
-    map[key] = (map[key] || 0) + amount
+    const lfi = item.LFI || 'Unknown'
+    if (lfi.toUpperCase() === 'UNKNOWN') return
+    const consent = item.paymentConsentType || 'Unknown'
+    const count = Number(item.Count) || 0
+
+    consentSet.add(consent)
+    if (!map[lfi]) map[lfi] = {}
+    map[lfi][consent] = (map[lfi][consent] || 0) + count
   })
-  return {
-    labels: Object.keys(map).sort(), // alphabetically
-    values: Object.keys(map).sort().map(k => map[k])
-  }
+
+  const labels = sortLfis(Object.keys(map))
+  const consents = Array.from(consentSet).sort()
+
+  const datasets = consents.map((consent, idx) => ({
+    label: consent,
+    data: labels.map(lfi => map[lfi]?.[consent] || 0),
+    backgroundColor: palette[idx % palette.length],
+    borderColor: palette[idx % palette.length],
+    borderWidth: 1,
+    borderRadius: 8,
+    maxBarThickness: 50,
+    stack: 'consents'
+  }))
+
+  return { labels: labels.map(formatLfiLabel), datasets }
 }
 
-// Create / update chart
 const updateChart = () => {
   if (chartInstance) chartInstance.destroy()
 
   const filtered = getFilteredData()
-  const { labels, values } = buildAmountsByLFI(filtered)
+  const { labels, datasets } = buildCountsByLFIConsent(filtered)
 
   chartInstance = new Chart(canvasRef.value, {
     type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Total Amount',
-          data: values,
-          backgroundColor: 'rgba(79, 70, 229, 0.5)', // 50% opacity
-          borderRadius: 8,
-          maxBarThickness: 50
-        }
-      ]
-    },
+    data: { labels, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: { display: true, position: 'bottom' },
         tooltip: {
           callbacks: {
-            label: ctx => `${ctx.parsed.y.toFixed(2)}`
+            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}`
           }
         }
       },
       scales: {
         y: {
+          stacked: true,
           beginAtZero: true,
           title: { display: true, text: 'Count (#)' }
         },
         x: {
-          title: { display: true, text: 'LFI' }
+          stacked: true,
+          title: { display: true, text: 'Bank (LFI)' }
         }
       }
     }

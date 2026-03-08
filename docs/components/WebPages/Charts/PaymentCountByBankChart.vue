@@ -22,6 +22,7 @@ import {
   Tooltip,
   Legend
 } from 'chart.js'
+import { sortLfis, formatLfiLabel, getStatusBucket } from './chartHelpers'
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
 
@@ -29,7 +30,6 @@ const canvasRef = ref(null)
 let chartInstance = null
 const rawData = ref([])
 
-// default to last month
 const getLastMonth = () => {
   const d = new Date()
   d.setMonth(d.getMonth() - 1)
@@ -38,14 +38,12 @@ const getLastMonth = () => {
 
 const selectedMonth = ref(getLastMonth())
 
-// Load JSON
 const loadData = async () => {
   const response = await fetch('/api/payment-log.json')
   rawData.value = await response.json()
   updateChart()
 }
 
-// Filter by selected month (DD/MM/YYYY → YYYY-MM)
 const getFilteredData = () =>
   rawData.value.filter(item => {
     if (!item.Date) return false
@@ -53,37 +51,31 @@ const getFilteredData = () =>
     return !selectedMonth.value || monthKey === selectedMonth.value
   })
 
-// Compute average payment amount per LFI
-const buildAverageAmountByLFI = data => {
+// Sum counts per LFI split by status
+const buildCountsByLFIStatus = data => {
   const map = {}
-
   data.forEach(item => {
     const key = item.LFI || 'Unknown'
     if (key.toUpperCase() === 'UNKNOWN') return
-
-    const amount = Number(item.amount) || 0
     const count = Number(item.Count) || 0
-    if (!map[key]) map[key] = { totalAmount: 0, totalCount: 0 }
-
-    map[key].totalAmount += amount
-    map[key].totalCount += count
+    const bucket = getStatusBucket(item.status)
+    if (!map[key]) map[key] = { pending: 0, rejected: 0, successful: 0 }
+    map[key][bucket] += count
   })
-
-  const labels = Object.keys(map).sort() // alphabetically
-  const values = labels.map(k => {
-    const entry = map[k]
-    return entry.totalCount > 0 ? entry.totalAmount / entry.totalCount : 0
-  })
-
-  return { labels, values }
+  const labelsOrdered = sortLfis(Object.keys(map))
+  return {
+    labels: labelsOrdered.map(formatLfiLabel),
+    pendingValues: labelsOrdered.map(k => map[k].pending),
+    rejectedValues: labelsOrdered.map(k => map[k].rejected),
+    successfulValues: labelsOrdered.map(k => map[k].successful)
+  }
 }
 
-// Create / update chart
 const updateChart = () => {
   if (chartInstance) chartInstance.destroy()
 
   const filtered = getFilteredData()
-  const { labels, values } = buildAverageAmountByLFI(filtered)
+  const { labels, pendingValues, rejectedValues, successfulValues } = buildCountsByLFIStatus(filtered)
 
   chartInstance = new Chart(canvasRef.value, {
     type: 'bar',
@@ -91,9 +83,23 @@ const updateChart = () => {
       labels,
       datasets: [
         {
-          label: 'Average Payment Amount',
-          data: values,
-          backgroundColor: 'rgba(79, 70, 229, 0.5)', // 50% opacity
+          label: 'Pending',
+          data: pendingValues,
+          backgroundColor: 'rgba(245, 158, 11, 0.75)',
+          borderRadius: 8,
+          maxBarThickness: 50
+        },
+        {
+          label: 'Rejected',
+          data: rejectedValues,
+          backgroundColor: 'rgba(239, 68, 68, 0.75)',
+          borderRadius: 8,
+          maxBarThickness: 50
+        },
+        {
+          label: 'Successful',
+          data: successfulValues,
+          backgroundColor: 'rgba(16, 185, 129, 0.75)',
           borderRadius: 8,
           maxBarThickness: 50
         }
@@ -103,19 +109,21 @@ const updateChart = () => {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: { display: true, position: 'bottom' },
         tooltip: {
           callbacks: {
-            label: ctx => `${ctx.parsed.y.toFixed(2)} (AED)`
+            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}`
           }
         }
       },
       scales: {
         y: {
+          stacked: true,
           beginAtZero: true,
-          title: { display: true, text: 'Average Payment Amount (AED)' }
+          title: { display: true, text: 'Count (#)' }
         },
         x: {
+          stacked: true,
           title: { display: true, text: 'Bank (LFI)' }
         }
       }
@@ -132,7 +140,7 @@ watch(selectedMonth, updateChart)
   background: rgba(255, 255, 255, 0.9);
   padding: 1.5rem;
   border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
 }
 
 .controls {

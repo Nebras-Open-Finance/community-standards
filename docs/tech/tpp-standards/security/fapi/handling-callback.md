@@ -214,3 +214,61 @@ def handle_callback(callback_url: str, stored_state: str, code_verifier: str) ->
 ```
 
 :::
+
+## Consent status in `/token` responses
+
+On a successful `POST /token` (HTTP 200), the Authorization Server returns not only the `access_token` and `refresh_token` but also the Consent object, including its current `Status`. See the token endpoint reference for details: [CreateAccessTokenRequestV21](/tech/tpp-standards/security/tokens/open-api/token) (OpenAPI: `docs/public/openapi/v2.1/standards/uae-authorization-endpoints-openapi.yaml`, schema `AEAuthorizationEndpointsV21.AEAuthorizationCodeGrantTokenResponseProperties`).
+
+Example response:
+
+```json
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIsInR5c",
+  "token_type": "Bearer",
+  "expires_in": 300,
+  "authorization_details": [
+    {
+      "type": "urn:openfinanceuae:service-initiation-consent:v2.1",
+      "consent": {
+        "Data": {
+            "ConsentId": "b8f42378-10ac-46a1-8d20-4e020484216d",
+            "IsSingleAuthorization": true,
+            "ExpirationDateTime": "2026-12-25T23:00:00.000Z",
+            "AuthorizationExpirationDateTime": "2026-12-25T23:00:00.000Z",
+            "ControlParameters": {
+               "ConsentSchedule": {
+                  "MultiPayment": {
+                      "PeriodicSchedule": {
+                          "Type": "VariableOnDemand",
+                          "PeriodType": "Week",
+                          "PeriodStartDate": "2026-12-01",
+                          "Controls": {
+                              "MaximumIndividualAmount": {
+                                  "Amount": "200.00",
+                                  "Currency": "AED"
+                              },
+                          }
+                      }
+                  }
+              }
+          },
+          "PaymentPurposeCode": "ACM",
+          "DebtorReference": "Test Purchase",
+          "CreditorReference": "Test Purchase"
+        },
+        "Links": {
+          "Self": "https://rs1.altareq1.sandbox.apihub.openfinance.ae/open-finance/payment/v2.1/payment-consents/b8f42378-10ac-46a1-8d20-4e020484216d"
+        },
+      }
+    }
+  ],
+  "scope": "payments openid",
+  "state": "eyJhbGciOiJSUzI1NiIsInR5cC",
+  "refresh_token": "eyJhbGciOiJSUzI1NiIsInR5cC",
+  "id_token": "eyJhbGciOiJSUzI1NiIsInR5cC",
+}
+```
+
+Because access to resources requires both a valid access token **and** an authorized consent, the TPP can determine from this response whether resource access is permitted. 
+
+In most flows the consent status will be `Authorized`. However, for payment (Bank Service Initiation) consents that support and require multi-authorization, the consent status may instead be `AwaitingAuthorization`, indicating the first authorizer has approved but additional authorizers are still required before a payment can be made.

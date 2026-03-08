@@ -60,17 +60,15 @@ const isIncludedOpenFinanceUrl = (url) => {
 /* =========================
    EXTRACT API FAMILY
 ========================= */
-const getApiFamily = (url) => {
+const getEndpointAndVersion = (url) => {
   if (!url || !url.startsWith('open-finance/account-information')) return null
 
   const parts = url.split('/')
-  return parts.length > 1 ? buildPath(parts) : null
-}
-
-const buildPath = (parts) => {
-  return [parts[3], parts[4], parts[5]]   // pick the parts you want
-    .filter(p => p !== undefined && p !== null && p !== '') // only keep real values
-    .join('/') // join with slash
+  // expect: open-finance / account-information / vX.Y / ...
+  const version = parts[2] || 'v?'
+  const endpointPath = parts.slice(3).filter(Boolean).join('/')
+  const endpoint = endpointPath || '(root)'
+  return { endpoint, version }
 }
 
 /* =========================
@@ -113,24 +111,50 @@ const getFilteredData = () => {
 /* =========================
    GROUP BY API FAMILY
 ========================= */
-const buildGroupedByFamily = (data) => {
-  const map = {}
+const buildStackedByEndpointVersion = (data) => {
+  const endpoints = new Set()
+  const versions = new Set()
+  const bucket = {}
 
   data.forEach(item => {
-    const family = getApiFamily(item.url)
-    if (!family) return
-
+    const parsed = getEndpointAndVersion(item.url)
+    if (!parsed) return
+    const { endpoint, version } = parsed
     const volume = Number(item.Volume) || 0
-    map[family] = (map[family] || 0) + volume
+
+    endpoints.add(endpoint)
+    versions.add(version)
+
+    if (!bucket[endpoint]) bucket[endpoint] = {}
+    bucket[endpoint][version] = (bucket[endpoint][version] || 0) + volume
   })
 
-  const sorted = Object.entries(map)
-    .sort((a, b) => b[1] - a[1])
+  const labels = Array.from(endpoints).sort()
+  const versionList = Array.from(versions).sort()
 
-  return {
-    labels: sorted.map(([k]) => k),
-    values: sorted.map(([, v]) => v)
-  }
+  const palette = [
+    '#4F46E5',
+    '#10B981',
+    '#F59E0B',
+    '#3B82F6',
+    '#EC4899',
+    '#8B5CF6',
+    '#F97316',
+    '#14B8A6'
+  ]
+
+  const datasets = versionList.map((ver, idx) => ({
+    label: ver,
+    data: labels.map(ep => bucket[ep]?.[ver] || 0),
+    backgroundColor: palette[idx % palette.length],
+    borderColor: palette[idx % palette.length],
+    borderWidth: 1,
+    borderRadius: 8,
+    maxBarThickness: 50,
+    stack: 'versions'
+  }))
+
+  return { labels, datasets }
 }
 
 /* =========================
@@ -138,34 +162,24 @@ const buildGroupedByFamily = (data) => {
 ========================= */
 const updateChart = () => {
   const filtered = getFilteredData()
-  const { labels, values } = buildGroupedByFamily(filtered)
+  const { labels, datasets } = buildStackedByEndpointVersion(filtered)
 
   if (chartInstance) {
     chartInstance.data.labels = labels
-    chartInstance.data.datasets[0].data = values
+    chartInstance.data.datasets = datasets
     chartInstance.update()
   } else {
     chartInstance = new Chart(canvasRef.value, {
       type: 'bar',
       data: {
         labels,
-        datasets: [
-          {
-            label: 'Open Finance API Calls (by Family)',
-            data: values,
-            backgroundColor: '#4F46E5',
-            borderColor: '#4338CA',
-            borderWidth: 2,
-            borderRadius: 8,
-            maxBarThickness: 50
-          }
-        ]
+        datasets
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { display: false },
+          legend: { display: true, position: 'bottom' },
           tooltip: {
             callbacks: {
               label: ctx => `${ctx.parsed.y.toLocaleString()} calls`
@@ -174,11 +188,18 @@ const updateChart = () => {
         },
         scales: {
           y: {
+            stacked: true,
             beginAtZero: true,
             title: { display: true, text: 'Total API Calls' }
           },
           x: {
-            title: { display: true, text: 'API Endpoint' }
+            stacked: true,
+            title: { display: true, text: 'API Endpoint' },
+            ticks: {
+              font: { size: 10 },
+              maxRotation: 45,
+              minRotation: 45
+            }
           }
         }
       }

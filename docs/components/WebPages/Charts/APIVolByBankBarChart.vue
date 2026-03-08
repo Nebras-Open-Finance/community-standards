@@ -22,6 +22,7 @@ import {
   Tooltip,
   Legend
 } from 'chart.js'
+import { sortLfis, formatLfiLabel } from './chartHelpers'
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
 
@@ -83,65 +84,92 @@ const getFilteredData = () => {
   })
 }
 
-// Group by LFI (sorted by volume descending)
-const buildGroupedByLFI = (data) => {
-  const map = {}
+// Group by LFI and API family (for stacking)
+const buildStackedByLFI = (data) => {
+  const lfis = new Set()
+  const families = new Set()
+  const buckets = {}
+
   data.forEach(item => {
-    const key = item.LFI || 'Unknown'
-    const value = Number(item.Volume) || 0
-    map[key] = (map[key] || 0) + value
+    const lfi = item.LFI || 'Unknown'
+    const volume = Number(item.Volume) || 0
+    const family = (() => {
+      const parts = (item.url || '').split('/')
+      const idx = parts.indexOf('open-finance')
+      if (idx >= 0 && parts.length > idx + 1) return parts[idx + 1]
+      if (parts.length > 1) return parts[1]
+      return 'other'
+    })()
+
+    lfis.add(lfi)
+    families.add(family)
+
+    if (!buckets[lfi]) buckets[lfi] = {}
+    buckets[lfi][family] = (buckets[lfi][family] || 0) + volume
   })
 
-  const sorted = Object.entries(map).sort((a, b) => b[1] - a[1])
-  return {
-    labels: sorted.map(([k]) => k),
-    values: sorted.map(([, v]) => v)
-  }
+  const orderedLfis = sortLfis(Array.from(lfis))
+  const familyList = Array.from(families).sort()
+  const palette = [
+    '#4F46E5',
+    '#10B981',
+    '#F59E0B',
+    '#3B82F6',
+    '#EC4899',
+    '#8B5CF6',
+    '#F97316',
+    '#14B8A6'
+  ]
+
+  const datasets = familyList.map((family, idx) => ({
+    label: family,
+    data: orderedLfis.map(lfi => buckets[lfi]?.[family] || 0),
+    backgroundColor: palette[idx % palette.length],
+    borderColor: palette[idx % palette.length],
+    borderWidth: 1,
+    borderRadius: 8,
+    maxBarThickness: 50,
+    stack: 'apiFamilies'
+  }))
+
+  return { labels: orderedLfis.map(formatLfiLabel), datasets }
 }
 
-// Create / update chart
+// Create / update chart (stacked by API family per LFI)
 const updateChart = () => {
   const filtered = getFilteredData()
-  const { labels, values } = buildGroupedByLFI(filtered)
+  const { labels, datasets } = buildStackedByLFI(filtered)
 
   if (chartInstance) {
     chartInstance.data.labels = labels
-    chartInstance.data.datasets[0].data = values
+    chartInstance.data.datasets = datasets
     chartInstance.update()
   } else {
     chartInstance = new Chart(canvasRef.value, {
       type: 'bar',
       data: {
         labels,
-        datasets: [
-          {
-            label: 'Open Finance API Calls',
-            data: values,
-            backgroundColor: '#4F46E5',
-            borderColor: '#4338CA',
-            borderWidth: 2,
-            borderRadius: 8,
-            maxBarThickness: 50
-          }
-        ]
+        datasets
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { display: false },
+          legend: { display: true, position: 'bottom' },
           tooltip: {
             callbacks: {
-              label: ctx => `${ctx.parsed.y.toLocaleString()} calls`
+              label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} calls`
             }
           }
         },
         scales: {
           y: {
+            stacked: true,
             beginAtZero: true,
             title: { display: true, text: 'Total API Calls' }
           },
           x: {
+            stacked: true,
             title: { display: true, text: 'LFI' }
           }
         }

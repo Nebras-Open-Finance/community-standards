@@ -21,7 +21,7 @@ sequenceDiagram
 
     LFI->>+Hub: GET /auth
     LFI->>Hub: GET /consents/{consentId}
-    Note left of LFI: User authenticates & authorizes consent
+    Note over LFI: User authenticates & authorizes consent
     LFI->>Hub: PATCH /consent/{consentId}
     LFI->>Hub: POST /auth/{interactionId}/doConfirm
 

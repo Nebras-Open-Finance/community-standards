@@ -7,11 +7,12 @@ const props = defineProps({
 })
 
 const BASE_SCALE = 2.75
+const BASE_Y = -150
 
 const isOpen = ref(false)
 const scale = ref(BASE_SCALE)
 const panX = ref(0)
-const panY = ref(0)
+const panY = ref(BASE_Y)
 const isDragging = ref(false)
 const dragStart = ref({ x: 0, y: 0, panX: 0, panY: 0 })
 
@@ -31,7 +32,7 @@ function close() {
 function resetView() {
   scale.value = BASE_SCALE
   panX.value = 0
-  panY.value = 0
+  panY.value = BASE_Y
 }
 
 function handleKey(e) {

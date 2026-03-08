@@ -18,7 +18,7 @@
         <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
-            API Volumes</h4>
+            API Calls by Month</h4>
 
 
           <APIVolBarChart />
@@ -27,7 +27,7 @@
         <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; text-align: left; font-weight: 500;">
-            API Vol by Bank</h4>
+            API Calls by Bank</h4>
 
           <APIVolByBankBarChart />
         </div>
@@ -39,7 +39,7 @@
         <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
-            API Response Times</h4>
+            API Response Time by Month</h4>
 
 
           <APIResponseBarChart />
@@ -48,7 +48,7 @@
         <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; text-align: left; font-weight: 500;">
-            API Error Rates</h4>
+            API Error Rate by Month</h4>
 
 
           <APIErrorRatesBarChart />
@@ -60,7 +60,7 @@
         <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
-            API Volume by Family</h4>
+            API Calls by API Family</h4>
 
 
           <APIVolByFamilyBarChart />
@@ -70,7 +70,7 @@
         <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; text-align: left; font-weight: 500;">
-            API Volume by Endpoint (Data Sharing)</h4>
+            API Calls by Endpoint (Data Sharing)</h4>
 
 
           <APIEndpointDSBarChart />
@@ -81,7 +81,7 @@
         <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
-            API Volume by TPP</h4>
+            API Calls by TPP</h4>
 
 
           <APIVolByTPPBarChart />
@@ -99,18 +99,18 @@
         <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
-            Payment Volumes (Amount)</h4>
+            Payment Amount by Month</h4>
 
 
-          <PaymentVolAmountBarChart />
+          <PaymentAmountByMonthChart />
         </div>
 
         <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; text-align: left; font-weight: 500;">
-            Payment Volumes (Count)</h4>
+            Payment Count by Month</h4>
 
-          <PaymentVolBarChart />
+          <PaymentCountByMonthChart />
         </div>
       </div>
 
@@ -118,18 +118,18 @@
         <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
-            Payment Volumes By Bank (Amount)</h4>
+            Payment Amount by Bank</h4>
 
 
-          <PaymentVolAmountByBankBarChart />
+          <PaymentAmountByBankChart />
         </div>
 
         <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; text-align: left; font-weight: 500;">
-             Payment Volumes By Bank (Count)</h4>
+             Payment Count by Bank</h4>
 
-          <PaymentVolByBankBarChart />
+          <PaymentCountByBankChart />
         </div>
       </div>
 
@@ -137,20 +137,37 @@
         <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
-            Payment Success Rate By Bank</h4>
+            Payment Amount by Bank & Consent Type</h4>
 
-
-          <PaymentSuccessByBankBarChart />
+          <PaymentAmountByConsentAndBankChart />
         </div>
 
         <div class="chart-col">
           <h4
             style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; text-align: left; font-weight: 500;">
-             Average Payment Amount By Bank</h4>
+            Payment Count by Bank & Consent Type</h4>
 
-          <PaymentAverageByBankBarChart />
+          <PaymentCountByConsentAndBankChart />
+        </div>
+      </div>
+
+      <div class="chart-row">
+        <div class="chart-col">
+          <h4
+            style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
+            Payment Success Rate by Bank</h4>
+
+
+          <PaymentSuccessRateByBankChart />
         </div>
 
+        <div class="chart-col">
+          <h4
+            style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; text-align: left; font-weight: 500;">
+             Avg Successful Payment Amount by Bank</h4>
+
+          <PaymentAvgAmountByBankChart />
+        </div>
       </div>
 
     </div>
@@ -168,12 +185,14 @@ import APIVolByFamilyBarChart from './Charts/APIVolByFamilyBarChart.vue'
 import APIEndpointDSBarChart from './Charts/APIEndpointDSBarChart.vue'
 import APIVolByTPPBarChart from './Charts/APIVolByTPPBarChart.vue'
 
-import PaymentVolBarChart from './Charts/PaymentVolBarChart.vue'
-import PaymentVolAmountBarChart from './Charts/PaymentVolAmountBarChart.vue'
-import PaymentVolByBankBarChart from './Charts/PaymentVolByBankBarChart.vue'
-import PaymentVolAmountByBankBarChart from './Charts/PaymentVolAmountByBankBarChart.vue'
-import PaymentSuccessByBankBarChart from './Charts/PaymentSuccessByBankBarChart.vue'
-import PaymentAverageByBankBarChart from './Charts/PaymentAverageByBankBarChart.vue'
+import PaymentCountByMonthChart from './Charts/PaymentCountByMonthChart.vue'
+import PaymentAmountByMonthChart from './Charts/PaymentAmountByMonthChart.vue'
+import PaymentCountByBankChart from './Charts/PaymentCountByBankChart.vue'
+import PaymentAmountByBankChart from './Charts/PaymentAmountByBankChart.vue'
+import PaymentAmountByConsentAndBankChart from './Charts/PaymentAmountByConsentAndBankChart.vue'
+import PaymentCountByConsentAndBankChart from './Charts/PaymentCountByConsentAndBankChart.vue'
+import PaymentSuccessRateByBankChart from './Charts/PaymentSuccessRateByBankChart.vue'
+import PaymentAvgAmountByBankChart from './Charts/PaymentAvgAmountByBankChart.vue'
 
 // const apiVolByLFI = ref([])
 

@@ -17,13 +17,26 @@ import {
   Chart,
   BarController,
   BarElement,
+  LineController,
+  LineElement,
+  PointElement,
   CategoryScale,
   LinearScale,
   Tooltip,
   Legend
 } from 'chart.js'
 
-Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
+Chart.register(
+  BarController,
+  BarElement,
+  LineController,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend
+)
 
 const canvasRef = ref(null)
 let chartInstance = null
@@ -64,7 +77,14 @@ const getApiFamily = (url) => {
   if (!url || !url.startsWith('open-finance/')) return null
 
   const parts = url.split('/')
-  return parts.length > 1 ? `${parts[1]} ${parts[2]}` : null
+  if (parts.length > 2) {
+    const version = parts[2] || ''
+    return {
+      family: parts[1],
+      version
+    }
+  }
+  return null
 }
 
 /* =========================
@@ -107,24 +127,48 @@ const getFilteredData = () => {
 /* =========================
    GROUP BY API FAMILY
 ========================= */
-const buildGroupedByFamily = (data) => {
-  const map = {}
+const buildStackedByFamilyVersion = (data) => {
+  const families = new Set()
+  const versions = new Set()
+  const bucket = {}
 
   data.forEach(item => {
-    const family = getApiFamily(item.url)
-    if (!family) return
-
-    const volume = Number(item.Volume) || 0
-    map[family] = (map[family] || 0) + volume
+    const info = getApiFamily(item.url)
+    if (!info) return
+    const { family, version } = info
+    families.add(family)
+    versions.add(version)
+    const vol = Number(item.Volume) || 0
+    if (!bucket[family]) bucket[family] = {}
+    bucket[family][version] = (bucket[family][version] || 0) + vol
   })
 
-  const sorted = Object.entries(map)
-    .sort((a, b) => b[1] - a[1])
+  const labels = Array.from(families).sort()
+  const versionList = Array.from(versions).sort()
 
-  return {
-    labels: sorted.map(([k]) => k),
-    values: sorted.map(([, v]) => v)
-  }
+  const palette = [
+    '#4F46E5',
+    '#10B981',
+    '#F59E0B',
+    '#3B82F6',
+    '#EC4899',
+    '#8B5CF6',
+    '#F97316',
+    '#14B8A6'
+  ]
+
+  const datasets = versionList.map((ver, idx) => ({
+    label: ver || 'v? (unspecified)',
+    data: labels.map(fam => bucket[fam]?.[ver] || 0),
+    backgroundColor: palette[idx % palette.length],
+    borderColor: palette[idx % palette.length],
+    borderWidth: 1,
+    borderRadius: 8,
+    maxBarThickness: 50,
+    stack: 'versions'
+  }))
+
+  return { labels, datasets }
 }
 
 /* =========================
@@ -132,34 +176,24 @@ const buildGroupedByFamily = (data) => {
 ========================= */
 const updateChart = () => {
   const filtered = getFilteredData()
-  const { labels, values } = buildGroupedByFamily(filtered)
+  const { labels, datasets } = buildStackedByFamilyVersion(filtered)
 
   if (chartInstance) {
     chartInstance.data.labels = labels
-    chartInstance.data.datasets[0].data = values
+    chartInstance.data.datasets = datasets
     chartInstance.update()
   } else {
     chartInstance = new Chart(canvasRef.value, {
       type: 'bar',
       data: {
         labels,
-        datasets: [
-          {
-            label: 'Open Finance API Calls (by Family)',
-            data: values,
-            backgroundColor: '#4F46E5',
-            borderColor: '#4338CA',
-            borderWidth: 2,
-            borderRadius: 8,
-            maxBarThickness: 50
-          }
-        ]
+        datasets
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { display: false },
+          legend: { display: true, position: 'bottom' },
           tooltip: {
             callbacks: {
               label: ctx => `${ctx.parsed.y.toLocaleString()} calls`
@@ -168,10 +202,12 @@ const updateChart = () => {
         },
         scales: {
           y: {
+            stacked: true,
             beginAtZero: true,
             title: { display: true, text: 'Total API Calls' }
           },
           x: {
+            stacked: true,
             title: { display: true, text: 'API Family' }
           }
         }

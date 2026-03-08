@@ -11,6 +11,9 @@ sequenceDiagram
     participant LFI as LFI
 
     Note over TPP: Encrypt PII (creditor name + IBAN)
+    Note over TPP: Construct Authorization Details
+    Note over TPP: Construct Request JWT (payments openid)
+    Note over TPP: Create Client Assertion
     TPP->>+Hub: POST /par (urn:openfinanceuae:service-initiation-consent:v2.1)
     opt Config-dependent
         Hub->>+LFI: POST /consents/action/validate
@@ -22,7 +25,7 @@ sequenceDiagram
 
     LFI->>+Hub: GET /auth
     LFI->>Hub: GET /consents/{consentId}
-    Note left of LFI: User authenticates & authorizes consent
+    Note over LFI: User authenticates & authorizes consent
     LFI->>Hub: PATCH /consent/{consentId}
     LFI->>Hub: POST /auth/{interactionId}/doConfirm
 

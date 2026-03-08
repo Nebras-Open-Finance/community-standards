@@ -1,528 +1,415 @@
 <template>
-  <div class="builder">
-    <h2>Generate Your Postman Bootstrap Script</h2>
-    <p>
-      Complete all required fields, then download a TPP-specific script for the Postman
-      <code>Tests</code> tab.
-    </p>
+  <div class="form-root">
 
-    <div class="grid">
-      <label class="field">
-        <span class="field-title">
-          Client ID (<code>tf_client_id</code>)
-          <button type="button" class="help-link" @click="openGuidance('client_id')">(?)</button>
-        </span>
-        <input v-model.trim="form.tf_client_id" type="text" placeholder="UUID from Trust Framework application" />
-      </label>
-
-      <fieldset class="field role-field">
-        <legend class="field-title">
-          Roles (<code>tf_roles</code>)
-          <button type="button" class="help-link" @click="openGuidance('roles')">(?)</button>
-        </legend>
-        <label><input v-model="form.role_bdsp" type="checkbox" /> BDSP</label>
-        <label><input v-model="form.role_bsip" type="checkbox" /> BSIP</label>
-      </fieldset>
-
-      <label class="field">
-        <span class="field-title">
-          Redirect URI (<code>tf_redirect_uri</code>)
-          <button type="button" class="help-link" @click="openGuidance('redirect_uri')">(?)</button>
-        </span>
-        <input v-model.trim="form.tf_redirect_uri" type="url" placeholder="https://app.example.com/callback" />
-      </label>
-
-      <label class="field">
-        <span class="field-title">
-          Transport cert path (<code>tf_client_transport_pem_path</code>)
-          <button type="button" class="help-link" @click="openGuidance('transport_pem')">(?)</button>
-        </span>
-        <input
-          v-model.trim="form.tf_client_transport_pem_path"
-          type="text"
-          placeholder="C:\\certs\\client_transport.pem"
-        />
-      </label>
-
-      <label class="field">
-        <span class="field-title">
-          Transport key path (<code>tf_client_transport_key_path</code>)
-          <button type="button" class="help-link" @click="openGuidance('transport_key')">(?)</button>
-        </span>
-        <input
-          v-model.trim="form.tf_client_transport_key_path"
-          type="text"
-          placeholder="C:\\certs\\client_transport.key"
-        />
-      </label>
-
-      <label class="field">
-        <span class="field-title">
-          Signing key ID (<code>tf_signing_kid</code>)
-          <button type="button" class="help-link" @click="openGuidance('signing_kid')">(?)</button>
-        </span>
-        <input v-model.trim="form.tf_signing_kid" type="text" placeholder="kid from Trust Framework signing certificate" />
-      </label>
-
-      <label class="field">
-        <span class="field-title">
-          LFI discovery URL (<code>tf_discovery_url</code>)
-          <button type="button" class="help-link" @click="openGuidance('discovery_url')">(?)</button>
-        </span>
-        <input v-model.trim="form.tf_discovery_url" type="url" />
-      </label>
-
-      <label class="field field-full">
-        <span class="field-title">
-          Signing key PEM content (<code>tf_signing_key_pem</code>)
-          <button type="button" class="help-link" @click="openGuidance('signing_key_pem')">(?)</button>
-        </span>
-        <textarea
-          v-model="form.tf_signing_key_pem"
-          rows="10"
-          placeholder="Paste full content of client_signing.key"
-        ></textarea>
-      </label>
-
-      <label class="field field-full">
-        <span class="field-title">
-          Load signing key from file (optional)
-          <button type="button" class="help-link" @click="openGuidance('signing_key_file')">(?)</button>
-        </span>
-        <input type="file" accept=".key,.pem,.txt" @change="loadSigningKeyFile" />
-      </label>
+    <div class="form-section">
+      <FormInput placeholder="Enter your Client Id" ref="inputClientId" name="client_id" :input="formData.client_id"
+        :error="!!showError('client_id')" @output="setClientId" />
+      <InfoTooltip style="position: absolute; right: 10px; top: 10px;" :icon-size="40">
+        <strong>Client ID</strong> - Use the client_id from your Trust Framework application detail page.<br />
+        See: <a href="/tech/tpp-standards/trust-framework/application#your-client-id">Trust Framework client_id</a>
+      </InfoTooltip>
+            <div v-if="showError('client_id') === ''" class="field-error" style="color: rgba(17, 85, 113, 1);"
+        aria-live="polite">Your Client Id should look like: <span style="font-style: italic;">https://rp.sandbox.directory.openfinance.ae/openid_relying_party/c6fb03a0-e987-49d5-94e2-76cfec02c522</span>
+      </div>
+      <div class="field-error" aria-live="polite">{{ showError('client_id') }}</div>
     </div>
 
-    <div v-if="errors.length" class="errors">
-      <strong>Fix these fields before download:</strong>
-      <ul>
-        <li v-for="err in errors" :key="err">{{ err }}</li>
-      </ul>
+    <div class="form-section">
+      <div class="role-label">Client Roles</div>
+      <div class="role-row">
+        <button v-for="opt in roles" :key="opt" type="button"
+          :class="['role-chip', { active: formData.roles.includes(opt), error: showError('role') }]"
+          @click="setRoles(opt)">
+          {{ opt }}
+        </button>
+      </div>
+      <InfoTooltip style="position: absolute; right: 10px; top: 30px;" :icon-size="40">
+        <strong>Client Roles</strong> - Choose the roles assigned to your app (BDSP for data sharing, BSIP for payments/service initiation).<br />
+        See: <a href="/tech/tpp-standards/trust-framework/roles">roles reference</a>
+      </InfoTooltip>
+      
+      <div class="field-error" aria-live="polite">{{ showError('role') }}</div>
     </div>
+
+    <div class="form-section">
+      <FormInput placeholder="Enter your Redirect URI" ref="inputRedirectURI" name="redirect_uri"
+        :input="formData.redirect_uri" :error="!!showError('redirect_uri')" @output="setRedirectURI" />
+      <InfoTooltip style="position: absolute; right: 10px; top: 10px;" :icon-size="40">
+        <strong>Redirect URI</strong> - Must exactly match a redirect URI registered on your Trust Framework application.<br />
+        See: <a href="/tech/tpp-standards/trust-framework/redirect-uri">redirect URI guidance</a>
+      </InfoTooltip>
+      <div class="field-error" aria-live="polite">{{ showError('redirect_uri') }}</div>
+    </div>
+
+    <div class="form-section">
+      <FormInput placeholder="Enter your Client Transport Key ID" ref="inputTransportKeyId" name="transport_key_id"
+        :input="formData.transport_key_id" :error="!!showError('transport_key_id')" @output="setTransportKeyID" />
+      <InfoTooltip style="position: absolute; right: 10px; top: 10px;" :icon-size="40">
+        <strong>Transport key ID</strong> - - The kid from your transport certificate details in the Trust Framework.<br />
+        See: <a href="/tech/tpp-standards/trust-framework/certificates">mTLS certificates</a>
+      </InfoTooltip>
+      <div class="field-error" aria-live="polite">{{ showError('transport_key_id') }}</div>
+    </div>
+
+    <div class="form-section">
+      <FormInput placeholder="Enter your Client Signing Key ID" ref="inputSigningKeyId" name="signing_key_id"
+        :input="formData.signing_key_id" :error="!!showError('signing_key_id')" @output="setSigningKeyID" />
+      <InfoTooltip style="position: absolute; right: 10px; top: 10px;" :icon-size="40">
+        <strong>Signing key ID</strong> - The kid from your signing certificate details in the Trust Framework.<br />
+        See: <a href="/tech/tpp-standards/trust-framework/certificates#finding-your-key-id-kid">finding your key ID (kid)</a>
+      </InfoTooltip>
+      <div class="field-error" aria-live="polite">{{ showError('signing_key_id') }}</div>
+    </div>
+
+    <div class="form-section">
+      <div class="upload-label">Upload signing private key (.key)</div>
+      <label class="file-input">
+        <span class="file-button">Choose file</span>
+        <span class="file-name">{{ formData.key_file_name || 'No file chosen' }}</span>
+        <input type="file" accept=".key,.pem,.txt" @change="handleKeyUpload" />
+      </label>
+      <div class="field-hint" aria-live="polite">Accepted: .key, .pem or .txt private key files.</div>
+      <div v-if="showError('key_upload') === ''" class="field-hint strong" aria-live="polite">
+        While we request your Signing Private Key here to help you get up and running in the sandbox environment, this is strictly for testing purposes. In production, never share your private keys—they must stay secure within your own environment.
+        Please refer to <a href="/policy/secure-management">Secure Management of Keys and Credentials in UAE Open Finance</a> for guidance.
+      </div>
+      <div class="field-error" aria-live="polite">{{ showError('key_upload') || uploadError }}</div>
+    </div>
+
+
+    <div class="form-section">
+      <FormInput placeholder="Enter the LFI's Discovery Endpoint" ref="inputDiscoveryURI" name="discovery_uri"
+        :input="formData.discovery_uri" :error="!!showError('discovery_uri')" @output="setDiscoveryURI" />
+      <InfoTooltip style="position: absolute; right: 10px; top: 10px;" :icon-size="40">
+        <strong>LFI Discovery URL</strong> - The .well-known endpoint of the target LFI; model bank URL is prefilled.<br />
+        See: <a href="/tpp-standards/trust-framework/well-known">The .well-known Endpoint</a>
+      </InfoTooltip>
+      <div v-if="showError('discovery_uri') === ''" class="field-error" style="color: rgba(17, 85, 113, 1);"
+        aria-live="polite">The discovery uri for the model bank is: <br />
+        <span style="font-style: italic; padding-left: 12px;">https://auth1.altareq1.sandbox.apihub.openfinance.ae/.well-known/openid-configuration</span>
+        <br /> 
+        for an LFI's preprod environment it will be 
+        <br />
+        <span style="font-style: italic; padding-left: 12px;">https://auth1.<span style="background-color: rgba(255,255,0,0.6);">[LFI  CODE]</span>.preprod.apihub.openfinance.ae/.well-known/openid-configuration</span>
+      </div>
+      <div class="field-error" aria-live="polite">{{ showError('discovery_uri') }}</div>
+    </div>
+
+
 
     <div class="actions">
-      <button :disabled="!isValid" @click="downloadScript">Download Postman Script (.js)</button>
-    </div>
-
-    <div id="field-guidance" class="guidance">
-      <h3>Field Guidance</h3>
-      <details
-        v-for="item in guidanceItems"
-        :key="item.key"
-        :open="activeGuidance === item.key"
-        class="guidance-item"
-      >
-        <summary>{{ item.title }}</summary>
-        <p>{{ item.text }}</p>
-        <p v-if="item.link">
-          Reference: <a :href="item.link">{{ item.linkText || item.link }}</a>
-        </p>
-      </details>
+      <button class="consent-style-button" @click="submit">
+        <span class="consent-style-button-inner">
+          <svg class="consent-style-button-icon" width="22" height="23" viewBox="0 0 22 23" fill="none"
+            xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path
+              d="M11 0C4.92501 0 0 4.93861 0 11.0306C0 17.1225 4.92501 22.0611 11 22.0611C17.075 22.0611 22 17.1225 22 11.0306C22 4.93861 17.075 0 11 0Z"
+              fill="white" />
+            <path
+              d="M14.8042 14.8454H7.19727V7.21704H14.8056V14.8454H14.8042ZM8.95837 13.078H13.0417V8.98435H8.95837V13.078Z"
+              fill="url(#paint0_linear_2_496)" />
+            <path
+              d="M5.4292 5.44275V16.6169H16.5723V5.44275H5.4292ZM14.8042 14.8454H7.19727V7.2171H14.8056V14.8454H14.8042Z"
+              fill="url(#paint1_linear_2_496)" />
+            <path
+              d="M3.66125 3.6698V18.3899H18.3404V3.6698H3.66125ZM16.5724 16.6183H5.42793V5.44416H16.5724V16.6183Z"
+              fill="url(#paint2_linear_2_496)" />
+            <path d="M22 22.0611L13.0416 13.0781H8.95831L17.9166 22.0611H22Z"
+              fill="url(#paint3_radial_2_496)" />
+            <defs>
+              <linearGradient id="paint0_linear_2_496" x1="7.02442" y1="10.9465" x2="14.6294" y2="10.9465"
+                gradientUnits="userSpaceOnUse">
+                <stop stop-color="#4083E1" />
+                <stop offset="0.08" stop-color="#3E8BDD" />
+                <stop offset="0.48" stop-color="#36B1CC" />
+                <stop offset="0.8" stop-color="#31C9C1" />
+                <stop offset="1" stop-color="#30D2BE" />
+              </linearGradient>
+              <linearGradient id="paint1_linear_2_496" x1="5.42781" y1="11.0305" x2="16.5723" y2="11.0305"
+                gradientUnits="userSpaceOnUse">
+                <stop stop-color="#80ACEB" />
+                <stop offset="0.3" stop-color="#7BC0E1" />
+                <stop offset="0.73" stop-color="#76D8D7" />
+                <stop offset="1" stop-color="#75E1D4" />
+              </linearGradient>
+              <linearGradient id="paint2_linear_2_496" x1="3.65987" y1="11.0305" x2="18.3404" y2="11.0305"
+                gradientUnits="userSpaceOnUse">
+                <stop stop-color="#BFD6F5" />
+                <stop offset="0.55" stop-color="#BBE7ED" />
+                <stop offset="1" stop-color="#BAF0E9" />
+              </linearGradient>
+              <radialGradient id="paint3_radial_2_496" cx="0" cy="0" r="1"
+                gradientTransform="matrix(9.09232 8.98302 -65.3309 67.979 10.8846 13.0781)"
+                gradientUnits="userSpaceOnUse">
+                <stop stop-color="#40E0C7" />
+                <stop offset="0.304248" stop-color="#0050C8" />
+                <stop offset="0.623256" stop-color="white" />
+              </radialGradient>
+            </defs>
+          </svg>
+          <span class="consent-style-button-text">Download your Postman Collection</span>
+        </span>
+      </button>
     </div>
   </div>
 </template>
 
-<script setup>
-import { computed, reactive, ref } from 'vue'
+<script>
+import FormInput from './Form/FormInput.vue'
+import InfoTooltip from './InfoTooltip.vue'
 
-const DEFAULT_DISCOVERY_URL =
-  'https://auth1.altareq1.sandbox.apihub.openfinance.ae/.well-known/openid-configuration'
+export default {
+  components: { FormInput, InfoTooltip },
+  data() {
+    return {
+      complete: false,
+      roles: ['BDSP (Bank Data Sharing)', 'BSIP (Payments / Service Initiation)'],
+      formData: {
+        client_id: undefined,
+        roles: [],
+        redirect_uri: undefined,
+        transport_key_id: undefined,
+        signing_key_id: undefined,
+        discovery_uri: 'https://auth1.altareq1.sandbox.apihub.openfinance.ae/.well-known/openid-configuration',
+        key_file_name: undefined
+      },
+      uploadError: ''
+    }
+  },
+  methods: {
+    setRoles(val) {
+      const roles = this.formData.roles
+      const index = roles.indexOf(val)
+      if (index >= 0) {
+        roles.splice(index, 1)
+      } else {
+        roles.push(val)
+      }
+    },
+    setClientId(val) {
+      this.formData.client_id = val.data
+    },
+    setRedirectURI(val) {
+      this.formData.redirect_uri = val.data
+    },
+    setTransportKeyID(val) {
+      this.formData.transport_key_id = val.data
+    },
+    setSigningKeyID(val) {
+      this.formData.signing_key_id = val.data
+    },
+    setDiscoveryURI(val) {
+      this.formData.discovery_uri = val.data
+    },
+    async handleKeyUpload(event) {
+      const file = event?.target?.files?.[0]
+      if (!file) return
+      if (!file.name.match(/\\.(key|pem|txt)$/i)) {
+        this.uploadError = 'Please upload a .key, .pem or .txt private key file.'
+        return
+      }
+      this.uploadError = ''
+      this.formData.key_file_name = file.name
+    },
 
-const form = reactive({
-  tf_client_id: '',
-  role_bdsp: true,
-  role_bsip: true,
-  tf_redirect_uri: '',
-  tf_client_transport_pem_path: '',
-  tf_client_transport_key_path: '',
-  tf_signing_key_pem: '',
-  tf_signing_kid: '',
-  tf_discovery_url: DEFAULT_DISCOVERY_URL
-})
-
-const activeGuidance = ref('client_id')
-
-const guidanceItems = [
-  {
-    key: 'client_id',
-    title: 'Client ID',
-    text: 'Use the client_id of your application from the Trust Framework application detail page.',
-    link: '/tech/tpp-standards/trust-framework/application#your-client-id'
-  },
-  {
-    key: 'roles',
-    title: 'Roles',
-    text: 'Select the roles assigned to your application. This controls what functionality you can test (BDSP for data sharing, BSIP for service initiation).',
-    link: '/tech/tpp-standards/trust-framework/roles'
-  },
-  {
-    key: 'redirect_uri',
-    title: 'Redirect URI',
-    text: 'Use a redirect_uri already registered on your Trust Framework application. It must match exactly in authorization requests.',
-    link: '/tech/tpp-standards/trust-framework/redirect-uri'
-  },
-  {
-    key: 'transport_pem',
-    title: 'Transport Certificate Path',
-    text: 'Provide the local path to client_transport.pem. This certificate is used for mTLS when calling onboarding, auth, and resource endpoints.',
-    link: '/tech/tpp-standards/trust-framework/certificates'
-  },
-  {
-    key: 'transport_key',
-    title: 'Transport Key Path',
-    text: 'Provide the local path to client_transport.key paired with your transport certificate.',
-    link: '/tech/tpp-standards/trust-framework/certificates'
-  },
-  {
-    key: 'signing_kid',
-    title: 'Signing Key ID (kid)',
-    text: 'Use the kid of your signing certificate exactly as shown in Trust Framework certificate details.',
-    link: '/tech/tpp-standards/trust-framework/certificates#finding-your-key-id-kid'
-  },
-  {
-    key: 'discovery_url',
-    title: 'LFI Discovery URL',
-    text: 'Use the target LFI .well-known URL. For model bank use the default sandbox discovery endpoint.',
-    link: '/tech/tpp-standards/v2.1/banking/testing/model-bank'
-  },
-  {
-    key: 'signing_key_pem',
-    title: 'Signing Key PEM',
-    text: 'Paste full content of client_signing.key. This is used in sandbox tooling only.',
-    link: '/tech/tpp-standards/security/fapi/o3-utils'
-  },
-  {
-    key: 'signing_key_file',
-    title: 'Signing Key File Upload',
-    text: 'Optional shortcut to load client_signing.key content into the form instead of copy/paste.',
-    link: '/tech/tpp-standards/security/fapi/message-signing'
+    showError(key) {
+      if (!this.complete) return ''
+      if (key === 'client_id' && !this.formData.client_id) return 'Field is required.'
+      if (key === 'role' && this.formData.roles.length === 0) return 'One role is required.'
+      if (key === 'redirect_uri' && !this.formData.redirect_uri) return 'Field is required.'
+      if (key === 'transport_key_id' && !this.formData.transport_key_id) return 'Field is required.'
+      if (key === 'signing_key_id' && !this.formData.signing_key_id) return 'Field is required.'
+      if (key === 'discovery_uri' && !this.formData.discovery_uri) return 'Field is required.'
+      if (key === 'key_upload' && !this.formData.key_file_name) return 'Signing .key file is required.'
+      return ''
+    },
+    async submit() {
+      this.complete = true
+      if (
+        this.showError('client_id') ||
+        this.showError('role') ||
+        this.showError('redirect_uri') ||
+        this.showError('transport_key_id') ||
+        this.showError('signing_key_id') ||
+        this.showError('discovery_uri')
+      ) {
+        window.scrollTo({ top: 300, behavior: 'smooth' })
+        return
+      }
+      // submit logic placeholder
+      this.$emit('submit', { ...this.formData })
+    }
   }
-]
-
-const roles = computed(() => {
-  const selected = []
-  if (form.role_bdsp) selected.push('BDSP')
-  if (form.role_bsip) selected.push('BSIP')
-  return selected
-})
-
-const errors = computed(() => {
-  const list = []
-  if (!form.tf_client_id) list.push('Client ID is required.')
-  if (!roles.value.length) list.push('At least one role (BDSP or BSIP) is required.')
-  if (!form.tf_redirect_uri) list.push('Redirect URI is required.')
-  if (!form.tf_client_transport_pem_path) list.push('Transport certificate path is required.')
-  if (!form.tf_client_transport_key_path) list.push('Transport key path is required.')
-  if (!form.tf_signing_key_pem.trim()) list.push('Signing key PEM content is required.')
-  if (!form.tf_signing_kid) list.push('Signing key ID (kid) is required.')
-  if (!form.tf_discovery_url) list.push('Discovery URL is required.')
-
-  if (form.tf_client_id && !isLikelyUuid(form.tf_client_id)) {
-    list.push('Client ID should be a UUID from the Trust Framework.')
-  }
-  if (form.tf_redirect_uri && !isLikelyUrl(form.tf_redirect_uri)) {
-    list.push('Redirect URI must be a valid URL.')
-  }
-  if (form.tf_discovery_url && !isLikelyUrl(form.tf_discovery_url)) {
-    list.push('Discovery URL must be a valid URL.')
-  }
-  if (form.tf_signing_key_pem && !form.tf_signing_key_pem.includes('BEGIN')) {
-    list.push('Signing key PEM looks invalid (missing BEGIN marker).')
-  }
-
-  return list
-})
-
-const isValid = computed(() => errors.value.length === 0)
-
-function isLikelyUuid(value) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
-}
-
-function isLikelyUrl(value) {
-  try {
-    const parsed = new URL(value)
-    return parsed.protocol === 'https:' || parsed.protocol === 'http:'
-  } catch {
-    return false
-  }
-}
-
-function openGuidance(key) {
-  activeGuidance.value = key
-  const section = document.getElementById('field-guidance')
-  if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
-
-function sanitizeFilePart(value) {
-  return value.replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 48)
-}
-
-function escapeForJsSingleQuote(value) {
-  return String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'")
-}
-
-async function loadSigningKeyFile(event) {
-  const input = event.target
-  if (!input?.files?.length) return
-  const file = input.files[0]
-  form.tf_signing_key_pem = await file.text()
-}
-
-function buildScript() {
-  const tfRoles = roles.value.join(',')
-  const cfg = {
-    tf_client_id: form.tf_client_id,
-    tf_roles: tfRoles,
-    tf_redirect_uri: form.tf_redirect_uri,
-    tf_client_transport_pem_path: form.tf_client_transport_pem_path,
-    tf_client_transport_key_path: form.tf_client_transport_key_path,
-    tf_signing_key_pem: form.tf_signing_key_pem,
-    tf_signing_kid: form.tf_signing_kid,
-    tf_discovery_url: form.tf_discovery_url
-  }
-
-  return `/**
- * Generated by Nebras TPP Sandbox Quickstart
- * Usage:
- * 1) In Postman, create request: GET ${escapeForJsSingleQuote(cfg.tf_discovery_url)}
- * 2) Paste this script in the Tests tab of that request.
- * 3) Send request once to populate environment variables for this TPP.
- *
- * mTLS note:
- * Postman scripts cannot install client certificates.
- * Configure certificates manually in Postman Settings -> Certificates:
- * - CRT: ${escapeForJsSingleQuote(cfg.tf_client_transport_pem_path)}
- * - KEY: ${escapeForJsSingleQuote(cfg.tf_client_transport_key_path)}
- */
-
-const cfg = ${JSON.stringify(cfg, null, 2)};
-
-const roles = cfg.tf_roles
-  .split(',')
-  .map((r) => r.trim().toUpperCase())
-  .filter(Boolean);
-
-const hasBDSP = roles.includes('BDSP');
-const hasBSIP = roles.includes('BSIP');
-if (!hasBDSP && !hasBSIP) {
-  throw new Error('tf_roles must include BDSP and/or BSIP');
-}
-
-const scopeParts = ['openid'];
-if (hasBDSP) scopeParts.push('accounts');
-if (hasBSIP) scopeParts.push('payments');
-const roleScope = scopeParts.join(' ');
-
-for (const [k, v] of Object.entries(cfg)) {
-  pm.environment.set(k, v);
-}
-
-let jsonData;
-try {
-  jsonData = pm.response.json();
-} catch (e) {
-  throw new Error('Discovery response is not valid JSON.');
-}
-
-const registrationEndpoint = jsonData.registration_endpoint;
-if (!registrationEndpoint) {
-  throw new Error('registration_endpoint is missing in discovery document.');
-}
-const rs = registrationEndpoint.replace(/\\/tpp-registration$/, '');
-
-pm.environment.set('_clientId', cfg.tf_client_id);
-pm.environment.set('client_id', cfg.tf_client_id);
-pm.environment.set('redirectUrl', cfg.tf_redirect_uri);
-pm.environment.set('kid-local', cfg.tf_signing_kid);
-pm.environment.set('pem-local', cfg.tf_signing_key_pem);
-pm.environment.set('tpp_roles', roles.join(','));
-pm.environment.set('scope', roleScope);
-
-pm.environment.set('issuer', jsonData.issuer || '');
-pm.environment.set('auth-endpoint', jsonData.authorization_endpoint || '');
-pm.environment.set('token-endpoint', jsonData.token_endpoint || '');
-pm.environment.set('par-endpoint', jsonData.pushed_authorization_request_endpoint || '');
-pm.environment.set('jwksUrl', jsonData.jwks_uri || '');
-pm.environment.set('registration-endpoint', registrationEndpoint);
-pm.environment.set('rs', rs);
-
-console.log('Bootstrap complete', {
-  client_id: cfg.tf_client_id,
-  roles,
-  scope: roleScope,
-  issuer: pm.environment.get('issuer'),
-  rs: pm.environment.get('rs')
-});
-`
-}
-
-function downloadScript() {
-  if (!isValid.value) return
-
-  const script = buildScript()
-  const blob = new Blob([script], { type: 'application/javascript;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `postman-bootstrap-${sanitizeFilePart(form.tf_client_id || 'tpp')}.js`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
 }
 </script>
 
 <style scoped>
-.builder {
-  border: 1px solid var(--vp-c-border);
-  border-radius: 12px;
-  padding: 24px;
-  margin: 16px 0 28px;
-  background: linear-gradient(180deg, var(--vp-c-bg-soft) 0%, var(--vp-c-bg) 100%);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.05);
+.form-root {
+  /* max-width: 760px; */
+  margin: 0 auto;
+  padding: 16px 12px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
 }
 
-.builder h2 {
-  margin: 0 0 8px;
-  font-size: 22px;
+.lead {
+  margin: 0;
+  color: #4d5566;
+  font-size: 14px;
 }
 
-.builder p {
-  margin: 0 0 18px;
-  color: var(--vp-c-text-2);
+.form-section {
+  position: relative;
+  width: 100%;
+  gap: 8px;
 }
 
-.grid {
+.two-col {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 14px;
 }
 
-.field {
+.field-col {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
 }
 
-.field-title {
+.role-label {
+  font-weight: 600;
+  color: #0b1340;
+}
+
+.role-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.role-chip {
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.75rem;
+  border: 1px solid #dadce0;
+  box-shadow: 0 0 4px rgba(17, 85, 113, 1);
+  padding: 15px;
+  padding-left: 24px;
+  padding-right: 24px;
+  border-radius: 4px;
+  color: rgba(17, 85, 113, 1) !important;
+  border-color: rgba(17, 85, 113, 1);
+}
+
+.role-chip.active {
+  background: rgba(54, 191, 212, 0.3);
+}
+
+.role-chip.error {
+  border-color: #dc2626;
+  box-shadow: 0 0 4px #dc2626;
+}
+
+.upload-label {
+  font-weight: 600;
+  color: #0b1340;
+  margin-bottom: 6px;
+}
+
+.file-input {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 600;
-}
-
-.help-link {
-  border: none;
-  background: transparent;
-  color: var(--vp-c-brand-1);
+  gap: 10px;
+  padding: 8px 10px;
   cursor: pointer;
-  font-weight: 700;
-  padding: 0;
-  line-height: 1;
 }
 
-.help-link:hover {
-  text-decoration: underline;
+.file-input input {
+  display: none;
 }
 
-.field-full {
-  grid-column: 1 / -1;
+.file-button {
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.75rem;
+  border: 1px solid #dadce0;
+  box-shadow: 0 0 4px rgba(17, 85, 113, 1);
+  padding: 7px;
+  padding-left: 12px;
+  padding-right: 12px;
+  border-radius: 4px;
+  color: rgba(17, 85, 113, 1) !important;
+  border-color: rgba(17, 85, 113, 1);
 }
 
-.field input,
-.field textarea {
-  border: 1px solid var(--vp-c-border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 14px;
-  background: var(--vp-c-bg);
-  color: var(--vp-c-text-1);
+.file-name {
+  flex: 1;
+  color: #0b1340;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.field input:focus,
-.field textarea:focus {
-  outline: 2px solid color-mix(in srgb, var(--vp-c-brand-1) 45%, transparent);
-  border-color: var(--vp-c-brand-1);
+.field-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #4d5566;
 }
 
-.role-field {
-  border: 1px solid var(--vp-c-border);
-  border-radius: 8px;
-  padding: 10px 12px;
+.field-hint.strong {
+  color: rgba(17, 85, 113, 1);
 }
 
-.role-field legend {
-  padding: 0 6px;
-}
-
-.role-field label {
-  margin-right: 16px;
-}
-
-.errors {
-  margin-top: 16px;
-  border: 1px solid #fca5a5;
-  background: #fff1f2;
-  color: #991b1b;
-  padding: 10px 12px;
-  border-radius: 8px;
-}
-
-.errors ul {
-  margin: 8px 0 0 18px;
+.field-error {
+  min-height: 18px;
+  font-size: 12px;
+  padding-left: 12px;
+  color: #dc2626;
 }
 
 .actions {
-  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
 }
 
-.actions button {
+.consent-style-button {
   border: none;
-  background: linear-gradient(180deg, var(--vp-c-brand-1), var(--vp-c-brand-2));
-  color: white;
-  border-radius: 8px;
-  padding: 11px 16px;
-  font-weight: 600;
+  background: transparent;
+  padding: 0;
   cursor: pointer;
 }
 
-.actions button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.guidance {
-  margin-top: 22px;
-  border-top: 1px solid var(--vp-c-divider);
-  padding-top: 14px;
-}
-
-.guidance h3 {
-  margin: 0 0 8px;
-  font-size: 16px;
-}
-
-.guidance-item {
-  border: 1px solid var(--vp-c-border);
-  border-radius: 8px;
-  margin-bottom: 10px;
-  padding: 8px 10px;
-  background: var(--vp-c-bg);
-}
-
-.guidance-item summary {
-  cursor: pointer;
+.consent-style-button-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 400px;
+  height: 48px;
+  padding: 10px 10px 10px 20px;
+  border-radius: 66px;
+  background: linear-gradient(84.64deg, #00c8af 0%, #015ad7 41.05%, #000000 82.6%);
+  box-shadow: 0 10px 20px rgba(1, 90, 215, 0.18);
+  color: #ffffff;
   font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
-.guidance-item p {
-  margin: 10px 0 0;
+.consent-style-button:hover .consent-style-button-inner {
+ opacity: 80%;
 }
 
-@media (max-width: 800px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
+.consent-style-button-icon {
+  flex: none;
+}
+
+.consent-style-button-text {
+  font-size: 14px;
 }
 </style>
+
+

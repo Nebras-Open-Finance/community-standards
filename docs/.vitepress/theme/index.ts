@@ -31,6 +31,8 @@ import APIFlowsPeriodicSchedule from '../../components/APIFlows/PeriodicSchedule
 import APIFlowsDefinedSchedule from '../../components/APIFlows/DefinedSchedule.vue'
 import APIFlowsConsentFlow from '../../components/APIFlows/ConsentFlow.vue'
 import APIFlowsConfirmationOfPayee from '../../components/APIFlows/ConfirmationOfPayee.vue'
+import APIFlowsMultiAuthorization from '../../components/APIFlows/MultiAuthorization.vue'
+
 
 // UIs
 import ConsentBankDataSharing from '../../components/ConsentPages/ConsentBankDataSharing.vue'
@@ -92,6 +94,7 @@ export default {
     app.component('APIFlowsDefinedSchedule', APIFlowsDefinedSchedule)
     app.component('APIFlowsConsentFlow', APIFlowsConsentFlow)
     app.component('APIFlowsConfirmationOfPayee', APIFlowsConfirmationOfPayee)
+    app.component('APIFlowsMultiAuthorization', APIFlowsMultiAuthorization)
 
     // UI
     app.component('ConsentBankDataSharing', ConsentBankDataSharing)

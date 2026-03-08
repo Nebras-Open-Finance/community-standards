@@ -15,6 +15,20 @@ There are two types of consent, corresponding to the two service families:
 | **Bank Data Sharing** | Reading account data, balances, transactions, and related resources | `authorization_details` with `type: urn:openfinanceuae:account-access-consent:v2.1` |
 | **Bank Service Initiation** | Initiating payments | `authorization_details` with `type: urn:openfinanceuae:payment-consent:v2.1` |
 
+## API Hub as the source of truth
+
+The API Hub maintains all Open Finance consents and acts as the **authoritative system of record** for consents across the ecosystem. All consent creation, modification, and revocation events are recorded within the API Hub to ensure a single, consistent source of truth.
+
+Whenever a TPP initiates a request to access customer data or initiate a payment, the request is validated against the consent record stored in the API Hub.
+
+To maintain ecosystem-wide consistency consent updates such as status changes must be synchronized with the API Hub.
+
+## Consent immutability after staging
+
+Once a consent is staged, the **only field under `Data` that may change is `Status`**. All other `Data` values are fixed for the lifetime of that consent. `Subscription` and `Meta` may be patched, but they sit outside the `Data` object. See the request/response models in the OpenAPI (e.g. `/tpp-standards/v2.1/consent/open-api/account-access-consents`) for the canonical structure.
+
+If a user needs to change any `Data` value (for example, adjust `ExpirationDateTime` or add/remove a permission), the TPP must create a **new consent**, revoke the previous one, and link the two via `BaseConsentId`.
+
 
 ## Accessing a Protected Resource
 

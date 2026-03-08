@@ -22,12 +22,24 @@ import {
   Tooltip,
   Legend
 } from 'chart.js'
+import { sortLfis, formatLfiLabel } from './chartHelpers'
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
 
 const canvasRef = ref(null)
 let chartInstance = null
 const rawData = ref([])
+
+const palette = [
+  '#4F46E5',
+  '#10B981',
+  '#F59E0B',
+  '#3B82F6',
+  '#EC4899',
+  '#8B5CF6',
+  '#F97316',
+  '#14B8A6'
+]
 
 const getLastMonth = () => {
   const d = new Date()
@@ -37,22 +49,12 @@ const getLastMonth = () => {
 
 const selectedMonth = ref(getLastMonth())
 
-const getStatusBucket = (status) => {
-  const normalized = String(status || '').toLowerCase()
-
-  if (normalized.includes('pending') || normalized.includes('received')) return 'pending'
-  if (normalized.includes('rejected')) return 'rejected'
-  return 'successful'
-}
-
-// Load JSON
 const loadData = async () => {
   const response = await fetch('/api/payment-log.json')
   rawData.value = await response.json()
   updateChart()
 }
 
-// Filter by selected month (DD/MM/YYYY -> YYYY-MM)
 const getFilteredData = () =>
   rawData.value.filter(item => {
     if (!item.Date) return false
@@ -60,76 +62,55 @@ const getFilteredData = () =>
     return !selectedMonth.value || monthKey === selectedMonth.value
   })
 
-// Group counts by LFI and status bucket
-const buildStatusByLFI = data => {
+const buildAmountsByLFIConsent = data => {
   const map = {}
+  const consentSet = new Set()
 
   data.forEach(item => {
-    const key = item.LFI || 'Unknown'
-    if (key.toUpperCase() === 'UNKNOWN') return
+    const lfi = item.LFI || 'Unknown'
+    if (lfi.toUpperCase() === 'UNKNOWN') return
+    const consent = item.paymentConsentType || 'Unknown'
+    const amount = Number(item.amount) || 0
 
-    const count = Number(item.Count) || 0
-    const bucket = getStatusBucket(item.status)
-
-    if (!map[key]) {
-      map[key] = { pending: 0, rejected: 0, successful: 0 }
-    }
-
-    map[key][bucket] += count
+    consentSet.add(consent)
+    if (!map[lfi]) map[lfi] = {}
+    map[lfi][consent] = (map[lfi][consent] || 0) + amount
   })
 
-  const labels = Object.keys(map).sort()
-  return {
-    labels,
-    pendingValues: labels.map(k => map[k].pending),
-    rejectedValues: labels.map(k => map[k].rejected),
-    successfulValues: labels.map(k => map[k].successful)
-  }
+  const ordered = sortLfis(Object.keys(map))
+  const consents = Array.from(consentSet).sort()
+
+  const datasets = consents.map((consent, idx) => ({
+    label: consent,
+    data: ordered.map(lfi => map[lfi]?.[consent] || 0),
+    backgroundColor: palette[idx % palette.length],
+    borderColor: palette[idx % palette.length],
+    borderWidth: 1,
+    borderRadius: 8,
+    maxBarThickness: 50,
+    stack: 'consents'
+  }))
+
+  return { labels: ordered.map(formatLfiLabel), datasets }
 }
 
-// Create / update chart
 const updateChart = () => {
   if (chartInstance) chartInstance.destroy()
 
   const filtered = getFilteredData()
-  const { labels, pendingValues, rejectedValues, successfulValues } = buildStatusByLFI(filtered)
+  const { labels, datasets } = buildAmountsByLFIConsent(filtered)
 
   chartInstance = new Chart(canvasRef.value, {
     type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Pending',
-          data: pendingValues,
-          backgroundColor: 'rgba(245, 158, 11, 0.75)',
-          borderRadius: 8,
-          maxBarThickness: 50
-        },
-        {
-          label: 'Rejected',
-          data: rejectedValues,
-          backgroundColor: 'rgba(239, 68, 68, 0.75)',
-          borderRadius: 8,
-          maxBarThickness: 50
-        },
-        {
-          label: 'Successful',
-          data: successfulValues,
-          backgroundColor: 'rgba(16, 185, 129, 0.75)',
-          borderRadius: 8,
-          maxBarThickness: 50
-        }
-      ]
-    },
+    data: { labels, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: true },
+        legend: { display: true, position: 'bottom' },
         tooltip: {
           callbacks: {
-            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}`
+            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`
           }
         }
       },
@@ -137,11 +118,11 @@ const updateChart = () => {
         y: {
           stacked: true,
           beginAtZero: true,
-          title: { display: true, text: 'Count (#)' }
+          title: { display: true, text: 'Amount (AED)' }
         },
         x: {
           stacked: true,
-          title: { display: true, text: 'LFI' }
+          title: { display: true, text: 'Bank (LFI)' }
         }
       }
     }
@@ -171,4 +152,3 @@ watch(selectedMonth, updateChart)
   height: 320px;
 }
 </style>
-

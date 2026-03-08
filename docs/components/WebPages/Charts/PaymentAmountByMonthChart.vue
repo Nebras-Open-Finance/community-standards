@@ -17,20 +17,13 @@ import {
   Tooltip,
   Legend
 } from 'chart.js'
+import { getStatusBucket } from './chartHelpers'
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
 
 const canvasRef = ref(null)
 let chartInstance = null
 const rawData = ref([])
-
-const getStatusBucket = (status) => {
-  const normalized = String(status || '').toLowerCase()
-
-  if (normalized.includes('pending') || normalized.includes('received')) return 'pending'
-  if (normalized.includes('rejected')) return 'rejected'
-  return 'successful'
-}
 
 // Load JSON
 const loadData = async () => {
@@ -43,13 +36,13 @@ const loadData = async () => {
 const createChart = () => {
   if (chartInstance) chartInstance.destroy()
 
-  // Group counts by month (YYYY-MM) and status bucket
+  // Group amounts by month (YYYY-MM) and status bucket
   const grouped = {}
   rawData.value.forEach(item => {
     if (!item.Date) return
 
     const monthKey = item.Date.slice(6, 10) + '-' + item.Date.slice(3, 5)
-    const value = Number(item.Count) || 0
+    const value = Number(item.amount) || 0
     const bucket = getStatusBucket(item.status)
 
     if (!grouped[monthKey]) {
@@ -107,7 +100,7 @@ const createChart = () => {
         y: {
           stacked: true,
           beginAtZero: true,
-          title: { display: true, text: 'Count (#)' }
+          title: { display: true, text: 'Amount (AED)' }
         },
         x: {
           stacked: true,

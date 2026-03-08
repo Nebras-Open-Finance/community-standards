@@ -48,7 +48,8 @@ const loadData = async () => {
 const createChart = () => {
   if (chartInstance) chartInstance.destroy()
 
-  const grouped = {}
+  const monthFamilyTotals = {}
+  const familiesSet = new Set()
 
   rawData.value.forEach(item => {
     // === FILTER: Only URLs starting with "open-finance/" ===
@@ -58,34 +59,56 @@ const createChart = () => {
     if (!monthKey) return
 
     const volume = Number(item.Volume) || 0
+    const family = (() => {
+      const parts = item.url.split('/')
+      const idx = parts.indexOf('open-finance')
+      if (idx >= 0 && parts.length > idx + 1) return parts[idx + 1]
+      if (parts.length > 1) return parts[1]
+      return 'other'
+    })()
 
-    grouped[monthKey] = (grouped[monthKey] || 0) + volume
+    familiesSet.add(family)
+
+    if (!monthFamilyTotals[monthKey]) monthFamilyTotals[monthKey] = {}
+    monthFamilyTotals[monthKey][family] = (monthFamilyTotals[monthKey][family] || 0) + volume
   })
 
-  const labels = Object.keys(grouped).sort()
-  const values = labels.map(month => grouped[month])
+  const labels = Object.keys(monthFamilyTotals).sort()
+  const families = Array.from(familiesSet).sort()
+
+  const palette = [
+    '#4F46E5',
+    '#10B981',
+    '#F59E0B',
+    '#3B82F6',
+    '#EC4899',
+    '#8B5CF6',
+    '#F97316',
+    '#14B8A6'
+  ]
+
+  const datasets = families.map((family, idx) => ({
+    label: family,
+    data: labels.map(month => monthFamilyTotals[month]?.[family] || 0),
+    backgroundColor: palette[idx % palette.length],
+    borderColor: palette[idx % palette.length],
+    borderWidth: 1,
+    borderRadius: 8,
+    maxBarThickness: 60,
+    stack: 'apiFamilies'
+  }))
 
   chartInstance = new Chart(canvasRef.value, {
     type: 'bar',
     data: {
       labels,
-      datasets: [
-        {
-          label: 'Open Finance API Calls',
-          data: values,
-          backgroundColor: '#4F46E5',
-          borderColor: '#4338CA',
-          borderWidth: 2,
-          borderRadius: 8,
-          maxBarThickness: 60
-        }
-      ]
+      datasets
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: { display: true, position: 'bottom' },
         tooltip: {
           backgroundColor: '#1F2937',
           titleColor: '#F3F4F6',
@@ -94,10 +117,12 @@ const createChart = () => {
       },
       scales: {
         y: {
+          stacked: true,
           beginAtZero: true,
           title: { display: true, text: 'Total API Calls', font: { size: 14 } }
         },
         x: {
+          stacked: true,
           title: { display: true, text: 'Month (YYYY-MM)', font: { size: 14 } }
         }
       }

@@ -10,12 +10,17 @@ sequenceDiagram
     participant Hub as API Hub
     participant LFI as LFI
 
+    Note over TPP: Create Client Assertion
     TPP->>+Hub: POST /token (client_credentials, scope=confirmation-of-payee)
     Hub-->>-TPP: {access_token}
 
     Note over TPP: Sign /discovery request as JWT
     TPP->>+Hub: POST /discovery (application/jwt)
     Hub-->>-TPP: 200 { DiscoveryEndpointUrl, ResourceServerUrl  } (application/jwt)
+
+    Note over TPP: Create Client Assertion
+    TPP->>+Hub: POST /token (client_credentials, scope=confirmation-of-payee)
+    Hub-->>-TPP: {access_token}
 
     Note over TPP: Sign /confirmation request as JWT
     TPP->>+Hub: POST /confirmation (application/jwt)

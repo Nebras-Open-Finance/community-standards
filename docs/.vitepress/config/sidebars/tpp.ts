@@ -20,10 +20,6 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'TPP Sandbox Quickstart', link: `${BASE}/getting-started` }
     ],
   },
-
-  // { text: 'Postman', link: `${BASE}/${VERSION}/banking/testing/postman` },
-  { text: 'Model Bank', link: `${BASE}/${VERSION}/banking/testing/model-bank` },
-
   {
     text: 'Trust Framework (Directory)',
     collapsed: true,
@@ -239,6 +235,9 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
             ],
           },
           {
+            text: 'Multi Authorization', link: `${BASE}/${VERSION}/banking/service-initiation//multi-authorization/`
+          },
+          {
             text: 'API Reference',
             collapsed: true,
             items: [
@@ -288,23 +287,37 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
     ],
   },
 
+    {
+    text: 'Sandbox',
+    collapsed: true,
+    items: [
+  { text: 'Model Bank', link: `${BASE}/sandbox/model-bank` },
+  ]
+  },
+
+  {
+    text: 'Production',
+    collapsed: true,
+    items: [
   {
     text: 'Testing & Certification',
     collapsed: true,
     items: [
-      { text: 'Overview', link: `${BASE}/testing-certification/overview` },
-      { text: 'Readiness Checklist', link: `${BASE}/testing-certification/readiness-checklist` },
+      { text: 'Overview', link: `${BASE}/production/testing-certification/overview` },
+      { text: 'Readiness Checklist', link: `${BASE}/production/testing-certification/readiness-checklist` },
       {
         text: 'Functional Evidence',
         collapsed: true,
         items: [
-          { text: 'Bank Data Sharing', link: `${BASE}/testing-certification/functional` },
+          { text: 'Bank Data Sharing', link: `${BASE}/production/testing-certification/functional` },
         ],
       },
-      { text: 'User Experience Evidence', link: `${BASE}/testing-certification/user-experience` },
-      { text: 'FAPI Conformance', link: `${BASE}/testing-certification/fapi` },
-      { text: 'Security Validation', link: `${BASE}/testing-certification/security-validation` },
+      { text: 'User Experience Evidence', link: `${BASE}/production/testing-certification/user-experience` },
+      { text: 'FAPI Conformance', link: `${BASE}/production/testing-certification/fapi` },
+      { text: 'Security Validation', link: `${BASE}/production/testing-certification/security-validation` },
     ],
   },
-    { text: 'Production Live Proving', link: `${BASE}/testing-certification/production-proving` },
+  { text: 'Production Live Proving', link: `${BASE}/production/live-proving` },
+  ]
+  }
 ]
