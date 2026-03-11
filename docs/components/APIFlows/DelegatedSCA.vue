@@ -34,11 +34,12 @@ sequenceDiagram
     TPP->>+Hub: POST /token (authorization_code + code_verifier)
     Hub-->>-TPP: {access_token + refresh_token}
 
-    loop Each on-demand payment
-        TPP->>+Hub: POST /payments (fixed amount from consent)
+    loop Each Delegated SCA payment
+        Note over TPP: Authenticates with TPP (SCA)
+        TPP->>+Hub: POST /payments
         Hub->>LFI: POST /payments
-        LFI-->>Hub: 200 {PaymentId}
-        Hub-->>-TPP: 200 {PaymentId, Status: Pending}
+        LFI-->>Hub: 201 {PaymentId}
+         Hub-->>-TPP: 201 {PaymentId, Status: Pending}
 
         TPP->>+Hub: GET /payments/{paymentId}
         Hub->>LFI: GET /payments/{paymentId}
@@ -67,7 +68,7 @@ onMounted(async () => {
 
   if (mermaidContainer.value) {
     try {
-      const { svg } = await mermaid.render('fixed-od-diagram', mermaidDefinition)
+      const { svg } = await mermaid.render('on-demand-diagram', mermaidDefinition)
       mermaidContainer.value.innerHTML = svg
     } catch (err) {
       console.error(err)

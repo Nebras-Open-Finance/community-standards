@@ -1005,6 +1005,8 @@ flex-grow: 0;
 }
 
 .consent-page-account-subtext-container-2 {
+   font-size: 12px;
+   font-weight: 400;
 
     /* Auto layout */
     display: flex;

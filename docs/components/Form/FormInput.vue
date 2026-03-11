@@ -99,7 +99,7 @@ export default {
   line-height: 1.5rem;
   border: 1px solid #dadce0;
   box-shadow: 0 0 4px rgba(17, 85, 113, 1);
-  padding: 15px;
+  padding: 17px;
   padding-left: 24px;
   border-radius: 4px;
   width: 100%;

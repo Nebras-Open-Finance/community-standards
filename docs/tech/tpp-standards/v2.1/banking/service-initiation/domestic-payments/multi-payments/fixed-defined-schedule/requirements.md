@@ -24,3 +24,4 @@ The table below lists the validation rules that apply to a Fixed Defined Schedul
 | 12 | `consent.Permissions` | If `ReadBalances` is included, at least one of `ReadAccountsBasic` or `ReadAccountsDetail` must also be present. | API Hub |
 | 13 | `consent.AuthorizationExpirationDateTime` | If provided, must not be in the past. Must not be after `consent.ExpirationDateTime`. | API Hub |
 | 14 | `Initiation.Creditor` | Required. Must contain exactly one creditor entry. | LFI |
+| 15 | `consent.ControlParameters.IsDelegatedAuthentication` | Must be `false` or not provided (Delegated SCA is not permitted for this payment type). | API Hub |

@@ -20,6 +20,7 @@ import LiveAPIs from '../../components/LiveAPIs.vue'
 import EditableJson from '../../components/EditableJson.vue'
 import ErrataNotice from '../../components/ErrataNotice.vue'
 import TPPPostmanScriptBuilder from '../../components/TPPPostmanScriptBuilder.vue'
+import ConsentAuthLayout from '../../components/ConsentAuthLayout.vue'
 
 
 // API Flows
@@ -29,6 +30,7 @@ import APIFlowsSingleInstantPayment from '../../components/APIFlows/SingleInstan
 import APIFlowsOnDemand from '../../components/APIFlows/OnDemand.vue'
 import APIFlowsPeriodicSchedule from '../../components/APIFlows/PeriodicSchedule.vue'
 import APIFlowsDefinedSchedule from '../../components/APIFlows/DefinedSchedule.vue'
+import APIFlowsDelegatedSCA from '../../components/APIFlows/DelegatedSCA.vue'
 import APIFlowsConsentFlow from '../../components/APIFlows/ConsentFlow.vue'
 import APIFlowsConfirmationOfPayee from '../../components/APIFlows/ConfirmationOfPayee.vue'
 import APIFlowsMultiAuthorization from '../../components/APIFlows/MultiAuthorization.vue'
@@ -40,6 +42,7 @@ import ConsentSingleInstantPayment from '../../components/ConsentPages/ConsentSi
 import ConsentOnDemand from '../../components/ConsentPages/ConsentOnDemand.vue'
 import ConsentPeriodicSchedule from '../../components/ConsentPages/ConsentPeriodicSchedule.vue'
 import ConsentDefinedSchedule from '../../components/ConsentPages/ConsentDefinedSchedule.vue'
+import ConsentDelegatedSCA from '../../components/ConsentPages/ConsentDelegatedSCA.vue'
 import ConsentSIPCOP from '../../components/ConsentPages/ConsentSIPCOP.vue'
 import ConsentManagementConnections from '../../components/ConsentPages/ConsentManagementConnections.vue'
 
@@ -52,6 +55,7 @@ import AuthorizationSingleInstantPayment from '../../components/AuthorizationPag
 import AuthorizationOnDemand from '../../components/AuthorizationPages/AuthorizationOnDemand.vue'
 import AuthorizationPeriodicSchedule from '../../components/AuthorizationPages/AuthorizationPeriodicSchedule.vue'
 import AuthorizationDefinedSchedule from '../../components/AuthorizationPages/AuthorizationDefinedSchedule.vue'
+import AuthorizationDelegatedSCA from '../../components/AuthorizationPages/AuthorizationDelegatedSCA.vue'
 import AuthorizationSIPCOP from '../../components/AuthorizationPages/AuthorizationSIPCOP.vue'
 
 
@@ -84,6 +88,7 @@ export default {
     app.component('EditableJson', EditableJson)
     app.component('ErrataNotice', ErrataNotice)
     app.component('TPPPostmanScriptBuilder', TPPPostmanScriptBuilder)
+    app.component('ConsentAuthLayout', ConsentAuthLayout)
 
     // API Flows
     app.component('APIFlowsRegistration', APIFlowsRegistration)
@@ -92,6 +97,7 @@ export default {
     app.component('APIFlowsOnDemand', APIFlowsOnDemand)
     app.component('APIFlowsPeriodicSchedule', APIFlowsPeriodicSchedule)
     app.component('APIFlowsDefinedSchedule', APIFlowsDefinedSchedule)
+    app.component('APIFlowsDelegatedSCA', APIFlowsDelegatedSCA)
     app.component('APIFlowsConsentFlow', APIFlowsConsentFlow)
     app.component('APIFlowsConfirmationOfPayee', APIFlowsConfirmationOfPayee)
     app.component('APIFlowsMultiAuthorization', APIFlowsMultiAuthorization)
@@ -102,6 +108,7 @@ export default {
     app.component('ConsentOnDemand', ConsentOnDemand)
     app.component('ConsentPeriodicSchedule', ConsentPeriodicSchedule)
     app.component('ConsentDefinedSchedule', ConsentDefinedSchedule)
+    app.component('ConsentDelegatedSCA', ConsentDelegatedSCA)
     app.component('ConsentManagementConnections', ConsentManagementConnections)
 
     app.component('AuthorizationBankDataSharing', AuthorizationBankDataSharing)
@@ -109,8 +116,8 @@ export default {
     app.component('AuthorizationOnDemand', AuthorizationOnDemand)
     app.component('AuthorizationPeriodicSchedule', AuthorizationPeriodicSchedule)
     app.component('AuthorizationDefinedSchedule', AuthorizationDefinedSchedule)
-
-
+    app.component('AuthorizationDelegatedSCA', AuthorizationDelegatedSCA)
+    
     app.component('PermissionsReference', PermissionsReference)
     app.component('ServiceInitiationPermissionText', ServiceInitiationPermissionText)
     app.component('PaymentConsentPermissionsText', PaymentConsentPermissionsText)

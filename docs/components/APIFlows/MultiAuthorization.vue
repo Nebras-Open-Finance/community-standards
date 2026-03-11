@@ -42,8 +42,8 @@ sequenceDiagram
     Hub-->>TPP: Event / GET /payment-consents/{ConsentId}\\nStatus=Authorized
     TPP->>+Hub: POST /payments
     Hub->>LFI: POST /payments
-    LFI-->>Hub: 200 {PaymentId}
-    Hub-->>-TPP: 200 {PaymentId, Status: Pending}
+    LFI-->>Hub: 201 {PaymentId}
+     Hub-->>-TPP: 201 {PaymentId, Status: Pending}
 `
 
 onMounted(async () => {

@@ -215,20 +215,14 @@ const initialFormDataPII = ref({
 
 Changes made above are immediately reflected in both panels.
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.25rem;">
-  <div style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem;">
-    <div style="width: 100%; text-align: center; padding: 0.45rem 0.75rem; background: rgba(0,39,127,0.05); border-radius: 7px; border: 1px solid rgba(0,39,127,0.12); box-sizing: border-box;">
-      <div style="font-size: 0.85rem; font-weight: 600; color: #1a202c; margin-top: 2px;">TPP · Consent Page</div>
-    </div>
+<ConsentAuthLayout>
+  <template #consent>
     <ConsentSingleInstantPayment />
-  </div>
-  <div style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem;">
-    <div style="width: 100%; text-align: center; padding: 0.45rem 0.75rem; background: rgba(0,192,167,0.07); border-radius: 7px; border: 1px solid rgba(0,192,167,0.28); box-sizing: border-box;">
-      <div style="font-size: 0.85rem; font-weight: 600; color: #1a202c; margin-top: 2px;">LFI · Authorisation Page</div>
-    </div>
+  </template>
+  <template #auth>
     <AuthorizationSingleInstantPayment />
-  </div>
-</div>
+  </template>
+</ConsentAuthLayout>
 
 
 ## UI Behaviour Driven by API Fields

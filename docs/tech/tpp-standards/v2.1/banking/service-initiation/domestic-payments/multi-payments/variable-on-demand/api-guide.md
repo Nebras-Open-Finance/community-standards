@@ -17,7 +17,7 @@ Common use cases include subscription billing with variable charges, metered ser
 Before initiating a Variable On-Demand payment, ensure the following requirements are met:
 
 - **Registered [Application](../../../../../../trust-framework/application)**
-  The application must be created within the Trust Framework and assigned the **PISP role** as defined in [Roles](../../../../../../trust-framework/roles).
+  The application must be created within the Trust Framework and assigned the **BSIP role** as defined in [Roles](../../../../../../trust-framework/roles).
 
 - **Valid [Transport Certificate](../../../../../../trust-framework/certificates)**
   An active transport certificate must be issued and registered in the Trust Framework to establish secure **mTLS communication** with participating LFIs.
@@ -158,11 +158,7 @@ At least one of `MaximumIndividualAmount`, `MaximumCumulativeValueOfPaymentsPerP
 
 ### Step 3 - Constructing the Request JWT
 
-With your `authorization_details` ready, generate a PKCE code pair then use the [`buildRequestJWT()`](/tech/tpp-standards/security/fapi/request-jwt#building-the-request-jwt) helper, passing `payments openid` as the scope.
-
-::: warning Scope change required when using Permissions
-If your consent includes `ReadAccountsBasic`, `ReadAccountsDetail`, or `ReadBalances`, you must change the scope to `accounts payments openid`. Without the `accounts` scope the issued token will not grant access to the account endpoints. See [Account Permissions in a Payment Consent](/knowledge-base/articles/payment-account-permissions).
-:::
+<!--@include: ../../_shared/step-3-request-jwt-scope.md-->
 
 
 ::: code-group

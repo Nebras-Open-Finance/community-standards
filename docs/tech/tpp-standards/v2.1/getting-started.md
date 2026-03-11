@@ -9,7 +9,7 @@ aside: false
 
 ## Prerequisites
 
-- You are onboarded to the sandbox Trust Framework: [Trust Framework Onboarding](/tech/tpp-standards/trust-framework/onboarding)
+- You are onboarded to the sandbox Trust Framework: If you are not onboarded onto the sandbox Trust Framework please see [Trust Framework Onboarding](/tech/tpp-standards/trust-framework/onboarding)
 
 ## Postman Collection (Sandbox)
 Please fill in the below using an Application (Client) you have created in the **Sandbox Trust Framework**
@@ -151,36 +151,91 @@ Please fill in the below using an Application (Client) you have created in the *
 
 ## Setting Up Postman
 
-#### Install postman
+#### 1. Install postman
 
-- Download: https://www.postman.com/downloads/ (choose the desktop app for your OS).
-- Install: run the installer and follow defaults. On macOS, drag Postman to Applications.
-- Launch: open Postman and sign in (or create a free account).
-- Enable HTTPS certificates: Settings → Certificates → add your sandbox certificate/key when running mTLS calls.
-- Verify: import a sample collection (File → Import) and send a simple GET to confirm connectivity.
+- Download Postman from https://www.postman.com/downloads/.
+- Launch Postman and sign in (or create a free account).
 
-#### Configure mTLS certificates in Postman
+#### 2. Import the Collection
+
+- In Postman, click Import (top left).
+- Select the downloaded .json file.
+- The collection will appear in your Collections sidebar.
+
+<ClientOnly>
+    <Carousel :images="images1" />
+  </ClientOnly>
+
+#### 3. Configure mTLS certificates in Postman
 
 1) Open Postman settings  
    - Click the gear icon (top right) → **Settings** → **Certificates** tab.
 
-2) Add your sandbox host  
-   - Click **Add Certificate**.  
+2) Navigate to the Certificates tab.
+
+3) Click Add Certificate:
+
+4) Add the host of the LFI Discovery URL you input 
    - In **Host**, enter the domain (no protocol), e.g. 
     `*.altareq1.sandbox.apihub.openfinance.ae`.  or 
     `*.[LFI CODE].preprod.apihub.openfinance.ae`
    - Leave port blank (defaults to 443)
 
-3) Attach your certs  
+5) Attach your certs  
    - CRT file: browse to `client_transport.pem`.  
    - KEY file: browse to `client_transport.key`.
    - Save the certificate entry.    
 
-4) Test by registring
+6) Test by registring
    - Send a request to the TPP's registration endpoint.
    - If you receive a `204 (No Content)`
 
-*Note if you are testing multiple LFIs in sandbox/pre-prod you may need to change the host in (2)*
+*Note if you are testing multiple LFIs in sandbox/pre-prod you may need to change the host in (4)*
 
+<ClientOnly>
+    <Carousel :images="images2" />
+  </ClientOnly>
 
 ## Your First Open Finance Requests
+
+
+docs\public\images\postman\postman 1_spotlight.png
+
+
+<script setup>
+const images1 =  [
+  {
+    src: new URL('/images/postman/postman_1_spotlight.png', import.meta.url).href,
+    alt: 'Step 1',
+    title: 'Import'
+  },
+  {
+    src: new URL('/images/postman/post_spotlight.png', import.meta.url).href,
+    alt: 'Step 2',
+    title: 'Import'
+  }
+]
+
+const images2 =  [
+  {
+    src: new URL('/images/postman/postman_2_spotlight.png', import.meta.url).href,
+    alt: 'Step 1',
+    title: 'Settings'
+  },
+  {
+    src: new URL('/images/postman/postman_3_spotlight.png', import.meta.url).href,
+    alt: 'Step 2',
+    title: 'Certificates'
+  },
+  {
+    src: new URL('/images/postman/postman_4_spotlight.png', import.meta.url).href,
+    alt: 'Step 3',
+    title: 'Add Certificate'
+  },
+  {
+    src: new URL('/images/postman/postman_5_spotlight.png', import.meta.url).href,
+    alt: 'Step 3',
+    title: 'Host, Client Transport CRT (.pem), Client Transport KEY (.key)'
+  }
+]
+</script>

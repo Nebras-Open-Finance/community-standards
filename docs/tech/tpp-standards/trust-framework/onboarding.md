@@ -14,18 +14,20 @@ The onboarding process to the **Trust Framework** works in tandem with the **lic
 
 As a **Third-Party Provider (TPP)**, you may begin onboarding to the appropriate Trust Framework environment based on your licensing status:
 
-- **Sandbox Environment:**  
+- **Sandbox Environment:**
   You may onboard to the [Sandbox Trust Framework](https://web.sandbox.directory.openfinance.ae/) once the CBUAE has **confirmed receipt** of your **licence application** and **business plan**.
 
-- **Production Environment:**  
+- **Production Environment:**
   You may onboard to the [Production Trust Framework](https://web.directory.openfinance.ae/) once the CBUAE has **approved your licence.**
 
-## Primary Business Contact (PBC)
+If you have not yet started your Open Finance licensing process and are interested in finding out more, please contact [connect@nebrasopenfinance.ae](mailto:connect@nebrasopenfinance.ae).
 
-As part of your licence application, you must nominate a **Primary Business Contact (PBC)**.  
-The PBC will act as your organization’s main point of contact with **Nebras** and the **CBUAE** during onboarding and ongoing operations.
+## Primary Organisation Admin
 
-Within the Trust Framework, the PBC will:
+As part of your licence application, you must nominate a **Primary Organisation Admin**.
+The Primary Organisation Admin will act as your organization's main point of contact with **Nebras** and the **CBUAE** during onboarding and ongoing operations.
+
+Within the Trust Framework, the Primary Organisation Admin will:
 
 - Serve as **system administrator**
 - Manage user access
@@ -35,7 +37,7 @@ Within the Trust Framework, the PBC will:
 
 ## Access & Registration
 
-When your organization reaches the appropriate point in the licensing process, the **PBC** will receive an email granting access to the Trust Framework platform.
+When your organization reaches the appropriate point in the licensing process, the **Primary Organisation Admin** will receive an email granting access to the Trust Framework platform.
 
 **Steps to register:**
 
@@ -43,8 +45,8 @@ When your organization reaches the appropriate point in the licensing process, t
 2. Use the **same email address** provided for onboarding access.
 3. Follow the prompts to set up your account credentials.
 
-Once registration is complete, your **organization’s Trust Framework entity** will also be created.
+Once registration is complete, your **organization's Trust Framework entity** will also be created.
 
 
-After the PBC account is set up, they can **add additional users** within the Trust Framework platform.
+After the Primary Organisation Admin account is set up, they can **add additional users** within the Trust Framework platform.
 

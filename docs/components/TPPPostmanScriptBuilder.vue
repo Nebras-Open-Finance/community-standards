@@ -64,9 +64,9 @@
     <div class="form-section">
       <div class="upload-label">Upload signing private key (.key)</div>
       <label class="file-input">
-        <span class="file-button">Choose file</span>
+        <span :class="['file-button', { error: showError('key_upload') || uploadError }]">Choose file</span>
         <span class="file-name">{{ formData.key_file_name || 'No file chosen' }}</span>
-        <input type="file" accept=".key,.pem,.txt" @change="handleKeyUpload" />
+        <input type="file" accept=".key" @change="handleKeyUpload" />
       </label>
       <div class="field-hint" aria-live="polite">Accepted: .key, .pem or .txt private key files.</div>
       <div v-if="showError('key_upload') === ''" class="field-hint strong" aria-live="polite">
@@ -79,7 +79,7 @@
 
     <div class="form-section">
       <FormInput placeholder="Enter the LFI's Discovery Endpoint" ref="inputDiscoveryURI" name="discovery_uri"
-        :input="formData.discovery_uri" :error="!!showError('discovery_uri')" @output="setDiscoveryURI" />
+        :input="formData.discovery_uri" :error="!!showError('discovery_uri') || !!discoveryError" @output="setDiscoveryURI" />
       <InfoTooltip style="position: absolute; right: 10px; top: 10px;" :icon-size="40">
         <strong>LFI Discovery URL</strong> - The .well-known endpoint of the target LFI; model bank URL is prefilled.<br />
         See: <a href="/tpp-standards/trust-framework/well-known">The .well-known Endpoint</a>
@@ -92,7 +92,7 @@
         <br />
         <span style="font-style: italic; padding-left: 12px;">https://auth1.<span style="background-color: rgba(255,255,0,0.6);">[LFI  CODE]</span>.preprod.apihub.openfinance.ae/.well-known/openid-configuration</span>
       </div>
-      <div class="field-error" aria-live="polite">{{ showError('discovery_uri') }}</div>
+      <div class="field-error" aria-live="polite">{{ showError('discovery_uri') || discoveryError }}</div>
     </div>
 
 
@@ -171,9 +171,11 @@ export default {
         transport_key_id: undefined,
         signing_key_id: undefined,
         discovery_uri: 'https://auth1.altareq1.sandbox.apihub.openfinance.ae/.well-known/openid-configuration',
-        key_file_name: undefined
+        key_file_name: undefined,
+        key_content: undefined
       },
-      uploadError: ''
+      uploadError: '',
+      discoveryError: ''
     }
   },
   methods: {
@@ -200,43 +202,151 @@ export default {
     },
     setDiscoveryURI(val) {
       this.formData.discovery_uri = val.data
+      this.discoveryError = ''
     },
     async handleKeyUpload(event) {
       const file = event?.target?.files?.[0]
       if (!file) return
-      if (!file.name.match(/\\.(key|pem|txt)$/i)) {
+      if (!file.name.match(/\.(key|pem|txt)$/i)) {
         this.uploadError = 'Please upload a .key, .pem or .txt private key file.'
+        this.formData.key_file_name = undefined
+        this.formData.key_content = undefined
+        return
+      }
+      const text = await file.text()
+      if (!/-----BEGIN[\w\s]+PRIVATE KEY-----/.test(text) || !/-----END[\w\s]+PRIVATE KEY-----/.test(text)) {
+        this.uploadError = 'File does not appear to be a valid PEM private key. Expected a file containing -----BEGIN PRIVATE KEY----- / -----END PRIVATE KEY----- headers.'
+        this.formData.key_file_name = undefined
+        this.formData.key_content = undefined
         return
       }
       this.uploadError = ''
       this.formData.key_file_name = file.name
+      this.formData.key_content = text
     },
 
     showError(key) {
       if (!this.complete) return ''
       if (key === 'client_id' && !this.formData.client_id) return 'Field is required.'
       if (key === 'role' && this.formData.roles.length === 0) return 'One role is required.'
-      if (key === 'redirect_uri' && !this.formData.redirect_uri) return 'Field is required.'
-      if (key === 'transport_key_id' && !this.formData.transport_key_id) return 'Field is required.'
-      if (key === 'signing_key_id' && !this.formData.signing_key_id) return 'Field is required.'
-      if (key === 'discovery_uri' && !this.formData.discovery_uri) return 'Field is required.'
+      if (key === 'redirect_uri') {
+        if (!this.formData.redirect_uri) return 'Field is required.'
+        try { new URL(this.formData.redirect_uri) } catch { return 'Must be a valid URI.' }
+      }
+      if (key === 'transport_key_id') {
+        if (!this.formData.transport_key_id) return 'Field is required.'
+        // if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(this.formData.transport_key_id)) return 'Must be a valid UUID (e.g. c9fb03a0-e987-49d5-94e2-76cfec02c522).'
+      }
+      if (key === 'signing_key_id') {
+        if (!this.formData.signing_key_id) return 'Field is required.'
+        // if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(this.formData.signing_key_id)) return 'Must be a valid UUID (e.g. c9fb03a0-e987-49d5-94e2-76cfec02c522).'
+      }
+      if (key === 'discovery_uri') {
+        if (!this.formData.discovery_uri) return 'Field is required.'
+        if (!/^https:\/\/auth1\.[a-zA-Z0-9-]{1,15}\.(sandbox|preprod)\.apihub\.openfinance\.ae\/\.well-known\/openid-configuration$/.test(this.formData.discovery_uri))
+          return 'Must match: https://auth1.[LFI-CODE].(sandbox|preprod).apihub.openfinance.ae/.well-known/openid-configuration'
+      }
       if (key === 'key_upload' && !this.formData.key_file_name) return 'Signing .key file is required.'
       return ''
     },
     async submit() {
       this.complete = true
+      this.discoveryError = ''
       if (
         this.showError('client_id') ||
         this.showError('role') ||
         this.showError('redirect_uri') ||
         this.showError('transport_key_id') ||
         this.showError('signing_key_id') ||
+        this.showError('key_upload') ||
         this.showError('discovery_uri')
       ) {
         window.scrollTo({ top: 300, behavior: 'smooth' })
         return
       }
-      // submit logic placeholder
+
+      // Derive issuer and rs from the discovery URI pattern.
+      // Direct fetch is not possible due to CORS — the API Hub .well-known endpoints
+      // do not include Access-Control-Allow-Origin headers.
+      // Pattern: https://auth1.[lfi].[env].apihub.openfinance.ae/.well-known/openid-configuration
+      //   issuer → origin (strip path)
+      //   rs     → replace auth1. with rs1. in the origin
+      const discoveryUrl = new URL(this.formData.discovery_uri)
+      const issuer = discoveryUrl.origin
+      const rs = issuer.replace(/^(https:\/\/)auth1\./, '$1rs1.')
+      const as1Base = issuer.replace(/^(https:\/\/)auth1\./, '$1as1.')
+      const parEndpoint = as1Base + '/par'
+      const tokenEndpoint = as1Base + '/token'
+
+      const hasBanking = this.formData.roles.some(r =>
+        r.includes('BDSP') || r.includes('BSIP')
+      )
+
+      if (hasBanking) {
+        const url = 'https://raw.githubusercontent.com/Nebras-Open-Finance/postman/main/banking.postman_collection.json'
+        const response = await fetch(url)
+        if (!response.ok) throw new Error(`Failed to fetch collection: ${response.status}`)
+        const json = await response.json()
+
+        // Keep "TPP Onboarding" and only the folder matching the current version.
+        // Derived from the URL path (e.g. /tech/tpp-standards/v2.1/...)
+        const versionMatch = window.location.pathname.match(/\/(v\d+\.\d+)\//)
+        const currentVersion = versionMatch ? versionMatch[1] : 'v2.1'
+        json.item = json.item.filter(folder =>
+          folder.name === 'TPP Onboarding' ||
+          folder.name.toLowerCase() === currentVersion.toLowerCase()
+        )
+        json.info.name = `Banking ${currentVersion.toUpperCase()}`
+
+        const hasBDSP = this.formData.roles.some(r => r.includes('BDSP'))
+        const hasBSIP = this.formData.roles.some(r => r.includes('BSIP'))
+
+        // Map subfolder names to the roles required to include them.
+        // Folders not listed here (Webhook, Do Fail) are kept for any role.
+        const subFolderRoleMap = {
+          'Data Sharing':                                  () => hasBDSP,
+          'Service Initiation':                            () => hasBSIP,
+          'File Payment':                                  () => hasBSIP,
+          'Service Initiation - International Payments':   () => hasBSIP,
+          'Confirmation Of Payee APIs (application/jwt)':  () => hasBSIP,
+          'Payment Rail':                                  () => hasBSIP,
+          'Data Sharing with Service Initiation':          () => hasBDSP && hasBSIP,
+          'Open Product API':                              () => hasBDSP,
+          'Open Atms API':                                 () => hasBDSP,
+        }
+
+        const versionFolder = json.item.find(f => f.name.toLowerCase() === currentVersion.toLowerCase())
+        if (versionFolder?.item) {
+          versionFolder.item = versionFolder.item.filter(sub => {
+            const check = subFolderRoleMap[sub.name]
+            return check ? check() : true
+          })
+        }
+
+        // Recursively remove any request/folder named with "LFI-API Hub:" or the OIDC well-known endpoint
+        const removeLFIItems = items => items
+          .filter(item => !item.name.includes('LFI-API Hub:') && !item.name.includes('TPP-API Hub: Get OIDC well-known end-point') && !item.name.includes('Confirm with Heimdall'))
+          .map(item => item.item ? { ...item, item: removeLFIItems(item.item) } : item)
+        json.item = removeLFIItems(json.item)
+
+        let collectionStr = JSON.stringify(json, null, 2)
+        collectionStr = collectionStr.replaceAll('{{issuer}}', issuer)
+        collectionStr = collectionStr.replaceAll('{{rs}}', rs)
+        collectionStr = collectionStr.replaceAll('{{kid-local}}', this.formData.signing_key_id ?? '')
+        collectionStr = collectionStr.replaceAll('{{_clientId}}', this.formData.client_id ?? '')
+        collectionStr = collectionStr.replaceAll('{{pem-local}}', (this.formData.key_content ?? '').replace(/[\r\n]/g, ''))
+        collectionStr = collectionStr.replaceAll('{{redirectUrl}}', this.formData.redirect_uri ?? '')
+        collectionStr = collectionStr.replaceAll('{{par-endpoint}}', parEndpoint)
+        collectionStr = collectionStr.replaceAll('{{tokenEndpoint}}', tokenEndpoint)
+
+        const blob = new Blob([collectionStr], { type: 'application/json' })
+        const a = document.createElement('a')
+        a.href = URL.createObjectURL(blob)
+        a.download = `Banking ${currentVersion.toUpperCase()}.postman_collection.json`
+        a.click()
+        URL.revokeObjectURL(a.href)
+      }
+
       this.$emit('submit', { ...this.formData })
     }
   }
@@ -342,6 +452,11 @@ export default {
   border-radius: 4px;
   color: rgba(17, 85, 113, 1) !important;
   border-color: rgba(17, 85, 113, 1);
+}
+
+.file-button.error {
+  box-shadow: 0 0 4px rgba(255, 5, 5, 1) !important;
+  border-color: rgba(255, 5, 5, 1) !important;
 }
 
 .file-name {

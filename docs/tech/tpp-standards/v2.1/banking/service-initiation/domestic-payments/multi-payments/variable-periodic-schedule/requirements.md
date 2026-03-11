@@ -21,3 +21,4 @@ The table below lists the validation rules that apply to a Variable Periodic Sch
 | 9 | `consent.Permissions` | If `ReadBalances` is included, at least one of `ReadAccountsBasic` or `ReadAccountsDetail` must also be present. | API Hub |
 | 10 | `consent.AuthorizationExpirationDateTime` | If provided, must not be in the past. Must not be after `consent.ExpirationDateTime`. | API Hub |
 | 11 | `Initiation.Creditor` | Required. Must contain exactly one creditor entry. | LFI |
+| 12 | `consent.ControlParameters.IsDelegatedAuthentication` | Must be `false` or not provided (Delegated SCA is not permitted for this payment type). | API Hub |

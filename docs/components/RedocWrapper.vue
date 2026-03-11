@@ -41,9 +41,21 @@ const props = defineProps({
     default: null 
   },
   filterMethod: {
-  type: String,
-  default: null // e.g., "GET", "POST"
-}
+    type: String,
+    default: null // e.g., "GET", "POST"
+  },
+  displayPath: {
+    type: String,
+    default: null // override the path key shown in the UI
+  },
+  overrideServers: {
+    type: Array,
+    default: null // e.g., [{ url: 'https://...' }]
+  },
+  hideSecurity: {
+    type: Boolean,
+    default: false
+  }
 })
 
 
@@ -85,15 +97,29 @@ onMounted(() => {
   }
 
 
- finalSpec = {
-    openapi: fullSpec.openapi,
-    info: fullSpec.info,
-    servers: fullSpec.servers,
-    components: fullSpec.components,
-    paths: {
-      [props.filterPath]: pathObj
-    }
-  };
+      // 4️⃣ Strip security if requested
+      if (props.hideSecurity && pathObj) {
+        pathObj = Object.fromEntries(
+          Object.entries(pathObj).map(([method, op]) => {
+            const { security, ...rest } = op
+            return [method, rest]
+          })
+        )
+      }
+
+      const displayKey = props.displayPath || props.filterPath
+
+      finalSpec = {
+        openapi: fullSpec.openapi,
+        info: fullSpec.info,
+        servers: props.overrideServers ?? fullSpec.servers,
+        components: props.hideSecurity
+          ? { ...fullSpec.components, securitySchemes: undefined }
+          : fullSpec.components,
+        paths: {
+          [displayKey]: pathObj
+        }
+      };
 
       // 4️⃣ Initialize Redoc
       window.Redoc.init(

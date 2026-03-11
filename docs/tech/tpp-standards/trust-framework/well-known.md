@@ -6,7 +6,7 @@ aside: false
 
 🕒 **5 minute read**
 
-# The `.well-known` Endpoint
+# Authorisation Server Discovery
 
 The `.well-known/openid-configuration` endpoint provides a standardized way for Third Party Providers (TPPs) to retrieve OAuth 2.0 and OpenID Connect configuration for a Licensed Financial Institution (LFI). This allows TPPs to discover authorization, token, and other endpoints programmatically, without hardcoding URLs.
 

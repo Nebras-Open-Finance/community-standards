@@ -25,23 +25,6 @@ Consents are created through the **Pushed Authorization Request** flow ([FAPI 2.
   <APIFlowsConsentFlow/>
 </APIFlowViewer>
 
-## The Consent Flow
-
-All consent types follow the same authorization pattern:
-
-```
-1. Build authorization_details  →  POST /par  →  request_uri
-2. Redirect user to bank        →  user authenticates and authorizes
-3. Bank redirects back          →  authorization code in callback
-4. Exchange code                →  POST /token  →  access_token + refresh_token
-5. Retrieve consent             →  GET /account-access-consents/{ConsentId}
-                                    or GET /payment-consents/{ConsentId}
-```
-
-For the full construction of `authorization_details` — including field tables, PII encryption, and code examples — see the specific API guides:
-
-- [Bank Data Sharing — API Guide](../banking/data-sharing/api-guide)
-- [Single Instant Payment — API Guide](../banking/service-initiation/domestic-payments/single-instant-payment/api-guide)
 
 ## <span style="color: #3b82f6; padding-right: 5px;">POST</span> `/par`
 
@@ -81,6 +64,12 @@ request_uri = par_response.json()["request_uri"]
 ```
 
 :::
+
+For the full construction of `authorization_details` — including field tables, PII encryption, and code examples — see the specific API guides, for example:
+
+- [Bank Data Sharing — API Guide](../banking/data-sharing/api-guide)
+- [Single Instant Payment — API Guide](../banking/service-initiation/domestic-payments/single-instant-payment/api-guide)
+
 
 See [Preparing the Request JWT](/tech/tpp-standards/security/fapi/request-jwt) for how to build and sign the Request JWT, and [POST /par](/tech/tpp-standards/v2.1/consent/open-api/par) for the full API reference.
 

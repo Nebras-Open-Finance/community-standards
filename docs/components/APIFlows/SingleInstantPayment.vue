@@ -36,8 +36,8 @@ sequenceDiagram
 
     TPP->>+Hub: POST /payments
     Hub->>LFI: POST /payments
-    LFI-->>Hub: 200 {PaymentId}
-    Hub-->>-TPP: 200 {PaymentId, Status: Pending}
+    LFI-->>Hub: 201 {PaymentId}
+     Hub-->>-TPP: 201 {PaymentId, Status: Pending}
 
     TPP->>+Hub: GET /payments/{paymentId}
     Hub->>LFI: GET /payments/{paymentId}

@@ -17,53 +17,66 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
     text: 'Getting Started',
     collapsed: true,
     items: [
-      { text: 'TPP Sandbox Quickstart', link: `${BASE}/getting-started` }
+      { text: 'Sandbox Quickstart', link: `${BASE}/${VERSION}/getting-started` }
     ],
   },
   {
     text: 'Trust Framework (Directory)',
     collapsed: true,
     items: [
-      { text: 'Overview', link: `${BASE}/trust-framework/` },
+      { text: 'Overview & Organisations', link: `${BASE}/trust-framework/` },
       {
         text: 'Onboarding',
         collapsed: true,
-        link: `${BASE}/trust-framework/onboarding/`,
         items: [
           { text: 'Overview', link: `${BASE}/trust-framework/onboarding/` },
-          { text: 'Roles in the Trust Framework', link: `${BASE}/trust-framework/roles/` },
+          { text: 'Organisation Admins', link: `${BASE}/trust-framework/organisation-admins` },
+          { text: 'Adding Users', link: `${BASE}/trust-framework/adding-users` },
+          { text: 'User/Admin Sign Up', link: `${BASE}/trust-framework/user-sign-up` },
         ],
       },
       {
-        text: 'Creating an Application',
+        text: 'Applications',
         collapsed: true,
-        link: `${BASE}/trust-framework/application`,
         items: [
           { text: 'Overview', link: `${BASE}/trust-framework/application` },
-          { text: 'Handling Redirect URIs', link: `${BASE}/trust-framework/redirect-uri/` },
+          { text: 'Roles', link: `${BASE}/trust-framework/roles/` },
+          { text: 'Redirect URIs', link: `${BASE}/trust-framework/redirect-uri/` },
           {
-            text: 'Keys and Certificates',
-            link: `${BASE}/trust-framework/certificates/`,
+            text: 'Keys & Certificates',
             items: [
-              { text: 'Overview', link: `${BASE}/trust-framework/certificates/` },
+              { text: 'Overview',   link: `${BASE}/trust-framework/certificates/`},
+              { text: 'Client Transport', link: `${BASE}/trust-framework/certificates/client-transport` },
+              { text: 'Client Signing', link: `${BASE}/trust-framework/certificates/client-signing` },
+              { text: 'Client Encryption', link: `${BASE}/trust-framework/certificates/client-encryption` },
               { text: 'Certificates with a SAN', link: `${BASE}/trust-framework/certificates-san/` },
             ],
           },
         ],
       },
+      { text: 'Contacts', link: `${BASE}/trust-framework/contacts` },
       {
-        text: 'API Guides',
+        text: 'LFI Discovery',
         collapsed: true,
         items: [
-          { text: '/participants', link: `${BASE}/trust-framework/api-discovery/` },
-          { text: '/.well-known', link: `${BASE}/trust-framework/well-known/` },
-        ],
-      },
-      {
-        text: 'API Reference',
-        collapsed: true,
-        items: [
-          apiRef('GET', '/participants', `${BASE}/trust-framework/open-api/participants`),
+          { text: 'Overview & /participants', link: `${BASE}/trust-framework/api-discovery/` },
+          {
+            text: 'Authorisation Servers',
+            collapsed: true,
+            items: [
+              { text: 'Overview', link: `${BASE}/trust-framework/authorisation-servers`},
+              { text: 'Discovery', link: `${BASE}/trust-framework/well-known/` },
+            ],
+          },
+          { text: 'API Resources', link: `${BASE}/trust-framework/api-resources` },
+          { text: 'Flags & Meta Data', link: `${BASE}/trust-framework/flags-metadata` },
+          {
+            text: 'API Reference',
+            collapsed: true,
+            items: [
+              apiRef('GET', '/participants', `${BASE}/trust-framework/open-api/participants`),
+            ],
+          },
         ],
       },
     ],
@@ -164,7 +177,6 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
       {
         text: 'Data Sharing',
         collapsed: true,
-        link: `${BASE}/${VERSION}/banking/data-sharing`,
         items: [
           { text: 'Overview', link: `${BASE}/${VERSION}/banking/data-sharing` },
           { text: 'Requirements', link: `${BASE}/${VERSION}/banking/data-sharing/requirements` },
@@ -193,6 +205,7 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
         text: 'Payments (Service Initiation)',
         collapsed: true,
         items: [
+          { text: 'Overview',  link: `${BASE}/${VERSION}/banking/service-initiation/`},
           {
             text: 'Domestic Payments',
             collapsed: true,
@@ -220,6 +233,7 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
                   { text: 'Fixed Periodic Schedule', collapsed: true, items: multiPaymentItems(`${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/fixed-periodic-schedule`) },
                   { text: 'Variable Defined Schedule', collapsed: true, items: multiPaymentItems(`${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/variable-defined-schedule`) },
                   { text: 'Fixed Defined Schedule', collapsed: true, items: multiPaymentItems(`${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/fixed-defined-schedule`) },
+                   { text: 'Delegated SCA', collapsed: true, items: multiPaymentItems(`${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/delegated-sca`) },
                 ],
               },
             ],

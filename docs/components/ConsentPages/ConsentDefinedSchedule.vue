@@ -1118,6 +1118,8 @@ flex-grow: 0;
 }
 
 .consent-page-account-subtext-container-2 {
+   font-size: 12px;
+   font-weight: 400;
 
     /* Auto layout */
     display: flex;
@@ -1712,6 +1714,8 @@ flex-grow: 0;
 }
 
 .schedule-item {
+   font-size: 12px;
+   font-weight: 400;
     display: flex;
     flex-direction: row;
     justify-content: space-between;

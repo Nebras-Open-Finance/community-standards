@@ -15,6 +15,16 @@ There are two types of consent, corresponding to the two service families:
 | **Bank Data Sharing** | Reading account data, balances, transactions, and related resources | `authorization_details` with `type: urn:openfinanceuae:account-access-consent:v2.1` |
 | **Bank Service Initiation** | Initiating payments | `authorization_details` with `type: urn:openfinanceuae:payment-consent:v2.1` |
 
+## From Creation to Authorized — the High Level Flow
+
+Before any (UserOAuth2Security) protected resource can be accessed, a consent must go through a two-phase flow: **staging** and **authorization**.
+
+<ImageViewer
+  src="/images/journeys/oauth-wireframe.png"
+  alt="Oauth flow"
+/>
+
+
 ## API Hub as the source of truth
 
 The API Hub maintains all Open Finance consents and acts as the **authoritative system of record** for consents across the ecosystem. All consent creation, modification, and revocation events are recorded within the API Hub to ensure a single, consistent source of truth.

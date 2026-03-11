@@ -1528,7 +1528,8 @@ top: 20%;
 }
 
 .auth-page-account-amount-container {
-    /* Auto layout */
+   font-size: 12px;
+   font-weight: 400;
     display: flex;
     flex-direction: row;
     justify-content: center;

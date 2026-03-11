@@ -13,8 +13,6 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
     items: [
       {
         text: 'Onboarding',
-        collapsed: true,
-        link: `${BASE}/trust-framework/onboarding/`,
         items: [
           { text: 'Adding Users', link: `${BASE}/trust-framework/onboarding/adding-users` },
         ],
@@ -65,8 +63,6 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
     items: [
       {
         text: 'Data Sharing',
-        collapsed: true,
-        link: `${BASE}/${VERSION}/banking/data-sharing/`,
         items: [
           { text: 'Requirements', link: `${BASE}/${VERSION}/banking/data-sharing/requirements` },
           { text: 'User Experience', link: `${BASE}/${VERSION}/banking/data-sharing/user-journeys` },
@@ -93,8 +89,8 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
       {
         text: 'Confirmation of Payee',
         collapsed: true,
-        link: `${BASE}/${VERSION}/banking/confirmation-of-payee/`,
         items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/`},
           { text: 'Requirements', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/requirements` },
           { text: 'User Experience', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/user-journeys` },
           { text: 'API Guide', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/api-guide` },

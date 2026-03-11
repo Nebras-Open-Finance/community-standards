@@ -34,7 +34,7 @@ defineProps({
 .dirham-icon {
   height: 1em;
   width: auto;
-  transform: translateY(-0.08em);
+  transform: translateY(-1px);
 }
 
 .dirham-amount {
