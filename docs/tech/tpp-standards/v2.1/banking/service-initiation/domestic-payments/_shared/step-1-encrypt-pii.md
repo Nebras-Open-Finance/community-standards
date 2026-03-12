@@ -25,20 +25,27 @@ Build the PII object according to the schema, then encrypt it as a JWE using the
 ::: code-group
 
 ```typescript [Node.js]
-import { importJWK, CompactEncrypt } from 'jose'
+import { SignJWT, importJWK, CompactEncrypt } from 'jose'
 
 /**
- * Encrypt PII as a JWE using the LFI's public encryption key.
+ * Sign PII as a JWT and encrypt it as a JWE using the LFI's public encryption key.
  * Fetch the LFI's JWKS URI from their .well-known/openid-configuration.
  */
-async function encryptPII(pii: object, jwksUri: string): Promise<string> {
+async function encryptPII(pii: object, jwksUri: string, signingKey: CryptoKey, signingKeyId: string): Promise<string> {
+  // 1. Sign the PII as a JWT
+  const signedPII = await new SignJWT(pii as Record<string, unknown>)
+    .setProtectedHeader({ alg: 'PS256', kid: signingKeyId })
+    .sign(signingKey)
+
+  // 2. Fetch the LFI's encryption key
   const { keys } = await fetch(jwksUri).then(r => r.json())
   const encKeyJwk = keys.find((k: { use: string }) => k.use === 'enc')
   if (!encKeyJwk) throw new Error('No encryption key (use: enc) found in JWKS')
 
   const encKey = await importJWK(encKeyJwk, 'RSA-OAEP-256')
 
-  return new CompactEncrypt(new TextEncoder().encode(JSON.stringify(pii)))
+  // 3. Encrypt the signed JWT
+  return new CompactEncrypt(new TextEncoder().encode(signedPII))
     .setProtectedHeader({
       alg: 'RSA-OAEP-256',
       enc: 'A256GCM',
@@ -48,28 +55,32 @@ async function encryptPII(pii: object, jwksUri: string): Promise<string> {
 }
 
 const pii = {
-  Initiation: {
-    Creditor: [
+   "Initiation": {
+     "DebtorAccount": {
+       "SchemeName": "IBAN",
+       "Identification": "AE070331234567890123456",
+       "Name": {
+         "en": "Mohammed Al Rashidi",
+       }
+     },
+    "Creditor": [
       {
-        Creditor: { Name: 'Ivan England' },
-        CreditorAccount: {
-          SchemeName: 'IBAN',
-          Identification: 'AE070331234567890123456',
-          Name: { en: 'Ivan David England' },
+        "Creditor": {
+          "Name": "Ivan England"
         },
-      },
-    ],
-  },
-  Risk: {
-    DebtorIndicators: { UserName: { en: 'Ahmad Al Mansouri' } },
-    CreditorIndicators: {
-      IsCreditorConfirmed: true,
-      IsCreditorPrePopulated: true,
-    },
-  },
+        "CreditorAccount": {
+          "SchemeName": "IBAN",
+          "Identification": "AE070331234567890123456",
+          "Name": {
+            "en": "Ivan David England"
+          }
+        }
+      }
+    ]
+  }
 }
 
-const encryptedPII = await encryptPII(pii, LFI_JWKS_URI)
+const encryptedPII = await encryptPII(pii, LFI_JWKS_URI, signingKey, SIGNING_KEY_ID)
 // encryptedPII is a compact JWE string — embed it in authorization_details below
 ```
 
@@ -92,25 +103,29 @@ def encrypt_pii(pii: dict, jwks_uri: str) -> str:
     ).decode()
 
 pii = {
-    "Initiation": {
-        "Creditor": [
-            {
-                "Creditor": {"Name": "Ivan England"},
-                "CreditorAccount": {
-                    "SchemeName": "IBAN",
-                    "Identification": "AE070331234567890123456",
-                    "Name": {"en": "Ivan David England"},
-                },
-            }
-        ]
-    },
-    "Risk": {
-        "DebtorIndicators": {"UserName": {"en": "Ahmad Al Mansouri"}},
-        "CreditorIndicators": {
-            "IsCreditorConfirmed": True,
-            "IsCreditorPrePopulated": True,
+  "Initiation": {
+     "DebtorAccount": {
+       "SchemeName": "IBAN",
+       "Identification": "AE070331234567890123456",
+       "Name": {
+         "en": "Mohammed Al Rashidi",
+       }
+     },
+    "Creditor": [
+      {
+        "Creditor": {
+          "Name": "Ivan England"
         },
-    },
+        "CreditorAccount": {
+          "SchemeName": "IBAN",
+          "Identification": "AE070331234567890123456",
+          "Name": {
+            "en": "Ivan David England"
+          }
+        }
+      }
+    ]
+  },
 }
 
 encrypted_pii = encrypt_pii(pii, LFI_JWKS_URI)

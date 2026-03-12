@@ -110,7 +110,6 @@ export async function encryptRequestObject(
       alg: 'RSA-OAEP-256',
       enc: 'A256GCM',
       kid: encKeyJwk.kid,
-      cty: 'JWT',   // Content-Type: JWT (signals this is a Nested JWT)
     })
     .encrypt(encKey)
 
@@ -140,7 +139,6 @@ def encrypt_request_object(signed_jwt: str, jwks_uri: str) -> str:
         enc_key,
         algorithm="RSA-OAEP-256",
         encryption="A256GCM",
-        cty="JWT",
     ).decode()
 ```
 

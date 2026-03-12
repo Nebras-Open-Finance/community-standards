@@ -10,7 +10,7 @@ sequenceDiagram
     participant Hub as API Hub
     participant LFI as LFI
 
-    Note over TPP: Encrypt PII (creditor name + IBAN)
+    Note over TPP: Encrypt PII (Initiation.Creditor[], Initiation.DebtorAccount{}, Risk{})
     Note over TPP: Construct Authorization Details
     Note over TPP: Construct Request JWT (payments openid)
     Note over TPP: Create Client Assertion
@@ -36,6 +36,7 @@ sequenceDiagram
 
     loop Each Delegated SCA payment
         Note over TPP: Authenticates with TPP (SCA)
+        Note over TPP: Encrypt PII (Initiation.CreditorAccount{}, Initiation.Creditor{}, <br/> Initiation.CreditorAgent{}, Initiation.ConfirmationOfPayeeResponse, Risk{})
         TPP->>+Hub: POST /payments
         Hub->>LFI: POST /payments
         LFI-->>Hub: 201 {PaymentId}

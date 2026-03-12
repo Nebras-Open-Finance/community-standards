@@ -301,54 +301,69 @@ See [User Experience](./user-journeys) for screen mockups of the Fixed Defined S
 
 ## Initiating Payments on the Defined Schedule
 
+<!--@include: ../../_shared/step-encrypt-pii-multi-payment.md-->
+
 ### Step 9 - POST /payments
 
 Submit **one payment per scheduled date** under this consent. On or around each `PaymentExecutionDate`, call `POST /payments` with the amount defined for that entry in the schedule. The LFI will reject any payment that does not match the scheduled amount, duplicates a date already paid, or is submitted after the consent has expired.
+
+::: info Fields that can vary per payment
+Unlike Single Instant Payment, multi-payment consents do not require `PaymentPurposeCode`, `DebtorReference`, `CreditorReference`, or `OpenFinanceBilling` to match the consent exactly. Only `ConsentId` must match the authorized consent. `Instruction.Amount` must be within the parameters the consent allows for this payment type.
+:::
 
 ::: warning One payment per scheduled date
 Each `PaymentExecutionDate` in the schedule may only be used for a single `POST /payments` call. Submitting a second payment for the same date will be rejected, regardless of the amount.
 :::
 
-::: info Consent stays Authorized between payments
-After each successful payment, the consent remains in the `Authorized` state. You do **not** need to re-initiate the authorization flow between scheduled dates — use the token refresh flow to maintain a valid access token.
-:::
-
 ::: code-group
 
 ```typescript [Node.js]
+import { SignJWT } from 'jose'
+
 const LFI_API_BASE = process.env.LFI_API_BASE_URL!
 
 async function initiateFixedSchedulePayment(
   accessToken: string,
   consentId: string,
   amount: string,        // must match the Amount defined for this PaymentExecutionDate
-  encryptedPII: string,  // same encrypted PII from Step 1
+  paymentEncryptedPII: string,  // from the PII step above
+  idempotencyKey: string,
 ) {
+  const paymentPayload = {
+    Data: {
+      ConsentId: consentId,                    // must match the authorized consent
+      Instruction: {
+        Amount: {
+          Amount:   amount,                  // must be within consent parameters
+          Currency: 'AED',
+        },
+      },
+      PersonalIdentifiableInformation: paymentEncryptedPII,
+      PaymentPurposeCode: 'ACM',
+      DebtorReference:    'Invoice 2026-08',
+      CreditorReference:  'Invoice 2026-08',
+      OpenFinanceBilling: {
+        Type: 'PushP2P',
+      },
+    },
+  }
+
+  const signedPayment = await new SignJWT(paymentPayload)
+    .setProtectedHeader({ alg: 'PS256', kid: SIGNING_KEY_ID })
+    .setIssuedAt()
+    .setIssuer(CLIENT_ID)
+    .setExpirationTime('5m')
+    .sign(signingKey)
+
   const paymentResponse = await fetch(`${LFI_API_BASE}/open-finance/v2.1/payments`, {
     method: 'POST',
     headers: {
-      Authorization:  `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
+      Authorization:       `Bearer ${accessToken}`,
+      'Content-Type':      'application/jwt',
+      'x-consent-id':      consentId,
+      'x-idempotency-key': idempotencyKey,
     },
-    body: JSON.stringify({
-      Data: {
-        ConsentId: consentId,
-        Instruction: {
-          Amount: {
-            Amount:   amount,   // fixed — must equal the scheduled Amount for this date
-            Currency: 'AED',
-          },
-        },
-        PersonalIdentifiableInformation: encryptedPII,
-        PaymentPurposeCode: 'ACM',
-        DebtorReference:    'Invoice 2026-08',
-        CreditorReference:  'Invoice 2026-08',
-        OpenFinanceBilling: {
-          UserType: 'Retail',
-          Purpose:  'PersonalTransfer',
-        },
-      },
-    }),
+    body: signedPayment,
     // agent: new https.Agent({ cert: transportCert, key: transportKey }),
   })
 
@@ -357,44 +372,59 @@ async function initiateFixedSchedulePayment(
 }
 
 // Payment on 2026-08-01 — scheduled AED 500.00
-const { PaymentId: aug } = await initiateFixedSchedulePayment(accessToken, consentId, '500.00', encryptedPII)
+const { PaymentId: aug } = await initiateFixedSchedulePayment(accessToken, consentId, '500.00', paymentEncryptedPII, crypto.randomUUID())
 
 // Payment on 2026-09-02 — scheduled AED 1200.00 (using a refreshed access token)
-const { PaymentId: sep } = await initiateFixedSchedulePayment(refreshedToken, consentId, '1200.00', encryptedPII)
+const { PaymentId: sep } = await initiateFixedSchedulePayment(refreshedToken, consentId, '1200.00', paymentEncryptedPII, crypto.randomUUID())
 ```
 
 ```python [Python]
+import time
+from jose import jwt as jose_jwt
+
 def initiate_fixed_schedule_payment(
     access_token: str,
     consent_id: str,
     amount: str,          # must match the Amount defined for this PaymentExecutionDate
-    encrypted_pii: str,   # same encrypted PII from Step 1
+    payment_encrypted_pii: str,  # from the PII step above
+    idempotency_key: str,
 ) -> dict:
+    payment_payload = {
+        "Data": {
+            "ConsentId":   consent_id,               # must match the authorized consent
+            "Instruction": {
+                "Amount": {
+                    "Amount":   amount,            # must be within consent parameters
+                    "Currency": "AED",
+                }
+            },
+            "PersonalIdentifiableInformation": payment_encrypted_pii,
+            "PaymentPurposeCode": "ACM",
+            "DebtorReference":    "Invoice 2026-08",
+            "CreditorReference":  "Invoice 2026-08",
+            "OpenFinanceBilling": {
+                "Type": "PushP2P",
+            },
+        }
+    }
+
+    now = int(time.time())
+    signed_payment = jose_jwt.encode(
+        {**payment_payload, "iss": CLIENT_ID, "iat": now, "exp": now + 300},
+        signing_key,
+        algorithm="PS256",
+        headers={"kid": SIGNING_KEY_ID},
+    )
+
     response = httpx.post(
         f"{LFI_API_BASE}/open-finance/v2.1/payments",
         headers={
-            "Authorization":  f"Bearer {access_token}",
-            "Content-Type":   "application/json",
+            "Authorization":     f"Bearer {access_token}",
+            "Content-Type":      "application/jwt",
+            "x-consent-id":      consent_id,
+            "x-idempotency-key": idempotency_key,
         },
-        json={
-            "Data": {
-                "ConsentId":   consent_id,
-                "Instruction": {
-                    "Amount": {
-                        "Amount":   amount,   # fixed — must equal the scheduled Amount for this date
-                        "Currency": "AED",
-                    }
-                },
-                "PersonalIdentifiableInformation": encrypted_pii,
-                "PaymentPurposeCode": "ACM",
-                "DebtorReference":    "Invoice 2026-08",
-                "CreditorReference":  "Invoice 2026-08",
-                "OpenFinanceBilling": {
-                    "UserType": "Retail",
-                    "Purpose":  "PersonalTransfer",
-                },
-            }
-        },
+        content=signed_payment,
         # cert=("transport.crt", "transport.key"),
     )
     data = response.json()["Data"]
@@ -402,10 +432,10 @@ def initiate_fixed_schedule_payment(
 
 
 # Payment on 2026-08-01 — scheduled AED 500.00
-aug_pay = initiate_fixed_schedule_payment(access_token, consent_id, "500.00", encrypted_pii)
+aug_pay = initiate_fixed_schedule_payment(access_token, consent_id, "500.00", payment_encrypted_pii, str(uuid.uuid4()))
 
 # Payment on 2026-09-02 — scheduled AED 1200.00 (using a refreshed access token)
-sep_pay = initiate_fixed_schedule_payment(refreshed_token, consent_id, "1200.00", encrypted_pii)
+sep_pay = initiate_fixed_schedule_payment(refreshed_token, consent_id, "1200.00", payment_encrypted_pii, str(uuid.uuid4()))
 ```
 
 :::
@@ -415,3 +445,8 @@ The LFI will reject a payment if `Instruction.Amount` does not match the `Amount
 :::
 
 <!--@include: ../../_shared/step-token-refresh.md-->
+<!--@include: ../../_shared/step-payment-response.md-->
+
+::: info Consent stays Authorized between payments
+After each successful payment, the consent remains in the `Authorized` state. You do **not** need to re-initiate the authorization flow between scheduled dates — use the token refresh flow to maintain a valid access token.
+:::

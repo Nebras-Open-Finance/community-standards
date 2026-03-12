@@ -89,7 +89,7 @@
                                                     <div v-if="show_payment_setup" class="consent-page-account-subtext-container-2">
                                     <div class="consent-page-account-subtext-part">Payment to</div>
                                         <div class="consent-page-account-amount">
-                                            {{ sharedState?.pii?.Initiation?.Creditor[0]?.Creditor?.Name || sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Name?.en || sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Name?.ar }}
+                                            {{ sharedState?.pii?.Initiation?.Creditor?.[0]?.Creditor?.Name || sharedState?.pii?.Initiation?.Creditor?.[0]?.CreditorAccount?.Name?.en || sharedState?.pii?.Initiation?.Creditor?.[0]?.CreditorAccount?.Name?.ar }}
                                         </div>
                                 </div>
                                                                 <div v-if="show_payment_setup" class="consent-page-account-subtext-container-2">
@@ -245,13 +245,13 @@
                                     <div class="consent-page-account-subtext-container-2">
                                         <div class="consent-page-account-subtext-part">Payee Name</div>
                                         <div class="consent-page-account-amount">
-                                            {{ sharedState?.pii?.Initiation?.Creditor[0]?.Creditor?.Name || sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Name?.en || sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Name?.ar }}
+                                            {{ sharedState?.pii?.Initiation?.Creditor?.[0]?.Creditor?.Name || sharedState?.pii?.Initiation?.Creditor?.[0]?.CreditorAccount?.Name?.en || sharedState?.pii?.Initiation?.Creditor?.[0]?.CreditorAccount?.Name?.ar }}
                                         </div>
                                     </div>
                                     <div class="consent-page-account-subtext-container-2">
                                         <div class="consent-page-account-subtext-part">IBAN</div>
                                         <div class="consent-page-account-amount-iban">
-                                            {{ sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Identification?.match(/.{1,4}/g)?.join(" ") }}
+                                            {{ sharedState?.pii?.Initiation?.Creditor?.[0]?.CreditorAccount?.Identification?.match(/.{1,4}/g)?.join(" ") }}
                                         </div>
                                     </div>
                                 </template>

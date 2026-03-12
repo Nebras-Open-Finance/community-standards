@@ -285,8 +285,7 @@ The `authorization_endpoint` is found in the LFI's `.well-known/openid-configura
 After redirecting, the user will see the bank's authorization screen showing:
 
 - The TPP name and purpose
-- The `MaximumIndividualAmount` (e.g. "up to AED 500.00 per payment")
-- Any periodic caps (per-period value and count limits)
+- The active periodic controls (e.g. "up to AED 500.00 per payment" if `MaximumIndividualAmount` is set, per-period value and count limits if set)
 - Any lifetime cumulative caps
 - The consent expiry date
 
@@ -304,50 +303,66 @@ See [User Experience](./user-journeys) for screen mockups of the Variable On-Dem
 
 ## Initiating Payments On-Demand
 
+<!--@include: ../../_shared/step-encrypt-pii-multi-payment.md-->
+
 ### Step 9 - POST /payments
 
-Unlike Single Instant Payment, this step can be called **multiple times** under the same consent. Each call specifies the actual amount for that payment — it must be ≤ `MaximumIndividualAmount` and must not exceed any periodic or cumulative caps.
+Unlike Single Instant Payment, this step can be called **multiple times** under the same consent. Each call specifies the actual amount for that payment — it must satisfy whichever control parameters exist on the consent (`MaximumIndividualAmount`, `MaximumCumulativeValueOfPaymentsPerPeriod`, and/or `MaximumCumulativeNumberOfPaymentsPerPeriod`), as well as any lifetime cumulative caps.
 
-::: info Consent stays Authorized
-After each successful payment, the consent remains in the `Authorized` state (unless cumulative caps are reached or the consent expires). You do **not** need to re-initiate the authorization flow.
+::: info Fields that can vary per payment
+Unlike Single Instant Payment, multi-payment consents do not require `PaymentPurposeCode`, `DebtorReference`, `CreditorReference`, or `OpenFinanceBilling` to match the consent exactly. Only `ConsentId` must match the authorized consent. `Instruction.Amount` must be within the parameters the consent allows for this payment type.
 :::
+
 
 ::: code-group
 
 ```typescript [Node.js]
+import { SignJWT } from 'jose'
+
 const LFI_API_BASE = process.env.LFI_API_BASE_URL!
 
 async function initiateVariablePayment(
   accessToken: string,
   consentId: string,
-  amount: string,        // must be ≤ MaximumIndividualAmount ('500.00')
-  encryptedPII: string,  // same encrypted PII from Step 1
+  amount: string,        // must satisfy the control parameters on the consent
+  paymentEncryptedPII: string,  // from the PII step above
+  idempotencyKey: string,
 ) {
+  const paymentPayload = {
+    Data: {
+      ConsentId: consentId,                    // must match the authorized consent
+      Instruction: {
+        Amount: {
+          Amount:   amount,                  // must be within consent parameters
+          Currency: 'AED',
+        },
+      },
+      PersonalIdentifiableInformation: paymentEncryptedPII,
+      PaymentPurposeCode: 'ACM',
+      DebtorReference:    'Subscription',
+      CreditorReference:  'Subscription',
+      OpenFinanceBilling: {
+        Type: 'PushP2P',
+      },
+    },
+  }
+
+  const signedPayment = await new SignJWT(paymentPayload)
+    .setProtectedHeader({ alg: 'PS256', kid: SIGNING_KEY_ID })
+    .setIssuedAt()
+    .setIssuer(CLIENT_ID)
+    .setExpirationTime('5m')
+    .sign(signingKey)
+
   const paymentResponse = await fetch(`${LFI_API_BASE}/open-finance/v2.1/payments`, {
     method: 'POST',
     headers: {
-      Authorization:  `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
+      Authorization:       `Bearer ${accessToken}`,
+      'Content-Type':      'application/jwt',
+      'x-consent-id':      consentId,
+      'x-idempotency-key': idempotencyKey,
     },
-    body: JSON.stringify({
-      Data: {
-        ConsentId: consentId,
-        Instruction: {
-          Amount: {
-            Amount:   amount,   // variable — the actual charge for this payment
-            Currency: 'AED',
-          },
-        },
-        PersonalIdentifiableInformation: encryptedPII,
-        PaymentPurposeCode: 'ACM',
-        DebtorReference:    'Subscription',
-        CreditorReference:  'Subscription',
-        OpenFinanceBilling: {
-          UserType: 'Retail',
-          Purpose:  'PersonalTransfer',
-        },
-      },
-    }),
+    body: signedPayment,
     // agent: new https.Agent({ cert: transportCert, key: transportKey }),
   })
 
@@ -356,44 +371,59 @@ async function initiateVariablePayment(
 }
 
 // First payment
-const { PaymentId: pay1 } = await initiateVariablePayment(access_token, consentId, '149.99', encryptedPII)
+const { PaymentId: pay1 } = await initiateVariablePayment(access_token, consentId, '149.99', paymentEncryptedPII, crypto.randomUUID())
 
 // Second payment (days/weeks later using a refreshed access token)
-const { PaymentId: pay2 } = await initiateVariablePayment(refreshedToken, consentId, '89.00', encryptedPII)
+const { PaymentId: pay2 } = await initiateVariablePayment(refreshedToken, consentId, '89.00', paymentEncryptedPII, crypto.randomUUID())
 ```
 
 ```python [Python]
+import time
+from jose import jwt as jose_jwt
+
 def initiate_variable_payment(
     access_token: str,
     consent_id: str,
-    amount: str,          # must be ≤ MaximumIndividualAmount ('500.00')
-    encrypted_pii: str,   # same encrypted PII from Step 1
+    amount: str,          # must satisfy the control parameters on the consent
+    payment_encrypted_pii: str,  # from the PII step above
+    idempotency_key: str,
 ) -> dict:
+    payment_payload = {
+        "Data": {
+            "ConsentId":   consent_id,               # must match the authorized consent
+            "Instruction": {
+                "Amount": {
+                    "Amount":   amount,            # must be within consent parameters
+                    "Currency": "AED",
+                }
+            },
+            "PersonalIdentifiableInformation": payment_encrypted_pii,
+            "PaymentPurposeCode": "ACM",
+            "DebtorReference":    "Subscription",
+            "CreditorReference":  "Subscription",
+            "OpenFinanceBilling": {
+                "Type": "PushP2P",
+            },
+        }
+    }
+
+    now = int(time.time())
+    signed_payment = jose_jwt.encode(
+        {**payment_payload, "iss": CLIENT_ID, "iat": now, "exp": now + 300},
+        signing_key,
+        algorithm="PS256",
+        headers={"kid": SIGNING_KEY_ID},
+    )
+
     response = httpx.post(
         f"{LFI_API_BASE}/open-finance/v2.1/payments",
         headers={
-            "Authorization":  f"Bearer {access_token}",
-            "Content-Type":   "application/json",
+            "Authorization":     f"Bearer {access_token}",
+            "Content-Type":      "application/jwt",
+            "x-consent-id":      consent_id,
+            "x-idempotency-key": idempotency_key,
         },
-        json={
-            "Data": {
-                "ConsentId":   consent_id,
-                "Instruction": {
-                    "Amount": {
-                        "Amount":   amount,   # variable — the actual charge
-                        "Currency": "AED",
-                    }
-                },
-                "PersonalIdentifiableInformation": encrypted_pii,
-                "PaymentPurposeCode": "ACM",
-                "DebtorReference":    "Subscription",
-                "CreditorReference":  "Subscription",
-                "OpenFinanceBilling": {
-                    "UserType": "Retail",
-                    "Purpose":  "PersonalTransfer",
-                },
-            }
-        },
+        content=signed_payment,
         # cert=("transport.crt", "transport.key"),
     )
     data = response.json()["Data"]
@@ -401,17 +431,21 @@ def initiate_variable_payment(
 
 
 # First payment
-pay1 = initiate_variable_payment(access_token, consent_id, "149.99", encrypted_pii)
+pay1 = initiate_variable_payment(access_token, consent_id, "149.99", payment_encrypted_pii, str(uuid.uuid4()))
 
 # Second payment (days/weeks later using a refreshed access token)
-pay2 = initiate_variable_payment(refreshed_token, consent_id, "89.00", encrypted_pii)
+pay2 = initiate_variable_payment(refreshed_token, consent_id, "89.00", payment_encrypted_pii, str(uuid.uuid4()))
 ```
 
 :::
 
 ::: warning Amount validation
-The LFI will reject a payment if `Instruction.Amount` exceeds `MaximumIndividualAmount`, or if any periodic or lifetime cumulative cap has already been reached.
+The LFI will reject a payment if `Instruction.Amount` violates any control parameter present on the consent — whether `MaximumIndividualAmount`, `MaximumCumulativeValueOfPaymentsPerPeriod`, `MaximumCumulativeNumberOfPaymentsPerPeriod`, or any lifetime cumulative cap.
 :::
 
 <!--@include: ../../_shared/step-token-refresh.md-->
+<!--@include: ../../_shared/step-payment-response.md-->
 
+::: info Consent stays Authorized
+After each successful payment, the consent remains in the `Authorized` state (unless cumulative caps are reached or the consent expires). You do **not** need to re-initiate the authorization flow.
+:::

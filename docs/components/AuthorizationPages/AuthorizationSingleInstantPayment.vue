@@ -92,7 +92,7 @@
                                 <div class="auth-page-account-subtext-part">Payee Name</div>
                                 <div class="auth-page-account-amount-container">
                                     <div class="auth-page-account-amount">
-                                        {{ sharedState?.pii?.Initiation?.Creditor[0]?.Creditor?.Name || sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Name?.en || sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Name?.ar }}
+                                        {{ sharedState?.pii?.Initiation?.Creditor?.[0]?.Creditor?.Name || sharedState?.pii?.Initiation?.Creditor?.[0]?.CreditorAccount?.Name?.en || sharedState?.pii?.Initiation?.Creditor?.[0]?.CreditorAccount?.Name?.ar }}
                                     </div>
                                     <slot name="cop-icon" />
                                 </div>
@@ -104,7 +104,7 @@
                                 <div class="auth-page-account-subtext-part">IBAN</div>
                                 <div class="auth-page-account-amount-container">
                                     <div class="auth-page-account-amount">
-                                        {{ sharedState?.pii?.Initiation?.Creditor[0]?.CreditorAccount?.Identification?.match(/.{1,4}/g)?.join(" ") }}
+                                        {{ sharedState?.pii?.Initiation?.Creditor?.[0]?.CreditorAccount?.Identification?.match(/.{1,4}/g)?.join(" ") }}
                                     </div>
 
                                 </div>

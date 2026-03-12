@@ -24,7 +24,7 @@
 
 
   </div> -->
-  <div id="redoc-container" style="height: 90vh; width: 100%;"></div>
+  <div :id="containerId" class="redoc-wrapper-container" :style="{ height: height, width: '100%' }"></div>
 </div>
 </template>
 
@@ -36,9 +36,9 @@ const props = defineProps({
     type: String,
     required: true
   },
-  filterPath: { 
-    type: String, 
-    default: null 
+  filterPath: {
+    type: String,
+    default: null
   },
   filterMethod: {
     type: String,
@@ -55,6 +55,18 @@ const props = defineProps({
   hideSecurity: {
     type: Boolean,
     default: false
+  },
+  containerId: {
+    type: String,
+    default: 'redoc-container'
+  },
+  height: {
+    type: String,
+    default: '90vh'
+  },
+  filterSchema: {
+    type: String,
+    default: null // e.g., "AEBankServiceInitiation.AEDomesticPaymentPIIProperties"
   }
 })
 
@@ -80,46 +92,71 @@ onMounted(() => {
 
       let finalSpec = fullSpec
 
-      let pathObj;
+      // 3️⃣ Schema-only mode: build a synthetic path exposing just the named schema
+      if (props.filterSchema) {
+        const displayKey = props.displayPath || `/${props.filterSchema}`
+        finalSpec = {
+          openapi: fullSpec.openapi,
+          info: fullSpec.info,
+          components: fullSpec.components,
+          paths: {
+            [displayKey]: {
+              post: {
+                summary: displayKey,
+                requestBody: {
+                  required: true,
+                  content: {
+                    'application/json': {
+                      schema: { '$ref': `#/components/schemas/${props.filterSchema}` }
+                    }
+                  }
+                },
+                responses: { '200': { description: 'OK' } }
+              }
+            }
+          }
+        }
+      } else {
+        let pathObj;
 
-      // 3️⃣ Filter path if prop is provided
-      if (props.filterPath && fullSpec.paths?.[props.filterPath]) {
-        pathObj = fullSpec.paths[props.filterPath];
-      }
+        // Filter path if prop is provided
+        if (props.filterPath && fullSpec.paths?.[props.filterPath]) {
+          pathObj = fullSpec.paths[props.filterPath];
+        }
 
         if (props.filterMethod) {
-    const method = props.filterMethod.toLowerCase(); // OpenAPI uses lowercase keys
-    if (pathObj[method]) {
-      pathObj = { [method]: pathObj[method] };
-    } else {
-      pathObj = {}; // no match
-    }
-  }
-
-
-      // 4️⃣ Strip security if requested
-      if (props.hideSecurity && pathObj) {
-        pathObj = Object.fromEntries(
-          Object.entries(pathObj).map(([method, op]) => {
-            const { security, ...rest } = op
-            return [method, rest]
-          })
-        )
-      }
-
-      const displayKey = props.displayPath || props.filterPath
-
-      finalSpec = {
-        openapi: fullSpec.openapi,
-        info: fullSpec.info,
-        servers: props.overrideServers ?? fullSpec.servers,
-        components: props.hideSecurity
-          ? { ...fullSpec.components, securitySchemes: undefined }
-          : fullSpec.components,
-        paths: {
-          [displayKey]: pathObj
+          const method = props.filterMethod.toLowerCase();
+          if (pathObj[method]) {
+            pathObj = { [method]: pathObj[method] };
+          } else {
+            pathObj = {};
+          }
         }
-      };
+
+        // Strip security if requested
+        if (props.hideSecurity && pathObj) {
+          pathObj = Object.fromEntries(
+            Object.entries(pathObj).map(([method, op]) => {
+              const { security, ...rest } = op
+              return [method, rest]
+            })
+          )
+        }
+
+        const displayKey = props.displayPath || props.filterPath
+
+        finalSpec = {
+          openapi: fullSpec.openapi,
+          info: fullSpec.info,
+          servers: props.overrideServers ?? fullSpec.servers,
+          components: props.hideSecurity
+            ? { ...fullSpec.components, securitySchemes: undefined }
+            : fullSpec.components,
+          paths: {
+            [displayKey]: pathObj
+          }
+        };
+      }
 
       // 4️⃣ Initialize Redoc
       window.Redoc.init(
@@ -139,7 +176,7 @@ onMounted(() => {
           untrustedSpec: true,
           hideRightPanel: true,
         },
-        document.getElementById('redoc-container')
+        document.getElementById(props.containerId)
       )
     }
 
@@ -166,8 +203,7 @@ const backHref = getBackHref()
 </script>
 
 <style>
-#redoc-container {
-  height: 90vh;
+.redoc-wrapper-container {
   width: 100%;
   font-family: var(--vp-font-family-base) !important;
 }

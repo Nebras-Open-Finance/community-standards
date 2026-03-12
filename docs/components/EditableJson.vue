@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref, watchEffect, watch } from 'vue'
+import { reactive, ref, watchEffect, watch, nextTick } from 'vue'
 import YAML from 'yaml'
 import { useSharedState } from './Composables/useSharedState.ts'
 
@@ -342,6 +342,15 @@ function updateFromJson() {
       jsonInput.value = JSON.stringify(form.value, null, 2)
     } else {
       form.value = newObj
+      // Defer updateField to the next tick so Vue has finished flushing reactive updates
+      // from form.value = newObj before we replace sharedState.value. Calling it synchronously
+      // here can trigger a sharedState replacement mid-flush, causing a blank-screen rendering
+      // error. The watch(form) → watch(jsonInput) cascade alone is unreliable because:
+      //   (a) suppressNextStateUpdate from a prior revert cycle silently skips updateField, or
+      //   (b) JSON.stringify(newObj) === jsonInput.value means Vue won't fire watch(jsonInput).
+      nextTick(() => {
+        updateField(props.stateField, JSON.stringify(form.value))
+      })
     }
   } catch (e) {
     addError('Invalid JSON—reverting changes.')

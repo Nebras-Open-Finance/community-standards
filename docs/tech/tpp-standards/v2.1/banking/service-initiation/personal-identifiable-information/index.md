@@ -90,6 +90,7 @@ See the sub-pages for full schema and rules:
 - [Creditor](./creditor) — consent-time models (single/multiple/open), payment-time structure, and match requirements
 - [Risk](./risk) — debtor and creditor risk indicators
 
+
 ## Decentralised validation
 
 Because PII is encrypted using the LFI's public key, **Nebras cannot decrypt or validate it**. The LFI is solely responsible for decrypting and validating the PII — at consent time and at payment time.
