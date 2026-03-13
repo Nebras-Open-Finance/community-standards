@@ -84,6 +84,10 @@ You will need this value as `client_id`, `iss`, and `sub` in all Client Assertio
 
 ## Activation
 
- Note registration does not automatically grant access. Once a TPP submits a registration request to an LFI, the LFI must activate the TPP, the associated Client, and the Software Statement before the TPP can communicate with the LFI.  
+Registration does not automatically grant access. Once a TPP submits a registration request to an LFI, the LFI must activate the TPP, the associated Client, and the Software Statement before the TPP can communicate with the LFI.
 
- For guidance on how an LFI activates a TPP's registration request via their Admin Portal, please review the [TPP Activation page](/tech/lfi-api-hub/admin-portal/tpp-activation).
+::: info Model bank
+Registration with the [model bank](/tech/tpp-standards/sandbox/model-bank) is activated automatically — no manual approval is required. For all other LFIs, activation must be performed by the LFI via their Admin Portal before the TPP can make API calls.
+:::
+
+For guidance on how an LFI activates a TPP's registration request via their Admin Portal, please review the [TPP Activation page](/tech/lfi-api-hub/admin-portal/tpp-activation).

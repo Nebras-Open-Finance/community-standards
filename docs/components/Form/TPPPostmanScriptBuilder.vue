@@ -366,21 +366,40 @@ export default {
         collectionStr = collectionStr.replaceAll('{{auth-endpoint}}', authEndpoint)
         collectionStr = collectionStr.replaceAll('{{jwksUrl}}', jwksUrl)
 
-        // pm.environment.get replacements — bake values directly into scripts
+        // (pm.environment.name ? pm.environment : pm.collectionVariables).get replacements — bake values directly into scripts
+        const pmGet = key => `(pm.environment.name ? pm.environment : pm.collectionVariables).get('${key}')`
+        const pmGetDQ = key => `(pm.environment.name ? pm.environment : pm.collectionVariables).get(\\"${key}\\")`
+        collectionStr = collectionStr.replaceAll(pmGet('issuer'), `'${issuer}'`)
+        collectionStr = collectionStr.replaceAll(pmGetDQ('issuer'), `\\"${issuer}\\"`)
+        collectionStr = collectionStr.replaceAll(pmGet('auth-endpoint'), `'${authEndpoint}'`)
+        collectionStr = collectionStr.replaceAll(pmGetDQ('auth-endpoint'), `\\"${authEndpoint}\\"`)
+        collectionStr = collectionStr.replaceAll(pmGet('authEndpoint'), `'${authEndpoint}'`)
+        collectionStr = collectionStr.replaceAll(pmGetDQ('authEndpoint'), `\\"${authEndpoint}\\"`)
+        collectionStr = collectionStr.replaceAll(pmGet('token-endpoint'), `'${tokenEndpoint}'`)
+        collectionStr = collectionStr.replaceAll(pmGetDQ('token-endpoint'), `\\"${tokenEndpoint}\\"`)
+        collectionStr = collectionStr.replaceAll(pmGet('tokenEndpoint'), `'${tokenEndpoint}'`)
+        collectionStr = collectionStr.replaceAll(pmGetDQ('tokenEndpoint'), `\\"${tokenEndpoint}\\"`)
+        collectionStr = collectionStr.replaceAll(pmGet('par-endpoint'), `'${parEndpoint}'`)
+        collectionStr = collectionStr.replaceAll(pmGetDQ('par-endpoint'), `\\"${parEndpoint}\\"`)
+        collectionStr = collectionStr.replaceAll(pmGet('response_type'), `'code'`)
+        collectionStr = collectionStr.replaceAll(pmGetDQ('response_type'), `\\"code\\"`)
+        collectionStr = collectionStr.replaceAll(pmGet('_clientId'), `'${this.formData.client_id ?? ''}'`)
+        collectionStr = collectionStr.replaceAll(pmGetDQ('_clientId'), `\\"${this.formData.client_id ?? ''}\\"`)
+
+        // Legacy pm.environment.get fallback (older collection versions)
         collectionStr = collectionStr.replaceAll(`pm.environment.get('issuer')`, `'${issuer}'`)
-        collectionStr = collectionStr.replaceAll(`pm.environment.get("issuer")`, `\\"${issuer}\\"`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get(\\"issuer\\")`, `\\"${issuer}\\"`)
         collectionStr = collectionStr.replaceAll(`pm.environment.get('auth-endpoint')`, `'${authEndpoint}'`)
-        collectionStr = collectionStr.replaceAll(`pm.environment.get("auth-endpoint")`, `\\"${authEndpoint}\\"`)
-        collectionStr = collectionStr.replaceAll(`pm.environment.get('authEndpoint')`, `'${authEndpoint}'`)
-        collectionStr = collectionStr.replaceAll(`pm.environment.get("authEndpoint")`, `\\"${authEndpoint}\\"`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get(\\"auth-endpoint\\")`, `\\"${authEndpoint}\\"`)
         collectionStr = collectionStr.replaceAll(`pm.environment.get('token-endpoint')`, `'${tokenEndpoint}'`)
-        collectionStr = collectionStr.replaceAll(`pm.environment.get("token-endpoint")`, `\\"${tokenEndpoint}\\"`)
-        collectionStr = collectionStr.replaceAll(`pm.environment.get('tokenEndpoint')`, `'${tokenEndpoint}'`)
-        collectionStr = collectionStr.replaceAll(`pm.environment.get("tokenEndpoint")`, `\\"${tokenEndpoint}\\"`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get(\\"token-endpoint\\")`, `\\"${tokenEndpoint}\\"`)
         collectionStr = collectionStr.replaceAll(`pm.environment.get('par-endpoint')`, `'${parEndpoint}'`)
-        collectionStr = collectionStr.replaceAll(`pm.environment.get("par-endpoint")`, `\\"${parEndpoint}\\"`)
-        collectionStr = collectionStr.replaceAll(`pm.environment.get('response_type')`, `'code'`)
-        collectionStr = collectionStr.replaceAll(`pm.environment.get("response_type")`, `\\"code\\"`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get(\\"par-endpoint\\")`, `\\"${parEndpoint}\\"`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get('_clientId')`, `'${this.formData.client_id ?? ''}'`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get(\\"_clientId\\")`, `\\"${this.formData.client_id ?? ''}\\"`)
+
+
+
 
         const blob = new Blob([collectionStr], { type: 'application/json' })
         const a = document.createElement('a')

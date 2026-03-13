@@ -207,8 +207,75 @@ Please fill in the below using an Application (Client) you have created in the *
 ## Your First Open Finance Requests
 
 
-hads
+### Step 1 – Prepare the requests for /par
 
+Navigate to the **Auth Flow** folder within **Single Instant Payment** and run the three [O3 utility requests](/tech/tpp-standards/security/fapi/o3-utils) in order:
+
+1. Send **O3 Util: Prepare Encrypted PII** — encrypts the [PII payload](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/) required for the consent.
+2. Send **O3 Util: Prepare Request Object JWT** — builds the [signed request object](/tech/tpp-standards/security/fapi/request-jwt) for the `/par` call.
+3. Send **O3 Util: Prepare Private Key JWT** — creates the client assertion used for authentication.
+
+<ClientOnly>
+    <Carousel :images="images3" />
+  </ClientOnly>
+
+### Step 2 – Stage the Consent and Redirect to the LFI
+
+1. Send the [`POST /par`](/tech/tpp-standards/v2.1/consent/open-api/par) request to stage the payment consent.
+2. Click **Visualize** in the Postman response panel — this renders the response as a clickable redirect link.
+3. Copy the link and open it in a browser to start the authorization redirect to the LFI.
+
+<ClientOnly>
+    <Carousel :images="images4" />
+  </ClientOnly>
+
+### Step 3 – Authenticate and Authorize
+
+1. Authenticate with the LFI using your test credentials.
+2. Select the account to debit and authorize the payment consent.
+
+> The exact UI will vary by LFI. For sandbox testing, see the [Model Bank guide](/tech/tpp-standards/sandbox/model-bank).
+
+<ClientOnly>
+    <Carousel :images="images5" />
+  </ClientOnly>
+
+
+### Step 4 – Exchange the Authorization Code for a Token
+
+After the LFI redirects back to your `redirect_uri`, the URL will contain a `code` query parameter.
+
+1. Copy the `code` value from the redirect URL.
+2. Set it as the `authorizationCode` [collection variable](/tech/tpp-standards/security/tokens) in Postman.
+3. Send the **token request** to exchange the code for an access token.
+
+<ClientOnly>
+    <Carousel :images="images6" />
+  </ClientOnly>
+
+
+### Step 5 – Initiate the Payment
+
+Navigate to the **Payments** folder and run the O3 utility requests, then submit the payment:
+
+1. Send **O3 Util: Prepare Encrypted PII** — encrypts the [payment PII](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/).
+2. Send **O3 Util: Prepare Request Object JWT for SIP** — builds the signed request object for the payment.
+3. Send [`POST /payments`](/tech/tpp-standards/v2.1/banking/service-initiation/open-api/payments).
+
+A `201` response confirms the payment was successfully initiated.
+
+<ClientOnly>
+    <Carousel :images="images7" />
+  </ClientOnly>
+
+### Step 6 – Retrieve the Payment ID and Status
+
+1. Decode the [JWT](/knowledge-base/articles/jwt-claims) received in the `POST /payments` response to retrieve the `PaymentId` and `Status`. The status will typically start as `Pending`.
+
+<ImageViewer
+  src="/images/postman/first-flow-sip/16.png"
+  alt="Decoded payment response JWT showing PaymentId and Status"
+/>
 
 <script setup>
 const images1 =  [
@@ -246,4 +313,95 @@ const images2 =  [
     title: 'Host, Client Transport CRT (.pem), Client Transport KEY (.key)'
   }
 ]
+
+const images3 =  [
+  {
+    src: new URL('/images/postman/first-flow-sip/1.png', import.meta.url).href,
+    alt: 'Step 1',
+    title: 'Navigate to Single Instant Payment → Auth Flow and send O3 Util: Prepare Encrypted PII'
+  },
+  {
+    src: new URL('/images/postman/first-flow-sip/2.png', import.meta.url).href,
+    alt: 'Step 2',
+    title: 'Send O3 Util: Prepare Request Object JWT'
+  },
+  {
+    src: new URL('/images/postman/first-flow-sip/3.png', import.meta.url).href,
+    alt: 'Step 3',
+    title: 'Send O3 Util: Prepare Private Key JWT'
+  }
+]
+
+const images4 =  [
+  {
+    src: new URL('/images/postman/first-flow-sip/4.png', import.meta.url).href,
+    alt: 'Step 1',
+    title: 'Send POST /par to stage the payment consent'
+  },
+  {
+    src: new URL('/images/postman/first-flow-sip/5_spotlight.png', import.meta.url).href,
+    alt: 'Step 2',
+    title: 'Click Visualize to render the /par response as a redirect link'
+  },
+  {
+    src: new URL('/images/postman/first-flow-sip/6.png', import.meta.url).href,
+    alt: 'Step 3',
+    title: 'Copy the link and open it in a browser to redirect the user to the LFI'
+  }
+]
+
+const images5 =  [
+  {
+    src: new URL('/images/postman/first-flow-sip/7.png', import.meta.url).href,
+    alt: 'Step 1',
+    title: 'Authenticate with the LFI'
+  },
+  {
+    src: new URL('/images/postman/first-flow-sip/8.png', import.meta.url).href,
+    alt: 'Step 2',
+    title: 'Select the account to debit for the payment'
+  },
+  {
+    src: new URL('/images/postman/first-flow-sip/9.png', import.meta.url).href,
+    alt: 'Step 3',
+    title: 'Authorize the payment consent'
+  }
+]
+
+const images6 =  [
+  {
+    src: new URL('/images/postman/first-flow-sip/10.png', import.meta.url).href,
+    alt: 'Step 1',
+    title: 'Copy the `code` parameter from the redirect URL'
+  },
+  {
+    src: new URL('/images/postman/first-flow-sip/11.png', import.meta.url).href,
+    alt: 'Step 2',
+    title: 'Set the `authorizationCode` collection variable in Postman'
+  },
+  {
+    src: new URL('/images/postman/first-flow-sip/12.png', import.meta.url).href,
+    alt: 'Step 3',
+    title: 'Send the token request to exchange the code for an access token'
+  }
+]
+
+const images7 =  [
+  {
+    src: new URL('/images/postman/first-flow-sip/13.png', import.meta.url).href,
+    alt: 'Step 1',
+    title: 'Navigate to the Payments folder and send O3 Util: Prepare Encrypted PII'
+  },
+  {
+    src: new URL('/images/postman/first-flow-sip/14.png', import.meta.url).href,
+    alt: 'Step 2',
+    title: 'Send O3 Util: Prepare Request Object JWT for SIP'
+  },
+  {
+    src: new URL('/images/postman/first-flow-sip/15.png', import.meta.url).href,
+    alt: 'Step 3',
+    title: 'Send POST /payments — a 201 confirms the payment was initiated'
+  }
+]
+
 </script>

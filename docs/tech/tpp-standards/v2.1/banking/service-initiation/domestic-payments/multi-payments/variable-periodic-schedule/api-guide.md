@@ -94,7 +94,7 @@ With the encrypted PII ready, construct the `authorization_details` of type `urn
 | `PeriodicSchedule.MaximumIndividualAmount.Currency` | Yes | ISO 4217 currency code | `AED` |
 
 ::: info One payment per period
-Only one payment may be submitted per period. The LFI will reject a second `POST /payments` call within the same period, even if the amount is within the ceiling.
+Only one payment may be submitted per period. The API Hub will reject a second `POST /payments` call within the same period, even if the amount is within the ceiling.
 :::
 
 #### Example request
@@ -290,7 +290,7 @@ See [User Experience](./user-journeys) for screen mockups of the Variable Period
 
 ### Step 9 - POST /payments
 
-Submit **one payment per period** under this consent. Each call specifies the actual amount for that period — it must be ≤ `MaximumIndividualAmount`. The LFI will reject a second payment submitted within the same period and any payment that exceeds the ceiling.
+Submit **one payment per period** under this consent. Each call specifies the actual amount for that period — it must be ≤ `MaximumIndividualAmount`. The API Hub will reject a second payment submitted within the same period and any payment that exceeds the ceiling.
 
 ::: info Fields that can vary per payment
 Unlike Single Instant Payment, multi-payment consents do not require `PaymentPurposeCode`, `DebtorReference`, `CreditorReference`, or `OpenFinanceBilling` to match the consent exactly. Only `ConsentId` must match the authorized consent. `Instruction.Amount` must be within the parameters the consent allows for this payment type.
@@ -426,7 +426,7 @@ apr_pay = initiate_variable_periodic_payment(refreshed_token, consent_id, "193.2
 :::
 
 ::: warning Amount ceiling and period enforcement
-The LFI will reject a payment if `Instruction.Amount` exceeds `MaximumIndividualAmount`, if a payment has already been submitted in the current period, or if any lifetime cumulative cap has been reached.
+The API Hub will reject a payment if `Instruction.Amount` exceeds `MaximumIndividualAmount`, if a payment has already been submitted in the current period, or if any lifetime cumulative cap has been reached.
 :::
 
 <!--@include: ../../_shared/step-token-refresh.md-->

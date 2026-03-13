@@ -6,6 +6,7 @@ aside: false
 
 # Postman Collection — Sandbox Testing
 
+The UAE Open Finance Postman collection covers the full sandbox flow — TPP registration, consent, authorization, and payments. It is maintained in the <a href="https://github.com/Nebras-Open-Finance/postman" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="display:inline;vertical-align:middle;margin-right:3px;fill:currentColor"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>Nebras-Open-Finance/postman</a> repository on GitHub and can be downloaded pre-configured for your application from the [Getting Started](/tech/tpp-standards/v2.1/getting-started/) page.
 
 ### TPP Onboarding
 
@@ -13,70 +14,3 @@ Contains the `POST /tpp-registration` dynamic client registration request. Run t
 
 See: [Registration — API Guide](../registration/api-guide)
 
----
-
-### Data Sharing
-
-Implements the Bank Data Sharing flow described in the [Data Sharing API Guide](../banking/data-sharing/api-guide).
-
-**AuthFlow** — runs the full consent authorisation sequence:
-1. Build the signed request object JWT for `/par`
-2. Build the `private_key_jwt` client assertion
-3. `POST /par` — stage the consent
-4. Auth Code Grant — exchange the authorisation code for an access token
-
-**Data Sharing APIs** — the account-information resource requests, available in both `application/json` and `application/jwt` response formats:
-- `GET /accounts`
-- `GET /accounts/{accountId}`
-- `GET /accounts/{accountId}/balances`
-- `GET /accounts/{accountId}/transactions`
-- `GET /accounts/{accountId}/direct-debits`
-- `GET /accounts/{accountId}/beneficiaries`
-- `GET /accounts/{accountId}/standing-orders`
-- `GET /accounts/{accountId}/scheduled-payments`
-- `GET /accounts/{accountId}/statements`
-- `GET /accounts/{accountId}/offers`
-- `GET /accounts/{accountId}/parties`
-- `GET /accounts/{accountId}/product`
-
-**Consents** — retrieve and manage the consent resource directly.
-
----
-
-### Service Initiation
-
-Each sub-folder implements one payment type end-to-end. The AuthFlow pattern is the same in each case — build the request object (including encrypted PII), POST to `/par`, and exchange the authorisation code for a token — then the TPP folder runs the payment API calls. See the relevant API guide for the full field-level specification.
-
-| Sub-folder | API Guide |
-|---|---|
-| Single Instant Payment | [Single Instant Payment](../banking/service-initiation/domestic-payments/single-instant-payment/api-guide) |
-| Single Instant Payment with CoP | Confirmation of Payee checked before payment |
-| Single Instant Payment (Multi-Authorization) | LFI co-authorisation flow |
-| Multi Payment — Fixed Defined Schedule | [Fixed Defined Schedule](../banking/service-initiation/domestic-payments/multi-payments/fixed-defined-schedule/api-guide) |
-| Multi Payment — Variable Defined Schedule | [Variable Defined Schedule](../banking/service-initiation/domestic-payments/multi-payments/variable-defined-schedule/api-guide) |
-| Multi Payment — Fixed Periodic Schedule | [Fixed Periodic Schedule](../banking/service-initiation/domestic-payments/multi-payments/fixed-periodic-schedule/api-guide) |
-| Multi Payment — Variable Periodic Schedule | [Variable Periodic Schedule](../banking/service-initiation/domestic-payments/multi-payments/variable-periodic-schedule/api-guide) |
-| Multi Payment — Fixed On-Demand | [Fixed On-Demand](../banking/service-initiation/domestic-payments/multi-payments/fixed-on-demand/api-guide) |
-| Multi Payment — Variable On-Demand | [Variable On-Demand](../banking/service-initiation/domestic-payments/multi-payments/variable-on-demand/api-guide) |
-| Payment Consent Refund | Refund flow against an existing payment consent |
-
-Each folder includes:
-- **AuthFlow** — PAR staging + auth code grant
-- **TPP > Payments** — `POST /payments` and `GET /payments/{paymentId}`
-- **TPP > Consents** — consent retrieval and status checks
-
-
----
-
-### Confirmation of Payee
-
-Implements the CoP discovery and confirmation flow:
-- `GET /confirmation-of-payee/discovery` — retrieve LFI CoP capabilities
-- `POST /confirmation-of-payee/confirmation` — submit a payee name check
-
-
-## Running the flows
-
-Import the downloaded collection into Postman. The requests within each AuthFlow folder are numbered and should be run in sequence. The O3 utility requests (prefixed `O3 Util:`) use the O3 signing service to prepare signed JWTs — these must succeed before the downstream PAR and token requests will work.
-
-Once the Auth Code Grant step completes successfully, the access token is stored automatically and the resource API requests in the TPP folder are ready to run.

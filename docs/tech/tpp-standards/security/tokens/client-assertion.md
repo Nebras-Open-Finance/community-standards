@@ -22,7 +22,7 @@ A client assertion must be freshly generated for every request. The `jti` claim 
 :::
 
 ::: tip Strict claim rules
-For a complete per-claim reference — including the exact `aud` value, `jti` uniqueness requirements, `exp`/`iat` lifetime window, and a side-by-side comparison with the Request Object — see [JWT Claim Rules](../fapi/jwt-claims).
+For a complete per-claim reference — including the exact `aud` value, `jti` uniqueness requirements, `exp`/`iat` lifetime window, and a side-by-side comparison with the Request Object — see [JWT Claim Rules](/knowledge-base/articles/jwt-claims).
 :::
 
 ## Structure

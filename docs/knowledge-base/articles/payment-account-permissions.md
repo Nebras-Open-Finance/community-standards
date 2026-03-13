@@ -1,6 +1,8 @@
 ---
 title: "Account Permissions in a Payment Consent"
 description: "How to use ReadAccountsBasic, ReadAccountsDetail, and ReadBalances on a payment consent, which endpoints they unlock, and why they're useful during a payment flow."
+next: false
+prev: false
 ---
 
 # Account Permissions in a Payment Consent

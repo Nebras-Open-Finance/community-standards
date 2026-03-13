@@ -15,8 +15,11 @@ The object you encrypt **MUST** conform exactly to `AEDomesticPaymentPIIProperti
 See [Personal Identifiable Information](../../../personal-identifiable-information/) for the complete field reference, required vs optional fields, and creditor models for each domestic payment type.
 :::
 
-::: danger Creditor must match the consent PII
-The creditor supplied here must correspond to the single beneficiary set at consent time. `CreditorAccount.SchemeName`, `CreditorAccount.Identification`, and `CreditorAccount.Name` must exactly match the entry in the consent PII. The LFI decrypts both PII tokens and compares them; any discrepancy results in rejection.
+::: danger Creditor must match the consent beneficiary model
+The creditor supplied here must correspond to the beneficiary model set at consent time:
+- **Single beneficiary** (`Initiation.Creditor[]` had 1 entry): `CreditorAccount.SchemeName`, `CreditorAccount.Identification`, and `CreditorAccount.Name` must exactly match that entry. The LFI decrypts both PII tokens and compares them; any discrepancy results in rejection.
+- **Multiple beneficiaries** (2–10 entries): must exactly match one entry from the pre-approved list in the consent PII.
+- **Open beneficiary** (`Initiation.Creditor[]` omitted at consent): no consent-time match required — supply any valid creditor.
 
 See [Creditor](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/creditor) for the full matching rules and [field validation requirements](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/creditor#validation-requirement).
 :::

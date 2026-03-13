@@ -1,6 +1,8 @@
 ---
 title: "Base Consent ID (consentGroupId) – How to Link Consents"
 description: "How to use a Base Consent ID to link related consents within a TPP's service, and when it applies."
+next: false
+prev: false
 ---
 
 # How to Link Consents — Base Consent ID (`consentGroupId`)

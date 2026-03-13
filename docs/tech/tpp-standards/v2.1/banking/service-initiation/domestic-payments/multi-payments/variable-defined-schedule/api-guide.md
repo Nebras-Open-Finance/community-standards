@@ -305,7 +305,7 @@ See [User Experience](./user-journeys) for screen mockups of the Variable Define
 
 ### Step 9 - POST /payments
 
-Submit **one payment per scheduled date** under this consent. On or around each `PaymentExecutionDate`, call `POST /payments` with the actual amount for that date — it must be ≤ the `MaximumIndividualAmount` defined for that entry. The LFI will reject any payment that exceeds the per-date ceiling, duplicates a date already paid, or is submitted after the consent has expired.
+Submit **one payment per scheduled date** under this consent. On or around each `PaymentExecutionDate`, call `POST /payments` with the actual amount for that date — it must be ≤ the `MaximumIndividualAmount` defined for that entry. The API Hub will reject any payment that exceeds the per-date ceiling, duplicates a date already paid, or is submitted after the consent has expired.
 
 ::: info Fields that can vary per payment
 Unlike Single Instant Payment, multi-payment consents do not require `PaymentPurposeCode`, `DebtorReference`, `CreditorReference`, or `OpenFinanceBilling` to match the consent exactly. Only `ConsentId` must match the authorized consent. `Instruction.Amount` must be within the parameters the consent allows for this payment type.
@@ -442,7 +442,7 @@ sep_pay = initiate_defined_schedule_payment(refreshed_token, consent_id, "1150.0
 :::
 
 ::: warning Amount ceiling enforcement
-The LFI will reject a payment if `Instruction.Amount` exceeds the `MaximumIndividualAmount` for the corresponding `PaymentExecutionDate`, if that date has already been paid, or if any lifetime cumulative cap has been reached.
+The API Hub will reject a payment if `Instruction.Amount` exceeds the `MaximumIndividualAmount` for the corresponding `PaymentExecutionDate`, if that date has already been paid, or if any lifetime cumulative cap has been reached.
 :::
 
 <!--@include: ../../_shared/step-token-refresh.md-->

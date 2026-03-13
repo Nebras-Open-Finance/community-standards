@@ -11,7 +11,7 @@ To send a [/par](../../v2.1/consent/open-api/par) request, you must first constr
 <img src="/images/journeys/par_spotlight-request.png" alt="Request JWT highlighted in the PAR flow" />
 
 ::: tip Strict claim rules
-For a precise per-claim reference covering `aud`, `exp`/`nbf` lifetime windows, clock skew, and the difference between the Request Object and Client Assertion, see [JWT Claim Rules](./jwt-claims).
+For a precise per-claim reference covering `aud`, `exp`/`nbf` lifetime windows, clock skew, and the difference between the Request Object and Client Assertion, see [JWT Claim Rules](/knowledge-base/articles/jwt-claims).
 :::
 
 ## Header

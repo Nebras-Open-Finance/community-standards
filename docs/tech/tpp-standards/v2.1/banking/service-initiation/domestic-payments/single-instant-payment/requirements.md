@@ -40,10 +40,11 @@ All requests require an active [Trust Framework application](/tech/tpp-standards
 | 5 | `Data.OpenFinanceBilling` | Must exactly match `consent.OpenFinanceBilling` (including `Type` and, if present, `MerchantId`). | API Hub |
 | 6 | `Data.DebtorReference` | Must exactly match `consent.DebtorReference`. | API Hub |
 | 7 | `Data.CreditorReference` | Must exactly match `consent.CreditorReference`. | API Hub |
-| 8 | `PersonalIdentifiableInformation` (Creditor) | The `Creditor` fields (account scheme, identification, name) must exactly match those in the consent PII. | LFI |
-| 9 | `consent.ExpirationDateTime` | The consent must not have expired at the time of the payment request. | API Hub |
-| 10 | *(implicit)* | Only one payment may be made against this consent. A second `POST /payments` call will be rejected. | API Hub |
-| 11 | OpenAPI schema | The request body must conform exactly to the [POST `/payments` OpenAPI schema](/tech/tpp-standards/v2.1/banking/service-initiation/open-api/payments). No additional or undocumented parameters are permitted. | API Hub |
-| 12 | `PersonalIdentifiableInformation` | The decrypted PII payload must conform exactly to the [PII schema](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information). No additional or undocumented parameters are permitted. | LFI |
-| 13 | `PersonalIdentifiableInformation.Risk` | The `Risk` block must be fully populated — every field that is known or derivable from the TPP's system must be included. See [Risk](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/risk). | LFI |
-| 14 | `CurrencyRequest` | Must not be present. Domestic payments are denominated in AED only; `CurrencyRequest` is for non-local currency and international transfers. | LFI |
+| 8 | `PersonalIdentifiableInformation` (Creditor) | `Initiation.Creditor[]` had 1 entry at consent time. `CreditorAccount.SchemeName`, `CreditorAccount.Identification`, and `CreditorAccount.Name` must exactly match that entry. See [Creditor](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/creditor). | LFI |
+| 9 | `PersonalIdentifiableInformation` (Creditor — field validation) | The creditor fields must also satisfy the [creditor field validation requirements](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/creditor#validation-requirement) — mandatory fields, valid UAE IBAN, and BIC derivation rules. | LFI |
+| 10 | `consent.ExpirationDateTime` | The consent must not have expired at the time of the payment request. | API Hub |
+| 11 | *(implicit)* | Only one payment may be made against this consent. A second `POST /payments` call will be rejected. | API Hub |
+| 12 | OpenAPI schema | The request body must conform exactly to the [POST `/payments` OpenAPI schema](/tech/tpp-standards/v2.1/banking/service-initiation/open-api/payments). No additional or undocumented parameters are permitted. | API Hub |
+| 13 | `PersonalIdentifiableInformation` | The decrypted PII payload must conform exactly to the [PII schema](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information). No additional or undocumented parameters are permitted. | LFI |
+| 14 | `PersonalIdentifiableInformation.Risk` | The `Risk` block must be fully populated — every field that is known or derivable from the TPP's system must be included. See [Risk](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/risk). | LFI |
+| 15 | `CurrencyRequest` | Must not be present. Domestic payments are denominated in AED only; `CurrencyRequest` is for non-local currency and international transfers. | LFI |

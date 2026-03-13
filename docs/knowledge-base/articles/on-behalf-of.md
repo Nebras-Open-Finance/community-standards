@@ -1,6 +1,8 @@
 ---
 title: "OnBehalfOf — When to Use It and When Not To"
 description: "When to populate OnBehalfOf in PAR requests, which consent types support it, and how payment (service initiation) consents handle merchant identity via creditor fields instead."
+next: false
+prev: false
 ---
 
 # OnBehalfOf — When to Use It and When Not To

@@ -305,7 +305,7 @@ See [User Experience](./user-journeys) for screen mockups of the Fixed Defined S
 
 ### Step 9 - POST /payments
 
-Submit **one payment per scheduled date** under this consent. On or around each `PaymentExecutionDate`, call `POST /payments` with the amount defined for that entry in the schedule. The LFI will reject any payment that does not match the scheduled amount, duplicates a date already paid, or is submitted after the consent has expired.
+Submit **one payment per scheduled date** under this consent. On or around each `PaymentExecutionDate`, call `POST /payments` with the amount defined for that entry in the schedule. The API HUb will reject any payment that does not match the scheduled amount, duplicates a date already paid, or is submitted after the consent has expired.
 
 ::: info Fields that can vary per payment
 Unlike Single Instant Payment, multi-payment consents do not require `PaymentPurposeCode`, `DebtorReference`, `CreditorReference`, or `OpenFinanceBilling` to match the consent exactly. Only `ConsentId` must match the authorized consent. `Instruction.Amount` must be within the parameters the consent allows for this payment type.
@@ -441,7 +441,7 @@ sep_pay = initiate_fixed_schedule_payment(refreshed_token, consent_id, "1200.00"
 :::
 
 ::: warning Amount enforcement
-The LFI will reject a payment if `Instruction.Amount` does not match the `Amount` defined for the corresponding `PaymentExecutionDate` in the schedule, if that date has already been paid, or if any lifetime cumulative cap has been reached.
+The API Hub will reject a payment if `Instruction.Amount` does not match the `Amount` defined for the corresponding `PaymentExecutionDate` in the schedule, if that date has already been paid, or if any lifetime cumulative cap has been reached.
 :::
 
 <!--@include: ../../_shared/step-token-refresh.md-->

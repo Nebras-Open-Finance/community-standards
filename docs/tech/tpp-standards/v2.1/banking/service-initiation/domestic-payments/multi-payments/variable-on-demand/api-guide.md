@@ -42,7 +42,7 @@ Before initiating a Variable On-Demand payment, ensure the following requirement
 
 ## <span style="color: #3b82f6; padding-right: 5px;">POST</span> `/par`
 
-<!--@include: ../../_shared/step-1-encrypt-pii.md-->
+<!--@include: ../../_shared/step-1-encrypt-pii-variable.md-->
 
 ### Step 2 - Constructing Authorization Details
 
@@ -303,7 +303,7 @@ See [User Experience](./user-journeys) for screen mockups of the Variable On-Dem
 
 ## Initiating Payments On-Demand
 
-<!--@include: ../../_shared/step-encrypt-pii-multi-payment.md-->
+<!--@include: ../../_shared/step-encrypt-pii-multi-payment-variable.md-->
 
 ### Step 9 - POST /payments
 
@@ -440,7 +440,7 @@ pay2 = initiate_variable_payment(refreshed_token, consent_id, "89.00", payment_e
 :::
 
 ::: warning Amount validation
-The LFI will reject a payment if `Instruction.Amount` violates any control parameter present on the consent — whether `MaximumIndividualAmount`, `MaximumCumulativeValueOfPaymentsPerPeriod`, `MaximumCumulativeNumberOfPaymentsPerPeriod`, or any lifetime cumulative cap.
+The API Hub will reject a payment if `Instruction.Amount` violates any control parameter present on the consent — whether `MaximumIndividualAmount`, `MaximumCumulativeValueOfPaymentsPerPeriod`, `MaximumCumulativeNumberOfPaymentsPerPeriod`, or any lifetime cumulative cap.
 :::
 
 <!--@include: ../../_shared/step-token-refresh.md-->

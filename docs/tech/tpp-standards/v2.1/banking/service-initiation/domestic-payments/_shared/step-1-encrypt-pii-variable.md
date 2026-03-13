@@ -16,10 +16,16 @@ The object you encrypt **MUST** conform exactly to the **Domestic Payment PII Sc
 See [Personal Identifiable Information](../../../personal-identifiable-information/) for the complete field reference, required vs optional fields, and creditor models for each domestic payment type.
 :::
 
-::: info Creditor array — exactly one entry
-`Initiation.Creditor` is an **array** but must contain **exactly one entry** for this payment type. The consent is bound to that single recipient — every payment made under this consent must go to that account.
+::: info Creditor array — choosing a beneficiary model
+`Initiation.Creditor` determines the beneficiary model for all payments made under this consent:
 
-See [Creditor](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/creditor) for the field schema and validation rules.
+| Entries | Model | Effect |
+|---------|-------|--------|
+| Omitted | Open beneficiary | No creditor fixed at consent time — each `POST /payments` supplies its own creditor |
+| 1 entry | Single beneficiary | Consent is bound to that one recipient — every payment must go to that account |
+| 2–10 entries | Multiple beneficiaries | Consent authorises any one of the listed accounts — each payment specifies which one |
+
+See [Creditor](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/creditor) for the field schema, matching rules, and validation requirements.
 :::
 
 The PII object is serialized to JSON, signed as a JWS using your signing key, and then encrypted as a JWE using the LFI's public encryption key — producing the `AEJWEPaymentPII` compact string embedded as `PersonalIdentifiableInformation` in the consent.
@@ -69,6 +75,7 @@ const pii = {
          "en": "Mohammed Al Rashidi",
        }
      },
+    // Creditor array is optional — omit for open beneficiary, or supply 1–10 entries
     "Creditor": [
       {
         "Creditor": {
@@ -117,6 +124,7 @@ pii = {
          "en": "Mohammed Al Rashidi",
        }
      },
+    # Creditor array is optional — omit for open beneficiary, or supply 1–10 entries
     "Creditor": [
       {
         "Creditor": {

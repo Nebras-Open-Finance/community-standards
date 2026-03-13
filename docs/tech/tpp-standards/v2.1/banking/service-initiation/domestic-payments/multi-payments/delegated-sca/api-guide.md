@@ -42,7 +42,7 @@ Before initiating a Variable On-Demand payment, ensure the following requirement
 
 ## <span style="color: #3b82f6; padding-right: 5px;">POST</span> `/par`
 
-<!--@include: ../../_shared/step-1-encrypt-pii.md-->
+<!--@include: ../../_shared/step-1-encrypt-pii-variable.md-->
 
 ### Step 2 - Constructing Authorization Details
 
@@ -240,7 +240,7 @@ See [User Experience](./user-journeys) for screen mockups of the Variable On-Dem
 
 ## Initiating Payments On-Demand
 
-<!--@include: ../../_shared/step-encrypt-pii-multi-payment.md-->
+<!--@include: ../../_shared/step-encrypt-pii-multi-payment-variable.md-->
 
 ### Step 9 - POST /payments
 
@@ -374,10 +374,6 @@ pay1 = initiate_variable_payment(access_token, consent_id, "149.99", payment_enc
 pay2 = initiate_variable_payment(refreshed_token, consent_id, "89.00", payment_encrypted_pii, str(uuid.uuid4()))
 ```
 
-:::
-
-::: warning Delegated SCA validation
-The LFI will reject a payment if the consent is expired/unauthorized or if the request is not marked as Delegated SCA. Ensure you call `/payments` immediately after authenticating the user and use the same `ConsentId` that was authorized.
 :::
 
 <!--@include: ../../_shared/step-token-refresh.md-->

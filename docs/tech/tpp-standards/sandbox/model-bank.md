@@ -47,6 +47,13 @@ The Model Bank includes two pre-configured users, each with varied accounts. You
 | `mits`   | `mits`       |
 | `rora`   | `rora`       |
 
+
+
+<ImageViewer
+  src="/images/postman/first-flow-sip/7.png"
+  alt="Model Bank Auth"
+/>
+
 **Mits Accounts:**
 
 | AccountId                | SchemeName    | Identification | AccountType | Name                |
@@ -54,6 +61,12 @@ The Model Bank includes two pre-configured users, each with varied accounts. You
 | 100004000000000000000002 | AccountNumber | 10000109010102 | Corporate   | Luigi International |
 | 100004000000000000000003 | AccountNumber | 10000109010103 | Retail      | Mario International |
 | 100004000000000000000005 | IBAN          | 10000109010105 | Retail      | Spectrum            |
+
+
+<ImageViewer
+  src="/images/postman/first-flow-sip/8.png"
+  alt="Mits Accounts"
+/>
 
 **Rora Accounts:**
 

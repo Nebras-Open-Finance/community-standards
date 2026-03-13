@@ -307,7 +307,7 @@ See [User Experience](./user-journeys) for screen mockups of the Fixed On-Demand
 
 ### Step 9 - POST /payments
 
-This step can be called **multiple times** under the same consent. Unlike Variable On-Demand, the `Instruction.Amount` must exactly match the fixed `Amount` defined in `PeriodicSchedule` — the LFI will reject any payment where the amount does not match.
+This step can be called **multiple times** under the same consent. Unlike Variable On-Demand, the `Instruction.Amount` must exactly match the fixed `Amount` defined in `PeriodicSchedule` — the API Hub will reject any payment where the amount does not match.
 
 ::: info Fields that can vary per payment
 Unlike Single Instant Payment, multi-payment consents do not require `PaymentPurposeCode`, `DebtorReference`, `CreditorReference`, or `OpenFinanceBilling` to match the consent exactly. Only `ConsentId` must match the authorized consent. `Instruction.Amount` must be within the parameters the consent allows for this payment type.
@@ -437,7 +437,7 @@ pay2 = initiate_fixed_payment(refreshed_token, consent_id, payment_encrypted_pii
 :::
 
 ::: warning Fixed amount enforcement
-The LFI will reject a payment if `Instruction.Amount` does not exactly match the `PeriodicSchedule.Amount` from the consent, or if any periodic or lifetime cumulative cap has already been reached.
+The API Hub will reject a payment if `Instruction.Amount` does not exactly match the `PeriodicSchedule.Amount` from the consent, or if any periodic or lifetime cumulative cap has already been reached.
 :::
 
 <!--@include: ../../_shared/step-token-refresh.md-->
