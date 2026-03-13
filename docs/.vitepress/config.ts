@@ -44,7 +44,10 @@ export default defineConfig({
   },
 
   vite: {
-    plugins: [wellKnownProxyPlugin]
+    plugins: [wellKnownProxyPlugin],
+    optimizeDeps: {
+      include: ['vue3-tel-input'],
+    },
   },
 
   themeConfig: {
@@ -56,7 +59,7 @@ export default defineConfig({
         items: [
           { text: 'Technology Architecture & Overview', link: '/tech/overview' },
           { text: 'TPP – Open Finance Standards', link: '/tech/tpp-standards/' },
-          { text: 'LFI – API Hub Integration', link: '/tech/lfi-api-hub/' },
+          { text: 'LFI – Integration Guide', link: '/tech/lfi-api-hub/' },
           { text: 'Erratas', link: '/erratas/' },
           { text: 'Knowledge Base', link: '/knowledge-base/' },
         ],
@@ -76,7 +79,7 @@ export default defineConfig({
     sidebar: {
       '/tech/overview': [
         { text: 'TPP - Open Finance Standards', link: '/tech/tpp-standards/' },
-        { text: 'LFI - API Hub Integration', link: '/tech/lfi-api-hub/' },
+        { text: 'LFI - Integration Guide', link: '/tech/lfi-api-hub/' },
       ],
       '/tech/tpp-standards': tppSidebar,
       '/tech/lfi-api-hub': lfiSidebar,

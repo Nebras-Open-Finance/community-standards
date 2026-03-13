@@ -6,25 +6,47 @@ const VERSION = 'v2.1'
 
 export const lfiSidebar: DefaultTheme.SidebarItem[] = [
 
+  // ── Getting Started ───────────────────────────────────────────────────
+  {
+    text: 'Getting Started',
+    collapsed: false,
+    items: [
+      { text: 'LFI Integration Journey', link: `${BASE}/getting-started/` },
+    ],
+  },
+
   // ── Trust Framework (Directory) ──────────────────────────────────────
   {
-    text: 'Trust Framework (Directory)',
+    text: 'Trust Framework',
     collapsed: true,
     items: [
+      { text: 'Overview & Organisations', link: `${BASE}/trust-framework/` },
       {
         text: 'Onboarding',
+        collapsed: true,
         items: [
-          { text: 'Adding Users', link: `${BASE}/trust-framework/onboarding/adding-users` },
+          { text: 'Overview', link: `${BASE}/trust-framework/onboarding` },
+          { text: 'Organisation Admins', link: `${BASE}/trust-framework/organisation-admins` },
+          { text: 'Adding Users', link: `${BASE}/trust-framework/adding-users` },
+          { text: 'User/Admin Sign Up', link: `${BASE}/trust-framework/user-sign-up` },
         ],
       },
-      { text: 'Organisation Certificates', link: `${BASE}/trust-framework/onboarding/organisation-certificates` },
       {
-        text: 'Creating an Application',
-        link: `${BASE}/trust-framework/onboarding/application`,
+        text: 'Applications',
+        collapsed: true,
         items: [
-          { text: 'Keys and Certificates', link: `${BASE}/trust-framework/onboarding/keys-certificates` },
+          { text: 'Overview', link: `${BASE}/trust-framework/application` },
+          { text: 'Roles', link: `${BASE}/trust-framework/roles` },
+          {
+            text: 'Keys & Certificates',
+            items: [
+              { text: 'Overview', link: `${BASE}/trust-framework/certificates` },
+              { text: 'Server Certificates with SAN', link: `${BASE}/trust-framework/certificates-san` },
+            ],
+          },
         ],
       },
+      { text: 'Contacts', link: `${BASE}/trust-framework/contacts` },
     ],
   },
 

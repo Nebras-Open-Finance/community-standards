@@ -11,7 +11,7 @@ This section is the authoritative register of post-publication corrections to do
 
 - Published versions of:
   - TPP - Open Finance Standards
-  - LFI - API Hub Integration
+  - LFI - Integration Guide
 
 ### Operating Rules
 

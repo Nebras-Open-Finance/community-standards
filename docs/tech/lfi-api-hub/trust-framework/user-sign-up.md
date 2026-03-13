@@ -4,7 +4,7 @@ prev: false
 aside: false
 ---
 
-<!--@include: ./_shared/user-sign-up.md-->
+<!--@include: ../../tpp-standards/trust-framework/_shared/user-sign-up.md-->
 
 <script setup>
 const images1 = [

@@ -4,7 +4,7 @@ prev: false
 aside: false
 ---
 
-<!--@include: ./_shared/adding-users.md-->
+<!--@include: ../../tpp-standards/trust-framework/_shared/adding-users.md-->
 
 <script setup>
 const images1 = [
@@ -21,12 +21,12 @@ const images1 = [
   {
     src: new URL('/images/raidiam/add-user/role-bsip.png', import.meta.url).href,
     alt: 'Step 3',
-    title: 'Role BSIP'
+    title: 'Select a Role'
   },
   {
     src: new URL('/images/raidiam/add-user/role-bsip-2.png', import.meta.url).href,
     alt: 'Step 4',
-    title: 'Role BSIP (Domain Users)'
+    title: 'Role Domain Users'
   },
   {
     src: new URL('/images/raidiam/add-user/role-bsip-new-user.png', import.meta.url).href,

@@ -19,7 +19,7 @@
         <div class="dropdown-menu">
           <a href="/tech/overview">Technology Architecture &amp; Overview</a>
           <a href="/tech/tpp-standards">TPP – Open Finance Standards</a>
-          <a href="/tech/lfi-api-hub">LFI – API Hub Integration</a>
+          <a href="/tech/lfi-api-hub">LFI – Integration Guide</a>
           <a href="/erratas">Erratas</a>
           <a href="/knowledge-base">Knowledge Base</a>
         </div>
@@ -49,7 +49,7 @@
       <div class="mobile-menu-inner">
         <a href="/tech/overview" class="mobile-link mobile-section-label">Developer Docs</a>
         <a href="/tech/tpp-standards" class="mobile-link mobile-indent">TPP – Open Finance Standards</a>
-        <a href="/tech/lfi-api-hub" class="mobile-link mobile-indent">LFI – API Hub Integration</a>
+        <a href="/tech/lfi-api-hub" class="mobile-link mobile-indent">LFI – Integration Guide</a>
         <a href="/erratas" class="mobile-link mobile-indent">Erratas</a>
         <a href="/knowledge-base" class="mobile-link mobile-indent">Knowledge Base</a>
         <hr class="mobile-divider" />

@@ -4,7 +4,7 @@ prev: false
 aside: false
 ---
 
-<!--@include: ./_shared/index.md-->
+<!--@include: ../../tpp-standards/trust-framework/_shared/index.md-->
 
 <script setup>
 

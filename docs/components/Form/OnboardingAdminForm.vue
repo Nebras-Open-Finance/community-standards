@@ -28,7 +28,7 @@
 
     <div class="form-section">
       <FormInputPhoneNumber placeholder="Mobile Number" country_code="AE" :input="{ country_code: 'AE', phone_number: form.mobile }"
-        :error="!!errors.mobile" @output="v => setField('mobile', v.data)" />
+        :error="!!errors.mobile" @output="v => { setField('mobile', v.data); if (v.meta?.countryCallingCode) form.mobileDialCode = '+' + v.meta.countryCallingCode }" />
       <div class="field-error" aria-live="polite">{{ errors.mobile }}</div>
     </div>
 
@@ -53,7 +53,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const FIELDS = ['firstName', 'lastName', 'emiratesId', 'email', 'mobile']
 
 const form = reactive({
-  firstName: '', lastName: '', emiratesId: '', email: '', mobile: ''
+  firstName: '', lastName: '', emiratesId: '', email: '', mobile: '', mobileDialCode: '+971'
 })
 
 const submitted = ref(false)
@@ -101,6 +101,7 @@ async function submit() {
       ${row('Last Name', form.lastName)}
       ${row('Emirates ID', form.emiratesId)}
       ${row('Work Email Address', form.email)}
+      ${row('Mobile Country Code', form.mobileDialCode)}
       ${row('Mobile Number', form.mobile)}
     </table>
   `

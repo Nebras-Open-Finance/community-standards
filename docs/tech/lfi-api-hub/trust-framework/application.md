@@ -6,9 +6,7 @@ aside: false
 
 🕒 **5 minute read**
 
-<!--@include: ./_shared/application.md-->
-
-| **Redirect URI** | Must be a valid HTTPS URI that complies with FAPI standards for redirection after authentication.<br><br>More information on Mobile app [Redirect URIs](../trust-framework/redirect-uri) | `https://app.example.com/callback` |
+<!--@include: ../../tpp-standards/trust-framework/_shared/application.md-->
 
 <script setup>
 
@@ -41,20 +39,11 @@ const images1 = [
     tagline: 'Client Name, Client Logo & Federation Entity Management Type'
   },
   {
-    src: new URL('/images/raidiam/add-application/auth.png', import.meta.url).href,
-    alt: 'Step 6',
-    title: 'Provide user authentication details',
-    tagline: `More information on <a href="../trust-framework/redirect-uri/">Redirect URIs</a>`
-  },
-    {
     src: new URL('/images/raidiam/add-application/done.png', import.meta.url).href,
-    alt: 'Step 8',
+    alt: 'Step 6',
     title: 'Your application is now ready to use',
     tagline: 'Note the Client ID, as it will be required for all requests made by this client.'
   },
 ]
 
 </script>
-
-
-

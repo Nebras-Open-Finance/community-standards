@@ -4,7 +4,7 @@ prev: false
 aside: false
 ---
 
-<!--@include: ./_shared/contacts.md-->
+<!--@include: ../../tpp-standards/trust-framework/_shared/contacts.md-->
 
 <script setup>
 const images1 = [

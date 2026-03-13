@@ -131,11 +131,11 @@
       </ul>
 
       <div class="section-subheading" style="margin-top: 50px;">
-        LFIs - API Hub Integration
+        LFIs - Integration Guide
       </div>
 
       <p class="section-description">
-        These <a href="/tech/api-hub" class="link">API Hub Integration Guides</a> are for Licensed Financial
+        These <a href="/tech/api-hub" class="link">Integration Guide Guides</a> are for Licensed Financial
         Institutions (LFIs)
         integrating with the UAE’s Open Finance ecosystem. Each LFI is provided with its own <strong>API Hub</strong>
         tenant, which securely routes all requests from authorized TPPs. The API Hub manages consent records and TPP

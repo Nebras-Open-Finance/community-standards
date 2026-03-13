@@ -14,7 +14,7 @@ prev: false
 This policy defines how published documentation may be changed for:
 
 - **TPP - Open Finance Standards**
-- **LFI - API Hub Integration**
+- **LFI - Integration Guide**
 
 This policy is read alongside the [Version Management Policy](/policy/version-management).
 

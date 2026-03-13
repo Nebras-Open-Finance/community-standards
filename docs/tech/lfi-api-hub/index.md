@@ -4,7 +4,7 @@ prev: false
 aside: false
 ---
 
-# LFI — API Hub <Badge type="tip" text="v2.1" />
+# LFI - Integration Guide <Badge type="tip" text="v2.1" />
 
 The UAE Open Finance **API Hub** (powered by Ozone Connect) is the central intermediary platform operated by AlTareq on behalf of the Central Bank of the UAE. It sits between Licensed Financial Institutions (LFIs) and Third-Party Providers (TPPs), handling security enforcement, consent lifecycle management, API routing, and participant discovery.
 

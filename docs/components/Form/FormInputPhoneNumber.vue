@@ -1,7 +1,15 @@
 <template>
   <div class="phone-wrapper-outer" :class="field_class" style="height: 62px; margin-bottom: 5px;">
-    <VueTelInput :id="inputUUID" @input="onInput" type="number" :value="phone_number" v-bind="bindProps"
-      :defaultCountry="country_codeClean" />
+    <component
+      v-if="VueTelInput"
+      :is="VueTelInput"
+      :id="inputUUID"
+      @input="onInput"
+      type="number"
+      :value="phone_number"
+      v-bind="bindProps"
+      :defaultCountry="country_codeClean"
+    />
     <div :class="field_placeholder_class" @click="focus()">
       <span>{{ placeholder }}</span>
     </div>
@@ -9,13 +17,11 @@
 </template>
 
 <script>
-import { VueTelInput } from 'vue3-tel-input'
 import 'vue3-tel-input/dist/vue3-tel-input.css'
 import { v4 as uuidv4 } from "uuid";
 
 
 export default {
-  components: { VueTelInput },
   props: {
     input: {
       type: Object,
@@ -41,6 +47,7 @@ export default {
   },
   data() {
     return {
+      VueTelInput: null,
       phone_number: undefined,
       phoneObject: {
         country_code: undefined,
@@ -69,20 +76,22 @@ export default {
       return this.error ? 'phone-wrapper-error' : ''
     },
     country_codeClean() {
-      if (!this.input.country_code) return 'GB'
+      if (!this.input.country_code) return 'AE'
       return this.input.country_code
     },
     field_placeholder_class() {
-      var focused = document.activeElement;
-      if (!focused || focused == document.body) {
-        focused = null;
+      if (typeof document !== 'undefined') {
+        var focused = document.activeElement;
+        if (!focused || focused == document.body) focused = null;
       }
       if ((this.phone_number && this.phone_number !== '') || this.phoneFocus)
         return 'active-placeholder'
       return 'field-placeholder'
     }
   },
-  created() {
+  async mounted() {
+    const m = await import('vue3-tel-input')
+    this.VueTelInput = m.VueTelInput ?? m.default?.VueTelInput ?? m.default
     document.addEventListener('focusin', this.focusChanged)
     document.addEventListener('focusout', this.removeFocus)
   },

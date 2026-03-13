@@ -25,7 +25,7 @@ Together, they enable trusted collaboration between licensed financial instituti
 
 If you are an **LFI looking to provide Open Finance services**, please refer to:
 
-**[LFI - API Hub Integration](../lfi-api-hub/index.md)**
+**[LFI - Integration Guide](../lfi-api-hub/index.md)**
 
 
 ## For Third-Party Providers (TPPs)
