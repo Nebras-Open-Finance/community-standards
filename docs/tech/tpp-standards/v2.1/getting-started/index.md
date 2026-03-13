@@ -186,15 +186,23 @@ Please fill in the below using an Application (Client) you have created in the *
    - KEY file: browse to `client_transport.key`.
    - Save the certificate entry.    
 
+<ClientOnly>
+    <Carousel :images="images2" />
+  </ClientOnly>
+
+
 6) Test by registring
    - Send a request to the TPP's registration endpoint.
    - If you receive a `204 (No Content)`
 
+<ImageViewer
+  src="/images/postman/register_spotlight.png"
+  alt="Postman Registration Request"
+/>
+
 *Note if you are testing multiple LFIs in sandbox/pre-prod you may need to change the host in (4)*
 
-<ClientOnly>
-    <Carousel :images="images2" />
-  </ClientOnly>
+
 
 ## Your First Open Finance Requests
 

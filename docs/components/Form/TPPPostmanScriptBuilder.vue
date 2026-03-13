@@ -155,8 +155,8 @@
 </template>
 
 <script>
-import FormInput from './Form/FormInput.vue'
-import InfoTooltip from './InfoTooltip.vue'
+import FormInput from './FormInput.vue'
+import InfoTooltip from './../InfoTooltip.vue'
 
 export default {
   components: { FormInput, InfoTooltip },

@@ -19,8 +19,12 @@ import ProtectedPageWrapper from '../../components/ProtectedPageWrapper.vue'
 import LiveAPIs from '../../components/LiveAPIs.vue'
 import EditableJson from '../../components/EditableJson.vue'
 import ErrataNotice from '../../components/ErrataNotice.vue'
-import TPPPostmanScriptBuilder from '../../components/TPPPostmanScriptBuilder.vue'
 import ConsentAuthLayout from '../../components/ConsentAuthLayout.vue'
+
+// Forms
+import TPPPostmanScriptBuilder from '../../components/Form/TPPPostmanScriptBuilder.vue'
+import OnboardingOrganisationForm from '../../components/Form/OnboardingOrganisationForm.vue'
+import OnboardingAdminForm from '../../components/Form/OnboardingAdminForm.vue'
 
 
 // API Flows
@@ -89,6 +93,8 @@ export default {
     app.component('ErrataNotice', ErrataNotice)
     app.component('TPPPostmanScriptBuilder', TPPPostmanScriptBuilder)
     app.component('ConsentAuthLayout', ConsentAuthLayout)
+    app.component('OnboardingOrganisationForm', OnboardingOrganisationForm)
+    app.component('OnboardingAdminForm', OnboardingAdminForm)
 
     // API Flows
     app.component('APIFlowsRegistration', APIFlowsRegistration)

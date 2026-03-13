@@ -17,7 +17,8 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
     text: 'Getting Started',
     collapsed: true,
     items: [
-      { text: 'Sandbox Quickstart', link: `${BASE}/${VERSION}/getting-started` }
+      { text: 'Sandbox Quickstart', link: `${BASE}/${VERSION}/getting-started/` },
+      { text: 'Postman Guide', link: `${BASE}/${VERSION}/getting-started/postman` }
     ],
   },
   {

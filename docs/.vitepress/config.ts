@@ -5,6 +5,30 @@ import { policySidebar, processesSidebar } from './config/sidebars/policy'
 import { kbSidebar } from './config/sidebars/kb'
 import { erratasSidebar } from './config/sidebars/erratas'
 
+const wellKnownProxyPlugin = {
+  name: 'well-known-proxy',
+  configureServer(server: any) {
+    server.middlewares.use('/api/well-known-proxy', async (req: any, res: any) => {
+      const targetUrl = new URL('http://localhost' + req.url).searchParams.get('url')
+      if (!targetUrl) {
+        res.statusCode = 400
+        res.end(JSON.stringify({ error: 'Missing url parameter' }))
+        return
+      }
+      try {
+        const upstream = await fetch(targetUrl)
+        const text = await upstream.text()
+        res.setHeader('Content-Type', 'application/json')
+        res.setHeader('Access-Control-Allow-Origin', '*')
+        res.end(text)
+      } catch {
+        res.statusCode = 502
+        res.end(JSON.stringify({ error: 'Upstream fetch failed' }))
+      }
+    })
+  }
+}
+
 export default defineConfig({
   title: 'UAE Open Finance',
   // ignoreDeadLinks: true, // <-- temporary
@@ -17,6 +41,10 @@ export default defineConfig({
   rewrites: {
     'tech/tpp-standards/:path(.*)': 'tech/tpp-standards/:path',
     'tech/lfi-api-hub/:path(.*)': 'tech/lfi-api-hub/:path',
+  },
+
+  vite: {
+    plugins: [wellKnownProxyPlugin]
   },
 
   themeConfig: {
