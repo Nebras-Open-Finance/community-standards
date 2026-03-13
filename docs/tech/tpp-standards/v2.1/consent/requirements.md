@@ -35,18 +35,7 @@ Before any protected resource is accessed, the user must be presented with a cle
 
 The consent screen is rendered by the LFI during the authorization flow and is driven directly by the `authorization_details` submitted in the `/par` request — the permissions, account scope, and expiry the user sees must exactly match what the TPP requested. TPPs must not present users with a pre-consent screen that describes a different scope than what is ultimately submitted to `/par`.
 
-Each service type has a defined user experience standard that governs what must be shown to the user. The consent and authorisation screens for each service type are documented in the corresponding User Experience pages:
-
-| Service | User Experience |
-|---------|----------------|
-| Bank Data Sharing | [User Experience](../banking/data-sharing/user-journeys) |
-| Single Instant Payment | [User Experience](../banking/service-initiation/domestic-payments/single-instant-payment/user-journeys) |
-| Variable On Demand Payment | [User Experience](../banking/service-initiation/domestic-payments/multi-payments/variable-on-demand/user-journeys) |
-| Fixed On Demand Payment | [User Experience](../banking/service-initiation/domestic-payments/multi-payments/fixed-on-demand/user-journeys) |
-| Variable Periodic Schedule | [User Experience](../banking/service-initiation/domestic-payments/multi-payments/variable-periodic-schedule/user-journeys) |
-| Fixed Periodic Schedule | [User Experience](../banking/service-initiation/domestic-payments/multi-payments/fixed-periodic-schedule/user-journeys) |
-| Variable Defined Schedule | [User Experience](../banking/service-initiation/domestic-payments/multi-payments/variable-defined-schedule/user-journeys) |
-| Fixed Defined Schedule | [User Experience](../banking/service-initiation/domestic-payments/multi-payments/fixed-defined-schedule/user-journeys) |
+Each service type has a defined user experience standard that governs what must be shown to the user. The consent and authorisation screens for each service type are documented in the corresponding User Experience pages e.g. [Bank Data Sharing User Experience](../banking/data-sharing/user-journeys)
 
 
 ## Maintaining Consent State Accuracy

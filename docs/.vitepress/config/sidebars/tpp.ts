@@ -18,7 +18,8 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
     collapsed: true,
     items: [
       { text: 'Sandbox Quickstart', link: `${BASE}/${VERSION}/getting-started/` },
-      { text: 'Postman Guide', link: `${BASE}/${VERSION}/getting-started/postman` }
+      { text: 'Postman Guide', link: `${BASE}/${VERSION}/getting-started/postman` },
+      { text: 'Sandbox Model Bank', link: `${BASE}/sandbox/model-bank` },
     ],
   },
   {
@@ -276,7 +277,7 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
         collapsed: true,
         items: [
           { text: 'Overview', link: `${BASE}/${VERSION}/banking/confirmation-of-payee` },
-          { text: 'Requirements', link: `${BASE}/${VERSION}/requirements` },
+          { text: 'Requirements', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/requirements` },
           { text: 'User Experience', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/user-journeys` },
           { text: 'API Guide', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/api-guide` },
           {
@@ -307,14 +308,6 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
       //   ],
       // },
     ],
-  },
-
-    {
-    text: 'Sandbox',
-    collapsed: true,
-    items: [
-  { text: 'Model Bank', link: `${BASE}/sandbox/model-bank` },
-  ]
   },
 
   {

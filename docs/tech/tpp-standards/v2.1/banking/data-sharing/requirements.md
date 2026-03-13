@@ -6,6 +6,8 @@ aside: false
 
 # Bank Data Sharing - Requirements
 
+The [Consent requirements](/tech/tpp-standards/v2.1/consent/requirements) and the [User Journeys](./user-journeys) must be adhered to.
+
 The tables below list the validation rules that apply to Bank Data Sharing. The **Validated by** column indicates where each rule is enforced.
 
 All requests require an active [Trust Framework application](/tech/tpp-standards/trust-framework/application) with the **BDSP** role, a valid [transport certificate](/tech/tpp-standards/trust-framework/certificates) presented on every request via mTLS, and an active [signing key](/tech/tpp-standards/security/fapi/message-signing) for JWT signing.
