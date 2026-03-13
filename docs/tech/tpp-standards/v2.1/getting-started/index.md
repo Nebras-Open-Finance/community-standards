@@ -207,7 +207,7 @@ Please fill in the below using an Application (Client) you have created in the *
 ## Your First Open Finance Requests
 
 
-docs\public\images\postman\postman 1_spotlight.png
+hads
 
 
 <script setup>

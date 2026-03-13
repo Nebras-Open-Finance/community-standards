@@ -265,18 +265,34 @@ export default {
         return
       }
 
-      // Derive issuer and rs from the discovery URI pattern.
-      // Direct fetch is not possible due to CORS — the API Hub .well-known endpoints
-      // do not include Access-Control-Allow-Origin headers.
+      // Derive fallback values from the discovery URI pattern.
       // Pattern: https://auth1.[lfi].[env].apihub.openfinance.ae/.well-known/openid-configuration
-      //   issuer → origin (strip path)
-      //   rs     → replace auth1. with rs1. in the origin
       const discoveryUrl = new URL(this.formData.discovery_uri)
-      const issuer = discoveryUrl.origin
-      const rs = issuer.replace(/^(https:\/\/)auth1\./, '$1rs1.')
-      const as1Base = issuer.replace(/^(https:\/\/)auth1\./, '$1as1.')
-      const parEndpoint = as1Base + '/par'
-      const tokenEndpoint = as1Base + '/token'
+      const issuerPattern = discoveryUrl.origin
+      const rs = issuerPattern.replace(/^(https:\/\/)auth1\./, '$1rs1.')
+      const as1Base = issuerPattern.replace(/^(https:\/\/)auth1\./, '$1as1.')
+
+      let issuer = issuerPattern
+      let authEndpoint = issuerPattern + '/auth'
+      let tokenEndpoint = as1Base + '/token'
+      let parEndpoint = as1Base + '/par'
+      let jwksUrl = ''
+
+      try {
+        const encodedUrl = encodeURIComponent(this.formData.discovery_uri)
+        let discoveryResponse = await fetch(`/api/well-known-proxy?url=${encodedUrl}`)
+        if (!discoveryResponse.ok) {
+          discoveryResponse = await fetch(`https://api.allorigins.win/raw?url=${encodedUrl}`)
+        }
+        if (discoveryResponse.ok) {
+          const doc = await discoveryResponse.json()
+          issuer        = doc.issuer                                  ?? issuer
+          authEndpoint  = doc.authorization_endpoint                  ?? authEndpoint
+          tokenEndpoint = doc.token_endpoint                          ?? tokenEndpoint
+          parEndpoint   = doc.pushed_authorization_request_endpoint   ?? parEndpoint
+          jwksUrl       = doc.jwks_uri                                ?? jwksUrl
+        }
+      } catch { /* use pattern-derived fallbacks */ }
 
       const hasBanking = this.formData.roles.some(r =>
         r.includes('BDSP') || r.includes('BSIP')
@@ -323,13 +339,22 @@ export default {
           })
         }
 
-        // Recursively remove any request/folder named with "LFI-API Hub:" or the OIDC well-known endpoint
+        // Recursively remove LFI-only items and AuthFlow folders not needed for TPPs
+        const foldersToRemove = new Set([
+          'LFI-API Hub:',
+          'TPP-API Hub: Get OIDC well-known end-point',
+          'Confirm with Heimdall',
+          'AuthFlow - with login_hint',
+          'AuthFlow - with jwt-auth mandatory',
+        ])
         const removeLFIItems = items => items
-          .filter(item => !item.name.includes('LFI-API Hub:') && !item.name.includes('TPP-API Hub: Get OIDC well-known end-point') && !item.name.includes('Confirm with Heimdall'))
+          .filter(item => ![...foldersToRemove].some(name => item.name.includes(name)))
           .map(item => item.item ? { ...item, item: removeLFIItems(item.item) } : item)
         json.item = removeLFIItems(json.item)
 
         let collectionStr = JSON.stringify(json, null, 2)
+
+        // Template placeholder replacements
         collectionStr = collectionStr.replaceAll('{{issuer}}', issuer)
         collectionStr = collectionStr.replaceAll('{{rs}}', rs)
         collectionStr = collectionStr.replaceAll('{{kid-local}}', this.formData.signing_key_id ?? '')
@@ -338,6 +363,24 @@ export default {
         collectionStr = collectionStr.replaceAll('{{redirectUrl}}', this.formData.redirect_uri ?? '')
         collectionStr = collectionStr.replaceAll('{{par-endpoint}}', parEndpoint)
         collectionStr = collectionStr.replaceAll('{{tokenEndpoint}}', tokenEndpoint)
+        collectionStr = collectionStr.replaceAll('{{auth-endpoint}}', authEndpoint)
+        collectionStr = collectionStr.replaceAll('{{jwksUrl}}', jwksUrl)
+
+        // pm.environment.get replacements — bake values directly into scripts
+        collectionStr = collectionStr.replaceAll(`pm.environment.get('issuer')`, `'${issuer}'`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get("issuer")`, `\\"${issuer}\\"`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get('auth-endpoint')`, `'${authEndpoint}'`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get("auth-endpoint")`, `\\"${authEndpoint}\\"`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get('authEndpoint')`, `'${authEndpoint}'`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get("authEndpoint")`, `\\"${authEndpoint}\\"`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get('token-endpoint')`, `'${tokenEndpoint}'`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get("token-endpoint")`, `\\"${tokenEndpoint}\\"`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get('tokenEndpoint')`, `'${tokenEndpoint}'`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get("tokenEndpoint")`, `\\"${tokenEndpoint}\\"`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get('par-endpoint')`, `'${parEndpoint}'`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get("par-endpoint")`, `\\"${parEndpoint}\\"`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get('response_type')`, `'code'`)
+        collectionStr = collectionStr.replaceAll(`pm.environment.get("response_type")`, `\\"code\\"`)
 
         const blob = new Blob([collectionStr], { type: 'application/json' })
         const a = document.createElement('a')
