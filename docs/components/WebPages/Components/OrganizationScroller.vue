@@ -29,11 +29,11 @@ function shuffleArray(array) {
 
 onMounted(async () => {
     try {
-        const { data } = await axios.get('/api/orgs.json')
+        const { data } = await axios.get('/api/trust-framework.json')
 
-
+        const orgData = data.Organisations
         // Filter: must have LogoUri
-        const filtered = data.filter(org => org.LogoUri)
+        const filtered = orgData.filter(org => org.LogoUri)
 
         // Shuffle
         const shuffled = shuffleArray(filtered)

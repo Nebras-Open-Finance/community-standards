@@ -5,7 +5,7 @@ import Layout from './Layout.vue'
 // Pages
 import HomePage from '../../components/WebPages/HomePage.vue'
 import NewsPage from '../../components/WebPages/NewsPage.vue'
-import MetricsPage from '../../components/WebPages/MetricsPage.vue'
+import OpenFinanceDashboard from '../../components/WebPages/OpenFinanceDashboard.vue'
 import KnowledgeBasePage from '../../components/WebPages/KnowledgeBasePage.vue'
 
 //components
@@ -77,8 +77,8 @@ export default {
     //pages
     app.component('HomePage', HomePage)
     app.component('NewsPage', NewsPage)
-    app.component('MetricsPage', MetricsPage)
     app.component('KnowledgeBasePage', KnowledgeBasePage)
+    app.component('OpenFinanceDashboard', OpenFinanceDashboard)
 
     //components
     app.component('ImageViewer', ImageViewer)

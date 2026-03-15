@@ -26,141 +26,82 @@
     </div>
 
 
+
     <div class="section-2">
-
-
       <div class="section-heading">
-        Developer Docs
+        The Story in Numbers
       </div>
 
       <p class="section-description">
-        This site’s developer documentation aims to clearly explain the Open Finance integrations and specifications in
-        the UAE.
-        By using modern, best-in-class technologies and frameworks, the docs guide you on how to either provide Open
-        Finance services as a <strong>LFI</strong> or consume them as a <strong>TPP</strong>.
+        A snapshot of the UAE Open Finance ecosystem. Visit the <a href="/metrics" class="link">metrics page</a> for the full picture.
       </p>
 
-      <div class="section-subheading" style="margin-bottom: 0px;">
-        Technology Architecture & Overview
-      </div>
-
-      <div class="arch-row">
-
-        <div class="arch-text">
-          <p class="section-description">
-            At the core of the system is the <strong>Directory</strong>, known as the
-            <a class="link" href="tech/trust-framework/">Trust Framework</a>. It serves as the
-            <strong>single source of truth</strong> for all authorized participants, defining
-            their roles and access scopes within the ecosystem. All API discovery, certificate
-            issuance, and validation are managed through the Trust Framework.
-          </p>
-
-          <p class="section-description">
-            Going beyond many global models, the UAE has introduced a centralized
-            <a class="link" href="tech/api-hub/">API Hub</a> at the heart of its Open Finance infrastructure. Each LFI
-            is provided with its own API Hub tenant, and all requests from TPPs flow directly
-            through this hub, which handles interactions with the relevant LFIs. This centralized
-            approach reduces the burden on LFIs for managing consents and access, while ensuring
-            consistency and transparency across the ecosystem.
-          </p>
-
+      <div class="hp-kpi-row">
+        <div class="hp-kpi-card" style="--accent: #36BFD4">
+          <div class="hp-kpi-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="hp-kpi-body">
+            <div class="hp-kpi-value">{{ ecoStats.successfulApiCalls }}</div>
+            <div class="hp-kpi-label">Successful API Calls</div>
+          </div>
         </div>
-
-        <pre class="arch-diagram">
-+======================================================================+
-|                  AlTareq Trust Framework (Directory)                 |
-|----------------------------------------------------------------------|
-|                                                                      |
-|                      +-------------------------+                     |
-|                      |           TPP           |                     |
-|                      +------------+------------+                     |
-|                                   |                                  |
-|                 +-----------------+-----------------+                |
-|                 |                 |                 |                |
-|             +---v---+         +---v---+         +---v---+            |
-|             |API Hub|         |API Hub|   ...   |API Hub|            |
-|             +-------+         +-------+         +-------+            |
-|                 |                 |                 |                |
-|                 |                 |                 |                |
-|             +---v---+         +---v---+         +---v---+            |
-|             | LFI 1 |         | LFI 2 |   ...   | LFI N |            |
-|             +-------+         +-------+         +-------+            |
-|                                                                      |
-+======================================================================+
-    </pre>
-
-
-
+        <div class="hp-kpi-card" style="--accent: #8B5CF6">
+          <div class="hp-kpi-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="hp-kpi-body">
+            <div class="hp-kpi-value">{{ ecoStats.successfulPaymentAmount }}</div>
+            <div class="hp-kpi-label">Successful Payment Amount (AED)</div>
+          </div>
+        </div>
+        <div class="hp-kpi-card" style="--accent: #10B981">
+          <div class="hp-kpi-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
+              <path d="M2 10h20" stroke="currentColor" stroke-width="2"/>
+              <circle cx="7" cy="15" r="1.5" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="hp-kpi-body">
+            <div class="hp-kpi-value">{{ ecoStats.dataSharingRequests }}</div>
+            <div class="hp-kpi-label">Successful Data Sharing Requests</div>
+          </div>
+        </div>
       </div>
 
-      <div class="section-subheading">
-        TPP - Integration & Standards
+      <div class="chart-row">
+        <div class="chart-col">
+          <DashApiVolumeChart
+            :data="filteredSuccessApiData"
+            group-by="month"
+            stack-by="family"
+            title="Successful API Volume by Month"
+          />
+        </div>
+        <div class="chart-col">
+          <DashApiVolumeChart
+            :data="filteredSuccessPaymentData"
+            group-by="month"
+            value-key="amount"
+            title="Successful Payment Amount by Month (AED)"
+          />
+        </div>
       </div>
 
+      <a class="all-blogs-link" href="/metrics">
+        <span>More</span>
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" clip-rule="evenodd"
+            d="M12.2929 4.29289C12.6834 3.90237 13.3166 3.90237 13.7071 4.29289L20.7071 11.2929C21.0976 11.6834 21.0976 12.3166 20.7071 12.7071L13.7071 19.7071C13.3166 20.0976 12.6834 20.0976 12.2929 19.7071C11.9024 19.3166 11.9024 18.6834 12.2929 18.2929L17.5858 13H4C3.44772 13 3 12.5523 3 12C3 11.4477 3.44772 11 4 11H17.5858L12.2929 5.70711C11.9024 5.31658 11.9024 4.68342 12.2929 4.29289Z"
+            fill="#000000"></path>
+        </svg>
+      </a>
 
-      <p class="section-description">
-        These <a href="/tech/tpp-standards" class="link">TPP Guides & Standards</a> are for developers, fintech teams,
-        and
-        integrators building applications
-        that leverage Open Finance APIs. Whether you're offering personal finance management
-        tools, digital lending services, or payment solutions, this is your launchpad.
-      </p>
-
-      <p class="section-description">
-        Access API specs, Postman collections, developer guides, and our knowledge base to
-        integrate quickly and securely with licensed financial institutions.
-      </p>
-
-      <h4 style="font-size: larger; font-weight: 500; margin-bottom: 10px;">Core Open Finance APIs</h4>
-      <ul>
-        <li style="margin-bottom: 3px;">
-          <a href="/tech/tpp-standards/bank-data-sharing" style="font-size: large;" class="link">Bank Data Sharing</a> –
-          Access customer account information (balances, transactions, and account details) with explicit consent for
-          personal finance, analytics, or lending applications.
-        </li>
-        <li style="margin-bottom: 3px;">
-          <a href="/tech/tpp-standards/bank-service-initiation" style="font-size: large;" class="link">Payment (Bank
-            Service Initiation)</a> – Initiate payments directly from customer accounts, supporting real-time transfers,
-          bill payments, and other payment flows securely.
-        </li>
-        <li style="margin-bottom: 3px;">
-          <a href="/tech/tpp-standardsconfirmation-of-payee" style="font-size: large;" class="link">Confirmation of
-            Payee</a> – Verify beneficiary details before processing a payment to reduce fraud and ensure funds are sent
-          to the correct recipient.
-        </li>
-      </ul>
-
-      <div class="section-subheading" style="margin-top: 50px;">
-        LFIs - Integration Guide
-      </div>
-
-      <p class="section-description">
-        These <a href="/tech/api-hub" class="link">Integration Guide Guides</a> are for Licensed Financial
-        Institutions (LFIs)
-        integrating with the UAE’s Open Finance ecosystem. Each LFI is provided with its own <strong>API Hub</strong>
-        tenant, which securely routes all requests from authorized TPPs. The API Hub manages consent records and TPP
-        access
-        centrally, ensuring consistent, transparent, and secure access.
-      </p>
-
-      <h4 style="font-size: larger; font-weight: 500; margin-bottom: 10px;">Integration Resources</h4>
-      <ul>
-        <li style="margin-bottom: 3px;">
-          <a href="/tech/api-hub/setting-up" class="link">Connecting to the API Hub</a> – Step-by-step instructions for
-          setting up your API Hub tenant and connecting your systems.
-        </li>
-        <li style="margin-bottom: 3px;">
-          <a href="/tech/api-hub/api-specs" class="link">API Specifications</a> – Detailed documentation on endpoints
-          and data models.
-        </li>
-
-        <!-- TO DO Maybe seperate to API Sequence Diagrams -->
-
-        <li style="margin-bottom: 3px;">
-          <a href="/tech/api-hub/user-guides" class="link">API Flows and User Guides</a> – Practical guidance for
-          implementing API flows, including consent steup and authorization and other common integration patterns.
-        </li>
-      </ul>
     </div>
 
 
@@ -179,7 +120,7 @@
 
       <section class="stats-section">
         <h4
-          style="font-size: larger; font-weight: 500; margin-bottom: 10px; text-align: center; opacity: 70%; margin-top: 2rem; margin-bottom: 2.5rem; font-weight: 500;">
+          style="font-size: x-large; font-weight: 500; text-align: center; opacity: 70%; margin-top: 4rem; margin-bottom: 2.5rem; font-weight: 500;">
           Production</h4>
         <div class="stats-grid">
 
@@ -188,7 +129,7 @@
               <span class="stat-icon">🏛️</span>
               <span class="stat-title">Organisations</span>
             </div>
-            <div class="stat-number">15</div>
+            <div class="stat-number">{{ prodStats.total }}</div>
             <p class="stat-description">
               Organizations participating in the Open Finance ecosystem, securely sharing/consuming financial data or
               making payments for you.
@@ -200,7 +141,7 @@
               <span class="stat-icon">🚀</span>
               <span class="stat-title">TPPs</span>
             </div>
-            <div class="stat-number">5</div>
+            <div class="stat-number">{{ prodStats.tpps }}</div>
             <p class="stat-description">
               Authorized third-party providers building products powered by Open Finance.
             </p>
@@ -211,7 +152,7 @@
               <span class="stat-icon">🏦</span>
               <span class="stat-title">LFIs</span>
             </div>
-            <div class="stat-number">10</div>
+            <div class="stat-number">{{ prodStats.lfis }}</div>
             <p class="stat-description">
               Licensed financial institutions offering their services via the standardized and secure Open Finance
               network.
@@ -223,7 +164,7 @@
               <span class="stat-icon">⚡</span>
               <span class="stat-title">APIs</span>
             </div>
-            <div class="stat-number">36</div>
+            <div class="stat-number">{{ prodApiStats.total }}</div>
             <p class="stat-description">
               Production-ready APIs designed to be consumed, enabling seamless data exchange or real-time payment
               access.
@@ -235,23 +176,15 @@
 
       <div class="graph-grid">
 
-        <DonutChart style="margin: auto" title="LFI by Type" :items="[
-          { label: 'Banks', value: 9 },
-          { label: 'Insurers', value: 1 },
-        ]" />
+        <DonutChart v-if="lfiByTypeItems.length > 0" style="margin: auto" title="LFI by Type" :items="lfiByTypeItems" />
 
-        <DonutChart style="margin: auto" title="API by Type" :items="[
-          { label: 'Bank Data Sharing', value: 10 },
-          { label: 'Payments', value: 9 },
-          { label: 'Confirmation of Payee', value: 9 },
-          { label: 'Products and Leads', value: 7 },
-        ]" />
+        <DonutChart v-if="prodApiStats.byType.length > 0" style="margin: auto" title="API by Type" :items="prodApiStats.byType" />
       </div>
 
 
       <section class="stats-section">
         <h4
-          style="font-size: larger; font-weight: 500; margin-bottom: 10px; text-align: center; opacity: 70%; margin-top: 2rem; margin-bottom: 2.5rem; font-weight: 500;">
+          style="font-size: x-large; font-weight: 500; text-align: center; opacity: 70%; margin-top: 4rem; margin-bottom: 2.5rem; font-weight: 500;">
           Sandbox</h4>
         <div class="stats-grid">
 
@@ -260,7 +193,7 @@
               <span class="stat-icon">🏛️</span>
               <span class="stat-title">Organisations</span>
             </div>
-            <div class="stat-number">76</div>
+            <div class="stat-number">{{ sandboxStats.total }}</div>
             <p class="stat-description">
               Organizations in the Open Finance sandbox, building out integrations.
             </p>
@@ -271,7 +204,7 @@
               <span class="stat-icon">🚀</span>
               <span class="stat-title">TPPs</span>
             </div>
-            <div class="stat-number">23</div>
+            <div class="stat-number">{{ sandboxStats.tpps }}</div>
             <p class="stat-description">
               Third-party providers experimenting and developing products before production launch.
             </p>
@@ -282,7 +215,7 @@
               <span class="stat-icon">🏦</span>
               <span class="stat-title">LFIs</span>
             </div>
-            <div class="stat-number">53</div>
+            <div class="stat-number">{{ sandboxStats.lfis }}</div>
             <p class="stat-description">
               Licensed financial institutions integrating and testing their Open Finance services in Sandbox before
               promotion to production.
@@ -294,7 +227,7 @@
               <span class="stat-icon">⚡</span>
               <span class="stat-title">APIs</span>
             </div>
-            <div class="stat-number">218</div>
+            <div class="stat-number">{{ sandboxApiTotal }}</div>
             <p class="stat-description">
               Sandbox APIs ready for self testing, enabling developers to end to end test their own services.
             </p>
@@ -314,63 +247,49 @@
 
     </div>
 
-
     <div class="section-4">
-      <div class="section-heading">
-        Metrics & Monitoring
+
+      <div class="section-heading">Developer Docs</div>
+
+
+      <p class="section-description">
+        Technical documentation for every participant in the UAE Open Finance ecosystem —
+          whether you're <strong>building on top of it</strong> or <strong>powering it</strong>.
+      </p>
+
+      <div class="dev-split">
+
+        <div class="dev-side dev-side-tpp">
+          <span class="dev-badge dev-badge-tpp">TPP</span>
+          <h3 class="dev-side-heading">Third-Party Providers</h3>
+          <p class="dev-side-body">Get access to an ecosystem of services — payments, account information, and confirmation of payee — to power your product.</p>
+          <ul class="dev-side-links">
+            <li><a href="/tech/tpp-standards/trust-framework/">Trust Framework</a></li>
+            <li><a href="/tech/tpp-standards/v2.1/banking/service-initiation/">Payment Initiation</a></li>
+            <li><a href="/tech/tpp-standards/v2.1/banking/data-sharing/">Bank Data Sharing</a></li>
+            <li><a href="/tech/tpp-standards/v2.1/banking/confirmation-of-payee/">Confirmation of Payee</a></li>
+          </ul>
+          <a href="/tech/tpp-standards/" class="dev-cta dev-cta-tpp">Get started</a>
+        </div>
+
+        <div class="dev-divider"></div>
+
+        <div class="dev-side dev-side-lfi">
+          <span class="dev-badge dev-badge-lfi">LFI</span>
+          <h3 class="dev-side-heading">Licensed Financial Institutions</h3>
+          <p class="dev-side-body">Through a single integration with Nebras, power an ecosystem of entities. Follow our step-by-step guide to get set up in sandbox and production.</p>
+          <ul class="dev-side-links">
+            <li><a href="/tech/lfi-api-hub/trust-framework/">Trust Framework</a></li>
+            <li><a href="/tech/lfi-api-hub/getting-started/">Integration Journey</a></li>
+            <li><a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/">Data Sharing</a></li>
+            <li><a href="/tech/lfi-api-hub/v2.1/banking/confirmation-of-payee/">Confirmation of Payee</a></li>
+          </ul>
+          <a href="/tech/lfi-api-hub/getting-started/" class="dev-cta dev-cta-lfi">Get started</a>
+        </div>
+
       </div>
-
-            <div class="chart-row">
-        <div class="chart-col">
-          <h4
-            style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
-            API Volumes</h4>
-
-
-          <APIVolBarChart />
-        </div>
-
-        <div class="chart-col">
-          <h4
-            style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; text-align: left; font-weight: 500;">
-            API Vol by Bank</h4>
-
-          <APIVolByBankBarChart />
-        </div>
-      </div>
-
-
-
-      <div class="chart-row">
-        <div class="chart-col">
-          <h4
-            style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; font-weight: 500;">
-            API Response Times</h4>
-
-
-          <APIResponseBarChart />
-        </div>
-
-        <div class="chart-col">
-          <h4
-            style="font-size: larger; font-weight: 500; margin-bottom: 10px; opacity: 70%; margin-top: 2rem; margin-bottom: 1rem; text-align: left; font-weight: 500;">
-            API Error Rates</h4>
-
-
-          <APIErrorRatesBarChart />
-        </div>
-      </div>
-
-      <a class="all-blogs-link" href="/metrics">
-        <span>More</span>
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path fill-rule="evenodd" clip-rule="evenodd"
-            d="M12.2929 4.29289C12.6834 3.90237 13.3166 3.90237 13.7071 4.29289L20.7071 11.2929C21.0976 11.6834 21.0976 12.3166 20.7071 12.7071L13.7071 19.7071C13.3166 20.0976 12.6834 20.0976 12.2929 19.7071C11.9024 19.3166 11.9024 18.6834 12.2929 18.2929L17.5858 13H4C3.44772 13 3 12.5523 3 12C3 11.4477 3.44772 11 4 11H17.5858L12.2929 5.70711C11.9024 5.31658 11.9024 4.68342 12.2929 4.29289Z"
-            fill="#000000"></path>
-        </svg>
-      </a>
-
     </div>
+
 
 
     <div class="section-5">
@@ -446,15 +365,148 @@
 </template>
 
 <script setup>
+import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
 import PageHeader from './Components/PageHeader.vue'
 import OrganizationScroller from './Components/OrganizationScroller.vue'
 import DonutChart from './Charts/DonutChart.vue'
 import ArticleLink from './Components/ArticleLink.vue'
 
-import APIVolBarChart from './Charts/APIVolBarChart.vue'
-import APIVolByBankBarChart from './Charts/APIVolByBankBarChart.vue'
-import APIResponseBarChart from './Charts/APIResponseBarChart.vue'
-import APIErrorRatesBarChart from './Charts/APIErrorRatesBarChart.vue'
+import DashApiVolumeChart from './Charts/DashApiVolumeChart.vue'
+import { filteredSuccessApiData, filteredSuccessPaymentData } from './stores/dashboardStore.js'
+
+const tfData = ref(null)
+const apiData = ref([])
+const paymentData = ref([])
+
+const SUCCESS_PAYMENT_STATUSES = new Set([
+  'AcceptedSettlementCompleted',
+  'AcceptedCreditSettlementCompleted',
+  'AcceptedWithoutPosting',
+])
+
+onMounted(async () => {
+  const [tf, api, payments] = await Promise.all([
+    axios.get('/api/trust-framework.json'),
+    fetch('/api/api-data.json').then(r => r.json()).catch(() => []),
+    fetch('/api/payment-log.json').then(r => r.json()).catch(() => []),
+  ])
+  tfData.value = tf.data
+  apiData.value = api
+  paymentData.value = payments
+})
+
+const ecoStats = computed(() => {
+  // Successful API calls (2xx)
+  const successfulApiCalls = apiData.value
+    .filter(r => (r.TPPResponseCodeGroup || '2xx') === '2xx')
+    .reduce((s, r) => s + (r.TotalNumberofCalls || 0), 0)
+
+  // Data sharing requests: account-information family, 2xx
+  const dataSharingRequests = apiData.value
+    .filter(r => {
+      const url = r.URL || ''
+      return url.includes('/account-information/') && (r.TPPResponseCodeGroup || '2xx') === '2xx'
+    })
+    .reduce((s, r) => s + (r.TotalNumberofCalls || 0), 0)
+
+  // Successful payments
+  const successRows = paymentData.value.filter(r => SUCCESS_PAYMENT_STATUSES.has(r.status) && r.LFI)
+  const successfulPaymentAmount = successRows.reduce((s, r) => s + (r.amount || 0), 0)
+  const successfulPaymentCount  = successRows.reduce((s, r) => s + (r.Count  || 0), 0)
+
+  return {
+    successfulApiCalls:    successfulApiCalls.toLocaleString(),
+    dataSharingRequests:   dataSharingRequests.toLocaleString(),
+    successfulPaymentAmount: successfulPaymentAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    successfulPaymentCount:  successfulPaymentCount.toLocaleString(),
+  }
+})
+
+function parseApiResources(raw) {
+  if (!raw) return []
+  try {
+    return JSON.parse(raw.replace(/""/g, '"'))
+  } catch {
+    return []
+  }
+}
+
+const API_TYPE_LABELS = {
+  'payment': 'Payments',
+  'confirmation': 'Confirmation of Payee',
+  'account-information': 'Bank Data Sharing',
+  'account': 'Account Information',
+  'product': 'Products & Leads',
+  'insurance': 'Insurance',
+  'atm': 'ATM',
+}
+
+const prodStats = computed(() => {
+  if (!tfData.value) return { total: 0, tpps: 0, lfis: 0 }
+  const orgs = tfData.value.Organisations.filter(o => o.Environment === 'production' && o.Status === 'Active')
+  return {
+    total: orgs.length,
+    tpps: orgs.filter(o => o.Size === 'TPP').length,
+    lfis: orgs.filter(o => o.Size === 'LFI').length,
+  }
+})
+
+const sandboxStats = computed(() => {
+  if (!tfData.value) return { total: 0, tpps: 0, lfis: 0 }
+  const orgs = tfData.value.Organisations.filter(o => o.Environment === 'sandbox' && o.Status === 'Active')
+  return {
+    total: orgs.length,
+    tpps: orgs.filter(o => o.Size === 'TPP').length,
+    lfis: orgs.filter(o => o.Size === 'LFI').length,
+  }
+})
+
+function apiCountsFromServers(servers) {
+  const counts = {}
+  for (const server of servers) {
+    for (const r of parseApiResources(server.ApiResources)) {
+      if (r.Status === 'Active') {
+        const type = r.ApiFamilyType || 'other'
+        counts[type] = (counts[type] || 0) + 1
+      }
+    }
+  }
+  return counts
+}
+
+const prodApiStats = computed(() => {
+  if (!tfData.value) return { total: 0, byType: [] }
+  const servers = tfData.value.AuthorisationServers.filter(s => s.Environment === 'production' && s.Status === 'Active')
+  const counts = apiCountsFromServers(servers)
+  const total = Object.values(counts).reduce((s, n) => s + n, 0)
+  const byType = Object.entries(counts).map(([key, value]) => ({
+    label: API_TYPE_LABELS[key] ?? key,
+    value,
+  }))
+  return { total, byType }
+})
+
+const sandboxApiTotal = computed(() => {
+  if (!tfData.value) return 0
+  const servers = tfData.value.AuthorisationServers.filter(s => s.Environment === 'sandbox' && s.Status === 'Active')
+  const counts = apiCountsFromServers(servers)
+  return Object.values(counts).reduce((s, n) => s + n, 0)
+})
+
+const lfiByTypeItems = computed(() => {
+  if (!tfData.value) return []
+  const lfis = tfData.value.Organisations.filter(o => o.Environment === 'production' && o.Status === 'Active' && o.Size === 'LFI')
+  let banks = 0, insurers = 0
+  for (const org of lfis) {
+    const name = `${org.LegalEntityName} ${org.RegisteredName}`.toLowerCase()
+    if (name.includes('insur')) insurers++
+    else banks++
+  }
+  const items = [{ label: 'Banks', value: banks }]
+  if (insurers > 0) items.push({ label: 'Insurers', value: insurers })
+  return items
+})
 </script>
 
 <style scoped>
@@ -708,25 +760,197 @@ import APIErrorRatesBarChart from './Charts/APIErrorRatesBarChart.vue'
   /* match text color */
 }
 
-/* Architecture section */
-.arch-row {
+/* Developer Docs section */
+.dev-split {
   display: flex;
-  gap: 2rem;
+  align-items: stretch;
+  gap: 0;
+  margin-top: 2.5rem;
 }
 
-.arch-text {
-  margin-top: 50px;
+.dev-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 3rem;
+}
+
+.dev-divider {
+  width: 1px;
+  background: rgba(0, 0, 0, 0.12);
+  align-self: stretch;
+  margin: 1rem 0;
+}
+
+.dev-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  margin-bottom: 1.25rem;
+  width: fit-content;
+}
+
+.dev-badge-tpp {
+  background: rgba(0, 100, 210, 0.1);
+  color: rgb(0, 80, 180);
+}
+
+.dev-badge-lfi {
+  background: rgba(0, 129, 113, 0.1);
+  color: rgb(0, 100, 88);
+}
+
+.dev-side-heading {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 1rem;
+}
+
+.dev-side-body {
+  font-size: 1rem;
+  line-height: 1.65;
+  opacity: 0.7;
+  margin-bottom: 1.75rem;
+}
+
+.dev-side-links {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem;
+  flex: 1;
+}
+
+.dev-side-links li {
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 0.6rem 0;
+}
+
+.dev-side-links li:last-child {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dev-side-links a {
+  text-decoration: none;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.dev-side-links a::before {
+  content: '→';
+  font-size: 0.85rem;
+}
+
+.dev-side-links a:hover {
+  opacity: 1;
+}
+
+.dev-cta {
+  display: inline-block;
+  padding: 0.65rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  margin-top: auto;
+  width: fit-content;
+  transition: opacity 0.2s;
+}
+
+.dev-cta:hover {
+  opacity: 0.85;
+}
+
+.dev-cta-tpp {
+  background: rgb(0, 100, 210);
+  color: white;
+}
+
+.dev-cta-lfi {
+  background: rgb(0, 129, 113);
+  color: white;
+}
+
+/* ── Homepage KPI cards ──────────────────────────────────────────────────── */
+.hp-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.hp-kpi-card {
+  background: #fff;
+  border: 1px solid #E8EFF6;
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-left: 4px solid var(--accent, #36BFD4);
+  box-shadow: 0 2px 8px rgba(12, 20, 65, 0.05);
+  transition: box-shadow 0.15s;
+}
+
+.hp-kpi-card:hover {
+  box-shadow: 0 4px 16px rgba(12, 20, 65, 0.1);
+}
+
+.hp-kpi-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent, #36BFD4) 12%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent, #36BFD4);
+  flex-shrink: 0;
+}
+
+.hp-kpi-body {
   flex: 1;
   min-width: 0;
 }
 
-.arch-diagram {
-  margin-left: 5%;
-  overflow-x: auto;
-  flex-shrink: 0;
-  font-size: 0.75rem;
-  align-self: flex-start;
-  margin-top: 50px;
+.hp-kpi-value {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #0C1441;
+  line-height: 1.1;
+}
+
+.hp-kpi-label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #667085;
+  margin-top: 0.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 1100px) {
+  .hp-kpi-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .hp-kpi-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Metrics chart rows */
@@ -824,16 +1048,18 @@ import APIErrorRatesBarChart from './Charts/APIErrorRatesBarChart.vue'
     padding-bottom: 3rem;
   }
 
-  .arch-row {
+  .dev-split {
     flex-direction: column;
   }
 
-  .arch-diagram {
-    margin-left: 0;
-    margin-top: 1rem;
-    font-size: 0.5rem;
-    overflow-x: auto;
-    max-width: 100%;
+  .dev-divider {
+    width: auto;
+    height: 1px;
+    margin: 0;
+  }
+
+  .dev-side {
+    padding: 2rem 1.5rem;
   }
 
   .stats-section {

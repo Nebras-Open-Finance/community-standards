@@ -55,10 +55,10 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
     text: 'Onboarding to the API Hub',
     collapsed: true,
     items: [
-      { text: 'Overview of the API Hub', link: `${BASE}/onboarding/` },
-      { text: 'Prerequisites', link: `${BASE}/onboarding/prerequisites` },
-      { text: 'Application Layer Authentication', link: `${BASE}/onboarding/application-layer-auth` },
-      { text: 'Environment Specific', link: `${BASE}/onboarding/environment-specific` },
+      { text: 'Overview of the API Hub', link: `${BASE}/${VERSION}/onboarding/` },
+      { text: 'Prerequisites', link: `${BASE}/${VERSION}/onboarding/prerequisites` },
+      { text: 'Application Layer Authentication', link: `${BASE}/${VERSION}/onboarding/application-layer-auth` },
+      { text: 'Environment Specific', link: `${BASE}/${VERSION}/onboarding/environment-specific` },
     ],
   },
 
@@ -69,13 +69,6 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
     items: [
       { text: 'TPP Activation', link: '/tech/lfi-api-hub/admin-portal/tpp-activation' },
     ],
-  },
-
-  // ── Consent ───────────────────────────────────────────────────────────
-  {
-    text: 'Consent',
-    collapsed: true,
-    items: [],
   },
 
   // ── Banking ───────────────────────────────────────────────────────────

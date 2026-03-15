@@ -70,27 +70,20 @@
   font-size: 0.75rem !important;
 }
 
-span[data-v-cf6e7c5e] {
-  display: none !important;
-}
-
 @media (min-width: 1660px) {
-    .VPNavBar.has-sidebar .title[data-v-cf6e7c5e] {
-        padding-left: calc((100% - 1440px)/2 - 64px) !important;
-        width: calc(350px - 64px) !important;
-    }
+  .VPNavBar.has-sidebar .VPNavBarTitle {
+    padding-left: calc((100% - 1440px)/2 - 64px) !important;
+    width: calc(350px - 64px) !important;
+  }
+  .VPSidebar {
+    padding-left: calc((100% - 1440px)/2 - 64px) !important;
+  }
 }
 
-@media (min-width: 1660px) {
-.VPSidebar {
-  padding-left: calc((100% - 1440px)/2 - 64px) !important;
-}
-}
-
-@media (min-width: 1440px) {
-    .group[data-v-8b980502] {
-        width: calc(350px - 64px) !important;
-    }
+/* Stretch sidebar items to fill the full available sidebar width */
+.VPSidebar .group,
+.VPSidebar .VPSidebarItem .item {
+  width: 100% !important;
 }
 
 /* .VPNavBarTitle {
