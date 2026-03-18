@@ -20,7 +20,7 @@ All requests require an active [Trust Framework application](/tech/tpp-standards
 | 2 | `consent.ControlParameters.ConsentSchedule.MultiPayment.PeriodicSchedule.Schedule` | Required. Must be a non-empty array of schedule entries. | API Hub |
 | 3 | `consent.ControlParameters.ConsentSchedule.MultiPayment.PeriodicSchedule.Schedule[*].PaymentExecutionDate` | Required on each entry. Each date must be unique within the schedule — duplicate execution dates are not permitted. | API Hub |
 | 4 | `consent.ControlParameters.ConsentSchedule.MultiPayment.PeriodicSchedule.Schedule[*].PaymentExecutionDate` | Must be today or in the future. Past dates are not permitted. | API Hub |
-| 5 | `consent.ControlParameters.ConsentSchedule.MultiPayment.PeriodicSchedule.Schedule[*].PaymentExecutionDate` | Must be strictly before `consent.ExpirationDateTime`. | API Hub |
+| 5 | `consent.ExpirationDateTime` | The date portion of `consent.ExpirationDateTime` must exactly equal the last (latest) `PaymentExecutionDate` in the schedule. | API Hub |
 | 6 | `consent.ControlParameters.ConsentSchedule.MultiPayment.PeriodicSchedule.Schedule[*].Amount` | Required on each entry. Defines the exact fixed amount to be collected on that execution date. | API Hub |
 | 7 | `consent.ControlParameters.ConsentSchedule.MultiPayment.PeriodicSchedule.Schedule[*].Amount.Currency` | Must be `AED` on each entry. | API Hub |
 | 8 | *(implicit)* | Only 1 payment is allowed per `PaymentExecutionDate`. Always enforced. | API Hub |

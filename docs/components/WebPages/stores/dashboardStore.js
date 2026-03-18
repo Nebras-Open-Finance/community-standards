@@ -22,14 +22,14 @@ function transformRow(row) {
   const tpp   = row.TPPName || 'Unknown'
   const url   = row.URL || ''
 
-  // Extract API family from URL: open-finance/<family>/...
-  const familyMatch = url.match(/open-finance\/([^/]+)\//)
+  // Extract API family from URL: open-finance/<family>/... (trailing slash optional)
+  const familyMatch = url.match(/open-finance\/([^/]+)(?:\/|$)/)
   const family = familyMatch ? familyMatch[1] : 'other'
 
   // Extract version and endpoint from URL: .../v1.2/<endpoint>
   const versionMatch = url.match(/\/(v\d+\.\d+)(\/.*)?$/)
   const version  = versionMatch ? versionMatch[1] : 'unknown'
-  const endpoint = versionMatch?.[2] || `/${family}`
+  const endpoint = versionMatch?.[2] || (family !== 'other' ? `/${family}` : (url || '/other'))
 
   const codeGroup = row.TPPResponseCodeGroup || '2xx'
   const isError   = codeGroup !== '2xx'

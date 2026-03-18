@@ -96,7 +96,7 @@ function aggregate(data, groupBy, stackBy, valueKey) {
     const sKey = stackBy ? String(row[stackBy] ?? 'Unknown') : '_'
     const val = Number(row[valueKey]) || 0
 
-    if (!gKey || gKey.toLowerCase() === 'unknown') continue
+    if (!gKey || gKey.toLowerCase() === 'unknown' || gKey === '/other') continue
     if (!bucket[gKey]) bucket[gKey] = {}
     bucket[gKey][sKey] = (bucket[gKey][sKey] || 0) + val
     stackKeys.add(sKey)

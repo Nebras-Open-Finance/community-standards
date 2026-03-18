@@ -25,6 +25,11 @@ const navTitle = computed(() => {
     return { title: 'Internal Processes', link: '/processes' }
   if (path.startsWith('/knowledge-base'))
     return { title: 'Knowledge Base', link: '/knowledge-base/' }
+  if (path.startsWith('/tech/erratas'))
+    return { title: `Erratas – ${CURRENT_VERSION}`, link: '/tech/erratas/' }
+  if (path.startsWith('/tech/api-specs'))
+    return { title: `API Specs – ${CURRENT_VERSION}`, link: '/tech/api-sepcs/' }
+
 
   return { title: 'Developer Docs', link: '/' }
 })

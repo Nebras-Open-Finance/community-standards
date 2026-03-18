@@ -4,6 +4,8 @@ import { lfiSidebar } from './config/sidebars/lfi'
 import { policySidebar, processesSidebar } from './config/sidebars/policy'
 import { kbSidebar } from './config/sidebars/kb'
 import { erratasSidebar } from './config/sidebars/erratas'
+import { apiSpecsSidebar } from './config/sidebars/api-specs'
+import { CURRENT_VERSION } from './version'
 
 const wellKnownProxyPlugin = {
   name: 'well-known-proxy',
@@ -60,8 +62,9 @@ export default defineConfig({
           { text: 'Technology Architecture & Overview', link: '/tech/overview' },
           { text: 'TPP – Open Finance Standards', link: '/tech/tpp-standards/' },
           { text: 'LFI – Integration Guide', link: '/tech/lfi-api-hub/' },
-          { text: 'Erratas', link: '/erratas/' },
+          { text: 'Erratas', link: `/tech/erratas/${CURRENT_VERSION}` },
           { text: 'Knowledge Base', link: '/knowledge-base/' },
+          { text: 'API Specs', link: `/tech/api-specs/${CURRENT_VERSION}` },
         ],
       },
       { text: 'Metrics & Monitoring', link: '/metrics' },
@@ -85,8 +88,9 @@ export default defineConfig({
       '/tech/lfi-api-hub': lfiSidebar,
       '/policy': policySidebar,
       '/processes': processesSidebar,
-      '/erratas': erratasSidebar,
+      '/tech/erratas': erratasSidebar,
       '/knowledge-base': kbSidebar,
+      [`/tech/api-specs/${CURRENT_VERSION}`]: apiSpecsSidebar,
     },
   },
 })

@@ -28,7 +28,7 @@ Certification must be renewed for each major new version of the Standards.
 
 ### 1. Access the Conformance Suite
 
-The OIDF conformance suite is available at [certification.openid.net](https://certification.openid.net/). Log in with an OIDF account to create and run test plans.
+The OIDF conformance suite is available at [www.certification.openid.net](https://www.certification.openid.net/). Log in with a Google or GitLab account to create and run test plans.
 
 ### 2. Configure the Test Plan
 

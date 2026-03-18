@@ -5,13 +5,12 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 const route = useRoute()
 const router = useRouter()
 
-// Add new versions here as they are released
-const VERSIONS = ['v2.1']
+import { VERSIONS, CURRENT_VERSION } from '../.vitepress/version'
 
-const currentVersion = 'v2.1'
+const currentVersion = CURRENT_VERSION
 
 const showVersion = computed(() =>
-  route.path.startsWith('/tech/tpp-standards/') || route.path.startsWith('/tech/lfi-api-hub/')
+  route.path.startsWith('/tech/') || route.path.startsWith('/tech/lfi-api-hub/')
 )
 
 const isOpen = ref(false)

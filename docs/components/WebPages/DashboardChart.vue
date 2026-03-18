@@ -166,7 +166,7 @@ function buildErrorRate() {
   const byGroup = {}
   for (const r of props.data) {
     const key = String(r[groupBy] ?? 'Unknown')
-    if (!key || key.toLowerCase() === 'unknown') continue
+    if (!key || key.toLowerCase() === 'unknown' || key === '/other') continue
     if (!byGroup[key]) byGroup[key] = { vol: 0, err: 0 }
     byGroup[key].vol += r.volume || 0
     byGroup[key].err += r.errors || 0

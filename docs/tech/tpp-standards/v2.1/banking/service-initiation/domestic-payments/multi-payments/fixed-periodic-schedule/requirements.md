@@ -20,7 +20,7 @@ All requests require an active [Trust Framework application](/tech/tpp-standards
 | 2 | `consent.ControlParameters.ConsentSchedule.MultiPayment.PeriodicSchedule.Amount` | Required. Defines the exact fixed amount for each payment within a period. | API Hub |
 | 3 | `consent.ControlParameters.ConsentSchedule.MultiPayment.PeriodicSchedule.Amount.Currency` | Must be `AED`. | API Hub |
 | 4 | `consent.ControlParameters.ConsentSchedule.MultiPayment.PeriodicSchedule.PeriodType` | Required. Defines the period boundary (e.g. `Week`, `Month`). | API Hub |
-| 5 | `consent.ControlParameters.ConsentSchedule.MultiPayment.PeriodicSchedule.PeriodStartDate` | Required. The date from which each period is counted. | API Hub |
+| 5 | `consent.ControlParameters.ConsentSchedule.MultiPayment.PeriodicSchedule.PeriodStartDate` | Required. The date from which each period is counted. Must not be in the past. Must not be after `consent.ExpirationDateTime`. | API Hub |
 | 6 | `consent.ControlParameters.ConsentSchedule.MultiPayment.MaximumCumulativeNumberOfPayments` | Required. Defines the total number of payments permitted across the lifetime of the consent. | API Hub |
 | 7 | `consent.ControlParameters.ConsentSchedule.MultiPayment.MaximumCumulativeValueOfPayments` | If set, defines the maximum total value of all payments permitted across the lifetime of the consent. | API Hub |
 | 8 | `MaximumCumulativeValueOfPayments` | If set, `MaximumCumulativeValueOfPayments.Currency` must be `AED`. | API Hub |

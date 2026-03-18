@@ -20,8 +20,9 @@
           <a href="/tech/overview">Technology Architecture &amp; Overview</a>
           <a href="/tech/tpp-standards">TPP – Open Finance Standards</a>
           <a href="/tech/lfi-api-hub">LFI – Integration Guide</a>
-          <a href="/erratas">Erratas</a>
+          <a href="/tech/erratas">Erratas</a>
           <a href="/knowledge-base">Knowledge Base</a>
+          <a href="/tech/knowledge-base">Knowledge Base</a>
         </div>
       </div>
 

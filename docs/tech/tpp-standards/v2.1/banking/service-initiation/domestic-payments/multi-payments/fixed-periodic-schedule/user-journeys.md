@@ -120,6 +120,20 @@ const myCustomValidator = (value) => {
         return "consent.AuthorizationExpirationDateTime must not be after consent.ExpirationDateTime"
         }
     }
+
+    const periodStartDate = value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.PeriodStartDate
+    if (periodStartDate) {
+        const startDate = new Date(periodStartDate)
+        startDate.setHours(0, 0, 0, 0)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        if (startDate < today) {
+            return "consent.ControlParameters.ConsentSchedule.MultiPayment.PeriodicSchedule.PeriodStartDate must not be in the past"
+        }
+        if (value.consent.ExpirationDateTime && startDate > new Date(value.consent.ExpirationDateTime)) {
+            return "consent.ControlParameters.ConsentSchedule.MultiPayment.PeriodicSchedule.PeriodStartDate must not be after consent.ExpirationDateTime"
+        }
+    }
   return null
 }
 

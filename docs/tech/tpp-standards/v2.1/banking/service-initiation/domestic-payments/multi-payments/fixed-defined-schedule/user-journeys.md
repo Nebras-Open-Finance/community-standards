@@ -124,15 +124,18 @@ const myCustomValidator = (value) => {
 
         const today = new Date()
         today.setHours(0, 0, 0, 0)
-        const expiration = value.consent.ExpirationDateTime ? new Date(value.consent.ExpirationDateTime) : null
+        const lastExecDateStr = [...dates].sort().at(-1)
         for (const item of schedule) {
             const execDate = new Date(item.PaymentExecutionDate)
             execDate.setHours(0, 0, 0, 0)
             if (execDate < today) {
                 return `Schedule PaymentExecutionDate '${item.PaymentExecutionDate}' must be today or in the future`
             }
-            if (expiration && execDate >= expiration) {
-                return `Schedule PaymentExecutionDate '${item.PaymentExecutionDate}' must be before consent.ExpirationDateTime`
+        }
+        if (value.consent.ExpirationDateTime) {
+            const expirationDate = value.consent.ExpirationDateTime.substring(0, 10)
+            if (expirationDate !== lastExecDateStr) {
+                return `consent.ExpirationDateTime date (${expirationDate}) must match the last PaymentExecutionDate in the schedule (${lastExecDateStr})`
             }
         }
     }
@@ -145,9 +148,9 @@ const initialFormDataSIP = ref({
                 "consent": {
                     "ConsentId": "b8f42378-10ac-46a1-8d20-4e020484216d",
                     "IsSingleAuthorization": true,
-                    "ExpirationDateTime": "2026-12-25T23:00:00.000Z",
+                    "ExpirationDateTime": "2026-12-14T23:59:59.000Z",
                     "BaseConsentId": "b9f42378-10ac-46a1-8d20-4e020484216d",
-                    "AuthorizationExpirationDateTime": "2026-12-25T23:00:00.000Z",
+                    "AuthorizationExpirationDateTime": "2026-12-14T23:59:59.000Z",
                     "Permissions": ["ReadAccountsBasic", "ReadAccountsDetail", "ReadBalances", "ReadRefundAccount"],
                     "ControlParameters": {
                         "ConsentSchedule": {

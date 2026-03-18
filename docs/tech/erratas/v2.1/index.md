@@ -5,13 +5,11 @@ prev: false
 
 # Erratas
 
-This section is the authoritative register of post-publication corrections to documentation baselines.
+This section is the authoritative register of post-publication corrections to `V2.1` content in the **TPP - Open Finance Standards** or **LFI - Integration Guide**
 
-### Scope
+### Errata Items
 
-- Published versions of:
-  - TPP - Open Finance Standards
-  - LFI - Integration Guide
+There are currently no errata items for this version.
 
 ### Operating Rules
 

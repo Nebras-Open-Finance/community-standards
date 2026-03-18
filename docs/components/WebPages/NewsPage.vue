@@ -18,6 +18,11 @@
           title="Amazon expands UK payment options with Pay by Bank via partnership with TrueLayer"
           text="Amazon has expanded the range of payment options available to UK customers, giving shoppers more choice over how they pay at checkout. From Pay by Bank to cards, instalments, gift cards and rewards points, the move reflects a broader shift towards more flexible, account-to-account payment experiences in everyday commerce." />
 
+   <ArticleLink
+          link="https://gulfnews.com/business/banking/how-open-finance-in-uae-banks-is-driving-faster-credit-and-new-services-1.500418393"
+          imageSrc="/images/articles/faster-credit.png" date="23 Jan 2026"
+          title="How open finance in UAE banks is driving faster credit and new services"
+          text="UAE banking sector is entering a new phase of digital transformation as open finance begins to roll out, allowing individuals and businesses to securely share and initiate services such as payments through regulated third-party providers, all within a strict, consent-based framework." />
 
 
         <ArticleLink link="https://uaefintechvibes.com/adib-leads-open-finance-initiative-altareq/"

@@ -129,6 +129,22 @@ export const CHART_REGISTRY = {
       props: { groupBy: 'version' },
       dataSource: 'api',
     },
+    {
+      id: 'err_vol_by_endpoint',
+      title: 'Volume by Endpoint',
+      component: 'volume',
+      props: { groupBy: 'endpoint', stackBy: 'status' },
+      dataSource: 'api',
+      showOnlyIfFiltered: true,
+    },
+    {
+      id: 'err_rate_by_endpoint',
+      title: 'Error Rate by Endpoint',
+      component: 'error-rate',
+      props: { groupBy: 'endpoint' },
+      dataSource: 'api',
+      showOnlyIfFiltered: true,
+    },
   ],
 
   'api-response-times': [
