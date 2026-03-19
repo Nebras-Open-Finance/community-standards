@@ -8,6 +8,7 @@
     <!-- Desktop nav -->
     <nav class="header-links desktop-links">
 
+      <a href="/policy" class="header-link">Policies</a>
       <div class="header-dropdown">
         <a href="/tech/overview" class="header-link dropdown-trigger">
           Developer Docs
@@ -20,9 +21,9 @@
           <a href="/tech/overview">Technology Architecture &amp; Overview</a>
           <a href="/tech/tpp-standards">TPP – Open Finance Standards</a>
           <a href="/tech/lfi-api-hub">LFI – Integration Guide</a>
-          <a href="/tech/erratas">Erratas</a>
+          <a href="/tech/api-specs/">API specs</a>
           <a href="/knowledge-base">Knowledge Base</a>
-          <a href="/tech/knowledge-base">Knowledge Base</a>
+          <a href="/tech/erratas">Erratas</a>
         </div>
       </div>
 

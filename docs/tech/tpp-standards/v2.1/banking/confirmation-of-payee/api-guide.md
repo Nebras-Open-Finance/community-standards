@@ -96,6 +96,8 @@ discovery_request = sign_jwt({
 
 ### Step 1b — POST /discovery
 
+Include `x-fapi-interaction-id` on the request. See [Request Headers](/tech/tpp-standards/security/request-headers).
+
 ::: code-group
 
 ```typescript [Node.js]
@@ -358,7 +360,7 @@ signed_request = sign_jwt({
 
 ## Step 4 — POST /confirmation
 
-Send the signed JWT to the LFI's CoP endpoint using the `ResourceServerUrl` resolved in Step 1b. Both the request body and the response are JWTs.
+Send the signed JWT to the LFI's CoP endpoint using the `ResourceServerUrl` resolved in Step 1b. Both the request body and the response are JWTs. Include `x-fapi-interaction-id` on every request. See [Request Headers](/tech/tpp-standards/security/request-headers).
 
 ::: code-group
 

@@ -1,11 +1,18 @@
 ### Step 5 - Sending the /par Request
 
+Include `x-fapi-interaction-id` on the request — the API Hub echoes it in the response for end-to-end traceability. See [Request Headers](/tech/tpp-standards/security/request-headers).
+
 ::: code-group
 
 ```typescript [Node.js]
+import crypto from 'node:crypto'
+
 const parResponse = await fetch(`${ISSUER}/par`, {
   method: 'POST',
-  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  headers: {
+    'Content-Type':          'application/x-www-form-urlencoded',
+    'x-fapi-interaction-id': crypto.randomUUID(),
+  },
   body: new URLSearchParams({
     request:               requestJWT,
     client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
@@ -18,10 +25,13 @@ const { request_uri, expires_in } = await parResponse.json()
 ```
 
 ```python [Python]
-import httpx
+import httpx, uuid
 
 par_response = httpx.post(
     f"{ISSUER}/par",
+    headers={
+        "x-fapi-interaction-id": str(uuid.uuid4()),
+    },
     data={
         "request":               request_jwt,
         "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",

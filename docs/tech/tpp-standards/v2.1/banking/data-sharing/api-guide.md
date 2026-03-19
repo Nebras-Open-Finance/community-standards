@@ -264,15 +264,20 @@ See [Tokens & Assertions](/tech/tpp-standards/security/tokens#generating-a-clien
 
 With your signed Request JWT and client assertion ready, POST both to the Authorization Server's `/par` endpoint. The connection must use your **mTLS transport certificate**.
 
+Include `x-fapi-interaction-id` — a UUID v4 you generate per request. The API Hub echoes it in the response, enabling end-to-end traceability. See [Request Headers](/tech/tpp-standards/security/request-headers) for the full header reference.
+
 ::: code-group
 
 ```typescript [Node.js]
+import crypto from 'node:crypto'
+
 const PAR_ENDPOINT = `${ISSUER}/par`
 
 const parResponse = await fetch(PAR_ENDPOINT, {
   method: 'POST',
   headers: {
-    'Content-Type': 'application/x-www-form-urlencoded',
+    'Content-Type':          'application/x-www-form-urlencoded',
+    'x-fapi-interaction-id': crypto.randomUUID(),
   },
   body: new URLSearchParams({
     request:               requestJWT,
@@ -287,10 +292,13 @@ const { request_uri, expires_in } = await parResponse.json()
 ```
 
 ```python [Python]
-import httpx  # pip install httpx
+import httpx, uuid
 
 par_response = httpx.post(
     f"{ISSUER}/par",
+    headers={
+        "x-fapi-interaction-id": str(uuid.uuid4()),
+    },
     data={
         "request":               request_jwt,
         "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
@@ -485,16 +493,22 @@ Never store tokens in `localStorage`. Use `httpOnly` cookies or a server-side se
 
 ### Step 8 - GET /accounts
 
-With a valid access token, list all accounts the user consented to share. Include the token as a `Bearer` in the `Authorization` header and present your mTLS transport certificate on the connection.
+With a valid access token, retrieve all accounts the user consented to share. Include `x-fapi-interaction-id` on every request, and when the customer is present also send `x-fapi-customer-ip-address` and `x-customer-user-agent` and  `x-fapi-auth-date` if the customer has been authenticated. See [Request Headers](/tech/tpp-standards/security/request-headers).
 
 ::: code-group
 
 ```typescript [Node.js]
+import crypto from 'node:crypto'
+
 const LFI_API_BASE = process.env.LFI_API_BASE_URL!  // resource server base URL from .well-known
 
 const accountsResponse = await fetch(`${LFI_API_BASE}/open-finance/v2.1/accounts`, {
   headers: {
-    Authorization: `Bearer ${access_token}`,
+    Authorization:                `Bearer ${access_token}`,
+    'x-fapi-interaction-id':      crypto.randomUUID(),
+    'x-fapi-auth-date':           lastCustomerAuthDate,   // RFC 7231 — last time user authenticated with TPP
+    'x-fapi-customer-ip-address': customerIpAddress,      // customer's IP address
+    // 'x-customer-user-agent':   req.headers['user-agent'],
   },
   // agent: new https.Agent({ cert: transportCert, key: transportKey }),
 })
@@ -506,9 +520,17 @@ const accountId = accounts[0].AccountId
 ```
 
 ```python [Python]
+import uuid
+
 accounts_response = httpx.get(
     f"{LFI_API_BASE}/open-finance/v2.1/accounts",
-    headers={"Authorization": f"Bearer {access_token}"},
+    headers={
+        "Authorization":                f"Bearer {access_token}",
+        "x-fapi-interaction-id":        str(uuid.uuid4()),
+        "x-fapi-auth-date":             last_customer_auth_date,  # RFC 7231 — last time user authenticated with TPP
+        "x-fapi-customer-ip-address":   customer_ip_address,      # customer's IP address
+        # "x-customer-user-agent":      request.headers.get("user-agent"),
+    },
     # cert=("transport.crt", "transport.key"),
 )
 
@@ -522,7 +544,7 @@ See the [GET /accounts](/tech/tpp-standards/v2.1/banking/data-sharing/open-api/a
 
 ### Step 9 - GET /accounts/{AccountId}/balances
 
-Use a stored `AccountId` to fetch data from a specific account's sub-resources. Each endpoint requires the matching `Read*` permission in your consent.
+Use a stored `AccountId` to fetch data from a specific account's sub-resources. Each endpoint requires the matching `Read*` permission in your consent. Apply the same FAPI headers as Step 8.
 
 ::: code-group
 
@@ -531,7 +553,11 @@ const balancesResponse = await fetch(
   `${LFI_API_BASE}/open-finance/v2.1/accounts/${accountId}/balances`,
   {
     headers: {
-      Authorization: `Bearer ${access_token}`,
+      Authorization:                `Bearer ${access_token}`,
+      'x-fapi-interaction-id':      crypto.randomUUID(),
+      'x-fapi-auth-date':           lastCustomerAuthDate,
+      'x-fapi-customer-ip-address': customerIpAddress,
+      // 'x-customer-user-agent':   req.headers['user-agent'],
     },
     // agent: new https.Agent({ cert: transportCert, key: transportKey }),
   }
@@ -543,7 +569,13 @@ const { Data: { Balance } } = await balancesResponse.json()
 ```python [Python]
 balances_response = httpx.get(
     f"{LFI_API_BASE}/open-finance/v2.1/accounts/{account_id}/balances",
-    headers={"Authorization": f"Bearer {access_token}"},
+    headers={
+        "Authorization":                f"Bearer {access_token}",
+        "x-fapi-interaction-id":        str(uuid.uuid4()),
+        "x-fapi-auth-date":             last_customer_auth_date,
+        "x-fapi-customer-ip-address":   customer_ip_address,
+        # "x-customer-user-agent":      request.headers.get("user-agent"),
+    },
     # cert=("transport.crt", "transport.key"),
 )
 

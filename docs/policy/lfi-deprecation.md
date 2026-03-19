@@ -25,18 +25,29 @@ This policy applies to all LFIs operating within the UAE Open Finance ecosystem 
 - The dual-running period during which both the prior and new API versions are simultaneously supported
 - The formal deprecation process for retiring prior versions
 
+## When Dual-Running Does Not Apply
+
+Where an LFI implements the API for the first time, only a single version is required initially. There is no expectation to support dual-running before a prior version exists.
+
+There is also no expectation for LFIs to implement dual-running or formal deprecation processes for:
+
+- **Minor (non-breaking) API version updates**
+- **Errata or corrective changes**
+- **UI components or presentation-layer changes**
+- **Downstream system or internal implementation changes**
+
+These changes are expected to be backward compatible and managed without requiring concurrent version support.
+
 ## Dual-Running Requirement
 
-When a new major version of the Open Finance standard is introduced (e.g., Vx.y → Vz.0), LFIs **must** operate both the prior version and the new version of their API Hub implementation concurrently for the duration of the deprecation window.
+When an LFI is ready to go live with a new major version of the Open Finance standard is introduced (e.g., Vx.y → Vz.0), LFIs **must** operate both the prior version and the new version of their API Hub implementation concurrently for the duration of the deprecation window.
 
 ### How Dual-Running Works
 
 LFIs achieve dual-running by:
 
 - Deploying two active versions of their API Hub implementation simultaneously (e.g., V1.x and V2.0)
-- Routing incoming API requests to the correct implementation based on the version identifier present in the request, typically via:
-  - The URL path (e.g., `/v1.2/` vs `/v2.1/`)
-  - An API version header
+- Routing incoming API requests to the correct implementation based on the version the TPP requested, currently this is acheived via the `o3-api-uri` header
 - Ensuring each implementation is independently maintained and supported, with no cross-version dependencies that could cause instability
 
 Both implementations must remain fully functional and compliant with their respective standards throughout the dual-running period.

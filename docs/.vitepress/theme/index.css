@@ -71,6 +71,12 @@
 }
 
 @media (min-width: 1660px) {
+  
+  .VPNavBar.has-sidebar .title {
+    padding-left: calc((100% - 1440px)/2 - 64px) !important;
+    width: calc(350px - 64px) !important;
+  }  
+  
   .VPNavBar.has-sidebar .VPNavBarTitle {
     padding-left: calc((100% - 1440px)/2 - 64px) !important;
     width: calc(350px - 64px) !important;

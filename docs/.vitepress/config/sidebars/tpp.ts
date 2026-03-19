@@ -100,7 +100,7 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
   },
 
   {
-    text: 'Security & Authorization',
+    text: 'Security, Auth & Headers',
     collapsed: true,
     items: [
       {
@@ -129,6 +129,7 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
           },
         ],
       },
+      { text: 'Request Headers', link: `${BASE}/security/request-headers` },
     ],
   },
 
@@ -139,7 +140,15 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'Overview', link: `${BASE}/${VERSION}/consent/` },
       { text: 'Requirements', link: `${BASE}/${VERSION}/consent/requirements` },
       { text: 'API Guide', link: `${BASE}/${VERSION}/consent/api-guide` },
-      { text: 'Consent Management Interface', link: `${BASE}/${VERSION}/consent/consent-management-interface` },
+      { 
+        text: 'Consent Management Interface',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/consent/consent-management-interface` },
+          { text: 'Requirements', link: `${BASE}/${VERSION}/consent/consent-management-interface/requirements` },
+          { text: 'User Experience', link: `${BASE}/${VERSION}/consent/consent-management-interface/user-experience` }
+        ]
+      },
       {
         text: 'API Reference',
         collapsed: true,
@@ -319,7 +328,7 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
     collapsed: true,
     items: [
       { text: 'Overview', link: `${BASE}/production/testing-certification/overview` },
-      { text: 'Readiness Checklist', link: `${BASE}/production/testing-certification/readiness-checklist` },
+      { text: 'TrustFramework Checklist', link: `${BASE}/production/testing-certification/readiness-checklist` },
       {
         text: 'Functional Evidence',
         collapsed: true,

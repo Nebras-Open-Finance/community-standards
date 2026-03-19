@@ -49,16 +49,24 @@ function generateDocument() {
 <head>
 <meta charset='utf-8'>
 <title>Nebras Open Finance — Readiness Checklist</title>
+<!--[if gte mso 9]><xml>
+  <w:WordDocument>
+    <w:View>Normal</w:View>
+    <w:Zoom>100</w:Zoom>
+    <w:DoNotOptimizeForBrowser/>
+  </w:WordDocument>
+</xml><![endif]-->
 <style>
-  body        { font-family: Calibri, Arial, sans-serif; font-size: 11pt; margin: 2.5cm 2.5cm 2.5cm 2.5cm; color: #111; }
+  @page    { margin: 2.5cm; mso-page-orientation: portrait; size: 21cm 29.7cm; }
+  body        { font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #111; }
   h1          { font-size: 20pt; font-weight: bold; color: #0f172a; margin-bottom: 4pt; }
   h2          { font-size: 13pt; font-weight: bold; color: #0f172a; border-bottom: 2px solid #cbd5e1; padding-bottom: 3pt; margin-top: 18pt; margin-bottom: 8pt; }
   h3          { font-size: 11pt; font-weight: bold; color: #1e40af; margin-top: 14pt; margin-bottom: 4pt; }
   p           { margin: 4pt 0; }
   .subtitle   { font-size: 11pt; color: #475569; margin-bottom: 16pt; }
-  table       { width: 100%; border-collapse: collapse; margin: 8pt 0; font-size: 10.5pt; }
-  th          { background: #f1f5f9; font-weight: bold; text-align: left; padding: 6pt 8pt; border: 1pt solid #cbd5e1; font-size: 10pt; }
-  td          { padding: 6pt 8pt; border: 1pt solid #cbd5e1; vertical-align: top; }
+  table       { width: 100%; border-collapse: collapse; margin: 8pt 0; font-size: 10.5pt; table-layout: fixed; mso-table-layout-alt: fixed; }
+  th          { background: #f1f5f9; font-weight: bold; text-align: left; padding: 6pt 8pt; border: 1pt solid #cbd5e1; font-size: 10pt; word-wrap: break-word; }
+  td          { padding: 6pt 8pt; border: 1pt solid #cbd5e1; vertical-align: top; word-wrap: break-word; }
   .section-note { font-size: 9.5pt; color: #6b7280; font-style: italic; margin: 0 0 8pt 0; }
   .declaration-item { margin: 6pt 0; }
   .box        { font-size: 13pt; margin-right: 6pt; }
@@ -99,16 +107,17 @@ ${section('2.1 Trust Framework', [
   row('Application has been created with the correct roles assigned (e.g. BDSP, BSIP).', 'Application name: <br>Roles assigned:'),
   row('At least one Transport Certificate is active and installed for mTLS.', 'Certificate thumbprint:'),
   row('At least one Signing Certificate is active and available for JWT signing.', 'Certificate thumbprint: <br>Key ID (kid):'),
-  row('Production private keys are stored securely, never leave the company’s estate, and are never committed to source control — a FIPS 140-3 certified HSM or KMS that supports UAE data residency requirements must be used.', 'HSM / KMS provider:'),
+  row('Production private keys are stored securely, never leave the company\'s estate, and are never committed to source control — a FIPS 140-3 certified HSM or KMS that supports UAE data residency requirements must be used.', 'HSM / KMS provider:'),
   row('Certificate expiry is actively monitored and the firm has a documented process to rotate certificates before expiry.', 'Monitoring mechanism:'),
   row('All Redirect URIs are registered in the Directory and exactly match what the application sends in authorisation requests.', 'Redirect URI(s):'),
+  row('Organisation and Application logos are set in the Trust Framework Directory and accurately represent the organisation and the specific application (service the customer is receiving) respectively.'),
 ])}
 
 ${section('2.2 API Discovery', [
   row('Can call GET /participants to retrieve the list of LFIs and their Authorization Server metadata.'),
   row('Can inspect the API resources and metadata returned per Authorization Server to determine which support the capabilities required by the proposition.'),
-  row('Can resolve an LFI’s DiscoveryEndpointUrl and fetch its .well-known/openid-configuration to obtain token_endpoint, issuer, par_endpoint, and registration_endpoint.'),
-  row('LFI endpoint URLs are resolved dynamically at runtime — none are hardcoded.'),
+  row('Can resolve an LFI\'s DiscoveryEndpointUrl and fetch its .well-known/openid-configuration to obtain token_endpoint, issuer, par_endpoint, and registration_endpoint.'),
+  row('LFI endpoint URLs are not hardcoded — they are refreshed periodically from the Trust Framework directory to pick up changes.'),
 ])}
 
 ${section('2.3 Registration with an LFI', [

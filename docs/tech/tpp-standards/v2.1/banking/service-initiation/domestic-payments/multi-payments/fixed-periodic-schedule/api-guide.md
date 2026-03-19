@@ -290,6 +290,8 @@ See [User Experience](./user-journeys) for screen mockups of the Fixed Periodic 
 
 ### Step 9 - POST /payments
 
+Include `x-fapi-interaction-id` and `x-idempotency-key`. If the customer is present at this point in the flow, also send `x-fapi-customer-ip-address`, `x-customer-user-agent` and `x-fapi-auth-date` if the customer has been authenticated. See [Request Headers](/tech/tpp-standards/security/request-headers).
+
 Submit one payment per period under this consent. The `Instruction.Amount` must exactly match the fixed `Amount` defined in `PeriodicSchedule` — the API Hub will reject any payment where the amount does not match, and will reject a second payment submitted within the same period.
 
 ::: info Fields that can vary per payment
@@ -339,10 +341,12 @@ async function initiateFixedPeriodicPayment(
   const paymentResponse = await fetch(`${LFI_API_BASE}/open-finance/v2.1/payments`, {
     method: 'POST',
     headers: {
-      Authorization:       `Bearer ${accessToken}`,
-      'Content-Type':      'application/jwt',
-      'x-consent-id':      consentId,
-      'x-idempotency-key': idempotencyKey,
+      Authorization:                `Bearer ${accessToken}`,
+      'Content-Type':               'application/jwt',
+      'x-idempotency-key':          idempotencyKey,
+      'x-fapi-interaction-id':      crypto.randomUUID(),
+      'x-fapi-auth-date':           lastCustomerAuthDate,
+      'x-fapi-customer-ip-address': customerIpAddress,
     },
     body: signedPayment,
     // agent: new https.Agent({ cert: transportCert, key: transportKey }),
@@ -399,10 +403,12 @@ def initiate_fixed_periodic_payment(
     response = httpx.post(
         f"{LFI_API_BASE}/open-finance/v2.1/payments",
         headers={
-            "Authorization":     f"Bearer {access_token}",
-            "Content-Type":      "application/jwt",
-            "x-consent-id":      consent_id,
-            "x-idempotency-key": idempotency_key,
+            "Authorization":               f"Bearer {access_token}",
+            "Content-Type":                "application/jwt",
+            "x-idempotency-key":           idempotency_key,
+            "x-fapi-interaction-id":       str(uuid.uuid4()),
+            "x-fapi-auth-date":            last_customer_auth_date,
+            "x-fapi-customer-ip-address":  customer_ip_address,
         },
         content=signed_payment,
         # cert=("transport.crt", "transport.key"),

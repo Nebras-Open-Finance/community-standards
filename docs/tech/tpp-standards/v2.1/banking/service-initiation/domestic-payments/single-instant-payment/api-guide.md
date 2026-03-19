@@ -354,6 +354,8 @@ See [Message Encryption](/tech/tpp-standards/security/fapi/message-encryption) f
 
 ### Step 10 - Sign and Submit the Payment Request
 
+Include `x-fapi-interaction-id` and `x-idempotency-key`. As the customer is present at this point in the flow, also send `x-fapi-customer-ip-address`, `x-customer-user-agent` and `x-fapi-auth-date` if the customer has been authenticated. See [Request Headers](/tech/tpp-standards/security/request-headers).
+
 The POST /payments body is sent as `Content-Type: application/jwt` — the payment payload is wrapped in a signed JWT (`AEPaymentRequestSigned`) using your private signing key. The LFI verifies the signature before processing the payment.
 
 Every field in the request **must exactly match** the corresponding value from the authorized consent:
@@ -406,10 +408,12 @@ const signedPayment = await new SignJWT(paymentPayload)
 const paymentResponse = await fetch(`${LFI_API_BASE}/open-finance/v2.1/payments`, {
   method: 'POST',
   headers: {
-    'Authorization':       `Bearer ${access_token}`,
-    'Content-Type':        'application/jwt',
-    'x-consent-id':        consentId,
-    'x-idempotency-key':   idempotencyKey,       // stable per payment attempt; reuse on retry
+    'Authorization':               `Bearer ${access_token}`,
+    'Content-Type':                'application/jwt',
+    'x-idempotency-key':           idempotencyKey,       // stable per payment attempt; reuse on retry
+    'x-fapi-interaction-id':       crypto.randomUUID(),
+    'x-fapi-auth-date':            lastCustomerAuthDate,
+    'x-fapi-customer-ip-address':  customerIpAddress,
   },
   body: signedPayment,
   // agent: new https.Agent({ cert: transportCert, key: transportKey }),
@@ -458,10 +462,12 @@ signed_payment = jose_jwt.encode(
 payment_response = httpx.post(
     f"{LFI_API_BASE}/open-finance/v2.1/payments",
     headers={
-        "Authorization":     f"Bearer {access_token}",
-        "Content-Type":      "application/jwt",
-        "x-consent-id":      consent_id,
-        "x-idempotency-key": idempotency_key,   # stable per payment attempt; reuse on retry
+        "Authorization":               f"Bearer {access_token}",
+        "Content-Type":                "application/jwt",
+        "x-idempotency-key":           idempotency_key,   # stable per payment attempt; reuse on retry
+        "x-fapi-interaction-id":       str(uuid.uuid4()),
+        "x-fapi-auth-date":            last_customer_auth_date,
+        "x-fapi-customer-ip-address":  customer_ip_address,
     },
     content=signed_payment,
     # cert=("transport.crt", "transport.key"),
