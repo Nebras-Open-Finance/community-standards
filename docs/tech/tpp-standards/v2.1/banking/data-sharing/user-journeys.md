@@ -7,6 +7,9 @@ aside: false
 
 # Bank Data Sharing - User Experience
 
+Before a customer is redirected to Open Finance to consent to Data Sharing, you must present a Consent Page that clearly explains what the customer is consenting to and collects their explicit, informed consent. This page must accurately reflect the scope, purpose, and nature of the data being shared. The examples and interactive wireframes provided below define the expected structure, content, and behaviour of the Consent Page and must be followed.
+
+While you may adapt visual elements such as colour palette, fonts, and styling, you must not alter the meaning, clarity, or completeness of the consent content, and the representation of AlTareq (including logos, naming, and action buttons) must be preserved. The customer must always be able to clearly understand what they are consenting to and that it is part of the AlTareq ecosystem. Your Consent Page must be submitted as part of CX certification prior to production, and any material changes to a production Consent Page must be re-submitted for review and approval.
 
 ## Interactive Demo
 
@@ -24,6 +27,7 @@ Customise the `authorization_details` object below and watch the **Consent** and
     schemaName="AEBankDataSharingRichAuthorizationRequestsV21.AEBankDataSharingAuthorizationDetailsProperties"
     :initialData="initialFormData"
     :customValidator="myCustomValidator"
+    stateField="consent"
   />
 </div>
 

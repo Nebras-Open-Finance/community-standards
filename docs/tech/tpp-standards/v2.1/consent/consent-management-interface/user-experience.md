@@ -10,6 +10,8 @@ TPPs must provide a consent management interface where users can see their exist
 
 Configure the simulated connections below. The preview updates immediately.
 
+## Interactive Demo
+
 <ConsentConnectionsEditor />
 
 ## Live UI Preview
@@ -40,3 +42,9 @@ The components below represent the AlTareq Connections page layout across three 
   </div>
 
 </div>
+
+Tap any consent card in the live previews above to open its details and allow the customer to manage
+
+## Consent Details View
+
+

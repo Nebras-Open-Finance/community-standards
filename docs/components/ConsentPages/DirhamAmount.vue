@@ -29,12 +29,13 @@ defineProps({
   padding: 0;
   gap: 4px;
   margin-left: auto;
+  height: 1em;
 }
 
 .dirham-icon {
   height: 1em;
   width: auto;
-  transform: translateY(-1px);
+  /* transform: translateY(-1px); */
 }
 
 .dirham-amount {

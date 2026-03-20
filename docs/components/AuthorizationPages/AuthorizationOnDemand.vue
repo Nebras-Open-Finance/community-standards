@@ -1529,7 +1529,7 @@ top: 20%;
 
 .auth-page-account-amount-container {
    font-size: 12px;
-   font-weight: 400;
+   font-weight: 300;
     display: flex;
     flex-direction: row;
     justify-content: center;

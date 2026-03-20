@@ -49,6 +49,9 @@ import ConsentDefinedSchedule from '../../components/ConsentPages/ConsentDefined
 import ConsentDelegatedSCA from '../../components/ConsentPages/ConsentDelegatedSCA.vue'
 import ConsentSIPCOP from '../../components/ConsentPages/ConsentSIPCOP.vue'
 import ConsentManagementConnections from '../../components/ConsentPages/ConsentManagementConnections.vue'
+import ConsentManagementDetail from '../../components/ConsentPages/ConsentManagementDetail.vue'
+import ConsentDataSharingPermissions from '../../components/ConsentPages/ConsentDataSharingPermissions.vue'
+import ConsentPaymentPermissions from '../../components/ConsentPages/ConsentPaymentPermissions.vue'
 
 // Certification Docs
 import ReadinessChecklistDownload from '../../components/CertificationDocuments/ReadinessChecklistDownload.vue'
@@ -116,6 +119,9 @@ export default {
     app.component('ConsentDefinedSchedule', ConsentDefinedSchedule)
     app.component('ConsentDelegatedSCA', ConsentDelegatedSCA)
     app.component('ConsentManagementConnections', ConsentManagementConnections)
+    app.component('ConsentManagementDetail', ConsentManagementDetail)
+    app.component('ConsentDataSharingPermissions', ConsentDataSharingPermissions)
+    app.component('ConsentPaymentPermissions', ConsentPaymentPermissions)
 
     app.component('AuthorizationBankDataSharing', AuthorizationBankDataSharing)
     app.component('AuthorizationSingleInstantPayment', AuthorizationSingleInstantPayment)

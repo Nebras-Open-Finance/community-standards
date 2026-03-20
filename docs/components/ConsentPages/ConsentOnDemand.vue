@@ -141,7 +141,7 @@
 
                                 <div v-if="show_payment_rules" class="consent-page-account-subtext-container-2">
                                     <div class="consent-page-account-subtext-part">{{ primaryAmountLabel }}</div>
- <DirhamAmount :amount="primaryAmount" />
+ <DirhamAmount style="font-weight: 300;" :amount="primaryAmount" />
                                 
                                 </div>
 
@@ -158,7 +158,7 @@
 
                                                                                                 <div v-if="show_payment_rules && sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments" class="consent-page-account-subtext-container-2">
                                     <div class="consent-page-account-subtext-part">Total Value allowed</div>
- <DirhamAmount :amount="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments?.Amount" />
+ <DirhamAmount style="font-weight: 300;" :amount="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments?.Amount" />
                                 </div>
 
                                                                                                 <div v-if="show_payment_rules && sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Controls?.MaximumCumulativeNumberOfPaymentsPerPeriod" class="consent-page-account-subtext-container-2">
@@ -174,7 +174,7 @@
 
                                                                                                                                 <div v-if="show_payment_rules && sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Controls?.MaximumCumulativeValueOfPaymentsPerPeriod?.Amount" class="consent-page-account-subtext-container-2">
                                     <div class="consent-page-account-subtext-part">Max Value per {{sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.PeriodType }}</div>
- <DirhamAmount :amount="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Controls?.MaximumCumulativeValueOfPaymentsPerPeriod?.Amount" />
+ <DirhamAmount style="font-weight: 300;" :amount="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Controls?.MaximumCumulativeValueOfPaymentsPerPeriod?.Amount" />
                                 </div>
 
                 </div>

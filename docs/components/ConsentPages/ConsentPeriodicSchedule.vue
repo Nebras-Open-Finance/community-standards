@@ -130,7 +130,7 @@
 
                                 <div v-if="show_payment_rules" class="consent-page-account-subtext-container-2">
                                     <div class="consent-page-account-subtext-part">{{ primaryAmountLabel }}</div>
- <DirhamAmount :amount="primaryAmount" />
+ <DirhamAmount style="font-weight: 300;" :amount="primaryAmount" />
                                 
                                 </div>
 
@@ -170,7 +170,7 @@
 
                                                                                                 <div v-if="show_payment_rules && sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments" class="consent-page-account-subtext-container-2">
                                     <div class="consent-page-account-subtext-part">Total Value allowed</div>
- <DirhamAmount :amount="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments?.Amount" />
+ <DirhamAmount style="font-weight: 300;" :amount="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments?.Amount" />
                                 </div>
 
 

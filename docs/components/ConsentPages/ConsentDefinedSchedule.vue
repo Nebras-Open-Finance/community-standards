@@ -144,12 +144,12 @@
                                 </div>
                                 <div class="schedule-item-variable-row">
                                     <div class="schedule-item-label">Max Payment Amount</div>
-                                    <DirhamAmount :amount="item.MaximumIndividualAmount?.Amount" />
+                                    <DirhamAmount style="font-weight: 300;" :amount="item.MaximumIndividualAmount?.Amount" />
                                 </div>
                             </template>
                             <template v-else>
                                 <div class="schedule-item-date">{{ formatDate(item.PaymentExecutionDate) }}</div>
-                                <DirhamAmount :amount="item.Amount?.Amount" />
+                                <DirhamAmount style="font-weight: 300;" :amount="item.Amount?.Amount" />
                             </template>
                         </div>
                         <button v-if="show_payment_rules && visibleCount < schedule.length" class="schedule-show-more" @click="visibleCount += 5">
@@ -169,7 +169,7 @@
 
                                                                                                 <div v-if="show_payment_rules && sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments" class="consent-page-account-subtext-container-2">
                                     <div class="consent-page-account-subtext-part">Total Value allowed</div>
- <DirhamAmount :amount="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments?.Amount" />
+ <DirhamAmount style="font-weight: 300" :amount="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments?.Amount" />
                                 </div>
 
                 </div>

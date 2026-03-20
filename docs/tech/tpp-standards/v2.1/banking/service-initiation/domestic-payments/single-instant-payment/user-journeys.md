@@ -7,6 +7,9 @@ aside: false
 
 # Single Instant Payment - User Experience
 
+Before a customer authorises a payment through Open Finance, you must present a Consent Page that clearly explains the payment they are consenting to. This page must accurately reflect the payee, amount, schedule, and all material terms of the payment consent. The examples and interactive wireframes below define the expected structure, content, and behaviour of the Consent Page and must be followed.
+
+While you may adapt visual elements such as colour palette, fonts, and styling, you must not alter the meaning, clarity, or completeness of the payment information shown, and the representation of AlTareq (including logos, naming, and action buttons) must be preserved. The customer must always be able to clearly understand what payment they are consenting to and that it is part of the AlTareq ecosystem. Your Consent Page must be submitted as part of CX certification prior to production, and any material changes to a production Consent Page must be re-submitted for review and approval.
 
 ## Interactive Demo
 

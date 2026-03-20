@@ -99,7 +99,7 @@
                                     </div>
 
                                     <div class="consent-page-title-text-2">
-                                        <DirhamAmount
+                                        <DirhamAmount style="font-weight: 300;"
                                             iconColor="#0C1441"
                                             :amount="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.SinglePayment?.Amount?.Amount"
                                         />

@@ -1,5 +1,10 @@
 <template>
-  <div class="consent-management-frame">
+  <ConsentManagementDetail
+    v-if="selectedConnection"
+    :connection="selectedConnection"
+    @back="selectedConnection = null"
+  />
+  <div v-else class="consent-management-frame">
     <div class="consent-management-screen-name">
       <div class="consent-management-screen-bar"></div>
       <svg class="consent-management-arrow-left" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -35,8 +40,8 @@
               </svg>
             </button>
             <div id="consent-management-info-tooltip" class="consent-management-info-message" role="tooltip">
-              <p>This page gives you an overview of all the data-sharing and payment permissions you have given to us.</p>
-              <p>We will continue to share data and make payments on your behalf, where applicable, until the permission ends or you cancel.</p>
+              <p>{{ tooltipText.p1 }}</p>
+              <p>{{ tooltipText.p2 }}</p>
             </div>
           </div>
         </div>
@@ -143,12 +148,14 @@
             @keydown.enter.prevent="handleManage(connection)"
             @keydown.space.prevent="handleManage(connection)"
           >
-            <div class="consent-management-status" :class="displayStatusClass(connection)">{{ displayStatus(connection) }}</div>
-
-            <div class="consent-management-connection-name">[LFI {{ connection.lfiDigit }}]</div>
-            <div class="consent-management-connection-count">
+            <div class="consent-management-connection-header">
+              <div class="consent-management-connection-name">[LFI {{ connection.lfiDigit }}]</div>
+              <div class="consent-management-status" :class="displayStatusClass(connection)">{{ displayStatus(connection) }}</div>
+            </div>
+            <div v-if="connectionCountLabel(connection)" class="consent-management-connection-count">
               {{ connectionCountLabel(connection) }}
             </div>
+            <div v-else class="consent-management-connection-gap"></div>
             <div
               v-for="(line, lineIndex) in connectionMetaLines(connection)"
               :key="`${connection.lfiDigit}-${connection.type}-${index}-${lineIndex}`"
@@ -198,6 +205,7 @@
 import { computed, reactive, ref } from 'vue'
 import { useSharedState } from '../Composables/useSharedState.ts'
 import DirhamAmount from './DirhamAmount.vue'
+import ConsentManagementDetail from './ConsentManagementDetail.vue'
 
 const props = defineProps({
   mode: {
@@ -207,6 +215,7 @@ const props = defineProps({
 })
 
 const { sharedState } = useSharedState()
+const selectedConnection = ref(null)
 const activeTab = ref('current')
 const isFilterPanelOpen = ref(false)
 const filters = reactive({
@@ -397,6 +406,21 @@ const connectionSubtitle = computed(() => {
   return 'These are the account providers we are connected to for data sharing and payments'
 })
 
+const tooltipText = computed(() => {
+  if (props.mode === 'data-sharing') return {
+    p1: 'This page gives you an overview of the data-sharing permissions you have given to us.',
+    p2: 'We will continue to share data on your behalf until the permission ends or you cancel.'
+  }
+  if (props.mode === 'payments') return {
+    p1: 'This page gives you an overview of the payment permissions you have given to us.',
+    p2: 'We will continue to make payments on your behalf, where applicable, until the permission ends or you cancel.'
+  }
+  return {
+    p1: 'This page gives you an overview of all the data-sharing and payment permissions you have given to us.',
+    p2: 'We will continue to share data and make payments on your behalf, where applicable, until the permission ends or you cancel.'
+  }
+})
+
 const resolvedConnections = computed(() => {
   const configuredConnections = sharedState.value?.consentConnections
   const normalized = (!Array.isArray(configuredConnections) || configuredConnections.length === 0)
@@ -487,9 +511,9 @@ function isPaymentType(type) {
 
 function connectionCountLabel(connection) {
   if (isPaymentType(connection.type)) {
-    if (connection.status === 'AwaitingAuthorization') return '\u00a0'
+    if (connection.status === 'AwaitingAuthorization') return null
     if (connection.maskedIban) return connection.maskedIban
-    return '\u00a0'
+    return null
   }
   return accountCountLabel(connection.connectedAccountNumber)
 }
@@ -507,7 +531,7 @@ function connectionMetaLines(connection) {
   if (isMultiPaymentType(connection.type)) {
     return [
       { type: 'labelValue', label: 'Consent Type', value: 'Flexi Pay' },
-      { type: 'amount', label: 'Total paid to date', amount: connection.paymentAmount },
+      { type: 'amount', label: 'Total paid to date', amount: 350 },
       { type: 'labelValue', label: 'Connection expires', value: normalizeDate(connection.expiry) }
     ]
   }
@@ -526,7 +550,7 @@ const ACCEPTED_PAYMENT_STATUSES = new Set([
 ])
 
 function handleManage(connection) {
-  // Navigation action — no-op in demo; in production would route to the consent detail page
+  selectedConnection.value = connection
 }
 
 function statusClass(status) {
@@ -540,12 +564,18 @@ function statusClass(status) {
   return 'consent-management-status-awaiting'
 }
 
+const STATUS_LABELS = {
+  'Authorized': 'Active',
+  'Revoked': 'Cancelled',
+  'AwaitingAuthorization': 'Pending'
+}
+
 function displayStatus(connection) {
   if (connection.type === 'Single Instant Payment' && connection.status === 'Consumed' && connection.paymentStatus) {
     if (connection.paymentStatus === 'Rejected') return 'Failed'
     if (ACCEPTED_PAYMENT_STATUSES.has(connection.paymentStatus)) return 'Successful'
   }
-  return connection.status
+  return STATUS_LABELS[connection.status] ?? connection.status
 }
 
 function displayStatusClass(connection) {
@@ -958,7 +988,6 @@ function displayStatusClass(connection) {
 .consent-management-connection {
   position: relative;
   padding: 0 32px 20px 0;
-  min-height: 130px;
   border-bottom: 1px solid rgba(11, 19, 64, 0.2);
   border-radius: 6px;
   cursor: pointer;
@@ -967,7 +996,7 @@ function displayStatusClass(connection) {
 }
 
 .consent-management-connection + .consent-management-connection {
-  margin-top: 10px;
+  padding-top: 10px;
 }
 
 .consent-management-connection:hover {
@@ -979,25 +1008,25 @@ function displayStatusClass(connection) {
   box-shadow: 0 0 0 2px #36bfd4;
 }
 
-.consent-management-status {
-  position: absolute;
-  top: 0;
-  right: 0;
-  min-width: 99px;
-  height: 24px;
-  border-radius: 2px;
-  background: #21a35d;
-  display: inline-flex;
-  justify-content: center;
+.consent-management-connection-header {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  padding: 0 14px;
-  box-sizing: border-box;
+}
+
+.consent-management-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 20px;
   font-family: 'Poppins';
-  font-weight: 400;
-  font-size: 12px;
+  font-weight: 500;
+  font-size: 10px;
   line-height: 160%;
-  letter-spacing: -0.01em;
-  color: #f5f5fd;
+  color: #ffffff;
+  flex-shrink: 0;
+  margin-right: -20px;
 }
 
 .consent-management-status-authorized {
@@ -1013,7 +1042,7 @@ function displayStatusClass(connection) {
 }
 
 .consent-management-status-paused {
-  background: #7c3aed;
+  background: #b45309;
 }
 
 .consent-management-status-consumed {
@@ -1029,13 +1058,16 @@ function displayStatusClass(connection) {
 }
 
 .consent-management-connection-name {
-  margin-top: 2px;
   font-family: 'Poppins';
   font-weight: 600;
   font-size: 14px;
   line-height: 120%;
   letter-spacing: -0.01em;
   color: #0b1340;
+}
+
+.consent-management-connection-gap {
+  height: 10px;
 }
 
 .consent-management-connection-count {
@@ -1068,10 +1100,11 @@ function displayStatusClass(connection) {
 
 .consent-management-connection-meta-row {
   display: flex;
-  /* flex-direction: column; */
-  width: 200px;
-  align-items: flex-start;
-  row-gap: 4px;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  align-items: center;
+  column-gap: 8px;
 }
 
 .consent-management-connection-meta-row :deep(.dirham-amount) {
@@ -1084,7 +1117,6 @@ function displayStatusClass(connection) {
 
 .consent-management-connection-meta-value {
   color: #0b1340;
-  margin-left: auto;
 }
 
 .consent-management-chevron {

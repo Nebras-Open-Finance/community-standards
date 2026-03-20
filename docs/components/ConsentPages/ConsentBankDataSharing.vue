@@ -115,7 +115,7 @@
                     </div>
                     <div class="consent-page-text-section">
 
-                        <div v-if="sharedState?.value?.consent?.Permissions.some(item => ['ReadAccountsBasic', 'ReadAccountsDetail', 'ReadBalances'].includes(item))"
+                        <div v-if="sharedState?.value?.consent?.Permissions?.some(item => ['ReadAccountsBasic', 'ReadAccountsDetail', 'ReadBalances'].includes(item))"
                             class="consent-page-dropdown-container">
                             <div class="consent-page-dropdown" @click="show_account_details = !show_account_details">
                                 <div class="consent-page-dropdown-text-section">
@@ -150,15 +150,15 @@
                             <div v-if="show_account_details" class="consent-page-dropdown-subtext-section">
                                                                 <div class="consent-page-dropdown-subtext">
 
-                                <div v-if="sharedState?.value?.consent?.Permissions.includes('ReadAccountsDetail')">{{ permissionDescriptions['ReadAccountsDetail'] }}</div>
-                                <div v-else-if="sharedState?.value?.consent?.Permissions.includes('ReadAccountsBasic')">{{ permissionDescriptions['ReadAccountsBasic'] }}</div>
-                                <div v-if="sharedState?.value?.consent?.Permissions.includes('ReadBalances')">{{ permissionDescriptions['ReadBalances'] }}</div>
+                                <div v-if="sharedState?.value?.consent?.Permissions?.includes('ReadAccountsDetail')">{{ permissionDescriptions['ReadAccountsDetail'] }}</div>
+                                <div v-else-if="sharedState?.value?.consent?.Permissions?.includes('ReadAccountsBasic')">{{ permissionDescriptions['ReadAccountsBasic'] }}</div>
+                                <div v-if="sharedState?.value?.consent?.Permissions?.includes('ReadBalances')">{{ permissionDescriptions['ReadBalances'] }}</div>
 </div>
 
                             </div>
                         </div>
 
-                        <div v-if="sharedState?.value?.consent?.Permissions.some(item => ['ReadBeneficiariesBasic', 'ReadBeneficiariesDetail', 'ReadStandingOrdersBasic', 'ReadStandingOrdersDetail', 'ReadDirectDebits', 'ReadScheduledPaymentsBasic', 'ReadScheduledPaymentsDetail'].includes(item))"
+                        <div v-if="sharedState?.value?.consent?.Permissions?.some(item => ['ReadBeneficiariesBasic', 'ReadBeneficiariesDetail', 'ReadStandingOrdersBasic', 'ReadStandingOrdersDetail', 'ReadDirectDebits', 'ReadScheduledPaymentsBasic', 'ReadScheduledPaymentsDetail'].includes(item))"
                             class="consent-page-dropdown-container">
                             <div class="consent-page-dropdown" @click="show_regular_payments = !show_regular_payments">
                                 <div class="consent-page-dropdown-text-section">
@@ -196,20 +196,20 @@
 
                             <div v-if="show_regular_payments" class="consent-page-dropdown-subtext-section">
                                 <div class="consent-page-dropdown-subtext">
-                                    <div v-if="sharedState?.value?.consent?.Permissions.includes('ReadBeneficiariesDetail')">{{ permissionDescriptions['ReadBeneficiariesDetail'] }}</div>
-                                    <div v-else-if="sharedState?.value?.consent?.Permissions.includes('ReadBeneficiariesBasic')">{{ permissionDescriptions['ReadBeneficiariesBasic'] }}</div>
-                                    <div v-if="sharedState?.value?.consent?.Permissions.includes('ReadStandingOrdersDetail')">{{ permissionDescriptions['ReadStandingOrdersDetail'] }}</div>
-                                    <div v-else-if="sharedState?.value?.consent?.Permissions.includes('ReadStandingOrdersBasic')">{{ permissionDescriptions['ReadStandingOrdersBasic'] }}</div>
-                                    <div v-if="sharedState?.value?.consent?.Permissions.includes('ReadScheduledPaymentsDetail')">{{ permissionDescriptions['ReadScheduledPaymentsDetail'] }}</div>
-                                    <div v-else-if="sharedState?.value?.consent?.Permissions.includes('ReadScheduledPaymentsBasic')">{{ permissionDescriptions['ReadScheduledPaymentsBasic'] }}</div>
-                                    <div v-if="sharedState?.value?.consent?.Permissions.includes('ReadDirectDebits')">{{ permissionDescriptions['ReadDirectDebits'] }}</div>
+                                    <div v-if="sharedState?.value?.consent?.Permissions?.includes('ReadBeneficiariesDetail')">{{ permissionDescriptions['ReadBeneficiariesDetail'] }}</div>
+                                    <div v-else-if="sharedState?.value?.consent?.Permissions?.includes('ReadBeneficiariesBasic')">{{ permissionDescriptions['ReadBeneficiariesBasic'] }}</div>
+                                    <div v-if="sharedState?.value?.consent?.Permissions?.includes('ReadStandingOrdersDetail')">{{ permissionDescriptions['ReadStandingOrdersDetail'] }}</div>
+                                    <div v-else-if="sharedState?.value?.consent?.Permissions?.includes('ReadStandingOrdersBasic')">{{ permissionDescriptions['ReadStandingOrdersBasic'] }}</div>
+                                    <div v-if="sharedState?.value?.consent?.Permissions?.includes('ReadScheduledPaymentsDetail')">{{ permissionDescriptions['ReadScheduledPaymentsDetail'] }}</div>
+                                    <div v-else-if="sharedState?.value?.consent?.Permissions?.includes('ReadScheduledPaymentsBasic')">{{ permissionDescriptions['ReadScheduledPaymentsBasic'] }}</div>
+                                    <div v-if="sharedState?.value?.consent?.Permissions?.includes('ReadDirectDebits')">{{ permissionDescriptions['ReadDirectDebits'] }}</div>
                                 </div>
                             </div>
 
                         </div>
 
 
-                        <div v-if="sharedState?.value?.consent?.Permissions.some(item => ['ReadTransactionsBasic', 'ReadTransactionsDetail'].includes(item))"
+                        <div v-if="sharedState?.value?.consent?.Permissions?.some(item => ['ReadTransactionsBasic', 'ReadTransactionsDetail'].includes(item))"
                             class="consent-page-dropdown-container">
                             <div class="consent-page-dropdown" @click="show_account_trans = !show_account_trans">
                                 <div class="consent-page-dropdown-text-section">
@@ -244,13 +244,13 @@
 
                             </div>
                             <div v-if="show_account_trans" class="consent-page-dropdown-subtext-section">
-                                <div v-if="sharedState?.value?.consent?.Permissions.includes('ReadTransactionsDetail')" class="consent-page-dropdown-subtext">{{ permissionDescriptions['ReadTransactionsDetail'] }}</div>
-                                <div v-else-if="sharedState?.value?.consent?.Permissions.includes('ReadTransactionsBasic')" class="consent-page-dropdown-subtext">{{ permissionDescriptions['ReadTransactionsBasic'] }}</div>
+                                <div v-if="sharedState?.value?.consent?.Permissions?.includes('ReadTransactionsDetail')" class="consent-page-dropdown-subtext">{{ permissionDescriptions['ReadTransactionsDetail'] }}</div>
+                                <div v-else-if="sharedState?.value?.consent?.Permissions?.includes('ReadTransactionsBasic')" class="consent-page-dropdown-subtext">{{ permissionDescriptions['ReadTransactionsBasic'] }}</div>
                             </div>
                         </div>
 
 
-                        <div v-if="sharedState?.value?.consent?.Permissions.some(item => ['ReadStatements'].includes(item))"
+                        <div v-if="sharedState?.value?.consent?.Permissions?.some(item => ['ReadStatements'].includes(item))"
                             class="consent-page-dropdown-container">
                             <div class="consent-page-dropdown"
                                 @click="show_account_statements = !show_account_statements">
@@ -298,7 +298,7 @@
                             </div>
                         </div>
 
-                        <div v-if="sharedState?.value?.consent?.Permissions.some(item => ['ReadProduct'].includes(item))"
+                        <div v-if="sharedState?.value?.consent?.Permissions?.some(item => ['ReadProduct'].includes(item))"
                             class="consent-page-dropdown-container">
                             <div class="consent-page-dropdown" @click="show_product_info = !show_product_info">
                                 <div class="consent-page-dropdown-text-section">
@@ -339,7 +339,7 @@
 
                         </div>
 
-                        <div v-if="sharedState?.value?.consent?.Permissions.some(item => ['ReadPartyUser', 'ReadPartyUserIdentity', 'ReadParty'].includes(item))"
+                        <div v-if="sharedState?.value?.consent?.Permissions?.some(item => ['ReadPartyUser', 'ReadPartyUserIdentity', 'ReadParty'].includes(item))"
                             class="consent-page-dropdown-container">
                             <div class="consent-page-dropdown" @click="show_parties = !show_parties">
                                 <div class="consent-page-dropdown-text-section">
@@ -380,14 +380,14 @@
 
                             </div>
                             <div v-if="show_parties" class="consent-page-dropdown-subtext-section">
-                                <div v-if="sharedState?.value?.consent?.Permissions.includes('ReadPartyUserIdentity')" class="consent-page-dropdown-subtext">{{ permissionDescriptions['ReadPartyUserIdentity'] }}</div>
-                                <div v-else-if="sharedState?.value?.consent?.Permissions.includes('ReadPartyUser')" class="consent-page-dropdown-subtext">{{ permissionDescriptions['ReadPartyUser'] }}</div>
-                                <div v-else-if="sharedState?.value?.consent?.Permissions.includes('ReadParty')" class="consent-page-dropdown-subtext">{{ permissionDescriptions['ReadParty'] }}</div>
+                                <div v-if="sharedState?.value?.consent?.Permissions?.includes('ReadPartyUserIdentity')" class="consent-page-dropdown-subtext">{{ permissionDescriptions['ReadPartyUserIdentity'] }}</div>
+                                <div v-else-if="sharedState?.value?.consent?.Permissions?.includes('ReadPartyUser')" class="consent-page-dropdown-subtext">{{ permissionDescriptions['ReadPartyUser'] }}</div>
+                                <div v-else-if="sharedState?.value?.consent?.Permissions?.includes('ReadParty')" class="consent-page-dropdown-subtext">{{ permissionDescriptions['ReadParty'] }}</div>
                             </div>
 
                         </div>
 
-                        <div v-if="sharedState?.value?.consent?.Permissions.some(item => ['ReadProductFinanceRates'].includes(item))"
+                        <div v-if="sharedState?.value?.consent?.Permissions?.some(item => ['ReadProductFinanceRates'].includes(item))"
                             class="consent-page-dropdown-container">
                             <div class="consent-page-dropdown" @click="show_finance_rates = !show_finance_rates">
                                 <div class="consent-page-dropdown-text-section">
