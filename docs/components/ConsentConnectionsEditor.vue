@@ -9,6 +9,7 @@ const CONSENT_STATUSES = [
   'Authorized',
   'Rejected',
   'Suspended',
+  'Paused',
   'Consumed',
   'Expired',
   'Revoked'
@@ -22,7 +23,16 @@ const CONSENT_TYPES = [
   'Multi Payment (VariablePeriodicSchedule)',
   'Multi Payment (FixedPeriodicSchedule)',
   'Multi Payment (VariableDefinedSchedule)',
-  'Multi Payment (FixedDefinedSchedule)'
+  'Multi Payment (FixedDefinedSchedule)',
+  'Multi Payment (DelegatedSCA)'
+]
+
+const PAYMENT_STATUSES = [
+  'Pending',
+  'AcceptedSettlementCompleted',
+  'AcceptedCreditSettlementCompleted',
+  'AcceptedWithoutPosting',
+  'Rejected'
 ]
 
 const LFI_DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -49,6 +59,9 @@ function normalizeStatusForType(type, status) {
   if (isSingleInstantPayment(type) && status === 'Authorized') {
     return getFallbackStatusForType(type)
   }
+  if (isConsumedDisabled(type) && status === 'Consumed') {
+    return 'Authorized'
+  }
   return status
 }
 
@@ -57,8 +70,18 @@ function onTypeChanged(consent) {
   ensureMaskedIban(consent)
 }
 
+function isConsumedDisabled(type) {
+  return type === 'Data Sharing' || type === 'Multi Payment (DelegatedSCA)'
+}
+
 function isStatusDisabled(consentType, status) {
-  return isSingleInstantPayment(consentType) && status === 'Authorized'
+  if (isSingleInstantPayment(consentType) && status === 'Authorized') return true
+  if (isConsumedDisabled(consentType) && status === 'Consumed') return true
+  return false
+}
+
+function needsPaymentStatus(consent) {
+  return isSingleInstantPayment(consent.type) && consent.status === 'Consumed'
 }
 
 function generateMaskedIban(seed) {
@@ -80,7 +103,7 @@ const consents = ref([
   { id: 2, status: 'Revoked', lfiDigit: randomLfiDigit(), type: 'Data Sharing' },
   { id: 3, status: 'Expired', lfiDigit: randomLfiDigit(), type: 'Data Sharing' },
   { id: 4, status: 'AwaitingAuthorization', lfiDigit: randomLfiDigit(), type: 'Single Instant Payment', maskedIban: generateMaskedIban(4) },
-  { id: 5, status: 'Consumed', lfiDigit: randomLfiDigit(), type: 'Single Instant Payment', maskedIban: generateMaskedIban(5) },
+  { id: 5, status: 'Consumed', lfiDigit: randomLfiDigit(), type: 'Single Instant Payment', maskedIban: generateMaskedIban(5), paymentStatus: 'AcceptedWithoutPosting' },
   { id: 6, status: 'Authorized', lfiDigit: randomLfiDigit(), type: 'Multi Payment (VariableOnDemand)', maskedIban: generateMaskedIban(6) },
   { id: 7, status: 'Suspended', lfiDigit: randomLfiDigit(), type: 'Multi Payment (FixedOnDemand)', maskedIban: generateMaskedIban(7) }
 ])
@@ -106,13 +129,19 @@ watch(
     for (const consent of val) {
       consent.status = normalizeStatusForType(consent.type, consent.status)
       ensureMaskedIban(consent)
+      if (isSingleInstantPayment(consent.type) && consent.status === 'Consumed') {
+        if (!consent.paymentStatus) consent.paymentStatus = 'Pending'
+      } else {
+        consent.paymentStatus = undefined
+      }
     }
 
     const payload = val.map(item => ({
       status: item.status,
       lfiDigit: Number(item.lfiDigit),
       type: item.type,
-      maskedIban: item.maskedIban
+      maskedIban: item.maskedIban,
+      paymentStatus: item.paymentStatus
     }))
     updateField('consentConnections', JSON.stringify(payload))
   },
@@ -154,6 +183,13 @@ watch(
           <label class="cce-label">Type</label>
           <select class="cce-select" v-model="consent.type" @change="onTypeChanged(consent)">
             <option v-for="type in CONSENT_TYPES" :key="type" :value="type">{{ type }}</option>
+          </select>
+        </div>
+
+        <div v-if="needsPaymentStatus(consent)" class="cce-field cce-field-payment-status">
+          <label class="cce-label">Payment Status</label>
+          <select class="cce-select" v-model="consent.paymentStatus">
+            <option v-for="ps in PAYMENT_STATUSES" :key="ps" :value="ps">{{ ps }}</option>
           </select>
         </div>
 
@@ -238,6 +274,10 @@ watch(
 
 .cce-field-type {
   min-width: 180px;
+}
+
+.cce-field-payment-status {
+  min-width: 240px;
 }
 
 .cce-label {

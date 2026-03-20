@@ -15,7 +15,7 @@
         <div class="consent-management-header">
           <div class="consent-management-main-title">AlTareq Connections</div>
           <div class="consent-management-subtitle">
-            These are the account providers we are connected to for data sharing and payments
+            {{ connectionSubtitle }}
           </div>
         </div>
 
@@ -133,9 +133,17 @@
         </div>
 
         <div class="consent-management-connection-list">
-          <div v-for="(connection, index) in displayedConnections" :key="`${connection.lfiDigit}-${connection.type}-${index}`"
-            class="consent-management-connection">
-            <div class="consent-management-status" :class="statusClass(connection.status)">{{ connection.status }}</div>
+          <div
+            v-for="(connection, index) in displayedConnections"
+            :key="`${connection.lfiDigit}-${connection.type}-${index}`"
+            class="consent-management-connection"
+            role="button"
+            tabindex="0"
+            @click="handleManage(connection)"
+            @keydown.enter.prevent="handleManage(connection)"
+            @keydown.space.prevent="handleManage(connection)"
+          >
+            <div class="consent-management-status" :class="displayStatusClass(connection)">{{ displayStatus(connection) }}</div>
 
             <div class="consent-management-connection-name">[LFI {{ connection.lfiDigit }}]</div>
             <div class="consent-management-connection-count">
@@ -162,7 +170,12 @@
               </template>
             </div>
 
-            <button class="consent-management-manage-button" type="button">Manage</button>
+            <svg class="consent-management-chevron" xmlns="http://www.w3.org/2000/svg"
+              width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              aria-hidden="true">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
           </div>
           <div v-if="displayedConnections.length === 0" class="consent-management-empty-state">
             No connections yet
@@ -186,6 +199,13 @@ import { computed, reactive, ref } from 'vue'
 import { useSharedState } from '../Composables/useSharedState.ts'
 import DirhamAmount from './DirhamAmount.vue'
 
+const props = defineProps({
+  mode: {
+    type: String,
+    default: 'all' // 'all' | 'data-sharing' | 'payments'
+  }
+})
+
 const { sharedState } = useSharedState()
 const activeTab = ref('current')
 const isFilterPanelOpen = ref(false)
@@ -207,6 +227,7 @@ const VALID_CONSENT_STATUSES = [
   'Authorized',
   'Rejected',
   'Suspended',
+  'Paused',
   'Consumed',
   'Expired',
   'Revoked'
@@ -221,7 +242,16 @@ const VALID_TYPES = [
   'Multi Payment (VariablePeriodicSchedule)',
   'Multi Payment (FixedPeriodicSchedule)',
   'Multi Payment (VariableDefinedSchedule)',
-  'Multi Payment (FixedDefinedSchedule)'
+  'Multi Payment (FixedDefinedSchedule)',
+  'Multi Payment (DelegatedSCA)'
+]
+
+const VALID_PAYMENT_STATUSES = [
+  'Pending',
+  'AcceptedSettlementCompleted',
+  'AcceptedCreditSettlementCompleted',
+  'AcceptedWithoutPosting',
+  'Rejected'
 ]
 
 const MULTI_PAYMENT_EXPIRY = 'Connection expires 30/03/2025'
@@ -341,6 +371,12 @@ function normalizeConnection(connection, fallback) {
     ? connection.maskedIban
     : fallback.maskedIban
 
+  const paymentStatus = VALID_PAYMENT_STATUSES.includes(connection?.paymentStatus)
+    ? connection.paymentStatus
+    : (status === 'Consumed' && type === 'Single Instant Payment'
+        ? (VALID_PAYMENT_STATUSES.includes(fallback?.paymentStatus) ? fallback.paymentStatus : undefined)
+        : undefined)
+
   return {
     lfiDigit,
     connectedAccountNumber,
@@ -350,19 +386,32 @@ function normalizeConnection(connection, fallback) {
     expiry,
     paymentDate,
     paymentAmount: normalizedPaymentAmount,
-    maskedIban
+    maskedIban,
+    paymentStatus
   }
 }
 
+const connectionSubtitle = computed(() => {
+  if (props.mode === 'data-sharing') return 'These are the account providers we are connected to for data sharing'
+  if (props.mode === 'payments') return 'These are the payment permissions you have given to us'
+  return 'These are the account providers we are connected to for data sharing and payments'
+})
+
 const resolvedConnections = computed(() => {
   const configuredConnections = sharedState.value?.consentConnections
-  if (!Array.isArray(configuredConnections) || configuredConnections.length === 0) {
-    return defaultConnections
-  }
+  const normalized = (!Array.isArray(configuredConnections) || configuredConnections.length === 0)
+    ? defaultConnections
+    : configuredConnections.map((connection, index) =>
+        normalizeConnection(connection, defaultConnections[index % defaultConnections.length])
+      )
 
-  return configuredConnections.map((connection, index) =>
-    normalizeConnection(connection, defaultConnections[index % defaultConnections.length])
-  )
+  if (props.mode === 'data-sharing') {
+    return normalized.filter(c => c.type === 'Data Sharing')
+  }
+  if (props.mode === 'payments') {
+    return normalized.filter(c => c.type !== 'Data Sharing')
+  }
+  return normalized
 })
 
 const currentConnections = computed(() =>
@@ -447,11 +496,12 @@ function connectionCountLabel(connection) {
 
 function connectionMetaLines(connection) {
   if (connection.type === 'Single Instant Payment') {
-    return [
+    const lines = [
       { type: 'labelValue', label: 'Consent Type', value: 'Single Payment' },
       { type: 'labelValue', label: 'Payment Date', value: normalizeDate(connection.paymentDate) },
       { type: 'amount', label: 'Payment Amount', amount: connection.paymentAmount }
     ]
+    return lines
   }
 
   if (isMultiPaymentType(connection.type)) {
@@ -469,14 +519,41 @@ function connectionMetaLines(connection) {
   ]
 }
 
+const ACCEPTED_PAYMENT_STATUSES = new Set([
+  'AcceptedSettlementCompleted',
+  'AcceptedCreditSettlementCompleted',
+  'AcceptedWithoutPosting'
+])
+
+function handleManage(connection) {
+  // Navigation action — no-op in demo; in production would route to the consent detail page
+}
+
 function statusClass(status) {
   if (status === 'Authorized') return 'consent-management-status-authorized'
   if (status === 'AwaitingAuthorization') return 'consent-management-status-awaiting'
   if (status === 'Suspended') return 'consent-management-status-suspended'
+  if (status === 'Paused') return 'consent-management-status-paused'
   if (status === 'Consumed') return 'consent-management-status-consumed'
   if (status === 'Expired') return 'consent-management-status-expired'
   if (status === 'Rejected' || status === 'Revoked') return 'consent-management-status-rejected'
   return 'consent-management-status-awaiting'
+}
+
+function displayStatus(connection) {
+  if (connection.type === 'Single Instant Payment' && connection.status === 'Consumed' && connection.paymentStatus) {
+    if (connection.paymentStatus === 'Rejected') return 'Failed'
+    if (ACCEPTED_PAYMENT_STATUSES.has(connection.paymentStatus)) return 'Successful'
+  }
+  return connection.status
+}
+
+function displayStatusClass(connection) {
+  if (connection.type === 'Single Instant Payment' && connection.status === 'Consumed' && connection.paymentStatus) {
+    if (connection.paymentStatus === 'Rejected') return 'consent-management-status-rejected'
+    if (ACCEPTED_PAYMENT_STATUSES.has(connection.paymentStatus)) return 'consent-management-status-authorized'
+  }
+  return statusClass(connection.status)
 }
 </script>
 
@@ -880,13 +957,26 @@ function statusClass(status) {
 
 .consent-management-connection {
   position: relative;
-  padding: 0 100px 20px 0;
+  padding: 0 32px 20px 0;
   min-height: 130px;
   border-bottom: 1px solid rgba(11, 19, 64, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
 }
 
 .consent-management-connection + .consent-management-connection {
   margin-top: 10px;
+}
+
+.consent-management-connection:hover {
+  background: rgba(54, 191, 212, 0.05);
+  /* box-shadow: inset 0 0 0 1px rgba(54, 191, 212, 0.25); */
+}
+
+.consent-management-connection:focus-visible {
+  box-shadow: 0 0 0 2px #36bfd4;
 }
 
 .consent-management-status {
@@ -920,6 +1010,10 @@ function statusClass(status) {
 
 .consent-management-status-suspended {
   background: #d97706;
+}
+
+.consent-management-status-paused {
+  background: #7c3aed;
 }
 
 .consent-management-status-consumed {
@@ -993,22 +1087,19 @@ function statusClass(status) {
   margin-left: auto;
 }
 
-.consent-management-manage-button {
+.consent-management-chevron {
   position: absolute;
-  right: 0;
-  bottom: 20px;
-  width: 75px;
-  height: 29px;
-  border: 1px solid #232b53;
-  border-radius: 13px;
-  background: transparent;
-  font-family: 'Poppins';
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 160%;
-  letter-spacing: -0.01em;
-  color: #232b53;
-  cursor: pointer;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(11, 19, 64, 0.2);
+  transition: color 0.15s ease, transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.consent-management-connection:hover .consent-management-chevron {
+  color: #36bfd4;
+  transform: translateY(-50%) translateX(2px);
 }
 
 .consent-management-footer {
