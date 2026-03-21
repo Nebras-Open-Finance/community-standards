@@ -21,7 +21,7 @@
           <a href="/tech/overview">Technology Architecture &amp; Overview</a>
           <a href="/tech/tpp-standards">TPP – Open Finance Standards</a>
           <a href="/tech/lfi-api-hub">LFI – Integration Guide</a>
-          <a href="/tech/api-specs/">API specs</a>
+          <a href="/tech/api-specs">API specs</a>
           <a href="/knowledge-base">Knowledge Base</a>
           <a href="/tech/erratas">Erratas</a>
         </div>
@@ -49,11 +49,13 @@
     <!-- Mobile drawer -->
     <div class="mobile-menu" :class="{ open: menuOpen }" @click.self="menuOpen = false">
       <div class="mobile-menu-inner">
+
         <a href="/tech/overview" class="mobile-link mobile-section-label">Developer Docs</a>
-        <a href="/tech/tpp-standards" class="mobile-link mobile-indent">TPP – Open Finance Standards</a>
-        <a href="/tech/lfi-api-hub" class="mobile-link mobile-indent">LFI – Integration Guide</a>
-        <a href="/erratas" class="mobile-link mobile-indent">Erratas</a>
-        <a href="/knowledge-base" class="mobile-link mobile-indent">Knowledge Base</a>
+          <a href="/tech/tpp-standards" class="mobile-link mobile-indent">TPP – Open Finance Standards</a>
+          <a href="/tech/lfi-api-hub" class="mobile-link mobile-indent">LFI – Integration Guide</a>
+          <a href="/tech/api-specs" class="mobile-link mobile-indent">API specs</a>
+          <a href="/knowledge-base" class="mobile-link mobile-indent">Knowledge Base</a>
+          <a href="/tech/erratas"  class="mobile-link mobile-indent">Erratas</a>
         <hr class="mobile-divider" />
         <a href="/metrics" class="mobile-link">Metrics &amp; Monitoring</a>
         <a href="/news" class="mobile-link">Articles &amp; News</a>

@@ -65,7 +65,7 @@
         <div v-if="visibleAccounts.length > 0" class="auth-page-text-frame">
             <div class="auth-page-text-inner-frame">
                 <div class="auth-page-text-header">
-                    Select account(s) to share information with {{ sharedState?.value?.consent?.OnBehalfOf?.TradingName ||
+                    Select account(s) to share information with {{ sharedState?.consent?.consent?.OnBehalfOf?.TradingName ||
                     '[TPP Trading Name]'}}
                 </div>
                 <div class="auth-page-accounts-section">
@@ -131,7 +131,7 @@
                     </div>
                     <div v-if="show_information" class="auth-page-text-section">
 
-                        <div v-if="sharedState?.value?.consent?.Permissions.some(item => ['ReadAccountsBasic', 'ReadAccountsDetail', 'ReadBalances'].includes(item))"
+                        <div v-if="sharedState?.consent?.consent?.Permissions?.some(item => ['ReadAccountsBasic', 'ReadAccountsDetail', 'ReadBalances'].includes(item))"
                             class="auth-page-dropdown-container">
                             <div class="auth-page-dropdown" @click="show_account_details = !show_account_details">
                                 <div class="auth-page-dropdown-text-section">
@@ -167,17 +167,17 @@
                             <div v-if="show_account_details" class="auth-page-dropdown-subtext-section">
                                 <div class="auth-page-dropdown-subtext">
 
-                                    <div v-if="sharedState?.value?.consent?.Permissions.includes('ReadAccountsDetail')">
+                                    <div v-if="sharedState?.consent?.consent?.Permissions?.includes('ReadAccountsDetail')">
                                         Full account information (account number/ID, type and description of account,
                                         currency, nickname
                                         you gave it, and account holder name, opening date)
                                     </div>
-                                    <div v-else-if="sharedState?.value?.consent?.Permissions.includes('ReadAccountsBasic')">
+                                    <div v-else-if="sharedState?.consent?.consent?.Permissions?.includes('ReadAccountsBasic')">
                                         Basic account information (account number/ID, type of account, currency,
                                         nickname
                                         you gave it, and account holder name)
                                     </div>
-                                    <div v-if="sharedState?.value?.consent?.Permissions.includes('ReadBalances')">
+                                    <div v-if="sharedState?.consent?.consent?.Permissions?.includes('ReadBalances')">
                                         Your current account balances (available balance, booked balance, credit limit/
                                         overdraft if any, and when the balance was last updated)
                                     </div>
@@ -186,7 +186,7 @@
                             </div>
                         </div>
 
-                        <div v-if="sharedState?.value?.consent?.Permissions.some(item => ['ReadBeneficiariesBasic', 'ReadBeneficiariesDetail', 'ReadStandingOrdersBasic', 'ReadStandingOrdersDetail', 'ReadDirectDebits', 'ReadScheduledPaymentsBasic', 'ReadScheduledPaymentsDetail'].includes(item))"
+                        <div v-if="sharedState?.consent?.consent?.Permissions?.some(item => ['ReadBeneficiariesBasic', 'ReadBeneficiariesDetail', 'ReadStandingOrdersBasic', 'ReadStandingOrdersDetail', 'ReadDirectDebits', 'ReadScheduledPaymentsBasic', 'ReadScheduledPaymentsDetail'].includes(item))"
                             class="auth-page-dropdown-container">
                             <div class="auth-page-dropdown" @click="show_regular_payments = !show_regular_payments">
                                 <div class="auth-page-dropdown-text-section">
@@ -223,38 +223,38 @@
 
                             <div v-if="show_regular_payments" class="auth-page-dropdown-subtext-section">
                                 <div class="auth-page-dropdown-subtext">
-                                    <div v-if="sharedState?.value?.consent?.Permissions.includes('ReadBeneficiariesDetail')">
+                                    <div v-if="sharedState?.consent?.consent?.Permissions?.includes('ReadBeneficiariesDetail')">
                                         Full beneficiaries information (saved payee account number/ID, type, name and
                                         nickname, bank name and details, address, reference)
                                     </div>
                                     <div
-                                        v-else-if="sharedState?.value?.consent?.Permissions.includes('ReadBeneficiariesBasic')">
+                                        v-else-if="sharedState?.consent?.consent?.Permissions?.includes('ReadBeneficiariesBasic')">
                                         Basic beneficiaries information (saved payee account number/ID, type, name and
                                         nickname, bank name and details, reference)
                                     </div>
-                                    <div v-if="sharedState?.value?.consent?.Permissions.includes('ReadStandingOrdersDetail')">
+                                    <div v-if="sharedState?.consent?.consent?.Permissions?.includes('ReadStandingOrdersDetail')">
                                         Full standing orders information (payee name and nickname, reference, frequency,
                                         first/next/final payment amounts and dates, number of payments, purpose, status,
                                         type)
                                     </div>
                                     <div
-                                        v-else-if="sharedState?.value?.consent?.Permissions.includes('ReadStandingOrdersBasic')">
+                                        v-else-if="sharedState?.consent?.consent?.Permissions?.includes('ReadStandingOrdersBasic')">
                                         Basic standing orders information (payee name and nickname, reference,
                                         frequency, first/next/final payment amounts and dates, number of payments,
                                         purpose, status, type)
                                     </div>
                                     <div
-                                        v-if="sharedState?.value?.consent?.Permissions.includes('ReadScheduledPaymentsDetail')">
+                                        v-if="sharedState?.consent?.consent?.Permissions?.includes('ReadScheduledPaymentsDetail')">
                                         Full scheduled payments information (payee account details, name and nickname,
                                         creditor/debtor reference, instructed amount, scheduled date/time, ID, type)
                                     </div>
                                     <div
-                                        v-else-if="sharedState?.value?.consent?.Permissions.includes('ReadScheduledPaymentsBasic')">
+                                        v-else-if="sharedState?.consent?.consent?.Permissions?.includes('ReadScheduledPaymentsBasic')">
                                         Basic standing orders information (payee name and nickname, reference,
                                         frequency, first/next/final payment amounts and dates, number of payments,
                                         purpose, status, type)
                                     </div>
-                                    <div v-if="sharedState?.value?.consent?.Permissions.includes('ReadDirectDebits')">
+                                    <div v-if="sharedState?.consent?.consent?.Permissions?.includes('ReadDirectDebits')">
                                         Direct debits information (account ID, direct debit ID, status, frequency,
                                         mandate identification, name, previous payment amount and date)
                                     </div>
@@ -264,7 +264,7 @@
                         </div>
 
 
-                        <div v-if="sharedState?.value?.consent?.Permissions.some(item => ['ReadTransactionsBasic', 'ReadTransactionsDetail'].includes(item))"
+                        <div v-if="sharedState?.consent?.consent?.Permissions?.some(item => ['ReadTransactionsBasic', 'ReadTransactionsDetail'].includes(item))"
                             class="auth-page-dropdown-container">
                             <div class="auth-page-dropdown" @click="show_account_trans = !show_account_trans">
                                 <div class="auth-page-dropdown-text-section">
@@ -298,13 +298,13 @@
 
                             </div>
                             <div v-if="show_account_trans" class="auth-page-dropdown-subtext-section">
-                                <div v-if="sharedState?.value?.consent?.Permissions.includes('ReadTransactionsDetail')"
+                                <div v-if="sharedState?.consent?.consent?.Permissions?.includes('ReadTransactionsDetail')"
                                     class="auth-page-dropdown-subtext">
                                     Full transactions information (date/time, amount, type, description/narrative,
                                     payee/merchant name and details, category, status, reference, currency exchange if
                                     applicable)
                                 </div>
-                                <div v-else-if="sharedState?.value?.consent?.Permissions.includes('ReadTransactionsBasic')"
+                                <div v-else-if="sharedState?.consent?.consent?.Permissions?.includes('ReadTransactionsBasic')"
                                     class="auth-page-dropdown-subtext">
                                     Basic transactions information (date/time, amount, type, description/narrative,
                                     status, reference)
@@ -313,7 +313,7 @@
                         </div>
 
 
-                        <div v-if="sharedState?.value?.consent?.Permissions.some(item => ['ReadStatements'].includes(item))"
+                        <div v-if="sharedState?.consent?.consent?.Permissions?.some(item => ['ReadStatements'].includes(item))"
                             class="auth-page-dropdown-container">
                             <div class="auth-page-dropdown" @click="show_account_statements = !show_account_statements">
                                 <div class="auth-page-dropdown-text-section">
@@ -364,7 +364,7 @@
                             </div>
                         </div>
 
-                        <div v-if="sharedState?.value?.consent?.Permissions.some(item => ['ReadProduct'].includes(item))"
+                        <div v-if="sharedState?.consent?.consent?.Permissions?.some(item => ['ReadProduct'].includes(item))"
                             class="auth-page-dropdown-container">
                             <div class="auth-page-dropdown" @click="show_product_info = !show_product_info">
                                 <div class="auth-page-dropdown-text-section">
@@ -407,7 +407,7 @@
 
                         </div>
 
-                        <div v-if="sharedState?.value?.consent?.Permissions.some(item => ['ReadPartyUser', 'ReadPartyUserIdentity', 'ReadParty'].includes(item))"
+                        <div v-if="sharedState?.consent?.consent?.Permissions?.some(item => ['ReadPartyUser', 'ReadPartyUserIdentity', 'ReadParty'].includes(item))"
                             class="auth-page-dropdown-container">
                             <div class="auth-page-dropdown" @click="show_parties = !show_parties">
                                 <div class="auth-page-dropdown-text-section">
@@ -446,17 +446,17 @@
 
                             </div>
                             <div v-if="show_parties" class="auth-page-dropdown-subtext-section">
-                                <div v-if="sharedState?.value?.consent?.Permissions.includes('ReadPartyUserIdentity')"
+                                <div v-if="sharedState?.consent?.consent?.Permissions?.includes('ReadPartyUserIdentity')"
                                     class="auth-page-dropdown-subtext">
                                     Detailed personal identity details (name, date of birth, contact information,
                                     Emirates ID, nationality, residential address, employer details)
                                 </div>
-                                <div v-else-if="sharedState?.value?.consent?.Permissions.includes('ReadPartyUser')"
+                                <div v-else-if="sharedState?.consent?.consent?.Permissions?.includes('ReadPartyUser')"
                                     class="auth-page-dropdown-subtext">
                                     Detailed personal details (name, date of birth, contact information, residential
                                     address)
                                 </div>
-                                <div v-else-if="sharedState?.value?.consent?.Permissions.includes('ReadParty')"
+                                <div v-else-if="sharedState?.consent?.consent?.Permissions?.includes('ReadParty')"
                                     class="auth-page-dropdown-subtext">
                                     Your legal or registered name as the account holder
                                 </div>
@@ -464,7 +464,7 @@
 
                         </div>
 
-                        <div v-if="sharedState?.value?.consent?.Permissions.some(item => ['ReadProductFinanceRates'].includes(item))"
+                        <div v-if="sharedState?.consent?.consent?.Permissions?.some(item => ['ReadProductFinanceRates'].includes(item))"
                             class="auth-page-dropdown-container">
                             <div class="auth-page-dropdown" @click="show_finance_rates = !show_finance_rates">
                                 <div class="auth-page-dropdown-text-section">
@@ -509,7 +509,7 @@
 
                                     <div>As part of your consent, the interest or profit rates for the selected finance
                                         products will be securely shared with {{
-                                            sharedState?.value?.consent?.OnBehalfOf?.TradingName || '[TPP Trading Name]'}}. </div>
+                                            sharedState?.consent?.consent?.OnBehalfOf?.TradingName || '[TPP Trading Name]'}}. </div>
 
                                     <div>To protect this information, your rates will be encrypted when requested. A
                                         one-time code will be sent to your mobile ending [016].</div>
@@ -573,7 +573,7 @@
                                 </svg>
 
                                 <div class="auth-page-date-text">
-                                    {{ formatDate(sharedState?.value?.consent?.ExpirationDateTime) }}
+                                    {{ formatDate(sharedState?.consent?.consent?.ExpirationDateTime) }}
                                 </div>
                             </div>
                         </div>
@@ -600,7 +600,7 @@
 
                 </div>
                  <div class="auth-page-text">
-                        We couldn’t find any accounts that match the data sharing request, so unfortunatley we’re unable to share any information with {{sharedState?.value?.consent?.OnBehalfOf?.TradingName || '[TPP Trading Name]'}}.
+                        We couldn’t find any accounts that match the data sharing request, so unfortunatley we’re unable to share any information with {{sharedState?.consent?.consent?.OnBehalfOf?.TradingName || '[TPP Trading Name]'}}.
                     </div>
             </div>
         </div>
@@ -726,7 +726,7 @@
                 </div>
             </div>
             <div class="auth-page-button-description">
-                By pressing Close you will be returned to {{ sharedState?.value?.consent?.OnBehalfOf?.TradingName ||
+                By pressing Close you will be returned to {{ sharedState?.consent?.consent?.OnBehalfOf?.TradingName ||
                     '[TPP Trading Name]'}}. No data will be shared.
             </div>
         </div>
@@ -744,7 +744,6 @@ import { formatDateTime as formatDate } from '../Composables/formatDate.ts'
 import DirhamAmount from '../ConsentPages/DirhamAmount.vue'
 
 const { sharedState } = useSharedState()
-
 const show_information = ref(true)
 const show_account_details = ref(false)
 const show_regular_payments = ref(false)

@@ -38,6 +38,7 @@ import APIFlowsDelegatedSCA from '../../components/APIFlows/DelegatedSCA.vue'
 import APIFlowsConsentFlow from '../../components/APIFlows/ConsentFlow.vue'
 import APIFlowsConfirmationOfPayee from '../../components/APIFlows/ConfirmationOfPayee.vue'
 import APIFlowsMultiAuthorization from '../../components/APIFlows/MultiAuthorization.vue'
+import APIFlowsRefunds from '../../components/APIFlows/Refunds.vue'
 
 
 // UIs
@@ -110,6 +111,7 @@ export default {
     app.component('APIFlowsConsentFlow', APIFlowsConsentFlow)
     app.component('APIFlowsConfirmationOfPayee', APIFlowsConfirmationOfPayee)
     app.component('APIFlowsMultiAuthorization', APIFlowsMultiAuthorization)
+    app.component('APIFlowsRefunds', APIFlowsRefunds)
 
     // UI
     app.component('ConsentBankDataSharing', ConsentBankDataSharing)

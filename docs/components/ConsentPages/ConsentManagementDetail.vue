@@ -90,22 +90,27 @@ provide('paymentHistory', EXAMPLE_PAYMENT_HISTORY)
 const lastDataReceivedDate = computed(() => extractDate(props.connection?.lastDataReceived))
 
 const DISCONNECT_STATUSES = new Set(['AwaitingAuthorization', 'Authorized', 'Suspended', 'Paused'])
-const showDisconnect = computed(() => DISCONNECT_STATUSES.has(props.connection?.status))
-const showPause      = computed(() => props.connection?.status === 'Authorized')
+const showDisconnect  = computed(() => DISCONNECT_STATUSES.has(props.connection?.status))
+const showPause       = computed(() => props.connection?.status === 'Authorized' && !isSinglePayment.value)
+const showReactivate  = computed(() => props.connection?.status === 'Paused')
 const disconnectLabel = computed(() => isDataSharing.value ? 'Stop Sharing' : 'Cancel Permission')
 
 // ─── Confirmation screen ──────────────────────────────────────────────────────
-const confirmAction = ref(null) // null | 'revoke' | 'pause'
+const confirmAction = ref(null) // null | 'revoke' | 'pause' | 'reactivate'
 
 const confirmTitle = computed(() => {
   if (confirmAction.value === 'pause') {
     return isDataSharing.value ? 'Pause data sharing' : 'Pause payment permission'
+  }
+  if (confirmAction.value === 'reactivate') {
+    return isDataSharing.value ? 'Resume data sharing' : 'Resume payment permission'
   }
   return isDataSharing.value ? 'Stop sharing' : 'Cancel payment permission'
 })
 
 const confirmButtonLabel = computed(() => {
   if (confirmAction.value === 'pause') return 'Confirm pause'
+  if (confirmAction.value === 'reactivate') return 'Confirm reactivation'
   return isDataSharing.value ? 'Confirm stop sharing' : 'Confirm cancellation'
 })
 
@@ -114,6 +119,11 @@ const confirmImpactText = computed(() => {
     return isDataSharing.value
       ? '[Placeholder] This text is set by the TPP and should explain to the customer what pausing this data sharing consent will mean for their experience — for example, which features or services will be temporarily unavailable and how they can resume access.'
       : '[Placeholder] This text is set by the TPP and should explain to the customer what pausing this payment permission will mean for their experience — for example, which upcoming payments will be affected and how they can resume the permission.'
+  }
+  if (confirmAction.value === 'reactivate') {
+    return isDataSharing.value
+      ? '[Placeholder] This text is set by the TPP and should explain to the customer what reactivating this data sharing consent will mean for their experience — for example, which features or services will become available again and any considerations for data that may have changed during the pause.'
+      : '[Placeholder] This text is set by the TPP and should explain to the customer what reactivating this payment permission will mean for their experience — for example, when the next payment will be taken and any upcoming payment dates that apply.'
   }
   return isDataSharing.value
     ? '[Placeholder] This text is set by the TPP and should explain to the customer what stopping this data sharing consent will mean for their experience — for example, which features or services will stop working and what steps they would need to take to reconnect.'
@@ -306,9 +316,10 @@ provide('detailConnection', computed(() => props.connection))
       <ConsentPaymentPermissions v-else-if="isMultiPayment" />
     </div>
 
-    <div v-if="showDisconnect" class="cmd-footer">
+    <div v-if="showDisconnect || showReactivate" class="cmd-footer">
+      <button v-if="showReactivate" type="button" class="cmd-reactivate-btn" @click="confirmAction = 'reactivate'">Reactivate</button>
       <button v-if="showPause" type="button" class="cmd-pause-btn" @click="confirmAction = 'pause'">Pause</button>
-      <button type="button" class="cmd-revoke-btn" @click="confirmAction = 'revoke'">{{ disconnectLabel }}</button>
+      <button v-if="showDisconnect" type="button" class="cmd-revoke-btn" @click="confirmAction = 'revoke'">{{ disconnectLabel }}</button>
     </div>
     </template>
 
@@ -329,7 +340,7 @@ provide('detailConnection', computed(() => props.connection))
 
       <!-- Confirm footer -->
       <div class="cmd-confirm-footer">
-        <button type="button" class="cmd-confirm-btn" :class="confirmAction === 'pause' ? 'cmd-confirm-btn-pause' : 'cmd-confirm-btn-revoke'">
+        <button type="button" class="cmd-confirm-btn" :class="confirmAction === 'pause' ? 'cmd-confirm-btn-pause' : confirmAction === 'reactivate' ? 'cmd-confirm-btn-reactivate' : 'cmd-confirm-btn-revoke'">
           {{ confirmButtonLabel }}
         </button>
         <button type="button" class="cmd-confirm-back-btn" @click="confirmAction = null">Go back</button>
@@ -718,6 +729,26 @@ provide('detailConnection', computed(() => props.connection))
   background: #fffbeb;
 }
 
+.cmd-reactivate-btn {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #00897b;
+  border-radius: 66px;
+  background: transparent;
+  font-family: 'Poppins';
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 120%;
+  letter-spacing: -0.01em;
+  color: #00897b;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cmd-reactivate-btn:hover {
+  background: #e0f2f1;
+}
+
 /* ── Confirmation screen ───────────────────────────────────────────── */
 
 .cmd-confirm-card {
@@ -809,6 +840,15 @@ provide('detailConnection', computed(() => props.connection))
 
 .cmd-confirm-btn-pause:hover {
   background: #fffbeb;
+}
+
+.cmd-confirm-btn-reactivate {
+  border: 1px solid #00897b;
+  color: #00897b;
+}
+
+.cmd-confirm-btn-reactivate:hover {
+  background: #e0f2f1;
 }
 
 .cmd-confirm-back-btn {

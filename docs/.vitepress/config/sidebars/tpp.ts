@@ -270,6 +270,14 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
             text: 'Multi Authorization', link: `${BASE}/${VERSION}/banking/service-initiation//multi-authorization/`
           },
           {
+            text: 'Refunds',
+            collapsed: true,
+            items: [
+              { text: 'Overview', link: `${BASE}/${VERSION}/banking/service-initiation/refunds/` },
+              { text: 'API Guide', link: `${BASE}/${VERSION}/banking/service-initiation/refunds/api-guide` },
+            ],
+          },
+          {
             text: 'API Reference',
             collapsed: true,
             items: [

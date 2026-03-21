@@ -37,7 +37,7 @@ Before calling the CoP API, ensure the following requirements are met:
   <APIFlowsConfirmationOfPayee/>
 </APIFlowViewer>
 
-## Step 1 — Discover the LFI
+### Step 1 — Discover the LFI
 
 CoP is served by individual LFIs — the API Hub's `/discovery` endpoint resolves a payee IBAN to the correct LFI and returns two URLs you will need for the rest of the flow:
 
@@ -46,7 +46,7 @@ CoP is served by individual LFIs — the API Hub's `/discovery` endpoint resolve
 | `DiscoveryEndpointUrl` | The `.well-known` endpoint for the LFI's Authorisation Server. Fetch this to obtain the `token_endpoint` and `issuer` used in Step 2. |
 | `ResourceServerUrl` | The base URL of the LFI's Resource Server. Use this as the base URL when calling `/confirmation` in Step 4. |
 
-### Step 1a — Build a signed discovery request
+### Step 2 — Build a signed discovery request
 
 The request body is a signed JWT containing the IBAN, signed with your signing key:
 
@@ -94,7 +94,7 @@ discovery_request = sign_jwt({
 
 :::
 
-### Step 1b — POST /discovery
+### Step 3 — POST /discovery
 
 Include `x-fapi-interaction-id` on the request. See [Request Headers](/tech/tpp-standards/security/request-headers).
 
@@ -158,7 +158,7 @@ resource_server_url    = message["Data"]["ResourceServerUrl"]
 
 See the [POST /discovery](./open-api/discovery) API reference for the full request and response schema.
 
-### Step 1c — Resolve the LFI token endpoint
+### Step 4 — Resolve the LFI token endpoint
 
 Fetch the `DiscoveryEndpointUrl` directly to read the LFI's OpenID configuration. This gives you the `token_endpoint` and `issuer` needed in Step 2:
 
@@ -178,11 +178,10 @@ issuer         = oidc_config["issuer"]           # used in Step 2a
 
 :::
 
-## Step 2 — Get a Client Credentials Token
+
+### Step 5 — Build a Client Assertion
 
 CoP uses the OAuth 2.0 **client credentials** grant — no user consent or redirect is required.
-
-### Step 2a — Build a Client Assertion
 
 Use the [`signJWT()`](/tech/tpp-standards/security/fapi/message-signing#signing-a-jwt) helper to build a short-lived JWT asserting your application's identity to the LFI's Authorisation Server:
 
@@ -193,7 +192,7 @@ import crypto from 'node:crypto'
 import { signJWT } from './sign-jwt'
 
 const CLIENT_ID = process.env.CLIENT_ID!
-// issuer resolved from DiscoveryEndpointUrl in Step 1c
+// issuer resolved from DiscoveryEndpointUrl in Step 4
 
 const clientAssertion = await signJWT({
   iss: CLIENT_ID,
@@ -208,7 +207,7 @@ import os, uuid
 from sign_jwt import sign_jwt
 
 CLIENT_ID = os.environ["CLIENT_ID"]
-# issuer resolved from discovery_endpoint_url in Step 1c
+# issuer resolved from discovery_endpoint_url in Step 4
 
 client_assertion = sign_jwt({
     "iss": CLIENT_ID,
@@ -222,14 +221,14 @@ client_assertion = sign_jwt({
 
 See [Client Assertion](/tech/tpp-standards/security/tokens/client-assertion) for the full claims reference.
 
-### Step 2b — Token Request
+### Step 6 — Token Request
 
-POST to the LFI's token endpoint (resolved in Step 1c) with `scope=confirmation-of-payee`:
+POST to the LFI's token endpoint (resolved in Step 4) with `scope=confirmation-of-payee`:
 
 ::: code-group
 
 ```typescript [Node.js]
-// tokenEndpoint resolved from DiscoveryEndpointUrl in Step 1c
+// tokenEndpoint resolved from DiscoveryEndpointUrl in Step 4
 
 const params = new URLSearchParams({
   grant_type:            'client_credentials',
@@ -251,7 +250,7 @@ const { access_token } = await tokenResponse.json()
 ```python [Python]
 import httpx
 
-# token_endpoint resolved from discovery_endpoint_url in Step 1c
+# token_endpoint resolved from discovery_endpoint_url in Step 4
 
 token_response = httpx.post(
     token_endpoint,
@@ -360,12 +359,12 @@ signed_request = sign_jwt({
 
 ## Step 4 — POST /confirmation
 
-Send the signed JWT to the LFI's CoP endpoint using the `ResourceServerUrl` resolved in Step 1b. Both the request body and the response are JWTs. Include `x-fapi-interaction-id` on every request. See [Request Headers](/tech/tpp-standards/security/request-headers).
+Send the signed JWT to the LFI's CoP endpoint using the `ResourceServerUrl` resolved in Step 3. Both the request body and the response are JWTs. Include `x-fapi-interaction-id` on every request. See [Request Headers](/tech/tpp-standards/security/request-headers).
 
 ::: code-group
 
 ```typescript [Node.js]
-// ResourceServerUrl resolved from discovery in Step 1b
+// ResourceServerUrl resolved from discovery in Step 3
 
 const copResponse = await fetch(
   `${ResourceServerUrl}/open-finance/confirmation-of-payee/v1.2/confirmation`,
@@ -391,7 +390,7 @@ const result = JSON.parse(Buffer.from(payloadB64, 'base64url').toString())
 ```python [Python]
 import httpx, base64, json
 
-# resource_server_url resolved from discovery in Step 1b
+# resource_server_url resolved from discovery in Step 3
 
 cop_response = httpx.post(
     f"{resource_server_url}/open-finance/confirmation-of-payee/v1.2/confirmation",

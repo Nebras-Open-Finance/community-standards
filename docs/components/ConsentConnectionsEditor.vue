@@ -56,7 +56,7 @@ function getFallbackStatusForType(type) {
 }
 
 function normalizeStatusForType(type, status) {
-  if (isSingleInstantPayment(type) && status === 'Authorized') {
+  if (isSingleInstantPayment(type) && (status === 'Authorized' || status === 'Paused')) {
     return getFallbackStatusForType(type)
   }
   if (isConsumedDisabled(type) && status === 'Consumed') {
@@ -75,7 +75,7 @@ function isConsumedDisabled(type) {
 }
 
 function isStatusDisabled(consentType, status) {
-  if (isSingleInstantPayment(consentType) && status === 'Authorized') return true
+  if (isSingleInstantPayment(consentType) && (status === 'Authorized' || status === 'Paused')) return true
   if (isConsumedDisabled(consentType) && status === 'Consumed') return true
   return false
 }
