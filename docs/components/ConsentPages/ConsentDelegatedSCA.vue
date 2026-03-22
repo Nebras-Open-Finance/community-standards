@@ -152,7 +152,7 @@
                 </div>
 
 
-                                                    <div class="consent-page-text-inner-frame-2">
+                                                    <div v-if="(sharedState?.pii?.Initiation?.Creditor?.length ?? 0) > 0" class="consent-page-text-inner-frame-2">
                     <div class="consent-page-text-mini-header-section">
                         <div class="consent-page-text-mini-header-section-header"
                             @click="show_to_account = !show_to_account">

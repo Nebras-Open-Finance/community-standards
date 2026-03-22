@@ -307,6 +307,21 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
           },
         ],
       },
+      {
+        text: 'ATMs',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/banking/atms` },
+          { text: 'API Guide', link: `${BASE}/${VERSION}/banking/atms/api-guide` },
+          {
+            text: 'API Reference',
+            collapsed: true,
+            items: [
+              apiRef('GET', '/atms', `${BASE}/${VERSION}/banking/atms/open-api/atms`),
+            ],
+          },
+        ],
+      },
       // {
       //   text: 'Products and Leads',
       //   collapsed: true,
@@ -328,11 +343,11 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
   },
 
   {
-    text: 'Production',
+    text: 'Testing & Certification',
     collapsed: true,
     items: [
   {
-    text: 'Testing & Certification',
+    text: 'Required Certifications',
     collapsed: true,
     items: [
       { text: 'Overview', link: `${BASE}/production/testing-certification/overview` },

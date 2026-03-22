@@ -1,12 +1,12 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 const lfis = ref([])
 
 const props = defineProps({
   families: {
     type: Array,
-    default: () => ['account-information', 'payment', 'confirmation', 'product']
+    default: () => ['account-information', 'payment', 'confirmation', 'product', 'atm']
   }
 })
 
@@ -77,8 +77,30 @@ function getServiceType(familyType) {
   if (familyType === 'payment') return 'Payment Initiation'
   if (familyType === 'confirmation') return 'Confirmation of Payee'
   if (familyType === 'product') return 'Products & Leads'
+  if (familyType === 'atm') return 'ATMs'
   return null
 }
+
+const familyLabels = {
+  'account-information': 'Account Information',
+  'payment': 'Payment Initiation',
+  'confirmation': 'Confirmation of Payee',
+  'product': 'Products & Leads',
+  'atm': 'ATM',
+}
+
+const introText = computed(() => {
+  const labels = props.families
+    .map(f => familyLabels[f])
+    .filter(Boolean)
+  if (labels.length === 0 || labels.length === Object.keys(familyLabels).length) {
+    return 'The following LFIs currently offer live Open Finance banking services:'
+  }
+  const joined = labels.length === 1
+    ? labels[0]
+    : labels.slice(0, -1).join(', ') + ' and ' + labels[labels.length - 1]
+  return `The following LFIs currently offer live ${joined} services:`
+})
 
 const toggleServer = (server) => {
   server.expanded = !server.expanded
@@ -91,7 +113,7 @@ const toggleService = (service) => {
 
 <template>
   <div v-if="lfis.length > 0" class="lfi-list">
-    <p class="lfi-intro">The following LFIs currently offer live Open Finance banking services:</p>
+    <p class="lfi-intro">{{ introText }}</p>
 
     <div class="lfi-table">
       <div class="lfi-table-header">

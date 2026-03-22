@@ -182,6 +182,20 @@ Use `AccountSubType` to restrict access to specific account types (e.g. `Mortgag
 :::
 
 
+### On Behalf Of
+
+When a TPP acts on behalf of another entity (e.g. an aggregator operating under a different trading name), `OnBehalfOf.TradingName` can be passed to identify the entity to the user on the LFI Authorisation Page.
+
+| `OnBehalfOf.TradingName` | LFI Authorisation Page Behaviour |
+|---|---|
+| **Provided** | The trading name is displayed within the Authorisation Page so the user clearly understands which entity they are sharing data with. |
+| **Not provided** | The TPP's name is displayed in place of the trading name. |
+
+::: tip
+Always populate `OnBehalfOf.TradingName` so users see a recognisable name rather than a blank or placeholder on the Authorisation Page.
+:::
+
+
 ## Example User Journeys
 
 #### Example 1 - Current and Savings Account

@@ -17,10 +17,10 @@ CoP is served by each participating LFI independently. Before calling an LFI dir
 Before calling the CoP API, ensure the following requirements are met:
 
 - **Registered [Application](../../../../../trust-framework/application)**
-  The application must be created within the Trust Framework and assigned the **CoP role** as defined in [Roles](../../../../../trust-framework/roles).
+  The application must be created within the Trust Framework and assigned the **BSIP role** as defined in [Roles](../../../../../trust-framework/roles).
 
 - **Valid [Transport Certificate](../../../../../trust-framework/certificates)**
-  An active transport certificate must be issued and registered in the Trust Framework to establish secure **mTLS communication** with participating LFIs.
+  An active transport certificate must be issued and registered in the Trust Framework to establish secure **mTLS communication**.
 
 - **Valid [Signing Certificate](../../../../../trust-framework/certificates)**
   An active signing certificate must be issued and registered in the Trust Framework. This certificate is used to sign the confirmation request JWT and client assertions.

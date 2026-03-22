@@ -39,6 +39,8 @@ import APIFlowsConsentFlow from '../../components/APIFlows/ConsentFlow.vue'
 import APIFlowsConfirmationOfPayee from '../../components/APIFlows/ConfirmationOfPayee.vue'
 import APIFlowsMultiAuthorization from '../../components/APIFlows/MultiAuthorization.vue'
 import APIFlowsRefunds from '../../components/APIFlows/Refunds.vue'
+import APIFlowsATMs from '../../components/APIFlows/ATMs.vue'
+import APIFlowsTrustFramework from '../../components/APIFlows/TrustFramework.vue'
 
 
 // UIs
@@ -112,6 +114,8 @@ export default {
     app.component('APIFlowsConfirmationOfPayee', APIFlowsConfirmationOfPayee)
     app.component('APIFlowsMultiAuthorization', APIFlowsMultiAuthorization)
     app.component('APIFlowsRefunds', APIFlowsRefunds)
+    app.component('APIFlowsATMs', APIFlowsATMs)
+    app.component('APIFlowsTrustFramework', APIFlowsTrustFramework)
 
     // UI
     app.component('ConsentBankDataSharing', ConsentBankDataSharing)

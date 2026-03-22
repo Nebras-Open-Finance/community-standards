@@ -50,7 +50,7 @@ const props = defineProps({
   },
   overrideServers: {
     type: Array,
-    default: null // e.g., [{ url: 'https://...' }]
+    default: [{ url: 'https://rs1.[LFICODE].apihub.openfinance.ae' }, { url: 'https://rs1.[LFICODE].preprod.apihub.openfinance.ae' }, { url: 'https://rs1.altareq1.sandbox.apihub.openfinance.ae'}]
   },
   hideSecurity: {
     type: Boolean,

@@ -6,16 +6,16 @@ const VERSION = 'v2.1'
 
 export const lfiSidebar: DefaultTheme.SidebarItem[] = [
 
-  // ── Getting Started ───────────────────────────────────────────────────
+
   {
     text: 'Getting Started',
-    collapsed: false,
+    collapsed: true,
     items: [
       { text: 'LFI Integration Journey', link: `${BASE}/getting-started/` },
     ],
   },
 
-  // ── Trust Framework (Directory) ──────────────────────────────────────
+
   {
     text: 'Trust Framework',
     collapsed: true,
@@ -47,73 +47,24 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         ],
       },
       { text: 'Contacts', link: `${BASE}/trust-framework/contacts` },
-    ],
-  },
-
-  // ── Onboarding to the API Hub ─────────────────────────────────────────
-  {
-    text: 'Onboarding to the API Hub',
-    collapsed: true,
-    items: [
-      { text: 'Overview of the API Hub', link: `${BASE}/${VERSION}/onboarding/` },
-      { text: 'Prerequisites', link: `${BASE}/${VERSION}/onboarding/prerequisites` },
-      { text: 'Application Layer Authentication', link: `${BASE}/${VERSION}/onboarding/application-layer-auth` },
-      { text: 'Environment Specific', link: `${BASE}/${VERSION}/onboarding/environment-specific` },
-    ],
-  },
-
-  // ── Admin Portal ──────────────────────────────────────────────────────
-  {
-    text: 'Admin Portal',
-    collapsed: true,
-    items: [
-      { text: 'TPP Activation', link: '/tech/lfi-api-hub/admin-portal/tpp-activation' },
-    ],
-  },
-
-  // ── Banking ───────────────────────────────────────────────────────────
-  {
-    text: 'Banking',
-    collapsed: true,
-    items: [
       {
-        text: 'Data Sharing',
-        items: [
-          { text: 'Requirements', link: `${BASE}/${VERSION}/banking/data-sharing/requirements` },
-          { text: 'User Experience', link: `${BASE}/${VERSION}/banking/data-sharing/user-journeys` },
-          { text: 'API Guide', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide` },
-          {
-            text: 'API Reference',
-            collapsed: true,
-            items: [
-              apiRef('GET', '/accounts', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts`),
-              apiRef('GET', '/accounts/{AccountId}', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId`),
-              apiRef('GET', '/accounts/{AccountId}/balances', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-balances`),
-              apiRef('GET', '/accounts/{AccountId}/beneficiaries', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-beneficiaries`),
-              apiRef('GET', '/accounts/{AccountId}/direct-debits', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-direct-debits`),
-              apiRef('GET', '/customer', `${BASE}/${VERSION}/banking/data-sharing/open-api/customer`),
-              apiRef('GET', '/accounts/{AccountId}/customer', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-customer`),
-              apiRef('GET', '/accounts/{AccountId}/scheduled-payments', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-scheduled-payments`),
-              apiRef('GET', '/accounts/{AccountId}/standing-orders', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-standing-orders`),
-              apiRef('GET', '/accounts/{AccountId}/statements', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-statements`),
-              apiRef('GET', '/accounts/{AccountId}/transactions', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-transactions`),
-            ],
-          },
-        ],
-      },
-      {
-        text: 'Confirmation of Payee',
+        text: 'Trust Framework APIs',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/`},
-          { text: 'Requirements', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/requirements` },
-          { text: 'User Experience', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/user-journeys` },
-          { text: 'API Guide', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/api-guide` },
+          { text: 'Overview', link: `${BASE}/trust-framework/api/` },
+          {
+            text: 'API Guide', link: `${BASE}/trust-framework/api/api-guide` 
+          },
           {
             text: 'API Reference',
             collapsed: true,
             items: [
-              apiRef('POST', '/customers/action/cop-query', `${BASE}/${VERSION}/banking/confirmation-of-payee/open-api/cop-query`)
+              apiRef('POST', '/token', `${BASE}/trust-framework/api/token`),
+              apiRef('GET', '/organisations', `${BASE}/trust-framework/api/organisations`),
+              apiRef('GET', '.../{OrganisationId}/softwarestatements', `${BASE}/trust-framework/api/software-statements`),
+              apiRef('GET', '.../{OrganisationId}/authorisationservers', `${BASE}/trust-framework/api/auth-servers`),
+              apiRef('GET', '.../{AuthorisationServerId}/apiresources', `${BASE}/trust-framework/api/api-resources`),
+              apiRef('GET', '/references/apifamilies', `${BASE}/trust-framework/api/api-families`), 
             ],
           },
         ],
@@ -121,4 +72,165 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
     ],
   },
 
+  {
+    text: 'API Hub',
+    collapsed: true,
+    items: [
+      { text: 'Overview', link: `${BASE}/api-hub/` },
+      {
+        text: 'Onboarding', 
+        collapsed: true,        
+        items: [
+          { text: 'Overview', link: `${BASE}/api-hub/onboarding/` },
+          { text: 'Prerequisites', link: `${BASE}/api-hub/onboarding/prerequisites` },
+          { text: 'Application Layer Authentication', link: `${BASE}/api-hub/onboarding/application-layer-auth` },
+          {
+            text: 'Environment Specific',
+            collapsed: true,
+            items: [
+              { text: 'Overview', link: `${BASE}/api-hub/onboarding/environment-specific` },
+              { text: 'Ozone Connect Base URL', link: `${BASE}/api-hub/onboarding/environment-specific/ozone-connect-url` },
+              { text: 'Authorization Endpoint', link: `${BASE}/api-hub/onboarding/environment-specific/auth-endpoint` },
+            ]
+          }
+        ]
+      },
+      {
+        text: 'Admin Portal', 
+        collapsed: true,        
+        items: [
+          { text: 'Overview', link: `${BASE}/api-hub/admin-portal/` },
+          { text: 'Overview', link: `${BASE}/api-hub/tpp-activation/` },
+        ]
+      }
+    ],
+  },
+
+
+
+  {
+    text: 'Ozone Connect Specifications',
+    collapsed: true,
+    items: [
+      { text: 'Overview', link: `${BASE}/${VERSION}/` },
+      {
+        text: 'Consent',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/consent/` },
+          { text: 'Requirements', link: `${BASE}/${VERSION}/consent/requirements` },
+          { text: 'API Guide', link: `${BASE}/${VERSION}/consent/api-guide` },
+          {
+            text: 'Consent Management Interface',
+            collapsed: true,
+            items: [
+              { text: 'Overview', link: `${BASE}/${VERSION}/consent/consent-management-interface` },
+              { text: 'Requirements', link: `${BASE}/${VERSION}/consent/consent-management-interface/requirements` },
+              { text: 'User Experience', link: `${BASE}/${VERSION}/consent/consent-management-interface/user-experience` }
+            ]
+          },
+          {
+            text: 'API Reference',
+            collapsed: true,
+            items: [
+
+            ],
+          },
+        ],
+      },
+      {
+        text: 'Banking',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/banking` },
+          {
+            text: 'Data Sharing',
+            collapsed: true,
+            items: [
+              { text: 'Overview', link: `${BASE}/${VERSION}/banking/data-sharing` },
+              { text: 'Requirements', link: `${BASE}/${VERSION}/banking/data-sharing/requirements` },
+              { text: 'User Experience', link: `${BASE}/${VERSION}/banking/data-sharing/user-journeys` },
+              { text: 'API Guide', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide` },
+              {
+                text: 'API Reference',
+                collapsed: true,
+                items: [
+
+                ],
+              },
+            ],
+          },
+          {
+            text: 'Confirmation of Payee',
+            collapsed: true,
+            items: [
+              { text: 'Overview', link: `${BASE}/${VERSION}/banking/confirmation-of-payee` },
+              { text: 'Requirements', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/requirements` },
+              { text: 'User Experience', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/user-journeys` },
+              { text: 'API Guide', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/api-guide` },
+              {
+                text: 'API Reference',
+                collapsed: true,
+                items: [
+
+                ],
+              },
+            ],
+          },
+          {
+            text: 'ATMs',
+            collapsed: true,
+            items: [
+              { text: 'Overview', link: `${BASE}/${VERSION}/banking/atms` },
+              { text: 'Requirements', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/requirements` },
+              { text: 'API Guide', link: `${BASE}/${VERSION}/banking/atms/api-guide` },
+              {
+                text: 'API Reference',
+                collapsed: true,
+                items: [
+
+                ],
+              },
+            ],
+          },
+        ]
+      },
+
+
+
+    ],
+  },
+
+  {
+    text: 'Testing & Certification',
+    collapsed: true,
+    items: [
+      {
+        text: 'Required Certifications',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/production/testing-certification/overview` },
+          { text: 'TrustFramework Checklist', link: `${BASE}/production/testing-certification/readiness-checklist` },
+          {
+            text: 'Functional Evidence',
+            collapsed: true,
+            items: [
+              { text: 'Bank Data Sharing', link: `${BASE}/production/testing-certification/functional` },
+            ],
+          },
+          { text: 'User Experience Evidence', link: `${BASE}/production/testing-certification/user-experience` },
+          { text: 'Performance Testing', link: `${BASE}/production/testing-certification/performance` },
+          { text: 'Security Validation', link: `${BASE}/production/testing-certification/security-validation` },
+        ],
+      },
+      {
+        text: 'Production Live Proving', 
+        collapsed: true,
+        items: [
+          { text: 'Attestation & Self Testing', link: `${BASE}/production/testing-certification/self-testing` },
+          { text: 'TPP Buddying', link: `${BASE}/production/testing-certification/tpp-buddying` },
+        ]
+      },
+    ]
+  }
 ]

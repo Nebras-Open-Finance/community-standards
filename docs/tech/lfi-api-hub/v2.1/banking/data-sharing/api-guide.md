@@ -1,326 +1,659 @@
 ---
 next: false
 prev: false
+aside: false
 ---
 
-🕒 **12 minute read**
+🕒 **15 minute read**
 
-# API Guide — Bank Data Sharing (LFI)
-
-This guide walks through the Bank Data Sharing flow from the **LFI's perspective**. The Hub (Ozone Connect) routes all TPP requests to your systems — your responsibilities are:
-
-1. **Authorization Server** — receiving the user redirect, authenticating the user, and presenting the consent screen
-2. **Consent Manager integration** — retrieving consent details from the Hub and updating consent state
-3. **Resource Server** — serving account data in response to proxied Hub requests
+# Bank Data Sharing - API Guide
 
 
+## Prerequisites
 
-## Flow Overview
+Before creating a Bank Data Sharing consent, ensure the following requirements are met:
 
-```
-TPP                    Hub (Ozone)              LFI Auth Server       LFI Resource Server
- |                          |                          |                       |
- |── POST /par ────────────>|                          |                       |
- |<── request_uri ──────────|                          |                       |
- |                          |                          |                       |
- |── GET /authorize ───────>|── GET /authorize ───────>|                       |
- |                          |                    user authenticates            |
- |                          |                          |                       |
- |                          |<── GET /consent/{id} ───>|                       |
- |                          |── consent details ──────>|                       |
- |                          |                   show consent screen            |
- |                          |                          |                       |
- |                          |<── PATCH /consent/{id} ──|  (authorize/cancel)   |
- |                          |                          |                       |
- |                          |<── POST /doconfirm ──────| (if authorized)       |
- |                          |    or /dofail            | (if cancelled)        |
- |                          |                          |                       |
- |<── redirect (code) ──────|                          |                       |
- |                          |                          |                       |
- |── GET /accounts ────────>|── GET /accounts ─────────────────────────────────>|
- |<── accounts data ────────|<── accounts data ────────────────────────────────|
-```
+- **Registered [Application](../trust-framework/application)**
+  The application must be created within the Trust Framework and assigned the **BDSP role** as defined in [Roles](../trust-framework/roles).
 
+- **Valid [Transport Certificate](../trust-framework/certificates)**
+  An active transport certificate must be issued and registered in the Trust Framework to establish secure **mTLS communication**.
 
+- **Valid [Signing Certificate](../trust-framework/certificates)**
+  An active signing certificate must be issued and registered in the Trust Framework. This certificate is used to sign request objects and client assertions.
 
-## Step 1 — Receiving the Authorization Request
+- **Registration with the relevant [Authorisation Server](../../registration/api-guide)**
+  The application must be registered with the Authorisation Server of the LFI for which you intend to create a Bank Data Sharing consent.
 
-The TPP redirects the user's browser to your authorization endpoint. The URL is discovered from your `/.well-known/openid-configuration` (hosted by the Hub for your LFI identifier).
+- **Understanding of the [FAPI Security Profile](../../security/fapi)** and **[Tokens & Assertions](../../security/tokens)**
+  You should understand how request object signing, client authentication, and access token validation underpin secure API interactions.
 
-```
-GET /authorize
-  ?client_id={tppClientId}
-  &response_type=code
-  &scope=openid
-  &request_uri={request_uri}
-```
+- **Understanding of [Consents](../../consent)**
+  You should understand how to create, retrieve, and manage consents, including consent states and lifecycle transitions.
 
-The `request_uri` was issued by the Hub's PAR endpoint and contains a reference to the consent definition the TPP submitted.
+## API Sequence Flow
 
-**Your Authorization Server must:**
+<APIFlowViewer title="Bank Data Sharing API Flow">
+  <APIFlowsBankDataSharing/>
+</APIFlowViewer>
 
-1. Validate the `request_uri` — resolve it against the Hub's PAR store (the Hub exposes this internally)
-2. Extract the `consentId` from the resolved request object
-3. Authenticate the user with your bank's standard authentication flow (e.g. username/password + OTP, biometrics)
+## <span style="color: #3b82f6; padding-right: 5px;">POST</span> `/par`
 
-::: info
-The Hub's authorization server integration handles the PAR validation step if you are using the Hub-hosted authorization server option. If you run your own authorization server, you will need to integrate with the Hub's PAR store via the API Hub Authorization Server API.
-:::
+### Step 1 - Constructing Authorization Details
+
+To send a `/par` request, first we need to generate the `request JWT`. We do this by first constructing `authorization_details` of type (`urn:openfinanceuae:account-access-consent:v2.1`)
+
+### authorization_details
+
+| Field | Type | Description | Example |
+|-------|------|------------|---------|
+| `type`* | enum | Must be `urn:openfinanceuae:account-access-consent:v2.1` | `urn:openfinanceuae:account-access-consent:v2.1` |
+| `consent`* | object | Properties of the consent agreed by the User with the TPP. *Described below* | *Described below* |
+| `subscription` | object | Optional subscription to Event Notifications, to be sent to the TPP Webhook Url *Described below* | *Described below* |
 
 
+#### consent (Required) | `authorization_details.consent`
 
-## Step 2 — Retrieving the Consent
+| Field | Type | Description | Example |
+|-------|------|------------|---------|
+| `ConsentId`* | string (uuid) | Unique ID assigned by the TPP (1–128 chars) | `123e4567-e89b-12d3-a456-426614174001` |
+| `BaseConsentId` | string (uuid) | Used when renewing or modifying an existing consent | `123e4567-e89b-12d3-a456-426614174000` |
+| `Permissions`* | array\<enum\> | List of account access permissions being consented by the user | `ReadAccountsBasic`, `ReadBalances` |
+| `ExpirationDateTime`* | date-time | Expiry date/time (ISO 8601 with timezone, max 1 year) | `2025-11-03T15:46:00+00:00` |
+| `FromDate` | date | Start date for transaction access (ISO 8601 format) | `2023-11-03` |
+| `ToDate` | date | End date for transaction access (ISO 8601 format) | `2025-11-03` |
+| `AccountType` | array\<enum\> | Allowed: `Retail`, `SME`, `Corporate` | `Retail` |
+| `AccountSubType` | array\<enum\> | Allowed: `CurrentAccount`, `Savings`, `CreditCard`, `Mortgage`, `Finance` | `Savings` |
+| `OpenFinanceBilling`* | object | Billing parameters specified by the TPP. *Described below* | *Described below* |
+| `OnBehalfOf` | object | Provided when TPP is acting for another regulated entity *Described below* | *Described below* |
 
-Once the user is authenticated, retrieve the consent record from the Hub's Consent Manager to understand what the user is being asked to authorize.
+#### OpenFinanceBilling (Required) | `authorization_details.consent.OpenFinanceBilling`
 
-### <span style="color: #16a34a; padding-right: 5px;">GET</span> `/consent/{consentId}`
+| Field | Type | Allowed Values | Example |
+|-------|------|---------------|---------|
+| `UserType`* | enum | `Retail`, `SME`, `Corporate` | `Retail` |
+| `Purpose`* | enum | `AccountAggregation`, `RiskAssessment`, `TaxFiling`, `Onboarding`, `Verification`, `QuoteComparison`, `BudgetingAnalysis`, `FinancialAdvice`, `AuditReconciliation` | `AccountAggregation` |
 
-```typescript
-const consentResponse = await fetch(
-  `${HUB_CONSENT_MANAGER_BASE}/consent/${consentId}`,
-  {
-    headers: {
-      Authorization: `Bearer ${hubAccessToken}`,  // Hub-issued token for LFI
-      'Content-Type': 'application/json',
-    },
-    // agent: new https.Agent({ cert: transportCert, key: transportKey }),
-  }
-)
+#### OnBehalfOf (Optional) | `authorization_details.consent.OnBehalfOf`
 
-const consent = await consentResponse.json()
-```
+| Field | Type | Description | Example |
+|-------|------|------------|---------|
+| `TradingName` | string | Trading name if acting on behalf of another entity | `Acme Ltd` |
+| `LegalName` | string | Legal name of represented entity | `Acme Legal Name` |
+| `IdentifierType` | enum | Only `Other` currently supported | `Other` |
+| `Identifier` | string | Identifier value | `9876543210` |
 
-The response contains everything you need to render the consent screen:
+
+#### subscription (Optional) | `authorization_details.subscription`
+
+| Field | Type | Description | Example |
+|-------|------|------------|---------|
+| `Webhook`* | object | *Described below* | *Described below* |
+
+
+#### Webhook (Required) | `authorization_details.subscription.Webhook`
+
+| Field | Type | Description | Example |
+|-------|------|------------|---------|
+| `Url`* | string | HTTPS callback URL | `https://tpp.example.com/webhook` |
+| `IsActive`* | boolean | Whether webhook is active | `true` |
+
+
+
+### Example request
+
+See an example of a valid authorization_details for urn:openfinanceuae:account-access-consent:v2.1:
+
 
 ```json
-{
-  "Data": {
-    "ConsentId": "aac-consent-a3f1b2c4",
-    "Status": "AwaitingAuthorization",
-    "ConsentType": "urn:openfinanceuae:account-access-consent:v2.1",
-    "Permissions": [
-      "ReadAccountsBasic",
-      "ReadAccountsDetail",
-      "ReadBalances",
-      "ReadTransactionsCredits",
-      "ReadTransactionsDebits",
-      "ReadTransactionsDetail"
-    ],
-    "ExpirationDateTime": "2027-03-02T00:00:00Z",
-    "TransactionFromDateTime": "2025-01-01T00:00:00Z",
-    "TransactionToDateTime": "2026-03-02T00:00:00Z"
+"authorization_details": [
+  {
+    "type": "urn:openfinanceuae:account-access-consent:v2.1",
+    "consent": {
+      "ConsentId": "{{unique-guid}}", // Unique ID assigned by the TPP (uuid format)
+      "ExpirationDateTime": "2026-05-03T15:46:00+00:00", // Max 1 year from today (ISO 8601 format with timezone)
+
+      // Optional: specify start date of historic period for which data can be fetched for transactions and statements (inclusive). If not populated, data will be returned from the earliest available transaction or statement.
+      // "FromDate": "2024-05-03",
+
+      // Optional: specify end date of historic period for which data can be fetched for transactions and statements (inclusive). If not populated, data will be returned to the latest available transaction or statement.
+      // "ToDate": "2025-05-03",
+
+      "Permissions": [
+        "ReadAccountsBasic",
+        "ReadAccountsDetail",
+        "ReadBalances",
+        "ReadBeneficiariesBasic",
+        "ReadBeneficiariesDetail",
+        "ReadTransactionsBasic",
+        "ReadTransactionsDetail",
+        "ReadProduct",
+        "ReadScheduledPaymentsBasic",
+        "ReadScheduledPaymentsDetail",
+        "ReadDirectDebits",
+        "ReadStandingOrdersBasic",
+        "ReadStandingOrdersDetail",
+        "ReadStatements",
+        "ReadPartyUser",
+        "ReadPartyUserIdentity",
+        "ReadParty",
+        "ReadProductFinanceRates"
+      ],
+
+      "OpenFinanceBilling": {
+        "UserType": "Retail", // Options: Retail, SME, Corporate
+        "Purpose": "AccountAggregation" // Purpose of data sharing (e.g., RiskAssessment, BudgetingAnalysis)
+      },
+
+      // Optional: to link to other ConsentId e.g. when renewing long-lived consents
+      // "BaseConsentId": "existing-consent-id",
+
+      // Optional: for consent on behalf of another legal entity
+      // "OnBehalfOf": {
+      //   "TradingName": "Ozone",
+      //   "LegalName": "Ozone-CBUAE",
+      //   "IdentifierType": "Other", // Only 'Other' allowed for now
+      //   "Identifier": "1234567890"
+      // },
+
+      // Optional: filter by account types
+      // "AccountType": [
+      //   "Retail", // Options: Retail, SME, Corporate
+      //   "SME"
+      // ],
+
+      // Optional: filter by account subtypes
+      // "AccountSubType": [
+      //   "CurrentAccount", // Options: CurrentAccount, Savings, CreditCard, Mortgage, Finance
+      //   "Savings"
+      // ]
+    },
+
+    // Optional: to receive webhook notifications from LFI
+    // "subscription": {
+    //   "Webhook": {
+    //     "Url": "https://tpp.example.com/webhook", // Must be a reachable HTTPS endpoint
+    //     "IsActive": true
+    //   }
+    // }
+  }
+]
+```
+
+### Step 2 - Constructing the Request JWT
+
+With your `authorization_details` ready, generate a PKCE code pair then use the [`buildRequestJWT()`](/tech/tpp-standards/security/fapi/request-jwt#building-the-request-jwt) helper from the FAPI page, passing `accounts openid` as the scope.
+
+::: code-group
+
+```typescript [Node.js]
+import crypto from 'node:crypto'
+import { generateCodeVerifier, deriveCodeChallenge } from './pkce'    // from FAPI page
+import { buildRequestJWT } from './request-jwt'                        // from FAPI page
+
+// 1. Generate PKCE pair — store codeVerifier in your session before redirecting
+const codeVerifier  = generateCodeVerifier()
+const codeChallenge = deriveCodeChallenge(codeVerifier)
+
+// 2. Define the authorization_details for this consent
+const authorizationDetails = [
+  {
+    type: 'urn:openfinanceuae:account-access-consent:v2.1',
+    consent: {
+      ConsentId: crypto.randomUUID(),
+      ExpirationDateTime: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      Permissions: [
+        'ReadAccountsBasic',
+        'ReadAccountsDetail',
+        'ReadBalances',
+        'ReadTransactionsBasic',
+        'ReadTransactionsDetail',
+      ],
+      OpenFinanceBilling: {
+        UserType: 'Retail',
+        Purpose: 'AccountAggregation',
+      },
+    },
   },
-  "Risk": {}
+]
+
+// 3. Build and sign the Request JWT
+const requestJWT = await buildRequestJWT({
+  scope: 'accounts openid',
+  codeChallenge,
+  authorizationDetails,
+})
+```
+
+:::
+
+::: tip Store the code_verifier
+Save `codeVerifier` in your server-side session or an `httpOnly` cookie. You will need it in [Step 7](#step-7-post-token-authorization-code) to exchange the authorization code for tokens.
+:::
+
+See [Preparing the Request JWT](/tech/tpp-standards/security/fapi/request-jwt) for the full JWT claim reference and PKCE helpers.
+
+### Step 3 - Creating a Client Assertion
+
+Every call to the Authorization Server requires a **client assertion** — a short-lived signed JWT that proves your application's identity in place of a client secret. Use the [`signJWT()`](/tech/tpp-standards/security/fapi/message-signing#signing-a-jwt) helper from the FAPI Message Signing page:
+
+::: code-group
+
+```typescript [Node.js]
+import crypto from 'node:crypto'
+import { signJWT } from './sign-jwt'    // from FAPI Message Signing page
+
+const CLIENT_ID = process.env.CLIENT_ID!
+const ISSUER    = process.env.AUTHORIZATION_SERVER_ISSUER!  // from .well-known
+
+async function buildClientAssertion(): Promise<string> {
+  return signJWT({
+    iss: CLIENT_ID,
+    sub: CLIENT_ID,
+    aud: ISSUER,
+    jti: crypto.randomUUID(),
+  })
 }
 ```
 
-
-
-## Step 3 — Presenting the Consent Screen
-
-Render the **Consent Management Interface (CMI)** — the screen that shows the user exactly what they are being asked to authorize.
-
-Your CMI must clearly display:
-
-| Element | Description |
-|---|---|
-| **TPP name and logo** | The name of the third-party app requesting access |
-| **Requested permissions** | Human-readable description of each permission (e.g. "View your account balances") |
-| **Expiry date** | When the consent will expire |
-| **Transaction date range** | If applicable, the date range for transaction history |
-| **Account selection** | Allow the user to select which accounts to include |
-| **Authorize / Cancel buttons** | Clear, prominent actions |
-
-::: tip
-See [User Experience](./user-journeys) for screen design requirements and the Consumer Duty obligations for CMI presentation.
 :::
 
+See [Tokens & Assertions](/tech/tpp-standards/security/tokens#generating-a-client-assertion) for the full claims reference and [Preparing Your Client Assertion](/tech/tpp-standards/security/tokens/client-assertion) for a step-by-step walkthrough.
 
+### Step 4 - Sending the /par Request
 
-## Step 4 — User Decision: PATCH /consent/{consentId}
+With your signed Request JWT and client assertion ready, POST both to the Authorization Server's `/par` endpoint. The connection must use your **mTLS transport certificate**.
 
-After the user makes a decision, call the Hub's Consent Manager to update the consent status.
+Include `x-fapi-interaction-id` — a UUID v4 you generate per request. The API Hub echoes it in the response, enabling end-to-end traceability. See [Request Headers](/tech/tpp-standards/security/request-headers) for the full header reference.
 
-### <span style="color: #f59e0b; padding-right: 5px;">PATCH</span> `/consent/{consentId}`
+::: code-group
 
-**If the user authorizes:**
+```typescript [Node.js]
+import crypto from 'node:crypto'
 
-```typescript
-const patchResponse = await fetch(
-  `${HUB_CONSENT_MANAGER_BASE}/consent/${consentId}`,
-  {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${hubAccessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      Data: {
-        Status: 'Authorized',
-        AccountIds: selectedAccountIds,   // accounts the user selected
-      }
-    }),
-    // agent: new https.Agent({ cert: transportCert, key: transportKey }),
-  }
-)
-```
+const PAR_ENDPOINT = `${ISSUER}/par`
 
-**If the user cancels:**
-
-```typescript
-const patchResponse = await fetch(
-  `${HUB_CONSENT_MANAGER_BASE}/consent/${consentId}`,
-  {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${hubAccessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      Data: {
-        Status: 'Rejected',
-      }
-    }),
-    // agent: new https.Agent({ cert: transportCert, key: transportKey }),
-  }
-)
-```
-
-
-
-## Step 5 — Completing the Flow
-
-After patching the consent, call the Hub to finalize the authorization code flow and redirect the user back to the TPP.
-
-### If the user authorized — <span style="color: #3b82f6; padding-right: 5px;">POST</span> `/doconfirm`
-
-This instructs the Hub to generate an authorization code and redirect the user back to the TPP's `redirect_uri`.
-
-```typescript
-const confirmResponse = await fetch(`${HUB_AUTH_SERVER_BASE}/doconfirm`, {
+const parResponse = await fetch(PAR_ENDPOINT, {
   method: 'POST',
   headers: {
-    Authorization: `Bearer ${hubAccessToken}`,
-    'Content-Type': 'application/json',
+    'Content-Type':          'application/x-www-form-urlencoded',
+    'x-fapi-interaction-id': crypto.randomUUID(),
   },
-  body: JSON.stringify({
-    consentId,
-    userId,   // the authenticated user's unique identifier at your bank
+  body: new URLSearchParams({
+    request:               requestJWT,
+    client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+    client_assertion:      await buildClientAssertion(),
+  }),
+  // Node.js: pass an https.Agent configured with your transport cert and key
+  // agent: new https.Agent({ cert: transportCert, key: transportKey }),
+})
+
+const { request_uri, expires_in } = await parResponse.json()
+```
+
+```python [Python]
+import httpx, uuid
+
+par_response = httpx.post(
+    f"{ISSUER}/par",
+    headers={
+        "x-fapi-interaction-id": str(uuid.uuid4()),
+    },
+    data={
+        "request":               request_jwt,
+        "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+        "client_assertion":      build_client_assertion(),
+    },
+    # cert=("transport.crt", "transport.key"),  # mTLS
+)
+
+data        = par_response.json()
+request_uri = data["request_uri"]
+expires_in  = data["expires_in"]
+```
+
+:::
+
+::: info mTLS transport certificate
+You must present your **transport certificate** on every connection to the Authorization Server and resource APIs. In Node.js, configure an `https.Agent` with your PEM certificate and private key. See [Certificates](/tech/tpp-standards/trust-framework/certificates) for how to obtain and configure your transport certificate.
+:::
+
+The `/par` response contains:
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| `request_uri` | A single-use reference to your pushed authorization request | `urn:ietf:params:oauth:request-uri:bwc4JDpSd7` |
+| `expires_in` | Seconds until the `request_uri` expires — redirect the user before this window closes | `90` |
+
+## Redirecting the User to the Bank
+
+### Step 5 - Building the Authorization URL
+
+Use the `request_uri` returned by `/par` to build the redirect URL. The `authorization_endpoint` is found in the LFI's `.well-known/openid-configuration` — not constructed from the issuer URL directly. All authorization parameters are already inside the signed Request JWT, so the only query parameters needed are `client_id`, `response_type`, `scope`, and `request_uri`.
+
+::: code-group
+
+```typescript [Node.js]
+// authorization_endpoint is discovered from the LFI's .well-known/openid-configuration
+// See /.well-known for how to fetch and cache discovery documents
+// e.g. 'https://auth1.altareq1.sandbox.apihub.openfinance.ae/authorize'
+const AUTHORIZATION_ENDPOINT = discoveryDoc.authorization_endpoint
+
+const response_type = 'code'
+
+const authCodeUrl = `${AUTHORIZATION_ENDPOINT}?client_id=${CLIENT_ID}&response_type=${response_type}&scope=openid&request_uri=${encodeURIComponent(request_uri)}`
+
+// Redirect the user
+window.location.href = authCodeUrl
+// or server-side:
+// res.redirect(authCodeUrl)
+```
+
+```python [Python]
+import urllib.parse
+
+# authorization_endpoint from .well-known/openid-configuration
+# e.g. 'https://auth1.altareq1.sandbox.apihub.openfinance.ae/authorize'
+AUTHORIZATION_ENDPOINT = discovery_doc["authorization_endpoint"]
+
+auth_code_url = (
+    f"{AUTHORIZATION_ENDPOINT}"
+    f"?client_id={CLIENT_ID}"
+    f"&response_type=code"
+    f"&scope=openid"
+    f"&request_uri={urllib.parse.quote(request_uri)}"
+)
+# redirect the user to auth_code_url
+```
+
+:::
+
+::: tip User Experience
+See [User Experience](./user-journeys) for screen mockups of the **Consent** and **Authorization** pages the user sees at the bank, including an interactive example where you can edit the consent JSON and preview the resulting UI.
+:::
+
+After redirecting, the user will:
+
+1. Authenticate with their bank
+2. Review the consent — accounts, permissions, and expiry — on the bank's authorization screen
+3. Approve or decline
+
+## Handling the Callback
+
+### Step 6 - Extracting the Authorization Code
+
+After the user approves, the bank redirects them back to your `redirect_uri`. The callback includes an authorization `code`, the `state` you sent in your Request JWT, and the `iss` (issuer) of the Authorization Server:
+
+```
+https://yourapp.com/callback?code=fbe03604-baf2-4220-b7dd-05b14de19e5c&state=d2fe5e2c-77cd-4788-b0ef-7cf0fc8a3e54&iss=https://auth1.altareq1.sandbox.apihub.openfinance.ae
+```
+
+Extract all three parameters and validate `state` and `iss` before proceeding:
+
+::: code-group
+
+```typescript [Node.js]
+const params = new URLSearchParams(window.location.search)
+// or server-side: new URLSearchParams(req.url.split('?')[1])
+
+const code  = params.get('code')!
+const state = params.get('state')!
+const iss   = params.get('iss')!
+
+if (state !== storedState) {
+  throw new Error('State mismatch — possible CSRF attack. Abort the flow.')
+}
+if (iss !== ISSUER) {
+  throw new Error(`Unexpected issuer: ${iss}`)
+}
+```
+
+```python [Python]
+from urllib.parse import urlparse, parse_qs
+
+params = parse_qs(urlparse(callback_url).query)
+code  = params["code"][0]
+state = params["state"][0]
+iss   = params["iss"][0]
+
+if state != stored_state:
+    raise ValueError("State mismatch — possible CSRF attack. Abort the flow.")
+if iss != ISSUER:
+    raise ValueError(f"Unexpected issuer: {iss}")
+```
+
+:::
+
+See [Handling Authorization Callbacks](/tech/tpp-standards/security/fapi/handling-callback) for a full guide on security best practices including issuer verification, replay prevention, and keeping callback logic minimal.
+
+## Exchanging the Code for Tokens
+
+### Step 7 - POST /token (Authorization Code)
+
+Exchange the authorization code for an access token and refresh token. Include the `code_verifier` from Step 2 — the Authorization Server will verify it against the `code_challenge` in your Request JWT before issuing tokens.
+
+::: code-group
+
+```typescript [Node.js]
+const TOKEN_ENDPOINT = `${ISSUER}/token`
+
+const tokenResponse = await fetch(TOKEN_ENDPOINT, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/x-www-form-urlencoded',
+  },
+  body: new URLSearchParams({
+    grant_type:            'authorization_code',
+    code,
+    redirect_uri:          REDIRECT_URI,
+    code_verifier:         codeVerifier,            // from Step 2
+    client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+    client_assertion:      await buildClientAssertion(),
   }),
   // agent: new https.Agent({ cert: transportCert, key: transportKey }),
 })
 
-const { redirectUrl } = await confirmResponse.json()
-
-// Redirect the user's browser to the TPP
-res.redirect(redirectUrl)
+const {
+  access_token,
+  refresh_token,
+  expires_in,   // 600 — access token lasts 10 minutes
+  token_type,   // 'Bearer'
+} = await tokenResponse.json()
 ```
 
-### If the user cancelled — <span style="color: #3b82f6; padding-right: 5px;">POST</span> `/dofail`
+```python [Python]
+token_response = httpx.post(
+    f"{ISSUER}/token",
+    data={
+        "grant_type":            "authorization_code",
+        "code":                  code,
+        "redirect_uri":          REDIRECT_URI,
+        "code_verifier":         code_verifier,     # from Step 2
+        "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+        "client_assertion":      build_client_assertion(),
+    },
+    # cert=("transport.crt", "transport.key"),
+)
 
-This instructs the Hub to redirect the user back to the TPP with an OAuth `access_denied` error.
+tokens        = token_response.json()
+access_token  = tokens["access_token"]
+refresh_token = tokens["refresh_token"]
+expires_in    = tokens["expires_in"]   # 600 — access token lasts 10 minutes
+```
 
-```typescript
-const failResponse = await fetch(`${HUB_AUTH_SERVER_BASE}/dofail`, {
-  method: 'POST',
+:::
+
+Store both tokens securely. The **access token** expires in **10 minutes**; the **refresh token** remains valid for the lifetime of the consent.
+
+::: tip Token storage
+Never store tokens in `localStorage`. Use `httpOnly` cookies or a server-side session store. See [Tokens & Assertions](/tech/tpp-standards/security/tokens) for the full token lifecycle and expiry guidance.
+:::
+
+## Calling the Account APIs
+
+### Step 8 - GET /accounts
+
+With a valid access token, retrieve all accounts the user consented to share. Include `x-fapi-interaction-id` on every request, and when the customer is present also send `x-fapi-customer-ip-address` and `x-customer-user-agent` and  `x-fapi-auth-date` if the customer has been authenticated. See [Request Headers](/tech/tpp-standards/security/request-headers).
+
+::: code-group
+
+```typescript [Node.js]
+import crypto from 'node:crypto'
+
+const LFI_API_BASE = process.env.LFI_API_BASE_URL!  // resource server base URL from .well-known
+
+const accountsResponse = await fetch(`${LFI_API_BASE}/open-finance/v2.1/accounts`, {
   headers: {
-    Authorization: `Bearer ${hubAccessToken}`,
-    'Content-Type': 'application/json',
+    Authorization:                `Bearer ${access_token}`,
+    'x-fapi-interaction-id':      crypto.randomUUID(),
+    'x-fapi-auth-date':           lastCustomerAuthDate,   // RFC 7231 — last time user authenticated with TPP
+    'x-fapi-customer-ip-address': customerIpAddress,      // customer's IP address
+    // 'x-customer-user-agent':   req.headers['user-agent'],
   },
-  body: JSON.stringify({
-    consentId,
-    errorCode: 'access_denied',
-    errorDescription: 'User cancelled the consent authorization.',
-  }),
   // agent: new https.Agent({ cert: transportCert, key: transportKey }),
 })
 
-const { redirectUrl } = await failResponse.json()
+const { Data: { Account: accounts } } = await accountsResponse.json()
 
-res.redirect(redirectUrl)
+// Store the AccountId(s) for sub-resource queries
+const accountId = accounts[0].AccountId
 ```
 
-::: warning
-Always redirect the user after calling `/doconfirm` or `/dofail`. Leaving the user on the consent screen without redirecting will result in a broken TPP experience.
+```python [Python]
+import uuid
+
+accounts_response = httpx.get(
+    f"{LFI_API_BASE}/open-finance/v2.1/accounts",
+    headers={
+        "Authorization":                f"Bearer {access_token}",
+        "x-fapi-interaction-id":        str(uuid.uuid4()),
+        "x-fapi-auth-date":             last_customer_auth_date,  # RFC 7231 — last time user authenticated with TPP
+        "x-fapi-customer-ip-address":   customer_ip_address,      # customer's IP address
+        # "x-customer-user-agent":      request.headers.get("user-agent"),
+    },
+    # cert=("transport.crt", "transport.key"),
+)
+
+accounts   = accounts_response.json()["Data"]["Account"]
+account_id = accounts[0]["AccountId"]
+```
+
 :::
 
+See the [GET /accounts](/tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts) API reference for the full response schema.
 
+### Step 9 - GET /accounts/{AccountId}/balances
 
-## Step 6 — Serving Resource API Requests
+Use a stored `AccountId` to fetch data from a specific account's sub-resources. Each endpoint requires the matching `Read*` permission in your consent. Apply the same FAPI headers as Step 8.
 
-Once the TPP has exchanged the authorization code for an access token, it will start calling the account data endpoints via the Hub. The Hub validates the token and routes each request to your resource server.
+::: code-group
 
-Your resource server receives standard HTTP requests — the Hub injects the access token as a Bearer token in the Authorization header, and presents its mTLS client certificate.
-
-### What you must implement
-
-| Endpoint | Description |
-|---|---|
-| `GET /open-finance/v2.1/accounts` | Returns all accounts linked to the authorized consent |
-| `GET /open-finance/v2.1/accounts/{AccountId}` | Returns details for a specific account |
-| `GET /open-finance/v2.1/accounts/{AccountId}/balances` | Returns current balances |
-| `GET /open-finance/v2.1/accounts/{AccountId}/transactions` | Returns transaction history |
-| `GET /open-finance/v2.1/accounts/{AccountId}/beneficiaries` | Returns saved payees |
-| `GET /open-finance/v2.1/accounts/{AccountId}/direct-debits` | Returns direct debits |
-| `GET /open-finance/v2.1/accounts/{AccountId}/standing-orders` | Returns standing orders |
-| `GET /open-finance/v2.1/accounts/{AccountId}/scheduled-payments` | Returns scheduled payments |
-| `GET /open-finance/v2.1/accounts/{AccountId}/statements` | Returns statements |
-| `GET /open-finance/v2.1/parties` | Returns the account holder's party information |
-
-### Validating inbound requests
-
-For each request your resource server receives from the Hub:
-
-```typescript
-// 1. Verify mTLS — confirm the client certificate matches the Hub's registered cert
-// 2. Validate the Bearer token
-const payload = await verifyJwt(bearerToken, {
-  issuer: HUB_TOKEN_ISSUER,
-  audience: YOUR_LFI_RESOURCE_SERVER_URL,
-})
-
-// 3. Extract consentId and check it is Authorized
-const { consentId, scope, sub } = payload
-
-// 4. Verify the requested AccountId is linked to this consent
-const consent = await getConsentFromCache(consentId)
-if (!consent.AccountIds.includes(accountId)) {
-  return res.status(403).json({ error: 'account_not_linked' })
-}
-```
-
-### Response format
-
-All responses must follow the UAE Open Finance v2.1 JSON schema. Refer to the [API Hub Specifications — Data Sharing](/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/) for the full response schemas.
-
-```json
-{
-  "Data": {
-    "Account": [
-      {
-        "AccountId": "acc-00001",
-        "Currency": "AED",
-        "AccountType": "Personal",
-        "AccountSubType": "CurrentAccount",
-        "Nickname": "My Current Account",
-        "Account": [
-          {
-            "SchemeName": "UAE.IBAN",
-            "Identification": "AE070331234567890123456"
-          }
-        ]
-      }
-    ]
-  },
-  "Links": {
-    "Self": "https://api.yourbank.ae/open-finance/v2.1/accounts"
-  },
-  "Meta": {
-    "TotalPages": 1
+```typescript [Node.js]
+const balancesResponse = await fetch(
+  `${LFI_API_BASE}/open-finance/v2.1/accounts/${accountId}/balances`,
+  {
+    headers: {
+      Authorization:                `Bearer ${access_token}`,
+      'x-fapi-interaction-id':      crypto.randomUUID(),
+      'x-fapi-auth-date':           lastCustomerAuthDate,
+      'x-fapi-customer-ip-address': customerIpAddress,
+      // 'x-customer-user-agent':   req.headers['user-agent'],
+    },
+    // agent: new https.Agent({ cert: transportCert, key: transportKey }),
   }
+)
+
+const { Data: { Balance } } = await balancesResponse.json()
+```
+
+```python [Python]
+balances_response = httpx.get(
+    f"{LFI_API_BASE}/open-finance/v2.1/accounts/{account_id}/balances",
+    headers={
+        "Authorization":                f"Bearer {access_token}",
+        "x-fapi-interaction-id":        str(uuid.uuid4()),
+        "x-fapi-auth-date":             last_customer_auth_date,
+        "x-fapi-customer-ip-address":   customer_ip_address,
+        # "x-customer-user-agent":      request.headers.get("user-agent"),
+    },
+    # cert=("transport.crt", "transport.key"),
+)
+
+balances = balances_response.json()["Data"]["Balance"]
+```
+
+:::
+
+All available sub-resources and their required permissions:
+
+| Endpoint | Required Permission | API Reference |
+|----------|---------------------|---------------|
+| `/accounts/{AccountId}/balances` | `ReadBalances` | [reference](/tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts-AccountId-balances) |
+| `/accounts/{AccountId}/transactions` | `ReadTransactionsBasic` | [reference](/tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts-AccountId-transactions) |
+| `/accounts/{AccountId}/beneficiaries` | `ReadBeneficiariesBasic` | [reference](/tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts-AccountId-beneficiaries) |
+| `/accounts/{AccountId}/direct-debits` | `ReadDirectDebits` | [reference](/tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts-AccountId-direct-debits) |
+| `/accounts/{AccountId}/standing-orders` | `ReadStandingOrdersBasic` | [reference](/tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts-AccountId-standing-orders) |
+| `/accounts/{AccountId}/scheduled-payments` | `ReadScheduledPaymentsBasic` | [reference](/tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts-AccountId-scheduled-payments) |
+| `/accounts/{AccountId}/statements` | `ReadStatements` | [reference](/tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts-AccountId-statements) |
+| `/accounts/{AccountId}/parties` | `ReadParty` | [reference](/tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts-AccountId-parties) |
+
+## Refresh Token Flow
+
+### Step 10 - Refreshing the Access Token
+
+Access tokens expire after **10 minutes**. Track the `expires_in` value returned by `/token` and refresh proactively rather than waiting for a `401 Unauthorized`. Each refresh requires a fresh client assertion.
+
+::: code-group
+
+```typescript [Node.js]
+async function refreshAccessToken(refreshToken: string) {
+  const response = await fetch(`${ISSUER}/token`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      grant_type:            'refresh_token',
+      refresh_token:         refreshToken,
+      client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+      client_assertion:      await buildClientAssertion(),
+    }),
+    // agent: new https.Agent({ cert: transportCert, key: transportKey }),
+  })
+
+  const { access_token, refresh_token: newRefreshToken, expires_in } = await response.json()
+
+  // Always replace both tokens — some servers rotate the refresh token on each use
+  return { access_token, refresh_token: newRefreshToken, expires_in }
 }
 ```
 
-::: info Pagination
-For endpoints that return lists (transactions, statements), implement pagination using the `Page` query parameter. The Hub forwards pagination parameters as-is from the TPP request.
+```python [Python]
+def refresh_access_token(refresh_token: str) -> dict:
+    response = httpx.post(
+        f"{ISSUER}/token",
+        data={
+            "grant_type":            "refresh_token",
+            "refresh_token":         refresh_token,
+            "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+            "client_assertion":      build_client_assertion(),
+        },
+        # cert=("transport.crt", "transport.key"),
+    )
+
+    tokens = response.json()
+    # Always replace both tokens — some servers rotate the refresh token on each use
+    return {
+        "access_token":  tokens["access_token"],
+        "refresh_token": tokens["refresh_token"],
+        "expires_in":    tokens["expires_in"],
+    }
+```
+
 :::
+
+::: warning Refresh token rotation
+Always replace both `access_token` and `refresh_token` from the response. If the Authorization Server rotates refresh tokens, continuing to use the old one will return `400 invalid_grant`.
+:::
+
+The refresh token remains valid until the consent's `ExpirationDateTime`. Once expired, the user must go through the full authorization flow again — send a new `/par` request with a new `ConsentId`.

@@ -2,6 +2,7 @@
 certs/
 confluence/
 internal_helpers/
+.claude/
 
 # Logs
 logs
