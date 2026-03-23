@@ -4,25 +4,9 @@ prev: false
 aside: false
 ---
 
-# ATMs - API Guide
+# ATMs — API Guide
 
-The ATM API exposes a single endpoint — `GET /atms` — that returns all ATM records published by a participating LFI. No user consent or redirect is required; the TPP authenticates directly using a client credentials grant.
-
-## Prerequisites
-
-Before calling the ATM API, ensure the following requirements are met:
-
-- **Registered [Application](/tech/tpp-standards/trust-framework/application)**
-  The application must be created within the Trust Framework and assigned the **BDSP role** as defined in [Roles](/tech/tpp-standards/trust-framework/roles).
-
-- **Valid [Transport Certificate](/tech/tpp-standards/trust-framework/certificates)**
-  An active transport certificate must be issued and registered in the Trust Framework to establish secure **mTLS communication** with the LFI.
-
-- **Valid [Signing Certificate](/tech/tpp-standards/trust-framework/certificates)**
-  An active signing certificate must be issued and registered in the Trust Framework for client authentication.
-
-- **Understanding of [Tokens & Assertions](/tech/tpp-standards/security/tokens)**
-  You should understand how client authentication works with `private_key_jwt` before calling the token endpoint.
+The ATM API exposes a single endpoint that returns all ATM records published by the LFI. This is open data — no customer consent is required. The Hub calls your resource server whenever a TPP or public consumer requests ATM data for your institution.
 
 ## API Sequence Flow
 
@@ -30,153 +14,110 @@ Before calling the ATM API, ensure the following requirements are met:
   <APIFlowsATMs/>
 </APIFlowViewer>
 
-## Step 1 — Build a Client Assertion
 
-The ATM API uses the OAuth 2.0 **client credentials** grant with `scope=atm`.
+## <span style="color: #22c55e; padding-right: 5px;">GET</span> `/atm`
 
-Use the [`signJWT()`](/tech/tpp-standards/security/fapi/message-signing#signing-a-jwt) helper to build a short-lived JWT asserting your application's identity:
+### Request headers
 
-::: code-group
+| Header | Required | Description |
+|--------|----------|-------------|
+| `o3-provider-id` | Yes | Identifier for your LFI registered in the Hub |
+| `o3-caller-org-id` | Yes | Organisation ID of the TPP making the underlying request |
+| `o3-caller-client-id` | Yes | OIDC client ID of the TPP application |
+| `o3-caller-software-statement-id` | Yes | Software statement ID of the TPP application |
+| `o3-api-uri` | Yes | The parameterised URL of the API being called by the TPP |
+| `o3-api-operation` | Yes | The HTTP method of the operation carried out by the TPP (e.g. `GET`) |
+| `o3-ozone-interaction-id` | Yes | Hub-generated interaction ID. Equals `o3-caller-interaction-id` if the TPP provided one |
+| `o3-caller-interaction-id` | No | Interaction ID passed in by the TPP, if present |
 
-```typescript [Node.js]
-import crypto from 'node:crypto'
-import { signJWT } from './sign-jwt'
+### Response
 
-const CLIENT_ID = process.env.CLIENT_ID!
-const ISSUER    = process.env.LFI_ISSUER!   // from the LFI's .well-known/openid-configuration
+`Content-Type: application/json`
 
-const clientAssertion = await signJWT({
-  iss: CLIENT_ID,
-  sub: CLIENT_ID,
-  aud: ISSUER,
-  jti: crypto.randomUUID(),
-})
-```
+Return `200` with a `data` array containing one record per ATM. Return an empty array if no ATMs are registered — do not return `404`.
 
-```python [Python]
-import os, uuid
-from sign_jwt import sign_jwt
+#### `data[]` — ATM record
 
-CLIENT_ID = os.environ["CLIENT_ID"]
-ISSUER    = os.environ["LFI_ISSUER"]   # from the LFI's .well-known/openid-configuration
+##### Required fields
 
-client_assertion = sign_jwt({
-    "iss": CLIENT_ID,
-    "sub": CLIENT_ID,
-    "aud": ISSUER,
-    "jti": str(uuid.uuid4()),
-})
-```
+| Field | Type | Description |
+|-------|------|-------------|
+| `LFIId` | string | Your LFI identifier as registered in the Hub (1–36 characters) |
+| `LFIBrandId` | string | Brand identifier for the LFI (1–140 characters) |
+| `ATMId` | string | Unique identifier for the ATM (1–36 characters) |
+| `SupportedCurrencies` | string[] | ISO 4217 currency codes the ATM dispenses or accepts (at least one required) |
+| `Location` | object | Physical location of the ATM — see below |
 
-:::
+##### `Location`
 
-See [Client Assertion](/tech/tpp-standards/security/tokens/client-assertion) for the full claims reference.
+Both `PostalAddress` and `GeoLocation` are required.
 
-## Step 2 — Token Request
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `PostalAddress` | object | Yes | Structured postal address — see below |
+| `GeoLocation` | object | Yes | GPS coordinates — see below |
+| `LocationCategory` | string[] | No | One or more of: `BranchExternal`, `BranchInternal`, `BranchLobby`, `RetailerOutlet`, `RemoteUnit`, `DriveThru`, `Other` |
+| `Site` | object | No | `Identification` and `Name` of the site |
 
-POST to the LFI's token endpoint with `scope=atm`:
+##### `PostalAddress`
 
-::: code-group
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `AddressLine` | string[] | Yes | 1–7 free-form address lines |
+| `TownName` | string | No | City or town |
+| `CountrySubDivision` | string | No | UAE emirate: `AbuDhabi`, `Dubai`, `Sharjah`, `Ajman`, `UmmAlQuwain`, `RasAlKhaimah`, `Fujairah` |
+| `Country` | string | No | ISO 3166-1 alpha-2 country code (e.g. `AE`) |
+| `StreetName` | string | No | Street name |
+| `BuildingNumber` | string | No | Building number |
+| `BuildingName` | string | No | Building name |
+| `Floor` | string | No | Floor within the building |
+| `DistrictName` | string | No | District or neighbourhood |
+| `PostBox` | string | No | PO box |
+| `AddressType` | string | No | `Business` or `Other` |
 
-```typescript [Node.js]
-const TOKEN_ENDPOINT = process.env.LFI_TOKEN_ENDPOINT!
+##### `GeoLocation`
 
-const params = new URLSearchParams({
-  grant_type:            'client_credentials',
-  scope:                 'atm',
-  client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
-  client_assertion:      clientAssertion,
-})
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `Latitude` | string | Yes | Latitude of the ATM |
+| `Longitude` | string | Yes | Longitude of the ATM |
 
-const tokenResponse = await fetch(TOKEN_ENDPOINT, {
-  method:  'POST',
-  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  body:    params.toString(),
-  // agent: new https.Agent({ cert: transportCert, key: transportKey }),
-})
+##### Optional fields
 
-const { access_token } = await tokenResponse.json()
-```
+| Field | Type | Description |
+|-------|------|-------------|
+| `SupportedLanguages` | string[] | Languages supported on the ATM interface |
+| `Services` | string[] | Services available: `Balance`, `BillPayments`, `CashDeposits`, `CharityDonation`, `ChequeDeposits`, `CashWithdrawal`, `EnvelopeDeposit`, `FastCash`, `MobileBankingRegistration`, `MobilePaymentRegistration`, `MobilePhoneTopUp`, `OrderStatement`, `PINActivation`, `PINChange`, `PINUnblock`, `MiniStatement`, `Other`, or a namespaced extension value |
+| `Accessibility` | string[] | Accessibility features: `AudioCashMachine`, `AutomaticDoors`, `ExternalRamp`, `InductionLoop`, `InternalRamp`, `LevelAccess`, `LowerLevelCounter`, `WheelchairAccess`, `Other` |
+| `IsAccess24Hour` | boolean | Whether the ATM is accessible 24 hours |
+| `Availability` | object | `Status` (`Available`, `Unavailable`, `UnderMaintenance`) and `OperatingHours` (array of `Days`, `OpenTime`, `CloseTime`) |
+| `MinimumPossibleAmount` | object | Minimum transaction amount (`Amount` and `Currency`) |
+| `MaximumPossibleAmount` | object | Maximum transaction amount (`Amount` and `Currency`) |
+| `Branch` | object | Associated branch identifier (`SchemeName`: `BICFI` or `Other`, and `Identification`) |
+| `ATMFee` | array | Fee records — each requires `Type`; optionally includes `Amount`, `Percentage`, `ApplicableNetworks`, `Conditions` |
+| `Notes` | string[] | Free-text notes about the ATM |
+| `Links` | object | `FeesUri` — URL to a full fee schedule |
 
-```python [Python]
-import httpx, os
+##### `ATMFee.Type` values
 
-token_endpoint = os.environ["LFI_TOKEN_ENDPOINT"]
+`Withdrawal`, `BalanceInquiry`, `MiniStatement`, `PINChange`, `CashDeposit`, `CardlessWithdrawal`, `InternationalWithdrawal`, `CrossBankWithdrawal`, `OverLimit`, `DeclinedTransaction`, `EmergencyCashWithdrawal`, `ForeignATMUsage`, `ServiceDenial`, `FastCashWithdrawal`, `NetworkSurcharge`, `ForeignExchange`, `DomesticCrossBank`, `InternationalCrossBank`, `Other`
 
-token_response = httpx.post(
-    token_endpoint,
-    data={
-        "grant_type":            "client_credentials",
-        "scope":                 "atm",
-        "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-        "client_assertion":      client_assertion,
-    },
-    # cert=("transport.crt", "transport.key"),
-)
+#### `meta`
 
-access_token = token_response.json()["access_token"]
-```
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `LastUpdatedDateTime` | string (date-time) | Yes | Timestamp of the most recent update to the ATM data |
+| `TotalRecords` | integer | Yes | Total number of ATM records returned |
 
-:::
-
-## Step 3 — GET /atms
-
-Call the endpoint with the access token. Include `x-fapi-interaction-id` on every request. See [Request Headers](/tech/tpp-standards/security/request-headers).
-
-::: code-group
-
-```typescript [Node.js]
-import crypto from 'node:crypto'
-
-const API_BASE = process.env.LFI_API_BASE!
-
-const response = await fetch(`${API_BASE}/open-finance/atm/v2.1/atms`, {
-  method: 'GET',
-  headers: {
-    'Authorization':         `Bearer ${access_token}`,
-    'x-fapi-interaction-id': crypto.randomUUID(),
-  },
-  // agent: new https.Agent({ cert: transportCert, key: transportKey }),
-})
-
-const { Data, Meta } = await response.json()
-// Data — array of ATM records
-// Meta.TotalRecords — total count
-// Meta.LastUpdatedDateTime — when the data was last refreshed
-```
-
-```python [Python]
-import httpx, uuid, os
-
-api_base = os.environ["LFI_API_BASE"]
-
-response = httpx.get(
-    f"{api_base}/open-finance/atm/v2.1/atms",
-    headers={
-        "Authorization":         f"Bearer {access_token}",
-        "x-fapi-interaction-id": str(uuid.uuid4()),
-    },
-    # cert=("transport.crt", "transport.key"),
-)
-
-payload      = response.json()
-atms         = payload["Data"]
-total        = payload["Meta"]["TotalRecords"]
-last_updated = payload["Meta"]["LastUpdatedDateTime"]
-```
-
-:::
-
-### Response structure
+#### Example response
 
 ```json
 {
-  "Data": [
+  "data": [
     {
-      "ATMId": "ATM-001",
-      "LFIId": "ADCB",
-      "LFIBrandId": "ADCB",
-      "SupportedCurrencies": ["AED"],
+      "LFIId": "lfi-001",
+      "LFIBrandId": "First National Bank UAE",
+      "ATMId": "atm-dxb-001",
       "SupportedLanguages": ["en", "ar"],
       "Services": ["CashWithdrawal", "Balance", "MiniStatement", "PINChange"],
       "Accessibility": ["WheelchairAccess", "AudioCashMachine"],
@@ -184,28 +125,70 @@ last_updated = payload["Meta"]["LastUpdatedDateTime"]
       "Availability": {
         "Status": "Available"
       },
-      "MinimumPossibleAmount": { "Amount": "20.00", "Currency": "AED" },
-      "MaximumPossibleAmount": { "Amount": "5000.00", "Currency": "AED" },
+      "SupportedCurrencies": ["AED"],
+      "MinimumPossibleAmount": {
+        "Amount": "20",
+        "Currency": "AED"
+      },
+      "MaximumPossibleAmount": {
+        "Amount": "5000",
+        "Currency": "AED"
+      },
       "Location": {
         "LocationCategory": ["BranchExternal"],
         "PostalAddress": {
-          "StreetName": "Corniche Road",
-          "TownName": "Abu Dhabi",
-          "CountrySubDivision": "AbuDhabi",
+          "AddressLine": ["Sheikh Zayed Road", "Al Quoz"],
+          "TownName": "Dubai",
+          "CountrySubDivision": "Dubai",
           "Country": "AE"
         },
         "GeoLocation": {
-          "Latitude": "24.4539",
-          "Longitude": "54.3773"
+          "Latitude": "25.1972",
+          "Longitude": "55.2796"
         }
-      }
+      },
+      "ATMFee": [
+        {
+          "Type": "CrossBankWithdrawal",
+          "Amount": {
+            "Amount": "2.00",
+            "Currency": "AED"
+          }
+        }
+      ]
     }
   ],
-  "Meta": {
-    "TotalRecords": 1,
-    "LastUpdatedDateTime": "2025-03-21T08:00:00Z"
+  "meta": {
+    "LastUpdatedDateTime": "2025-03-01T08:00:00Z",
+    "TotalRecords": 1
   }
 }
 ```
 
-See the [GET /atms](./open-api/atms) API reference for the full response schema.
+#### Error responses
+
+Only return an error when the Hub's request itself is invalid or a server condition prevents you from responding. All error bodies must include `errorCode` and `errorMessage`.
+
+##### `400` — Bad request
+
+| `errorCode` | When to use |
+|-------------|-------------|
+| `Body.InvalidFormat` | Request is malformed or does not match the schema |
+| `Resource.InvalidFormat` | A request parameter is present but syntactically invalid |
+| `GenericRecoverableError` | Recoverable validation error not covered above — Hub may retry |
+| `GenericError` | Unrecoverable validation error not covered above |
+
+##### `403` — Forbidden
+
+| `errorCode` | When to use |
+|-------------|-------------|
+| `AccessToken.InvalidScope` | The Hub's token does not include the required scope |
+| `GenericRecoverableError` | Recoverable access failure not covered above |
+| `GenericError` | Unrecoverable access failure not covered above |
+
+##### `500` — Internal server error
+
+| `errorCode` | When to use |
+|-------------|-------------|
+| `GenericRecoverableError` | Transient server error — Hub may retry after a delay |
+| `GenericError` | Unrecoverable server error |

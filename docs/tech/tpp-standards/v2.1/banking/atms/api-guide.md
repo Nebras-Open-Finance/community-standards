@@ -6,7 +6,7 @@ aside: false
 
 # ATMs - API Guide
 
-The ATM API exposes a single endpoint — `GET /atms` — that returns all ATM records published by a participating LFI. No user consent or redirect is required; the TPP authenticates directly using a client credentials grant.
+The ATM API exposes a single endpoint — `GET /atms` — that returns the details of all ATMs managed by the LFI.
 
 ## Prerequisites
 

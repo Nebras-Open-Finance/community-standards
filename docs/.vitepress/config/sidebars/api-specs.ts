@@ -8,23 +8,31 @@ const BASE = `/tech/api-specs/${CURRENT_VERSION}`
 export const apiSpecsSidebar: DefaultTheme.SidebarItem[] = [
     {
         text: 'TPP - Standards',
+        collapsed: true,
         items: [
             {
-                text: 'Trust Framework', items: [
+                text: 'Trust Framework',
+                collapsed: true,
+                items: [
                     apiRef('GET', '/participants', `${BASE}/trust-framework/open-api/participants`)]
             },
             {
-                text: 'Registration', items: [
+                text: 'Registration',
+                collapsed: true,
+                items: [
                     apiRef('POST', '/tpp-registration', `${BASE}/registration/open-api/tpp-registration`),
                 ]
             },
             {
-                text: 'Token', items: [
+                text: 'Token',
+                collapsed: true,
+                items: [
                     apiRef('POST', '/token', `${BASE}/security/tokens/open-api/token`),
                 ]
             },
             {
                 text: 'Consent',
+                collapsed: true,
                 items: [
                     {
                         text: 'Create Consent',
@@ -52,6 +60,7 @@ export const apiSpecsSidebar: DefaultTheme.SidebarItem[] = [
             },
             {
                 text: 'Bank Data Sharing',
+                collapsed: true,
                 items: [
                     apiRef('GET', '/accounts', `${BASE}/${CURRENT_VERSION}/banking/data-sharing/open-api/accounts`),
                     apiRef('GET', '/accounts/{AccountId}', `${BASE}/${CURRENT_VERSION}/banking/data-sharing/open-api/accounts-AccountId`),
@@ -68,6 +77,7 @@ export const apiSpecsSidebar: DefaultTheme.SidebarItem[] = [
             },
             {
                 text: 'Bank Service Initation',
+                collapsed: true,
                 items: [
                     apiRef('POST', '/payments', `${BASE}/${CURRENT_VERSION}/banking/service-initiation/open-api/payments`),
                     apiRef('GET', '/payments/{PaymentId}', `${BASE}/${CURRENT_VERSION}/banking/service-initiation/open-api/payments-PaymentId`),
@@ -77,10 +87,26 @@ export const apiSpecsSidebar: DefaultTheme.SidebarItem[] = [
             },
             {
                 text: 'Confirmation of Payee',
+                collapsed: true,
                 items: [
-                            apiRef('POST', '/discovery', `${BASE}/${CURRENT_VERSION}/banking/confirmation-of-payee/open-api/discovery`),
-                            apiRef('POST', '/confirmation', `${BASE}/${CURRENT_VERSION}/banking/confirmation-of-payee/open-api/confirmation`),
-                        ],
+                    apiRef('POST', '/discovery', `${BASE}/${CURRENT_VERSION}/banking/confirmation-of-payee/open-api/discovery`),
+                    apiRef('POST', '/confirmation', `${BASE}/${CURRENT_VERSION}/banking/confirmation-of-payee/open-api/confirmation`),
+                ],
+            },
+            {
+                text: 'ATMs',
+                collapsed: true,
+                items: [
+                  apiRef('GET', '/atms', `${BASE}/${CURRENT_VERSION}/banking/atms/open-api/atms`),
+                ],
+            },
+            {
+                text: 'Events & Webhooks',
+                collapsed: true,
+                items: [
+                    apiRef('POST', '[consent status]', `${BASE}/${CURRENT_VERSION}/banking/confirmation-of-payee/open-api/discovery`),
+                    apiRef('POST', '[payment status]', `${BASE}/${CURRENT_VERSION}/banking/confirmation-of-payee/open-api/confirmation`),
+                ],
             },
         ]
     }

@@ -248,14 +248,13 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
             text: 'ATMs',
             collapsed: true,
             items: [
-              { text: 'Overview', link: `${BASE}/${VERSION}/banking/atms` },
               { text: 'Requirements', link: `${BASE}/${VERSION}/banking/atms/requirements` },
               { text: 'API Guide', link: `${BASE}/${VERSION}/banking/atms/api-guide` },
               {
                 text: 'API Reference',
                 collapsed: true,
                 items: [
-
+                    apiRef('GET', '/atm', `${BASE}/${VERSION}/banking/atms/open-api/atm`),
                 ],
               },
             ],
@@ -277,7 +276,6 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         collapsed: true,
         items: [
           { text: 'Overview', link: `${BASE}/production/testing-certification/overview` },
-          { text: 'TrustFramework Checklist', link: `${BASE}/production/testing-certification/readiness-checklist` },
           {
             text: 'Functional Evidence',
             collapsed: true,

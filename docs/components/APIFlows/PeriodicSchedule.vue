@@ -39,12 +39,15 @@ sequenceDiagram
         TPP->>+Hub: POST /payments
         Hub->>LFI: POST /payments
         LFI-->>Hub: 201 {PaymentId}
-         Hub-->>-TPP: 201 {PaymentId, Status: Pending}
+        Hub-->>-TPP: 201 {PaymentId, Status: Pending}
+
+        LFI-->>+Hub: PATCH /payment-log/{paymentId} {Status: AcceptedWithoutPosting}
+        Hub-->>-TPP: POST (Event - Payment Initiation Request) {Status: AcceptedWithoutPosting}
 
         TPP->>+Hub: GET /payments/{paymentId}
         Hub->>LFI: GET /payments/{paymentId}
-        LFI-->>Hub: 200 {Status: AcceptedSettlementCompleted}
-        Hub-->>-TPP: 200 {Status: AcceptedSettlementCompleted}
+        LFI-->>Hub: 200 {Status: AcceptedWithoutPosting}
+        Hub-->>-TPP: 200 {Status: AcceptedWithoutPosting}
     end
 `
 

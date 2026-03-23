@@ -36,6 +36,8 @@ import APIFlowsOnDemand from '../../components/APIFlows/OnDemand.vue'
 import APIFlowsPeriodicSchedule from '../../components/APIFlows/PeriodicSchedule.vue'
 import APIFlowsDefinedSchedule from '../../components/APIFlows/DefinedSchedule.vue'
 import APIFlowsDelegatedSCA from '../../components/APIFlows/DelegatedSCA.vue'
+import APIFlowPaymentStatusEvent from '../../components/APIFlows/PaymentStatusEvent.vue'
+import APIFlowConsentEvent from '../../components/APIFlows/ConsentEvent.vue'
 import APIFlowsConsentFlow from '../../components/APIFlows/ConsentFlow.vue'
 import APIFlowsConfirmationOfPayee from '../../components/APIFlows/ConfirmationOfPayee.vue'
 import APIFlowsMultiAuthorization from '../../components/APIFlows/MultiAuthorization.vue'
@@ -114,6 +116,8 @@ export default {
     app.component('APIFlowsPeriodicSchedule', APIFlowsPeriodicSchedule)
     app.component('APIFlowsDefinedSchedule', APIFlowsDefinedSchedule)
     app.component('APIFlowsDelegatedSCA', APIFlowsDelegatedSCA)
+    app.component('APIFlowPaymentStatusEvent', APIFlowPaymentStatusEvent)
+    app.component('APIFlowConsentEvent', APIFlowConsentEvent)
     app.component('APIFlowsConsentFlow', APIFlowsConsentFlow)
     app.component('APIFlowsConfirmationOfPayee', APIFlowsConfirmationOfPayee)
     app.component('APIFlowsMultiAuthorization', APIFlowsMultiAuthorization)

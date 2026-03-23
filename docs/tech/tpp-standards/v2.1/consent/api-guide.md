@@ -165,11 +165,62 @@ refresh_token = tokens["refresh_token"]
 
 The access token is consent-bound — it carries the scope and `ConsentId` granted during authorization. See [Tokens & Assertions](/tech/tpp-standards/security/tokens) for token lifetimes and the refresh flow.
 
-## Retrieving the Consent
+When obtaining an access token you also recieve the current state of the consent (including the status) to confirm it has moved to the `Authorized` state before making resource API calls. 
 
-After obtaining an access token, retrieve the consent to confirm it has moved to the `Authorized` state before making resource API calls. The endpoint differs by consent type.
+## Maintaining Consent State
 
-### Bank Data Sharing
+After a consent is created, your application needs to track its status over time. There are two approaches:
+
+### Option 1 — Subscribe to Webhook Events (recommended)
+
+When a consent is created with subscription.Webhook.IsActive: true, on every consent status changes — for example, when a User revokes, or the consent expires — the API Hub delivers a [Consent Status Event](/tech/tpp-standards/v2.1/webhooks/consent-status/api-guide) to your registered webhook URL. This avoids the need to poll and ensures your application reacts to status changes in real time.
+
+Note as Events are delivered as JWEs this approach requires a valid **Encryption Certificate** to be on your **Application**. See the [Consent Status Event — API Guide](/tech/tpp-standards/v2.1/webhooks/consent-status/api-guide) for the full flow.
+
+### Option 2 — Poll the Consent Endpoint
+
+If you need to check the current state of a consent on demand, call the consent endpoint directly. Both endpoints require a **client credentials** access token — not the user's consent-bound access token.
+
+#### Obtaining a client credentials token
+
+::: code-group
+
+```typescript [Node.js]
+const params = new URLSearchParams({
+  grant_type:            'client_credentials',
+  scope:                 'accounts',   // or 'payments' for service initiation
+  client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+  client_assertion:      await buildClientAssertion(),
+})
+
+const tokenResponse = await fetch(`${ISSUER}/token`, {
+  method:  'POST',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  body:    params.toString(),
+  // agent: new https.Agent({ cert: transportCert, key: transportKey }),
+})
+
+const { access_token } = await tokenResponse.json()
+```
+
+```python [Python]
+token_response = httpx.post(
+    f"{ISSUER}/token",
+    data={
+        "grant_type":            "client_credentials",
+        "scope":                 "accounts",   # or "payments" for service initiation
+        "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+        "client_assertion":      build_client_assertion(),
+    },
+    # cert=("transport.crt", "transport.key"),
+)
+
+access_token = token_response.json()["access_token"]
+```
+
+:::
+
+#### Bank Data Sharing
 
 ::: code-group
 
@@ -210,7 +261,9 @@ if status != "Authorized":
 
 See [GET /account-access-consents/{ConsentId}](/tech/tpp-standards/v2.1/consent/open-api/account-access-consents-ConsentId) for the full response schema.
 
-### Service Initiation
+You can also retrieve all consents created under a long-lived base consent by passing `baseConsentId` as a query parameter to [GET /account-access-consents](/tech/tpp-standards/v2.1/consent/open-api/account-access-consents).
+
+#### Service Initiation
 
 ::: code-group
 
@@ -248,6 +301,8 @@ if status != "Authorized":
 :::
 
 See [GET /payment-consents/{ConsentId}](/tech/tpp-standards/v2.1/consent/open-api/payment-consents-ConsentId) for the full response schema.
+
+You can also retrieve all payment consents under a long-lived base consent by passing `baseConsentId` as a query parameter to [GET /payment-consents](/tech/tpp-standards/v2.1/consent/open-api/payment-consents).
 
 ::: info Consent States
 A consent moves through a defined lifecycle — `AwaitingAuthorization` → `Authorized` → `Consumed` / `Expired` / `Revoked`. See [Consent Overview](./index) for the full state machine and transition rules.

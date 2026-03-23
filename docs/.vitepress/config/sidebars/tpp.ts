@@ -113,6 +113,7 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
           { text: 'Preparing /par request JWT', link: `${BASE}/security/fapi/request-jwt` },
           { text: 'Message Signing', link: `${BASE}/security/fapi/message-signing` },
           { text: 'Message Encryption', link: `${BASE}/security/fapi/message-encryption` },
+          { text: 'Receiving Event Notifications', link: `${BASE}/security/fapi/receiving-events` },
           { text: 'Handling Authorization Callbacks', link: `${BASE}/security/fapi/handling-callback` },
         ],
       },
@@ -311,21 +312,6 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
         ],
       },
       {
-        text: 'ATMs',
-        collapsed: true,
-        items: [
-          { text: 'Overview', link: `${BASE}/${VERSION}/banking/atms` },
-          { text: 'API Guide', link: `${BASE}/${VERSION}/banking/atms/api-guide` },
-          {
-            text: 'API Reference',
-            collapsed: true,
-            items: [
-              apiRef('GET', '/atms', `${BASE}/${VERSION}/banking/atms/open-api/atms`),
-            ],
-          },
-        ],
-      },
-      {
         text: 'Products and Leads',
         collapsed: true,
         items: [
@@ -343,7 +329,58 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
           },
         ],
       },
+      {
+        text: 'ATMs',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/banking/atms` },
+          { text: 'API Guide', link: `${BASE}/${VERSION}/banking/atms/api-guide` },
+          {
+            text: 'API Reference',
+            collapsed: true,
+            items: [
+              apiRef('GET', '/atms', `${BASE}/${VERSION}/banking/atms/open-api/atms`),
+            ],
+          },
+        ],
+      },
     ],
+  },
+
+  {
+    text: 'Event Notifications & Webhooks',
+    collapsed: true,
+    items: [
+      { text: 'Overview', link: `${BASE}/${VERSION}/webhooks/` },
+      {
+        text: 'Consent Status',
+        collapsed: true,
+        items: [
+          { text: 'API Guide', link: `${BASE}/${VERSION}/webhooks/consent-status/api-guide` },
+          { 
+            text: 'API Referrence',
+            collapsed: true,
+            items: [
+              apiRef('POST', '[consent status]', `${BASE}/${VERSION}/webhooks/consent-status/open-api`),
+            ],
+          }
+        ]
+      },
+      {
+        text: 'Payment Status',
+        collapsed: true,
+        items: [
+          { text: 'API Guide', link: `${BASE}/${VERSION}/webhooks/payment-status/api-guide` },
+          { 
+            text: 'API Referrence',
+            collapsed: true,
+            items: [
+              apiRef('POST', '[payment status]', `${BASE}/${VERSION}/webhooks/payment-status/open-api`),
+            ],
+          }
+        ]
+      },
+    ]
   },
 
   {

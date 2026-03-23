@@ -67,6 +67,10 @@ const props = defineProps({
   filterSchema: {
     type: String,
     default: null // e.g., "AEBankServiceInitiation.AEDomesticPaymentPIIProperties"
+  },
+  patchSchemas: {
+    type: Object,
+    default: null // e.g., { AEWebhookEventTypes: { '$ref': '#/components/schemas/AEWebhookConsentedEventProperties' } }
   }
 })
 
@@ -152,13 +156,22 @@ onMounted(() => {
           components: props.hideSecurity
             ? { ...fullSpec.components, securitySchemes: undefined }
             : fullSpec.components,
-          paths: {
-            [displayKey]: pathObj
-          }
+          paths: pathObj
+            ? { [displayKey]: pathObj }
+            : fullSpec.paths
         };
       }
 
-      // 4️⃣ Initialize Redoc
+      // 4️⃣ Apply schema patches
+      if (props.patchSchemas && finalSpec.components?.schemas) {
+        for (const [name, override] of Object.entries(props.patchSchemas)) {
+          if (finalSpec.components.schemas[name] !== undefined) {
+            finalSpec.components.schemas[name] = override
+          }
+        }
+      }
+
+      // 5️⃣ Initialize Redoc
       window.Redoc.init(
         finalSpec,
         {
