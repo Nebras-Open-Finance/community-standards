@@ -1,25 +1,23 @@
-# Creating an Application
+# Application
 
-Within the Trust Framework, applications perform the **dual role of client and software statement** within the Open Finance ecosystem. Each application embodies the technical identity of a system integrating with other organisations and contains the essential data required to establish connections. As a software statement, it is a unique and verifiable declaration of the system's capabilities and intended actions, while as a client, it acts on behalf of the system to interact with other participants in the ecosystem.
+Within the Trust Framework, an application performs two closely related roles: **software statement** and **client**.
 
-## Walkthrough - Creating an Application
+As a software statement, the application contains the key information required to establish a trusted connection with other organisations. This includes:
+- the roles it is permitted to perform (e.g. BDSP, BSIP)
+- the organisation it belongs to
+- its approved capabilities and permissions
 
-<ClientOnly>
-  <Carousel :images="images1" />
-</ClientOnly>
+In this role, it defines the identity and permissions of the application as authorised within the ecosystem.
 
-## Your Client ID
+As a client, the same application becomes the active connection to another organisation (such as the API Hub). In this role, it:
+- is issued credentials (such as a client ID and certificates)
+- uses those credentials to make API calls and perform transactions
+- is registered with the API Hub
 
-Once your application is created, the Trust Framework assigns it a **Client ID** — a UUID that permanently identifies this application. You will use this value as `client_id`, `iss`, and `sub` in every JWT you sign, including Client Assertions and Request JWTs. Keep a note of it.
+In simple terms:
 
-<ImageViewer
-  src="/images/raidiam/client_id_spotlight.png"
-  alt="Client ID location in the Trust Framework application detail page"
-/>
+An application both defines what it is allowed to do and uses those permissions to interact with other participants, in line with the rules set by the Central Bank of the UAE.
 
-::: tip Where to find it later
-Your Client ID is always visible on the application detail page in the Trust Framework Directory. If you need to retrieve it again, navigate to your Organisation → Applications → select the application.
-:::
 
 ## Application Details
 
@@ -27,8 +25,9 @@ Each application must include the following details:
 
 | Feature | Description | Example |
 |---------|-------------|---------|
-| **Roles** | Functional roles assigned to the application, inherited from the parent organisation's registered roles. | `ASPSP`, `BSIP`, `BDSP` |
+| **Roles** | Functional roles assigned to the application, inherited from the parent organisation's registered roles. | `BSIP`, `BDSP` |
 | **Client Name** | The public-facing name of the application as registered in the Trust Framework. | `MyApp v1` |
 | **Version** | The current version of the application or software statement. | `1.0.3` |
 | **Federation Entity Management Type** | Specifies how the application's entity is managed within the federation (e.g., self-managed or delegated). | `self-managed` |
 | **Logo** | A PNG or JPEG image uploaded to represent the application. Used in portals and consent screens. | `logo.png` |
+| **Redirect URI** | Must be a valid HTTPS URI that complies with FAPI standards for redirection after authentication.<br><br>More information on Mobile app [Redirect URIs](../trust-framework/redirect-uri) | `https://app.example.com/callback` |

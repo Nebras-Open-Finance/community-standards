@@ -6,14 +6,14 @@ aside: false
 
 # Confirmation of Payee — User Experience
 
-You must display the Confirmation of Payee result faithfully aligned with the demo and examples below. You may not suppress, reorder, or alter the result as this could mislead the customer about whether the payee name matched. The customer must always be able to make an informed decision about whether to proceed with the payment based on the result shown.
+You must display the Confirmation of Payee result next to the Payees Name in the Authorization Page faithfully aligned with the demo and examples below.
 
- Your CoP screen must be submitted as part of CX certification prior to production.
+Your CoP screen must be submitted as part of CX certification prior to production.
 
 
 ## Interactive Demo
 
-Edit the `message.Data` fields returned by the LFI and see to change the signed JWS is embedded inside the `domestic_payment_pii` creditor block and watch the Consent and Authorisation page previews update live.
+Edit the `message.Data` fields and see to change the signed JWS is embedded inside the `domestic_payment_pii` creditor block and watch the Consent and Authorisation page previews update live.
 
 <div style="border: 1px solid #bfdbfe; border-radius: 10px; overflow: hidden; margin: 1.5rem 0; box-shadow: 0 2px 8px rgba(0,39,127,0.06);">
   <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 1rem; background: rgba(0,39,127,0.04); border-bottom: 1px solid #bfdbfe; flex-wrap: wrap; gap: 0.5rem;">

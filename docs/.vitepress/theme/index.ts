@@ -19,6 +19,7 @@ import ProtectedPageWrapper from '../../components/ProtectedPageWrapper.vue'
 import LiveAPIs from '../../components/LiveAPIs.vue'
 import EditableJson from '../../components/EditableJson.vue'
 import ErrataNotice from '../../components/ErrataNotice.vue'
+import OzoneConnectCompatibility from '../../components/OzoneConnectCompatibility.vue'
 import ConsentAuthLayout from '../../components/ConsentAuthLayout.vue'
 
 // Forms
@@ -41,6 +42,8 @@ import APIFlowsMultiAuthorization from '../../components/APIFlows/MultiAuthoriza
 import APIFlowsRefunds from '../../components/APIFlows/Refunds.vue'
 import APIFlowsATMs from '../../components/APIFlows/ATMs.vue'
 import APIFlowsTrustFramework from '../../components/APIFlows/TrustFramework.vue'
+import APIFlowsProductsLeads from '../../components/APIFlows/ProductsLeads.vue'
+import APIFlowsAPIHubArchitecture from '../../components/APIFlows/APIHubArchitecture.vue'
 
 
 // UIs
@@ -97,6 +100,7 @@ export default {
     app.component('LiveAPIs', LiveAPIs)
     app.component('EditableJson', EditableJson)
     app.component('ErrataNotice', ErrataNotice)
+    app.component('OzoneConnectCompatibility', OzoneConnectCompatibility)
     app.component('TPPPostmanScriptBuilder', TPPPostmanScriptBuilder)
     app.component('ConsentAuthLayout', ConsentAuthLayout)
     app.component('OnboardingOrganisationForm', OnboardingOrganisationForm)
@@ -116,6 +120,8 @@ export default {
     app.component('APIFlowsRefunds', APIFlowsRefunds)
     app.component('APIFlowsATMs', APIFlowsATMs)
     app.component('APIFlowsTrustFramework', APIFlowsTrustFramework)
+    app.component('APIFlowsProductsLeads', APIFlowsProductsLeads)
+    app.component('APIFlowsAPIHubArchitecture', APIFlowsAPIHubArchitecture)
 
     // UI
     app.component('ConsentBankDataSharing', ConsentBankDataSharing)

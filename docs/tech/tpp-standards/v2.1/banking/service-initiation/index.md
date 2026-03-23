@@ -51,9 +51,3 @@ There are several multi-payment consent types, each suited to different use case
 Delegated SCA is a variant of multi-payment consent where Strong Customer Authentication is performed by the TPP rather than the LFI. This enables a frictionless in-app payment experience — the customer authenticates once within the TPP's interface, and the LFI accepts that authentication for subsequent payments.
 
 Delegated SCA requires the TPP to hold an explicit delegation from the LFI and is subject to additional requirements. See [Delegated SCA](/tech/tpp-standards/v2.1/banking/service-initiation/domestic-payments/multi-payments/delegated-sca/requirements) for details.
-
-### Confirmation of Payee
-
-Before submitting a payment, TPPs should verify that the creditor account details provided by the user match the account holder registered at the LFI. Confirmation of Payee reduces the risk of misdirected payments and is a key fraud prevention control.
-
-See [Confirmation of Payee](/tech/tpp-standards/v2.1/banking/confirmation-of-payee/requirements) for requirements and integration guidance.

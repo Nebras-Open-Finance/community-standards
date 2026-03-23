@@ -8,31 +8,26 @@ aside: false
 
 The [User Journeys](./user-journeys) for this service also apply and must be adhered to.
 
-The tables below list the validation rules that apply to Confirmation of Payee. The **Validated by** column indicates where each rule is enforced.
+The tables below list the rules that apply to Confirmation of Payee. The Hub receives and validates the TPP's request, then calls your resource server at `POST /customers/action/cop-query`. You are responsible for returning accurate customer data — the Hub performs name matching.
 
-All requests require an active [Trust Framework application](/tech/tpp-standards/trust-framework/application) with the **BSIP** role, a valid [transport certificate](/tech/tpp-standards/trust-framework/certificates) presented on every request via mTLS, and an active [signing key](/tech/tpp-standards/security/fapi/message-signing) for JWT signing.
 
-## Mandatory CoP Requirement
+## POST `/customers/action/cop-query`
 
-For all Open Finance account-to-account transfers where the creditor is unknown to the TPP — for example, entered by the customer at the time of payment — a Confirmation of Payee request **must** be made prior to consent creation, provided the receiving bank supports the CoP service.
+| # | Condition | Rule |
+|---|-----------|------|
+| 1 | Account found, holder not opted out | Return `200` with a `data` array containing the account holder's customer record(s). For personal accounts, `verifiedClaims[].claims.fullName` is mandatory; include `givenName` and `familyName` if held separately. For business accounts, populate `verifiedClaims[].organisationClaims.name` with the registered business name. Joint accounts may return multiple records. |
+| 2 | IBAN not recognised at this LFI | Return `200` with an empty `data` array.  |
+| 3 | Account is blocked from receiving payments | Return `403`  |
+| 4 | Account holder has opted out of CoP | Return `200` with an empty `data` array.  |
+| 5 | Hub request is malformed or fails schema validation | Return `400` with `errorCode` and `errorMessage`. Valid codes: `Body.InvalidFormat`, `Resource.InvalidFormat`, `GenericRecoverableError`, `GenericError`. |
+| 6 | Hub credentials are absent or invalid | Return `401` with no body. |
+| 7 | Hub credentials are valid but access is refused | Return `403` with `errorCode` and `errorMessage`. Valid codes: `AccessToken.InvalidScope`, `Consent.TransientAccountAccessFailure`, `Consent.PermanentAccountAccessFailure`, `GenericRecoverableError`, `GenericError`. |
+| 8 | Unexpected server-side error | Return `500` with `errorCode` and `errorMessage`. Valid codes: `GenericRecoverableError`, `GenericError`. |
 
-A creditor is considered unknown when the TPP does not already hold a verified record of the payee (for example, a pre-enrolled beneficiary confirmed by a prior successful CoP check). Where CoP has been performed, the full raw JWS response from the `/confirmation` endpoint must be included in the `ConfirmationOfPayeeResponse` field of the creditor entry in the payment consent PII.
+## Opt-out
 
-## POST `/discovery` — Payee Discovery
-
-| # | Field | Rule | Validated by |
-|---|-------|------|-------------|
-| 1 | Request body | Must be a compact signed JWT (`Content-Type: application/jwt`). | API Hub |
-| 2 | `message.Data.Identification` | Required. Must be a valid UAE IBAN. | API Hub |
-| 3 | OpenAPI schema | The request body must conform exactly to the [POST `/discovery` OpenAPI schema](/tech/tpp-standards/v2.1/banking/confirmation-of-payee/open-api/discovery). No additional or undocumented parameters are permitted. | API Hub |
-| 4 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
-
-## POST `/confirmation` — Name Match
-
-| # | Field | Rule | Validated by |
-|---|-------|------|-------------|
-| 1 | Request body | Must be a compact signed JWT (`Content-Type: application/jwt`). | API Hub |
-| 2 | `message.Data.Identification` | Required. Must be a valid UAE IBAN. | API Hub |
-| 3 | `ConfirmationOfPayeeResponse` in PII | Where CoP has been performed, the full raw JWS response string from `/confirmation` must be included in the `ConfirmationOfPayeeResponse` field of the creditor entry in the payment consent PII. | TPP |
-| 4 | OpenAPI schema | The request body must conform exactly to the [POST `/confirmation` OpenAPI schema](/tech/tpp-standards/v2.1/banking/confirmation-of-payee/open-api/confirmation). No additional or undocumented parameters are permitted. | API Hub |
-| 5 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
+| # | Rule |
+|---|------|
+| 1 | LFIs **must not** provide users with a general opt-out option for the CoP service. Opt-out is only permitted in exceptional circumstances — for example, where the account holder is a national or Emirati leader or their immediate family. |
+| 2 | The opt-out process is not defined by the Open Finance Framework. LFIs must implement opt-out as part of their own BAU processes. |
+| 3 | When an account holder has opted out, the LFI must return no data in the response — i.e. `200` with an empty `data` array (see row 4 of the table above). |

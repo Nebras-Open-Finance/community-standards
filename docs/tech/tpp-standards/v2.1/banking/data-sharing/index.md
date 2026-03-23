@@ -14,8 +14,40 @@ All data access operates under explicit customer consent, with granular permissi
 Access to the Bank Data Sharing APIs requires the **BDSP** (Bank Data Sharing Provider) role. This role must be assigned to your application in the Trust Framework before making any account information requests. See [Roles](/tech/tpp-standards/trust-framework/roles) for the full list of scopes and grant types this role permits.
 :::
 
-<LiveAPIs families="['account-information']" />
+<LiveAPIs :families="['account-information']" />
 
+## Endpoint & account type coverage
+
+Not all endpoints are available for every account subtype, and not all account subtypes are available for every account type. The tables below show what is supported.
+
+### Account subtypes by account type
+
+| `AccountSubType` | `Retail` | `SME` | `Corporate` |
+|-----------------|:--------:|:-----:|:-----------:|
+| `CurrentAccount` | ✓ | ✓ | ✓ |
+| `Savings` | ✓ | ✓ | ✓ |
+| `CreditCard` | ✓ | — | — |
+| `Finance` | ✓ | — | — |
+| `Mortgage` | ✓ | — | — |
+
+### Endpoints by account subtype
+
+| Endpoint | `CurrentAccount` | `Savings` | `CreditCard` | `Finance` | `Mortgage` |
+|----------|:----------------:|:---------:|:------------:|:---------:|:----------:|
+| `GET /accounts` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /accounts/{AccountId}` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /accounts/{AccountId}/balances` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /accounts/{AccountId}/transactions` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /accounts/{AccountId}/statements` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /accounts/{AccountId}/product` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /parties` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /accounts/{AccountId}/parties` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /accounts/{AccountId}/beneficiaries` | ✓ | ✓ | — | — | — |
+| `GET /accounts/{AccountId}/direct-debits` | ✓ | ✓ | — | — | — |
+| `GET /accounts/{AccountId}/scheduled-payments` | ✓ | ✓ | — | — | — |
+| `GET /accounts/{AccountId}/standing-orders` | ✓ | ✓ | — | — | — |
+
+## Capabilities
 
 ### Account & Balance Information
 

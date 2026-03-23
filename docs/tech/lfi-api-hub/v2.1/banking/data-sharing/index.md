@@ -8,14 +8,39 @@ aside: false
 
 The Open Finance Banking Data Sharing capabilities enable secure, consent-driven access to customer banking data. These services empower licensed third-party providers (TPPs) to deliver account aggregation, financial management tools, lending assessments, and value-added digital services.
 
-All data access operates under explicit customer consent, with granular permission scopes, strict expiry controls, and full auditability.
 
-::: info Required role: BDSP
-Access to the Bank Data Sharing APIs requires the **BDSP** (Bank Data Sharing Provider) role. This role must be assigned to your application in the Trust Framework before making any account information requests. See [Roles](/tech/tpp-standards/trust-framework/roles) for the full list of scopes and grant types this role permits.
-:::
+## Endpoint & account type coverage
 
-<LiveAPIs families="['account-information']" />
+Not all endpoints are expected to be delivered for every account subtype, and not all account subtypes are available for every account type. The tables below show what is expected to be supported.
 
+### Account subtypes by account type
+
+| `AccountSubType` | `Retail` | `SME` | `Corporate` |
+|-----------------|:--------:|:-----:|:-----------:|
+| `CurrentAccount` | ✓ | ✓ | ✓ |
+| `Savings` | ✓ | ✓ | ✓ |
+| `CreditCard` | ✓ | — | — |
+| `Finance` | ✓ | — | — |
+| `Mortgage` | ✓ | — | — |
+
+### Endpoints by account subtype
+
+| Endpoint | `CurrentAccount` | `Savings` | `CreditCard` | `Finance` | `Mortgage` |
+|----------|:----------------:|:---------:|:------------:|:---------:|:----------:|
+| `GET /accounts` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /accounts/{AccountId}` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /accounts/{AccountId}/balances` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /accounts/{AccountId}/transactions` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /accounts/{AccountId}/statements` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /accounts/{AccountId}/product` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /parties` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /accounts/{AccountId}/parties` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /accounts/{AccountId}/beneficiaries` | ✓ | ✓ | — | — | — |
+| `GET /accounts/{AccountId}/direct-debits` | ✓ | ✓ | — | — | — |
+| `GET /accounts/{AccountId}/scheduled-payments` | ✓ | ✓ | — | — | — |
+| `GET /accounts/{AccountId}/standing-orders` | ✓ | ✓ | — | — | — |
+
+## Capabilities
 
 ### Account & Balance Information
 
@@ -50,3 +75,4 @@ Enables visibility into existing payment commitments and setup information.
 Provides structured information on banking products associated with the account, including fees, charges, rewards, benefits, eligibility criteria, and key product features.
 
 Supports transparency and comparison of product terms under customer consent.
+

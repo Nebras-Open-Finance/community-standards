@@ -43,6 +43,8 @@ function processData(data) {
             services[type].push({
               version: resource.ApiVersion,
               endpoints: resource.ApiDiscoveryEndpoints?.map(ep => ep.ApiEndpoint) || [],
+              paymentTypes: resource.ApiFamilyType === 'payment' ? getPaymentTypes(resource.ApiMetadata) : [],
+              accountSubTypes: resource.ApiFamilyType === 'account-information' ? (resource.ApiMetadata?.AccountSubType || []) : [],
               expanded: false
             })
           })
@@ -70,6 +72,24 @@ function processData(data) {
       }
     })
     .filter(Boolean)
+}
+
+function getPaymentTypes(meta) {
+  if (!meta) return []
+  const types = []
+  if (meta.SingleInstantPayment?.Supported)       types.push('Single Instant')
+  if (meta.FixedOnDemand?.Supported)              types.push('Fixed On-Demand')
+  if (meta.FixedPeriodicSchedule?.Supported)      types.push('Fixed Periodic')
+  if (meta.FixedDefinedSchedule?.Supported)       types.push('Fixed Defined Schedule')
+  if (meta.VariableOnDemand?.SingleBeneficiarySupported ||
+      meta.VariableOnDemand?.MultipleBeneficiariesSupported ||
+      meta.VariableOnDemand?.OpenBeneficiariesSupported)   types.push('Variable On-Demand')
+  if (meta.VariablePeriodicSchedule?.Supported)   types.push('Variable Periodic')
+  if (meta.VariableDefinedSchedule?.Supported)    types.push('Variable Defined Schedule')
+  if (meta.DelegatedAuthentication?.SingleBeneficiarySupported ||
+      meta.DelegatedAuthentication?.MultipleBeneficiariesSupported ||
+      meta.DelegatedAuthentication?.OpenBeneficiariesSupported) types.push('Delegated SCA')
+  return types
 }
 
 function getServiceType(familyType) {
@@ -113,7 +133,7 @@ const toggleService = (service) => {
 
 <template>
   <div v-if="lfis.length > 0" class="lfi-list">
-    <p class="lfi-intro">{{ introText }}</p>
+    <h2 class="lfi-intro">{{ introText }}</h2>
 
     <div class="lfi-table">
       <div class="lfi-table-header">
@@ -147,7 +167,9 @@ const toggleService = (service) => {
               <div class="detail-service-name">{{ key }}</div>
               <div v-for="service in versions" :key="service.version" class="detail-version">
                 <div class="detail-version-header" @click.stop="toggleService(service)">
-                  <span>v{{ service.version }}</span>
+                  <span class="version-label">v{{ service.version }}</span>
+                  <span v-for="t in service.paymentTypes" :key="t" class="badge badge-meta">{{ t }}</span>
+                  <span v-for="t in service.accountSubTypes" :key="t" class="badge badge-meta">{{ t }}</span>
                   <span class="toggle-icon small" :class="{ 'is-open': service.expanded }">›</span>
                 </div>
                 <ul v-if="service.expanded" class="endpoints">
@@ -164,9 +186,12 @@ const toggleService = (service) => {
 
 <style scoped>
 .lfi-intro {
-  font-size: 0.9rem;
-  color: var(--vp-c-text-2);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
   margin-bottom: 0.75rem;
+  border-top: none;
+  padding-top: 0;
 }
 
 .lfi-table {
@@ -310,12 +335,24 @@ const toggleService = (service) => {
 .detail-version-header {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  flex-wrap: wrap;
+  gap: 0.3rem;
   cursor: pointer;
   font-size: 0.8rem;
   font-weight: 500;
   color: var(--vp-c-brand);
   padding: 0.15rem 0;
+}
+
+.version-label {
+  flex-shrink: 0;
+}
+
+.badge-meta {
+  background: var(--vp-c-purple-soft);
+  color: var(--vp-c-purple-1);
+  font-size: 0.65rem;
+  font-weight: 500;
 }
 
 .detail-version-header:hover {

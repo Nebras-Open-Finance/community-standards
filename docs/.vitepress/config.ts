@@ -32,6 +32,34 @@ const wellKnownProxyPlugin = {
 }
 
 export default defineConfig({
+  markdown: {
+    config(md) {
+      md.core.ruler.push('version-badge', (state) => {
+        const env = state.env as Record<string, any>
+        const filePath: string = (env?.relativePath ?? env?.path ?? '').replace(/\\/g, '/')
+        const versionMatch = filePath.match(/\/v(\d+\.\d+)\//)
+        if (!versionMatch) return
+
+        const version = `v${versionMatch[1]}`
+
+        for (let i = 0; i < state.tokens.length - 1; i++) {
+          const tok = state.tokens[i]
+          if (tok.type === 'heading_open' && tok.tag === 'h1') {
+            const inline = state.tokens[i + 1]
+            if (inline?.type === 'inline' && !inline.content.includes('<Badge')) {
+              inline.content += ` <Badge type="tip" text="${version}" />`
+              if (inline.children) {
+                const badge = new state.Token('html_inline', '', 0)
+                badge.content = ` <Badge type="tip" text="${version}" />`
+                inline.children.push(badge)
+              }
+            }
+            break
+          }
+        }
+      })
+    },
+  },
   title: 'UAE Open Finance',
   ignoreDeadLinks: true, // <-- temporary
   description: 'Community-driven, experimental Open Finance documentation',

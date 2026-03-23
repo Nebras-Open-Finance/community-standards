@@ -42,10 +42,12 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
         collapsed: true,
         items: [
           { text: 'Overview', link: `${BASE}/trust-framework/application` },
+          { text: 'Creating An Application', link: `${BASE}/trust-framework/creating-an-application` },
           { text: 'Roles', link: `${BASE}/trust-framework/roles/` },
           { text: 'Redirect URIs', link: `${BASE}/trust-framework/redirect-uri/` },
           {
             text: 'Keys & Certificates',
+            collapsed: true,
             items: [
               { text: 'Overview',   link: `${BASE}/trust-framework/certificates/`},
               { text: 'Client Transport', link: `${BASE}/trust-framework/certificates/client-transport` },
@@ -204,6 +206,7 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
               apiRef('GET', '/accounts/{AccountId}/direct-debits', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-direct-debits`),
               apiRef('GET', '/parties', `${BASE}/${VERSION}/banking/data-sharing/open-api/parties`),
               apiRef('GET', '/accounts/{AccountId}/parties', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-parties`),
+              apiRef('GET', '/accounts/{AccountId}/products', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-products`),
               apiRef('GET', '/accounts/{AccountId}/scheduled-payments', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-scheduled-payments`),
               apiRef('GET', '/accounts/{AccountId}/standing-orders', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-standing-orders`),
               apiRef('GET', '/accounts/{AccountId}/statements', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-statements`),
@@ -322,23 +325,24 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
           },
         ],
       },
-      // {
-      //   text: 'Products and Leads',
-      //   collapsed: true,
-      //   items: [
-      //     { text: 'Requirements', link: `${BASE}/${VERSION}/banking/products-leads/requirements` },
-      //     { text: 'User Experience', link: `${BASE}/${VERSION}/banking/products-leads/user-journeys` },
-      //     { text: 'API Guide', link: `${BASE}/${VERSION}/banking/products-leads/api-guide` },
-      //     {
-      //       text: 'API Reference',
-      //       collapsed: true,
-      //       items: [
-      //         apiRef('GET', '/products', `${BASE}/${VERSION}/banking/products-leads/open-api/products`),
-      //         apiRef('POST', '/leads', `${BASE}/${VERSION}/banking/products-leads/open-api/leads `),
-      //       ],
-      //     },
-      //   ],
-      // },
+      {
+        text: 'Products and Leads',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/banking/products-leads/` },
+          { text: 'Requirements', link: `${BASE}/${VERSION}/banking/products-leads/requirements` },
+          { text: 'User Experience', link: `${BASE}/${VERSION}/banking/products-leads/user-journeys` },
+          { text: 'API Guide', link: `${BASE}/${VERSION}/banking/products-leads/api-guide` },
+          {
+            text: 'API Reference',
+            collapsed: true,
+            items: [
+              apiRef('GET', '/products', `${BASE}/${VERSION}/banking/products-leads/open-api/products`),
+              apiRef('POST', '/leads', `${BASE}/${VERSION}/banking/products-leads/open-api/leads `),
+            ],
+          },
+        ],
+      },
     ],
   },
 

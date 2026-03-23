@@ -36,12 +36,17 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         collapsed: true,
         items: [
           { text: 'Overview', link: `${BASE}/trust-framework/application` },
+          { text: 'Creating An Application', link: `${BASE}/trust-framework/creating-an-application` },
           { text: 'Roles', link: `${BASE}/trust-framework/roles` },
           {
             text: 'Keys & Certificates',
+            collapsed: true,
             items: [
-              { text: 'Overview', link: `${BASE}/trust-framework/certificates` },
-              { text: 'Server Certificates with SAN', link: `${BASE}/trust-framework/certificates-san` },
+              { text: 'Overview', link: `${BASE}/trust-framework/certificates/` },
+              { text: 'Client Transport', link: `${BASE}/trust-framework/certificates/client-transport` },
+              { text: 'Client Signing', link: `${BASE}/trust-framework/certificates/client-signing` },
+              { text: 'Client Encryption', link: `${BASE}/trust-framework/certificates/client-encryption` },
+              { text: 'Certificates with a SAN', link: `${BASE}/trust-framework/certificates-san/` },
             ],
           },
         ],
@@ -53,7 +58,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         items: [
           { text: 'Overview', link: `${BASE}/trust-framework/api/` },
           {
-            text: 'API Guide', link: `${BASE}/trust-framework/api/api-guide` 
+            text: 'API Guide', link: `${BASE}/trust-framework/api/api-guide`
           },
           {
             text: 'API Reference',
@@ -64,7 +69,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
               apiRef('GET', '.../{OrganisationId}/softwarestatements', `${BASE}/trust-framework/api/software-statements`),
               apiRef('GET', '.../{OrganisationId}/authorisationservers', `${BASE}/trust-framework/api/auth-servers`),
               apiRef('GET', '.../{AuthorisationServerId}/apiresources', `${BASE}/trust-framework/api/api-resources`),
-              apiRef('GET', '/references/apifamilies', `${BASE}/trust-framework/api/api-families`), 
+              apiRef('GET', '/references/apifamilies', `${BASE}/trust-framework/api/api-families`),
             ],
           },
         ],
@@ -78,8 +83,8 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
     items: [
       { text: 'Overview', link: `${BASE}/api-hub/` },
       {
-        text: 'Onboarding', 
-        collapsed: true,        
+        text: 'Onboarding',
+        collapsed: true,
         items: [
           { text: 'Overview', link: `${BASE}/api-hub/onboarding/` },
           { text: 'Prerequisites', link: `${BASE}/api-hub/onboarding/prerequisites` },
@@ -96,11 +101,18 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         ]
       },
       {
-        text: 'Admin Portal', 
-        collapsed: true,        
+        text: 'Admin Portal',
+        collapsed: true,
         items: [
           { text: 'Overview', link: `${BASE}/api-hub/admin-portal/` },
-          { text: 'Overview', link: `${BASE}/api-hub/tpp-activation/` },
+          { text: 'TPP Activation', link: `${BASE}/api-hub/tpp-activation/` },
+        ]
+      },
+      {
+        text: 'Deployments',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/api-hub/depolyments/` }
         ]
       }
     ],
@@ -113,6 +125,22 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
     collapsed: true,
     items: [
       { text: 'Overview', link: `${BASE}/${VERSION}/` },
+      {
+        text: 'Authentication & Authorization',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/auth/` },
+          { text: 'Requirements', link: `${BASE}/${VERSION}/auth/requirements` },
+          { text: 'API Guide', link: `${BASE}/${VERSION}/auth/api-guide` },
+          {
+            text: 'Headless Heimdall API Reference',
+            collapsed: true,
+            items: [
+
+            ],
+          },
+        ],
+      },
       {
         text: 'Consent',
         collapsed: true,
@@ -130,10 +158,24 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
             ]
           },
           {
-            text: 'API Reference',
+            text: 'Consent Manager API Reference',
             collapsed: true,
             items: [
 
+            ],
+          },
+          {
+            text: 'Consent Events & Actions',
+            collapsed: true,
+            items: [
+              { text: 'Overview', link: `${BASE}/${VERSION}/consent/events-and-actions` },
+              {
+                text: 'API Reference',
+                collapsed: true,
+                items: [
+
+                ],
+              },
             ],
           },
         ],
@@ -155,7 +197,18 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
                 text: 'API Reference',
                 collapsed: true,
                 items: [
-
+                    apiRef('GET', '/accounts', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts`),
+                    apiRef('GET', '/accounts/{AccountId}', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId`),
+                    apiRef('GET', '/accounts/{AccountId}/balances', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-balances`),
+                    apiRef('GET', '/accounts/{AccountId}/beneficiaries', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-beneficiaries`),
+                    apiRef('GET', '/customer', `${BASE}/${VERSION}/banking/data-sharing/open-api/customer`),
+                    apiRef('GET', '/accounts/{AccountId}/customer', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-customer`),
+                    apiRef('GET', '/accounts/{AccountId}/direct-debits', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-direct-debits`),
+                    apiRef('GET', '/accounts/{AccountId}/products', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-products`),
+                    apiRef('GET', '/accounts/{AccountId}/scheduled-payments', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-scheduled-payments`),
+                    apiRef('GET', '/accounts/{AccountId}/standing-orders', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-standing-orders`),
+                    apiRef('GET', '/accounts/{AccountId}/statements', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-statements`),
+                    apiRef('GET', '/accounts/{AccountId}/transactions', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-transactions`),
                 ],
               },
             ],
@@ -164,10 +217,24 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
             text: 'Confirmation of Payee',
             collapsed: true,
             items: [
-              { text: 'Overview', link: `${BASE}/${VERSION}/banking/confirmation-of-payee` },
               { text: 'Requirements', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/requirements` },
               { text: 'User Experience', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/user-journeys` },
               { text: 'API Guide', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/api-guide` },
+              {
+                text: 'API Reference',
+                collapsed: true,
+                items: [
+               apiRef('POST', '/customers/action/cop-query', `${BASE}//${VERSION}/banking/confirmation-of-payee/open-api/cop-query`),
+                ],
+              },
+            ],
+          },
+          {
+            text: 'Products & Leads',
+            collapsed: true,
+            items: [
+              { text: 'Requirements', link: `${BASE}/${VERSION}/banking/products-and-leads/requirements` },
+              { text: 'API Guide', link: `${BASE}/${VERSION}/banking/products-and-leads/api-guide` },
               {
                 text: 'API Reference',
                 collapsed: true,
@@ -182,7 +249,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
             collapsed: true,
             items: [
               { text: 'Overview', link: `${BASE}/${VERSION}/banking/atms` },
-              { text: 'Requirements', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/requirements` },
+              { text: 'Requirements', link: `${BASE}/${VERSION}/banking/atms/requirements` },
               { text: 'API Guide', link: `${BASE}/${VERSION}/banking/atms/api-guide` },
               {
                 text: 'API Reference',
@@ -224,7 +291,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         ],
       },
       {
-        text: 'Production Live Proving', 
+        text: 'Production Live Proving',
         collapsed: true,
         items: [
           { text: 'Attestation & Self Testing', link: `${BASE}/production/testing-certification/self-testing` },

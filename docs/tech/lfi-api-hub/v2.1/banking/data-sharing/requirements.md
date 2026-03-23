@@ -4,167 +4,164 @@ prev: false
 aside: false
 ---
 
-# Bank Data Sharing - Requirements
+# Bank Data Sharing — Requirements
 
-The [Consent requirements](/tech/tpp-standards/v2.1/consent/requirements) and the [User Journeys](./user-journeys) must be adhered to.
+The [Authentication & Authorization requirements](../../auth/requirements) and the [User Journeys](./user-journeys) must be adhered to.
 
-The tables below list the validation rules that apply to Bank Data Sharing. The **Validated by** column indicates where each rule is enforced.
+The tables below list the rules that apply to Bank Data Sharing. All request validation of the TPP's credentials, access token, and consent is performed by the Hub before your resource server is called. The rules below cover what your resource server must validate and what it must return.
 
-All requests require an active [Trust Framework application](/tech/tpp-standards/trust-framework/application) with the **BDSP** role, a valid [transport certificate](/tech/tpp-standards/trust-framework/certificates) presented on every request via mTLS, and an active [signing key](/tech/tpp-standards/security/fapi/message-signing) for JWT signing.
 
-## POST `/par` — Consent Creation
+## Account Selection
 
-| # | Field | Rule | Validated by |
-|---|-------|------|-------------|
-| 1 | `consent.ExpirationDateTime` | Must not be in the past. Must be less than one year in the future. | API Hub |
-| 2 | `consent.Permissions` | If any of `ReadBalances`, `ReadBeneficiariesBasic`, `ReadBeneficiariesDetail`, `ReadTransactionsBasic`, `ReadTransactionsDetail`, `ReadProduct`, `ReadScheduledPaymentsBasic`, `ReadScheduledPaymentsDetail`, `ReadDirectDebits`, `ReadStandingOrdersBasic`, `ReadStandingOrdersDetail`, `ReadStatements`, or `ReadProductFinanceRates` are included, at least one of `ReadAccountsBasic` or `ReadAccountsDetail` must also be present. | API Hub |
-| 3 | `consent.AccountType` | Must be a value supported by the target LFI. Supported account types are discoverable via the `AccountTypes` flag on the LFI's authorisation server entry in the [Trust Framework](/tech/tpp-standards/trust-framework/api-discovery). | LFI |
-| 4 | `consent.AccountSubType` | If provided, each value must be a sub-type supported by the target LFI. Supported sub-types are discoverable via the `AccountSubTypes` metadata on the LFI's authorisation server entry in the [Trust Framework](/tech/tpp-standards/trust-framework/api-discovery). | LFI |
-| 5 | OpenAPI schema | The request body must conform exactly to the [POST `/par` OpenAPI schema](/tech/tpp-standards/v2.1/consent/open-api/par). No additional or undocumented parameters are permitted. | API Hub |
-| 6 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
+During the consent authorization journey, the customer selects which of their accounts to share with the TPP. The LFI is responsible for presenting the eligible accounts and applying any filters the TPP has specified in the consent.
+
+| # | Field | Rule |
+|---|-------|------|
+| 1 | Eligible accounts | Present all accounts the customer holds at the LFI that have an `accountSubType` of `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, or `Mortgage`. The customer may select one or more accounts. |
+| 2 | `consent.AccountType` | If the consent specifies `AccountType`, only present accounts whose type matches one of the specified values (`Retail`, `SME`, `Corporate`). If not specified, present accounts of all types. |
+| 3 | `consent.AccountSubType` | If the consent specifies `AccountSubType`, only present accounts whose subtype matches one of the specified values. If not specified, present accounts of all subtypes. |
+| 4 | Unsupported `AccountType` | If the consent's `AccountType` array contains a value not supported by this LFI, reject the consent during consent validation. |
+| 5 | Unsupported `AccountSubType` | If the consent's `AccountSubType` array contains a value not supported by this LFI, reject the consent during consent validation. Do not proceed to account selection. |
+| 6 | Multiple selection | The account selection screen must allow the customer to select more than one account. A consent with no accounts selected must not be authorised. |
+
 
 ## GET `/accounts`
 
-| # | Field | Rule | Validated by |
-|---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
-| 2 | `consent.Permissions` | The consent must include `ReadAccountsBasic` or `ReadAccountsDetail`. | API Hub |
-| 3 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
-| 4 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
-| 5 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
-| 6 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| # | Field | Rule |
+|---|-------|------|
+| 1 | `accountIds` | Return only accounts whose `id` matches one of the values in the `accountIds` query parameter. If no accounts match, return `200` with an empty `data` array. |
+| 2 | Data completeness | All fields that exist or are derivable from your systems must be populated on each account. All fields marked as required in the OpenAPI spec must be present. This includes `accountHolderName`, `status`, `currency`, `accountType`, and `accountSubType` where held. |
+| 3 | `accountNumbers` | Must contain at least one entry. `schemeName` and `identification` are required on each entry. |
+| 4 | `accountNumbers.schemeName` | Must reflect the account identifier type: `IBAN` for `CurrentAccount` and `Savings`; `MaskedPAN` for `CreditCard`; `MortgageReference` for `Mortgage`; `FinanceReference` for `Finance`. |
+| 5 | `customers` | For non-business accounts, `customers` must contain at least one entry. For business accounts, populate `businessCustomer` instead. |
+| 6 | Empty result | Return `200` with an empty `data` array if no accounts match. Do not return `404`. |
+| 7 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, and `Mortgage`. |
 
-## GET `/accounts/{AccountId}`
+## GET `/accounts/{accountId}`
 
-| # | Field | Rule | Validated by |
-|---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
-| 2 | `consent.Permissions` | The consent must include `ReadAccountsBasic` or `ReadAccountsDetail`. | API Hub |
-| 3 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
-| 4 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
-| 5 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
-| 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
-| 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| # | Field | Rule |
+|---|-------|------|
+| 1 | `account` | Return only account whose `id` matches the value in the `accountIds` path parameter. If no accounts match, return `200` with an empty `data` array. |
+| 2 | Data completeness | All fields that exist or are derivable from your systems must be populated, consistent with what is returned by `GET /accounts` for the same account. All fields marked as required in the OpenAPI spec must be present. |
+| 3 | `accountNumbers` | Must contain at least one entry. `schemeName` and `identification` are required on each entry. |
+| 4 | `accountNumbers.schemeName` | Must reflect the account identifier type: `IBAN` for `CurrentAccount` and `Savings`; `MaskedPAN` for `CreditCard`; `MortgageReference` for `Mortgage`; `FinanceReference` for `Finance`. |
+| 5 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, and `Mortgage`. |
 
-## GET `/accounts/{AccountId}/balances`
 
-| # | Field | Rule | Validated by |
-|---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
-| 2 | `consent.Permissions` | The consent must include `ReadBalances`. | API Hub |
-| 3 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
-| 4 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
-| 5 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
-| 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
-| 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+## GET `/accounts/{accountId}/balances`
 
-## GET `/accounts/{AccountId}/beneficiaries`
+| # | Field | Rule |
+|---|-------|------|
+| 1 | `account` | Return only account whose `accountId` matches the value in the `accountIds` path parameter. If no accounts match, return `200` with an empty `data` array. |
+| 2 | Data completeness | All balance types that exist for the account must be returned. All fields marked as required in the OpenAPI spec must be present on each record, including `accountId`, `balanceType`, `amount` (with `amount` and `currency`), `creditDebitIndicator`, and `timestamp`. |
+| 3 | Multiple balance types | Return one record per distinct balance type held for the account. More than one record per account is permitted and expected where multiple balance types exist. Include `creditLines` where applicable. |
+| 4 | `InterimAvailable` | For `CurrentAccount` and `Savings` accounts, a record with `balanceType: InterimAvailable` must always be included. This is the real-time available balance on the account. |
+| 5 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, and `Mortgage`. |
 
-| # | Field | Rule | Validated by |
-|---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
-| 2 | `consent.Permissions` | The consent must include `ReadBeneficiariesBasic` or `ReadBeneficiariesDetail`. | API Hub |
-| 3 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
-| 4 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
-| 5 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
-| 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
-| 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+## GET `/accounts/{accountId}/beneficiaries`
 
-## GET `/accounts/{AccountId}/direct-debits`
+| # | Field | Rule |
+|---|-------|------|
+| 1 | `account` | Return only account whose `accountId` matches the value in the `accountId` path parameter. If no account matches, return `200` with an empty `data` array. |
+| 2 | Required fields | Every beneficiary record must include `accountId`, `beneficiaryId`, `beneficiaryType`, and `addedViaOF`. |
+| 3 | Data completeness | All fields that exist or are derivable must be populated, including `creditorAccount` (with `schemeName` and `identification`), `servicer`, and `reference` where held. |
+| 4 | Empty result | Return `200` with an empty `data` array if no beneficiaries exist. Do not return `404`. |
+| 5 | `AccountSubType` | Only supported for `CurrentAccount` and `Savings` accounts. Not available for `CreditCard`, `Finance`, or `Mortgage` accounts. |
 
-| # | Field | Rule | Validated by |
-|---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
-| 2 | `consent.Permissions` | The consent must include `ReadDirectDebits`. | API Hub |
-| 3 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
-| 4 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
-| 5 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
-| 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
-| 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
 
-## GET `/accounts/{AccountId}/product`
+## GET `/accounts/{accountId}/direct-debits`
 
-| # | Field | Rule | Validated by |
-|---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
-| 2 | `consent.Permissions` | The consent must include `ReadProduct`. `ReadProductFinanceRates` is required for finance rate data to be included in the response. | API Hub |
-| 3 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
-| 4 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
-| 5 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
-| 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
-| 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| # | Field | Rule |
+|---|-------|------|
+| 1 | `account` | Return only account whose `accountId` matches the value in the `accountId` path parameter. If no account matches, return `200` with an empty `data` array. |
+| 2 | Required fields | Every direct debit record must include `accountId`, `directDebitId`, `directDebitStatusCode`, `mandateIdentification`, `name`, and `frequency`. |
+| 3 | Data completeness | Include `previousPaymentDateTime` and `previousPaymentAmount` where available. |
+| 4 | Empty result | Return `200` with an empty `data` array if no direct debits exist. Do not return `404`. |
+| 5 | `AccountSubType` | Only supported for `CurrentAccount` and `Savings` accounts. Not available for `CreditCard`, `Finance`, or `Mortgage` accounts. |
 
-## GET `/accounts/{AccountId}/scheduled-payments`
+## GET `/accounts/{accountId}/scheduled-payments`
 
-| # | Field | Rule | Validated by |
-|---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
-| 2 | `consent.Permissions` | The consent must include `ReadScheduledPaymentsBasic` or `ReadScheduledPaymentsDetail`. | API Hub |
-| 3 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
-| 4 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
-| 5 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
-| 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
-| 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| # | Field | Rule |
+|---|-------|------|
+| 1 | `account` | Return only account whose `accountId` matches the value in the `accountId` path parameter. If no account matches, return `200` with an empty `data` array. |
+| 2 | Required fields | Every scheduled payment record must include `accountId`, `scheduledPaymentId`, `scheduledType`, `scheduledPaymentDateTime`, and `instructedAmount` (with `amount` and `currency`). |
+| 3 | Data completeness | Include `creditorAccount` (with `schemeName` and `identification`), `creditorAgent`, `creditorReference`, and `debtorReference` where held. |
+| 4 | Empty result | Return `200` with an empty `data` array if no scheduled payments exist. Do not return `404`. |
+| 5 | `AccountSubType` | Only supported for `CurrentAccount` and `Savings` accounts. Not available for `CreditCard`, `Finance`, or `Mortgage` accounts. |
 
-## GET `/accounts/{AccountId}/standing-orders`
+## GET `/accounts/{accountId}/standing-orders`
 
-| # | Field | Rule | Validated by |
-|---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
-| 2 | `consent.Permissions` | The consent must include `ReadStandingOrdersBasic` or `ReadStandingOrdersDetail`. | API Hub |
-| 3 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
-| 4 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
-| 5 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
-| 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
-| 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| # | Field | Rule |
+|---|-------|------|
+| 1 | `account` | Return only account whose `accountId` matches the value in the `accountId` path parameter. If no account matches, return `200` with an empty `data` array. |
+| 2 | Required fields | Every standing order record must include `accountId`, `standingOrderId`, `frequency`, `firstPaymentDateTime`, `standingOrderStatusCode`, and `firstPaymentAmount` (with `amount` and `currency`). |
+| 3 | Data completeness | Include `nextPaymentDateTime`, `nextPaymentAmount`, `lastPaymentDateTime`, `lastPaymentAmount`, `finalPaymentDateTime`, `finalPaymentAmount`, `numberOfPayments`, `creditorAccount`, `creditorAgent`, and `standingOrderType` where held. |
+| 4 | Empty result | Return `200` with an empty `data` array if no standing orders exist. Do not return `404`. |
+| 5 | `AccountSubType` | Only supported for `CurrentAccount` and `Savings` accounts. Not available for `CreditCard`, `Finance`, or `Mortgage` accounts. |
 
-## GET `/accounts/{AccountId}/transactions`
+## GET `/accounts/{accountId}/statements`
 
-| # | Field | Rule | Validated by |
-|---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
-| 2 | `consent.Permissions` | The consent must include `ReadTransactionsBasic` or `ReadTransactionsDetail`. `ReadFXTransactionsBasic`, `ReadFXTransactionsDetail`, or `ReadFXRemittanceCharges` are required for FX transaction data to be included. | API Hub |
-| 3 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
-| 4 | `fromBookingDateTime` | If provided, must be a valid ISO 8601 date-time. Time component is optional (defaults to `00:00:00`). Any timezone offset must be ignored by the LFI. | LFI |
-| 5 | `toBookingDateTime` | If provided, must be a valid ISO 8601 date-time. Time component is optional (defaults to `00:00:00`). Any timezone offset must be ignored by the LFI. | LFI |
-| 6 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
-| 7 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
-| 8 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
-| 9 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| # | Field | Rule |
+|---|-------|------|
+| 1 | `account` | Return only account whose `accountId` matches the value in the `accountId` path parameter. If no account matches, return `200` with an empty `data` array. |
+| 2 | `fromStatementDate` | If provided, return only statements with a statement date on or after this date. Filtering is open-ended (from the earliest available statement) if not provided. |
+| 3 | `toStatementDate` | If provided, return only statements with a statement date on or before this date. Filtering is open-ended (to the latest available statement) if not provided. |
+| 4 | Required fields | Every statement record must include `accountId`, `accountSubType`, `statementId`, `statementDate`, `openingDate`, `closingDate`, `openingBalance` (with `creditDebitIndicator`, `amount`, and `currency`), `closingBalance` (with `creditDebitIndicator`, `amount`, and `currency`), and `summary` (with `creditDebitIndicator`, `subTransactionType`, `amount`, and `count` per entry). |
+| 5 | Data completeness | All fields that exist or are derivable for each statement must be returned, including `creditLine` where applicable. |
+| 6 | Data retention | The endpoint must support retrieval of at least the last two years of statements. |
+| 7 | Empty result | Return `200` with an empty `data` array if no statements exist within the requested range. Do not return `404`. |
+| 8 | Pagination | Pagination must be supported. `meta.paginated`, `meta.totalRecords`, and `meta.totalPages` must be accurate. |
+| 9 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, and `Mortgage`. |
 
-## GET `/accounts/{AccountId}/statements`
+## GET `/accounts/{accountId}/transactions`
 
-| # | Field | Rule | Validated by |
-|---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
-| 2 | `consent.Permissions` | The consent must include `ReadStatements`. | API Hub |
-| 3 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
-| 4 | `fromStatementDate` | If provided, must be a valid ISO 8601 date. Filtering is open-ended if not provided. | LFI |
-| 5 | `toStatementDate` | If provided, must be a valid ISO 8601 date. Filtering is open-ended if not provided. | LFI |
-| 6 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
-| 7 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
-| 8 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
-| 9 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| # | Field | Rule |
+|---|-------|------|
+| 1 | `account` | Return only account whose `accountId` matches the value in the `accountId` path parameter. If no account matches, return `200` with an empty `data` array. |
+| 2 | `fromBookingDateTime` | If provided, return only transactions booked on or after this date-time. Filtering is open-ended if not provided. |
+| 3 | `toBookingDateTime` | If provided, return only transactions booked on or before this date-time. Filtering is open-ended if not provided. |
+| 4 | Timezone | Any timezone offset in `fromBookingDateTime` or `toBookingDateTime` must be ignored. Filter against local booking date-time only. |
+| 5 | Required fields | Every transaction record must include `accountId`, `transactionId`, `transactionDateTime`, `transactionType`, `subTransactionType`, `creditDebitIndicator`, `status`, `bookingDateTime`, and `amount` (with `amount` and `currency`). |
+| 6 | Data completeness | All fields that exist or are derivable must be populated, including `balance` (with `creditDebitIndicator`, `balanceType`, and `amount`) where available, `merchantDetails`, `creditorAccount`, `debtorAccount`, `cardInstrument`, `currencyExchange`, `flags`, and `paymentPurposeCode` where held. |
+| 7 | Transaction context | `transactionInformation` and `transactionReference` must be provided where held to give the TPP meaningful context for the transaction. |
+| 8 | Data retention | The endpoint must support retrieval of at least the last two years of transactions. |
+| 9 | Empty result | Return `200` with an empty `data` array if no transactions exist within the requested range. Do not return `404`. |
+| 10 | Pagination | Pagination must be supported. `meta.paginated`, `meta.totalRecords`, and `meta.totalPages` must be accurate. |
+| 11 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, and `Mortgage`. |
 
-## GET `/accounts/{AccountId}/parties`
+## GET `/accounts/{accountId}/products`
 
-| # | Field | Rule | Validated by |
-|---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
-| 2 | `consent.Permissions` | The consent must include `ReadParty`, `ReadPartyUser`, or `ReadPartyUserIdentity`. | API Hub |
-| 3 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
-| 4 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
-| 5 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
-| 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
-| 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| # | Field | Rule |
+|---|-------|------|
+| 1 | `account` | Return only products associated with the account specified by the `accountId` path parameter. If no account matches, return `200` with an empty `data` array. |
+| 2 | Data completeness | All product data that exists or is derivable from your systems must be returned, including fees, charges, rates, rewards, benefits, and eligibility criteria where held. |
+| 3 | `FinanceRates` format | `FinanceRates` may be returned as either a cleartext `AEProductFinanceRates` JSON object or as a JWE compact serialisation string. Encryption is at the LFI's discretion.  |
+| 4 | `FinanceRates` — JWE | If encrypting `FinanceRates`, generate an ephemeral symmetric encryption key per response (must not be reused). Encrypt the `AEProductFinanceRates` payload as a JWE using the content encryption algorithm required by the Security Profile. Set `exp` to 30 minutes from the time of the response and set `kid` to the value of `x-fapi-interaction-id`. Transmit the encryption key to the User via an existing LFI channel (e.g. SMS or push notification) — do not include it in the API response. |
+| 5 | Empty result | Return `200` with an empty `data` array if no product data exists for the account. Do not return `404`. |
+| 6 | Pagination | Pagination must be supported. `meta.paginated`, `meta.totalRecords`, and `meta.totalPages` must be accurate. |
+| 7 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, and `Mortgage`. |
 
-## GET `/parties`
 
-| # | Field | Rule | Validated by |
-|---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
-| 2 | `consent.Permissions` | The consent must include `ReadParty`, `ReadPartyUser`, or `ReadPartyUserIdentity`. | API Hub |
-| 3 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
-| 4 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
-| 5 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
-| 6 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+
+## GET `/accounts/{accountId}/customer`
+
+| # | Field | Rule |
+|---|-------|------|
+| 1 | `account` | Return only customers who are associated to the account specified by the value in the `accountId` path parameter. |
+| 2 | Multiple customers | Return one record per customer associated with the account. Joint accounts must return a record for each joint holder. |
+| 3 | Required fields | Every customer record must include `id`, `claims` `verifiedClaims`, `customerType`, `customerCategory`, and `accountRole`. |
+| 4 | Person claims | For retail customers, `verifiedClaims[].claims` must include `identityType`, `fullName`, `givenName`, `familyName`, `emiratesId`, `emiratesIdExpiryDate`, and `residentialAddress`. Include all optional fields (`middleName`, `birthDate`, `mobileNumber`, `email`, `nationality`, etc.) where held. |
+| 5 | Corporate claims | For SME/Corporate customers, `verifiedClaims[].claims` must include `identityType`, `businessName`, and `tradeLicenceNumber`. Include all optional fields (`taxIdentificationNumber`, `dateOfIncorporation`, `countryOfIncorporation`, `corporateAddress`, etc.) where held. |
+| 6 | Data completeness | All fields that exist or are derivable from your systems must be populated on each customer record. |
+| 7 | Empty result | Return `200` with an empty `data` array if no customer records are associated with the account. Do not return `404`. |
+| 8 | Pagination | `meta.totalRecords` and `meta.totalPages` must be accurate. |
+
+## GET `/customer`
+
+| # | Field | Rule |
+|---|-------|------|
+| 1 | Customer identification | Identify the customer from the `o3-psu-identifier` header passed by the Hub. |
+| 2 | Required fields | The customer record must include `id`, `verifiedClaims`, and `customerCategory`. |
+| 3 | Person claims | For retail customers, `verifiedClaims[].claims` must include `identityType`, `fullName`, `givenName`, `familyName`, `emiratesId`, `emiratesIdExpiryDate`, and `residentialAddress`. Include all optional fields where held. |
+| 4 | Corporate claims | For SME/Corporate customers, `verifiedClaims[].claims` must include `identityType`, `businessName`, and `tradeLicenceNumber`. Include all optional fields where held. |
+| 5 | Data completeness | All fields that exist or are derivable from your systems must be populated. |

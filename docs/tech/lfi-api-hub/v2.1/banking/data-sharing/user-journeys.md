@@ -7,9 +7,13 @@ aside: false
 
 # Bank Data Sharing - User Experience
 
-Before a customer is redirected to Open Finance to consent to Data Sharing, you must present a Consent Page that clearly explains what the customer is consenting to and collects their explicit, informed consent. This page must accurately reflect the scope, purpose, and nature of the data being shared. The examples and interactive wireframes provided below define the expected structure, content, and behaviour of the Consent Page and must be followed.
+When a customer is redirected to you to authorize an Open Finance consent for data sharing, you must present an Authorization Page that clearly explains what the customer is authorizing. The page must collect the customer’s explicit and informed consent, and it must accurately reflect the scope and nature of the data being shared.
 
-While you may adapt visual elements such as colour palette, fonts, and styling, you must not alter the meaning, clarity, or completeness of the consent content, and the representation of AlTareq (including logos, naming, and action buttons) must be preserved. The customer must always be able to clearly understand what they are consenting to and that it is part of the AlTareq ecosystem. Your Consent Page must be submitted as part of CX certification prior to production, and any material changes to a production Consent Page must be re-submitted for review and approval.
+The examples and interactive wireframes provided below define the expected structure, content, and behavior of the Consent Page and must be followed.
+
+While you may adapt visual elements such as color palette, fonts, and styling, you must not alter the meaning, clarity, or completeness of the consent content. The representation of AlTareq (including logos, naming, and action buttons) must be preserved at all times. The customer must be able to clearly understand what they are authorizing and that the authorization is part of the AlTareq ecosystem.
+
+Your Authorization Page must be submitted as part of CX certification prior to production. Any material changes to a production Authorization Page must also be resubmitted for review and approval.
 
 ## Interactive Demo
 

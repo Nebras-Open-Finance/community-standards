@@ -33,6 +33,7 @@ All requests require an active [Trust Framework application](/tech/tpp-standards
 | 4 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 5 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 6 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| 7 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, `Mortgage`. | LFI |
 
 ## GET `/accounts/{AccountId}`
 
@@ -45,6 +46,7 @@ All requests require an active [Trust Framework application](/tech/tpp-standards
 | 5 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| 8 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, `Mortgage`. | LFI |
 
 ## GET `/accounts/{AccountId}/balances`
 
@@ -57,6 +59,7 @@ All requests require an active [Trust Framework application](/tech/tpp-standards
 | 5 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| 8 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, `Mortgage`. | LFI |
 
 ## GET `/accounts/{AccountId}/beneficiaries`
 
@@ -69,6 +72,7 @@ All requests require an active [Trust Framework application](/tech/tpp-standards
 | 5 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| 8 | `AccountSubType` | Only supported for `CurrentAccount` and `Savings` accounts. Not available for `CreditCard`, `Finance`, or `Mortgage` accounts. | LFI |
 
 ## GET `/accounts/{AccountId}/direct-debits`
 
@@ -81,6 +85,7 @@ All requests require an active [Trust Framework application](/tech/tpp-standards
 | 5 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| 8 | `AccountSubType` | Only supported for `CurrentAccount` and `Savings` accounts. Not available for `CreditCard`, `Finance`, or `Mortgage` accounts. | LFI |
 
 ## GET `/accounts/{AccountId}/product`
 
@@ -93,6 +98,12 @@ All requests require an active [Trust Framework application](/tech/tpp-standards
 | 5 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| 8 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, `Mortgage`. | LFI |
+| 10 | `FinanceRates` — key request | If `FinanceRates` is returned as a JWE, the TPP must prompt the User to enter the encryption key delivered to them by the LFI (e.g. via SMS or push notification) before decryption can proceed. | TPP |
+| 11 | `FinanceRates` — local decryption | Decryption of the JWE must be performed locally on the User's device. The decrypted data must not be transmitted to the TPP's servers or persisted in any storage accessible to the TPP's application. | TPP |
+| 12 | `FinanceRates` — data usage | The decrypted data must only be used to display the rates to the User within the active session. The TPP must not store, transmit, or otherwise process the unencrypted data. | TPP |
+| 13 | `FinanceRates` — expiry | The TPP must observe the `exp` value in the JWE header and discard any decrypted data once the expiry threshold has passed. If the data is still required, the TPP must repeat the API operation to retrieve a fresh response — the original consent must still be valid for this to succeed. | TPP |
+| 14 | `FinanceRates` — session discard | The TPP must discard all decrypted data from memory when the User closes their session, regardless of whether `exp` has been reached. | TPP |
 
 ## GET `/accounts/{AccountId}/scheduled-payments`
 
@@ -105,6 +116,7 @@ All requests require an active [Trust Framework application](/tech/tpp-standards
 | 5 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| 8 | `AccountSubType` | Only supported for `CurrentAccount` and `Savings` accounts. Not available for `CreditCard`, `Finance`, or `Mortgage` accounts. | LFI |
 
 ## GET `/accounts/{AccountId}/standing-orders`
 
@@ -117,6 +129,7 @@ All requests require an active [Trust Framework application](/tech/tpp-standards
 | 5 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| 8 | `AccountSubType` | Only supported for `CurrentAccount` and `Savings` accounts. Not available for `CreditCard`, `Finance`, or `Mortgage` accounts. | LFI |
 
 ## GET `/accounts/{AccountId}/transactions`
 
@@ -131,6 +144,7 @@ All requests require an active [Trust Framework application](/tech/tpp-standards
 | 7 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 8 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 9 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| 10 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, `Mortgage`. | LFI |
 
 ## GET `/accounts/{AccountId}/statements`
 
@@ -145,6 +159,7 @@ All requests require an active [Trust Framework application](/tech/tpp-standards
 | 7 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 8 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 9 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| 10 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, `Mortgage`. | LFI |
 
 ## GET `/accounts/{AccountId}/parties`
 
@@ -157,6 +172,7 @@ All requests require an active [Trust Framework application](/tech/tpp-standards
 | 5 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| 8 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, `Mortgage`. | LFI |
 
 ## GET `/parties`
 
@@ -168,3 +184,4 @@ All requests require an active [Trust Framework application](/tech/tpp-standards
 | 4 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 5 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 6 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
+| 7 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, `Mortgage`. | LFI |

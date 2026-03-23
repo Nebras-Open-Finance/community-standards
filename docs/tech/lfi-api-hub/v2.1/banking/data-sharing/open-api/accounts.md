@@ -5,7 +5,8 @@ aside: false
 ---
 
 #  Get Accounts
-<RedocWrapper 
-    spec="/openapi/v2.1/standards/uae-account-information-openapi.yaml" 
-    filterPath="/accounts"
+ <RedocWrapper 
+    spec="/openapi/v2.1/api-hub/uae-ozone-connect-bank-data-sharing-openapi.yaml"
+     filterPath="/accounts"
+    :overrideServers="[{ url: 'https://[Ozone_Connect_API]' }]" 
  />
