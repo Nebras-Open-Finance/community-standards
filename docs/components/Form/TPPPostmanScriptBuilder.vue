@@ -322,13 +322,13 @@ export default {
         const subFolderRoleMap = {
           'Data Sharing':                                  () => hasBDSP,
           'Service Initiation':                            () => hasBSIP,
-          'File Payment':                                  () => hasBSIP,
-          'Service Initiation - International Payments':   () => hasBSIP,
           'Confirmation Of Payee APIs (application/jwt)':  () => hasBSIP,
           'Payment Rail':                                  () => hasBSIP,
-          'Data Sharing with Service Initiation':          () => hasBDSP && hasBSIP,
-          'Open Product API':                              () => hasBDSP,
-          'Open Atms API':                                 () => hasBDSP,
+          'Products & Leads':                              () => hasBDSP,
+          'Atms':                                          () => hasBDSP,
+          'Example 2 - With Accounts & Balances':          () => hasBDSP && hasBSIP,
+          'Example 3 - With Accounts & Balances':          () => hasBDSP && hasBSIP,
+          'Example 4 - With Accounts & Balances':          () => hasBDSP && hasBSIP,
         }
 
         const versionFolder = json.item.find(f => f.name.toLowerCase() === currentVersion.toLowerCase())
@@ -346,6 +346,8 @@ export default {
           'Confirm with Heimdall',
           'AuthFlow - with login_hint',
           'AuthFlow - with jwt-auth mandatory',
+          '(with login_hint)',
+          '(with jwt-auth mandatory)'
         ])
         const removeLFIItems = items => items
           .filter(item => ![...foldersToRemove].some(name => item.name.includes(name)))

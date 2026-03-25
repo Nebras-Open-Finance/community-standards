@@ -100,7 +100,7 @@ export default defineConfig({
     ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/AlTareq-OpenFinance/community-specs' },
+      { icon: 'github', link: 'https://github.com/Nebras-Open-Finance/community-standards' },
     ],
 
     search: {

@@ -52,13 +52,13 @@
         </div>
         <div class="new-kpi-card">
           <p class="new-kpi-label">Licensed LFIs</p>
-          <p class="new-kpi-value new-kpi-teal">{{ prodStats.lfis }}</p>
+          <p class="new-kpi-value new-kpi-teal">{{ sandboxStats.lfis }}</p>
           <p class="new-kpi-delta new-kpi-delta-teal">In production</p>
           <p class="new-kpi-desc">Licensed Financial Institutions connected to the framework</p>
         </div>
         <div class="new-kpi-card">
           <p class="new-kpi-label">Registered TPPs</p>
-          <p class="new-kpi-value new-kpi-gold">{{ prodStats.tpps }}</p>
+          <p class="new-kpi-value new-kpi-gold">{{ sandboxStats.tpps }}</p>
           <p class="new-kpi-delta new-kpi-delta-gold">Authorised providers</p>
           <p class="new-kpi-desc">Third Party Providers authorised to access Open Finance APIs</p>
         </div>
@@ -69,25 +69,24 @@
           <p class="new-chart-tag">API Consumption</p>
           <h3 class="new-chart-title">Successful API Volume by Month</h3>
           <DashApiVolumeChart
+            style="background-color: transparent; border: 0px;"
             :data="filteredSuccessApiData"
             group-by="month"
-            stack-by="family"
-            title="Successful API Volume by Month"
           />
         </div>
         <div class="new-chart-panel">
           <p class="new-chart-tag">Payment Activity</p>
           <h3 class="new-chart-title">Successful Payment Amount by Month (AED)</h3>
           <DashApiVolumeChart
+            style="background-color: transparent; border: 0px;"
             :data="filteredSuccessPaymentData"
             group-by="month"
             value-key="amount"
-            title="Successful Payment Amount by Month (AED)"
           />
         </div>
       </div>
 
-      <a class="all-blogs-link" href="/metrics">
+      <a style="margin-top: 5rem;" class="all-blogs-link" href="/metrics">
         <span>View all metrics</span>
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path fill-rule="evenodd" clip-rule="evenodd"
@@ -100,111 +99,6 @@
 
 
     <div class="section-3">
-
-
-      <div class="section-heading">
-        Our Community
-      </div>
-
-      <p class="section-description">
-        AlTareq brings together LFIs, TPPs, regulators, and developers shaping the future of finance in the UAE.
-      </p>
-
-      <!-- Community Stats Grid -->
-      <div class="new-comm-grid">
-        <div class="new-comm-stat">
-          <div class="new-comm-icon new-comm-icon--teal">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 21h18M3 10h18M3 7l9-4 9 4M4 10v11M20 10v11M8 10v11M16 10v11M12 10v11"/>
-            </svg>
-          </div>
-          <p class="new-comm-value new-kpi-teal">{{ prodStats.lfis }}</p>
-          <p class="new-comm-label">Licensed LFIs</p>
-          <p class="new-comm-desc">Banks &amp; financial institutions live on the framework</p>
-        </div>
-        <div class="new-comm-stat">
-          <div class="new-comm-icon new-comm-icon--gold">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
-            </svg>
-          </div>
-          <p class="new-comm-value new-kpi-gold">{{ prodStats.tpps }}</p>
-          <p class="new-comm-label">Active TPPs</p>
-          <p class="new-comm-desc">Third-party providers building on Open Finance APIs</p>
-        </div>
-        <div class="new-comm-stat">
-          <div class="new-comm-icon new-comm-icon--teal">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-            </svg>
-          </div>
-          <p class="new-comm-value new-kpi-teal">{{ prodApiStats.total }}</p>
-          <p class="new-comm-label">APIs Available</p>
-          <p class="new-comm-desc">Published API endpoints across all categories</p>
-        </div>
-        <div class="new-comm-stat">
-          <div class="new-comm-icon new-comm-icon--gold">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-          </div>
-          <p class="new-comm-value new-kpi-gold">{{ prodStats.total }}</p>
-          <p class="new-comm-label">Organisations</p>
-          <p class="new-comm-desc">Organisations active in the Open Finance ecosystem</p>
-        </div>
-      </div>
-
-      <!-- Charts -->
-      <div class="graph-grid">
-        <DonutChart v-if="lfiByTypeItems.length > 0" style="margin: auto" title="LFI by Type" :items="lfiByTypeItems" />
-        <DonutChart v-if="prodApiStats.byType.length > 0" style="margin: auto" title="API by Type" :items="prodApiStats.byType" />
-      </div>
-
-      <!-- Join & Contribute -->
-      <div class="new-join-grid">
-        <div class="new-join-panel new-join-panel--teal">
-          <div class="new-comm-icon new-comm-icon--teal" style="margin-bottom: 1rem;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-          </div>
-          <h3 class="new-join-title">Join the Community</h3>
-          <p class="new-join-body">
-            Whether you're an LFI, a TPP, a developer, or just curious about Open Finance — all are welcome.
-            Share insights, ask questions, and help shape the ecosystem.
-          </p>
-          <div class="new-join-actions">
-            <a href="https://github.com/Nebras-Open-Finance" target="_blank" rel="noopener noreferrer" class="new-join-btn new-join-btn--primary">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-              GitHub
-            </a>
-            <a href="/news" class="new-join-btn new-join-btn--secondary">Read News</a>
-          </div>
-        </div>
-        <div class="new-join-panel new-join-panel--default">
-          <div class="new-comm-icon new-comm-icon--gold" style="margin-bottom: 1rem;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-          </div>
-          <h3 class="new-join-title">Contribute to AlTareq</h3>
-          <p class="new-join-body">
-            This site is open source. Help improve the data, documentation links, community guides, or the code itself.
-            Every contribution strengthens the ecosystem.
-          </p>
-          <ul class="new-contribute-list">
-            <li>Update or add KPI data</li>
-            <li>Improve developer documentation links</li>
-            <li>Submit your company or profile</li>
-            <li>Translate content to Arabic</li>
-          </ul>
-          <a href="https://github.com/Nebras-Open-Finance/community-standards" target="_blank" rel="noopener noreferrer" class="new-contribute-link">
-            View on GitHub ↗
-          </a>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="section-4">
 
       <div class="section-heading">Developer Docs</div>
 
@@ -228,7 +122,7 @@
               <h3 class="new-doc-col-title">For TPPs</h3>
               <p class="new-kpi-label" style="margin:0;">Third Party Providers · Build on Open Finance</p>
             </div>
-            <span class="new-doc-badge new-doc-badge--teal">12 resources</span>
+            <span class="new-doc-badge new-doc-badge--teal"> Standards</span>
           </div>
 
           <div class="new-doc-cards">
@@ -238,7 +132,7 @@
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                 </div>
                 <div>
-                  <h4 class="new-doc-card-title">Getting Started</h4>
+                  <h4 class="new-doc-card-title">Getting Started in Sandbox</h4>
                   <p class="new-doc-card-desc">Understand the TPP registration process, trust framework, and your first API call.</p>
                 </div>
               </div>
@@ -249,10 +143,57 @@
                 </a>
                 <a href="/tech/tpp-standards/" class="new-doc-link new-doc-link--teal">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  TPP Standards Overview
+                  Sandbox Quick-Start
+                </a>
+                <a href="/tech/tpp-standards/" class="new-doc-link new-doc-link--teal">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  Postman Collection
                 </a>
               </div>
             </div>
+
+
+            <div class="new-doc-card">
+              <div class="new-doc-card-header">
+                <div class="new-doc-icon new-doc-icon--teal">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                </div>
+                <div>
+                  <h4 class="new-doc-card-title">Consent</h4>
+                  <p class="new-doc-card-desc">Manage the lifecycle of customer consents — create, retrieve, and revoke consents.</p>
+                </div>
+              </div>
+              <div class="new-doc-links">
+                <a href="/tech/tpp-standards/v2.1/consent/" class="new-doc-link new-doc-link--teal">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  Consent
+                </a>
+              </div>
+            </div>
+
+
+            <div class="new-doc-card">
+              <div class="new-doc-card-header">
+                <div class="new-doc-icon new-doc-icon--teal">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                </div>
+                <div>
+                  <h4 class="new-doc-card-title">API Guides &amp; Tools</h4>
+                  <p class="new-doc-card-desc">Security standards, FAPI compliance, webhooks, and tooling to accelerate integration.</p>
+                </div>
+              </div>
+              <div class="new-doc-links">
+                <a href="/tech/tpp-standards/security/fapi/" class="new-doc-link new-doc-link--teal">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  Security &amp; FAPI
+                </a>
+                <a href="/tech/tpp-standards/v2.1/webhooks/" class="new-doc-link new-doc-link--teal">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  Webhooks
+                </a>
+              </div>
+            </div>
+          </div>
 
             <div class="new-doc-card">
               <div class="new-doc-card-header">
@@ -276,14 +217,15 @@
               </div>
             </div>
 
+
             <div class="new-doc-card">
               <div class="new-doc-card-header">
                 <div class="new-doc-icon new-doc-icon--teal">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
                 </div>
                 <div>
-                  <h4 class="new-doc-card-title">Bank Data Sharing</h4>
-                  <p class="new-doc-card-desc">Access customer account data and transaction history with consent.</p>
+                  <h4 class="new-doc-card-title">Data Access APIs</h4>
+                  <p class="new-doc-card-desc">Access customer account data, transaction history, product catalogues, and ATM locations.</p>
                 </div>
               </div>
               <div class="new-doc-links">
@@ -291,9 +233,18 @@
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                   Bank Data Sharing
                 </a>
+                <a href="/tech/tpp-standards/v2.1/banking/products-leads/" class="new-doc-link new-doc-link--teal">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  Products &amp; Leads
+                </a>
+                <a href="/tech/tpp-standards/v2.1/banking/atms/" class="new-doc-link new-doc-link--teal">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  ATMs
+                </a>
               </div>
             </div>
-          </div>
+
+
 
           <a href="/tech/tpp-standards/" class="new-doc-cta new-doc-cta--teal">
             View full TPP documentation →
@@ -312,25 +263,23 @@
               <h3 class="new-doc-col-title">For LFIs</h3>
               <p class="new-kpi-label" style="margin:0;">Licensed Financial Institutions · Power Open Finance</p>
             </div>
-            <span class="new-doc-badge new-doc-badge--gold">12 resources</span>
+            <span class="new-doc-badge new-doc-badge--gold">Integration Guide</span>
           </div>
 
           <div class="new-doc-cards">
+
+            <!-- Integration Guide -->
             <div class="new-doc-card">
               <div class="new-doc-card-header">
                 <div class="new-doc-icon new-doc-icon--gold">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M3 10h18M3 7l9-4 9 4M4 10v11M20 10v11M8 10v11M16 10v11M12 10v11"/></svg>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 </div>
                 <div>
-                  <h4 class="new-doc-card-title">LFI Onboarding</h4>
-                  <p class="new-doc-card-desc">Step-by-step guide to connecting your institution to the Open Finance framework.</p>
+                  <h4 class="new-doc-card-title">Step-by-step Integration Guide</h4>
+                  <p class="new-doc-card-desc">Follow the end-to-end journey from onboarding to your first live API call.</p>
                 </div>
               </div>
               <div class="new-doc-links">
-                <a href="/tech/lfi-api-hub/trust-framework/" class="new-doc-link new-doc-link--gold">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Trust Framework
-                </a>
                 <a href="/tech/lfi-api-hub/getting-started/" class="new-doc-link new-doc-link--gold">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                   Integration Journey
@@ -338,45 +287,98 @@
               </div>
             </div>
 
+            <!-- Trust Framework -->
+            <div class="new-doc-card">
+              <div class="new-doc-card-header">
+                <div class="new-doc-icon new-doc-icon--gold">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <div>
+                  <h4 class="new-doc-card-title">Trust Framework</h4>
+                  <p class="new-doc-card-desc">Register your organisation, create clients, authorisation servers, and manage certificates.</p>
+                </div>
+              </div>
+              <div class="new-doc-links">
+                <a href="/tech/lfi-api-hub/trust-framework/" class="new-doc-link new-doc-link--gold">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  Overview
+                </a>
+                <a href="/tech/lfi-api-hub/trust-framework/creating-c3-application" class="new-doc-link new-doc-link--gold">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  Clients
+                </a>
+                <a href="/tech/lfi-api-hub/trust-framework/servers/" class="new-doc-link new-doc-link--gold">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  Servers
+                </a>
+                <a href="/tech/lfi-api-hub/trust-framework/certificates/" class="new-doc-link new-doc-link--gold">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  Certificates
+                </a>
+              </div>
+            </div>
+
+            <!-- API Hub -->
             <div class="new-doc-card">
               <div class="new-doc-card-header">
                 <div class="new-doc-icon new-doc-icon--gold">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
                 </div>
                 <div>
-                  <h4 class="new-doc-card-title">API Standards</h4>
-                  <p class="new-doc-card-desc">Implement CBUAE-compliant API standards to expose your financial data.</p>
-                </div>
-              </div>
-              <div class="new-doc-links">
-                <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/" class="new-doc-link new-doc-link--gold">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Data Sharing
-                </a>
-                <a href="/tech/lfi-api-hub/v2.1/banking/confirmation-of-payee/" class="new-doc-link new-doc-link--gold">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Confirmation of Payee
-                </a>
-              </div>
-            </div>
-
-            <div class="new-doc-card">
-              <div class="new-doc-card-header">
-                <div class="new-doc-icon new-doc-icon--gold">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                </div>
-                <div>
-                  <h4 class="new-doc-card-title">Operations &amp; Support</h4>
-                  <p class="new-doc-card-desc">Manage API health, respond to incidents, and stay up to date.</p>
+                  <h4 class="new-doc-card-title">API Hub</h4>
+                  <p class="new-doc-card-desc">Explore the LFI-facing APIs for consent management, token flows, and more.</p>
                 </div>
               </div>
               <div class="new-doc-links">
                 <a href="/tech/lfi-api-hub/" class="new-doc-link new-doc-link--gold">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  LFI API Hub
+                  API Hub Overview
                 </a>
               </div>
             </div>
+
+            <!-- Ozone Connect -->
+            <div class="new-doc-card">
+              <div class="new-doc-card-header">
+                <div class="new-doc-icon new-doc-icon--gold">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="10" ry="4"/><path d="M2 12c0 4.4 4.5 8 10 8s10-3.6 10-8"/><path d="M2 12c0-4.4 4.5-8 10-8s10 3.6 10 8"/></svg>
+                </div>
+                <div>
+                  <h4 class="new-doc-card-title">Ozone Connect</h4>
+                  <p class="new-doc-card-desc">Configure and manage your Ozone Connect instance to power your Open Finance APIs.</p>
+                </div>
+              </div>
+              <div class="new-doc-links">
+                <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/" class="new-doc-link new-doc-link--gold">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  Banking
+                </a>
+                <a href="/tech/lfi-api-hub/v2.1/banking/confirmation-of-payee/" class="new-doc-link new-doc-link--gold">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  Insurance
+                </a>
+              </div>
+            </div>
+
+            <!-- Testing & Certification -->
+            <div class="new-doc-card">
+              <div class="new-doc-card-header">
+                <div class="new-doc-icon new-doc-icon--gold">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                </div>
+                <div>
+                  <h4 class="new-doc-card-title">Testing &amp; Certification</h4>
+                  <p class="new-doc-card-desc">Validate your implementation against the conformance suite before going live.</p>
+                </div>
+              </div>
+              <div class="new-doc-links">
+                <a href="/tech/lfi-api-hub/getting-started/" class="new-doc-link new-doc-link--gold">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  Testing Guide
+                </a>
+              </div>
+            </div>
+
           </div>
 
           <a href="/tech/lfi-api-hub/getting-started/" class="new-doc-cta new-doc-cta--gold">
@@ -387,6 +389,93 @@
       </div>
     </div>
 
+
+    <div class="section-4">
+
+
+      <div class="section-heading">
+        Our Community
+      </div>
+
+      <p class="section-description">
+        AlTareq brings together LFIs, TPPs, regulators, and developers shaping the future of finance in the UAE.
+      </p>
+
+      <!-- Community Stats Grid -->
+      <div class="new-comm-grid">
+        <div class="new-comm-stat">
+          <div class="new-comm-icon new-comm-icon--teal">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 21h18M3 10h18M3 7l9-4 9 4M4 10v11M20 10v11M8 10v11M16 10v11M12 10v11"/>
+            </svg>
+          </div>
+          <p class="new-comm-value new-kpi-teal">{{ sandboxStats.lfis }}</p>
+          <p class="new-comm-label">Licensed LFIs</p>
+          <p class="new-comm-desc">Banks &amp; financial institutions live on the framework</p>
+        </div>
+        <div class="new-comm-stat">
+          <div class="new-comm-icon new-comm-icon--gold">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+            </svg>
+          </div>
+          <p class="new-comm-value new-kpi-gold">{{ sandboxStats.tpps }}</p>
+          <p class="new-comm-label">Active TPPs</p>
+          <p class="new-comm-desc">Third-party providers building on Open Finance APIs</p>
+        </div>
+        <div class="new-comm-stat">
+          <div class="new-comm-icon new-comm-icon--teal">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          </div>
+          <p class="new-comm-value new-kpi-teal">{{ sandboxApiStats.total }}</p>
+          <p class="new-comm-label">APIs Available</p>
+          <p class="new-comm-desc">Published API endpoints across all categories</p>
+        </div>
+        <div class="new-comm-stat">
+          <div class="new-comm-icon new-comm-icon--gold">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <p class="new-comm-value new-kpi-gold">{{ sandboxStats.total }}</p>
+          <p class="new-comm-label">Organisations</p>
+          <p class="new-comm-desc">Organisations active in the Open Finance ecosystem</p>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <!-- 
+      <div class="graph-grid">
+        <DonutChart v-if="lfiByTypeItems.length > 0" style="margin: auto" title="LFI by Type" :items="lfiByTypeItems" />
+        <DonutChart v-if="sandboxApiStats.byType.length > 0" style="margin: auto" title="API by Type" :items="sandboxApiStats.byType" />
+      </div> -->
+
+      <!-- Join & Contribute -->
+      <div class="new-join-grid">
+        <div class="new-join-panel new-join-panel--default">
+          <div class="new-comm-icon new-comm-icon--gold" style="margin-bottom: 1rem;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          </div>
+          <h3 class="new-join-title">Contribute to AlTareq</h3>
+          <p class="new-join-body">
+            This site is open source. Help improve the data, documentation links, community guides, or the code itself.
+            Every contribution strengthens the ecosystem.
+          </p>
+          <ul class="new-contribute-list">
+            <li>Fix errors, fill gaps, or clarify existing developer documentation</li>
+            <li>Suggest use cases that could unlock value for consumers and businesses in the UAE</li>
+            <li>Report issues with the documentation, API Hub, or Trust Framework</li>
+            <li>Help make content accessible to Arabic-speaking developers</li>
+          </ul>
+          <a href="https://github.com/Nebras-Open-Finance/community-standards" target="_blank" rel="noopener noreferrer" class="new-contribute-link">
+            View on GitHub ↗
+          </a>
+        </div>
+      </div>
+
+    </div>
 
 
     <div class="section-5">
@@ -576,9 +665,9 @@ function apiCountsFromServers(servers) {
   return counts
 }
 
-const prodApiStats = computed(() => {
+const sandboxApiStats = computed(() => {
   if (!tfData.value) return { total: 0, byType: [] }
-  const servers = tfData.value.AuthorisationServers.filter(s => s.Environment === 'production' && s.Status === 'Active')
+  const servers = tfData.value.AuthorisationServers.filter(s => s.Environment === 'sandbox' && s.Status === 'Active')
   const counts = apiCountsFromServers(servers)
   const total = Object.values(counts).reduce((s, n) => s + n, 0)
   const byType = Object.entries(counts).map(([key, value]) => ({
@@ -588,16 +677,9 @@ const prodApiStats = computed(() => {
   return { total, byType }
 })
 
-const sandboxApiTotal = computed(() => {
-  if (!tfData.value) return 0
-  const servers = tfData.value.AuthorisationServers.filter(s => s.Environment === 'sandbox' && s.Status === 'Active')
-  const counts = apiCountsFromServers(servers)
-  return Object.values(counts).reduce((s, n) => s + n, 0)
-})
-
 const lfiByTypeItems = computed(() => {
   if (!tfData.value) return []
-  const lfis = tfData.value.Organisations.filter(o => o.Environment === 'production' && o.Status === 'Active' && o.Size === 'LFI')
+  const lfis = tfData.value.Organisations.filter(o => o.Environment === 'sandbox' && o.Status === 'Active' && o.Size === 'LFI')
   let banks = 0, insurers = 0
   for (const org of lfis) {
     const name = `${org.LegalEntityName} ${org.RegisteredName}`.toLowerCase()
@@ -1295,7 +1377,9 @@ const lfiByTypeItems = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 0.75rem;
+  margin-right: 3rem;
+  margin-left: 1rem;
+  margin-bottom: auto;
 }
 
 .new-comm-icon--teal {
@@ -1442,7 +1526,7 @@ const lfiByTypeItems = computed(() => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 3rem;
-  margin-top: 2rem;
+  margin-top: 5rem;
 }
 
 .new-doc-col-header {

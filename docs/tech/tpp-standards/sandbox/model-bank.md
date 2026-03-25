@@ -38,46 +38,63 @@ The `.well-known` endpoint exposes the following critical information values:
 
 ## Model Bank Credentials
 
-The Model Bank includes two pre-configured users, each with varied accounts. You can log in as either user to explore the various Open Finance capabilities.
+Credentials are version-specific. The accounts below correspond to the **Banking API v2.1** sandbox environment.
 
-**Model Bank Users**
+### Banking API v2.1 <Badge type="tip" text="Current" />
 
-| **User** | **Password** |
-|----------|--------------|
-| `mits`   | `mits`       |
-| `rora`   | `rora`       |
-
-
+| Username | Password |
+|----------|----------|
+| `omar.farsi@testmail.ae` | `PIX` |
 
 <ImageViewer
   src="/images/postman/first-flow-sip/7.png"
   alt="Model Bank Auth"
 />
 
-**Mits Accounts:**
+**Omar Al-Farsi Accounts:**
 
-| AccountId                | SchemeName    | Identification | AccountType | Name                |
-|--------------------------|---------------|----------------|-------------|---------------------|
-| 100004000000000000000002 | AccountNumber | 10000109010102 | Corporate   | Luigi International |
-| 100004000000000000000003 | AccountNumber | 10000109010103 | Retail      | Mario International |
-| 100004000000000000000005 | IBAN          | 10000109010105 | Retail      | Spectrum            |
+| AccountId | SchemeName | Identification | AccountType | Name |
+|-----------|------------|----------------|-------------|------|
+| `2_1_100004000000000000000001` | AccountNumber | 10901010157 | Retail | Omar Al-Farsi |
+| `2_1_100004000000000000000002` | AccountNumber | 10000109010103 | Corporate | Mario International |
+| `2_1_100004000000000000000003` | IBAN | 10000109010105 | Retail | Spectrum |
 
+---
 
-<ImageViewer
-  src="/images/postman/first-flow-sip/8.png"
-  alt="Mits Accounts"
-/>
+### Older API Versions
 
-**Rora Accounts:**
+:::details Banking API v2.0
 
-| AccountId                | SchemeName    | Identification | AccountType | Name               |
-|--------------------------|---------------|----------------|-------------|--------------------|
-| 100004000000000000000001 | IBAN          | 10000109010101 | Retail      | Mario Current      |
-| 100004000000000000000004 | AccountNumber | 10000109010104 | Corporate   | Luigi PrePaid Card |
-| 100004000000000000000006 | AccountNumber | 10000109010106 | Corporate   | Peach Charge Card  |
-| 100004000000000000000007 | IBAN          | 10000109010107 | Retail      | Bowser Other       |
-| 100004000000000000000008 | IBAN          | 10000109010108 | Corporate   | Toadstool Current  |
-| 100004000000000000000009 | AccountNumber | 10000109010109 | Retail      | Yoshi Savings      |
-| 100004000000000000000010 | IBAN          | 10000109010110 | Corporate   | Koopa Credit Card  |
-| 100004000000000000000011 | IBAN          | 10000109010111 | Retail      | Daisy PrePaid Card |
+| Username | Password |
+|----------|----------|
+| `mario@biz.bix` | `PIX` |
 
+**mario@biz.bix Accounts:**
+
+| AccountId | SchemeName | Identification | AccountType | Name |
+|-----------|------------|----------------|-------------|------|
+| `100004000000000000000004` | AccountNumber | 10000109010104 | Corporate | Luigi PrePaid Card |
+| `100004000000000000000006` | AccountNumber | 10000109010106 | Corporate | Peach Charge Card |
+| `100004000000000000000007` | IBAN | 10000109010107 | Retail | Bowser Other |
+| `100004000000000000000008` | IBAN | 10000109010108 | Corporate | Toadstool Current |
+| `100004000000000000000009` | AccountNumber | 10000109010109 | Retail | Yoshi Savings |
+| `100004000000000000000010` | IBAN | 10000109010110 | Corporate | Koopa Credit Card |
+| `100004000000000000000011` | IBAN | 10000109010111 | Retail | Daisy PrePaid Card |
+
+:::
+
+:::details Banking API v1.2
+
+| Username | Password |
+|----------|----------|
+| `mits` | `mits` |
+
+**mits Accounts:**
+
+| AccountId | SchemeName | Identification | AccountType | Name |
+|-----------|------------|----------------|-------------|------|
+| `100004000000000000000002` | AccountNumber | 10000109010102 | Corporate | Luigi International |
+| `100004000000000000000003` | AccountNumber | 10000109010103 | Retail | Mario International |
+| `100004000000000000000005` | IBAN | 10000109010105 | Retail | Spectrum |
+
+:::

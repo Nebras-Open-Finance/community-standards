@@ -30,7 +30,7 @@
       <a href="/metrics" class="header-link">Metrics &amp; Monitoring</a>
       <a href="/news" class="header-link">Articles &amp; News</a>
 
-      <a href="https://github.com/AlTareq-OpenFinance/community-specs" class="github-link" target="_blank"
+      <a href="https://github.com/Nebras-Open-Finance/community-standards" class="github-link" target="_blank"
         rel="noopener noreferrer" aria-label="View on GitHub">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path
@@ -57,9 +57,8 @@
           <a href="/knowledge-base" class="mobile-link mobile-indent">Knowledge Base</a>
           <a href="/tech/erratas"  class="mobile-link mobile-indent">Erratas</a>
         <hr class="mobile-divider" />
-        <a href="/metrics" class="mobile-link">Metrics &amp; Monitoring</a>
         <a href="/news" class="mobile-link">Articles &amp; News</a>
-        <a href="https://github.com/AlTareq-OpenFinance/community-specs" class="mobile-link" target="_blank"
+        <a href="https://github.com/Nebras-Open-Finance/community-standards" class="mobile-link" target="_blank"
           rel="noopener noreferrer">GitHub</a>
       </div>
     </div>

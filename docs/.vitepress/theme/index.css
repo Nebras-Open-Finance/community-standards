@@ -1,3 +1,9 @@
+@media (max-width: 768px) {
+  .VPNavScreen a[href="/metrics"] {
+    display: none;
+  }
+}
+
 .homepage {
   background-color: white;
   color: black;

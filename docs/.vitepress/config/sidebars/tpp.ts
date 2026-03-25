@@ -37,13 +37,13 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
           { text: 'User/Admin Sign Up', link: `${BASE}/trust-framework/user-sign-up` },
         ],
       },
+      { text: 'Roles', link: `${BASE}/trust-framework/roles/` },
       {
         text: 'Applications',
         collapsed: true,
         items: [
           { text: 'Overview', link: `${BASE}/trust-framework/application` },
           { text: 'Creating An Application', link: `${BASE}/trust-framework/creating-an-application` },
-          { text: 'Roles', link: `${BASE}/trust-framework/roles/` },
           { text: 'Redirect URIs', link: `${BASE}/trust-framework/redirect-uri/` },
           {
             text: 'Keys & Certificates',

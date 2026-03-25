@@ -31,13 +31,30 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
           { text: 'User/Admin Sign Up', link: `${BASE}/trust-framework/user-sign-up` },
         ],
       },
+      { text: 'Roles', link: `${BASE}/trust-framework/roles` },
+      {
+        text: 'Servers',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/trust-framework/servers` },
+          { text: 'Creating a Server', link: `${BASE}/trust-framework/servers/creating` },
+          { text: 'API Resources',
+            collapsed: true,
+            items: [
+                { text: 'Overview', link: `${BASE}/trust-framework/servers/api` },
+                { text: 'Creating an API resource', link: `${BASE}/trust-framework/servers/api/creating` },
+                { text: 'Meta Data', link: `${BASE}/trust-framework/servers/api/meta` },    
+            ],
+          },
+          
+        ],
+      },
       {
         text: 'Applications',
         collapsed: true,
         items: [
           { text: 'Overview', link: `${BASE}/trust-framework/application` },
-          { text: 'Creating An Application', link: `${BASE}/trust-framework/creating-an-application` },
-          { text: 'Roles', link: `${BASE}/trust-framework/roles` },
+          { text: 'Creating C3-hh-cm-client', link: `${BASE}/trust-framework/creating-c3-application` },
           {
             text: 'Keys & Certificates',
             collapsed: true,
@@ -45,7 +62,6 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
               { text: 'Overview', link: `${BASE}/trust-framework/certificates/` },
               { text: 'Client Transport', link: `${BASE}/trust-framework/certificates/client-transport` },
               { text: 'Client Signing', link: `${BASE}/trust-framework/certificates/client-signing` },
-              { text: 'Client Encryption', link: `${BASE}/trust-framework/certificates/client-encryption` },
               { text: 'Certificates with a SAN', link: `${BASE}/trust-framework/certificates-san/` },
             ],
           },
