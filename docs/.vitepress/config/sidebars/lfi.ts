@@ -38,15 +38,16 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         items: [
           { text: 'Overview', link: `${BASE}/trust-framework/servers` },
           { text: 'Creating a Server', link: `${BASE}/trust-framework/servers/creating` },
-          { text: 'API Resources',
+          {
+            text: 'API Resources',
             collapsed: true,
             items: [
-                { text: 'Overview', link: `${BASE}/trust-framework/servers/api` },
-                { text: 'Creating an API resource', link: `${BASE}/trust-framework/servers/api/creating` },
-                { text: 'Meta Data', link: `${BASE}/trust-framework/servers/api/meta` },    
+              { text: 'Overview', link: `${BASE}/trust-framework/servers/api` },
+              { text: 'Creating an API resource', link: `${BASE}/trust-framework/servers/api/creating` },
+              { text: 'Meta Data', link: `${BASE}/trust-framework/servers/api/meta` },
             ],
           },
-          
+
         ],
       },
       {
@@ -125,24 +126,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         ]
       },
       {
-        text: 'Deployments',
-        collapsed: true,
-        items: [
-          { text: 'Overview', link: `${BASE}/api-hub/depolyments/` }
-        ]
-      }
-    ],
-  },
-
-
-
-  {
-    text: 'Ozone Connect Specifications',
-    collapsed: true,
-    items: [
-      { text: 'Overview', link: `${BASE}/${VERSION}/` },
-      {
-        text: 'Authentication & Authorization',
+        text: 'Headless Heimdall Auth Server',
         collapsed: true,
         items: [
           { text: 'Overview', link: `${BASE}/${VERSION}/auth/` },
@@ -158,44 +142,30 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         ],
       },
       {
-        text: 'Consent',
+        text: 'Consent Manager',
         collapsed: true,
         items: [
           { text: 'Overview', link: `${BASE}/${VERSION}/consent/` },
           { text: 'Requirements', link: `${BASE}/${VERSION}/consent/requirements` },
           { text: 'API Guide', link: `${BASE}/${VERSION}/consent/api-guide` },
-          {
-            text: 'Consent Management Interface',
-            collapsed: true,
-            items: [
-              { text: 'Overview', link: `${BASE}/${VERSION}/consent/consent-management-interface` },
-              { text: 'Requirements', link: `${BASE}/${VERSION}/consent/consent-management-interface/requirements` },
-              { text: 'User Experience', link: `${BASE}/${VERSION}/consent/consent-management-interface/user-experience` }
-            ]
-          },
-          {
-            text: 'Consent Manager API Reference',
-            collapsed: true,
-            items: [
-
-            ],
-          },
-          {
-            text: 'Consent Events & Actions',
-            collapsed: true,
-            items: [
-              { text: 'Overview', link: `${BASE}/${VERSION}/consent/events-and-actions` },
-              {
-                text: 'API Reference',
-                collapsed: true,
-                items: [
-
-                ],
-              },
-            ],
-          },
         ],
       },
+      {
+        text: 'Deployments',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/api-hub/deployments/` }
+        ]
+      },
+    ],
+  },
+
+
+  {
+    text: 'Ozone Connect Specifications',
+    collapsed: true,
+    items: [
+      { text: 'Overview', link: `${BASE}/${VERSION}/` },
       {
         text: 'Banking',
         collapsed: true,
@@ -213,18 +183,18 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
                 text: 'API Reference',
                 collapsed: true,
                 items: [
-                    apiRef('GET', '/accounts', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts`),
-                    apiRef('GET', '/accounts/{AccountId}', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId`),
-                    apiRef('GET', '/accounts/{AccountId}/balances', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-balances`),
-                    apiRef('GET', '/accounts/{AccountId}/beneficiaries', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-beneficiaries`),
-                    apiRef('GET', '/customer', `${BASE}/${VERSION}/banking/data-sharing/open-api/customer`),
-                    apiRef('GET', '/accounts/{AccountId}/customer', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-customer`),
-                    apiRef('GET', '/accounts/{AccountId}/direct-debits', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-direct-debits`),
-                    apiRef('GET', '/accounts/{AccountId}/products', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-products`),
-                    apiRef('GET', '/accounts/{AccountId}/scheduled-payments', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-scheduled-payments`),
-                    apiRef('GET', '/accounts/{AccountId}/standing-orders', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-standing-orders`),
-                    apiRef('GET', '/accounts/{AccountId}/statements', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-statements`),
-                    apiRef('GET', '/accounts/{AccountId}/transactions', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-transactions`),
+                  apiRef('GET', '/accounts', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts`),
+                  apiRef('GET', '/accounts/{AccountId}', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId`),
+                  apiRef('GET', '/accounts/{AccountId}/balances', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-balances`),
+                  apiRef('GET', '/accounts/{AccountId}/beneficiaries', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-beneficiaries`),
+                  apiRef('GET', '/customer', `${BASE}/${VERSION}/banking/data-sharing/open-api/customer`),
+                  apiRef('GET', '/accounts/{AccountId}/customer', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-customer`),
+                  apiRef('GET', '/accounts/{AccountId}/direct-debits', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-direct-debits`),
+                  apiRef('GET', '/accounts/{AccountId}/products', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-products`),
+                  apiRef('GET', '/accounts/{AccountId}/scheduled-payments', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-scheduled-payments`),
+                  apiRef('GET', '/accounts/{AccountId}/standing-orders', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-standing-orders`),
+                  apiRef('GET', '/accounts/{AccountId}/statements', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-statements`),
+                  apiRef('GET', '/accounts/{AccountId}/transactions', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-transactions`),
                 ],
               },
             ],
@@ -240,7 +210,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
                 text: 'API Reference',
                 collapsed: true,
                 items: [
-               apiRef('POST', '/customers/action/cop-query', `${BASE}//${VERSION}/banking/confirmation-of-payee/open-api/cop-query`),
+                  apiRef('POST', '/customers/action/cop-query', `${BASE}//${VERSION}/banking/confirmation-of-payee/open-api/cop-query`),
                 ],
               },
             ],
@@ -270,16 +240,42 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
                 text: 'API Reference',
                 collapsed: true,
                 items: [
-                    apiRef('GET', '/atm', `${BASE}/${VERSION}/banking/atms/open-api/atm`),
+                  apiRef('GET', '/atm', `${BASE}/${VERSION}/banking/atms/open-api/atm`),
                 ],
               },
             ],
           },
         ]
       },
+    ],
+  },
 
+  {
+    text: 'Authentication and Authorization Journey',
+    collapsed: true,
+    items: [
+      { text: 'Overview', link: `${BASE}/${VERSION}/auth/` },
+      { text: 'Requirements', link: `${BASE}/${VERSION}/auth/requirements` },
+      { text: 'API Guide', link: `${BASE}/${VERSION}/auth/api-guide` },
+    ],
+  },
 
+  {
+    text: 'Consent Management Interface',
+    collapsed: true,
+    items: [
+      { text: 'Overview', link: `${BASE}/${VERSION}/consent/consent-management-interface/` },
+      { text: 'Requirements', link: `${BASE}/${VERSION}/consent/consent-management-interface/requirements` },
+      { text: 'User Experience', link: `${BASE}/${VERSION}/consent/consent-management-interface/user-experience` },
+    ],
+  },
 
+  {
+    text: 'Operational Requirements',
+    collapsed: true,
+    items: [
+      { text: 'Availability', link: `${BASE}/operational-requirements/` },
+      { text: 'API Responsiveness', link: `${BASE}/operational-requirements/api-responsiveness` },
     ],
   },
 

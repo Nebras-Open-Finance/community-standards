@@ -21,9 +21,9 @@
           <a href="/tech/overview">Technology Architecture &amp; Overview</a>
           <a href="/tech/tpp-standards">TPP – Open Finance Standards</a>
           <a href="/tech/lfi-api-hub">LFI – Integration Guide</a>
-          <a href="/tech/api-specs">API specs</a>
+          <a :href="`/tech/api-specs/${CURRENT_VERSION}`">API Specs</a>
           <a href="/knowledge-base">Knowledge Base</a>
-          <a href="/tech/erratas">Erratas</a>
+          <a :href="`/tech/erratas/${CURRENT_VERSION}`">Erratas</a>
         </div>
       </div>
 
@@ -53,9 +53,9 @@
         <a href="/tech/overview" class="mobile-link mobile-section-label">Developer Docs</a>
           <a href="/tech/tpp-standards" class="mobile-link mobile-indent">TPP – Open Finance Standards</a>
           <a href="/tech/lfi-api-hub" class="mobile-link mobile-indent">LFI – Integration Guide</a>
-          <a href="/tech/api-specs" class="mobile-link mobile-indent">API specs</a>
+          <a :href="`/tech/api-specs/${CURRENT_VERSION}`" class="mobile-link mobile-indent">API Specs</a>
           <a href="/knowledge-base" class="mobile-link mobile-indent">Knowledge Base</a>
-          <a href="/tech/erratas"  class="mobile-link mobile-indent">Erratas</a>
+          <a :href="`/tech/erratas/${CURRENT_VERSION}`" class="mobile-link mobile-indent">Erratas</a>
         <hr class="mobile-divider" />
         <a href="/news" class="mobile-link">Articles &amp; News</a>
         <a href="https://github.com/Nebras-Open-Finance/community-standards" class="mobile-link" target="_blank"
@@ -68,6 +68,8 @@
 
 <script setup>
 import { ref } from 'vue'
+import { CURRENT_VERSION } from '../../../.vitepress/version'
+
 const menuOpen = ref(false)
 </script>
 

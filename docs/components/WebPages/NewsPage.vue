@@ -3,7 +3,7 @@
 
     <PageHeader />
 
-    <section class="section">
+    <section class="section" style="padding-bottom: 20px;">
 
       <div class="section-heading">
         Articles & News
@@ -146,10 +146,12 @@
       </div>
 
     </section>
+    <PageFooter />
   </div>
 </template>
 
 <script setup>
 import PageHeader from './Components/PageHeader.vue'
 import ArticleLink from './Components/ArticleLink.vue'
+import PageFooter from './Components/PageFooter.vue'
 </script>

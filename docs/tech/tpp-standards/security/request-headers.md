@@ -28,6 +28,30 @@ A UUID v4 correlation identifier that links a request to its response and enable
 
 TPPs should log the interaction ID alongside every outbound request and its response. This enables correlation of issues across TPP systems, the API Hub and the LFI systems, and Nebras support.
 
+::: warning UUID v4 format is strictly required
+The API Hub validates the format of `x-fapi-interaction-id`. If the value is not a valid UUID v4, **the request will not fail**, but the interaction ID will be silently discarded and will not be stored at the API Hub. This means the ID cannot be used for tracing or support — the value in your logs will not match anything on the API Hub side.
+
+
+::: code-group
+
+```js [Node.js]
+import { v4 as uuidv4 } from 'uuid'
+const interactionId = uuidv4()
+// e.g. "7b5b4e3c-1d2a-4f5e-8c3b-9a0d6e2f1b4c"
+```
+
+```python [Python]
+import uuid
+interaction_id = str(uuid.uuid4())
+# e.g. "7b5b4e3c-1d2a-4f5e-8c3b-9a0d6e2f1b4c"
+```
+
+:::
+
+
+Do not use any format that does not conform to RFC 4122 UUID v4. Even values that look similar (e.g. GUIDs or UUIDs without hyphens) will be discarded.
+:::
+
 ## x-fapi-customer-ip-address
 
 The IP address of the customer's device at the time of the request.
