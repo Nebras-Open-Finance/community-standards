@@ -38,63 +38,46 @@ The `.well-known` endpoint exposes the following critical information values:
 
 ## Model Bank Credentials
 
-Credentials are version-specific. The accounts below correspond to the **Banking API v2.1** sandbox environment.
+Credentials are version-specific.
 
-### Banking API v2.1 <Badge type="tip" text="Current" />
+<div v-for="(c, i) in allCredentials" :key="c.version">
 
-| Username | Password |
-|----------|----------|
-| `omar.farsi@testmail.ae` | `PIX` |
+<h3>Banking API {{ c.version }} <Badge v-if="c.version === currentVersion" type="tip" text="Current" /></h3>
+
+<table>
+  <thead><tr><th>Username</th><th>Password</th></tr></thead>
+  <tbody><tr><td><code>{{ c.username }}</code></td><td><code>{{ c.password }}</code></td></tr></tbody>
+</table>
 
 <ImageViewer
+  v-if="c.version === currentVersion"
   src="/images/postman/first-flow-sip/7.png"
   alt="Model Bank Auth"
 />
 
-**Omar Al-Farsi Accounts:**
+<p><strong>Accounts:</strong></p>
 
-| AccountId | SchemeName | Identification | AccountType | Name |
-|-----------|------------|----------------|-------------|------|
-| `2_1_100004000000000000000001` | AccountNumber | 10901010157 | Retail | Omar Al-Farsi |
-| `2_1_100004000000000000000002` | AccountNumber | 10000109010103 | Corporate | Mario International |
-| `2_1_100004000000000000000003` | IBAN | 10000109010105 | Retail | Spectrum |
+<table>
+  <thead>
+    <tr><th>AccountId</th><th>SchemeName</th><th>Identification</th><th>AccountType</th><th>Name</th></tr>
+  </thead>
+  <tbody>
+    <tr v-for="a in c.accounts" :key="a.accountId">
+      <td><code>{{ a.accountId }}</code></td>
+      <td>{{ a.schemeName }}</td>
+      <td>{{ a.identification }}</td>
+      <td>{{ a.accountType }}</td>
+      <td>{{ a.name }}</td>
+    </tr>
+  </tbody>
+</table>
 
----
+<hr v-if="i < allCredentials.length - 1" />
 
-### Older API Versions
+</div>
 
-:::details Banking API v2.0
+<script setup>
+import { useModelBankCredentials } from '../../../components/Composables/useModelBankCredentials'
 
-| Username | Password |
-|----------|----------|
-| `mario@biz.bix` | `PIX` |
-
-**mario@biz.bix Accounts:**
-
-| AccountId | SchemeName | Identification | AccountType | Name |
-|-----------|------------|----------------|-------------|------|
-| `100004000000000000000004` | AccountNumber | 10000109010104 | Corporate | Luigi PrePaid Card |
-| `100004000000000000000006` | AccountNumber | 10000109010106 | Corporate | Peach Charge Card |
-| `100004000000000000000007` | IBAN | 10000109010107 | Retail | Bowser Other |
-| `100004000000000000000008` | IBAN | 10000109010108 | Corporate | Toadstool Current |
-| `100004000000000000000009` | AccountNumber | 10000109010109 | Retail | Yoshi Savings |
-| `100004000000000000000010` | IBAN | 10000109010110 | Corporate | Koopa Credit Card |
-| `100004000000000000000011` | IBAN | 10000109010111 | Retail | Daisy PrePaid Card |
-
-:::
-
-:::details Banking API v1.2
-
-| Username | Password |
-|----------|----------|
-| `mits` | `mits` |
-
-**mits Accounts:**
-
-| AccountId | SchemeName | Identification | AccountType | Name |
-|-----------|------------|----------------|-------------|------|
-| `100004000000000000000002` | AccountNumber | 10000109010102 | Corporate | Luigi International |
-| `100004000000000000000003` | AccountNumber | 10000109010103 | Retail | Mario International |
-| `100004000000000000000005` | IBAN | 10000109010105 | Retail | Spectrum |
-
-:::
+const { currentVersion, allCredentials } = useModelBankCredentials()
+</script>

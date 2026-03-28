@@ -334,6 +334,7 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
         collapsed: true,
         items: [
           { text: 'Overview', link: `${BASE}/${VERSION}/banking/atms` },
+          { text: 'Requirements', link: `${BASE}/${VERSION}/banking/atms/requirements` },
           { text: 'API Guide', link: `${BASE}/${VERSION}/banking/atms/api-guide` },
           {
             text: 'API Reference',

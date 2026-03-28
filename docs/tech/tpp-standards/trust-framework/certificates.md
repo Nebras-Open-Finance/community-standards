@@ -63,7 +63,7 @@ openssl req -new -newkey rsa:2048 -nodes \
   -sha256
 ```
 
-Replace `LegalName` and `OrganizationId` with your organisation's details from the Trust Framework. Replace `UUID` with your application's **Client ID** — the UUID assigned when the application was created (see [Creating an Application](./application#your-client-id)). Equivalent cryptographic tools may be used, provided all requirements above are met.
+Replace `LegalName` and `OrganizationId` with your organisation's details from the Trust Framework. Replace `UUID` with your application's **Client ID** — the UUID assigned when the application was created (see [Creating an Application](./creating-an-application#your-client-id)). Equivalent cryptographic tools may be used, provided all requirements above are met.
 
 The `.csr` file (Certificate Signing Request) must be uploaded to the Trust Framework.
 The `.key` file (Private Key) must be kept *secure and must never be shared*. More information on private key handling and security requirements can be found [here](/policy/secure-management).
