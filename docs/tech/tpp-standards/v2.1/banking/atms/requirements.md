@@ -15,4 +15,4 @@ All requests require an active [Trust Framework application](/tech/tpp-standards
 | # | Field | Rule | Validated by |
 |---|-------|------|-------------|
 | 1 | `Authorization` | Must contain a valid Bearer access token obtained via a `client_credentials` grant with the `atm` scope. | API Hub |
-| 2 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
+| 2 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |

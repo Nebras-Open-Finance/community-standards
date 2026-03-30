@@ -109,4 +109,62 @@ export const apiSpecsSidebar: DefaultTheme.SidebarItem[] = [
             },
         ],
     },
+    {
+        text: 'API Hub',
+        items: [
+            {
+                text: 'Headless Heimdall Auth Server',
+                collapsed: true,
+                items: [
+                    {
+                        text: 'Health Check',
+                        items: [
+                            apiRef('GET', '/hello-mtls', `${BASE}/api-hub/headless-heimdall/open-api/hello-mtls`),
+                        ],
+                    },
+                    {
+                        text: 'Authorization',
+                        items: [
+                            apiRef('GET', '/auth', `${BASE}/api-hub/headless-heimdall/open-api/auth`),
+                            apiRef('POST', '/auth/{interactionId}/doConfirm', `${BASE}/api-hub/headless-heimdall/open-api/auth-interactionId-doConfirm`),
+                            apiRef('POST', '/auth/{interactionId}/doFail', `${BASE}/api-hub/headless-heimdall/open-api/auth-interactionId-doFail`),
+                        ],
+                    },
+                ],
+            },
+            {
+                text: 'Consent Manager',
+                collapsed: true,
+                items: [
+                    {
+                        text: 'Health Check',
+                        items: [
+                            apiRef('GET', '/hello-mtls', `${BASE}/api-hub/consent-manager/open-api/hello-mtls`),
+                        ],
+                    },
+                    {
+                        text: 'Consents',
+                        items: [
+                            apiRef('GET', '/consents', `${BASE}/api-hub/consent-manager/open-api/consents`),
+                            apiRef('GET', '/consents/{consentId}', `${BASE}/api-hub/consent-manager/open-api/consents-consentId`),
+                            apiRef('PATCH', '/consents/{consentId}', `${BASE}/api-hub/consent-manager/open-api/patch-consents-consentId`),
+                            apiRef('GET', '/consents/{consentId}/audit', `${BASE}/api-hub/consent-manager/open-api/consents-consentId-audit`),
+                            apiRef('GET', '/consent-groups/{consentGroupId}/consents', `${BASE}/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents`),
+                            apiRef('GET', '/psu/{userId}/consents', `${BASE}/api-hub/consent-manager/open-api/psu-userId-consents`),
+                            apiRef('GET', '/accounts/{accountId}/consents', `${BASE}/api-hub/consent-manager/open-api/accounts-accountId-consents`),
+                            apiRef('POST', '/consent-groups/{consentGroupId}/consents/action/revoke', `${BASE}/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents-action-revoke`),
+                            apiRef('POST', '/consents/{consentId}/action/revoke', `${BASE}/api-hub/consent-manager/open-api/consents-consentId-action-revoke`),
+                        ],
+                    },
+                    {
+                        text: 'Payment Log',
+                        items: [
+                            apiRef('GET', '/payment-log', `${BASE}/api-hub/consent-manager/open-api/payment-log`),
+                            apiRef('PATCH', '/payment-log/{id}', `${BASE}/api-hub/consent-manager/open-api/payment-log-id`),
+                        ],
+                    },
+                ],
+            },
+        ],
+    },
 ]

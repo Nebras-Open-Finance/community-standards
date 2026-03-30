@@ -98,21 +98,21 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
     text: 'API Hub',
     collapsed: true,
     items: [
-      { text: 'Overview', link: `${BASE}/api-hub/` },
+      { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/` },
       {
         text: 'Onboarding',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/api-hub/onboarding/` },
-          { text: 'Prerequisites', link: `${BASE}/api-hub/onboarding/prerequisites` },
-          { text: 'Application Layer Authentication', link: `${BASE}/api-hub/onboarding/application-layer-auth` },
+          { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/onboarding/` },
+          { text: 'Prerequisites', link: `${BASE}/${VERSION}/api-hub/onboarding/prerequisites` },
+          { text: 'Application Layer Authentication', link: `${BASE}/${VERSION}/api-hub/onboarding/application-layer-auth` },
           {
             text: 'Environment Specific',
             collapsed: true,
             items: [
-              { text: 'Overview', link: `${BASE}/api-hub/onboarding/environment-specific` },
-              { text: 'Ozone Connect Base URL', link: `${BASE}/api-hub/onboarding/environment-specific/ozone-connect-url` },
-              { text: 'Authorization Endpoint', link: `${BASE}/api-hub/onboarding/environment-specific/auth-endpoint` },
+              { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/onboarding/environment-specific` },
+              { text: 'Ozone Connect Base URL', link: `${BASE}/${VERSION}/api-hub/onboarding/environment-specific/ozone-connect-url` },
+              { text: 'Authorization Endpoint', link: `${BASE}/${VERSION}/api-hub/onboarding/environment-specific/auth-endpoint` },
             ]
           }
         ]
@@ -121,22 +121,33 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         text: 'Admin Portal',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/api-hub/admin-portal/` },
-          { text: 'TPP Activation', link: `${BASE}/api-hub/tpp-activation/` },
+          { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/admin-portal/` },
+          { text: 'TPP Activation', link: `${BASE}/${VERSION}/api-hub/tpp-activation/` },
         ]
       },
       {
         text: 'Headless Heimdall Auth Server',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/${VERSION}/auth/` },
-          { text: 'Requirements', link: `${BASE}/${VERSION}/auth/requirements` },
-          { text: 'API Guide', link: `${BASE}/${VERSION}/auth/api-guide` },
+          { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/headless-heimdall` },
           {
-            text: 'Headless Heimdall API Reference',
+            text: 'API Reference',
             collapsed: true,
             items: [
-
+              {
+                text: 'Health Check',
+                items: [
+                  apiRef('GET', '/hello-mtls', `${BASE}/${VERSION}/api-hub/headless-heimdall/open-api/hello-mtls`),
+                ]
+              },
+              {
+                text: 'Authorization',
+                items: [
+                  apiRef('GET', '/auth', `${BASE}/${VERSION}/api-hub/headless-heimdall/open-api/auth`),
+                  apiRef('POST', '/auth/{interactionId}/doConfirm', `${BASE}/${VERSION}/api-hub/headless-heimdall/open-api/auth-interactionId-doConfirm`),
+                  apiRef('POST', '/auth/{interactionId}/doFail', `${BASE}/${VERSION}/api-hub/headless-heimdall/open-api/auth-interactionId-doFail`),
+               ]
+              },
             ],
           },
         ],
@@ -145,16 +156,47 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         text: 'Consent Manager',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/${VERSION}/consent/` },
-          { text: 'Requirements', link: `${BASE}/${VERSION}/consent/requirements` },
-          { text: 'API Guide', link: `${BASE}/${VERSION}/consent/api-guide` },
+          { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/consent-manager/` },
+          {
+            text: 'API Reference',
+            collapsed: true,
+            items: [
+              {
+                text: 'Health Check',
+                items: [
+                  apiRef('GET', '/hello-mtls', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/hello-mtls`),
+                ]
+              },
+              {
+                text: 'Consents',
+                items: [
+                  apiRef('GET', '/consents', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/consents`),
+                  apiRef('GET', '/consents/{consentId}', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/consents-consentId`),
+                  apiRef('PATCH', '/consents/{consentId}', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/patch-consents-consentId`),
+                  apiRef('GET', '/consents/{consentId}/audit', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/consents-consentId-audit`),
+                  apiRef('GET', '/consent-groups/{consentGroupId}/consents', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents`),
+                  apiRef('GET', '/psu/{userId}/consents', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/psu-userId-consents`),
+                  apiRef('GET', '/accounts/{accountId}/consents', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/accounts-accountId-consents`),
+                  apiRef('POST', '/consent-groups/{consentGroupId}/consents/action/revoke', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents-action-revoke`),
+                  apiRef('POST', '/consents/{consentId}/action/revoke', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/consents-consentId-action-revoke`),
+                ]
+              },
+              {
+                text: 'Payment Log',
+                items: [
+                  apiRef('GET', '/payment-log', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/payment-log`),
+                    apiRef('PATCH', '/payment-log/{id}', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/payment-log-id`),
+                ]
+              },
+            ],
+          },
         ],
       },
       {
         text: 'Deployments',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/api-hub/deployments/` }
+          { text: '2026', link: `${BASE}/${VERSION}/api-hub/deployments/2026` }
         ]
       },
     ],
@@ -264,9 +306,9 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
     text: 'Consent Management Interface',
     collapsed: true,
     items: [
-      { text: 'Overview', link: `${BASE}/${VERSION}/consent/consent-management-interface/` },
-      { text: 'Requirements', link: `${BASE}/${VERSION}/consent/consent-management-interface/requirements` },
-      { text: 'User Experience', link: `${BASE}/${VERSION}/consent/consent-management-interface/user-experience` },
+      { text: 'Overview', link: `${BASE}/${VERSION}/consent-management-interface/` },
+      { text: 'Requirements', link: `${BASE}/${VERSION}/consent-management-interface/requirements` },
+      { text: 'User Experience', link: `${BASE}/${VERSION}/consent-management-interface/user-experience` },
     ],
   },
 

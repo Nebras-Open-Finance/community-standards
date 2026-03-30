@@ -31,7 +31,7 @@ onMounted(async () => {
     try {
         const { data } = await axios.get('/api/trust-framework.json')
 
-        const orgData = data.Organisations
+        const orgData = data.organisations
         // Filter: must have LogoUri
         const filtered = orgData.filter(org => org.LogoUri)
 

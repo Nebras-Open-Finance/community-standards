@@ -51,16 +51,16 @@
           <p class="new-kpi-desc">Total value of successful payments through Open Finance rails</p>
         </div>
         <div class="new-kpi-card">
-          <p class="new-kpi-label">Licensed LFIs</p>
+          <p class="new-kpi-label">LFIs</p>
           <p class="new-kpi-value new-kpi-teal">{{ sandboxStats.lfis }}</p>
           <p class="new-kpi-delta new-kpi-delta-teal">In production</p>
           <p class="new-kpi-desc">Licensed Financial Institutions connected to the framework</p>
         </div>
         <div class="new-kpi-card">
-          <p class="new-kpi-label">Registered TPPs</p>
+          <p class="new-kpi-label">TPPs</p>
           <p class="new-kpi-value new-kpi-gold">{{ sandboxStats.tpps }}</p>
           <p class="new-kpi-delta new-kpi-delta-gold">Authorised providers</p>
-          <p class="new-kpi-desc">Third Party Providers authorised to access Open Finance APIs</p>
+          <p class="new-kpi-desc">Third Party Providers onboarded to access Open Finance APIs</p>
         </div>
       </div>
 
@@ -548,7 +548,7 @@ const API_TYPE_LABELS = {
 
 const prodStats = computed(() => {
   if (!tfData.value) return { total: 0, tpps: 0, lfis: 0 }
-  const orgs = tfData.value.Organisations.filter(o => o.Environment === 'production' && o.Status === 'Active')
+  const orgs = tfData.value.organisations.filter(o => o.Environment === 'production' && o.Status === 'Active')
   return {
     total: orgs.length,
     tpps: orgs.filter(o => o.Size === 'TPP').length,
@@ -558,7 +558,7 @@ const prodStats = computed(() => {
 
 const sandboxStats = computed(() => {
   if (!tfData.value) return { total: 0, tpps: 0, lfis: 0 }
-  const orgs = tfData.value.Organisations.filter(o => o.Environment === 'sandbox' && o.Status === 'Active')
+  const orgs = tfData.value.organisations.filter(o => o.Environment === 'sandbox' && o.Status === 'Active')
   return {
     total: orgs.length,
     tpps: orgs.filter(o => o.Size === 'TPP').length,

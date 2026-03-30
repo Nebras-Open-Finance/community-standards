@@ -25,8 +25,8 @@ A creditor is considered unknown when the TPP does not already hold a verified r
 | 1 | `Authorization` | Must contain a valid Bearer access token obtained via a `client_credentials` grant with the `confirmation-of-payee` scope. | API Hub |
 | 2 | Request body | Must be a compact signed JWT (`Content-Type: application/jwt`). | API Hub |
 | 3 | `message.Data.Identification` | Required. Must be a valid UAE IBAN. | API Hub |
-| 4 | OpenAPI schema | The request body must conform exactly to the [POST `/discovery` OpenAPI schema](/tech/tpp-standards/v2.1/banking/confirmation-of-payee/open-api/discovery). No additional or undocumented parameters are permitted. | API Hub |
-| 5 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
+| 4 | OpenAPI schema | The request must conform exactly to the [POST `/discovery` OpenAPI schema](/tech/tpp-standards/v2.1/banking/confirmation-of-payee/open-api/discovery). No additional or undocumented parameters are permitted. | API Hub |
+| 5 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
 
 ## POST [`/confirmation`](/tech/tpp-standards/v2.1/banking/confirmation-of-payee/open-api/confirmation) — Name Match
 
@@ -36,5 +36,5 @@ A creditor is considered unknown when the TPP does not already hold a verified r
 | 2 | Request body | Must be a compact signed JWT (`Content-Type: application/jwt`). | API Hub |
 | 3 | `message.Data.Identification` | Required. Must be a valid UAE IBAN. | API Hub |
 | 4 | `ConfirmationOfPayeeResponse` in PII | Where CoP has been performed, the full raw JWS response string from `/confirmation` must be included in the `ConfirmationOfPayeeResponse` field of the creditor entry in the payment consent PII. | TPP |
-| 5 | OpenAPI schema | The request body must conform exactly to the [POST `/confirmation` OpenAPI schema](/tech/tpp-standards/v2.1/banking/confirmation-of-payee/open-api/confirmation). No additional or undocumented parameters are permitted. | API Hub |
-| 6 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
+| 5 | OpenAPI schema | The request must conform exactly to the [POST `/confirmation` OpenAPI schema](/tech/tpp-standards/v2.1/banking/confirmation-of-payee/open-api/confirmation). No additional or undocumented parameters are permitted. | API Hub |
+| 6 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |

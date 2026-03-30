@@ -1,7 +1,6 @@
 <script setup>
 import { ref, inject, computed } from 'vue'
 import { useSharedState } from '../Composables/useSharedState.ts'
-import { formatDate } from '../Composables/formatDate.ts'
 import { permissionDescriptions } from '../Composables/permissionDescriptions.ts'
 
 const { sharedState } = useSharedState()
@@ -201,33 +200,6 @@ const show_finance_rates = ref(false)
                 </div>
             </div>
 
-            <div class="consent-page-date-range">
-                <svg class="consent-page-divider" width="292" height="2" viewBox="0 0 292 2" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="292" height="2" fill="#D9D9D9" fill-opacity="0.1" />
-                </svg>
-                <div class="consent-page-date">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="flex-shrink: 0; display: block; margin-top: 2px;">
-                        <path d="M5.33301 1.33203V3.33203" stroke="#0C1441" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M10.667 1.33203V3.33203" stroke="#0C1441" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M2.33301 6.05859H13.6663" stroke="#0C1441" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M14 5.66536V11.332C14 13.332 13 14.6654 10.6667 14.6654H5.33333C3 14.6654 2 13.332 2 11.332V5.66536C2 3.66536 3 2.33203 5.33333 2.33203H10.6667C13 2.33203 14 3.66536 14 5.66536Z" stroke="#0C1441" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M10.4635 9.13411H10.4694" stroke="#0C1441" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M10.4635 11.1341H10.4694" stroke="#0C1441" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M7.99666 9.13411H8.00265" stroke="#0C1441" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M7.99666 11.1341H8.00265" stroke="#0C1441" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M5.52987 9.13411H5.53585" stroke="#0C1441" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M5.52987 11.1341H5.53585" stroke="#0C1441" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    <div class="consent-page-date-text-group">
-                        <div class="consent-page-date-expiry-label">Connection valid until</div>
-                        <div class="consent-page-date-2">
-                            <div class="consent-page-date-text">
-                                {{ formatDate(consent?.ExpirationDateTime) }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </template>
@@ -424,78 +396,4 @@ const show_finance_rates = ref(false)
     flex-grow: 1;
 }
 
-.consent-page-date-range {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 0px;
-    gap: 8px;
-    width: 292px;
-    flex: none;
-    order: 1;
-    flex-grow: 0;
-}
-
-.consent-page-divider {
-    width: 292px;
-    height: 2px;
-    background: rgba(217, 217, 217, 0.1);
-    flex: none;
-    order: 0;
-    align-self: stretch;
-    flex-grow: 0;
-}
-
-.consent-page-date {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 8px;
-    width: 292px;
-}
-
-.consent-page-date-text-group {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.consent-page-date-expiry-label {
-    font-family: 'Poppins';
-    font-style: normal;
-    font-weight: 400;
-    font-size: 10px;
-    line-height: 140%;
-    letter-spacing: -0.01em;
-    color: #8287A0;
-}
-
-.consent-page-date-2 {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    padding: 0px;
-    gap: 10px;
-    width: 292px;
-    height: 14px;
-    flex: none;
-    order: 1;
-    align-self: stretch;
-    flex-grow: 0;
-}
-
-.consent-page-date-text {
-    width: 264px;
-    height: 14px;
-    font-family: 'Poppins';
-    font-style: normal;
-    font-weight: 400;
-    font-size: 12px;
-    line-height: 120%;
-    letter-spacing: -0.01em;
-    color: #8287A0;
-    flex: none;
-    order: 0;
-    flex-grow: 1;
-}
 </style>

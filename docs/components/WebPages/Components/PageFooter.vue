@@ -6,7 +6,7 @@
 
 
       <p class="footer-copy">
-        This site is open source. Help improve the data, documentation links, community guides, or the  itself.
+        This site is open source. Help improve the data, documentation links, guides, supporting content or feed into the next set of Open Finacne's features.
         Every contribution strengthens the ecosystem.
       </p>
 

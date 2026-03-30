@@ -5,6 +5,7 @@ import { policySidebar, processesSidebar } from './config/sidebars/policy'
 import { kbSidebar } from './config/sidebars/kb'
 import { erratasSidebar } from './config/sidebars/erratas'
 import { apiSpecsSidebar } from './config/sidebars/api-specs'
+import { docRepositorySidebar } from './config/sidebars/doc-repository'
 import { CURRENT_VERSION } from './version'
 
 const wellKnownProxyPlugin = {
@@ -121,6 +122,7 @@ export default defineConfig({
       '/processes': processesSidebar,
       '/tech/erratas': erratasSidebar,
       '/knowledge-base': kbSidebar,
+      '/doc-repository': docRepositorySidebar,
       [`/tech/api-specs/${CURRENT_VERSION}`]: apiSpecsSidebar,
     },
   },

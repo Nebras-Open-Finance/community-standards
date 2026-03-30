@@ -22,12 +22,13 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 | 2 | `consent.Permissions` | If any of `ReadBalances`, `ReadBeneficiariesBasic`, `ReadBeneficiariesDetail`, `ReadTransactionsBasic`, `ReadTransactionsDetail`, `ReadProduct`, `ReadScheduledPaymentsBasic`, `ReadScheduledPaymentsDetail`, `ReadDirectDebits`, `ReadStandingOrdersBasic`, `ReadStandingOrdersDetail`, `ReadStatements`, or `ReadProductFinanceRates` are included, at least one of `ReadAccountsBasic` or `ReadAccountsDetail` must also be present. | API Hub |
 | 3 | `consent.AccountType` | Must be a value supported by the target LFI. Supported account types are discoverable via the `AccountTypes` flag on the LFI's authorisation server entry in the [Trust Framework](/tech/tpp-standards/trust-framework/api-discovery). | LFI |
 | 4 | `consent.AccountSubType` | If provided, each value must be a sub-type supported by the target LFI. Supported sub-types are discoverable via the `AccountSubTypes` metadata on the LFI's authorisation server entry in the [Trust Framework](/tech/tpp-standards/trust-framework/api-discovery). | LFI |
-| 5 | OpenAPI schema | The request body must conform exactly to the [POST `/par` OpenAPI schema](/tech/tpp-standards/v2.1/consent/open-api/par). No additional or undocumented parameters are permitted. | API Hub |
-| 6 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
-| 7 | `client_assertion` | Must be included in the POST body (`client_assertion_type`: `urn:ietf:params:oauth:client-assertion-type:jwt-bearer`). Authenticates the TPP application — see [Client Assertion](/tech/tpp-standards/security/tokens/client-assertion). | API Hub |
-| 8 | Request JWT | Must conform to the [Request JWT requirements](/tech/tpp-standards/security/fapi/request-jwt) — correct `aud`, signing algorithm (`PS256`), and expiry window. | API Hub |
-| 9 | `scope` (in Request JWT) | Must be `accounts openid`. | API Hub |
-| 10 | `authorization_details[0].type` (in Request JWT) | Must be `urn:openfinanceuae:account-access-consent:v2.1`. | API Hub |
+| 5 | `consent.BaseConsentId` | If provided, must reference a previous consent belonging to the **same end user**. If the original consent in the chain already had a `BaseConsentId`, the TPP must reuse that same `BaseConsentId` rather than the immediate prior `ConsentId`. | LFI |
+| 6 | OpenAPI schema | The request must conform exactly to the [POST `/par` OpenAPI schema](/tech/tpp-standards/v2.1/consent/open-api/par). No additional or undocumented parameters are permitted. | API Hub |
+| 7 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
+| 8 | `client_assertion` | Must be included in the POST body (`client_assertion_type`: `urn:ietf:params:oauth:client-assertion-type:jwt-bearer`). Authenticates the TPP application — see [Client Assertion](/tech/tpp-standards/security/tokens/client-assertion). | API Hub |
+| 9 | Request JWT | Must conform to the [Request JWT requirements](/tech/tpp-standards/security/fapi/request-jwt) — correct `aud`, signing algorithm (`PS256`), and expiry window. | API Hub |
+| 10 | `scope` (in Request JWT) | Must be `accounts openid`. | API Hub |
+| 11 | `authorization_details[0].type` (in Request JWT) | Must be `urn:openfinanceuae:account-access-consent:v2.1`. | API Hub |
 
 ## GET [`/accounts`](/tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts)
 
@@ -36,7 +37,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 | 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadAccountsBasic` or `ReadAccountsDetail`. | API Hub |
-| 4 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
+| 4 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
 | 5 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
@@ -50,7 +51,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadAccountsBasic` or `ReadAccountsDetail`. | API Hub |
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
-| 5 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
+| 5 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
 | 6 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 7 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 8 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
@@ -64,7 +65,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadBalances`. | API Hub |
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
-| 5 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
+| 5 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
 | 6 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 7 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 8 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
@@ -78,7 +79,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadBeneficiariesBasic` or `ReadBeneficiariesDetail`. | API Hub |
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
-| 5 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
+| 5 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
 | 6 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 7 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 8 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
@@ -92,7 +93,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadDirectDebits`. | API Hub |
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
-| 5 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
+| 5 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
 | 6 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 7 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 8 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
@@ -106,7 +107,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadProduct`. `ReadProductFinanceRates` is required for finance rate data to be included in the response. | API Hub |
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
-| 5 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
+| 5 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
 | 6 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 7 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 8 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
@@ -125,7 +126,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadScheduledPaymentsBasic` or `ReadScheduledPaymentsDetail`. | API Hub |
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
-| 5 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
+| 5 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
 | 6 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 7 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 8 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
@@ -139,7 +140,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadStandingOrdersBasic` or `ReadStandingOrdersDetail`. | API Hub |
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
-| 5 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
+| 5 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
 | 6 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 7 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 8 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
@@ -155,7 +156,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
 | 5 | `fromBookingDateTime` | If provided, must be a valid ISO 8601 date-time. Time component is optional (defaults to `00:00:00`). Any timezone offset must be ignored by the LFI. | LFI |
 | 6 | `toBookingDateTime` | If provided, must be a valid ISO 8601 date-time. Time component is optional (defaults to `00:00:00`). Any timezone offset must be ignored by the LFI. | LFI |
-| 7 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
+| 7 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
 | 8 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 9 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 10 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
@@ -171,7 +172,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
 | 5 | `fromStatementDate` | If provided, must be a valid ISO 8601 date. Filtering is open-ended if not provided. | LFI |
 | 6 | `toStatementDate` | If provided, must be a valid ISO 8601 date. Filtering is open-ended if not provided. | LFI |
-| 7 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
+| 7 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
 | 8 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 9 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 10 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
@@ -185,7 +186,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadParty`, `ReadPartyUser`, or `ReadPartyUserIdentity`. | API Hub |
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
-| 5 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
+| 5 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
 | 6 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 7 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 8 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
@@ -198,7 +199,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 | 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadParty`, `ReadPartyUser`, or `ReadPartyUserIdentity`. | API Hub |
-| 4 | `x-fapi-interaction-id` | Must be included. Must be a valid UUID (RFC 4122). | API Hub |
+| 4 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
 | 5 | `x-fapi-auth-date` | Must be sent when the customer is authenticated at the time of the call. Must be a valid HTTP-date (RFC 7231), e.g. `Tue, 11 Sep 2012 19:43:31 UTC`. | TPP |
 | 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |

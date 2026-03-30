@@ -17,7 +17,7 @@ Your Authorization Page must be submitted as part of CX certification prior to p
 
 ## Interactive Demo
 
-Customise the `authorization_details` object below and watch the **Consent** and **Authorisation** page previews update live. Try changing permissions, account types, date ranges, or the TPP name to see how the pages respond.
+Customise the `consentBody` object below and watch the **Consent** and **Authorisation** page previews update live. Try changing permissions, account types, date ranges, or the TPP name to see how the pages respond.
 
 <div style="border: 1px solid #bfdbfe; border-radius: 10px; overflow: hidden; margin: 1.5rem 0; box-shadow: 0 2px 8px rgba(0,39,127,0.06);">
   <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 1rem; background: rgba(0,39,127,0.04); border-bottom: 1px solid #bfdbfe; flex-wrap: wrap; gap: 0.5rem;">
@@ -27,8 +27,8 @@ Customise the `authorization_details` object below and watch the **Consent** and
     </div>
     <a href="/tech/tpp-standards/v2.1/consent/open-api/par" style="font-size: 0.75rem; color: rgba(0,39,127,0.6); text-decoration: none; display: flex; align-items: center; gap: 3px;">View PAR endpoint ↗</a>
   </div>
-  <EditableJson spec="/openapi/v2.1/standards/uae-authorization-endpoints-openapi.yaml"
-    schemaName="AEBankDataSharingRichAuthorizationRequestsV21.AEBankDataSharingAuthorizationDetailsProperties"
+  <EditableJson spec="/openapi/v2.1/api-hub/uae-api-hub-consent-manager-openapi.yaml"
+    schemaName="AEAccountAccessConsentBody"
     :initialData="initialFormData"
     :customValidator="myCustomValidator"
     stateField="consent"
@@ -45,7 +45,7 @@ import { ref } from 'vue'
 const myCustomValidator = (value) => {
 if (
   (() => {
-    const expiration = new Date(value.consent.ExpirationDateTime);
+    const expiration = new Date(value.Data.ExpirationDateTime);
     const now = new Date();
     const oneYearFromNow = new Date();
     oneYearFromNow.setFullYear(now.getFullYear() + 1);
@@ -53,10 +53,10 @@ if (
     return expiration <= now || expiration >= oneYearFromNow;
   })()
 ) {
-  return "consent.ExpirationDateTime cannot be in the past and must be less than a year in the future.";
+  return "Data.ExpirationDateTime cannot be in the past and must be less than a year in the future.";
 } else if (
   (() => {
-    const perms = value.consent?.Permissions || [];
+    const perms = value.Data?.Permissions || [];
 
     const dependentPermissions = [
       "ReadBalances",
@@ -91,13 +91,11 @@ if (
 }
 
 const initialFormData = ref({
-                "type": "urn:openfinanceuae:account-access-consent:v2.1",
-                "consent": {
+                "Data": {
                     "ExpirationDateTime": "2026-12-25T23:00:00.000Z",
                     "OnBehalfOf": {
                         "TradingName": "Nebras",
                         "LegalName": "Nebras Open Finance Ltd",
-                        "IdentifierType": "Other",
                         "Identifier": "Identifier"
                     },
                     "ConsentId": "b8f42378-10ac-46a1-8d20-4e020484216d",
