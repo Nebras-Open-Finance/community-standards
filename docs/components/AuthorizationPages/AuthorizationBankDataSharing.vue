@@ -798,7 +798,7 @@ function getAccountRef(account) {
 const selectedAccounts = reactive({})
 const accounts = computed(() => sharedState.value?.accounts || DEFAULT_ACCOUNTS)
 const visibleAccounts = computed(() => {
-  const subtypes = sharedState.value?.value?.consent?.AccountSubType
+  const subtypes = sharedState.value?.consent?.consent?.AccountSubType
   if (!subtypes) return accounts.value
   return accounts.value.filter(a => subtypes.includes(a.type))
 })

@@ -98,7 +98,7 @@
 
 
     <div class="actions">
-      <button class="consent-style-button" @click="submit">
+      <button class="consent-style-button" :disabled="isDownloading" @click="submit">
         <span class="consent-style-button-inner">
           <svg class="consent-style-button-icon" width="22" height="23" viewBox="0 0 22 23" fill="none"
             xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -191,7 +191,8 @@ export default {
         key_content: undefined
       },
       uploadError: '',
-      discoveryError: ''
+      discoveryError: '',
+      isDownloading: false
     }
   },
   methods: {
@@ -266,6 +267,7 @@ export default {
       return ''
     },
     async submit() {
+      if (this.isDownloading) return
       this.complete = true
       this.discoveryError = ''
       if (
@@ -281,6 +283,8 @@ export default {
         return
       }
 
+      this.isDownloading = true
+      try {
       // Derive fallback values from the discovery URI pattern.
       // Pattern: https://auth1.[lfi].[env].apihub.openfinance.ae/.well-known/openid-configuration
       const discoveryUrl = new URL(this.formData.discovery_uri)
@@ -455,13 +459,53 @@ export default {
             return -1
           }
 
-          // Replaces Creditor array entries using brace-counting.
-          // First entry → creditorEntryReplacement.
-          // Second entry (if present) → secondCreditorEntryReplacement.
+          // Replaces CreditorAgent, Creditor and CreditorAccount fields
+          // inside a single Creditor-array entry object, preserving any
+          // other fields (e.g. ConfirmationOfPayeeResponse).
+          const patchCreditorEntry = (entryBlock, replacementEntry) => {
+            const fieldsToReplace = ['CreditorAgent', 'Creditor', 'CreditorAccount']
+            const indent = '                    ' // 20 spaces — field level inside array entry
+            for (const field of fieldsToReplace) {
+              const fieldMarker = '"' + field + '"'
+              // Make sure we match the exact field, not a prefix (e.g. "Creditor" vs "CreditorAccount")
+              const fieldRe = new RegExp('"' + field + '"\\s*:')
+              const match = fieldRe.exec(entryBlock)
+              if (match && replacementEntry[field]) {
+                const fieldPos = match.index
+                const colon = entryBlock.indexOf(':', fieldPos + fieldMarker.length)
+                // Determine if value is an object { or a string/primitive
+                const afterColon = entryBlock.substring(colon + 1).trimStart()
+                if (afterColon.startsWith('{')) {
+                  const valBrace = entryBlock.indexOf('{', colon)
+                  const valEnd = findMatchingBrace(entryBlock, valBrace)
+                  if (valEnd === -1) continue
+                  const replacementJson = JSON.stringify(replacementEntry[field], null, 4)
+                    .split('\n').map((line, i) => i === 0 ? line : indent + line).join('\n')
+                  entryBlock = entryBlock.substring(0, valBrace) + replacementJson + entryBlock.substring(valEnd + 1)
+                }
+              } else if (!match && replacementEntry[field]) {
+                // Field missing — insert after the opening {
+                const insertJson = JSON.stringify(replacementEntry[field], null, 4)
+                  .split('\n').map((line, i) => i === 0 ? line : indent + line).join('\n')
+                const insertPoint = entryBlock.indexOf('{') + 1
+                entryBlock = entryBlock.substring(0, insertPoint) +
+                  '\n' + indent + '"' + field + '": ' + insertJson + ',' +
+                  entryBlock.substring(insertPoint)
+              }
+            }
+            return entryBlock
+          }
+
+          // Patches Creditor array entries field-by-field.
+          // First entry uses values from creditorEntryReplacement.
+          // Second entry (if present) uses secondCreditorEntryReplacement.
           const replaceCreditorEntries = (raw) => {
             const marker = '"Creditor": ['
             const arrStart = raw.indexOf(marker)
             if (arrStart === -1) return raw
+
+            const entry1 = JSON.parse(creditorEntryReplacement.trim())
+            const entry2 = JSON.parse(secondCreditorEntryReplacement.trim())
 
             // First entry
             const searchFrom = arrStart + marker.length
@@ -470,11 +514,12 @@ export default {
             const firstEnd = findMatchingBrace(raw, first)
             if (firstEnd === -1) return raw
 
-            // Replace first entry
-            raw = raw.substring(0, first) + creditorEntryReplacement.trimStart() + raw.substring(firstEnd + 1)
+            // Patch first entry fields in-place
+            const patchedFirst = patchCreditorEntry(raw.substring(first, firstEnd + 1), entry1)
+            raw = raw.substring(0, first) + patchedFirst + raw.substring(firstEnd + 1)
 
-            // Look for a second uncommented entry after the replaced first entry
-            const afterFirst = first + creditorEntryReplacement.trimStart().length
+            // Look for a second uncommented entry after the patched first entry
+            const afterFirst = first + patchedFirst.length
             const nextBrace = raw.indexOf('{', afterFirst)
             const closingBracket = raw.indexOf(']', afterFirst)
             // Check the { isn't inside a // comment line
@@ -482,23 +527,82 @@ export default {
             const linePrefix = raw.substring(lineStart + 1, nextBrace).trim()
             const isCommented = linePrefix.startsWith('//')
             if (nextBrace !== -1 && closingBracket !== -1 && nextBrace < closingBracket && !isCommented) {
-              // There's a second uncommented entry before the array closes
               const secondEnd = findMatchingBrace(raw, nextBrace)
               if (secondEnd !== -1) {
-                raw = raw.substring(0, nextBrace) + secondCreditorEntryReplacement.trimStart() + raw.substring(secondEnd + 1)
+                const patchedSecond = patchCreditorEntry(raw.substring(nextBrace, secondEnd + 1), entry2)
+                raw = raw.substring(0, nextBrace) + patchedSecond + raw.substring(secondEnd + 1)
               }
             }
 
             return raw
           }
 
-          const patchPIIRequests = (items, insideDomestic = false) => {
+          // Replaces CreditorAgent, Creditor and CreditorAccount inside
+          // the "Initiation" block of a Post-payment PII request body,
+          // using the same model-bank values from creditorEntryReplacement.
+          const replaceInitiationCreditor = (raw, useSecond) => {
+            const replacement = useSecond ? secondCreditorEntryReplacement : creditorEntryReplacement
+            // Parse the replacement entry to extract individual objects
+            const entry = JSON.parse(replacement.trim())
+
+            const initMarker = '"Initiation"'
+            const initStart = raw.indexOf(initMarker)
+            if (initStart === -1) return raw
+            const initBrace = raw.indexOf('{', initStart + initMarker.length)
+            if (initBrace === -1) return raw
+            const initEnd = findMatchingBrace(raw, initBrace)
+            if (initEnd === -1) return raw
+
+            // Extract the Initiation block content and parse replacement fields
+            let initBlock = raw.substring(initBrace, initEnd + 1)
+            const fieldsToReplace = ['CreditorAgent', 'Creditor', 'CreditorAccount']
+
+            for (const field of fieldsToReplace) {
+              const fieldMarker = '"' + field + '"'
+              const fieldPos = initBlock.indexOf(fieldMarker)
+
+              // Indentation: Initiation fields sit at 3 levels (12 spaces).
+              // JSON.stringify(…, null, 4) adds its own 4-space indent per
+              // level, so the prefix for continuation lines is also 12 spaces.
+              const indent = '            '  // 12 spaces — field level
+
+              if (fieldPos !== -1 && entry[field]) {
+                // Find the opening { of this field's value
+                const valBrace = initBlock.indexOf('{', fieldPos + fieldMarker.length)
+                if (valBrace === -1) continue
+                const valEnd = findMatchingBrace(initBlock, valBrace)
+                if (valEnd === -1) continue
+
+                // Build replacement JSON with correct indentation
+                const replacementJson = JSON.stringify(entry[field], null, 4)
+                  .split('\n').map((line, i) => i === 0 ? line : indent + line).join('\n')
+
+                initBlock = initBlock.substring(0, valBrace) + replacementJson + initBlock.substring(valEnd + 1)
+              } else if (fieldPos === -1 && entry[field]) {
+                // Field missing — insert before the first existing field
+                const insertJson = JSON.stringify(entry[field], null, 4)
+                  .split('\n').map((line, i) => i === 0 ? line : indent + line).join('\n')
+                const insertPoint = initBlock.indexOf('{') + 1
+                initBlock = initBlock.substring(0, insertPoint) +
+                  '\n' + indent + '"' + field + '": ' + insertJson + ',' +
+                  initBlock.substring(insertPoint)
+              }
+            }
+
+            return raw.substring(0, initBrace) + initBlock + raw.substring(initEnd + 1)
+          }
+
+          const patchPIIRequests = (items, context = {}) => {
             if (!Array.isArray(items)) return
             for (const item of items) {
-              const isDomesticFolder = insideDomestic || (item.item && /^Domestic/i.test(item.name))
+              const newContext = { ...context }
+              if (item.item && item.name === 'Consent Flow') newContext.inConsentFlow = true
+              if (item.item && item.name === 'Resource Endpoints') newContext.inResourceEndpoints = true
+              if (item.item && /Creditor 2|Luigi/i.test(item.name)) newContext.isCreditor2 = true
+
               if (item.item) {
-                patchPIIRequests(item.item, isDomesticFolder)
-              } else if (isDomesticFolder && item.name === 'O3 Util: Prepare Encrypted PII' && item.request?.body?.raw) {
+                patchPIIRequests(item.item, newContext)
+              } else if (context.inConsentFlow && item.name === 'O3 Util: Prepare Encrypted PII' && item.request?.body?.raw) {
                 let raw = item.request.body.raw
 
                 // Replace commented-out DebtorAccount values (keep it commented out)
@@ -516,6 +620,9 @@ export default {
                 raw = replaceCreditorEntries(raw)
 
                 item.request.body.raw = raw
+              } else if (context.inResourceEndpoints && /O3 Util: Prepare Encrypted PII\s*-\s*Post payment/i.test(item.name) && item.request?.body?.raw) {
+                // Replace CreditorAgent, Creditor, CreditorAccount in the Initiation block
+                item.request.body.raw = replaceInitiationCreditor(item.request.body.raw, context.isCreditor2)
               }
             }
           }
@@ -584,6 +691,9 @@ export default {
       }
 
       this.$emit('submit', { ...this.formData })
+      } finally {
+        this.isDownloading = false
+      }
     }
   }
 }
@@ -764,6 +874,11 @@ export default {
 
 .consent-style-button:hover .consent-style-button-inner {
  opacity: 80%;
+}
+
+.consent-style-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .consent-style-button-icon {

@@ -88,7 +88,7 @@ Each consent card on the dashboard must show a consistent set of fields dependin
 |---|---|
 | LFI name | Name of the LFI the consent is held with |
 | Status badge | Mapped label from [Status labels](#status-labels) |
-| Masked IBAN | Masked payer IBAN (not shown when status is `AwaitingAuthorization`) |
+| Masked IBAN | Masked payer IBAN (only shown when the TPP has access to the `DebtorAccount` details) |
 | Consent Type | `Single Payment` |
 | Payment Date | Date the payment was or is to be made |
 | Payment Amount | Amount of the payment in AED. Shown as `0.00` when status is `AwaitingAuthorization`; must be a positive value once the consent is `Authorized` or later |
@@ -99,7 +99,7 @@ Each consent card on the dashboard must show a consistent set of fields dependin
 |---|---|
 | LFI name | Name of the LFI the consent is held with |
 | Status badge | Mapped label from [Status labels](#status-labels) |
-| Masked IBAN | Masked payer IBAN (not shown when status is `AwaitingAuthorization`) |
+| Masked IBAN | Masked payer IBAN (only shown when the TPP has access to the `DebtorAccount` details) |
 | Consent Type | `Flexi Pay` |
 | Total paid to date | Cumulative sum of all successful payments under this consent in AED |
 | Connection expires | Date the consent expires |
@@ -122,14 +122,14 @@ In addition to all fields shown on the dashboard card, the detail page must show
 | Section | Content |
 |---|---|
 | **Payment details** | Amount, Reference, and Payment Purpose. If status is `Authorized`, a Status badge of `Authorized` must also be shown. |
-| **From account** | Bank name, Payer Name, and full IBAN of the payer account |
+| **From account** | Bank name, Payer Name, and full IBAN of the payer account. If the TPP does not have access to the account details — i.e. did not supply the `DebtorAccount` nor has a `ReadAccounts` permission on the consent — this section must not be shown. |
 | **To account** | Payee Name and IBAN of the destination account |
 
 ### Multi Payment — additional sections
 
 | Section | Content |
 |---|---|
-| **From account** | Bank name, Payer Name, and full IBAN of the payer account |
+| **From account** | Bank name, Payer Name, and full IBAN of the payer account. If the TPP does not have access to the account details — i.e. did not supply the `DebtorAccount` nor has a `ReadAccounts` permission on the consent — this section must not be shown. |
 | **To account** | Payee Name and IBAN of the destination account |
 | **Payment Rules / Payment History** | Tabbed section: Payment Rules shows consent parameters (schedule, limits, frequency); Payment History shows a log of all payments with date, amount, purpose, reference, and status |
 

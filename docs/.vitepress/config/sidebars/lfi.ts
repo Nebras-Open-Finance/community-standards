@@ -309,7 +309,9 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'Overview', link: `${BASE}/${VERSION}/consent-management-interface/` },
       { text: 'Requirements', link: `${BASE}/${VERSION}/consent-management-interface/requirements` },
       { text: 'User Experience', link: `${BASE}/${VERSION}/consent-management-interface/user-experience` },
+      { text: 'API Guide', link: `${BASE}/${VERSION}/consent-management-interface/api-guide` },
     ],
+    
   },
 
   {
