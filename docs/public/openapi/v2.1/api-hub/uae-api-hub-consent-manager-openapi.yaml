@@ -3258,7 +3258,7 @@ components:
         A number of monetary units specified in an active currency where the unit of currency is explicit and compliant
         with ISO 4217.
       type: string
-      pattern: ^\\d{1,16}\\.\\d{2}$
+      pattern: ^\d{1,16}\.\d{2}$
     CurrencyCode:
       description: >-
         A 3 character alphabetic code allocated to a currency under an international currency identification scheme, as

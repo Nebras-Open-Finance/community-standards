@@ -77,7 +77,7 @@ export default defineConfig({
   vite: {
     plugins: [wellKnownProxyPlugin],
     optimizeDeps: {
-      include: ['vue3-tel-input'],
+      include: ['vue3-tel-input', 'mermaid', 'dayjs'],
     },
   },
 

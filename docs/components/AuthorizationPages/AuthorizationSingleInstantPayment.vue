@@ -82,7 +82,7 @@
                             <div class="auth-page-account-subtext-container-2">
                                 <div class="auth-page-account-subtext-part">Amount</div>
                                 <div class="auth-page-account-amount-container">
-                                    <DirhamAmount :amount="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.SinglePayment?.Amount?.Amount" />
+                                    <DirhamAmount :amount="consentData?.ControlParameters?.ConsentSchedule?.SinglePayment?.Amount?.Amount" />
                                 </div>
 
                             </div>
@@ -116,7 +116,7 @@
                                 <div class="auth-page-account-subtext-part">Payment Reference</div>
                                 <div class="auth-page-account-amount-container">
                                     <div class="auth-page-account-amount">
-                                        {{ sharedState?.value?.consent?.DebtorReference }}
+                                        {{ consentData?.DebtorReference }}
                                     </div>
 
                                 </div>
@@ -129,7 +129,7 @@
                                 <div class="auth-page-account-subtext-part">Payment Purpose</div>
                                 <div class="auth-page-account-amount-container">
                                     <div class="auth-page-account-amount" style="width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        {{ getPurposeDescription(sharedState?.value?.consent?.PaymentPurposeCode) }}
+                                        {{ getPurposeDescription(consentData?.PaymentPurposeCode) }}
                                     </div>
 
                                 </div>
@@ -486,17 +486,17 @@ import { getPurposeDescription } from '../Composables/aaniPaymentCodes.ts'
 import { getAuthPaymentPermissionText } from '../Composables/serviceInitiationPermissionDescriptions.ts'
 import DirhamAmount from '../ConsentPages/DirhamAmount.vue'
 
-const { sharedState } = useSharedState()
+const { sharedState, consentData } = useSharedState()
 
 const selected = ref(null)
 const selected_add_to_trusted = ref(false)
 
 const authPermissionText = computed(() =>
-    getAuthPaymentPermissionText(sharedState?.value?.value?.consent?.Permissions)
+    getAuthPaymentPermissionText(consentData.value?.Permissions)
 )
 
 const isOverdraft = computed(() => {
-    const amount = parseFloat(sharedState?.value?.value?.consent?.ControlParameters?.ConsentSchedule?.SinglePayment?.Amount?.Amount || 0)
+    const amount = parseFloat(consentData.value?.ControlParameters?.ConsentSchedule?.SinglePayment?.Amount?.Amount || 0)
     if (sharedState?.value?.pii?.Initiation?.DebtorAccount?.Identification) return amount > 5000
     if (selected.value === 'savings_account') return amount > 25000
     if (selected.value === 'current_account') return amount > 5000

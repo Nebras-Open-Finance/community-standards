@@ -21,6 +21,8 @@ import EditableJson from '../../components/EditableJson.vue'
 import ErrataNotice from '../../components/ErrataNotice.vue'
 import OzoneConnectCompatibility from '../../components/OzoneConnectCompatibility.vue'
 import ConsentAuthLayout from '../../components/ConsentAuthLayout.vue'
+import DoumentRepoDisplay from '../../components/DoumentRepoDisplay.vue'
+
 
 // Forms
 import TPPPostmanScriptBuilder from '../../components/Form/TPPPostmanScriptBuilder.vue'
@@ -107,6 +109,7 @@ export default {
     app.component('ConsentAuthLayout', ConsentAuthLayout)
     app.component('OnboardingOrganisationForm', OnboardingOrganisationForm)
     app.component('OnboardingAdminForm', OnboardingAdminForm)
+    app.component('DoumentRepoDisplay', DoumentRepoDisplay)
 
     // API Flows
     app.component('APIFlowsRegistration', APIFlowsRegistration)

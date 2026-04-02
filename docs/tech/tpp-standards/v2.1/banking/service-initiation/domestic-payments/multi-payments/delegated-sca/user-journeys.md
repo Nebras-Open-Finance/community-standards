@@ -19,7 +19,7 @@ Customise the request body fields below and watch the **Consent** and **Authoris
   <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 1rem; background: rgba(0,39,127,0.04); border-bottom: 1px solid #bfdbfe; flex-wrap: wrap; gap: 0.5rem;">
     <div style="display: flex; align-items: center; gap: 0.6rem;">
       <span style="font-size: 0.72rem; font-weight: 700; color: rgba(0,39,127,0.8); letter-spacing: 0.07em; text-transform: uppercase;">domestic_payment_pii</span>
-      <span style="font-size: 0.7rem; color: rgba(0,39,127,0.45);">PAR request body field</span>
+      <span style="font-size: 0.7rem; color: rgba(0,39,127,0.45);">PAR request body (AEDomesticPaymentPII)</span>
     </div>
     <a href="/tech/tpp-standards/v2.1/consent/open-api/par" style="font-size: 0.75rem; color: rgba(0,39,127,0.6); text-decoration: none; display: flex; align-items: center; gap: 3px;">View PAR endpoint ↗</a>
   </div>
@@ -175,80 +175,8 @@ const initialFormDataPII = ref({
 </script>
 
 
+<!--@include: _shared/live-preview.md-->
 
+<!--@include: _shared/ui-behaviour.md-->
 
-
-### Live UI Preview
-
-Changes made above are immediately reflected in both panels.
-
-<ConsentAuthLayout>
-  <template #consent>
-    <ConsentDelegatedSCA />
-  </template>
-  <template #auth>
-    <AuthorizationDelegatedSCA />
-  </template>
-</ConsentAuthLayout>
-
-
-## UI Behaviour Driven by API Fields
-
-### Debtor Account Selection
-
-The presence or absence of `Initiation.DebtorAccount` in `domestic_payment_pii` determines whether the user selects their account at the LFI or if it is pre-selected by the TPP.
-
-<DebtorAccountSelectionTable />
-
-::: tip
-Passing a `DebtorAccount` reduces friction for users who have already selected their account within the TPP's own interface, but removes the user's ability to choose a different account at the LFI.
-:::
-
-
-
-### Creditor Configuration
-
-The presence or absence of creditors in `Initiation.Creditor` in `domestic_payment_pii` determines how the LFI presents payment recipient information to the user.
-
-| `Initiation.Creditor` | LFI Authorisation Page Behaviour |
-|---|---|
-| **1 creditor** | The single payee's name and account details are displayed under "Who you're paying". *(See Example 1)* |
-| **2–10 defined creditors** | All specified payees are listed under "Who you're paying". *(See Examples 2, 3 & 4)* |
-| **Undefined** (absent or empty) | A general message informs the user that the TPP is responsible for selecting beneficiaries at payment time. *(See Example 5)* |
-
-### Permissions and Data Access
-
-The table below describes the text shown to users on the Consent Page.
-
-<ServiceInitiationPermissionText />
-
-
-## Example User Journeys
-
-#### Example 1 - Account Selected at TPP
-
-<ImageViewer
-  src="/images/user-experience/delegated-sca/1.png"
-  alt="delegated-sca"
-/>
-
-#### Example 2 - Account Selected at LFI
-
-<ImageViewer
-  src="/images/user-experience/delegated-sca/2.png"
-  alt="delegated-sca"
-/>
-
-#### Example 3 - Three Creditors
-
-<ImageViewer
-  src="/images/user-experience/delegated-sca/3.png"
-  alt="delegated-sca"
-/>
-
-#### Example 4 - Undefined Creditors
-
-<ImageViewer
-  src="/images/user-experience/delegated-sca/4.png"
-  alt="delegated-sca"
-/> 
+<!--@include: _shared/example-journeys.md-->

@@ -9,10 +9,10 @@ import { computed } from 'vue'
 import { useSharedState } from '../Composables/useSharedState.ts'
 import { getPaymentPermissionText } from '../Composables/serviceInitiationPermissionDescriptions.ts'
 
-const { sharedState } = useSharedState()
+const { consentData } = useSharedState()
 
 const text = computed(() =>
-  getPaymentPermissionText(sharedState?.value?.value?.consent?.Permissions)
+  getPaymentPermissionText(consentData.value?.Permissions)
 )
 </script>
 

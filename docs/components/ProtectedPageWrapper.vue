@@ -27,8 +27,15 @@ function checkPassword() {
 <template>
   <!-- LOCKED: Show ONLY the gate (no page content at all) -->
   <div v-if="!unlocked" class="password-gate">
+    <h1 class="gate-header">Pay10 - Private Documents</h1>
+    <div class="gate-subheader">Private documentation for <strong>Pay10</strong></div>
+    <div class="gate-warning">
+      <div class="gate-warning-header">Access required</div>
+      <div class="gate-warning-text">This section contains private documents that are only accessible to authorized members of Pay10</div>
+    </div>
+    
     <div class="gate-card">
-      <h2>Protected Page</h2>
+      <div class="gate-card-header">Protected Page</div>
       <input
         v-model="input"
         type="password"
@@ -56,6 +63,41 @@ function checkPassword() {
   display: flex;
   align-items: center;
   justify-content: center;
+  display: flex;
+  flex-direction: column;
+  padding-left: 100px;
+  padding-right: 100px;
+}
+
+.gate-header {
+  text-align: left;
+  margin-right: auto;
+  margin-bottom: 1.5rem;
+  font-size: 3rem;
+  line-height: 4rem;
+}
+
+.gate-subheader {
+  margin-right: auto;
+  margin-bottom: 2rem;
+}
+
+.gate-warning {
+  margin-right: auto;
+  background-color: lightyellow;
+  border-radius: 1rem;
+  padding: 20px;
+  width: 100%;
+  margin-bottom: 3rem;
+}
+
+.gate-warning-header {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.gate-warning-text {
+
 }
 
 .gate-card {
@@ -68,9 +110,10 @@ function checkPassword() {
   max-width: 360px;
 }
 
-.gate-card h2 {
+.gate-card-header {
   margin-bottom: 1.5rem;
   font-size: 1.6rem;
+  font-weight: bold;
 }
 
 .gate-card input {
@@ -85,7 +128,7 @@ function checkPassword() {
 .gate-card button {
   width: 100%;
   padding: 14px;
-  background: #2563eb;
+  background: #1043b3;
   color: white;
   border: none;
   border-radius: 8px;

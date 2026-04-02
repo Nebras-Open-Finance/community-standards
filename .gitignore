@@ -3,6 +3,7 @@ certs/
 confluence/
 internal_helpers/
 .claude/
+docs/public/doc-repo/
 
 # Logs
 logs

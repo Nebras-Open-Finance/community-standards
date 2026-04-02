@@ -4,7 +4,16 @@ import { apiRef } from './shared'
 const BASE = '/tech/lfi-api-hub'
 const VERSION = 'v2.1'
 
+function multiPaymentItems(base: string): DefaultTheme.SidebarItem[] {
+  return [
+    { text: 'Requirements', link: `${base}/requirements` },
+    { text: 'User Experience', link: `${base}/user-journeys` },
+    { text: 'API Guide', link: `${base}/api-guide` },
+  ]
+}
+
 export const lfiSidebar: DefaultTheme.SidebarItem[] = [
+
 
 
   {
@@ -146,7 +155,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
                   apiRef('GET', '/auth', `${BASE}/${VERSION}/api-hub/headless-heimdall/open-api/auth`),
                   apiRef('POST', '/auth/{interactionId}/doConfirm', `${BASE}/${VERSION}/api-hub/headless-heimdall/open-api/auth-interactionId-doConfirm`),
                   apiRef('POST', '/auth/{interactionId}/doFail', `${BASE}/${VERSION}/api-hub/headless-heimdall/open-api/auth-interactionId-doFail`),
-               ]
+                ]
               },
             ],
           },
@@ -185,7 +194,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
                 text: 'Payment Log',
                 items: [
                   apiRef('GET', '/payment-log', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/payment-log`),
-                    apiRef('PATCH', '/payment-log/{id}', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/payment-log-id`),
+                  apiRef('PATCH', '/payment-log/{id}', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/payment-log-id`),
                 ]
               },
             ],
@@ -202,95 +211,190 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
     ],
   },
 
+  {
+      text: 'Ozone Connect | Consent Events',
+      collapsed: true,
+      items: [
+        { text: 'Overview', link: `${BASE}/${VERSION}/consent-events` },
+        { text: 'APi Guide', link: `${BASE}/${VERSION}/consent-events/api-guide` },
+        {
+            text: 'API Reference',
+            collapsed: true,
+            items: [
+              apiRef('POST', '/consent/action/validate', `${BASE}/${VERSION}/consent-events/open-api/validate`),
+              apiRef('POST', '/consent/action/augment', `${BASE}/${VERSION}/consent-events/open-api/augment`),
+              apiRef('POST', '/consent/event/{operation}', `${BASE}/${VERSION}/consent-events/open-api/event-op`),
+            ],
+          },
+      ]
+  },
 
   {
-    text: 'Ozone Connect Specifications',
+    text: 'Ozone Connect | Banking',
     collapsed: true,
     items: [
-      { text: 'Overview', link: `${BASE}/${VERSION}/` },
+      { text: 'Overview', link: `${BASE}/${VERSION}/banking` },
       {
-        text: 'Banking',
+        text: 'Data Sharing',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/${VERSION}/banking` },
+          { text: 'Overview', link: `${BASE}/${VERSION}/banking/data-sharing` },
+          { text: 'Requirements', link: `${BASE}/${VERSION}/banking/data-sharing/requirements` },
+          { text: 'User Experience', link: `${BASE}/${VERSION}/banking/data-sharing/user-journeys` },
+          { text: 'API Guide', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide` },
           {
-            text: 'Data Sharing',
+            text: 'API Reference',
             collapsed: true,
             items: [
-              { text: 'Overview', link: `${BASE}/${VERSION}/banking/data-sharing` },
-              { text: 'Requirements', link: `${BASE}/${VERSION}/banking/data-sharing/requirements` },
-              { text: 'User Experience', link: `${BASE}/${VERSION}/banking/data-sharing/user-journeys` },
-              { text: 'API Guide', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide` },
-              {
-                text: 'API Reference',
-                collapsed: true,
-                items: [
-                  apiRef('GET', '/accounts', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts`),
-                  apiRef('GET', '/accounts/{AccountId}', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId`),
-                  apiRef('GET', '/accounts/{AccountId}/balances', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-balances`),
-                  apiRef('GET', '/accounts/{AccountId}/beneficiaries', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-beneficiaries`),
-                  apiRef('GET', '/customer', `${BASE}/${VERSION}/banking/data-sharing/open-api/customer`),
-                  apiRef('GET', '/accounts/{AccountId}/customer', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-customer`),
-                  apiRef('GET', '/accounts/{AccountId}/direct-debits', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-direct-debits`),
-                  apiRef('GET', '/accounts/{AccountId}/products', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-products`),
-                  apiRef('GET', '/accounts/{AccountId}/scheduled-payments', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-scheduled-payments`),
-                  apiRef('GET', '/accounts/{AccountId}/standing-orders', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-standing-orders`),
-                  apiRef('GET', '/accounts/{AccountId}/statements', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-statements`),
-                  apiRef('GET', '/accounts/{AccountId}/transactions', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-transactions`),
-                ],
-              },
+              apiRef('GET', '/accounts', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts`),
+              apiRef('GET', '/accounts/{AccountId}', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId`),
+              apiRef('GET', '/accounts/{AccountId}/balances', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-balances`),
+              apiRef('GET', '/accounts/{AccountId}/beneficiaries', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-beneficiaries`),
+              apiRef('GET', '/customer', `${BASE}/${VERSION}/banking/data-sharing/open-api/customer`),
+              apiRef('GET', '/accounts/{AccountId}/customer', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-customer`),
+              apiRef('GET', '/accounts/{AccountId}/direct-debits', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-direct-debits`),
+              apiRef('GET', '/accounts/{AccountId}/products', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-products`),
+              apiRef('GET', '/accounts/{AccountId}/scheduled-payments', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-scheduled-payments`),
+              apiRef('GET', '/accounts/{AccountId}/standing-orders', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-standing-orders`),
+              apiRef('GET', '/accounts/{AccountId}/statements', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-statements`),
+              apiRef('GET', '/accounts/{AccountId}/transactions', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-transactions`),
             ],
           },
-          {
-            text: 'Confirmation of Payee',
-            collapsed: true,
-            items: [
-              { text: 'Requirements', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/requirements` },
-              { text: 'User Experience', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/user-journeys` },
-              { text: 'API Guide', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/api-guide` },
-              {
-                text: 'API Reference',
-                collapsed: true,
-                items: [
-                  apiRef('POST', '/customers/action/cop-query', `${BASE}//${VERSION}/banking/confirmation-of-payee/open-api/cop-query`),
-                ],
-              },
-            ],
-          },
-          {
-            text: 'Products & Leads',
-            collapsed: true,
-            items: [
-              { text: 'Requirements', link: `${BASE}/${VERSION}/banking/products-and-leads/requirements` },
-              { text: 'API Guide', link: `${BASE}/${VERSION}/banking/products-and-leads/api-guide` },
-              {
-                text: 'API Reference',
-                collapsed: true,
-                items: [
-
-                ],
-              },
-            ],
-          },
-          {
-            text: 'ATMs',
-            collapsed: true,
-            items: [
-              { text: 'Requirements', link: `${BASE}/${VERSION}/banking/atms/requirements` },
-              { text: 'API Guide', link: `${BASE}/${VERSION}/banking/atms/api-guide` },
-              {
-                text: 'API Reference',
-                collapsed: true,
-                items: [
-                  apiRef('GET', '/atm', `${BASE}/${VERSION}/banking/atms/open-api/atm`),
-                ],
-              },
-            ],
-          },
-        ]
+        ],
       },
-    ],
+      {
+        text: 'Payments (Service Initiation)',
+        collapsed: true,
+        items: [
+          {
+            text: 'Domestic Payments',
+            collapsed: true,
+            items: [
+              {
+                text: 'Overview',
+                collapsed: true,
+                items: [
+                  { text: 'Payment Rails', link: `${BASE}/${VERSION}/banking/service-initiation/domestic-payments/overview/payment-rails` },
+                  { text: 'Payment Status', link: `${BASE}/${VERSION}/banking/service-initiation/domestic-payments/overview/payment-status` },
+                ],
+              },
+              {
+                text: 'Single Instant Payment',
+                collapsed: true,
+                items: multiPaymentItems(`${BASE}/${VERSION}/banking/service-initiation/domestic-payments/single-instant-payment`),
+              },
+              {
+                text: 'Multi Payments',
+                collapsed: true,
+                items: [
+                  {
+                    text: 'Variable On Demand', collapsed: true,
+                    items: [
+                      { text: 'Requirements', link: `${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/variable-on-demand/requirements` },
+                      { text: 'User Experience', link: `${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/variable-on-demand/user-journeys` },
+                      { text: 'API Guide', link: `${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/variable-on-demand/api-guide` },
+                    ]
+                  },
+                  { text: 'Fixed On Demand', collapsed: true, items: multiPaymentItems(`${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/fixed-on-demand`) },
+                  { text: 'Variable Periodic Schedule', collapsed: true, items: multiPaymentItems(`${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/variable-periodic-schedule`) },
+                  { text: 'Fixed Periodic Schedule', collapsed: true, items: multiPaymentItems(`${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/fixed-periodic-schedule`) },
+                  { text: 'Variable Defined Schedule', collapsed: true, items: multiPaymentItems(`${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/variable-defined-schedule`) },
+                  { text: 'Fixed Defined Schedule', collapsed: true, items: multiPaymentItems(`${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/fixed-defined-schedule`) },
+                  { text: 'Delegated SCA', collapsed: true, items: multiPaymentItems(`${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/delegated-sca`) },
+                ],
+              },
+            ],
+          },
+          {
+            text: 'Personal Identifiable Information',
+            collapsed: true,
+            items: [
+              { text: 'Overview', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/` },
+              { text: 'Debtor Account', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/debtor-account` },
+              { text: 'Creditor', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/creditor` },
+              { text: 'Risk', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/risk` },
+              {
+                text: 'API Schemas',
+                collapsed: true,
+                items: [
+                  { text: 'PII (Post /par)', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/api-schema/pii-par` },
+                  { text: 'PII (Post /payments)', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/api-schema/pii-payments` },
+                ]
+              },
+            ],
+          },
+          {
+            text: 'Multi Authorization', link: `${BASE}/${VERSION}/banking/service-initiation//multi-authorization/`
+          },
+          {
+            text: 'Refunds',
+            collapsed: true,
+            items: [
+              { text: 'Overview', link: `${BASE}/${VERSION}/banking/service-initiation/refunds/` },
+              { text: 'API Guide', link: `${BASE}/${VERSION}/banking/service-initiation/refunds/api-guide` },
+            ],
+          },
+          {
+            text: 'API Reference',
+            collapsed: true,
+            items: [
+              apiRef('POST', '/payments', `${BASE}/${VERSION}/banking/service-initiation/open-api/payments`),
+              apiRef('GET', '/payments/{PaymentId}', `${BASE}/${VERSION}/banking/service-initiation/open-api/payments-PaymentId`),
+              apiRef('GET', '/payments', `${BASE}/${VERSION}/banking/service-initiation/open-api/payments-idempotency`),
+              apiRef('GET', '/payment-consents/{ConsentId}/refund', `${BASE}/${VERSION}/banking/service-initiation/open-api/payment-consents-ConsentId-refund`),
+            ],
+          },
+        ],
+      },
+      {
+        text: 'Confirmation of Payee',
+        collapsed: true,
+        items: [
+          { text: 'Requirements', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/requirements` },
+          { text: 'User Experience', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/user-journeys` },
+          { text: 'API Guide', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/api-guide` },
+          {
+            text: 'API Reference',
+            collapsed: true,
+            items: [
+              apiRef('POST', '/customers/action/cop-query', `${BASE}//${VERSION}/banking/confirmation-of-payee/open-api/cop-query`),
+            ],
+          },
+        ],
+      },
+      {
+        text: 'Products & Leads',
+        collapsed: true,
+        items: [
+          { text: 'Requirements', link: `${BASE}/${VERSION}/banking/products-and-leads/requirements` },
+          { text: 'API Guide', link: `${BASE}/${VERSION}/banking/products-and-leads/api-guide` },
+          {
+            text: 'API Reference',
+            collapsed: true,
+            items: [
+
+            ],
+          },
+        ],
+      },
+      {
+        text: 'ATMs',
+        collapsed: true,
+        items: [
+          { text: 'Requirements', link: `${BASE}/${VERSION}/banking/atms/requirements` },
+          { text: 'API Guide', link: `${BASE}/${VERSION}/banking/atms/api-guide` },
+          {
+            text: 'API Reference',
+            collapsed: true,
+            items: [
+              apiRef('GET', '/atm', `${BASE}/${VERSION}/banking/atms/open-api/atm`),
+            ],
+          },
+        ],
+      },
+    ]
   },
+
 
   {
     text: 'Authentication and Authorization Journey',
@@ -311,7 +415,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'User Experience', link: `${BASE}/${VERSION}/consent-management-interface/user-experience` },
       { text: 'API Guide', link: `${BASE}/${VERSION}/consent-management-interface/api-guide` },
     ],
-    
+
   },
 
   {
