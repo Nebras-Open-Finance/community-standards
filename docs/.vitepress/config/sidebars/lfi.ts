@@ -297,5 +297,12 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         ]
       },
     ]
+  },
+  {
+    text : 'test-thing',
+    collapsed: true,
+    items : [
+      { text: 'Overview', link: `${BASE}/production/testing-certification/overview` }
+    ]
   }
 ]
