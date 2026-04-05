@@ -9,4 +9,5 @@ aside: false
     spec="/openapi/v2.1/ozone-connect/uae-ozone-connect-bank-service-initiation-openapi.yaml" 
     filterPath="/payment-consents/{consentId}/refund"
     filterMethod="GET"
+    :overrideServers="[{ url: 'https://[Ozone_Connect_API]'}]" 
  />

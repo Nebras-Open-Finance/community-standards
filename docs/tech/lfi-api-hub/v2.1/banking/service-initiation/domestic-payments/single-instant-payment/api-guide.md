@@ -329,7 +329,7 @@ Only return an error when the Hub's request itself is invalid or a server condit
 }
 ```
 
-## <span style="color: #3b82f6; padding-right: 5px;">PATCH</span> `/payment-log/:id`
+## <span style="color: #eab308; padding-right: 5px;">PATCH</span> `/payment-log/:id`
 
 This endpoint updates the payment status in the API Hub. The API Hub receives the status update from the LFI, triggers asynchronous notifications to TPPs, and maintains accurate status for billing and limit calculations.
 
@@ -397,3 +397,7 @@ This endpoint updates the payment status in the API Hub. The API Hub receives th
 A successful `PATCH /payment-log/:id` returns `204 No Content` — the response does not have a body.
 
 See the [PATCH /payment-log/:id](/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/payment-log) API reference for the full request and response schema.
+
+## <span style="color: #22c55e; padding-right: 5px;">GET</span> `/payments/:paymentId`
+
+> This section is in progress.
