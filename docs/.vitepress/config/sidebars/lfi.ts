@@ -108,18 +108,27 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
     collapsed: true,
     items: [
       { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/` },
+      { text: 'Connectivity & Certificates', link: `${BASE}/${VERSION}/api-hub/connectivity/` },
       {
         text: 'Onboarding',
         collapsed: true,
         items: [
           { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/onboarding/` },
-          { text: 'Prerequisites', link: `${BASE}/${VERSION}/api-hub/onboarding/prerequisites` },
-          { text: 'Application Layer Authentication', link: `${BASE}/${VERSION}/api-hub/onboarding/application-layer-auth` },
+          { text: 'Prerequisites Questionnaire', link: `${BASE}/${VERSION}/api-hub/onboarding/prerequisites` },
+          {
+            text: 'Application Layer Authentication',
+            collapsed: true,
+            items: [
+              { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/onboarding/application-layer-auth` },
+              { text: 'JWT Auth', link: `${BASE}/${VERSION}/api-hub/onboarding/jwt-auth` },
+            ]
+          },
           {
             text: 'Environment Specific',
             collapsed: true,
             items: [
               { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/onboarding/environment-specific` },
+              { text: 'Certificate Walkthroughs', link: `${BASE}/${VERSION}/api-hub/onboarding/environment-specific/certificate-walkthroughs` },
               { text: 'Ozone Connect Base URL', link: `${BASE}/${VERSION}/api-hub/onboarding/environment-specific/ozone-connect-url` },
               { text: 'Authorization Endpoint', link: `${BASE}/${VERSION}/api-hub/onboarding/environment-specific/auth-endpoint` },
             ]
@@ -131,7 +140,9 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         collapsed: true,
         items: [
           { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/admin-portal/` },
-          { text: 'TPP Activation', link: `${BASE}/${VERSION}/api-hub/tpp-activation/` },
+          { text: 'TPP Management & Activation', link: `${BASE}/${VERSION}/api-hub/admin-portal/tpp-activation` },
+          { text: 'Logs', link: `${BASE}/${VERSION}/api-hub/admin-portal/logs` },
+          { text: 'Reports', link: `${BASE}/${VERSION}/api-hub/admin-portal/reports` },
         ]
       },
       {
@@ -216,7 +227,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
       collapsed: true,
       items: [
         { text: 'Overview', link: `${BASE}/${VERSION}/consent-events` },
-        { text: 'APi Guide', link: `${BASE}/${VERSION}/consent-events/api-guide` },
+        { text: 'API Guide', link: `${BASE}/${VERSION}/consent-events/api-guide` },
         {
             text: 'API Reference',
             collapsed: true,
@@ -397,12 +408,23 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
 
 
   {
-    text: 'Authentication and Authorization Journey',
+    text: 'Consent Journey',
     collapsed: true,
     items: [
-      { text: 'Overview', link: `${BASE}/${VERSION}/auth/` },
-      { text: 'Requirements', link: `${BASE}/${VERSION}/auth/requirements` },
-      { text: 'API Guide', link: `${BASE}/${VERSION}/auth/api-guide` },
+      {
+        text: 'Authentication',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/consent-journey/authentication` },
+          { text: 'Strong Customer Authentication', link: `${BASE}/${VERSION}/consent-journey/authentication/sca` },
+          { text: 'Implementation Guide', link: `${BASE}/${VERSION}/consent-journey/authentication/implementation` },
+        ]
+      },
+      {
+        text: 'Authorization',
+        link: `${BASE}/${VERSION}/consent-journey/authorization`,
+      },
+      { text: 'API Guide', link: `${BASE}/${VERSION}/consent-journey/api-guide` },
     ],
   },
 
@@ -457,5 +479,13 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         ]
       },
     ]
-  }
+  },
+
+  {
+    text: 'CAAP',
+    collapsed: true,
+    items: [
+      { text: 'Overview', link: `${BASE}/${VERSION}/caap/` },
+    ],
+  },
 ]

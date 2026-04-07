@@ -7,13 +7,30 @@ aside: false
 
 🕒 **3 minute read**
 
-# Activating a TPP
+# TPP Management & Activation
 
-After a TPP has registered with an you after the `/tpp-registration` endpoint is called successfully (for detail how a TPP registers this please see [Registration API Guide](/tpp/tech-standards/registration/api-guide)).
+The **TPP Management** section of the Admin Portal is where you manage all TPPs that have registered with your API Hub. It contains three sub-sections: **TPP List**, **Software Statements**, and **Clients**.
 
-The TPP is not automatically granted access. The LFI must activate the TPP within their API Hub Admin Portal for access to be granted. 
+All three levels — TPP, software statement, and client — MUST be active for a TPP to make API requests. If any one of the three is blocked, the TPP's requests will be rejected.
 
-The activation is done in three steps and **has to be performed in this order.**
+## Viewing registered TPPs
+
+The TPP List shows every TPP organisation that has registered with your API Hub. Each TPP entry represents an organisation from the Trust Framework. A single TPP organisation may have multiple software statements (applications) and multiple clients.
+
+<!-- TODO: Add screenshot of the TPP List page -->
+::: tip Image placeholder
+*Screenshot: TPP Management > TPP List showing registered TPP organisations and their status*
+:::
+
+::: info Ozone Health Probe
+You will see **Ozone** listed as an active TPP. This is an automated health monitoring client that periodically tests your API Hub. It SHOULD remain active. If the health probe's requests are causing any issues, contact Nebras before blocking the client.
+:::
+
+## Activating a TPP
+
+After a TPP has registered with you — after the `/tpp-registration` endpoint is called successfully (for detail on how a TPP registers, see [Registration API Guide](/tpp/tech-standards/registration/api-guide)) — the TPP is not automatically granted access. The LFI MUST activate the TPP within the Admin Portal for access to be granted.
+
+The activation is done in three steps and **MUST be performed in this order.**
 
 ### Step 1 - Activate the TPP
 
@@ -39,6 +56,27 @@ The activation is done in three steps and **has to be performed in this order.**
 
 
 
+
+## Blocking a TPP
+
+In certain circumstances, Nebras may instruct an LFI to block a TPP — for example, if a TPP is consistently sending malformed requests and is unresponsive to communications. Blocking can be applied at any of the three levels:
+
+- **Block the client** — immediately stops requests from that specific client
+- **Block the software statement** — stops all clients under that software statement
+- **Block the TPP** — stops all software statements and clients for the entire TPP organisation
+
+To block, navigate to the relevant entity (TPP, software statement, or client), open its detail page, and click **Block**.
+
+To restore access, open the blocked entity and click **Activate**.
+
+::: warning Do not block without instruction
+Do NOT block a TPP, software statement, or client without explicit instruction from Nebras. If you observe issues with a specific TPP's traffic, raise it with Nebras first. In cases where the Central Bank revokes a TPP's licence, Nebras will remove the TPP from the ecosystem centrally — no LFI action is required.
+:::
+
+<!-- TODO: Add screenshot of the Block confirmation dialog -->
+::: tip Image placeholder
+*Screenshot: Client detail page showing the Block button and confirmation dialog*
+:::
 
 <script setup>
 const images1 =  [

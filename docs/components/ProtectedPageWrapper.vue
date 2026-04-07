@@ -3,7 +3,10 @@ import { ref, onMounted } from 'vue'
 
 const props = defineProps({
   password: { type: String, required: true, default: 'NOF@1234' },
-//   storageKey: { type: String, default: 'protected_access' }
+  gateHeader: { type: String, default: 'Private Documents' },
+  gateSubheader: { type: String, default: '' },
+  gateWarningText: { type: String, default: 'This section contains private documents that are only accessible to authorized members.' },
+  gateLogo: { type: String, default: '' },
 })
 
 const input = ref('')
@@ -27,11 +30,14 @@ function checkPassword() {
 <template>
   <!-- LOCKED: Show ONLY the gate (no page content at all) -->
   <div v-if="!unlocked" class="password-gate">
-    <h1 class="gate-header">Pay10 - Private Documents</h1>
-    <div class="gate-subheader">Private documentation for <strong>Pay10</strong></div>
+    <div class="gate-header-row">
+      <img v-if="gateLogo" :src="gateLogo" :alt="gateHeader" class="gate-logo" />
+      <h1 class="gate-header">{{ gateHeader }}</h1>
+    </div>
+    <div v-if="gateSubheader" class="gate-subheader">{{ gateSubheader }}</div>
     <div class="gate-warning">
       <div class="gate-warning-header">Access required</div>
-      <div class="gate-warning-text">This section contains private documents that are only accessible to authorized members of Pay10</div>
+      <div class="gate-warning-text">{{ gateWarningText }}</div>
     </div>
     
     <div class="gate-card">
@@ -69,10 +75,24 @@ function checkPassword() {
   padding-right: 100px;
 }
 
-.gate-header {
-  text-align: left;
+.gate-header-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   margin-right: auto;
   margin-bottom: 1.5rem;
+}
+
+.gate-logo {
+  height: 60px;
+  object-fit: contain;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.gate-header {
+  text-align: left;
+  margin: 0;
   font-size: 3rem;
   line-height: 4rem;
 }
@@ -84,7 +104,7 @@ function checkPassword() {
 
 .gate-warning {
   margin-right: auto;
-  background-color: lightyellow;
+  background-color: rgba(245, 197, 47, 0.2);
   border-radius: 1rem;
   padding: 20px;
   width: 100%;

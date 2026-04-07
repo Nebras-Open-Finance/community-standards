@@ -4,6 +4,7 @@ confluence/
 internal_helpers/
 .claude/
 docs/public/doc-repo/
+CLAUDE.md
 
 # Logs
 logs

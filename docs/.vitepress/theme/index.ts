@@ -7,6 +7,7 @@ import HomePage from '../../components/WebPages/HomePage.vue'
 import NewsPage from '../../components/WebPages/NewsPage.vue'
 import OpenFinanceDashboard from '../../components/WebPages/OpenFinanceDashboard.vue'
 import KnowledgeBasePage from '../../components/WebPages/KnowledgeBasePage.vue'
+import DocumentRepoPage from '../../components/WebPages/DocumentRepoPage.vue'
 
 //components
 import ImageViewer from '../../components/ImageViewer.vue'
@@ -92,6 +93,7 @@ export default {
     app.component('NewsPage', NewsPage)
     app.component('KnowledgeBasePage', KnowledgeBasePage)
     app.component('OpenFinanceDashboard', OpenFinanceDashboard)
+    app.component('DocumentRepoPage', DocumentRepoPage)
 
     //components
     app.component('ImageViewer', ImageViewer)

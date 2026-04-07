@@ -6,51 +6,80 @@ aside: false
 
 🕒 **3 minute read**
 
-# Trust Framework – Authorisation Servers
+# Trust Framework – Servers
 
-An **Authorisation Server** (sometimes called an auth server or server) represents an OAuth 2.0 authorisation server your organisation operates within the Trust Framework. TPPs discover your authorisation server through the directory in order to initiate consent and token flows against your APIs.
+A **Server** in the Trust Framework represents your LFI's **API Hub** — the centralised platform that acts as the OIDC Authorisation Server, Resource Server, and Open Finance Gateway for your institution. Each API Hub instance is provisioned by the platform and is the entry point through which TPPs discover and interact with your Open Finance APIs.
 
-As an LFI you must register at least one authorisation server and associate your API resources with it so that TPPs can discover the endpoints you expose.
+As an LFI you MUST publish your API Hub as a server to the Trust Framework and associate your [API Resources](./api/) with it so that TPPs can discover the endpoints you expose via [`GET /participants`](/tech/tpp-standards/trust-framework/open-api/participants).
 
-## What is an Authorisation Server?
+::: warning Environment Mapping
+You MUST publish your **pre-production** API Hub to the **Sandbox Trust Framework** and your **production** API Hub to the **Production Trust Framework**.
+:::
 
-Within the Trust Framework, your authorisation server entry is a directory record that tells TPPs:
+## What Does a Server Represent?
 
-- **Where to send users** for authentication and consent (your authorisation endpoint)
-- **Where to obtain tokens** (your token endpoint)
+Within the Trust Framework, a server entry is a directory record that represents your API Hub. It tells TPPs:
+
+- **Where to send users** for authentication and consent (the API Hub's authorisation endpoint)
+- **Where to obtain tokens** (the API Hub's token endpoint)
 - **What APIs you expose** and at which base URLs (via your registered [API Resources](./api/))
-- **How to validate your identity** (via your JWKS URI and OIDC discovery document)
+- **How to validate identity** (via the API Hub's JWKS URI and OIDC discovery document)
 
-When a TPP performs dynamic client registration or initiates an authorisation code flow, it first queries the Trust Framework directory to locate the correct authorisation server for the institution it wants to interact with.
+When a TPP initiates an authorisation code flow, it queries the Trust Framework directory to locate the correct server (API Hub) for the institution it wants to interact with.
 
-## Key Fields
+## How the API Hub Discovery URI is Obtained
+
+When your API Hub is provisioned, the platform provides you with a **well-known discovery document URI**. This URI is unique to your institution and environment. It exposes your API Hub's `authorization_endpoint`, `token_endpoint`, `jwks_uri`, `issuer`, and supported parameters.
+
+You will receive this URI as part of your [environment-specific onboarding configuration](/tech/lfi-api-hub/v2.1/api-hub/onboarding/environment-specific/).
+
+The `issuer` value from the discovery document is a required field when creating your server entry in the Trust Framework.
+
+## Required Information
+
+To create a server in the Trust Framework, you MUST provide:
 
 | Field | Description |
 |-------|-------------|
-| **Customer Friendly Name** | The public-facing name for your authorisation server, displayed in TPP-facing portals and consent screens. |
-| **Customer Friendly Description** | A short description of your institution's open finance offering. |
-| **Developer Portal URI** | A URL pointing to your developer documentation or portal. |
-| **Terms of Service URI** | A URL to your terms of service for API consumers. |
-| **Notification Webhook** | The endpoint on your infrastructure that the API Hub will call with consent lifecycle events. |
-| **Open ID Well Known** | The URL of your OIDC discovery document (`.well-known/openid-configuration`). Must be publicly reachable. |
-| **Payload Signing Cert Location URI** | The URI of the JWKS endpoint used by TPPs to verify JWTs you sign. |
-| **API Resources** | The set of API resource entries associated with this server, each describing an API family, base URL, and applicable scopes. |
+| **Customer Friendly Server Name** | A public-facing name for your institution's Open Finance service, displayed in TPP-facing portals and consent screens. This MUST reflect the brand that the API Hub supports (see [Logo](#logo-and-branding) below). |
+| **Issuer** | The `issuer` value from your API Hub's well-known discovery document. |
+| **Description** | A short description of your institution's Open Finance offering. |
+| **Logo** | Your institution's logo for this API Hub instance (see [Logo and Branding](#logo-and-branding) below). |
+| **Account Type** | The account type(s) supported by this server: **Retail**, **SME**, or **Corporate** (see [Account Types](#account-types) below). |
+
+## Logo and Branding
+
+The logo you provide MUST match the brand that the API Hub supports. If your institution operates multiple API Hubs — for example, one for retail banking and one for business banking — each server entry MUST use the logo corresponding to that specific brand.
+
+This ensures that TPPs and PSUs see the correct branding during consent and authorisation journeys.
+
+## Account Types
+
+Each server MUST indicate the account type(s) it supports. This allows TPPs to identify which server to use when requesting access to a specific category of accounts.
+
+| Account Type | Description |
+|--------------|-------------|
+| **Retail** | Personal and individual customer accounts. |
+| **SME** | Small and medium enterprise accounts. |
+| **Corporate** | Corporate and institutional accounts. |
+
+An institution MAY register multiple servers if it operates separate API Hubs for different account types or brands.
 
 ## Relationship to API Resources
 
-An authorisation server acts as the parent for one or more **API Resources**. Each API resource entry associates a specific API family (e.g. banking data sharing, payment initiation) with a base URL on your infrastructure and the scopes your implementation supports.
+A server acts as the parent for one or more **API Resources**. Each API resource entry associates a specific API family (e.g. banking data sharing, payment initiation) with the scopes your implementation supports.
 
 ```
 Organisation
-└── Authorisation Server
+└── Server (API Hub)
     ├── API Resource  (Banking Data Sharing)
     ├── API Resource  (Payment Initiation)
     └── API Resource  (Confirmation of Payee)
 ```
 
-TPPs retrieving your directory entry will see both the authorisation server endpoints and the list of API resources, giving them everything they need to dynamically register and call your APIs.
+TPPs retrieving your directory entry will see both the server endpoints and the list of API resources, giving them everything they need to dynamically register and call your APIs.
 
 ## Next Steps
 
-- [Creating an Authorisation Server](./creating) — step-by-step walkthrough
+- [Creating a Server](./creating) — step-by-step walkthrough
 - [API Resources](./api/) — what API resources are and how to configure them

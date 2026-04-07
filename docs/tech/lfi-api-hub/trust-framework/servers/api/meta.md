@@ -4,55 +4,121 @@ prev: false
 aside: false
 ---
 
-🕒 **3 minute read**
+🕒 **10 minute read**
 
 # API Resource – Meta Data
 
-Each API resource registered in the Trust Framework can carry optional metadata fields. These fields are surfaced in the directory and in TPP-facing portals, helping developers understand what your API resource provides and where to find documentation.
+Each API resource registered in the Trust Framework carries a metadata schema specific to its API family. These metadata fields are surfaced in the directory and via [`GET /participants`](/tech/tpp-standards/trust-framework/open-api/participants), allowing TPPs to discover your institution's capabilities and configuration.
 
-## Fields
+The metadata schemas described below correspond to version **2.1** of the Open Finance UAE standards. The full schema definitions can be retrieved programmatically via [`GET /references/apifamilies`](/tech/lfi-api-hub/trust-framework/api/api-families).
 
-### Customer Friendly Name
+## Account Information (`account-information`)
 
-A short, human-readable name for this API resource. This name may be displayed in developer portals and directory listings.
+| Field | Required | Type | Description |
+|-------|----------|------|-------------|
+| **AccountSubType** | Yes | `array` | Account sub-types supported for data sharing. One or more of: `CurrentAccount`, `Savings`, `CreditCard`, `Mortgage`, `Finance` |
+| **OverLimitFees** | Optional | `string` | The cost per API call (in AED) for each data sharing transactional data request when usage limits have been exceeded (15 pages per customer per day for attended calls, or 5 pages per customer per day for unattended calls). Format: up to 16 digits with 2 decimal places (e.g. `0.50`) |
+| **DeprecationDate** | Optional | `string` | The date (`YYYY-MM-DD`) from which this API version or resource is officially deprecated. After this date, no new consents SHOULD be created for this family, and migration to a newer version is strongly recommended. The API remains functional for existing users until the Retirement Date |
+| **RetirementDate** | Optional | `string` | The date (`YYYY-MM-DD`) on which this API version or resource will be permanently retired and become unavailable. After this date, requests will fail, and any existing consents or integrations will cease to function. TPPs MUST complete migration before this date |
 
-**Example:** `Acme Bank – Account Data`
+### Example
 
----
+```json
+{
+  "AccountSubType": ["CurrentAccount", "Savings", "CreditCard"],
+  "OverLimitFees": "0.50"
+}
+```
 
-### Customer Friendly Description
+## Payment Initiation (`payment`)
 
-A brief description of what this API resource provides. Keep it concise and developer-facing.
+The `payment` family declares which payment types and consent models your institution supports. **All payment type fields are required** — set `Supported` to `false` for payment types you do not support.
 
-**Example:** `Access to account information, balances, transactions, and related data for Acme Bank customers.`
+### Simple payment types
 
----
-
-### Developer Portal URI
-
-A URL pointing to documentation or a developer portal specific to this API resource. This should help TPP developers understand how to integrate with your implementation — including any institution-specific behaviour, sandbox access, or support contacts.
-
-**Example:** `https://developer.example.com/open-finance`
-
----
-
-### Terms of Service URI
-
-A URL to the terms of service governing access to this API resource. TPPs may be required to accept these terms before accessing your APIs.
-
-**Example:** `https://developer.example.com/terms`
-
----
-
-## Field Summary
+These payment types require a single `Supported` boolean:
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| **Customer Friendly Name** | Recommended | Human-readable name for this resource, displayed in portals. |
-| **Customer Friendly Description** | Recommended | Short description of what the resource provides. |
-| **Developer Portal URI** | Optional | URL to your developer documentation for this resource. |
-| **Terms of Service URI** | Optional | URL to your terms of service for API consumers. |
+| **SingleInstantPayment.Supported** | Yes | `true` if single instant payments are supported |
+| **FixedDefinedSchedule.Supported** | Yes | `true` if fixed amount payments on a defined schedule are supported |
+| **VariableDefinedSchedule.Supported** | Yes | `true` if variable amount payments on a defined schedule are supported |
+| **FixedPeriodicSchedule.Supported** | Yes | `true` if fixed amount periodic payments are supported |
+| **VariablePeriodicSchedule.Supported** | Yes | `true` if variable amount periodic payments are supported |
+| **FixedOnDemand.Supported** | Yes | `true` if fixed amount on-demand payments are supported |
 
-::: tip
-While these fields are optional, completing them improves your institution's discoverability and helps TPP developers integrate correctly with your APIs. Institutions with well-documented directory entries typically experience fewer integration support requests.
-:::
+### Beneficiary-aware payment types
+
+These payment types require additional detail about which beneficiary models are supported:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| **VariableOnDemand.SingleBeneficiarySupported** | Yes | `true` if variable on-demand consents support a single beneficiary |
+| **VariableOnDemand.MultipleBeneficiariesSupported** | Yes | `true` if variable on-demand consents support multiple beneficiaries (2–10) |
+| **VariableOnDemand.OpenBeneficiariesSupported** | Yes | `true` if variable on-demand consents support unrestricted beneficiaries defined at the point of payment |
+| **DelegatedAuthentication.SingleBeneficiarySupported** | Yes | `true` if delegated authentication consents support a single beneficiary |
+| **DelegatedAuthentication.MultipleBeneficiariesSupported** | Yes | `true` if delegated authentication consents support multiple beneficiaries (2–10) |
+| **DelegatedAuthentication.OpenBeneficiariesSupported** | Yes | `true` if delegated authentication consents support unrestricted beneficiaries defined at the point of payment |
+
+### Lifecycle fields
+
+| Field | Required | Type | Description |
+|-------|----------|------|-------------|
+| **DeprecationDate** | Optional | `string` | The date (`YYYY-MM-DD`) from which this API version or resource is officially deprecated. After this date, no new consents SHOULD be created for this family, and migration to a newer version is strongly recommended. The API remains functional for existing users until the Retirement Date |
+| **RetirementDate** | Optional | `string` | The date (`YYYY-MM-DD`) on which this API version or resource will be permanently retired and become unavailable. After this date, requests will fail, and any existing consents or integrations will cease to function. TPPs MUST complete migration before this date |
+
+### Example
+
+```json
+{
+  "SingleInstantPayment": {
+    "Supported": true
+  },
+  "FixedDefinedSchedule": {
+    "Supported": true
+  },
+  "VariableDefinedSchedule": {
+    "Supported": false
+  },
+  "FixedPeriodicSchedule": {
+    "Supported": true
+  },
+  "VariablePeriodicSchedule": {
+    "Supported": false
+  },
+  "FixedOnDemand": {
+    "Supported": true
+  },
+  "VariableOnDemand": {
+    "SingleBeneficiarySupported": true,
+    "MultipleBeneficiariesSupported": true,
+    "OpenBeneficiariesSupported": false
+  },
+  "DelegatedAuthentication": {
+    "SingleBeneficiarySupported": true,
+    "MultipleBeneficiariesSupported": false,
+    "OpenBeneficiariesSupported": false
+  }
+}
+```
+
+## Confirmation of Payee (`confirmation`)
+
+| Field | Required | Type | Description |
+|-------|----------|------|-------------|
+| **DeprecationDate** | Optional | `string` | The date (`YYYY-MM-DD`) from which this API version or resource is officially deprecated. After this date, no new consents SHOULD be created for this family, and migration to a newer version is strongly recommended. The API remains functional for existing users until the Retirement Date |
+| **RetirementDate** | Optional | `string` | The date (`YYYY-MM-DD`) on which this API version or resource will be permanently retired and become unavailable. After this date, requests will fail, and any existing consents or integrations will cease to function. TPPs MUST complete migration before this date |
+
+## ATM (`atm`)
+
+| Field | Required | Type | Description |
+|-------|----------|------|-------------|
+| **DeprecationDate** | Optional | `string` | The date (`YYYY-MM-DD`) from which this API version or resource is officially deprecated. After this date, no new consents SHOULD be created for this family, and migration to a newer version is strongly recommended. The API remains functional for existing users until the Retirement Date |
+| **RetirementDate** | Optional | `string` | The date (`YYYY-MM-DD`) on which this API version or resource will be permanently retired and become unavailable. After this date, requests will fail, and any existing consents or integrations will cease to function. TPPs MUST complete migration before this date |
+
+## Products & Leads (`product`)
+
+| Field | Required | Type | Description |
+|-------|----------|------|-------------|
+| **DeprecationDate** | Optional | `string` | The date (`YYYY-MM-DD`) from which this API version or resource is officially deprecated. After this date, no new consents SHOULD be created for this family, and migration to a newer version is strongly recommended. The API remains functional for existing users until the Retirement Date |
+| **RetirementDate** | Optional | `string` | The date (`YYYY-MM-DD`) on which this API version or resource will be permanently retired and become unavailable. After this date, requests will fail, and any existing consents or integrations will cease to function. TPPs MUST complete migration before this date |

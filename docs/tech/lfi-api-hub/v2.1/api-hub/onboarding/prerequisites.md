@@ -1,33 +1,110 @@
 ---
 next: false
 prev: false
+aside: false
 ---
 
 # Prerequisites
 
-Before connecting to the API Hub, your organisation must have completed the following:
-
-## Trust Framework registration
-
-- [ ] Organisation registered in the Trust Framework directory
-- [ ] At least one admin user added to your organisation account
-- [ ] Organisation-level transport and signing certificates uploaded
-- [ ] API Hub application created and approved (see [Creating an Application](../trust-framework/onboarding/application))
-- [ ] Application-level transport and signing certificates configured (see [Keys and Certificates](../trust-framework/onboarding/keys-certificates))
-
-## Technical readiness
-
-- [ ] **Resource server deployed** — your bank's API endpoints must be running and reachable from the Hub's network egress IPs
-- [ ] **Authorization server ready** — your bank's FAPI 2.0-compliant authorization server must be deployed (or you are using the Hub's hosted authorization server option)
-- [ ] **mTLS client certificate** — the transport certificate registered in the Trust Framework must be installed and configured in your API server
-- [ ] **Consent screen (CMI)** — your Consent Management Interface must be built and deployed (see [Banking — Data Sharing API Guide](../banking/data-sharing/api-guide))
-
-## Regulatory requirements
-
-- [ ] CBUAE licence or in-principle approval received
-- [ ] API Hub participation agreement signed with AlTareq
-- [ ] Pre-production testing completed before requesting production access
+Before your API Hub can be provisioned, you MUST complete the prerequisites questionnaire via a Service Desk ticket. This page describes the information you will need to provide and why it is required.
 
 ::: info
-Contact your AlTareq integration manager if you are unsure about any of the above requirements.
+Ensure your organisation is registered in the Trust Framework before starting the prerequisites process. See [Trust Framework Onboarding](/tech/lfi-api-hub/trust-framework/onboarding) for details.
 :::
+
+
+## Organisation Details
+
+| Field | Description |
+|-------|-------------|
+| **LFI Legal Name** | Your legal name as it appears on your Trust Framework organisation page. |
+| **IBAN Bank Code** | The IBAN bank code for the brand associated with this onboarding. Not applicable for insurers. |
+| **Primary Technical Contact (PTC)** | Email address of the main technical contact for integration queries. |
+| **Primary Business Contact (PBC)** | Email address of the main business contact. |
+
+
+## LFI Code
+
+Your **LFI Code** forms part of the URL for both the TPP-facing and LFI-facing domain names — including your API Hub's well-known discovery document URI (see [Environment Specific Configuration](/tech/lfi-api-hub/v2.1/api-hub/onboarding/environment-specific/)).
+
+If your institution operates multiple brands (e.g. retail and business), each brand will have its own API Hub and its own LFI Code. Each brand is onboarded separately.
+
+
+## Infrastructure
+
+### Hosting Environment
+
+Indicate where your Ozone Connect endpoints will be hosted:
+
+- Azure
+- AWS
+- OCI (Oracle Cloud Infrastructure)
+- GCP (Google Cloud Platform)
+- On-premises
+
+### Digital Channels
+
+Indicate which digital channels you currently support for PSU authentication and consent journeys:
+
+- Web
+- Mobile
+- Both
+
+
+## Brands
+
+Indicate how many business brands you will be implementing. Each brand represents a separate API Hub instance — for example, a bank may have separate brands for retail and corporate, each requiring its own onboarding.
+
+
+## CAAP
+
+Indicate whether you plan to use the **Consent Approval Application Platform (CAAP)** for PSU consent management. CAAP is an API Hub-hosted solution for managing the PSU consent journey. See [CAAP](/tech/lfi-api-hub/v2.1/caap/) for details.
+
+
+## Supported API Families
+
+Indicate which API families you plan to support. The available families are:
+
+- **Bank Data Sharing** — account information, balances, transactions, and related data
+- **Bank & FX Service Initiation** — payment initiation, including domestic transfers
+- **Consent Events & Actions** — consent lifecycle event notifications
+
+::: info Insurance
+Insurance API families (e.g. Health, Motor, Travel) will be covered in a future update to this documentation.
+:::
+
+
+## Health Check Endpoints
+
+The following health check endpoints are **mandatory** for all LFI implementations:
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /hello` | Basic connectivity check. |
+| `GET /hello-mtls` | Verifies mutual TLS is correctly configured. |
+| `GET /echo-cert` | Returns the client certificate details received by your server, used to verify certificate propagation. |
+
+These endpoints MUST be implemented and reachable before your integration can proceed to testing.
+
+
+## Optional Features
+
+During onboarding you will be asked which optional features you plan to implement. These are configured per API family.
+
+### Consent Pre-Validation
+
+Allows your Ozone Connect implementation to validate a consent before it is created. When enabled, the API Hub calls your validation endpoint during consent creation.
+
+See [Consent Events & Actions](/tech/lfi-api-hub/v2.1/consent-events/) for details.
+
+### Consent Augmentation
+
+Supports multi-authorisation workflows where a consent requires approval from more than one party. When enabled, the API Hub calls your augmentation endpoint to enrich the consent with additional data.
+
+See [Consent Events & Actions](/tech/lfi-api-hub/v2.1/consent-events/) for details.
+
+### Consent Event Notification
+
+Enables asynchronous notification of consent lifecycle events to your Ozone Connect implementation. When enabled, the API Hub sends event notifications when consents are created, authorized, revoked, or otherwise modified.
+
+See [Consent Events & Actions](/tech/lfi-api-hub/v2.1/consent-events/) for details.

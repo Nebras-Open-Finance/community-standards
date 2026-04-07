@@ -6,84 +6,82 @@ aside: false
 
 🕒 **5 minute read**
 
-# Walkthrough – Creating an Authorisation Server
+# Walkthrough – Creating a Server
 
-This walkthrough covers registering your authorisation server in the Trust Framework. You must complete this before registering API resources or being discoverable by TPPs.
+This walkthrough covers publishing your API Hub as a server in the Trust Framework. You MUST complete this before registering API resources or being discoverable by TPPs.
 
 ::: info Prerequisites
-Before creating an authorisation server your organisation must be onboarded to the Trust Framework and you must have the necessary admin permissions. See [Onboarding](../onboarding) if you have not yet completed this step.
+Before creating a server:
+- Your organisation MUST be onboarded to the Trust Framework with the necessary admin permissions. See [Onboarding](../onboarding) if you have not yet completed this step.
+- Your API Hub MUST be provisioned and you MUST have received your [environment-specific configuration](/tech/lfi-api-hub/v2.1/api-hub/onboarding/environment-specific/), including your well-known discovery document URI.
 :::
 
----
 
-## Step 1 – Navigate to your Organisation
+## Step 1 – Obtain Your Issuer
+
+Before creating the server entry, retrieve the `issuer` value from your API Hub's well-known discovery document. The discovery document URI is provided as part of your [environment-specific onboarding configuration](/tech/lfi-api-hub/v2.1/api-hub/onboarding/environment-specific/).
+
+Open the discovery document URI in a browser or HTTP client and locate the `issuer` field. You will need this value in Step 3.
+
+
+## Step 2 – Navigate to your Organisation
 
 1. Sign in to the Trust Framework directory.
 2. Navigate to your **Organisation**.
 3. Open the **Auth Servers** section.
 4. Click **+ New Auth Server**.
 
----
+::: warning Environment Mapping
+Ensure you are creating the server in the correct Trust Framework environment:
+- **Pre-production** API Hub → **Sandbox** Trust Framework (`web.sandbox.directory.openfinance.ae`)
+- **Production** API Hub → **Production** Trust Framework (`web.directory.openfinance.ae`)
+:::
 
-## Step 2 – Provide the Server Details
 
-Fill in the fields that describe your authorisation server. These values are published in the directory and are visible to TPPs.
+## Step 3 – Provide the Server Details
+
+Fill in the required fields. These values are published in the directory and are visible to TPPs.
 
 | Field | Guidance |
 |-------|----------|
-| **Customer Friendly Name** | A public-facing name for your institution's open finance service (e.g. `Acme Bank Open Finance`). |
-| **Customer Friendly Description** | A short description of the service (e.g. `Open finance APIs for Acme Bank customers`). |
-| **Developer Portal URI** | URL to your developer portal or API documentation. |
-| **Terms of Service URI** | URL to your terms of service for API consumers. |
-| **Notification Webhook** | The HTTPS endpoint on your infrastructure that receives consent lifecycle events from the API Hub. This must be reachable from the platform. See [Consent Events & Actions](/tech/lfi-api-hub/v2.1/consent/events-and-actions) for details on the events sent to this endpoint. |
+| **Customer Friendly Server Name** | A public-facing name that reflects the brand this API Hub supports (e.g. `Acme Bank Retail` or `Acme Bank Business`). If your institution operates multiple API Hubs for different brands, each MUST have a distinct name. |
+| **Issuer** | The `issuer` value from your API Hub's well-known discovery document, obtained in Step 1. |
+| **Description** | A short description of the Open Finance service (e.g. `Open Finance APIs for Acme Bank retail customers`). |
 
----
 
-## Step 3 – Provide the OIDC Discovery URI
+## Step 4 – Upload the Logo
 
-The **Open ID Well Known** field must point to your OIDC discovery document, for example:
+Upload a logo for this server entry. The logo MUST match the brand that this API Hub supports.
 
-```
-https://auth.example.com/.well-known/openid-configuration
-```
+If your institution has multiple API Hubs (e.g. one for retail and one for business), each server MUST use the logo corresponding to its specific brand. This logo is displayed to TPPs and PSUs during consent and authorisation journeys.
 
-This document must be publicly reachable and must include at minimum:
 
-- `authorization_endpoint`
-- `token_endpoint`
-- `jwks_uri`
-- `issuer`
+## Step 5 – Set the Account Type
 
-The Trust Framework will use this document to validate your server's configuration during registration.
+Indicate the account type(s) supported by this server:
 
----
+- **Retail** — personal and individual customer accounts
+- **SME** — small and medium enterprise accounts
+- **Corporate** — corporate and institutional accounts
 
-## Step 4 – Provide the Payload Signing Cert Location URI
+This allows TPPs to identify which server to use when requesting access to a specific category of accounts.
 
-The **Payload Signing Cert Location URI** is the JWKS endpoint that TPPs will use to verify JWTs signed by your authorisation server. This is typically the same `jwks_uri` value published in your OIDC discovery document.
 
-```
-https://auth.example.com/.well-known/jwks.json
-```
-
----
-
-## Step 5 – Save the Authorisation Server
+## Step 6 – Save the Server
 
 1. Review all fields.
-2. Click **Create** (or **Save**) to register the authorisation server.
+2. Click **Create** (or **Save**) to register the server.
 
-Once created, the authorisation server will appear in the directory and be assigned a unique **Authorisation Server ID**. You will need this ID when calling the Trust Framework API and when associating API resources.
+Once created, the server will appear in the directory and be assigned a unique **Authorisation Server ID**. You will need this ID when calling the Trust Framework API and when associating API resources.
 
 ::: tip Finding your Authorisation Server ID
-After creation, your Authorisation Server ID is visible on the server detail page. It is also returned by the [`GET /organisations/{OrganisationId}/authorisationservers`](/tech/lfi-api-hub/trust-framework/api/auth-servers) Trust Framework API endpoint.
+After creation, your Authorisation Server ID is visible on the server detail page. It is also discoverable to TPPs via the [API Discovery](/tech/tpp-standards/trust-framework/api-discovery) process.
 :::
 
----
 
 ## Next Steps
 
-With your authorisation server registered, you can now add API resources to describe the APIs your institution exposes:
+With your server published, you can now add API resources to describe the APIs your institution exposes:
 
 - [API Resources – Overview](./api/)
 - [Creating an API Resource](./api/creating)

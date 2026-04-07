@@ -18,7 +18,7 @@
     "TPPResponseCodeGroup": "2xx",
     "TotalNumberofCalls": 2,
     "SumofTTLB(TimetoLastByte)": 24937
-  },
+  },  
   {
     "Date": "2025-11-01",
     "LFIName": "uae-hsbcrt",

@@ -4,10 +4,20 @@ prev: false
 aside: false
 ---
 
+<script setup>
+import files from './index.json'
+</script>
+
+<ProtectedPageWrapper
+  gateHeader="NymCard — Private Documents"
+  gateSubheader="Private documentation for NymCard Payment Services L.L.C."
+  gateWarningText="This section contains private documents that are only accessible to authorised members of NymCard."
+>
+
 # NymCard — Private Documents
 
 Private documentation for **NymCard Payment Services L.L.C.**.
 
-::: warning Access Required
-This section contains private documents that are only accessible to authorised members of NymCard.
-:::
+<DoumentRepoDisplay :files="files" :public="false" />
+
+</ProtectedPageWrapper>

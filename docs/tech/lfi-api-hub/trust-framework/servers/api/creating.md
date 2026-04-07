@@ -12,7 +12,6 @@ This walkthrough covers registering an API resource under your authorisation ser
 
 Repeat this process for each API family your institution supports.
 
----
 
 ## Step 1 – Navigate to your Authorisation Server
 
@@ -22,7 +21,6 @@ Repeat this process for each API family your institution supports.
 4. Open the **API Resources** section.
 5. Click **+ New API Resource**.
 
----
 
 ## Step 2 – Select the API Family
 
@@ -34,7 +32,6 @@ The available families are defined by the ecosystem. If the family you need is n
 You can retrieve the full list of available API families via the Trust Framework API: [`GET /references/apifamilies`](/tech/lfi-api-hub/trust-framework/api/api-families).
 :::
 
----
 
 ## Step 3 – Provide the Base URL
 
@@ -57,13 +54,11 @@ The base URL must:
 - Be publicly reachable from the internet (or at minimum from the Open Finance UAE test and production environments)
 - Not include a trailing slash
 
----
 
 ## Step 4 – Provide the API Version
 
 Enter the **version** of the API specification your implementation conforms to (e.g. `v2.1`). This helps TPPs and the platform identify which version of the standard your endpoint implements.
 
----
 
 ## Step 5 – Provide Metadata (Optional but Recommended)
 
@@ -76,7 +71,6 @@ These fields improve the experience for TPPs and operators browsing the director
 - **Developer Portal URI** — a URL with documentation specific to this resource
 - **Terms of Service URI** — a URL to the terms governing access to this resource
 
----
 
 ## Step 6 – Save the API Resource
 
@@ -85,13 +79,11 @@ These fields improve the experience for TPPs and operators browsing the director
 
 The resource will now appear under your authorisation server entry in the directory. TPPs querying the directory will see this resource and can register for the corresponding scopes.
 
----
 
 ## Repeating for Additional API Families
 
 If your institution offers multiple API families (e.g. both data sharing and payment initiation), repeat Steps 1–6 for each family. Each family must be registered as a separate API resource with its own base URL.
 
----
 
 ## Verifying Registration
 
