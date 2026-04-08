@@ -96,12 +96,12 @@ The Hub sends the request as a plain JSON payload rather than a JWS, with the bo
 | Field         | Type    | Required | Description                                      | Example            |
 |---------------|---------|----------|--------------------------------------------------|--------------------|
 | `clientId` | string  | Yes      | The client identifier for the TPP as issued by the Trust Framework. | `1675793e-d6e3-4954-96c8-acb9aaa83c53`    |
+| `orgId` | string  | Yes      | The organisation identifier for the TPP as issued by the Trust Framework. | `a1b2c3d4-e5f6-7890-abcd-ef0123456789`    |
 | `tppId` | string  | Yes      | The identifier used by the API Hub to uniquely identify the TPP. | `fdd6e0ac-ba7a-4bc4-a986-c45c5daaaf00`    |
 | `tppName` | string  | Yes      | The TPP name recorded in the Trust Framework. | `Example TPP`    |
-| `softwareStatementId` | string  | Yes      | The client identifier for the TPP as issued by the Trust Framework. | `XvAjPeeYZAdWwrFF..`    |
-| `directoryRecord` | string  | No      | The latest copy of the TPP directory record retrieve from the CBUAE Trust Framework directory, encoded as a Base 64 string. | `eyJhbW91bnQiOiIxMDAuMDAiLCJjdXJyZW5jeSI6IkFFRCJ9..`    |
+| `softwareStatementId` | string  | Yes      | The software statement identifier for the TPP as issued by the Trust Framework. | `XvAjPeeYZAdWwrFF..`    |
+| `directoryRecord` | string  | No      | The latest copy of the TPP directory record retrieved from the CBUAE Trust Framework directory, encoded as a Base 64 string. | `eyJhbW91bnQiOiIxMDAuMDAiLCJjdXJyZW5jeSI6IkFFRCJ9..`    |
 | `decodedSsa` | object  | Yes      | The decoded software statement retrieved from the Trust Framework that provides the properties of the Client. | — |
-| `ordId` | string  | Yes      | The organization identifier for the TPP. | `Example TPP`    |
 
 #### `decodedSsa`
 
@@ -117,6 +117,12 @@ The Hub sends the request as a plain JSON payload rather than a JWS, with the bo
 | `sector_identifier_uri` | string | No | URI for sector identifier configuration. | `https://example.com/sector` |
 | `application_type` | string | No | OAuth application type (e.g., `web`, `native`). | `web` |
 | `organisation_id` | string | No | Identifier of the organisation that owns the client. | `org-1234` |
+
+#### `supplementaryInformation`
+
+| Field         | Type    | Required | Description                                      | Example            |
+|---------------|---------|----------|--------------------------------------------------|--------------------|
+| `supplementaryInformation` | object  | No      | A free-form, unstructured object that may carry any additional context the Hub needs to pass through to the LFI. It has no fixed schema — any additional information can go in here. The LFI MUST safely ignore properties it does not recognise. | `{}`    |
 
 #### Request example
 
