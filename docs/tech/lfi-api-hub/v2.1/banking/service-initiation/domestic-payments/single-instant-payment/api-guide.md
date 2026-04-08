@@ -406,7 +406,7 @@ See the [PATCH /payment-log/{id}](/tech/lfi-api-hub/v2.1/api-hub/consent-manager
 
 ## <span style="color: #22c55e; padding-right: 5px;">GET</span> `/payments/{paymentId}`
 
-This endpoint retrieves the current payment resource from the LFI, including the latest lifecycle status, timestamp metadata, and billing details for a previously initiated payment. The API Hub invokes this endpoint to retrieve the latest lifecycle state of the payment identified by `paymentId`.
+This endpoint retrieves the current payment resource from the LFI, including the latest lifecycle status, timestamp metadata, and billing details for a previously initiated payment. The API Hub uses this endpoint to obtain the current state of the payment by `paymentId`.
 
 ### Request headers
 
