@@ -1,3 +1,4 @@
+import { resolve } from 'node:path'
 import { defineConfig } from 'vitepress'
 import { tppSidebar } from './config/sidebars/tpp'
 import { lfiSidebar } from './config/sidebars/lfi'
@@ -76,6 +77,11 @@ export default defineConfig({
 
   vite: {
     plugins: [wellKnownProxyPlugin],
+    resolve: {
+      alias: {
+        '@components': resolve(__dirname, '../components'),
+      },
+    },
     optimizeDeps: {
       include: ['vue3-tel-input', 'mermaid', 'dayjs'],
     },

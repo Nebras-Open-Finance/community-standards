@@ -21,7 +21,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import { useSharedState } from '../../../../../components/Composables/useSharedState.ts'
+import { useSharedState } from '@components/Composables/useSharedState.ts'
 
 const { sharedState } = useSharedState()
 
