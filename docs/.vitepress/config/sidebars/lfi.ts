@@ -351,7 +351,6 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
             items: [
               apiRef('POST', '/payments', `${BASE}/${VERSION}/banking/service-initiation/open-api/payments`),
               apiRef('GET', '/payments/{PaymentId}', `${BASE}/${VERSION}/banking/service-initiation/open-api/payments-PaymentId`),
-              apiRef('GET', '/payments', `${BASE}/${VERSION}/banking/service-initiation/open-api/payments-idempotency`),
               apiRef('GET', '/payment-consents/{ConsentId}/refund', `${BASE}/${VERSION}/banking/service-initiation/open-api/payment-consents-ConsentId-refund`),
             ],
           },
