@@ -335,6 +335,8 @@ Only return an error when the Hub's request itself is invalid or a server condit
 }
 ```
 
+See the [POST /payments](/tech/lfi-api-hub/v2.1/banking/service-initiation/open-api/payments) API reference for the full request and response schema.
+
 ## <span style="color: #eab308; padding-right: 5px;">PATCH</span> `/payment-log/{id}`
 
 This endpoint updates the payment status in the API Hub. The API Hub receives the status update from the LFI, triggers asynchronous notifications to TPPs, and maintains accurate status for billing and limit calculations.
