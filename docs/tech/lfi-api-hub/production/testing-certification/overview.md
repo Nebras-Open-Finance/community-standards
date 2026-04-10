@@ -85,49 +85,35 @@ Validates adherence to financial-grade API security standards.
 
 ---
 
-### 5. Production Live Proving  
-*(Delivered through Buddy Testing)*
+### 5. Production Live Proving (Delivered through Buddy Testing)
 
 The final stage before full go-live.
 
-**Scope**
-- Real-world validation in controlled production setup
-- End-to-end integration confirmation
-- Verification of monitoring and logging processes
-- Operational readiness checks
+- Involves real-world testing in a controlled production setup
+- Confirms end-to-end readiness with actual integrations
+- Ensures monitoring, logging, and operational processes are in place
 
----
+#### Buddy Testing (LFI–TPP Pairing)
 
-## Buddy Testing (LFI–TPP Pairing)
+Translates certification into real-world integration readiness.
 
-Buddy Testing translates certification into real-world integration readiness by pairing an **LFI** with an actual **TPP**.
+- A Third-Party Provider (TPP) is paired (“buddied”) with the LFI
+- Enables end-to-end testing using a real integration partner, not just simulated flows
+- Verifies the correct operation of APIs, consent flows, and edge scenarios in a multi-organization setup
+- Helps uncover practical issues like:
+  - Interpretation differences in API specs
+  - Data mapping inconsistencies
+  - Real UX friction in consent journeys
+- Encourages early collaboration and alignment between LFIs and TPPs
 
-### Purpose
-
-Ensures implementations function correctly in a multi-organization environment, not just simulated testing flows.
-
-### Key Benefits
-
-- Enables end-to-end testing with a real integration partner
-- Validates consent flows and API interoperability
-- Identifies real-world edge cases
-- Improves collaboration between LFIs and TPPs
-
-### Common Issues Identified
-
-- Differences in interpretation of API specifications
-- Data mapping inconsistencies
-- UX friction in consent journeys
-- Integration configuration mismatches
-
-> This stage ensures implementations are not only compliant on paper but also operate seamlessly in practice.
+This stage is critical in ensuring that implementations are not only compliant on paper but also work seamlessly in practice.
 
 ---
 
 ## Outcome
 
-Once all certification stages are successfully completed:
+Once all stages are successfully completed:
 
-- The **LFI is certified** for participation in Open Finance
-- APIs are **approved for production use**
-- **TPPs can safely integrate** and interact with the LFI
+- The LFI is certified for participation in Open Finance
+- APIs are approved for production use
+- TPPs can safely integrate and interact with the LFI
