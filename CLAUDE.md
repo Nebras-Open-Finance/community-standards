@@ -121,10 +121,16 @@ TPP → API Hub → LFI → API Hub → TPP
 ---
 
 ### 9. OpenAPI is the Source of Truth
-- ✅ ALL API behavior MUST align with OpenAPI specs in:
-  `docs/public/openapi/`
+- ✅ ALL API behavior MUST align with OpenAPI specs served at `docs/public/openapi/`
 - ❌ Claude MUST NOT invent fields, endpoints, or schemas
 - ✅ When unsure, infer from spec structure — never from assumptions
+- ✅ OpenAPI specs are fetched at build time from the canonical source:
+  **[Nebras-Open-Finance/api-specs](https://github.com/Nebras-Open-Finance/api-specs)** (`dist/` directory)
+- ✅ The fetch script (`scripts/fetch-openapi-specs.mjs`) resolves errata automatically:
+  per-file, highest errata wins, falling back to the base version
+- ✅ Versions are defined in `docs/.vitepress/version.ts` — adding a new version there
+  causes the script to fetch its specs automatically
+- ❌ OpenAPI YAML files MUST NOT be committed to this repo — they are fetched and gitignored
 
 
 ## 🔐 Standards Alignment

@@ -4,6 +4,8 @@ confluence/
 internal_helpers/
 .claude/
 docs/public/doc-repo/
+# Fetched OpenAPI specs (all versioned folders — see scripts/fetch-openapi-specs.mjs)
+docs/public/openapi/v*/
 CLAUDE.md
 
 # Logs
