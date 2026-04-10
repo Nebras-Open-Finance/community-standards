@@ -144,4 +144,4 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-package-loclk.json
+package-lock.json
