@@ -321,15 +321,20 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
             collapsed: true,
             items: [
               { text: 'Overview', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/` },
-              { text: 'Debtor Account', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/debtor-account` },
-              { text: 'Creditor', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/creditor` },
-              { text: 'Risk', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/risk` },
+              {
+                text: 'API Guide',
+                collapsed: true,
+                items: [
+                  { text: 'How to Decrypt PII', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/api-guide/decrypt-pii` },
+                  { text: 'Verify TPP Signature (Optional)', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/api-guide/verify-tpp-signature` },
+                ]
+              },
               {
                 text: 'API Schemas',
                 collapsed: true,
                 items: [
-                  { text: 'PII (Post /par)', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/api-schema/pii-par` },
-                  { text: 'PII (Post /payments)', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/api-schema/pii-payments` },
+                  { text: 'PII (Consent - Consent Manager)', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/api-schema/pii-par` },
+                  { text: 'PII (Payments - Ozone Connect)', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/api-schema/pii-payments` },
                 ]
               },
             ],
@@ -415,13 +420,18 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         collapsed: true,
         items: [
           { text: 'Overview', link: `${BASE}/${VERSION}/consent-journey/authentication` },
+          { text: 'Requirements', link: `${BASE}/${VERSION}/consent-journey/authentication/requirements` },
           { text: 'Strong Customer Authentication', link: `${BASE}/${VERSION}/consent-journey/authentication/sca` },
           { text: 'Implementation Guide', link: `${BASE}/${VERSION}/consent-journey/authentication/implementation` },
         ]
       },
       {
         text: 'Authorization',
-        link: `${BASE}/${VERSION}/consent-journey/authorization`,
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/consent-journey/authorization` },
+          { text: 'Requirements', link: `${BASE}/${VERSION}/consent-journey/authorization/requirements` },
+        ]
       },
       { text: 'API Guide', link: `${BASE}/${VERSION}/consent-journey/api-guide` },
     ],

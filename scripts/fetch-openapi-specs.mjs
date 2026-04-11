@@ -9,20 +9,44 @@
  *      falling back to the base version.
  *   3. Downloads each YAML file to docs/public/openapi/{version}/{category}/.
  *
- * Usage:  node scripts/fetch-openapi-specs.mjs [--force]
- *   --force   Re-download even if the target directory already has files.
+ * Usage:  node scripts/fetch-openapi-specs.mjs [--force] [--branch <name>]
+ *   --force          Re-download even if the target directory already has files.
+ *   --branch <name>  Fetch from a specific branch (default: main).
+ *
+ * The branch can also be set via the SPECS_BRANCH env variable.
+ * CLI --branch takes precedence over SPECS_BRANCH.
  */
 
 import { readFileSync, mkdirSync, writeFileSync, existsSync, readdirSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
+// Load .env file (no dependency required)
+function loadEnv() {
+  const envPath = resolve(dirname(fileURLToPath(import.meta.url)), '..', '.env')
+  if (!existsSync(envPath)) return
+  for (const line of readFileSync(envPath, 'utf-8').split('\n')) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+    const [key, ...rest] = trimmed.split('=')
+    if (!(key in process.env)) process.env[key] = rest.join('=')
+  }
+}
+loadEnv()
+
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..')
 
 const REPO_OWNER = 'Nebras-Open-Finance'
 const REPO_NAME = 'api-specs'
-const BRANCH = 'main'
+
+function parseBranch() {
+  const idx = process.argv.indexOf('--branch')
+  if (idx !== -1 && process.argv[idx + 1]) return process.argv[idx + 1]
+  return process.env.SPECS_BRANCH || 'main'
+}
+
+const BRANCH = parseBranch()
 
 const GITHUB_API = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents`
 const GITHUB_RAW = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}`

@@ -67,6 +67,28 @@ This document exposes your `authorization_endpoint`, `token_endpoint`, `jwks_uri
 | **Admin Portal URL** | Ozone | The URL to your Admin Portal for this environment. |
 | **IP Address** | Ozone | The IP address(es) for API Hub outbound traffic. You MUST allowlist these IPs at your network/firewall level to permit traffic from the API Hub to your Ozone Connect endpoints. |
 
+### Optional API family base paths
+
+The onboarding form includes optional base path fields for each API family. If provided, the path is inserted between your [Ozone Connect Base URL](./ozone-connect-url) and the API endpoint — allowing the LFI to route different API families to different path prefixes on the same server.
+
+| API Family | Example Endpoints | Path Effect |
+|------------|-------------------|-------------|
+| **[Data Sharing](/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/)** | `/accounts`, `/balances`, `/transactions` | `OzoneConnectURL/<path>/accounts` |
+| **[Service Initiation](/tech/lfi-api-hub/v2.1/banking/service-initiation/open-api/)** | `/domestic-payments`, `/multi-payments` | `OzoneConnectURL/<path>/domestic-payments` |
+| **[Products](/tech/lfi-api-hub/v2.1/banking/products-and-leads/)** | `/products`, `/leads` | `OzoneConnectURL/<path>/products` |
+| **Consent Events & Notifications** | `/event-notifications` | `OzoneConnectURL/<path>/event-notifications` |
+| **Echo Cert (Health Check)** | `/echo-cert` | `OzoneConnectURL/<path>/echo-cert` |
+
+All fields are optional. For any API families without a path specified — either because the field was left blank or because the family does not appear in the form — the API Hub sends requests directly to `OzoneConnectURL/<endpoint>`.
+
+::: tip Example
+If the LFI sets the Data Sharing base path to `/retail/data` and their Ozone Connect Base URL is `https://openapi.example.com`, a TPP request for accounts will be forwarded to:
+
+```
+https://openapi.example.com/retail/data/accounts
+```
+:::
+
 
 ## 3. Ozone-Held Transport & Signing Certificates
 
@@ -233,7 +255,7 @@ For a complete overview of all certificates and how they fit into the API Hub ne
 If your institution operates multiple API Hub instances (e.g. for retail and business brands), LFI-held certificates (C3, S4, Sig4, Enc1) MAY be reused across brands. Each brand still requires its own environment-specific onboarding form, but can reference the same certificates.
 :::
 
----
+
 
 ## Connectivity Validation
 

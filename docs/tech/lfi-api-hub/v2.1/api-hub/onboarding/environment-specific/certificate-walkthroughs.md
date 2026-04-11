@@ -31,12 +31,28 @@ The same patterns apply to the other certificates listed in the [Environment Spe
 1. Navigate to your **Organisation** in the Trust Framework.
 2. Open the **Organisation Certificates** section.
 3. Click **+ New Certificate**.
-4. Select **Server Transport** as the certificate type.
-5. Upload the CSR file provided by Ozone.
+
+<ClientOnly>
+  <Carousel :images="images1" />
+</ClientOnly>
+
+4. Select **OPF UAE SERVER TRANSPORT** as the certificate type.
+5. Set the description to **S1 - Ozone holds Private Key - TPP-APIHub** 
+6. Skip the step to generate the private key and CSR.
+7. Upload the CSR provided by Ozone.
+
+<ClientOnly>
+  <Carousel :images="images2" />
+</ClientOnly>
+
 6. The Trust Framework will generate the certificate. Once complete, the certificate detail page will display:
    - The **Key ID (KID)** — copy this value exactly as shown (it is case-sensitive).
    - The **JWKS URL** — this is your organisation's transport JWKS URL.
 7. Provide the **KID** and **JWKS URL** back to Ozone via the Service Desk ticket.
+
+<ClientOnly>
+  <Carousel :images="images3" />
+</ClientOnly>
 
 ::: tip Finding the JWKS URL
 Your organisation's transport JWKS URL follows this pattern:
@@ -59,7 +75,9 @@ Ozone will install the certificate (paired with the private key they hold) onto 
 ### Prerequisites
 
 - You have your organisation's **Legal Name** and **Organisation ID** from the Trust Framework.
-- You are signed in to the correct Trust Framework directory (Sandbox for pre-production, Production for production).
+- You are signed in to the correct Trust Framework directory:
+  - **Pre-production** → Sandbox Trust Framework (`web.sandbox.directory.openfinance.ae`)
+  - **Production** → Production Trust Framework (`web.directory.openfinance.ae`)
 
 ### Step 1 — Generate the private key and CSR
 
@@ -88,23 +106,135 @@ Store the `.key` file securely — it MUST never be shared. See [Secure Manageme
 1. Navigate to your **Organisation** in the Trust Framework.
 2. Open the **Organisation Certificates** section.
 3. Click **+ New Certificate**.
-4. Select **Server Transport** as the certificate type.
-5. Upload the `.csr` file generated in Step 1.
+
+<ClientOnly>
+  <Carousel :images="images1" />
+</ClientOnly>
+
+4. Select **OPF UAE SERVER TRANSPORT** as the certificate type.
+5. Set the description to **S4 - I hold Private Key - APIHub-OzoneConnect**
+6. Click **Next**.
+7. Upload the `.csr` file generated in Step 1.
+
+<ClientOnly>
+  <Carousel :images="images2a" />
+</ClientOnly>
 
 ### Step 3 — Record the KID and JWKS URL
 
 Once the Trust Framework processes the CSR:
 
 1. The certificate detail page will display the **Key ID (KID)** — copy this value exactly (case-sensitive).
-2. Note your organisation's **transport JWKS URL**:
-   ```
-   Sandbox:    https://keystore.sandbox.directory.openfinance.ae/{OrganisationId}/transport.jwks
-   Production: https://keystore.directory.openfinance.ae/{OrganisationId}/transport.jwks
-   ```
+2. Note your organisation's **transport JWKS URL**.
 3. Provide the **KID** and **JWKS URL** to Ozone via the Service Desk ticket.
+
+<ClientOnly>
+  <Carousel :images="images3" />
+</ClientOnly>
+
+::: tip Finding the JWKS URL
+Your organisation's transport JWKS URL follows this pattern:
+```
+Sandbox:    https://keystore.sandbox.directory.openfinance.ae/{OrganisationId}/transport.jwks
+Production: https://keystore.directory.openfinance.ae/{OrganisationId}/transport.jwks
+```
+You can also find it on the Organisation Certificates page in the Trust Framework.
+:::
 
 ### Step 4 — Deploy the certificate
 
 Deploy the certificate (`.pem`) and private key (`.key`) to your Ozone Connect server infrastructure. The API Hub will validate this certificate during mTLS connections to your Ozone Connect endpoints.
 
 For detailed guidance on generating keys and certificates in the Trust Framework, see [Keys & Certificates](/tech/lfi-api-hub/trust-framework/certificates/).
+
+
+
+<script setup>
+
+const images1 = [
+  {
+    src: new URL('/images/raidiam/s1/1.png', import.meta.url).href,
+    alt: 'Step 1',
+    title: 'Click into your organisation'
+  },
+  {
+    src: new URL('/images/raidiam/s1/2.png', import.meta.url).href,
+    alt: 'Step 2',
+    title: 'Click into organisation certificates'
+  },
+  {
+    src: new URL('/images/raidiam/s1/3.png', import.meta.url).href,
+    alt: 'Step 3',
+    title: 'Click + New Certificate'
+  }]
+
+ const images2 = [
+  {
+    src: new URL('/images/raidiam/s1/4.png', import.meta.url).href,
+    alt: 'Step 4',
+    title: 'Select the certificate type OPF UAE SERVER TRANSPORT'
+  },
+  {
+    src: new URL('/images/raidiam/s1/5.png', import.meta.url).href,
+    alt: 'Step 5',
+    title: 'Set the description to "S1 - Ozone holds Private Key - TPP-APIHub"'
+  },
+  {
+    src: new URL('/images/raidiam/s1/6.png', import.meta.url).href,
+    alt: 'Step 6',
+    title: 'Click Next'
+  },
+  {
+    src: new URL('/images/raidiam/s1/7.png', import.meta.url).href,
+    alt: 'Step 7',
+    title: 'Skip the section to generate the CSR and Private Key.'
+  },
+  {
+    src: new URL('/images/raidiam/s1/8.png', import.meta.url).href,
+    alt: 'Step 8',
+    title: 'Upload the CSR provided by Ozone in the ticket and click Save'
+  },
+  ]
+
+   const images2a = [
+  {
+    src: new URL('/images/raidiam/s1/4.png', import.meta.url).href,
+    alt: 'Step 4',
+    title: 'Select the certificate type OPF UAE SERVER TRANSPORT'
+  },
+  {
+    src: new URL('/images/raidiam/s1/12.png', import.meta.url).href,
+    alt: 'Step 5',
+    title: 'Set the description to S4 - I hold Private Key - APIHub-OzoneConnect'
+  },
+  {
+    src: new URL('/images/raidiam/s1/13.png', import.meta.url).href,
+    alt: 'Step 6',
+    title: 'Click Next'
+  },
+  {
+    src: new URL('/images/raidiam/s1/8.png', import.meta.url).href,
+    alt: 'Step 8',
+    title: 'Upload the CSR generated in step 1.'
+  },
+  ]
+
+  const images3 = [
+  {
+    src: new URL('/images/raidiam/s1/9.png', import.meta.url).href,
+    alt: 'Step 9',
+    title: 'The KID (Key ID) can be found and copied here'
+  },
+  {
+    src: new URL('/images/raidiam/s1/10.png', import.meta.url).href,
+    alt: 'Step 10',
+    title: 'You can navigate to the Keystore here'
+  },
+  {
+    src: new URL('/images/raidiam/s1/11.png', import.meta.url).href,
+    alt: 'Step 11',
+    title: 'Add then copy the JWKs from the URL'
+  },
+  ]
+
+</script>
