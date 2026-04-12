@@ -277,7 +277,7 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
             text: 'Refunds',
             collapsed: true,
             items: [
-              { text: 'Overview', link: `${BASE}/${VERSION}/banking/service-initiation/refunds/` },
+              { text: 'Requirements', link: `${BASE}/${VERSION}/banking/service-initiation/refunds/requirements` },
               { text: 'API Guide', link: `${BASE}/${VERSION}/banking/service-initiation/refunds/api-guide` },
             ],
           },

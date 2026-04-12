@@ -33,7 +33,7 @@ The PSU does not have any accounts or sufficient access rights to authorize the 
 
 | Field | Value |
 |-------|-------|
-| `error` | `access_denied` |
+| `error` | `invalid_request` |
 | `error_description` | `user_lacks_eligible_accounts` |
 
 ### 3. Consent type not supported by LFI
@@ -84,15 +84,31 @@ The LFI cannot communicate with the API Hub during the authorization process —
 
 The LFI MUST attempt to PATCH the consent to `Rejected` before calling `doFail`, but if the API Hub is unreachable, the LFI MUST still call `doFail` to redirect the PSU back to the TPP.
 
+### 7. LFI temporarily unavailable
+
+The LFI cannot complete authorization due to high load or temporary capacity constraints at the LFI's systems.
+
+| Field | Value |
+|-------|-------|
+| `error` | `temporarily_unavailable` |
+| `error_description` | `lfi_temporarily_unavailable` |
+
+The LFI MUST PATCH the consent to `Rejected` before calling `doFail` — the PSU has been identified during the authentication step.
+
 ## Summary
 
 | # | Scenario | `error` | `error_description` |
 |---|----------|---------|---------------------|
 | 1 | PSU explicitly cancels or declines the consent | `access_denied` | `user_rejected_consent` |
-| 2 | PSU lacks eligible accounts or access | `access_denied` | `user_lacks_eligible_accounts` |
+| 2 | PSU lacks eligible accounts or access | `invalid_request` | `user_lacks_eligible_accounts` |
 | 3 | Consent type not supported by LFI | `access_denied` | `consent_not_supported` |
 | 4 | PSU session expires | `access_denied` | `session_expired` |
 | 5 | LFI internal technical error | `server_error` | `lfi_internal_error` |
 | 6 | LFI fails to communicate with API Hub | `server_error` | `api_hub_communication_error` |
+| 7 | LFI temporarily unavailable | `temporarily_unavailable` | `lfi_temporarily_unavailable` |
 
 For all scenarios above, the LFI MUST PATCH the consent to `Rejected` before calling `doFail`, except scenario 6 where the API Hub may be unreachable — in which case the LFI MUST make a best-effort attempt.
+
+::: warning FAPI error code validation
+If the LFI submits an `error` code that is not supported by the FAPI 2.0 Security Profile, the API Hub will overwrite it with `invalid_request`.
+:::

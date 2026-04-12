@@ -17,12 +17,8 @@ The tables below list the rules that apply to Confirmation of Payee. The Hub rec
 |---|-----------|------|
 | 1 | Account found, holder not opted out | Return `200` with a `data` array containing the account holder's customer record(s). For personal accounts, `verifiedClaims[].claims.fullName` is mandatory; include `givenName` and `familyName` if held separately. For business accounts, populate `verifiedClaims[].organisationClaims.name` with the registered business name. Joint accounts may return multiple records. |
 | 2 | IBAN not recognised at this LFI | Return `200` with an empty `data` array.  |
-| 3 | Account is blocked from receiving payments | Return `403`  |
+| 3 | Account is blocked from receiving payments | Return `403` with `errorCode`: `GenericError` and `errorMessage`: `The account is blocked from receiving payments.` |
 | 4 | Account holder has opted out of CoP | Return `200` with an empty `data` array.  |
-| 5 | Hub request is malformed or fails schema validation | Return `400` with `errorCode` and `errorMessage`. Valid codes: `Body.InvalidFormat`, `Resource.InvalidFormat`, `GenericRecoverableError`, `GenericError`. |
-| 6 | Hub credentials are absent or invalid | Return `401` with no body. |
-| 7 | Hub credentials are valid but access is refused | Return `403` with `errorCode` and `errorMessage`. Valid codes: `AccessToken.InvalidScope`, `Consent.TransientAccountAccessFailure`, `Consent.PermanentAccountAccessFailure`, `GenericRecoverableError`, `GenericError`. |
-| 8 | Unexpected server-side error | Return `500` with `errorCode` and `errorMessage`. Valid codes: `GenericRecoverableError`, `GenericError`. |
 
 ## Opt-out
 

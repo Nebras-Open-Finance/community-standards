@@ -233,7 +233,6 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
             collapsed: true,
             items: [
               apiRef('POST', '/consent/action/validate', `${BASE}/${VERSION}/consent-events/open-api/validate`),
-              apiRef('POST', '/consent/action/augment', `${BASE}/${VERSION}/consent-events/open-api/augment`),
               apiRef('POST', '/consent/event/{operation}', `${BASE}/${VERSION}/consent-events/open-api/event-op`),
             ],
           },
@@ -346,7 +345,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
             text: 'Refunds',
             collapsed: true,
             items: [
-              { text: 'Overview', link: `${BASE}/${VERSION}/banking/service-initiation/refunds/` },
+              { text: 'Requirements', link: `${BASE}/${VERSION}/banking/service-initiation/refunds/requirements` },
               { text: 'API Guide', link: `${BASE}/${VERSION}/banking/service-initiation/refunds/api-guide` },
             ],
           },

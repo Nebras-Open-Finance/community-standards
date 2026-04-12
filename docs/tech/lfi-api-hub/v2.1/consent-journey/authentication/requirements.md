@@ -71,6 +71,17 @@ The LFI MUST NOT PATCH the consent to `Rejected` — the API Hub may be unreacha
 If `GET /auth` fails, the LFI has no `interactionId` and therefore cannot call `doFail`. In this case the LFI MUST render an error page to the PSU explaining that the service is temporarily unavailable.
 :::
 
+### 6. LFI temporarily unavailable
+
+The LFI cannot complete authentication due to high load or temporary capacity constraints at the LFI's systems.
+
+| Field | Value |
+|-------|-------|
+| `error` | `temporarily_unavailable` |
+| `error_description` | `lfi_temporarily_unavailable` |
+
+The LFI MUST NOT PATCH the consent to `Rejected` — the PSU's identity may not have been confirmed.
+
 ## Summary
 
 | # | Scenario | `error` | `error_description` | PATCH to Rejected? |
@@ -80,3 +91,8 @@ If `GET /auth` fails, the LFI has no `interactionId` and therefore cannot call `
 | 3 | PSU is blocked, suspended, or flagged | `access_denied` | `user_account_blocked` | No |
 | 4 | LFI internal technical error | `server_error` | `lfi_internal_error` | No |
 | 5 | LFI fails to communicate with API Hub | `server_error` | `api_hub_communication_error` | No |
+| 6 | LFI temporarily unavailable | `temporarily_unavailable` | `lfi_temporarily_unavailable` | No |
+
+::: warning FAPI error code validation
+If the LFI submits an `error` code that is not supported by the FAPI 2.0 Security Profile, the API Hub will overwrite it with `invalid_request`.
+:::

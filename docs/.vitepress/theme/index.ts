@@ -49,6 +49,8 @@ import APIFlowsATMs from '../../components/APIFlows/ATMs.vue'
 import APIFlowsTrustFramework from '../../components/APIFlows/TrustFramework.vue'
 import APIFlowsProductsLeads from '../../components/APIFlows/ProductsLeads.vue'
 import APIFlowsAPIHubArchitecture from '../../components/APIFlows/APIHubArchitecture.vue'
+import APIFlowsConsentValidate from '../../components/APIFlows/ConsentValidate.vue'
+import APIFlowsConsentEventLFI from '../../components/APIFlows/ConsentEventLFI.vue'
 
 
 // UIs
@@ -131,6 +133,8 @@ export default {
     app.component('APIFlowsTrustFramework', APIFlowsTrustFramework)
     app.component('APIFlowsProductsLeads', APIFlowsProductsLeads)
     app.component('APIFlowsAPIHubArchitecture', APIFlowsAPIHubArchitecture)
+    app.component('APIFlowsConsentValidate', APIFlowsConsentValidate)
+    app.component('APIFlowsConsentEventLFI', APIFlowsConsentEventLFI)
 
     // UI
     app.component('ConsentBankDataSharing', ConsentBankDataSharing)

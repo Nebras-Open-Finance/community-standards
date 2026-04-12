@@ -54,12 +54,11 @@ See [Consent](./consent/) for the full API guide and reference.
 
 #### Consent Events & Actions
 
-Unlike the APIs above, the **Consent Events & Actions API** is implemented by you. The Hub calls your endpoints to notify you of consent lifecycle changes and, during consent creation, to validate or augment the consent before it is stored.
+Unlike the APIs above, the **Consent Events & Actions API** is implemented by you. The Hub calls your endpoints to notify you of consent lifecycle changes and, during consent creation, to validate the consent before it is stored.
 
 | Endpoint | When the Hub calls it |
 |---|---|
 |  | When a consent is created, modified, or revoked — allows your systems to react to state changes in real time |
-|  | During consent creation — the Hub requests you to enrich the consent with additional data (e.g., resolving account identifiers) before it is stored |
 |  | During consent creation — the Hub requests you to validate the consent parameters before the authorization journey proceeds |
 
 See [Consent Events & Actions](./consent/events-and-actions) for the full API guide and reference.

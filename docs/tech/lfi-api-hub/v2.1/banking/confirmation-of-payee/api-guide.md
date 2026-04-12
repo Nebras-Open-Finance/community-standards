@@ -184,35 +184,10 @@ Return `200` with an empty `data` array for scenarios where no account was found
 
 #### Error responses
 
-Only return an error when the Hub's request itself is invalid or a server condition prevents you from responding. All error bodies must include `errorCode` and `errorMessage`.
-
-##### `400` — Bad request
-
-| `errorCode` | When to use |
-|-------------|-------------|
-| `Body.InvalidFormat` | Request body is absent, not valid JSON, or does not match the schema |
-| `Resource.InvalidFormat` | `identification` is present but not a syntactically valid IBAN |
-| `GenericRecoverableError` | Recoverable validation error not covered above — Hub may retry |
-| `GenericError` | Unrecoverable validation error not covered above |
-
-##### `401` — Unauthorized
-
-Return `401` with no body when the Hub's credentials are absent or invalid.
+All error bodies must include `errorCode` and `errorMessage`.
 
 ##### `403` — Forbidden
 
-| `errorCode` | When to use |
-|-------------|-------------|
-| `AccessToken.InvalidScope` | The Hub's token does not include the required scope |
-| `Consent.TransientAccountAccessFailure` | Account temporarily inaccessible — Hub may retry after a delay |
-| `Consent.PermanentAccountAccessFailure` | Account permanently inaccessible due to infrastructure reasons |
-| `GenericRecoverableError` | Recoverable access failure not covered above |
-| `GenericError` | Unrecoverable access failure not covered above |
-
-
-##### `500` — Internal server error
-
-| `errorCode` | When to use |
-|-------------|-------------|
-| `GenericRecoverableError` | Transient server error — Hub may retry after a delay |
-| `GenericError` | Unrecoverable server error |
+| `errorCode` | `errorMessage` | When to use |
+|-------------|----------------|-------------|
+| `GenericError` | `The account is blocked from receiving payments.` | The account is blocked from receiving payments — e.g. closed or frozen |
