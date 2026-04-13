@@ -39,16 +39,18 @@ Before calling the CoP API, ensure the following requirements are met:
 
 ### Step 1 — Discover the LFI
 
-CoP is served by individual LFIs — the API Hub's `/discovery` endpoint resolves a payee IBAN to the correct LFI and returns two URLs you will need for the rest of the flow:
+CoP is served by individual LFIs — the `/discovery` endpoint resolves a payee IBAN to the correct LFI and returns two URLs you will need for the rest of the flow:
 
 | Field | Description |
 |-------|-------------|
-| `DiscoveryEndpointUrl` | The `.well-known` endpoint for the LFI's Authorisation Server. Fetch this to obtain the `token_endpoint` and `issuer` used in Step 2. |
-| `ResourceServerUrl` | The base URL of the LFI's Resource Server. Use this as the base URL when calling `/confirmation` in Step 4. |
+| `DiscoveryEndpointUrl` | The `.well-known` endpoint for the LFI's Authorisation Server. Fetch this to obtain the `token_endpoint` and `issuer` used in later steps. |
+| `ResourceServerUrl` | The base URL of the LFI's Resource Server. Use this as the base URL when calling `/confirmation`. |
 
-### Step 2 — Build a signed discovery request
+Before calling `/discovery` you must obtain an access token from any LFI you are registered with using a client credentials grant. The API Hub does not make any requests to the LFI when processing `/discovery` — it resolves the IBAN centrally — so the response is the same regardless of which LFI you authenticate with. You only need to perform discovery once, and the `POST /discovery` request must be sent to the LFI whose token you are using.
 
-The request body is a signed JWT containing the IBAN, signed with your signing key:
+### Step 2 — Build a Client Assertion
+
+Use the [`signJWT()`](/tech/tpp-standards/security/fapi/message-signing#signing-a-jwt) helper to build a client assertion proving your application's identity:
 
 ::: code-group
 
@@ -56,12 +58,95 @@ The request body is a signed JWT containing the IBAN, signed with your signing k
 import crypto from 'node:crypto'
 import { signJWT } from './sign-jwt'
 
-const CLIENT_ID  = process.env.CLIENT_ID!
-const HUB_ISSUER = process.env.HUB_ISSUER!   // from the Hub's .well-known/openid-configuration
+const CLIENT_ID = process.env.CLIENT_ID!
+const ISSUER    = process.env.ISSUER!   // from the LFI's .well-known/openid-configuration
+
+const clientAssertion = await signJWT({
+  iss: CLIENT_ID,
+  sub: CLIENT_ID,
+  aud: ISSUER,
+  jti: crypto.randomUUID(),
+})
+```
+
+```python [Python]
+import os, uuid
+from sign_jwt import sign_jwt
+
+CLIENT_ID = os.environ["CLIENT_ID"]
+ISSUER    = os.environ["ISSUER"]   # from the LFI's .well-known/openid-configuration
+
+client_assertion = sign_jwt({
+    "iss": CLIENT_ID,
+    "sub": CLIENT_ID,
+    "aud": ISSUER,
+    "jti": str(uuid.uuid4()),
+})
+```
+
+:::
+
+See [Client Assertion](/tech/tpp-standards/security/tokens/client-assertion) for the full claims reference.
+
+### Step 3 — Token Request
+
+POST to any LFI's token endpoint with `scope=confirmation-of-payee`:
+
+::: code-group
+
+```typescript [Node.js]
+const TOKEN_ENDPOINT = process.env.TOKEN_ENDPOINT!  // from the LFI's .well-known/openid-configuration
+
+const params = new URLSearchParams({
+  grant_type:            'client_credentials',
+  scope:                 'confirmation-of-payee',
+  client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+  client_assertion:      clientAssertion,
+})
+
+const tokenResponse = await fetch(TOKEN_ENDPOINT, {
+  method:  'POST',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  body:    params.toString(),
+  // agent: new https.Agent({ cert: transportCert, key: transportKey }),
+})
+
+const { access_token: accessToken } = await tokenResponse.json()
+```
+
+```python [Python]
+import httpx, os
+
+TOKEN_ENDPOINT = os.environ["TOKEN_ENDPOINT"]  # from the LFI's .well-known/openid-configuration
+
+token_response = httpx.post(
+    TOKEN_ENDPOINT,
+    data={
+        "grant_type":            "client_credentials",
+        "scope":                 "confirmation-of-payee",
+        "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+        "client_assertion":      client_assertion,
+    },
+    # cert=("transport.crt", "transport.key"),
+)
+
+access_token = token_response.json()["access_token"]
+```
+
+:::
+
+### Step 4 — Build a signed discovery request
+
+The request body is a signed JWT containing the IBAN, signed with your signing key:
+
+::: code-group
+
+```typescript [Node.js]
+// CLIENT_ID and ISSUER already set in Step 2
 
 const discoveryRequest = await signJWT({
   iss: CLIENT_ID,
-  aud: HUB_ISSUER,
+  aud: ISSUER,
   jti: crypto.randomUUID(),
   message: {
     Data: {
@@ -73,15 +158,11 @@ const discoveryRequest = await signJWT({
 ```
 
 ```python [Python]
-import os, uuid
-from sign_jwt import sign_jwt
-
-CLIENT_ID  = os.environ["CLIENT_ID"]
-HUB_ISSUER = os.environ["HUB_ISSUER"]   # from the Hub's .well-known/openid-configuration
+# CLIENT_ID and ISSUER already set in Step 2
 
 discovery_request = sign_jwt({
     "iss": CLIENT_ID,
-    "aud": HUB_ISSUER,
+    "aud": ISSUER,
     "jti": str(uuid.uuid4()),
     "message": {
         "Data": {
@@ -94,22 +175,22 @@ discovery_request = sign_jwt({
 
 :::
 
-### Step 3 — POST /discovery
+### Step 5 — POST /discovery
 
 Include `x-fapi-interaction-id` on the request. See [Request Headers](/tech/tpp-standards/security/request-headers).
 
 ::: code-group
 
 ```typescript [Node.js]
-const HUB_API_BASE   = process.env.HUB_API_BASE!      // API Hub base URL
-const hubAccessToken = process.env.HUB_ACCESS_TOKEN!  // client credentials token from the Hub
+const LFI_BASE_URL = process.env.LFI_BASE_URL!  // base URL of the LFI you authenticated with in Step 3
+// accessToken obtained in Step 3
 
 const discoveryResponse = await fetch(
-  `${HUB_API_BASE}/open-finance/confirmation-of-payee/v2.1/discovery`,
+  `${LFI_BASE_URL}/open-finance/confirmation-of-payee/v2.1/discovery`,
   {
     method:  'POST',
     headers: {
-      'Authorization':         `Bearer ${hubAccessToken}`,
+      'Authorization':         `Bearer ${accessToken}`,
       'Content-Type':          'application/jwt',
       'Accept':                'application/jwt',
       'x-fapi-interaction-id': crypto.randomUUID(),
@@ -130,13 +211,13 @@ const { DiscoveryEndpointUrl, ResourceServerUrl } = message.Data
 ```python [Python]
 import httpx, base64, json, os
 
-HUB_API_BASE    = os.environ["HUB_API_BASE"]
-hub_access_token = os.environ["HUB_ACCESS_TOKEN"]
+LFI_BASE_URL = os.environ["LFI_BASE_URL"]  # base URL of the LFI you authenticated with in Step 3
+# access_token obtained in Step 3
 
 discovery_response = httpx.post(
-    f"{HUB_API_BASE}/open-finance/confirmation-of-payee/v2.1/discovery",
+    f"{LFI_BASE_URL}/open-finance/confirmation-of-payee/v2.1/discovery",
     headers={
-        "Authorization":         f"Bearer {hub_access_token}",
+        "Authorization":         f"Bearer {access_token}",
         "Content-Type":          "application/jwt",
         "Accept":                "application/jwt",
         "x-fapi-interaction-id": str(uuid.uuid4()),
@@ -158,32 +239,30 @@ resource_server_url    = message["Data"]["ResourceServerUrl"]
 
 See the [POST /discovery](./open-api/discovery) API reference for the full request and response schema.
 
-### Step 4 — Resolve the LFI token endpoint
+### Step 6 — Resolve the LFI token endpoint
 
-Fetch the `DiscoveryEndpointUrl` directly to read the LFI's OpenID configuration. This gives you the `token_endpoint` and `issuer` needed in Step 2:
+Fetch the `DiscoveryEndpointUrl` directly to read the LFI's OpenID configuration. This gives you the `token_endpoint` and `issuer` needed for the next steps:
 
 ::: code-group
 
 ```typescript [Node.js]
 const oidcConfig    = await fetch(DiscoveryEndpointUrl).then(r => r.json())
-const tokenEndpoint = oidcConfig.token_endpoint   // used in Step 2b
-const issuer        = oidcConfig.issuer           // used in Step 2a
+const tokenEndpoint = oidcConfig.token_endpoint   // used in Step 8
+const issuer        = oidcConfig.issuer           // used in Step 7
 ```
 
 ```python [Python]
 oidc_config    = httpx.get(discovery_endpoint_url).json()
-token_endpoint = oidc_config["token_endpoint"]   # used in Step 2b
-issuer         = oidc_config["issuer"]           # used in Step 2a
+token_endpoint = oidc_config["token_endpoint"]   # used in Step 8
+issuer         = oidc_config["issuer"]           # used in Step 7
 ```
 
 :::
 
 
-### Step 5 — Build a Client Assertion
+### Step 7 — Build a Client Assertion
 
-CoP uses the OAuth 2.0 **client credentials** grant — no user consent or redirect is required.
-
-Use the [`signJWT()`](/tech/tpp-standards/security/fapi/message-signing#signing-a-jwt) helper to build a short-lived JWT asserting your application's identity to the LFI's Authorisation Server:
+Use the [`signJWT()`](/tech/tpp-standards/security/fapi/message-signing#signing-a-jwt) helper to build a client assertion proving your application's identity:
 
 ::: code-group
 
@@ -192,7 +271,7 @@ import crypto from 'node:crypto'
 import { signJWT } from './sign-jwt'
 
 const CLIENT_ID = process.env.CLIENT_ID!
-// issuer resolved from DiscoveryEndpointUrl in Step 4
+// issuer resolved from DiscoveryEndpointUrl in Step 6
 
 const clientAssertion = await signJWT({
   iss: CLIENT_ID,
@@ -207,7 +286,7 @@ import os, uuid
 from sign_jwt import sign_jwt
 
 CLIENT_ID = os.environ["CLIENT_ID"]
-# issuer resolved from discovery_endpoint_url in Step 4
+# issuer resolved from discovery_endpoint_url in Step 6
 
 client_assertion = sign_jwt({
     "iss": CLIENT_ID,
@@ -221,14 +300,14 @@ client_assertion = sign_jwt({
 
 See [Client Assertion](/tech/tpp-standards/security/tokens/client-assertion) for the full claims reference.
 
-### Step 6 — Token Request
+### Step 8 — Token Request
 
-POST to the LFI's token endpoint (resolved in Step 4) with `scope=confirmation-of-payee`:
+POST to the the token endpoint (resolved in Step 6) with `scope=confirmation-of-payee`:
 
 ::: code-group
 
 ```typescript [Node.js]
-// tokenEndpoint resolved from DiscoveryEndpointUrl in Step 4
+// tokenEndpoint resolved from DiscoveryEndpointUrl in Step 6
 
 const params = new URLSearchParams({
   grant_type:            'client_credentials',
@@ -250,7 +329,7 @@ const { access_token } = await tokenResponse.json()
 ```python [Python]
 import httpx
 
-# token_endpoint resolved from discovery_endpoint_url in Step 4
+# token_endpoint resolved from discovery_endpoint_url in Step 6
 
 token_response = httpx.post(
     token_endpoint,
@@ -268,9 +347,9 @@ access_token = token_response.json()["access_token"]
 
 :::
 
-## <span style="color: #3b82f6; padding-right: 5px;">POST</span> `/open-finance/confirmation-of-payee/v1.2/confirmation`
+## <span style="color: #3b82f6; padding-right: 5px;">POST</span> `/open-finance/confirmation-of-payee/v2.1/confirmation`
 
-## Step 3 — Build and Sign the Confirmation Request
+## Step 9 — Build and Sign the Confirmation Request
 
 The confirmation request is sent as a **signed JWT** (`Content-Type: application/jwt`). Build the JWT payload containing the account details you want to verify, then sign it with your signing key.
 
@@ -357,17 +436,17 @@ signed_request = sign_jwt({
 
 :::
 
-## Step 4 — POST /confirmation
+## Step 10 — POST /confirmation
 
-Send the signed JWT to the LFI's CoP endpoint using the `ResourceServerUrl` resolved in Step 3. Both the request body and the response are JWTs. Include `x-fapi-interaction-id` on every request. See [Request Headers](/tech/tpp-standards/security/request-headers).
+Send the signed JWT to the LFI's CoP endpoint using the `ResourceServerUrl` resolved in Step 5. Both the request body and the response are JWTs. Include `x-fapi-interaction-id` on every request. See [Request Headers](/tech/tpp-standards/security/request-headers).
 
 ::: code-group
 
 ```typescript [Node.js]
-// ResourceServerUrl resolved from discovery in Step 3
+// ResourceServerUrl resolved from discovery in Step 5
 
 const copResponse = await fetch(
-  `${ResourceServerUrl}/open-finance/confirmation-of-payee/v1.2/confirmation`,
+  `${ResourceServerUrl}/open-finance/confirmation-of-payee/v2.1/confirmation`,
   {
     method:  'POST',
     headers: {
@@ -390,10 +469,10 @@ const result = JSON.parse(Buffer.from(payloadB64, 'base64url').toString())
 ```python [Python]
 import httpx, base64, json
 
-# resource_server_url resolved from discovery in Step 3
+# resource_server_url resolved from discovery in Step 5
 
 cop_response = httpx.post(
-    f"{resource_server_url}/open-finance/confirmation-of-payee/v1.2/confirmation",
+    f"{resource_server_url}/open-finance/confirmation-of-payee/v2.1/confirmation",
     headers={
         "Authorization":         f"Bearer {access_token}",
         "Content-Type":          "application/jwt",
@@ -488,7 +567,7 @@ Where Confirmation of Payee has been performed for a creditor, include the **ful
           "Identification": "AE070331234567890123456",
           "Name": { "en": "Ibrahim Al Suwaidi" }
         },
-        "ConfirmationOfPayeeResponse": "eyJhbGci..."   // full JWS string from Step 4
+        "ConfirmationOfPayeeResponse": "eyJhbGci..."   // full JWS string from Step 10
       }
     ]
   }

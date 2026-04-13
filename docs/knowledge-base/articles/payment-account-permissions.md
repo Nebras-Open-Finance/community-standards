@@ -47,7 +47,7 @@ Including any of the three permissions above **changes the required scope** in t
 | Payment **with** `ReadAccountsBasic`, `ReadAccountsDetail`, or `ReadBalances` | `accounts payments openid` |
 
 ::: warning
-If account-reading permissions are present in `authorization_details` but `accounts` is omitted from the scope, the Authorization Server will issue a token that cannot call the account endpoints — your `GET /accounts` calls will return `403 Forbidden`.
+If account-reading permissions are present in `authorization_details` but `accounts` is omitted from the `scope`, the API Hub will reject the `/par` request.
 :::
 
 

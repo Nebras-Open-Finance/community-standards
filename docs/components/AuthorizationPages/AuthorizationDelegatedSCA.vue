@@ -137,7 +137,7 @@
                                 <div class="auth-page-account-subtext-part">Payment Reference</div>
                                 <div class="auth-page-account-amount-container">
                                     <div class="auth-page-account-amount">
-                                        {{sharedState?.value?.consent?.DebtorReference }}
+                                        {{consentData?.DebtorReference }}
                                     </div>
 
                                 </div>
@@ -150,7 +150,7 @@
                                 <div class="auth-page-account-subtext-part">Payment Purpose</div>
                                 <div class="auth-page-account-amount-container">
                                     <div class="auth-page-account-amount">
-                                        {{ getPurposeDescription(sharedState?.value?.consent?.PaymentPurposeCode) }}
+                                        {{ getPurposeDescription(consentData?.PaymentPurposeCode) }}
                                     </div>
 
                                 </div>
@@ -193,7 +193,7 @@
                                 </svg>
 
                                 <div class="auth-page-date-text">
-                                    {{ formatDate(sharedState?.value?.consent?.ExpirationDateTime) }}
+                                    {{ formatDate(consentData?.ExpirationDateTime) }}
                                 </div>
                             </div>
                         </div>
@@ -486,16 +486,16 @@ import { formatDate } from '../Composables/formatDate.ts'
 import { getAuthPaymentPermissionText } from '../Composables/serviceInitiationPermissionDescriptions.ts'
 import DirhamAmount from '../ConsentPages/DirhamAmount.vue'
 
-const { sharedState } = useSharedState()
+const { sharedState, consentData } = useSharedState()
 
 const selected = ref(null)
 const benefListOpen = ref(true)
 
-const periodicSchedule = computed(() => sharedState?.value?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule)
+const periodicSchedule = computed(() => consentData.value?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule)
 const primaryAmountLabel = computed(() => periodicSchedule.value?.Controls?.MaximumIndividualAmount ? 'Max per Payment' : 'Amount')
 const primaryAmount = computed(() => periodicSchedule.value?.Controls?.MaximumIndividualAmount?.Amount ?? periodicSchedule.value?.Amount?.Amount)
 const authPermissionText = computed(() =>
-    getAuthPaymentPermissionText(sharedState?.value?.value?.consent?.Permissions)
+    getAuthPaymentPermissionText(consentData.value?.Permissions)
 )
 </script>
 

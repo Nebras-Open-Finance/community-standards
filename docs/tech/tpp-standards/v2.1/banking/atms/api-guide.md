@@ -34,7 +34,7 @@ Before calling the ATM API, ensure the following requirements are met:
 
 The ATM API uses the OAuth 2.0 **client credentials** grant with `scope=atm`.
 
-Use the [`signJWT()`](/tech/tpp-standards/security/fapi/message-signing#signing-a-jwt) helper to build a short-lived JWT asserting your application's identity:
+Use the [`signJWT()`](/tech/tpp-standards/security/fapi/message-signing#signing-a-jwt) helper to build a client assertion proving your application's identity:
 
 ::: code-group
 

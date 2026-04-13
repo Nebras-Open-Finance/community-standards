@@ -133,7 +133,7 @@
                                 <div class="auth-page-account-subtext-part">Payment Reference</div>
                                 <div class="auth-page-account-amount-container">
                                     <div class="auth-page-account-amount">
-                                        {{sharedState?.value?.consent?.DebtorReference }}
+                                        {{consentData?.DebtorReference }}
                                     </div>
 
                                 </div>
@@ -146,7 +146,7 @@
                                 <div class="auth-page-account-subtext-part">Payment Purpose</div>
                                 <div class="auth-page-account-amount-container">
                                     <div class="auth-page-account-amount">
-                                        {{ getPurposeDescription(sharedState?.value?.consent?.PaymentPurposeCode) }}
+                                        {{ getPurposeDescription(consentData?.PaymentPurposeCode) }}
                                     </div>
 
                                 </div>
@@ -189,20 +189,20 @@
                                 </div>
 
 
-                                                                <div v-if="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeNumberOfPayments" class="auth-page-account-subtext-container-2">
+                                                                <div v-if="consentData?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeNumberOfPayments" class="auth-page-account-subtext-container-2">
                                     <div class="auth-page-account-subtext-part">Total Number of Payments allowed</div>
  <div class="auth-page-account-amount-container">
                                     <div class="auth-page-account-amount">
-                                        {{sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeNumberOfPayments }}
+                                        {{consentData?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeNumberOfPayments }}
                                     </div>
 
                                 </div>
                                 </div>
 
-                                                                                                <div v-if="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments" class="auth-page-account-subtext-container-2">
+                                                                                                <div v-if="consentData?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments" class="auth-page-account-subtext-container-2">
                                     <div class="auth-page-account-subtext-part">Total Value allowed</div>
  <div class="auth-page-account-amount-container">
-                                    <DirhamAmount :amount="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments?.Amount" />
+                                    <DirhamAmount :amount="consentData?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments?.Amount" />
 
                                 </div>
                                 </div>
@@ -499,7 +499,7 @@ import { formatDate } from '../Composables/formatDate.ts'
 import { getAuthPaymentPermissionText } from '../Composables/serviceInitiationPermissionDescriptions.ts'
 import DirhamAmount from '../ConsentPages/DirhamAmount.vue'
 
-const { sharedState } = useSharedState()
+const { sharedState, consentData } = useSharedState()
 
 const props = defineProps({ scheduleType: { type: String, default: 'variable' } })
 const scheduleType = computed(() => props.scheduleType)
@@ -507,11 +507,11 @@ const scheduleType = computed(() => props.scheduleType)
 const selected = ref(null)
 const benefListOpen = ref(true)
 
-const schedule = computed(() => sharedState?.value?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Schedule ?? [])
+const schedule = computed(() => consentData.value?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Schedule ?? [])
 const visibleCount = ref(5)
 const visibleSchedule = computed(() => schedule.value.slice(0, visibleCount.value))
 const authPermissionText = computed(() =>
-    getAuthPaymentPermissionText(sharedState?.value?.value?.consent?.Permissions)
+    getAuthPaymentPermissionText(consentData.value?.Permissions)
 )
 </script>
 

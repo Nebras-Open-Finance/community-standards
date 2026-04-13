@@ -1,10 +1,15 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
+import { useRoute } from 'vitepress'
 import { useSharedState } from './Composables/useSharedState.ts'
+
+const route = useRoute()
+const isLfi = computed(() => (route.path ?? '').includes('/lfi-api-hub'))
+const entityLabel = computed(() => isLfi.value ? 'TPP' : 'LFI')
 
 const { updateField } = useSharedState()
 
-const CONSENT_STATUSES = [
+const ALL_CONSENT_STATUSES = [
   'AwaitingAuthorization',
   'Authorized',
   'Rejected',
@@ -14,6 +19,10 @@ const CONSENT_STATUSES = [
   'Expired',
   'Revoked'
 ]
+
+const CONSENT_STATUSES = computed(() =>
+  isLfi.value ? ALL_CONSENT_STATUSES.filter(s => s !== 'Paused') : ALL_CONSENT_STATUSES
+)
 
 const CONSENT_TYPES = [
   'Data Sharing',
@@ -56,6 +65,9 @@ function getFallbackStatusForType(type) {
 }
 
 function normalizeStatusForType(type, status) {
+  if (isLfi.value && status === 'Paused') {
+    return 'Authorized'
+  }
   if (isSingleInstantPayment(type) && (status === 'Authorized' || status === 'Paused')) {
     return getFallbackStatusForType(type)
   }
@@ -97,15 +109,16 @@ function ensureMaskedIban(consent) {
   }
 }
 
-let nextId = 8
+let nextId = 9
 const consents = ref([
-  { id: 1, status: 'Authorized', lfiDigit: randomLfiDigit(), type: 'Data Sharing' },
-  { id: 2, status: 'Revoked', lfiDigit: randomLfiDigit(), type: 'Data Sharing' },
-  { id: 3, status: 'Expired', lfiDigit: randomLfiDigit(), type: 'Data Sharing' },
-  { id: 4, status: 'AwaitingAuthorization', lfiDigit: randomLfiDigit(), type: 'Single Instant Payment', maskedIban: generateMaskedIban(4) },
-  { id: 5, status: 'Consumed', lfiDigit: randomLfiDigit(), type: 'Single Instant Payment', maskedIban: generateMaskedIban(5), paymentStatus: 'AcceptedWithoutPosting' },
-  { id: 6, status: 'Authorized', lfiDigit: randomLfiDigit(), type: 'Multi Payment (VariableOnDemand)', maskedIban: generateMaskedIban(6) },
-  { id: 7, status: 'Suspended', lfiDigit: randomLfiDigit(), type: 'Multi Payment (FixedOnDemand)', maskedIban: generateMaskedIban(7) }
+  { id: 1, status: 'Authorized', lfiDigit: 9, type: 'Data Sharing', baseConsentId: 3 },
+  { id: 2, status: 'Revoked', lfiDigit: randomLfiDigit(), type: 'Data Sharing', baseConsentId: '' },
+  { id: 3, status: 'Expired', lfiDigit: 9, type: 'Data Sharing', baseConsentId: '' },
+  { id: 4, status: 'AwaitingAuthorization', lfiDigit: randomLfiDigit(), type: 'Single Instant Payment', maskedIban: generateMaskedIban(4), baseConsentId: '' },
+  { id: 5, status: 'Consumed', lfiDigit: randomLfiDigit(), type: 'Single Instant Payment', maskedIban: generateMaskedIban(5), paymentStatus: 'AcceptedWithoutPosting', baseConsentId: '' },
+  { id: 6, status: 'Authorized', lfiDigit: 4, type: 'Multi Payment (VariableOnDemand)', maskedIban: generateMaskedIban(6), baseConsentId: 8 },
+  { id: 7, status: 'Suspended', lfiDigit: randomLfiDigit(), type: 'Multi Payment (FixedOnDemand)', maskedIban: generateMaskedIban(7), baseConsentId: '' },
+  { id: 8, status: 'Revoked', lfiDigit: 4, type: 'Multi Payment (VariableOnDemand)', maskedIban: generateMaskedIban(6), baseConsentId: '' }
 ])
 
 function addConsent() {
@@ -114,7 +127,8 @@ function addConsent() {
     id: nextId++,
     status: getFallbackStatusForType('Data Sharing'),
     lfiDigit: randomLfiDigit(),
-    type: 'Data Sharing'
+    type: 'Data Sharing',
+    baseConsentId: ''
   })
 }
 
@@ -137,11 +151,13 @@ watch(
     }
 
     const payload = val.map(item => ({
+      id: item.id,
       status: item.status,
       lfiDigit: Number(item.lfiDigit),
       type: item.type,
       maskedIban: item.maskedIban,
-      paymentStatus: item.paymentStatus
+      paymentStatus: item.paymentStatus,
+      baseConsentId: item.baseConsentId || undefined
     }))
     updateField('consentConnections', JSON.stringify(payload))
   },
@@ -173,7 +189,7 @@ watch(
         </div>
 
         <div class="cce-field cce-field-lfi">
-          <label class="cce-label">LFI</label>
+          <label class="cce-label">{{ entityLabel }}</label>
           <select class="cce-select" v-model.number="consent.lfiDigit">
             <option v-for="digit in LFI_DIGITS" :key="digit" :value="digit">{{ digit }}</option>
           </select>
@@ -191,6 +207,11 @@ watch(
           <select class="cce-select" v-model="consent.paymentStatus">
             <option v-for="ps in PAYMENT_STATUSES" :key="ps" :value="ps">{{ ps }}</option>
           </select>
+        </div>
+
+        <div class="cce-field cce-field-base-consent">
+          <label class="cce-label">BaseConsentId</label>
+          <input class="cce-input" type="text" v-model="consent.baseConsentId" placeholder="Optional" />
         </div>
 
         <button class="cce-remove" @click="removeConsent(consent.id)" :disabled="consents.length <= 1"
@@ -278,6 +299,31 @@ watch(
 
 .cce-field-payment-status {
   min-width: 240px;
+}
+
+.cce-field-base-consent {
+  width: 100px;
+}
+
+.cce-input {
+  font-size: 0.8rem;
+  padding: 4px 7px;
+  border: 1px solid #cbd5e0;
+  border-radius: 5px;
+  background: #fff;
+  color: #1a202c;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cce-input:focus {
+  border-color: rgba(0, 39, 127, 0.5);
+}
+
+.cce-input::placeholder {
+  color: #a0aec0;
 }
 
 .cce-label {

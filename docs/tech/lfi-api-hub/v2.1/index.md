@@ -11,7 +11,7 @@ The **Ozone Connect Specifications** define the APIs and integration contracts t
 
 ## Versioning
 
-Ozone Connect uses **major.minor** versioning (e.g., `v2.1`). Minor versions (`.1`, `.2`) are non-breaking — additional optional fields, new endpoints, or clarifications — and can be adopted without dual-running. Major version bumps (e.g., `v2.x → v3.0`) may include breaking changes, which require LFIs to run both versions concurrently during a structured transition period.
+Ozone Connect uses **major.minor** versioning (e.g., ). Minor versions (, ) are non-breaking — additional optional fields, new endpoints, or clarifications — and can be adopted without dual-running. Major version bumps (e.g., ) may include breaking changes, which require LFIs to run both versions concurrently during a structured transition period.
 
 Full rules are in the [Version Management Policy](/policy/version-management). Transition and dual-running requirements are in the [LFI Deprecation Policy](/policy/lfi-deprecation).
 
@@ -29,9 +29,9 @@ The LFI's authorisation server interacts with the **Headless Heimdall** API, pro
 
 | Endpoint | When to call |
 |---|---|
-| `GET /auth` | At the start of every authorization code grant — validates the FAPI/OIDC request and returns the interaction context and decoded consent details |
-| `POST /auth/{interactionId}/doConfirm` | After the customer has authenticated and authorized the consent — completes the interaction and triggers the Hub to issue tokens to the TPP |
-| `POST /auth/{interactionId}/doFail` | If authentication or consent authorization fails — ends the interaction and initiates an error redirect back to the TPP |
+|  | At the start of every authorization code grant — validates the FAPI/OIDC request and returns the interaction context and decoded consent details |
+|  | After the customer has authenticated and authorized the consent — completes the interaction and triggers the Hub to issue tokens to the TPP |
+|  | If authentication or consent authorization fails — ends the interaction and initiates an error redirect back to the TPP |
 
 See [Authentication & Authorization](./auth/) for the full API guide and reference.
 
@@ -39,28 +39,28 @@ See [Authentication & Authorization](./auth/) for the full API guide and referen
 
 #### Consent Manager
 
-The **Consent Manager API** is provided by the Hub. You call it during the consent journey and to power your Consent Management Interface to read the consent object, update its state, and manage its lifecycle.
+The **Consent Manager API** is provided by the Hub. Your authorisation server calls it during the consent journey to read the consent object, update its state, and manage its lifecycle.
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /consents/{consentId}` | Retrieve the full consent, including requested permissions, status, and account scope |
-| `PATCH /consents/{consentId}` | Update consent state — used to mark a consent as Authorised or Rejected after the customer journey |
-| `GET /consents/{consentId}/audit` | Retrieve the immutable audit trail for a consent |
-| `POST /consents/{consentId}/action/revoke` | Revoke an active consent — typically triggered from the CMI when a customer withdraws authorisation |
-| `GET /psu/{userId}/consents` | List all consents for a given customer — used to power the CMI consent list view |
-| `GET /accounts/{accountId}/consents` | List all consents associated with a given account |
+|  | Retrieve the full consent, including requested permissions, status, and account scope |
+|  | Update consent state — used to mark a consent as Authorised or Rejected after the customer journey |
+|  | Retrieve the immutable audit trail for a consent |
+|  | Revoke an active consent — typically triggered from the CMI when a customer withdraws authorisation |
+|  | List all consents for a given customer — used to power the CMI consent list view |
+|  | List all consents associated with a given account |
 
 See [Consent](./consent/) for the full API guide and reference.
 
 #### Consent Events & Actions
 
-Unlike the APIs above, the **Consent Events & Actions API** is optional and implemented by you. The Hub calls your endpoints to notify you of consent lifecycle changes and, during consent creation, to validate or augment the consent before it is stored.
+Unlike the APIs above, the **Consent Events & Actions API** is implemented by you. The Hub calls your endpoints to notify you of consent lifecycle changes and, during consent creation, to validate or augment the consent before it is stored.
 
 | Endpoint | When the Hub calls it |
 |---|---|
-| `POST /consent/event/{operation}` | When a consent is created, modified, or revoked — allows your systems to react to state changes in real time |
-| `POST /consent/action/augment` | During consent creation — the Hub requests you to enrich the consent with additional data (e.g., resolving account identifiers) before it is stored |
-| `POST /consent/action/validate` | During consent creation — the Hub requests you to validate the consent parameters before the authorization journey proceeds |
+|  | When a consent is created, modified, or revoked — allows your systems to react to state changes in real time |
+|  | During consent creation — the Hub requests you to enrich the consent with additional data (e.g., resolving account identifiers) before it is stored |
+|  | During consent creation — the Hub requests you to validate the consent parameters before the authorization journey proceeds |
 
 See [Consent Events & Actions](./consent/events-and-actions) for the full API guide and reference.
 

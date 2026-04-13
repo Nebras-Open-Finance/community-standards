@@ -13,3 +13,26 @@ The UAE Open Finance Postman collection covers the full sandbox flow — TPP reg
 ::: tip Watch for updates
 Implementers are encouraged to **watch** this repository on GitHub to stay informed of new collection versions and changes as the sandbox evolves.
 :::
+
+## Collections
+
+### Banking <Badge type="tip" text="V1.2 · V2.0 · V2.1 (current)" />
+
+| Folder | Role | Description |
+|--------|------|-------------|
+| [Data Sharing](/tech/tpp-standards/v2.1/banking/data-sharing/) | BDSP | Consent lifecycle plus account, balance, transaction, beneficiary, standing order, and party data. Available in `application/json` and `application/jwt` formats. |
+| [Service Initiation — Domestic](/tech/tpp-standards/v2.1/banking/service-initiation/) | BSIP | All [payment consent types](/tech/tpp-standards/v2.1/banking/service-initiation/#multi-payment-consents): single instant (including CoP and multi-auth variants), all six multi-payment schedule types, delegated SCA, and refunds. |
+| [Service Initiation — International](/tech/tpp-standards/v2.1/banking/service-initiation/) | BSIP | Single instant and fixed periodic schedule for cross-border transfers. |
+| [Confirmation of Payee](/tech/tpp-standards/v2.1/banking/confirmation-of-payee/) | BSIP | Two-step name verification: discovery (API Hub) then confirmation (resolved LFI). Client credentials flow, `application/jwt` throughout. |
+| [Products, Leads](/tech/tpp-standards/v2.1/banking/products-leads/) | BDSP | Open data endpoints — no user consent required. |
+| [ATMs](/tech/tpp-standards/v2.1/banking/atms/) | BDSP | ATM location and service data published by LFIs. No user consent required. |
+| [Webhooks](/tech/tpp-standards/v2.1/webhooks/) | — | Simulate JWE-encrypted event receipt and `202 Accepted` response. |
+
+### Insurance <Badge type="tip" text="V2.1 (current)" />
+
+| Folder | Description |
+|--------|-------------|
+| Data Sharing | Consent and access to insurance policy information. |
+| Quotation | Insurance quote retrieval following consent. |
+| Revoke | Consent revocation by ID or group ID. |
+| Webhooks / Do Fail | Webhook receipt testing and failure simulation. |

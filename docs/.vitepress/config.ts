@@ -1,3 +1,4 @@
+import { resolve } from 'node:path'
 import { defineConfig } from 'vitepress'
 import { tppSidebar } from './config/sidebars/tpp'
 import { lfiSidebar } from './config/sidebars/lfi'
@@ -5,6 +6,7 @@ import { policySidebar, processesSidebar } from './config/sidebars/policy'
 import { kbSidebar } from './config/sidebars/kb'
 import { erratasSidebar } from './config/sidebars/erratas'
 import { apiSpecsSidebar } from './config/sidebars/api-specs'
+import { docRepositorySidebar } from './config/sidebars/doc-repository'
 import { CURRENT_VERSION } from './version'
 
 const wellKnownProxyPlugin = {
@@ -75,8 +77,13 @@ export default defineConfig({
 
   vite: {
     plugins: [wellKnownProxyPlugin],
+    resolve: {
+      alias: {
+        '@components': resolve(__dirname, '../components'),
+      },
+    },
     optimizeDeps: {
-      include: ['vue3-tel-input'],
+      include: ['vue3-tel-input', 'mermaid', 'dayjs'],
     },
   },
 
@@ -100,7 +107,7 @@ export default defineConfig({
     ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/AlTareq-OpenFinance/community-specs' },
+      { icon: 'github', link: 'https://github.com/Nebras-Open-Finance/community-standards' },
     ],
 
     search: {
@@ -121,6 +128,7 @@ export default defineConfig({
       '/processes': processesSidebar,
       '/tech/erratas': erratasSidebar,
       '/knowledge-base': kbSidebar,
+      '/doc-repository': docRepositorySidebar,
       [`/tech/api-specs/${CURRENT_VERSION}`]: apiSpecsSidebar,
     },
   },

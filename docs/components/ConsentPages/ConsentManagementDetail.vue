@@ -5,14 +5,21 @@ import { CONSENT_EXAMPLE_STATE } from './consentExampleState.ts'
 import ConsentDataSharingPermissions from './ConsentDataSharingPermissions.vue'
 import ConsentPaymentPermissions from './ConsentPaymentPermissions.vue'
 import DirhamAmount from './DirhamAmount.vue'
+import { formatDate } from '../Composables/formatDate.ts'
 
 const props = defineProps({
-  connection: { type: Object, required: true }
+  connection: { type: Object, required: true },
+  allConnections: { type: Array, default: () => [] },
+  perspective: { type: String, default: 'tpp' }
 })
 
-const emit = defineEmits(['back'])
+const emit = defineEmits(['back', 'navigate'])
 
 const { updateField } = useSharedState()
+
+const isLfi = computed(() => props.perspective === 'lfi')
+const barTitle = computed(() => isLfi.value ? 'LFI' : 'TPP')
+const entityLabel = computed(() => isLfi.value ? 'TPP' : 'LFI')
 
 const CONSENT_ID = 'f47ac10b-58cc-4372-a567-0e02b2c3d479'
 const truncatedConsentId = `${CONSENT_ID.slice(0, 8)}...${CONSENT_ID.slice(-4)}`
@@ -88,12 +95,36 @@ const formattedPaymentAmount = computed(() => paymentHistoryTotal.toFixed(2))
 provide('paymentHistory', EXAMPLE_PAYMENT_HISTORY)
 
 const lastDataReceivedDate = computed(() => extractDate(props.connection?.lastDataReceived))
+const firstConnectedDate = computed(() => {
+  const dateStr = extractDate(props.connection?.lastDataReceived)
+  if (dateStr === '--/--/----') return dateStr
+  const [dd, mm, yyyy] = dateStr.split('/')
+  return formatDate(`${yyyy}-${mm}-${dd}T00:00:00Z`)
+})
 
 const DISCONNECT_STATUSES = new Set(['AwaitingAuthorization', 'Authorized', 'Suspended', 'Paused'])
 const showDisconnect  = computed(() => DISCONNECT_STATUSES.has(props.connection?.status))
-const showPause       = computed(() => props.connection?.status === 'Authorized' && !isSinglePayment.value)
-const showReactivate  = computed(() => props.connection?.status === 'Paused')
+const showPause       = computed(() => props.connection?.status === 'Authorized' && !isSinglePayment.value && !isLfi.value)
+const showReactivate  = computed(() => props.connection?.status === 'Paused' && !isLfi.value)
 const disconnectLabel = computed(() => isDataSharing.value ? 'Stop Sharing' : 'Cancel Permission')
+
+// ─── Updates list view ───────────────────────────────────────────────────────
+const showUpdates = ref(false)
+
+const relatedConsents = computed(() => {
+  const myBaseId = props.connection?.baseConsentId
+  if (!myBaseId) return []
+  const myId = props.connection?.id
+  return props.allConnections.filter(c => {
+    if (c.id != null && c.id == myId) return false
+    return c.baseConsentId == myBaseId || c.id == myBaseId
+  })
+})
+
+function navigateToConsent(connection) {
+  showUpdates.value = false
+  emit('navigate', connection)
+}
 
 // ─── Confirmation screen ──────────────────────────────────────────────────────
 const confirmAction = ref(null) // null | 'revoke' | 'pause' | 'reactivate'
@@ -168,23 +199,23 @@ provide('detailConnection', computed(() => props.connection))
 </script>
 
 <template>
-  <div class="cmd-frame">
+  <div class="cmd-frame" :class="{ 'cmd-lfi': isLfi }">
     <div class="cmd-screen-name">
       <div class="cmd-screen-bar"></div>
-      <button type="button" class="cmd-back-button" @click="confirmAction !== null ? confirmAction = null : emit('back')" aria-label="Back">
+      <button type="button" class="cmd-back-button" @click="showUpdates ? (showUpdates = false) : confirmAction !== null ? confirmAction = null : emit('back')" aria-label="Back">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path d="M14.5 5.5L8.5 12L14.5 18.5" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
       </button>
-      <div class="cmd-screen-title">TPP</div>
+      <div class="cmd-screen-title">{{ barTitle }}</div>
     </div>
 
     <!-- ── Main detail view ───────────────────────────────────────────── -->
-    <template v-if="confirmAction === null">
+    <template v-if="confirmAction === null && !showUpdates">
     <div class="cmd-card-shell">
       <div class="cmd-meta-card">
         <div class="cmd-meta-header">
-          <div class="cmd-meta-lfi">[LFI {{ connection.lfiDigit }}]</div>
+          <div class="cmd-meta-lfi">[{{ entityLabel }} {{ connection.lfiDigit }}]</div>
           <div class="cmd-status" :class="statusClass">{{ displayStatus }}</div>
         </div>
         <div class="cmd-meta-rows">
@@ -280,7 +311,7 @@ provide('detailConnection', computed(() => props.connection))
         <div class="cmd-detail-rows">
           <div class="cmd-detail-row">
             <span class="cmd-meta-row-label">Bank</span>
-            <span class="cmd-meta-row-value">[LFI {{ connection.lfiDigit }}]</span>
+            <span class="cmd-meta-row-value">[{{ entityLabel }} {{ connection.lfiDigit }}]</span>
           </div>
           <div class="cmd-detail-row">
             <span class="cmd-meta-row-label">Payer Name</span>
@@ -312,8 +343,136 @@ provide('detailConnection', computed(() => props.connection))
 
       <ConsentDataSharingPermissions v-if="isDataSharing" />
 
+      <!-- Data sharing: How we are using your data card (hidden for Rejected) -->
+      <div v-if="isDataSharing && connection.status !== 'Rejected'" class="cmd-usage-card">
+        <!-- Header -->
+        <div class="cmd-usage-header">
+          <div class="cmd-usage-title">{{ connection.status === 'Revoked' ? 'You cancelled this connection' : 'How we are using your data' }}</div>
+          <div class="cmd-usage-subtitle">[Detail purpose for which data will be used].</div>
+        </div>
+
+        <!-- Date rows -->
+        <div class="cmd-usage-dates">
+          <!-- First Connected -->
+          <div class="cmd-usage-date-block">
+            <div class="cmd-usage-date-row">
+              <!-- Calendar icon (teal) -->
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="flex-shrink: 0;">
+                <path d="M5.33301 1.33203V3.33203" stroke="#36BFD4" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M10.667 1.33203V3.33203" stroke="#36BFD4" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M2.33301 6.05859H13.6663" stroke="#36BFD4" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M14 5.66536V11.332C14 13.332 13 14.6654 10.6667 14.6654H5.33333C3 14.6654 2 13.332 2 11.332V5.66536C2 3.66536 3 2.33203 5.33333 2.33203H10.6667C13 2.33203 14 3.66536 14 5.66536Z" stroke="#36BFD4" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M10.4635 9.13411H10.4694" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M10.4635 11.1341H10.4694" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M7.99666 9.13411H8.00265" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M7.99666 11.1341H8.00265" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M5.52987 9.13411H5.53585" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M5.52987 11.1341H5.53585" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="cmd-usage-date-label">First Connected</span>
+            </div>
+            <div class="cmd-usage-date-value">{{ firstConnectedDate }}</div>
+          </div>
+
+          <!-- Connection Expires -->
+          <div class="cmd-usage-date-block">
+            <div class="cmd-usage-date-row">
+              <!-- Calendar icon (teal) -->
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="flex-shrink: 0;">
+                <path d="M5.33301 1.33203V3.33203" stroke="#36BFD4" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M10.667 1.33203V3.33203" stroke="#36BFD4" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M2.33301 6.05859H13.6663" stroke="#36BFD4" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M14 5.66536V11.332C14 13.332 13 14.6654 10.6667 14.6654H5.33333C3 14.6654 2 13.332 2 11.332V5.66536C2 3.66536 3 2.33203 5.33333 2.33203H10.6667C13 2.33203 14 3.66536 14 5.66536Z" stroke="#36BFD4" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M10.4635 9.13411H10.4694" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M10.4635 11.1341H10.4694" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M7.99666 9.13411H8.00265" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M7.99666 11.1341H8.00265" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M5.52987 9.13411H5.53585" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M5.52987 11.1341H5.53585" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="cmd-usage-date-label">{{ connection.status === 'Expired' ? 'Connection Expired' : 'Connection Expires' }}</span>
+            </div>
+            <div class="cmd-usage-date-value">{{ formatDate(consentState?.ExpirationDateTime) }}</div>
+          </div>
+
+          <!-- Last Updated (only when consent has a baseConsentId) -->
+          <div v-if="connection.baseConsentId" class="cmd-usage-date-block">
+            <div class="cmd-usage-date-row">
+              <!-- Refresh-square icon (teal) -->
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="flex-shrink: 0;">
+                <rect x="1.33301" y="1.33203" width="13.334" height="13.334" rx="2" stroke="#36BFD4" stroke-width="1.5" />
+                <path d="M10.167 6.16536C9.667 5.33203 8.667 4.66536 7.5 4.83203C6.167 5.0487 5.167 6.16536 5.0003 7.4987C4.8003 9.16536 6.0003 10.6654 7.6003 10.832C8.667 10.9487 9.6003 10.4987 10.167 9.83203" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M10.5 4.5V6.5H8.5" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="cmd-usage-date-label">Last Updated</span>
+            </div>
+            <div class="cmd-usage-date-value">{{ lastDataReceivedDate }}</div>
+            <div class="cmd-usage-updates-link" @click.stop="showUpdates = true">List of Updates</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Multi Payment: Payment Rules / History tabs -->
       <ConsentPaymentPermissions v-else-if="isMultiPayment" />
+
+      <!-- Multi Payment: dates card (hidden for Rejected) -->
+      <div v-if="isMultiPayment && connection.status !== 'Rejected'" class="cmd-usage-card">
+        <div class="cmd-usage-dates">
+          <!-- You started this permission -->
+          <div class="cmd-usage-date-block">
+            <div class="cmd-usage-date-row">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="flex-shrink: 0;">
+                <path d="M5.33301 1.33203V3.33203" stroke="#36BFD4" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M10.667 1.33203V3.33203" stroke="#36BFD4" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M2.33301 6.05859H13.6663" stroke="#36BFD4" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M14 5.66536V11.332C14 13.332 13 14.6654 10.6667 14.6654H5.33333C3 14.6654 2 13.332 2 11.332V5.66536C2 3.66536 3 2.33203 5.33333 2.33203H10.6667C13 2.33203 14 3.66536 14 5.66536Z" stroke="#36BFD4" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M10.4635 9.13411H10.4694" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M10.4635 11.1341H10.4694" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M7.99666 9.13411H8.00265" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M7.99666 11.1341H8.00265" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M5.52987 9.13411H5.53585" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M5.52987 11.1341H5.53585" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="cmd-usage-date-label">You started this permission</span>
+            </div>
+            <div class="cmd-usage-date-value">{{ firstConnectedDate }}</div>
+          </div>
+
+          <!-- We will make these payments until -->
+          <div class="cmd-usage-date-block">
+            <div class="cmd-usage-date-row">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="flex-shrink: 0;">
+                <path d="M5.33301 1.33203V3.33203" stroke="#36BFD4" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M10.667 1.33203V3.33203" stroke="#36BFD4" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M2.33301 6.05859H13.6663" stroke="#36BFD4" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M14 5.66536V11.332C14 13.332 13 14.6654 10.6667 14.6654H5.33333C3 14.6654 2 13.332 2 11.332V5.66536C2 3.66536 3 2.33203 5.33333 2.33203H10.6667C13 2.33203 14 3.66536 14 5.66536Z" stroke="#36BFD4" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M10.4635 9.13411H10.4694" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M10.4635 11.1341H10.4694" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M7.99666 9.13411H8.00265" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M7.99666 11.1341H8.00265" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M5.52987 9.13411H5.53585" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M5.52987 11.1341H5.53585" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="cmd-usage-date-label">{{ connection.status === 'Expired' ? 'Payments expired' : connection.status === 'Revoked' ? 'You cancelled payments on' : 'We will make these payments until' }}</span>
+            </div>
+            <div class="cmd-usage-date-value">{{ formatDate(consentState?.ExpirationDateTime) }}</div>
+          </div>
+
+          <!-- Last Updated (only when consent has a baseConsentId) -->
+          <div v-if="connection.baseConsentId" class="cmd-usage-date-block">
+            <div class="cmd-usage-date-row">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="flex-shrink: 0;">
+                <rect x="1.33301" y="1.33203" width="13.334" height="13.334" rx="2" stroke="#36BFD4" stroke-width="1.5" />
+                <path d="M10.167 6.16536C9.667 5.33203 8.667 4.66536 7.5 4.83203C6.167 5.0487 5.167 6.16536 5.0003 7.4987C4.8003 9.16536 6.0003 10.6654 7.6003 10.832C8.667 10.9487 9.6003 10.4987 10.167 9.83203" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M10.5 4.5V6.5H8.5" stroke="#36BFD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="cmd-usage-date-label">Last Updated</span>
+            </div>
+            <div class="cmd-usage-date-value">{{ lastDataReceivedDate }}</div>
+            <div class="cmd-usage-updates-link" @click.stop="showUpdates = true">List of Updates</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div v-if="showDisconnect || showReactivate" class="cmd-footer">
@@ -321,6 +480,56 @@ provide('detailConnection', computed(() => props.connection))
       <button v-if="showPause" type="button" class="cmd-pause-btn" @click="confirmAction = 'pause'">Pause</button>
       <button v-if="showDisconnect" type="button" class="cmd-revoke-btn" @click="confirmAction = 'revoke'">{{ disconnectLabel }}</button>
     </div>
+    </template>
+
+    <!-- ── Updates list view ─────────────────────────────────────────── -->
+    <template v-else-if="showUpdates">
+      <div class="cmd-card-shell">
+        <div class="cmd-updates-card">
+          <div class="cmd-updates-inner">
+            <div class="cmd-updates-title">List of Updates</div>
+            <div class="cmd-updates-subtitle">List of all changes that you made to this connection since first authorization.</div>
+          </div>
+        </div>
+
+        <div class="cmd-updates-list">
+          <div
+            v-for="(related, idx) in relatedConsents"
+            :key="idx"
+            class="cmd-updates-item"
+            role="button"
+            tabindex="0"
+            @click="navigateToConsent(related)"
+            @keydown.enter.prevent="navigateToConsent(related)"
+            @keydown.space.prevent="navigateToConsent(related)"
+          >
+            <div class="cmd-updates-item-name">{{ extractDate(related.lastDataReceived) }}</div>
+            <div class="cmd-updates-item-count">[{{ entityLabel }} {{ related.lfiDigit }}]</div>
+            <div class="cmd-updates-item-meta cmd-updates-item-meta-row">
+              <span class="cmd-updates-item-meta-label">Consent Type:</span>
+              <span class="cmd-updates-item-meta-value">{{ related.type }}</span>
+            </div>
+            <div class="cmd-updates-item-meta cmd-updates-item-meta-row">
+              <span class="cmd-updates-item-meta-label">Last data received:</span>
+              <span class="cmd-updates-item-meta-value">{{ extractDate(related.lastDataReceived) }}</span>
+            </div>
+            <div class="cmd-updates-item-meta cmd-updates-item-meta-row">
+              <span class="cmd-updates-item-meta-label">Connection expires:</span>
+              <span class="cmd-updates-item-meta-value">{{ extractDate(related.expiry) }}</span>
+            </div>
+            <svg class="cmd-updates-chevron" xmlns="http://www.w3.org/2000/svg"
+              width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              aria-hidden="true">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </div>
+        </div>
+
+        <div v-if="relatedConsents.length === 0" class="cmd-updates-empty">
+          No related updates found.
+        </div>
+      </div>
     </template>
 
     <!-- ── Confirmation screen ────────────────────────────────────────── -->
@@ -869,5 +1078,261 @@ provide('detailConnection', computed(() => props.connection))
 
 .cmd-confirm-back-btn:hover {
   background: #f4f8fb;
+}
+
+/* How we are using your data card */
+.cmd-usage-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px 12px;
+  gap: 24px;
+  width: 316px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  box-sizing: border-box;
+  order: 3;
+}
+
+.cmd-usage-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: 292px;
+}
+
+.cmd-usage-title {
+  width: 292px;
+  font-family: 'Poppins';
+  font-weight: 500;
+  font-size: 19px;
+  line-height: 120%;
+  letter-spacing: -0.01em;
+  color: #0B1340;
+}
+
+.cmd-usage-subtitle {
+  width: 292px;
+  font-family: 'Poppins';
+  font-weight: 300;
+  font-size: 12px;
+  line-height: 140%;
+  letter-spacing: -0.01em;
+  color: #8287A0;
+}
+
+.cmd-usage-dates {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: 292px;
+}
+
+.cmd-usage-date-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: 292px;
+}
+
+.cmd-usage-date-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  width: 292px;
+}
+
+.cmd-usage-date-label {
+  font-family: 'Poppins';
+  font-weight: 300;
+  font-size: 12px;
+  line-height: 120%;
+  letter-spacing: -0.01em;
+  color: #000000;
+}
+
+.cmd-usage-date-value {
+  padding-left: 28px;
+  font-family: 'Poppins';
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 120%;
+  letter-spacing: -0.01em;
+  color: #8287A0;
+}
+
+.cmd-usage-updates-link {
+  padding-left: 28px;
+  font-family: 'Poppins';
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 120%;
+  letter-spacing: -0.01em;
+  text-decoration-line: underline;
+  color: #36BFD4;
+  cursor: pointer;
+}
+
+/* Updates list view */
+.cmd-updates-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px 12px;
+  gap: 26px;
+  width: 316px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+.cmd-updates-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: 292px;
+}
+
+.cmd-updates-title {
+  width: 292px;
+  font-family: 'Poppins';
+  font-weight: 500;
+  font-size: 19px;
+  line-height: 120%;
+  letter-spacing: -0.01em;
+  color: #0B1340;
+}
+
+.cmd-updates-subtitle {
+  width: 292px;
+  font-family: 'Poppins';
+  font-weight: 300;
+  font-size: 12px;
+  line-height: 160%;
+  color: #0B1340;
+}
+
+.cmd-updates-list {
+  display: flex;
+  flex-direction: column;
+  width: 316px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 16px 12px;
+  box-sizing: border-box;
+}
+
+.cmd-updates-item {
+  position: relative;
+  padding: 0 32px 20px 0;
+  border-bottom: 1px solid rgba(11, 19, 64, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+}
+
+.cmd-updates-item + .cmd-updates-item {
+  padding-top: 10px;
+}
+
+.cmd-updates-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.cmd-updates-item:hover {
+  background: rgba(54, 191, 212, 0.05);
+}
+
+.cmd-updates-item:focus-visible {
+  box-shadow: 0 0 0 2px #36bfd4;
+}
+
+.cmd-updates-chevron {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(11, 19, 64, 0.2);
+  transition: color 0.15s ease, transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.cmd-updates-item:hover .cmd-updates-chevron {
+  color: #36bfd4;
+  transform: translateY(-50%) translateX(2px);
+}
+
+.cmd-updates-item-name {
+  font-family: 'Poppins';
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 120%;
+  letter-spacing: -0.01em;
+  color: #0b1340;
+}
+
+.cmd-updates-item-count {
+  margin-top: 8px;
+  margin-bottom: 6px;
+  font-family: 'Poppins';
+  font-weight: 300;
+  font-size: 13px;
+  line-height: 120%;
+  letter-spacing: -0.01em;
+  color: #0b1340;
+  font-style: italic;
+}
+
+.cmd-updates-item-meta {
+  margin-top: 8px;
+  font-family: 'Poppins';
+  font-weight: 300;
+  font-size: 11px;
+  line-height: 120%;
+  letter-spacing: -0.01em;
+  color: #616786;
+}
+
+.cmd-updates-item-meta-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  align-items: center;
+  column-gap: 8px;
+}
+
+.cmd-updates-item-meta-label {
+  color: #616786;
+}
+
+.cmd-updates-item-meta-value {
+  color: #0b1340;
+}
+
+.cmd-updates-empty {
+  width: 316px;
+  padding: 40px 12px;
+  text-align: center;
+  font-family: 'Poppins';
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 140%;
+  color: #616786;
+  background: #FFFFFF;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+/* ── LFI perspective overrides ─────────────────────────────────────── */
+.cmd-lfi .cmd-screen-bar {
+  background: #FD6436;
 }
 </style>

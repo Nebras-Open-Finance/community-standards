@@ -60,12 +60,30 @@ const meta = computed(() =>
 const visibleCharts = computed(() => {
   const configs = CHART_REGISTRY[state.activeSection] || []
   const hasAnyFilter = Object.values(state.filters).some(v => v != null)
-  return configs.filter(c => {
-    if (c.hideIfFiltered && state.filters[c.hideIfFiltered]) return false
-    if (c.showOnlyIfFiltered === true && !hasAnyFilter) return false
-    if (typeof c.showOnlyIfFiltered === 'string' && !state.filters[c.showOnlyIfFiltered]) return false
-    return true
-  })
+  const monthFiltered = !!state.filters.month
+
+  return configs
+    .filter(c => {
+      // 'hideIfFiltered: month' charts are never hidden — if month is active they switch to by-day below
+      if (c.hideIfFiltered && c.hideIfFiltered !== 'month' && state.filters[c.hideIfFiltered]) return false
+      if (c.showOnlyIfFiltered === true && !hasAnyFilter) return false
+      if (typeof c.showOnlyIfFiltered === 'string' && !state.filters[c.showOnlyIfFiltered]) return false
+      return true
+    })
+    .map(c => {
+      if (!monthFiltered) return c
+      // Detect charts that group by month (volume charts via groupBy prop, or RT avg-line mode)
+      const isByMonth =
+        c.props?.groupBy === 'month' ||
+        c.hideIfFiltered === 'month' ||
+        c.props?.mode === 'avg-line'
+      if (!isByMonth) return c
+      return {
+        ...c,
+        title: c.title.replace('by Month', 'by Day'),
+        props: { ...c.props, groupBy: 'day' },
+      }
+    })
 })
 
 // ── Record count for the section header ──────────────────────────────────

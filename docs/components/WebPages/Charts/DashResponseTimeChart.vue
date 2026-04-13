@@ -54,7 +54,7 @@ Chart.register(
 const props = defineProps({
   data:    { type: Array,  required: true },
   mode:    { type: String, default: 'avg-line' }, // avg-line | avg-bar | p-percentiles | histogram
-  groupBy: { type: String, default: 'family' },   // used only in avg-bar mode
+  groupBy: { type: String, default: 'month' },    // avg-line/percentiles group field; avg-bar group field
   title:   { type: String, default: '' },
 })
 
@@ -89,14 +89,16 @@ const metaValue = computed(() => {
 // ── Chart builders ───────────────────────────────────────────────────────
 
 function buildAvgLine() {
-  const byMonth = {}
+  const field = props.groupBy || 'month'
+  const byGroup = {}
   for (const r of props.data) {
-    if (!byMonth[r.month]) byMonth[r.month] = { total: 0, n: 0 }
-    byMonth[r.month].total += r.avgMs || 0
-    byMonth[r.month].n++
+    const key = r[field] || 'unknown'
+    if (!byGroup[key]) byGroup[key] = { total: 0, n: 0 }
+    byGroup[key].total += r.avgMs || 0
+    byGroup[key].n++
   }
-  const labels = Object.keys(byMonth).sort()
-  const values = labels.map(m => Math.round(byMonth[m].total / byMonth[m].n))
+  const labels = Object.keys(byGroup).sort()
+  const values = labels.map(m => Math.round(byGroup[m].total / byGroup[m].n))
 
   return new Chart(canvasRef.value, {
     type: 'line',
@@ -186,14 +188,17 @@ function buildAvgBar() {
 }
 
 function buildPercentiles() {
-  const byMonth = {}
+  const field = props.groupBy || 'month'
+  const byGroup = {}
   for (const r of props.data) {
-    if (!byMonth[r.month]) byMonth[r.month] = { p50: 0, p95: 0, p99: 0, n: 0 }
-    byMonth[r.month].p50 += r.p50 || 0
-    byMonth[r.month].p95 += r.p95 || 0
-    byMonth[r.month].p99 += r.p99 || 0
-    byMonth[r.month].n++
+    const key = r[field] || 'unknown'
+    if (!byGroup[key]) byGroup[key] = { p50: 0, p95: 0, p99: 0, n: 0 }
+    byGroup[key].p50 += r.p50 || 0
+    byGroup[key].p95 += r.p95 || 0
+    byGroup[key].p99 += r.p99 || 0
+    byGroup[key].n++
   }
+  const byMonth = byGroup
   const labels = Object.keys(byMonth).sort()
 
   const mkDs = (field, color, dash) => ({

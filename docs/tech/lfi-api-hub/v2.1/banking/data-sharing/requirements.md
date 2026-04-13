@@ -6,9 +6,23 @@ aside: false
 
 # Bank Data Sharing — Requirements
 
-The [Authentication & Authorization requirements](../../auth/requirements) and the [User Journeys](./user-journeys) must be adhered to.
+The [Authentication requirements](/tech/lfi-api-hub/v2.1/consent-journey/authentication/requirements), [Authorization requirements](/tech/lfi-api-hub/v2.1/consent-journey/authorization/requirements), and [User Journeys](./user-journeys) must be adhered to.
 
 The tables below list the rules that apply to Bank Data Sharing. All request validation of the TPP's credentials, access token, and consent is performed by the Hub before your resource server is called. The rules below cover what your resource server must validate and what it must return.
+
+
+## Consent Validation
+
+When a TPP creates a consent, the API Hub calls your [`POST /consent/action/validate`](/tech/lfi-api-hub/v2.1/consent-events/open-api/validate) endpoint before the consent is created. You MUST validate the consent and respond with `status: "valid"` or `status: "invalid"`. If you respond with `invalid`, the API Hub will not create the consent and the TPP will receive an error.
+
+This validation runs before the PSU is involved — there is no authentication or authorization at this stage. The purpose is to reject consents early that your systems cannot fulfil.
+
+| # | Rule | Detail |
+|---|------|--------|
+| 1 | Unsupported `AccountType` | If the consent's `AccountType` array contains a value that is not supported by the API Hub integration the consent was received on, respond with `invalid`. Each API Hub integration is scoped to a single segment (`Retail`, `SME`, or `Corporate`). If the LFI serves multiple segments, each segment MUST be configured as a separate API Hub integration because the API Hub has a single authorization endpoint. Validate that every requested `AccountType` is within scope of the integration that received the consent. |
+| 2 | Unsupported `AccountSubType` | If the consent's `AccountSubType` array contains a value not supported by this LFI, respond with `invalid`. For example, if the LFI does not offer `Mortgage` products but the consent requests `Mortgage`, the consent MUST be rejected at validation. |
+| 3 | Unsupported permissions | If the consent includes permissions that reference an endpoint the LFI has not yet delivered, respond with `invalid`. For example, if the consent includes `ReadStandingOrdersBasic` or `ReadStandingOrdersDetail` but `GET /accounts/{AccountId}/standing-orders` is not yet available, the consent MUST be rejected at validation. |
+| 4 | Invalid permission and `AccountSubType` combination | Some endpoints are only valid for certain account subtypes. If the consent requests a combination of permissions and `AccountSubType` values that cannot be fulfilled, respond with `invalid`. For example, `ReadDirectDebitsBasic` is only valid for `CurrentAccount` and `Savings` — if the consent specifies only `CreditCard` in `AccountSubType` and includes `ReadDirectDebitsBasic`, the consent MUST be rejected. See the [endpoints by account subtype](/tech/lfi-api-hub/v2.1/banking/data-sharing/#endpoints-by-account-subtype) matrix in the overview. |
 
 
 ## Account Selection
@@ -17,12 +31,9 @@ During the consent authorization journey, the customer selects which of their ac
 
 | # | Field | Rule |
 |---|-------|------|
-| 1 | Eligible accounts | Present all accounts the customer holds at the LFI that have an `accountSubType` of `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, or `Mortgage`. The customer may select one or more accounts. |
-| 2 | `consent.AccountType` | If the consent specifies `AccountType`, only present accounts whose type matches one of the specified values (`Retail`, `SME`, `Corporate`). If not specified, present accounts of all types. |
-| 3 | `consent.AccountSubType` | If the consent specifies `AccountSubType`, only present accounts whose subtype matches one of the specified values. If not specified, present accounts of all subtypes. |
-| 4 | Unsupported `AccountType` | If the consent's `AccountType` array contains a value not supported by this LFI, reject the consent during consent validation. |
-| 5 | Unsupported `AccountSubType` | If the consent's `AccountSubType` array contains a value not supported by this LFI, reject the consent during consent validation. Do not proceed to account selection. |
-| 6 | Multiple selection | The account selection screen must allow the customer to select more than one account. A consent with no accounts selected must not be authorised. |
+| 1 | `consent.AccountType` | If the consent specifies `AccountType`, only present accounts whose type matches one of the specified values (`Retail`, `SME`, `Corporate`). If not specified, present accounts of all types supported by this API Hub integration. |
+| 2 | `consent.AccountSubType` | If the consent specifies `AccountSubType`, only present accounts whose subtype matches one of the specified values. If not specified, present accounts of all subtypes. If the authenticated PSU does not hold any accounts matching the requested `AccountSubType`, PATCH the consent to `Rejected` and call `doFail` with `error: access_denied` and `error_description: user_lacks_eligible_accounts`. See [Authorization requirements](/tech/lfi-api-hub/v2.1/consent-journey/authorization/requirements) for details. |
+| 3 | Multiple selection | The account selection screen must allow the customer to select more than one account. A consent with no accounts selected must not be authorised. |
 
 
 ## GET `/accounts`

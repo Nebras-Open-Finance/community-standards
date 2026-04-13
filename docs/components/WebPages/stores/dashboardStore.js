@@ -39,6 +39,7 @@ function transformRow(row) {
 
   return {
     month,
+    day: (row.Date || '').substring(0, 10), // 'YYYY-MM-DD'
     lfi,
     tpp,
     family,
@@ -68,9 +69,10 @@ const SUCCESS_STATUSES = new Set([
 const FAILED_STATUSES = new Set(['Rejected'])
 
 function transformPaymentRow(row) {
-  // Parse DD/MM/YYYY → 'YYYY-MM'
+  // Parse DD/MM/YYYY → 'YYYY-MM' and 'YYYY-MM-DD'
   const parts = (row.Date || '').split('/')
   const month = parts.length === 3 ? `${parts[2]}-${parts[1]}` : 'unknown'
+  const day   = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : 'unknown'
 
   const lfi              = row.LFI || 'Unknown'
   const tpp              = row.TPP || 'Unknown'
@@ -87,7 +89,7 @@ function transformPaymentRow(row) {
   const successCount = statusGroup === 'Successful' ? count : 0
   const failCount    = statusGroup === 'Failed'     ? count : 0
 
-  return { month, lfi, tpp, consentType, count, amount, successCount, failCount, status: statusGroup, rawStatus }
+  return { month, day, lfi, tpp, consentType, count, amount, successCount, failCount, status: statusGroup, rawStatus }
 }
 
 // ── Reactive raw payment dataset (populated after fetch) ────────────────────
