@@ -193,7 +193,7 @@ refund_account = result["message"]["Data"]["RefundAccount"]
 
 ### Response
 
-The LFI returns a signed JWT. Decode the payload to read the refund account details:
+The response is a signed JWT. Decode the payload to read the refund account details:
 
 | Field | Type | Description |
 |-------|------|-------------|

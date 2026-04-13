@@ -37,6 +37,6 @@ A creditor is considered unknown when the TPP does not already hold a verified r
 | 3 | `message.Data.Identification` | Required. Must be a valid UAE IBAN. | API Hub |
 | 4 | `ConfirmationOfPayeeResponse` in PII | Where CoP has been performed, the full raw JWS response string from `/confirmation` must be included in the `ConfirmationOfPayeeResponse` field of the creditor entry in the payment consent PII. | TPP |
 | 5 | OpenAPI schema | The request must conform exactly to the [POST `/confirmation` OpenAPI schema](/tech/tpp-standards/v2.1/banking/confirmation-of-payee/open-api/confirmation). No additional or undocumented parameters are permitted. | API Hub |
-| 6 | IBAN not recognised | If the IBAN is not recognised at the receiving LFI, the API Hub returns `204` with no body. | LFI |
-| 7 | Account state | The account identified by the IBAN must not be blocked from receiving payments. If the account is blocked, the LFI returns `403` with `errorMessage`: `The account is blocked from receiving payments.` | LFI |
+| 6 | IBAN not recognised | If the IBAN is not recognised, the response will be `204` with no body. | LFI |
+| 7 | Account state | The account identified by the IBAN must not be blocked from receiving payments. If the account is blocked, the response will be `403` with `errorMessage`: `The account is blocked from receiving payments.` | LFI |
 | 8 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |

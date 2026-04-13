@@ -20,15 +20,22 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 |---|-------|------|-------------|
 | 1 | `consent.ExpirationDateTime` | Must not be in the past. Must be less than one year in the future. | API Hub |
 | 2 | `consent.Permissions` | If any of `ReadBalances`, `ReadBeneficiariesBasic`, `ReadBeneficiariesDetail`, `ReadTransactionsBasic`, `ReadTransactionsDetail`, `ReadProduct`, `ReadScheduledPaymentsBasic`, `ReadScheduledPaymentsDetail`, `ReadDirectDebits`, `ReadStandingOrdersBasic`, `ReadStandingOrdersDetail`, `ReadStatements`, or `ReadProductFinanceRates` are included, at least one of `ReadAccountsBasic` or `ReadAccountsDetail` must also be present. | API Hub |
-| 3 | `consent.AccountType` | Must be a value supported by the target LFI. Supported account types are discoverable via the `AccountTypes` flag on the LFI's authorisation server entry in the [Trust Framework](/tech/tpp-standards/trust-framework/api-discovery). | LFI |
-| 4 | `consent.AccountSubType` | If provided, each value must be a sub-type supported by the target LFI. Supported sub-types are discoverable via the `AccountSubTypes` metadata on the LFI's authorisation server entry in the [Trust Framework](/tech/tpp-standards/trust-framework/api-discovery). | LFI |
-| 5 | `consent.BaseConsentId` | If provided, must reference a previous consent belonging to the **same end user**. If the original consent in the chain already had a `BaseConsentId`, the TPP must reuse that same `BaseConsentId` rather than the immediate prior `ConsentId`. | LFI |
-| 6 | OpenAPI schema | The request must conform exactly to the [POST `/par` OpenAPI schema](/tech/tpp-standards/v2.1/consent/open-api/par). No additional or undocumented parameters are permitted. | API Hub |
-| 7 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
-| 8 | `client_assertion` | Must be included in the POST body (`client_assertion_type`: `urn:ietf:params:oauth:client-assertion-type:jwt-bearer`). Authenticates the TPP application — see [Client Assertion](/tech/tpp-standards/security/tokens/client-assertion). | API Hub |
-| 9 | Request JWT | Must conform to the [Request JWT requirements](/tech/tpp-standards/security/fapi/request-jwt) — correct `aud`, signing algorithm (`PS256`), and expiry window. | API Hub |
-| 10 | `scope` (in Request JWT) | Must be `accounts openid`. | API Hub |
-| 11 | `authorization_details[0].type` (in Request JWT) | Must be `urn:openfinanceuae:account-access-consent:v2.1`. | API Hub |
+| 3 | `consent.AccountType` | Must be a value supported by the target LFI. Supported account types are discoverable via the `AccountTypes` flag on the LFI's authorisation server entry in the [Trust Framework](/tech/tpp-standards/trust-framework/api-discovery). | LFI (`/consent/action/validate`) |
+| 4 | `consent.AccountSubType` | If provided, each value must be a sub-type supported by the target LFI. Supported sub-types are discoverable via the `AccountSubTypes` metadata on the LFI's authorisation server entry in the [Trust Framework](/tech/tpp-standards/trust-framework/api-discovery). | LFI (`/consent/action/validate`) |
+| 5 | `consent.Permissions` (unsupported) | If the provided Permissions include permissions not supported by the target LFI (e.g. the target LFI does not have the endpoint `/accounts/{AccountId}/standing-orders` published to the Trust Framework yet the consent request includes `ReadStandingOrdersBasic` or `ReadStandingOrdersDetail`), the consent validation will fail. | LFI (`/consent/action/validate`) |
+| 6 | `consent.BaseConsentId` | If provided, must reference a previous consent belonging to the **same end user**. If the original consent in the chain already had a `BaseConsentId`, the TPP must reuse that same `BaseConsentId` rather than the immediate prior `ConsentId`. | LFI (`/consent/action/validate`) |
+| 7 | OpenAPI schema | The request must conform exactly to the [POST `/par` OpenAPI schema](/tech/tpp-standards/v2.1/consent/open-api/par). No additional or undocumented parameters are permitted. | API Hub |
+| 8 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
+| 9 | `client_assertion` | Must be included in the POST body (`client_assertion_type`: `urn:ietf:params:oauth:client-assertion-type:jwt-bearer`). Authenticates the TPP application — see [Client Assertion](/tech/tpp-standards/security/tokens/client-assertion). | API Hub |
+| 10 | Request JWT | Must conform to the [Request JWT requirements](/tech/tpp-standards/security/fapi/request-jwt) — correct `aud`, signing algorithm (`PS256`), and expiry window. | API Hub |
+| 11 | `scope` (in Request JWT) | Must be `accounts openid`. | API Hub |
+| 12 | `authorization_details[0].type` (in Request JWT) | Must be `urn:openfinanceuae:account-access-consent:v2.1`. | API Hub |
+
+## Authorization — Account Selection
+
+| # | Field | Rule | Validated by |
+|---|-------|------|-------------|
+| 1 | Eligible accounts | If the authenticated PSU does not hold any accounts matching the requested consent parameters (e.g. `AccountType`, `AccountSubType`, or the permissions requested), the consent will be set to `Rejected` with `error`: `invalid_request` and `error_description`: `user_lacks_eligible_accounts`. | LFI |
 
 ## GET [`/accounts`](/tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts)
 

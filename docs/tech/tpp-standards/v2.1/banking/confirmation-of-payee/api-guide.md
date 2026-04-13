@@ -493,7 +493,7 @@ result        = json.loads(base64.urlsafe_b64decode(payload_b64 + "=="))
 
 ### Response
 
-The LFI returns a signed JWT. Decode the payload to read the match result:
+The response is a signed JWT. Decode the payload to read the match result:
 
 | Field | Type | Description |
 |-------|------|-------------|

@@ -12,6 +12,15 @@ Each API resource registered in the Trust Framework carries a metadata schema sp
 
 The metadata schemas described below correspond to version **2.1** of the Open Finance UAE standards. The full schema definitions can be retrieved programmatically via [`GET /references/apifamilies`](/tech/lfi-api-hub/trust-framework/api/api-families).
 
+## Configuring Metadata
+
+1. Click the actions menu on the API resource and select **Configure API Metadata**.
+2. Enter the metadata fields for the API family. The required fields vary per family — see the sections below for details.
+
+<ClientOnly>
+    <Carousel :images="images1" />
+</ClientOnly>
+
 ## Account Information (`account-information`)
 
 | Field | Required | Type | Description |
@@ -122,3 +131,18 @@ These payment types require additional detail about which beneficiary models are
 |-------|----------|------|-------------|
 | **DeprecationDate** | Optional | `string` | The date (`YYYY-MM-DD`) from which this API version or resource is officially deprecated. After this date, no new consents SHOULD be created for this family, and migration to a newer version is strongly recommended. The API remains functional for existing users until the Retirement Date |
 | **RetirementDate** | Optional | `string` | The date (`YYYY-MM-DD`) on which this API version or resource will be permanently retired and become unavailable. After this date, requests will fail, and any existing consents or integrations will cease to function. TPPs MUST complete migration before this date |
+
+<script setup>
+const images1 = [
+  {
+    src: new URL('/images/raidiam/add-api/15.png', import.meta.url).href,
+    alt: 'Step 1',
+    title: 'Click the actions menu and select Configure API Metadata'
+  },
+  {
+    src: new URL('/images/raidiam/add-api/16.png', import.meta.url).href,
+    alt: 'Step 2',
+    title: 'Enter the metadata fields for the API family | The example shown is account-information with Account Sub Types set to CurrentAccount Savings CreditCard'
+  },
+]
+</script>

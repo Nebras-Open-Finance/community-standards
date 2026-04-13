@@ -9,8 +9,8 @@
  *      falling back to the base version.
  *   3. Downloads each YAML file to docs/public/openapi/{version}/{category}/.
  *
- * Usage:  node scripts/fetch-openapi-specs.mjs [--force] [--branch <name>]
- *   --force          Re-download even if the target directory already has files.
+ * Usage:  node scripts/fetch-openapi-specs.mjs [--skip-existing] [--branch <name>]
+ *   --skip-existing  Skip download if the target directory already has files.
  *   --branch <name>  Fetch from a specific branch (default: main).
  *
  * The branch can also be set via the SPECS_BRANCH env variable.
@@ -51,7 +51,7 @@ const BRANCH = parseBranch()
 const GITHUB_API = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents`
 const GITHUB_RAW = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}`
 
-const FORCE = process.argv.includes('--force')
+const SKIP_EXISTING = process.argv.includes('--skip-existing')
 
 // ─── Version config ────────────────────────────────────────────────────────────
 // Parse VERSIONS array from the TypeScript source so there is a single source of truth.
@@ -142,9 +142,9 @@ async function ghDownloadFile(remotePath) {
 async function fetchCategory(version, category) {
   const outDir = resolve(ROOT, 'docs', 'public', 'openapi', version, category)
 
-  // Skip if already populated (unless --force)
-  if (!FORCE && existsSync(outDir) && readdirSync(outDir).some(f => f.endsWith('.yaml'))) {
-    console.log(`  ✓ ${category} — already present (use --force to re-fetch)`)
+  // Skip if already populated (only when --skip-existing is set)
+  if (SKIP_EXISTING && existsSync(outDir) && readdirSync(outDir).some(f => f.endsWith('.yaml'))) {
+    console.log(`  ✓ ${category} — already present (omit --skip-existing to re-fetch)`)
     return
   }
 

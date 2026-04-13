@@ -23,17 +23,21 @@ This validation runs before the PSU is involved — there is no authentication o
 | 2 | Unsupported `AccountType` | If the consent's `AccountType` array contains a value that is not supported by the API Hub integration the consent was received on, respond with `invalid`. Each API Hub integration is scoped to a single segment (`Retail`, `SME`, or `Corporate`). If the LFI serves multiple segments, each segment MUST be configured as a separate API Hub integration because the API Hub has a single authorization endpoint. Validate that every requested `AccountType` is within scope of the integration that received the consent. |
 | 3 | Unsupported `AccountSubType` | If the consent's `AccountSubType` array contains a value not supported by this LFI, respond with `invalid`. For example, if the LFI does not offer `Mortgage` products but the consent requests `Mortgage`, the consent MUST be rejected at validation. |
 | 4 | Unsupported permissions | If the consent includes permissions that reference an endpoint the LFI has not yet delivered, respond with `invalid`. For example, if the consent includes `ReadStandingOrdersBasic` or `ReadStandingOrdersDetail` but `GET /accounts/{AccountId}/standing-orders` is not yet available, the consent MUST be rejected at validation. |
+| 5 | Invalid `BaseConsentId` | If the consent includes a `BaseConsentId`, validate that: <ul><li>The `BaseConsentId` references an existing consent known to the LFI.</li><li>The referenced consent is a Data Sharing consent (`authorization_details[0].type` is `urn:openfinanceuae:account-access-consent:*`).</li><li>The referenced consent does not itself have a `BaseConsentId` — if it does, the TPP has incorrectly linked to an intermediate consent in the chain rather than the root consent. The `BaseConsentId` must always reference the original root consent.</li></ul> If any of these checks fail, respond with `invalid`. |
 
 
-## Account Selection
+## Authorization — Account Selection
+
+The generic [Authorization requirements](/tech/lfi-api-hub/v2.1/consent-journey/authorization/requirements) apply to this journey. The rules below cover the additional account selection logic specific to Bank Data Sharing.
 
 During the consent authorization journey, the customer selects which of their accounts to share with the TPP. The LFI is responsible for presenting the eligible accounts and applying any filters the TPP has specified in the consent.
 
 | # | Field | Rule |
 |---|-------|------|
 | 1 | `consent.AccountType` | If the consent specifies `AccountType`, only present accounts whose type matches one of the specified values (`Retail`, `SME`, `Corporate`). If not specified, present accounts of all types supported by this API Hub integration. |
-| 2 | `consent.AccountSubType` | If the consent specifies `AccountSubType`, only present accounts whose subtype matches one of the specified values. If not specified, present accounts of all subtypes. If the authenticated PSU does not hold any accounts matching the requested `AccountSubType`, PATCH the consent to `Rejected` and call `doFail` with `error: invalid_request` and `error_description: user_lacks_eligible_accounts`. See [Authorization requirements](/tech/lfi-api-hub/v2.1/consent-journey/authorization/requirements) for details. |
-| 3 | Multiple selection | The account selection screen must allow the customer to select more than one account. A consent with no accounts selected must not be authorised. |
+| 2 | `consent.AccountSubType` | If the consent specifies `AccountSubType`, only present accounts whose subtype matches one of the specified values. If not specified, present accounts of all subtypes. |
+| 3 | No eligible accounts | If the authenticated PSU does not hold any accounts matching the requested consent parameters (e.g. `AccountType`, `AccountSubType`, or the permissions requested), PATCH the consent to `Rejected` and call `doFail` with `error`: `invalid_request` and `error_description`: `user_lacks_eligible_accounts`. See [Authorization requirements](/tech/lfi-api-hub/v2.1/consent-journey/authorization/requirements) for details. |
+| 4 | Multiple selection | The account selection screen must allow the customer to select more than one account. A consent with no accounts selected must not be authorised. |
 
 
 ## GET `/accounts`

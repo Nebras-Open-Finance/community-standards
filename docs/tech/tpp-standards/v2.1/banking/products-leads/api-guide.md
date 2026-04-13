@@ -175,7 +175,7 @@ async def get_all_products(tokens):
 
 ### Response structure
 
-Each LFI returns its own set of products. The `Data` array groups products by `LFIId`:
+Products are returned grouped by LFI. The `Data` array groups products by `LFIId`:
 
 ```json
 {
