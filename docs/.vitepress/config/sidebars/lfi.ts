@@ -488,5 +488,13 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         ]
       },
     ]
-  }
+  },
+
+  {
+    text: 'CAAP',
+    collapsed: true,
+    items: [
+      { text: 'Overview', link: `${BASE}/${VERSION}/caap/` },
+    ],
+  },
 ]
