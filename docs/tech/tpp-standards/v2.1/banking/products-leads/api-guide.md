@@ -114,7 +114,7 @@ See [Client Assertion](/tech/tpp-standards/security/tokens/client-assertion) for
 
 With a token for each LFI, call `GET /products` for all of them simultaneously. Aggregate the results into a single list before presenting them to the user.
 
-Include `x-fapi-interaction-id` on every request. See [Request Headers](/tech/tpp-standards/security/request-headers).
+Include `x-fapi-interaction-id` and `x-fapi-customer-ip-address` on every request. The `x-fapi-customer-ip-address` header is required because `GET /products` can only be called while a customer is in a live session with the TPP. See [Request Headers](/tech/tpp-standards/security/request-headers).
 
 ### Query parameters
 
@@ -136,8 +136,9 @@ const results = await Promise.all(
   tokens.map(lfi =>
     fetch(`${lfi.apiBase}/open-finance/product/v2.1/products`, {
       headers: {
-        'Authorization':         `Bearer ${lfi.access_token}`,
-        'x-fapi-interaction-id': crypto.randomUUID(),
+        'Authorization':              `Bearer ${lfi.access_token}`,
+        'x-fapi-interaction-id':      crypto.randomUUID(),
+        'x-fapi-customer-ip-address': customerIpAddress,
       },
       // agent: new https.Agent({ cert: transportCert, key: transportKey }),
     }).then(r => r.json())
@@ -156,8 +157,9 @@ async def fetch_products(client, lfi):
     res = await client.get(
         f"{lfi['api_base']}/open-finance/product/v2.1/products",
         headers={
-            "Authorization":         f"Bearer {lfi['access_token']}",
-            "x-fapi-interaction-id": str(uuid.uuid4()),
+            "Authorization":              f"Bearer {lfi['access_token']}",
+            "x-fapi-interaction-id":      str(uuid.uuid4()),
+            "x-fapi-customer-ip-address": customer_ip_address,
         },
     )
     return res.json()
@@ -241,6 +243,8 @@ An LFI may provide more than one of these fields. `ApplicationUri` is the prefer
 
 If the user instead chooses to request that the LFI contact them, the TPP submits a lead. The API Hub forwards it to the LFI and does **not** retain the data.
 
+As with `GET /products`, include `x-fapi-customer-ip-address` on every request — leads can only be submitted while a customer is in a live session with the TPP.
+
 ::: code-group
 
 ```typescript [Node.js]
@@ -251,9 +255,10 @@ const leadResponse = await fetch(
   {
     method:  'POST',
     headers: {
-      'Authorization':         `Bearer ${access_token}`,
-      'Content-Type':          'application/json',
-      'x-fapi-interaction-id': crypto.randomUUID(),
+      'Authorization':              `Bearer ${access_token}`,
+      'Content-Type':               'application/json',
+      'x-fapi-interaction-id':      crypto.randomUUID(),
+      'x-fapi-customer-ip-address': customerIpAddress,
     },
     body: JSON.stringify({
       Email:             'user@example.com',
@@ -279,9 +284,10 @@ import httpx, uuid, os
 lead_response = httpx.post(
     f"{api_base}/open-finance/product/v2.1/leads",
     headers={
-        "Authorization":         f"Bearer {access_token}",
-        "Content-Type":          "application/json",
-        "x-fapi-interaction-id": str(uuid.uuid4()),
+        "Authorization":              f"Bearer {access_token}",
+        "Content-Type":               "application/json",
+        "x-fapi-interaction-id":      str(uuid.uuid4()),
+        "x-fapi-customer-ip-address": customer_ip_address,
     },
     json={
         "Email":             "user@example.com",

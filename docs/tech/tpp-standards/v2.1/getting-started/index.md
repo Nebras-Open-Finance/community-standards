@@ -231,10 +231,18 @@ Navigate to the **Auth Flow** folder within **Single Instant Payment** and run t
 
 ### Step 3 – Authenticate and Authorize
 
-1. Authenticate with the LFI using your test credentials.
-2. Select the account to debit and authorize the payment consent.
+1. Authenticate with the LFI.
 
-> The exact UI will vary by LFI. For sandbox testing, see the [Model Bank guide](/tech/tpp-standards/sandbox/model-bank).
+<div v-if="creds" class="tip custom-block">
+  <p class="custom-block-title">Model Bank Credentials ({{ currentVersion }})</p>
+  <p>If you are using the <a href="/tech/tpp-standards/sandbox/model-bank">Model Bank</a>, the sandbox credentials are:</p>
+  <table>
+    <thead><tr><th>Username</th><th>Password</th></tr></thead>
+    <tbody><tr><td><code>{{ creds.username }}</code></td><td><code>{{ creds.password }}</code></td></tr></tbody>
+  </table>
+</div>
+
+2. Select the account to debit and authorize the payment consent.
 
 <ClientOnly>
     <Carousel :images="images5" />
@@ -278,6 +286,10 @@ A `201` response confirms the payment was successfully initiated.
 />
 
 <script setup>
+import { useModelBankCredentials } from '../../../../components/Composables/useModelBankCredentials'
+
+const { currentVersion, currentCredentials: creds } = useModelBankCredentials()
+
 const images1 =  [
   {
     src: new URL('/images/postman/postman_1_spotlight.png', import.meta.url).href,

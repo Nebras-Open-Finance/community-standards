@@ -1,3 +1,9 @@
+@media (max-width: 768px) {
+  .VPNavScreen a[href="/metrics"] {
+    display: none;
+  }
+}
+
 .homepage {
   background-color: white;
   color: black;
@@ -113,6 +119,25 @@
 .http-put    { color: #8b5cf6; }
 .http-patch  { color: #f59e0b; }
 .http-delete { color: #ef4444; }
+
+/* Organisation header with logo next to heading in doc-repository pages */
+.org-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.org-header h1 {
+  margin: 0;
+}
+
+.org-logo {
+  height: 48px;
+  width: 48px;
+  object-fit: contain;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
 
 @media (max-width: 768px) {
   .section-heading {

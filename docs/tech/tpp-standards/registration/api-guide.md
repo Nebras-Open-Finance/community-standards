@@ -90,4 +90,4 @@ Registration does not automatically grant access. Once a TPP submits a registrat
 Registration with the [model bank](/tech/tpp-standards/sandbox/model-bank) is activated automatically — no manual approval is required. For all other LFIs, activation must be performed by the LFI via their Admin Portal before the TPP can make API calls.
 :::
 
-For guidance on how an LFI activates a TPP's registration request via their Admin Portal, please review the [TPP Activation page](/tech/lfi-api-hub/admin-portal/tpp-activation).
+For guidance on how an LFI activates a TPP's registration request via their Admin Portal, please review the [TPP Management & Activation page](/tech/lfi-api-hub/v2.1/api-hub/admin-portal/tpp-activation).

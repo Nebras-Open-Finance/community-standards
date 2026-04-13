@@ -188,7 +188,7 @@ If you need to check the current state of a consent on demand, call the consent 
 ```typescript [Node.js]
 const params = new URLSearchParams({
   grant_type:            'client_credentials',
-  scope:                 'accounts',   // or 'payments' for service initiation
+  scope:                 'openid accounts',   // or 'openid payments' for service initiation
   client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
   client_assertion:      await buildClientAssertion(),
 })

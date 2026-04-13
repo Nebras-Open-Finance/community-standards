@@ -2,9 +2,12 @@
   <ConsentManagementDetail
     v-if="selectedConnection"
     :connection="selectedConnection"
+    :all-connections="resolvedConnections"
+    :perspective="perspective"
     @back="selectedConnection = null"
+    @navigate="selectedConnection = $event"
   />
-  <div v-else class="consent-management-frame">
+  <div v-else class="consent-management-frame" :class="{ 'consent-management-lfi': isLfi }">
     <div class="consent-management-screen-name">
       <div class="consent-management-screen-bar"></div>
       <svg class="consent-management-arrow-left" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -12,7 +15,7 @@
         <path d="M14.5 5.5L8.5 12L14.5 18.5" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"
           stroke-linejoin="round" />
       </svg>
-      <div class="consent-management-screen-title">TPP</div>
+      <div class="consent-management-screen-title">{{ barTitle }}</div>
     </div>
 
     <div class="consent-management-card-shell">
@@ -67,7 +70,7 @@
 
             <div v-if="isFilterPanelOpen" class="consent-management-filter-fields">
               <label class="consent-management-filter-field">
-                <span class="consent-management-filter-field-label">LFI Name</span>
+                <span class="consent-management-filter-field-label">{{ filterEntityLabel }}</span>
                 <select v-model="filters.lfiName" class="consent-management-filter-select" @change="onFilterSelected">
                   <option v-for="option in lfiOptions" :key="option" :value="option">{{ option }}</option>
                 </select>
@@ -149,7 +152,7 @@
             @keydown.space.prevent="handleManage(connection)"
           >
             <div class="consent-management-connection-header">
-              <div class="consent-management-connection-name">[LFI {{ connection.lfiDigit }}]</div>
+              <div class="consent-management-connection-name">[{{ entityLabel }} {{ connection.lfiDigit }}]</div>
               <div class="consent-management-status" :class="displayStatusClass(connection)">{{ displayStatus(connection) }}</div>
             </div>
             <div v-if="connectionCountLabel(connection)" class="consent-management-connection-count">
@@ -211,10 +214,19 @@ const props = defineProps({
   mode: {
     type: String,
     default: 'all' // 'all' | 'data-sharing' | 'payments'
+  },
+  perspective: {
+    type: String,
+    default: 'tpp' // 'tpp' | 'lfi'
   }
 })
 
 const { sharedState } = useSharedState()
+
+const isLfi = computed(() => props.perspective === 'lfi')
+const barTitle = computed(() => isLfi.value ? 'LFI' : 'TPP')
+const entityLabel = computed(() => isLfi.value ? 'TPP' : 'LFI')
+const filterEntityLabel = computed(() => isLfi.value ? 'TPP Name' : 'LFI Name')
 const selectedConnection = ref(null)
 const activeTab = ref('current')
 const isFilterPanelOpen = ref(false)
@@ -386,7 +398,11 @@ function normalizeConnection(connection, fallback) {
         ? (VALID_PAYMENT_STATUSES.includes(fallback?.paymentStatus) ? fallback.paymentStatus : undefined)
         : undefined)
 
+  const id = connection?.id ?? fallback?.id ?? undefined
+  const baseConsentId = connection?.baseConsentId ?? fallback?.baseConsentId ?? undefined
+
   return {
+    id,
     lfiDigit,
     connectedAccountNumber,
     status,
@@ -396,17 +412,37 @@ function normalizeConnection(connection, fallback) {
     paymentDate,
     paymentAmount: normalizedPaymentAmount,
     maskedIban,
-    paymentStatus
+    paymentStatus,
+    baseConsentId
   }
 }
 
 const connectionSubtitle = computed(() => {
+  if (isLfi.value) {
+    if (props.mode === 'data-sharing') return 'These are the third party providers connected to your accounts for data sharing'
+    if (props.mode === 'payments') return 'These are the payment permissions you have given to third party providers'
+    return 'These are the third party providers connected to your accounts for data sharing and payments'
+  }
   if (props.mode === 'data-sharing') return 'These are the account providers we are connected to for data sharing'
   if (props.mode === 'payments') return 'These are the payment permissions you have given to us'
   return 'These are the account providers we are connected to for data sharing and payments'
 })
 
 const tooltipText = computed(() => {
+  if (isLfi.value) {
+    if (props.mode === 'data-sharing') return {
+      p1: 'This page gives you an overview of the data-sharing permissions you have given to third party providers.',
+      p2: 'They will continue to access data on your behalf until the permission ends or you cancel.'
+    }
+    if (props.mode === 'payments') return {
+      p1: 'This page gives you an overview of the payment permissions you have given to third party providers.',
+      p2: 'They will continue to make payments on your behalf, where applicable, until the permission ends or you cancel.'
+    }
+    return {
+      p1: 'This page gives you an overview of all the data-sharing and payment permissions you have given to third party providers.',
+      p2: 'They will continue to access data and make payments on your behalf, where applicable, until the permission ends or you cancel.'
+    }
+  }
   if (props.mode === 'data-sharing') return {
     p1: 'This page gives you an overview of the data-sharing permissions you have given to us.',
     p2: 'We will continue to share data on your behalf until the permission ends or you cancel.'
@@ -448,7 +484,7 @@ const historyConnections = computed(() =>
 
 const displayedConnections = computed(() =>
   (activeTab.value === 'history' ? historyConnections.value : currentConnections.value).filter(connection => {
-    if (filters.lfiName !== 'All' && `LFI ${connection.lfiDigit}` !== filters.lfiName) return false
+    if (filters.lfiName !== 'All' && `${entityLabel.value} ${connection.lfiDigit}` !== filters.lfiName) return false
     if (filters.consentType !== 'All' && connection.type !== filters.consentType) return false
     if (filters.consentState !== 'All' && connection.status !== filters.consentState) return false
     return true
@@ -471,8 +507,9 @@ const appliedFilters = computed(() => {
 })
 
 const lfiOptions = computed(() => {
-  const values = Array.from(new Set(resolvedConnections.value.map(connection => `LFI ${connection.lfiDigit}`)))
-    .sort((a, b) => Number(a.replace('LFI ', '')) - Number(b.replace('LFI ', '')))
+  const prefix = entityLabel.value
+  const values = Array.from(new Set(resolvedConnections.value.map(connection => `${prefix} ${connection.lfiDigit}`)))
+    .sort((a, b) => Number(a.replace(`${prefix} `, '')) - Number(b.replace(`${prefix} `, '')))
   return ['All', ...values]
 })
 
@@ -1153,5 +1190,10 @@ function displayStatusClass(connection) {
   line-height: 100%;
   letter-spacing: -0.03em;
   cursor: pointer;
+}
+
+/* ── LFI perspective overrides ─────────────────────────────────────── */
+.consent-management-lfi .consent-management-screen-bar {
+  background: #FD6436;
 }
 </style>

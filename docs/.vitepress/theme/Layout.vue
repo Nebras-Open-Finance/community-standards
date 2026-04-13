@@ -3,6 +3,7 @@ import DefaultTheme from 'vitepress/theme'
 import { useRoute } from 'vitepress'
 import { computed } from 'vue'
 import VersionDropdown from '../../components/VersionDropdown.vue'
+import DocRepositorySearch from '../../components/DocRepositorySearch.vue'
 
 const route = useRoute()
 
@@ -31,8 +32,13 @@ const navTitle = computed(() => {
     return { title: `API Specs – ${CURRENT_VERSION}`, link: '/tech/api-sepcs/' }
 
 
+  if (path.startsWith('/doc-repository'))
+    return { title: 'Document Repository', link: '/doc-repository/' }
+
   return { title: 'Developer Docs', link: '/' }
 })
+
+const isDocRepository = computed(() => (route.path ?? '').startsWith('/doc-repository'))
 </script>
 
 <template>
@@ -45,6 +51,10 @@ const navTitle = computed(() => {
 
     <template #nav-bar-content-after>
       <VersionDropdown />
+    </template>
+
+    <template v-if="isDocRepository" #sidebar-nav-before>
+      <DocRepositorySearch />
     </template>
 
     <template #nav-bar-content-before>

@@ -34,7 +34,10 @@
 </template>
 
 <script setup>
-import { state, setSection, toggleSidebar } from './stores/dashboardStore.js'
+import { onUnmounted } from 'vue'
+import { state, setSection, toggleSidebar, resetFilters } from './stores/dashboardStore.js'
+
+onUnmounted(() => resetFilters())
 import { NAV_SECTIONS } from './config/dashboardCharts.js'
 import PageHeader from './Components/PageHeader.vue'
 import DashboardNavbar      from './DashboardNavbar.vue'

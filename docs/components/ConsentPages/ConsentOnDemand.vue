@@ -95,14 +95,14 @@
                                                                 <div v-if="show_payment_setup" class="consent-page-account-subtext-container-2">
                                     <div class="consent-page-account-subtext-part">Reference</div>
                                         <div class="consent-page-account-amount">
-                                            {{sharedState?.value?.consent?.DebtorReference }}
+                                            {{consentData?.DebtorReference }}
                                         </div>
                                 </div>
 
                                 <div v-if="show_payment_setup" class="consent-page-account-subtext-container-2">
                                     <div class="consent-page-account-subtext-part">Payment Purpose</div>
                                         <div class="consent-page-account-amount">
-                                             {{ getPurposeDescription(sharedState?.value?.consent?.PaymentPurposeCode) }}
+                                             {{ getPurposeDescription(consentData?.PaymentPurposeCode) }}
                                         </div>
                                 </div>
 
@@ -129,13 +129,13 @@
                                                     <div v-if="show_payment_rules" class="consent-page-account-subtext-container-2">
                                     <div class="consent-page-account-subtext-part">First Payment Date</div>
                                         <div class="consent-page-account-amount">
-                                            {{formatDate(sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.PeriodStartDate)}}
+                                            {{formatDate(consentData?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.PeriodStartDate)}}
                                         </div>
                                 </div>
                                                                 <div v-if="show_payment_rules" class="consent-page-account-subtext-container-2">
                                     <div class="consent-page-account-subtext-part">Expiry Date</div>
                                         <div class="consent-page-account-amount">
-                                            {{formatDate(sharedState?.value?.consent?.ExpirationDateTime)}}
+                                            {{formatDate(consentData?.ExpirationDateTime)}}
                                         </div>
                                 </div>
 
@@ -146,35 +146,35 @@
                                 </div>
 
 
-                                                                <div v-if="show_payment_rules && sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeNumberOfPayments" class="consent-page-account-subtext-container-2">
+                                                                <div v-if="show_payment_rules && consentData?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeNumberOfPayments" class="consent-page-account-subtext-container-2">
                                     <div class="consent-page-account-subtext-part">Total Number of Payments allowed</div>
  <div class="consent-page-account-amount-container">
                                     <div class="consent-page-account-amount">
-                                        {{sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeNumberOfPayments }}
+                                        {{consentData?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeNumberOfPayments }}
                                     </div>
 
                                 </div>
                                 </div>
 
-                                                                                                <div v-if="show_payment_rules && sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments" class="consent-page-account-subtext-container-2">
+                                                                                                <div v-if="show_payment_rules && consentData?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments" class="consent-page-account-subtext-container-2">
                                     <div class="consent-page-account-subtext-part">Total Value allowed</div>
- <DirhamAmount style="font-weight: 300;" :amount="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments?.Amount" />
+ <DirhamAmount style="font-weight: 300;" :amount="consentData?.ControlParameters?.ConsentSchedule?.MultiPayment?.MaximumCumulativeValueOfPayments?.Amount" />
                                 </div>
 
-                                                                                                <div v-if="show_payment_rules && sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Controls?.MaximumCumulativeNumberOfPaymentsPerPeriod" class="consent-page-account-subtext-container-2">
-                                    <div class="consent-page-account-subtext-part">Max Payments per {{sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.PeriodType }}</div>
+                                                                                                <div v-if="show_payment_rules && consentData?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Controls?.MaximumCumulativeNumberOfPaymentsPerPeriod" class="consent-page-account-subtext-container-2">
+                                    <div class="consent-page-account-subtext-part">Max Payments per {{consentData?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.PeriodType }}</div>
  <div class="consent-page-account-amount-container">
                                     <div class="consent-page-account-amount">
-                                        {{sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Controls?.MaximumCumulativeNumberOfPaymentsPerPeriod }}
+                                        {{consentData?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Controls?.MaximumCumulativeNumberOfPaymentsPerPeriod }}
                                     </div>
 
                                 </div>
                                 </div>
 
 
-                                                                                                                                <div v-if="show_payment_rules && sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Controls?.MaximumCumulativeValueOfPaymentsPerPeriod?.Amount" class="consent-page-account-subtext-container-2">
-                                    <div class="consent-page-account-subtext-part">Max Value per {{sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.PeriodType }}</div>
- <DirhamAmount style="font-weight: 300;" :amount="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Controls?.MaximumCumulativeValueOfPaymentsPerPeriod?.Amount" />
+                                                                                                                                <div v-if="show_payment_rules && consentData?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Controls?.MaximumCumulativeValueOfPaymentsPerPeriod?.Amount" class="consent-page-account-subtext-container-2">
+                                    <div class="consent-page-account-subtext-part">Max Value per {{consentData?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.PeriodType }}</div>
+ <DirhamAmount style="font-weight: 300;" :amount="consentData?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Controls?.MaximumCumulativeValueOfPaymentsPerPeriod?.Amount" />
                                 </div>
 
                 </div>
@@ -383,14 +383,14 @@ import { getPurposeDescription } from '../Composables/aaniPaymentCodes.ts'
 import { formatDate } from '../Composables/formatDate.ts'
 import DirhamAmount from './DirhamAmount.vue'
 
-const { sharedState } = useSharedState()
+const { sharedState, consentData } = useSharedState()
 
 const show_payment_setup = ref(true)
 const show_payment_rules = ref(true)
 const show_from_account = ref(true)
 const show_to_account = ref(true)
 const show_terms = ref(false)
-const periodicSchedule = computed(() => sharedState?.value?.value?.consent?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule)
+const periodicSchedule = computed(() => consentData.value?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule)
 const primaryAmountLabel = computed(() => periodicSchedule.value?.Controls?.MaximumIndividualAmount ? 'Max per Payment' : 'Amount')
 const primaryAmount = computed(() => periodicSchedule.value?.Controls?.MaximumIndividualAmount?.Amount ?? periodicSchedule.value?.Amount?.Amount)
 

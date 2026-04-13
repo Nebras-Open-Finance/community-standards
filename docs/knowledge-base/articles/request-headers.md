@@ -28,6 +28,28 @@ Without it, tracing a failed payment across three systems means reconciling time
 
 **When debugging:** if a request fails, search your logs for the interaction ID to pull the full request and response together. Pass it to Nebras when raising a support case — it is the single fastest way to get an end-to-end trace.
 
+::: warning The format must be exactly UUID v4 — silent discard if invalid
+The API Hub validates the `x-fapi-interaction-id` value. If it is not a valid UUID v4, **the request will not fail** — but the interaction ID will be silently discarded and will not be stored at the API Hub. This means the ID you logged will not match anything on the API Hub side, and end-to-end tracing becomes impossible.
+
+
+::: code-group
+
+```js [Node.js]
+import { v4 as uuidv4 } from 'uuid'
+const interactionId = uuidv4()
+// e.g. "7b5b4e3c-1d2a-4f5e-8c3b-9a0d6e2f1b4c"
+```
+
+```python [Python]
+import uuid
+interaction_id = str(uuid.uuid4())
+# e.g. "7b5b4e3c-1d2a-4f5e-8c3b-9a0d6e2f1b4c"
+```
+:::
+
+Values that look similar but are not RFC 4122 UUID v4 will be discarded without any error response.
+:::
+
 ::: tip Always send it
 The header is defined as *recommended* in FAPI 2.0, but in practice it is essential. There is no meaningful cost to sending it and significant cost to omitting it when you need to investigate a problem.
 :::

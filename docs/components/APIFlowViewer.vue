@@ -126,8 +126,7 @@ onUnmounted(() => {
             <a
               v-if="downloadUrl"
               :href="downloadUrl"
-              target="_blank"
-              rel="noopener noreferrer"
+              download
               class="afv-btn-text afv-download"
             >Download Full API Flow ↓</a>
             <button class="afv-btn afv-close" @click="close" title="Close (Esc)">✕</button>

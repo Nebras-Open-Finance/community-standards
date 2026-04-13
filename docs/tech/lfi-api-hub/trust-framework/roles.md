@@ -10,14 +10,18 @@ aside: false
 
 The Trust Framework defines the rights and permissions granted to each organisation and its applications within the Open Finance ecosystem.
 
-Roles are assigned to organisations during onboarding based on the services they are licensed to provide under the Central Bank of the UAE. As an LFI, your role determines which Open Finance API families you can publish and what capabilities you make available to TPPs.
+Roles are assigned to organisations during onboarding based on the services they provide. All LFIs are assigned the **LFI role**, which enables them to make operational calls to the API Hub. In addition, you will be assigned the relevant TPP roles corresponding to the Open Finance services your institution offers, so that you can test end-to-end flows as a TPP would:
 
-When creating an application, include the relevant role required for your integration with the API Hub.
+- A **Bank** providing both payment initiation and data sharing services will be assigned **BSIP** and **BDSP**.
+- An **Insurer** providing data sharing services will be assigned **IDSP**.
 
 ## Defined Roles for LFIs
 
-| **Role** | **Description** | **API Families** |
-|----------|-----------------|-----------------|
-| **ASPSP**<br/>*Account Servicing Payment Service Provider* | Authorises your organisation to operate as an Open Finance API provider — publishing API resources, issuing consents, and responding to authorised TPP requests. | `payment`, `account-information`, `confirmation`, `product` |
+| **Role** | **Description** | **Typical Grant Types** |
+|---------|-----------------|--------------------------|
+| **LFI**<br/>*Licensed Financial Institution* | Assigned to all LFIs. Used by the C3-hh-cm-client to make operational calls to the API Hub (e.g. `GET /auth`, `PATCH /consents/{consentId}`). | `client_credentials` |
+| **BSIP**<br/>*Bank Service Initiation Provider* | Assigned to banks offering payment initiation services. Used to test service initiation flows as a TPP. | `client_credentials`<br/>`authorization_code`<br/>`refresh_token` |
+| **BDSP**<br/>*Bank Data Sharing Provider* | Assigned to banks offering account data sharing services. Used to test data sharing flows as a TPP. | `client_credentials`<br/>`authorization_code`<br/>`refresh_token` |
+| **IDSP**<br/>*Insurance Data Sharing Provider* | Assigned to insurers offering insurance data sharing services. Used to test insurance data flows as a TPP. | `client_credentials`<br/>`authorization_code`<br/>`refresh_token` |
 
-LFIs are assigned the **ASPSP** role upon onboarding. This role is the gateway to exposing your Open Finance APIs and making them discoverable by TPPs across the ecosystem.
+When creating an application, ensure you assign the correct roles for its purpose. Your **C3-hh-cm-client** must have the **LFI role only**; your TPP test client must have the appropriate TPP roles (e.g. **BDSP** for data sharing). See [Creating the C3-hh-cm-client](./creating-c3-application) and the [TPP Standards — Creating an Application](/tech/tpp-standards/trust-framework/creating-an-application) for guidance.

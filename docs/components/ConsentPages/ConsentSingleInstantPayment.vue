@@ -101,7 +101,7 @@
                                     <div class="consent-page-title-text-2">
                                         <DirhamAmount style="font-weight: 300;"
                                             iconColor="#0C1441"
-                                            :amount="sharedState?.value?.consent?.ControlParameters?.ConsentSchedule?.SinglePayment?.Amount?.Amount"
+                                            :amount="consentData?.ControlParameters?.ConsentSchedule?.SinglePayment?.Amount?.Amount"
                                         />
                                     </div>
 
@@ -115,14 +115,14 @@
                                 <div class="consent-page-account-subtext-container-2">
                                     <div class="consent-page-account-subtext-part">Payment Reference</div>
                                         <div class="consent-page-account-amount">
-                                             {{sharedState?.value?.consent?.DebtorReference }}
+                                             {{consentData?.DebtorReference }}
                                         </div>
                                 </div>
 
     <div class="consent-page-account-subtext-container-2">
                                     <div class="consent-page-account-subtext-part">Payment Purpose</div>
                                         <div class="consent-page-account-amount">
-                                            {{ getPurposeDescription(sharedState?.value?.consent?.PaymentPurposeCode) }}
+                                            {{ getPurposeDescription(consentData?.PaymentPurposeCode) }}
                                         </div>
 
                                 </div>
@@ -292,7 +292,7 @@ import { useSharedState } from '../Composables/useSharedState.ts'
 import { getPurposeDescription } from '../Composables/aaniPaymentCodes.ts'
 import DirhamAmount from './DirhamAmount.vue'
 
-const { sharedState } = useSharedState()
+const { sharedState, consentData } = useSharedState()
 
 const show_payee_information = ref(true)
 const show_payer_information = ref(true)

@@ -30,6 +30,7 @@
 
 <script setup>
 import { onMounted } from 'vue'
+import { CURRENT_VERSION } from '../.vitepress/version'
 
 const props = defineProps({
   spec: {
@@ -50,7 +51,11 @@ const props = defineProps({
   },
   overrideServers: {
     type: Array,
-    default: [{ url: 'https://rs1.[LFICODE].apihub.openfinance.ae' }, { url: 'https://rs1.[LFICODE].preprod.apihub.openfinance.ae' }, { url: 'https://rs1.altareq1.sandbox.apihub.openfinance.ae'}]
+    default: () => [
+      { url: `https://rs1.[LFICODE].apihub.openfinance.ae/open-finance/account-information/${CURRENT_VERSION}` },
+      { url: `https://rs1.[LFICODE].preprod.apihub.openfinance.ae/open-finance/account-information/${CURRENT_VERSION}` },
+      { url: `https://rs1.altareq1.sandbox.apihub.openfinance.ae/open-finance/account-information/${CURRENT_VERSION}` },
+    ]
   },
   hideSecurity: {
     type: Boolean,

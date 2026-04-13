@@ -1,25 +1,26 @@
 {
-  "name": "community-specs",
+  "name": "community-standards",
   "version": "1.0.0",
   "description": "Community-driven, experimental documentation and reference material for the UAE Open Finance standards. This repository is not official and is used to gather suggestions, trial modern documentation tooling and explore improvements to the Open Finance specifications.",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev:docs": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
+    "fetch:specs": "node scripts/fetch-openapi-specs.mjs",
+    "dev:docs": "node scripts/fetch-openapi-specs.mjs && vitepress dev docs",
+    "docs:build": "node scripts/fetch-openapi-specs.mjs --force && vitepress build docs",
     "docs:serve": "vitepress serve docs"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AlTareq-OpenFinance/community-specs.git"
+    "url": "git+https://github.com/Nebras-Open-Finance/community-standards.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/AlTareq-OpenFinance/community-specs/issues"
+    "url": "https://github.com/Nebras-Open-Finance/community-standards/issues"
   },
-  "homepage": "https://github.com/AlTareq-OpenFinance/community-specs#readme",
+  "homepage": "https://github.com/Nebras-Open-Finance/community-standards#readme",
   "devDependencies": {
     "@redocly/cli": "^2.20.0",
     "concurrently": "^9.2.1",

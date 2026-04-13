@@ -21,7 +21,126 @@ The `Risk` structure is the same at both stages. `DebtorAccount` is **only prese
 
 Payment consents are stored centrally at **Nebras**, the UAE Open Finance Hub. Because Nebras acts as an intermediary between TPPs and LFIs, PII is encrypted end-to-end before it leaves the TPP — ensuring that Nebras, and any other party in transit, cannot read the sensitive payment details.
 
-The encryption uses the destination LFI's public key (see [Message Encryption](/tech/tpp-standards/security/fapi/message-encryption)). Only the LFI can decrypt the payload. Nebras passes the opaque JWE through without inspection — all PII validation is performed by the LFI after the consent is authorised.
+The encryption uses the destination LFI's public key (see [Message Encryption](/tech/tpp-standards/security/fapi/message-encryption) for full cryptographic details). Only the LFI can decrypt the payload. Nebras passes the opaque JWE through without inspection — all PII validation is performed by the LFI after the consent is authorised.
+
+## Steps to encrypt PII
+
+The `PersonalIdentifiableInformation` field MUST be sent as a compact JWE — a signed-then-encrypted token (Nested JWT). The process is:
+
+1. **Build the PII JSON** — construct the PII object for the stage you are at (`POST /par` or `POST /payments`). See [Structure of the PII object](#structure-of-the-pii-object) below.
+2. **Sign** — sign the PII payload as a JWS using your TPP signing key. The JWS MUST include standard claims (`iat`, `exp`, `jti`, `iss`, `sub`, `aud`).
+3. **Fetch the LFI's encryption key** — retrieve the LFI's JWKS and select the key where `"use": "enc"`.
+4. **Encrypt** — encrypt the signed JWS into a compact JWE using `RSA-OAEP-256` / `A256GCM`.
+5. **Embed** — place the resulting JWE string in the `PersonalIdentifiableInformation` field of your request.
+
+### Example
+
+::: code-group
+
+```typescript [Node.js (jose)]
+import { SignJWT, importJWK, CompactEncrypt } from 'jose'
+import { v4 as uuidv4 } from 'uuid'
+
+async function encryptPII(
+  piiPayload: Record<string, unknown>,
+  signingKey: KeyLike,
+  signingKeyId: string,
+  signingAlg: string,
+  clientId: string,
+  audience: string,
+  jwksUri: string
+): Promise<string> {
+  const now = Math.floor(Date.now() / 1000)
+
+  // 1. Sign the PII payload
+  const jws = await new SignJWT(piiPayload)
+    .setProtectedHeader({ alg: signingAlg, kid: signingKeyId })
+    .setIssuedAt(now)
+    .setExpirationTime(now + 300)
+    .setJti(uuidv4())
+    .setIssuer(clientId)
+    .setSubject(clientId)
+    .setAudience(audience)
+    .sign(signingKey)
+
+  // 2. Fetch the LFI's JWKS and find the encryption key
+  const response = await fetch(jwksUri)
+  const { keys } = await response.json()
+  const encKeyJwk = keys.find((k: any) => k.use === 'enc')
+  if (!encKeyJwk) throw new Error('No encryption key (use: enc) found in JWKS')
+
+  // 3. Encrypt the signed JWS into a JWE
+  const publicKey = await importJWK(encKeyJwk, 'RSA-OAEP-256')
+  const jwe = await new CompactEncrypt(new TextEncoder().encode(jws))
+    .setProtectedHeader({
+      alg: 'RSA-OAEP-256',
+      enc: 'A256GCM',
+      kid: encKeyJwk.kid,
+    })
+    .encrypt(publicKey)
+
+  return jwe // → place this string in PersonalIdentifiableInformation
+}
+```
+
+```python [Python (python-jose)]
+from jose import jws, jwe
+import requests
+import json
+import uuid
+import time
+
+def encrypt_pii(
+    pii_payload: dict,
+    signing_key: str,
+    signing_key_id: str,
+    signing_alg: str,
+    client_id: str,
+    audience: str,
+    jwks_uri: str,
+) -> str:
+    now = int(time.time())
+
+    # 1. Sign the PII payload
+    claims = {
+        **pii_payload,
+        "iat": now,
+        "exp": now + 300,
+        "jti": str(uuid.uuid4()),
+        "iss": client_id,
+        "sub": client_id,
+        "aud": audience,
+    }
+    signed_jwt = jws.sign(
+        json.dumps(claims).encode(),
+        signing_key,
+        algorithm=signing_alg,
+        headers={"kid": signing_key_id},
+    )
+
+    # 2. Fetch the LFI's JWKS and find the encryption key
+    response = requests.get(jwks_uri)
+    keys = response.json()["keys"]
+    enc_key = next((k for k in keys if k.get("use") == "enc"), None)
+    if not enc_key:
+        raise ValueError("No encryption key (use: enc) found in JWKS")
+
+    # 3. Encrypt the signed JWS into a JWE
+    return jwe.encrypt(
+        signed_jwt.encode(),
+        enc_key,
+        algorithm="RSA-OAEP-256",
+        encryption="A256GCM",
+    ).decode()  # → place this string in PersonalIdentifiableInformation
+```
+
+:::
+
+For the full breakdown of JWKS discovery, key selection, and JWE structure, see [Message Encryption](/tech/tpp-standards/security/fapi/message-encryption).
+
+::: tip Testing on the sandbox
+The sandbox provides an **O3 Utility endpoint** that accepts your private key and JWKS URL and returns a ready-made encrypted PII token — useful for validating your payload structure before writing your own encryption code. See [O3 Sandbox Utilities](/tech/tpp-standards/security/fapi/o3-utils#example-1-o3-util-prepare-encrypted-pii).
+:::
 
 ## Structure of the PII object
 

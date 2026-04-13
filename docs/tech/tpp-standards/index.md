@@ -5,7 +5,7 @@ aside: false
 ---
 
 
-# TPP Standards – United Arab Emirates <Badge type="tip" text="v2.1" />
+# TPP Standards <Badge type="tip" text="v2.1" />
 
 The Open Finance Standards in the United Arab Emirates form the technical and operational foundation for secure, interoperable, and customer-consented data sharing across the financial ecosystem.
 
