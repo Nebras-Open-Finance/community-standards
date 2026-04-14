@@ -251,7 +251,15 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
           { text: 'Overview', link: `${BASE}/${VERSION}/banking/data-sharing` },
           { text: 'Requirements', link: `${BASE}/${VERSION}/banking/data-sharing/requirements` },
           { text: 'User Experience', link: `${BASE}/${VERSION}/banking/data-sharing/user-journeys` },
-          { text: 'API Guide', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide` },
+          {
+            text: 'API Guide',
+            collapsed: true,
+            items: [
+              { text: 'Overview', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide` },
+              { text: 'Pagination', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide/pagination` },
+              { text: 'Encrypted FinanceRates', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide/finance-rates` },
+            ],
+          },
           {
             text: 'API Reference',
             collapsed: true,

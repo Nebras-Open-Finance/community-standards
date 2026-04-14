@@ -54,6 +54,10 @@ Customise the request body fields below and watch the **Consent** and **Authoris
 import { ref, watch } from 'vue'
 import { useSharedState } from '../../../../../../../../components/Composables/useSharedState.ts'
 import { purposeCodes } from '../../../../../../../../components/Composables/aaniPaymentCodes.ts'
+import { futureDateTime, futureDateOnly } from '../../../../../../../../components/Composables/futureDates.ts'
+
+const expirationDateTime = futureDateTime(330)
+const periodStartDate = futureDateOnly(14)
 
 
 const { sharedState } = useSharedState()
@@ -144,9 +148,9 @@ const initialFormDataSIP = ref({
                 "consent": {
                     "ConsentId": "b8f42378-10ac-46a1-8d20-4e020484216d",
                     "IsSingleAuthorization": true,
-                    "ExpirationDateTime": "2026-12-25T23:00:00.000Z",
+                    "ExpirationDateTime": expirationDateTime,
                     "BaseConsentId": "b9f42378-10ac-46a1-8d20-4e020484216d",
-                    "AuthorizationExpirationDateTime": "2026-12-25T23:00:00.000Z",
+                    "AuthorizationExpirationDateTime": expirationDateTime,
                     "Permissions": ["ReadAccountsBasic", "ReadAccountsDetail", "ReadBalances", "ReadRefundAccount"],
                     "ControlParameters": {
                         "ConsentSchedule": {
@@ -159,7 +163,7 @@ const initialFormDataSIP = ref({
                                 "PeriodicSchedule": {
                                     "Type": "VariablePeriodicSchedule",
                                     "PeriodType": "Week",
-                                    "PeriodStartDate": "2026-12-01",
+                                    "PeriodStartDate": periodStartDate,
                                     "MaximumIndividualAmount": {
                                             "Amount": "200.00",
                                             "Currency": "AED"

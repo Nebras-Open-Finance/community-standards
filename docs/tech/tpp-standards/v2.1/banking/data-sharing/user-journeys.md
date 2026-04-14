@@ -36,6 +36,9 @@ Customise the `authorization_details` object below and watch the **Consent** and
 
 <script setup>
 import { ref } from 'vue'
+import { futureDateTime } from '../../../../../components/Composables/futureDates.ts'
+
+const expirationDateTime = futureDateTime(330)
 
 
 const myCustomValidator = (value) => {
@@ -89,7 +92,7 @@ if (
 const initialFormData = ref({
                 "type": "urn:openfinanceuae:account-access-consent:v2.1",
                 "consent": {
-                    "ExpirationDateTime": "2026-12-25T23:00:00.000Z",
+                    "ExpirationDateTime": expirationDateTime,
                     "OnBehalfOf": {
                         "TradingName": "Nebras",
                         "LegalName": "Nebras Open Finance Ltd",

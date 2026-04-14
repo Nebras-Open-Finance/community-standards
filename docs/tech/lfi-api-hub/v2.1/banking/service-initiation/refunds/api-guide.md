@@ -83,8 +83,8 @@ All error bodies must include `errorCode` and `errorMessage`.
 
 | `errorCode` | `errorMessage` | When to use |
 |-------------|----------------|-------------|
-| `GenericError` | `The debtor account is not in a state where it can receive a refund credit transaction.` | The account is unable to receive a credit transaction refund — e.g. temporarily restricted or suspended |
-| `GenericError` | `The debtor account is blocked from receiving payments.` | The account is permanently blocked from receiving payments — e.g. closed or frozen |
+| `Consent.AccountTemporarilyBlocked` | `The debtor account is blocked from receiving payments.` | The account is blocked from receiving payments for a temporary reason — e.g. account status is `Suspended`, or the account is otherwise unable to receive a credit transaction refund on a transient basis |
+| `Consent.PermanentAccountAccessFailure` | `The debtor account is blocked from receiving payments.` | The account is blocked from receiving payments permanently — e.g. account status is `Closed`, `Deceased`, or `Unclaimed` |
 
 ## API Reference
 

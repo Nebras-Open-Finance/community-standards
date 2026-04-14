@@ -190,4 +190,5 @@ All error bodies must include `errorCode` and `errorMessage`.
 
 | `errorCode` | `errorMessage` | When to use |
 |-------------|----------------|-------------|
-| `GenericError` | `The account is blocked from receiving payments.` | The account is blocked from receiving payments — e.g. closed or frozen |
+| `Consent.AccountTemporarilyBlocked` | `The account is blocked from receiving payments.` | The account is blocked from receiving payments for a temporary reason — e.g. account status is `Suspended` |
+| `Consent.PermanentAccountAccessFailure` | `The account is blocked from receiving payments.` | The account is blocked from receiving payments permanently — e.g. account status is `Closed`, `Deceased`, or `Unclaimed` |

@@ -40,6 +40,9 @@ Customise the `consentBody` object below and watch the **Consent** and **Authori
 
 <script setup>
 import { ref } from 'vue'
+import { futureDateTime } from '../../../../../components/Composables/futureDates.ts'
+
+const expirationDateTime = futureDateTime(330)
 
 
 const myCustomValidator = (value) => {
@@ -92,7 +95,7 @@ if (
 
 const initialFormData = ref({
                 "Data": {
-                    "ExpirationDateTime": "2026-12-25T23:00:00.000Z",
+                    "ExpirationDateTime": expirationDateTime,
                     "OnBehalfOf": {
                         "TradingName": "Nebras",
                         "LegalName": "Nebras Open Finance Ltd",

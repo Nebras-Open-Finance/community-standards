@@ -561,3 +561,37 @@ return redirect(redirect_uri)
 The API Hub responds with a **`303 See Other`** containing the redirect URI back to the TPP with OAuth 2.0 error parameters. Your LFI MUST redirect the PSU to this URI. If you omit `error` and `error_description`, the API Hub will return default error values.
 
 See the [`POST /auth/{interactionId}/doFail` API Reference](/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/open-api/auth-interactionId-doFail) for the full specification.
+
+## Identifier requirements
+
+The values the LFI patches onto the consent — `psuIdentifiers` and `accountIds` — are stored centrally in the API Hub. They MUST be **opaque, non-sensitive, LFI-defined references**.
+
+::: danger No sensitive values on the consent
+The LFI MUST NOT use Emirates ID, passport number, name, email, phone number, IBAN, account number, card number, CIF, or any other value that on its own identifies a natural person or a real-world account.
+
+See [Consent Identifiers](/knowledge-base/articles/consent-identifiers) for the full rationale.
+:::
+
+### `psuIdentifiers.userId`
+
+| Rule | Requirement |
+|------|-------------|
+| Type | String (required field on `psuIdentifiers`) |
+| Pattern | LFI-defined opaque string. UUID (v4) recommended |
+| Uniqueness | MUST uniquely identify a single PSU within the LFI |
+| Stability | MUST be the same value for the same PSU across every consent they authorise — used by `GET /psu/{userId}/consents` |
+| Sensitive values | MUST NOT be an Emirates ID, email, phone, CIF, or any other PII |
+
+Additional custom fields on `psuIdentifiers` are permitted but MUST follow the same non-sensitive rule.
+
+### `accountIds[]`
+
+| Rule | Requirement |
+|------|-------------|
+| Type | Array of strings, `minItems: 1` |
+| Item format | String, 1–40 characters. UUID (v4) recommended |
+| Value | MUST match the `AccountId` the LFI returns from its own `/accounts` APIs — the API Hub uses it to enrich downstream TPP requests |
+| Immutability | Once issued, the `AccountId` for an account MUST NOT change |
+| Uniqueness | MUST uniquely identify a single account within the LFI |
+| Sensitive values | MUST NOT be an IBAN, account number, card number, or any externally-meaningful account identifier |
+| Cardinality | Bank Service Initiation: exactly one (the debtor account). Bank Data Sharing: one or more selected accounts |

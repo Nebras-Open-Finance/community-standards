@@ -11,7 +11,7 @@ sequenceDiagram
     participant LFI as LFI
 
     Note over TPP: Construct Authorization Details
-    Note over TPP: Construct Request JWT (payments openid)
+    Note over TPP: Construct Request JWT (accounts openid)
     Note over TPP: Create Client Assertion
     TPP->>+Hub: POST /par (urn:openfinanceuae:account-access-consent:v2.1)
     opt Config-dependent

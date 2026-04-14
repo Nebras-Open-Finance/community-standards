@@ -54,6 +54,11 @@ Customise the request body fields below and watch the **Consent** and **Authoris
 import { ref, watch } from 'vue'
 import { useSharedState } from '../../../../../../../../components/Composables/useSharedState.ts'
 import { purposeCodes } from '../../../../../../../../components/Composables/aaniPaymentCodes.ts'
+import { generateScheduleDates, futureDateTime } from '../../../../../../../../components/Composables/futureDates.ts'
+
+const scheduleAmounts = ["500.00", "1200.00", "300.00", "300.00", "300.00", "400.00", "500.00", "1200.00", "300.00", "300.00", "300.00", "400.00"]
+const scheduleDates = generateScheduleDates(scheduleAmounts.length)
+const expirationDateTime = futureDateTime(10 + (scheduleAmounts.length - 1) * 28)
 
 
 const { sharedState } = useSharedState()
@@ -151,9 +156,9 @@ const initialFormDataSIP = ref({
     "Status": "AwaitingAuthorization",
                     "ConsentId": "b8f42378-10ac-46a1-8d20-4e020484216d",
                     "IsSingleAuthorization": true,
-                    "ExpirationDateTime": "2026-12-14T23:59:59.000Z",
+                    "ExpirationDateTime": expirationDateTime,
                     "BaseConsentId": "b9f42378-10ac-46a1-8d20-4e020484216d",
-                    "AuthorizationExpirationDateTime": "2026-12-14T23:59:59.000Z",
+                    "AuthorizationExpirationDateTime": expirationDateTime,
                     "Permissions": ["ReadAccountsBasic", "ReadAccountsDetail", "ReadBalances", "ReadRefundAccount"],
                     "ControlParameters": {
                         "ConsentSchedule": {
@@ -165,92 +170,13 @@ const initialFormDataSIP = ref({
                                 },
                                 "PeriodicSchedule": {
                                     "Type": "FixedDefinedSchedule",
-                                    "Schedule": [
-                                        {
-                                          "PaymentExecutionDate": "2026-08-01",
-                                          "Amount": {
-                                            "Amount": "500.00",
-                                            "Currency": "AED"
-                                          }
-                                        },
-                                                                                                                    {
-                                          "PaymentExecutionDate": "2026-09-02",
-                                          "Amount": {
-                                            "Amount": "1200.00",
-                                            "Currency": "AED"
-                                          }
-                                        },
-                                                                                                                    {
-                                          "PaymentExecutionDate": "2026-10-11",
-                                          "Amount": {
-                                            "Amount": "300.00",
-                                            "Currency": "AED"
-                                          }
-                                        },
-                                                                                                                    {
-                                          "PaymentExecutionDate": "2026-10-12",
-                                          "Amount": {
-                                            "Amount": "300.00",
-                                            "Currency": "AED"
-                                          }
-                                        },
-                                                                                                                    {
-                                          "PaymentExecutionDate": "2026-10-13",
-                                          "Amount": {
-                                            "Amount": "300.00",
-                                            "Currency": "AED"
-                                          }
-                                        },
-                                                                                                                    {
-                                          "PaymentExecutionDate": "2026-10-14",
-                                          "Amount": {
-                                            "Amount": "400.00",
-                                            "Currency": "AED"
-                                          }
-                                        },
-                                                                                {
-                                          "PaymentExecutionDate": "2026-04-01",
-                                          "Amount": {
-                                            "Amount": "500.00",
-                                            "Currency": "AED"
-                                          }
-                                        },
-                                                                                                                    {
-                                          "PaymentExecutionDate": "2026-05-02",
-                                          "Amount": {
-                                            "Amount": "1200.00",
-                                            "Currency": "AED"
-                                          }
-                                        },
-                                                                                                                    {
-                                          "PaymentExecutionDate": "2026-11-11",
-                                          "Amount": {
-                                            "Amount": "300.00",
-                                            "Currency": "AED"
-                                          }
-                                        },
-                                                                                                                    {
-                                          "PaymentExecutionDate": "2026-12-12",
-                                          "Amount": {
-                                            "Amount": "300.00",
-                                            "Currency": "AED"
-                                          }
-                                        },
-                                                                                                                    {
-                                          "PaymentExecutionDate": "2026-12-13",
-                                          "Amount": {
-                                            "Amount": "300.00",
-                                            "Currency": "AED"
-                                          }
-                                        },
-                                                                                                                    {
-                                          "PaymentExecutionDate": "2026-12-14",
-                                          "Amount": {
-                                            "Amount": "400.00",
-                                            "Currency": "AED"
-                                          }
-                                        }
-                                    ]
+                                    "Schedule": scheduleDates.map((date, i) => ({
+                                      "PaymentExecutionDate": date,
+                                      "Amount": {
+                                        "Amount": scheduleAmounts[i],
+                                        "Currency": "AED"
+                                      }
+                                    }))
                                 }
                             }
                         }
@@ -260,7 +186,6 @@ const initialFormDataSIP = ref({
                     "CreditorReference": "Test Purchase"
                 }
             })
-
 
 const myPIICustomValidator = (value) => {
  if (
