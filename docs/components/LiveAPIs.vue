@@ -148,7 +148,7 @@ const toggleService = (service) => {
           <div class="lfi-row" @click="toggleServer(server)" :class="{ 'is-expanded': server.expanded }">
             <span class="lfi-institution">
               <img :src="server.logo" alt="" class="server-logo" loading="lazy" />
-              <span class="server-name">{{ org.orgName }}</span>
+              <span class="server-name">{{ server.name }}</span>
             </span>
             <span class="lfi-account-type">
               <span v-for="t in server.flags.AccountType" :key="t" class="badge badge-type">{{ t }}</span>
