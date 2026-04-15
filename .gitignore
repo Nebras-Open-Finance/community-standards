@@ -6,7 +6,6 @@ internal_helpers/
 docs/public/doc-repo/
 # Fetched OpenAPI specs (all versioned folders — see scripts/fetch-openapi-specs.mjs)
 docs/public/openapi/v*/
-CLAUDE.md
 
 # Logs
 logs
@@ -147,5 +146,3 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
-
-package-lock.json
