@@ -53,13 +53,13 @@
         <div class="new-kpi-card">
           <p class="new-kpi-label">LFIs</p>
           <p class="new-kpi-value new-kpi-teal">{{ sandboxStats.lfis }}</p>
-          <p class="new-kpi-delta new-kpi-delta-teal">In production</p>
+          <p class="new-kpi-delta new-kpi-delta-teal">Onboarded to Open Finance</p>
           <p class="new-kpi-desc">Licensed Financial Institutions connected to the framework</p>
         </div>
         <div class="new-kpi-card">
           <p class="new-kpi-label">TPPs</p>
           <p class="new-kpi-value new-kpi-gold">{{ sandboxStats.tpps }}</p>
-          <p class="new-kpi-delta new-kpi-delta-gold">Authorised providers</p>
+          <p class="new-kpi-delta new-kpi-delta-gold">Onboarded to Open Finance</p>
           <p class="new-kpi-desc">Third Party Providers onboarded to access Open Finance APIs</p>
         </div>
       </div>
@@ -492,8 +492,8 @@ const SUCCESS_PAYMENT_STATUSES = new Set([
 onMounted(async () => {
   const [tf, api, payments] = await Promise.all([
     axios.get('/api/trust-framework.json'),
-    fetch('/api/api-data.json').then(r => r.json()).catch(() => []),
-    fetch('/api/payment-log.json').then(r => r.json()).catch(() => []),
+    fetch('/api/api-log.json').then(r => r.json()).catch(() => []),
+    fetch('/api/payments-log.json').then(r => r.json()).catch(() => []),
   ])
   tfData.value = tf.data
   apiData.value = api
@@ -503,21 +503,21 @@ onMounted(async () => {
 const ecoStats = computed(() => {
   // Successful API calls (2xx)
   const successfulApiCalls = apiData.value
-    .filter(r => (r.TPPResponseCodeGroup || '2xx') === '2xx')
-    .reduce((s, r) => s + (r.TotalNumberofCalls || 0), 0)
+    .filter(r => (r.tppresponsecodegroup || '2xx') === '2xx')
+    .reduce((s, r) => s + (r.totalapicalls || 0), 0)
 
   // Data sharing requests: account-information family, 2xx
   const dataSharingRequests = apiData.value
     .filter(r => {
-      const url = r.URL || ''
-      return url.includes('/account-information/') && (r.TPPResponseCodeGroup || '2xx') === '2xx'
+      const url = r.url || ''
+      return url.includes('/account-information/') && (r.tppresponsecodegroup || '2xx') === '2xx'
     })
-    .reduce((s, r) => s + (r.TotalNumberofCalls || 0), 0)
+    .reduce((s, r) => s + (r.totalapicalls || 0), 0)
 
   // Successful payments
-  const successRows = paymentData.value.filter(r => SUCCESS_PAYMENT_STATUSES.has(r.status) && r.LFI)
+  const successRows = paymentData.value.filter(r => SUCCESS_PAYMENT_STATUSES.has(r.status) && r.lfinamekey)
   const successfulPaymentAmount = successRows.reduce((s, r) => s + (r.amount || 0), 0)
-  const successfulPaymentCount  = successRows.reduce((s, r) => s + (r.Count  || 0), 0)
+  const successfulPaymentCount  = successRows.reduce((s, r) => s + (r.count  || 0), 0)
 
   return {
     successfulApiCalls:    successfulApiCalls.toLocaleString(),

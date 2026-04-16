@@ -64,6 +64,15 @@
     </div>
   </div>
 
+  <!-- ── Inline canvas: Auth Rate ──────────────────────────────────────── -->
+  <div v-else-if="config.component === 'auth-rate'" class="chart-card">
+    <div class="chart-card__title">{{ config.title }}</div>
+    <div class="chart-card__meta">{{ authRateSummary }}</div>
+    <div class="chart-card__canvas">
+      <canvas ref="canvasRef"></canvas>
+    </div>
+  </div>
+
   <!-- ── Ranked list: Slowest Endpoints ───────────────────────────────── -->
   <div v-else-if="config.component === 'rt-ranked'" class="chart-card">
     <div class="chart-card__title">{{ config.title }}</div>
@@ -123,7 +132,7 @@ const props = defineProps({
 const canvasRef = ref(null)
 let chartInstance = null
 
-const INLINE_TYPES = ['error-rate', 'error-codes', 'success-rate', 'pay-status']
+const INLINE_TYPES = ['error-rate', 'error-codes', 'success-rate', 'pay-status', 'auth-rate']
 
 const TOOLTIP = {
   backgroundColor: '#0C1441',
@@ -265,6 +274,58 @@ function buildPayStatus() {
   })
 }
 
+const authRateSummary = computed(() => {
+  if (props.config.component !== 'auth-rate') return ''
+  const numeratorType = props.config.props?.numeratorType || 'doConfirm'
+  let num = 0, den = 0
+  for (const r of props.data) {
+    if (r.type === 'auth') den += r.count || 0
+    if (r.type === numeratorType) num += r.count || 0
+  }
+  const rate = den > 0 ? ((num / den) * 100).toFixed(1) : '0.0'
+  const label = numeratorType === 'doConfirm' ? 'conversion' : 'cancellation'
+  return `${rate}% avg ${label} rate`
+})
+
+function buildAuthRate() {
+  const groupBy = props.config.props?.groupBy || 'lfi'
+  const numeratorType = props.config.props?.numeratorType || 'doConfirm'
+  const rateLabel = numeratorType === 'doConfirm' ? 'Conversion Rate (%)' : 'Cancellation Rate (%)'
+  const barColor = numeratorType === 'doConfirm' ? '#10B981' : '#EF4444'
+
+  const byGroup = {}
+  for (const r of props.data) {
+    const key = String(r[groupBy] ?? 'Unknown')
+    if (!key || key.toLowerCase() === 'unknown') continue
+    if (!byGroup[key]) byGroup[key] = { auth: 0, num: 0 }
+    if (r.type === 'auth') byGroup[key].auth += r.count || 0
+    if (r.type === numeratorType) byGroup[key].num += r.count || 0
+  }
+  const labels = Object.keys(byGroup).sort()
+  const authCounts = labels.map(k => byGroup[k].auth)
+  const rates = labels.map(k => byGroup[k].auth ? +((byGroup[k].num / byGroup[k].auth) * 100).toFixed(1) : 0)
+
+  chartInstance = new Chart(canvasRef.value, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { type: 'bar', label: 'Auth Requests', data: authCounts, backgroundColor: '#94A3B8', borderRadius: 6, maxBarThickness: 50, yAxisID: 'yCount' },
+        { type: 'line', label: rateLabel, data: rates, borderColor: barColor, borderWidth: 2, pointRadius: 4, pointBackgroundColor: barColor, yAxisID: 'yRate', tension: 0.3, fill: false },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }, tooltip: TOOLTIP },
+      scales: {
+        yCount: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, title: { display: true, text: 'Auth Requests', font: { size: 11 } } },
+        yRate:  { beginAtZero: true, max: 100, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '%', font: { size: 11 } }, ticks: { callback: v => `${v}%` } },
+        x: { grid: { display: false } },
+      },
+    },
+  })
+}
+
 function buildInlineChart() {
   if (!canvasRef.value) return
   destroyChart()
@@ -273,6 +334,7 @@ function buildInlineChart() {
   if (type === 'error-codes')  buildErrorCodes()
   if (type === 'success-rate') buildSuccessRate()
   if (type === 'pay-status')   buildPayStatus()
+  if (type === 'auth-rate')    buildAuthRate()
 }
 
 onMounted(async () => {

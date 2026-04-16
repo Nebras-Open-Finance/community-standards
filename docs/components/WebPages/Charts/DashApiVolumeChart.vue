@@ -66,6 +66,7 @@ const props = defineProps({
    * One of: 'family' | 'lfi' | 'tpp' | null
    */
   stackBy: { type: String, default: null },
+  grouped: { type: Boolean, default: false },
 
   /**
    * Which numeric field to sum.
@@ -113,7 +114,7 @@ function aggregate(data, groupBy, stackBy, valueKey) {
     borderWidth: 1,
     borderRadius: 6,
     maxBarThickness: 60,
-    ...(stackBy ? { stack: 'stack' } : {}),
+    ...(stackBy && !props.grouped ? { stack: 'stack' } : {}),
   }))
 
   return { groupLabels, datasets }
@@ -159,7 +160,7 @@ function render() {
       },
       scales: {
         y: {
-          stacked: !!props.stackBy,
+          stacked: !!props.stackBy && !props.grouped,
           beginAtZero: true,
           grid: { color: 'rgba(0,0,0,0.05)' },
           title: {
@@ -169,7 +170,7 @@ function render() {
           },
         },
         x: {
-          stacked: !!props.stackBy,
+          stacked: !!props.stackBy && !props.grouped,
           grid: { display: false },
         },
       },
@@ -193,7 +194,6 @@ onBeforeUnmount(() => { chart?.destroy() })
   border: 1px solid var(--vp-c-divider, #e2e8f0);
   border-radius: 12px;
   padding: 1.25rem;
-  height: 100%;
   box-sizing: border-box;
 }
 

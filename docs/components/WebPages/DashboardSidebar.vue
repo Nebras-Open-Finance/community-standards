@@ -27,6 +27,10 @@
               <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
               <path d="M2 10h20" stroke="currentColor" stroke-width="2"/>
             </svg>
+            <svg v-else-if="group.icon === 'auth'" width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/>
+              <path d="M8 11V7a4 4 0 118 0v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
           </span>
           <span class="db-sidebar__group-text">{{ group.label }}</span>
         </p>

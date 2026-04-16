@@ -3,13 +3,13 @@
  * ─────────────────────────────────────────────────────────────────────────
  * Module-level singleton reactive store.
  *
- * API data is loaded from /api/api-data.json and transformed into the
+ * API data is loaded from /api/api-log.json and transformed into the
  * internal row shape expected by the chart components.
- * Payment data is loaded from /api/payment-log.json.
+ * Payment data is loaded from /api/payments-log.json.
  *
  * Data flow:
- *   fetch('/api/api-data.json')      → transformRow        → rawApiData / rawRtData
- *   fetch('/api/payment-log.json')   → transformPaymentRow → rawPaymentData
+ *   fetch('/api/api-log.json')        → transformRow        → rawApiData / rawRtData
+ *   fetch('/api/payments-log.json')   → transformPaymentRow → rawPaymentData
  *   filters (state) → filteredXData (computed) → DashboardCharts → DashboardChart
  */
 
@@ -17,10 +17,10 @@ import { reactive, computed, ref } from 'vue'
 
 // ── Transform a raw JSON row into the dashboard row shape ──────────────────
 function transformRow(row) {
-  const month = (row.Date || '').substring(0, 7) // 'YYYY-MM'
-  const lfi   = row.LFIName || 'Unknown'
-  const tpp   = row.TPPName || 'Unknown'
-  const url   = row.URL || ''
+  const month = (row.date || '').substring(0, 7) // 'YYYY-MM'
+  const lfi   = row.lfinamekey || 'Unknown'
+  const tpp   = row.tppname || 'Unknown'
+  const url   = row.url || ''
 
   // Extract API family from URL: open-finance/<family>/... (trailing slash optional)
   const familyMatch = url.match(/open-finance\/([^/]+)(?:\/|$)/)
@@ -31,15 +31,15 @@ function transformRow(row) {
   const version  = versionMatch ? versionMatch[1] : 'unknown'
   const endpoint = versionMatch?.[2] || (family !== 'other' ? `/${family}` : (url || '/other'))
 
-  const codeGroup = row.TPPResponseCodeGroup || '2xx'
+  const codeGroup = row.tppresponsecodegroup || '2xx'
   const isError   = codeGroup !== '2xx'
-  const volume    = row.TotalNumberofCalls || 0
-  const ttlb      = row['SumofTTLB(TimetoLastByte)'] || 0
+  const volume    = row.totalapicalls || 0
+  const ttlb      = row.executiontime || 0
   const avgMs     = volume > 0 ? Math.round(ttlb / volume) : 0
 
   return {
     month,
-    day: (row.Date || '').substring(0, 10), // 'YYYY-MM-DD'
+    day: (row.date || '').substring(0, 10), // 'YYYY-MM-DD'
     lfi,
     tpp,
     family,
@@ -69,15 +69,14 @@ const SUCCESS_STATUSES = new Set([
 const FAILED_STATUSES = new Set(['Rejected'])
 
 function transformPaymentRow(row) {
-  // Parse DD/MM/YYYY → 'YYYY-MM' and 'YYYY-MM-DD'
-  const parts = (row.Date || '').split('/')
-  const month = parts.length === 3 ? `${parts[2]}-${parts[1]}` : 'unknown'
-  const day   = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : 'unknown'
+  const date  = row.date || ''
+  const month = date.substring(0, 7) || 'unknown'
+  const day   = date.substring(0, 10) || 'unknown'
 
-  const lfi              = row.LFI || 'Unknown'
-  const tpp              = row.TPP || 'Unknown'
-  const consentType      = row.paymentConsentType || 'Unknown'
-  const count            = row.Count || 0
+  const lfi              = row.lfinamekey || 'Unknown'
+  const tpp              = row.tppname || 'Unknown'
+  const consentType      = row.paymentconsenttype || 'Unknown'
+  const count            = row.count || 0
   const amount           = row.amount || 0
 
   const rawStatus = row.status || ''
@@ -95,6 +94,26 @@ function transformPaymentRow(row) {
 // ── Reactive raw payment dataset (populated after fetch) ────────────────────
 const rawPaymentData = ref([])
 
+// ── Transform a raw auth-log row into the dashboard auth shape ──────────────
+function transformAuthRow(row) {
+  const date  = row.date || ''
+  const month = date.substring(0, 7) || 'unknown'
+  const day   = date.substring(0, 10) || 'unknown'
+  const lfi   = row.lfinamekey || 'Unknown'
+  const url   = row.url || ''
+  const count = row.totalapicalls || 0
+
+  let type = 'other'
+  if (url.endsWith('/doConfirm'))      type = 'doConfirm'
+  else if (url.endsWith('/doFail'))    type = 'doFail'
+  else if (url === '/auth')            type = 'auth'
+
+  return { month, day, lfi, url, type, count }
+}
+
+// ── Reactive raw auth dataset (populated after fetch) ───────────────────────
+const rawAuthData = ref([])
+
 // ── Filter options (reactive so dropdowns update after data loads) ──────────
 export const filterOptions = reactive({
   lfis:        [],
@@ -104,6 +123,8 @@ export const filterOptions = reactive({
   paymentLfis:    [],
   paymentTpps:    [],
   paymentMonths:  [],
+  authLfis:       [],
+  authMonths:     [],
 })
 
 // ── Endpoints excluded from response time charts ───────────────────────────
@@ -116,7 +137,7 @@ const RT_EXCLUDED_ENDPOINTS = [
 
 // ── Fetch and load real API data ───────────────────────────────────────────
 if (typeof window !== 'undefined') {
-  fetch('/api/api-data.json')
+  fetch('/api/api-log.json')
     .then(r => r.json())
     .then(json => {
       const rows = json.map(transformRow)
@@ -130,9 +151,9 @@ if (typeof window !== 'undefined') {
       filterOptions.months      = [...new Set(rows.map(r => r.month))].sort()
       filterOptions.apiFamilies = [...new Set(rows.map(r => r.family))].sort()
     })
-    .catch(err => console.error('[dashboard] Failed to load api-data.json', err))
+    .catch(err => console.error('[dashboard] Failed to load api-log.json', err))
 
-  fetch('/api/payment-log.json')
+  fetch('/api/payments-log.json')
     .then(r => r.json())
     .then(json => {
       const rows = json.map(transformPaymentRow)
@@ -141,7 +162,17 @@ if (typeof window !== 'undefined') {
       filterOptions.paymentTpps   = [...new Set(rows.map(r => r.tpp))].filter(v => v !== 'Unknown').sort()
       filterOptions.paymentMonths = [...new Set(rows.map(r => r.month))].filter(v => v !== 'unknown').sort()
     })
-    .catch(err => console.error('[dashboard] Failed to load payment-log.json', err))
+    .catch(err => console.error('[dashboard] Failed to load payments-log.json', err))
+
+  fetch('/api/auth-log.json')
+    .then(r => r.json())
+    .then(json => {
+      const rows = json.map(transformAuthRow)
+      rawAuthData.value = rows
+      filterOptions.authLfis   = [...new Set(rows.map(r => r.lfi))].filter(v => v !== 'Unknown').sort()
+      filterOptions.authMonths = [...new Set(rows.map(r => r.month))].filter(v => v !== 'unknown').sort()
+    })
+    .catch(err => console.error('[dashboard] Failed to load auth-log.json', err))
 }
 
 // ── Singleton reactive state ──────────────────────────────────────────────
@@ -181,6 +212,13 @@ export const filteredSuccessPaymentData = computed(() =>
 
 export const filteredAllPaymentData = computed(() =>
   filteredPaymentData.value.filter(r => r.lfi !== 'Unknown')
+)
+
+export const filteredAuthData = computed(() =>
+  rawAuthData.value.filter(r =>
+    (!state.filters.lfi   || r.lfi   === state.filters.lfi)   &&
+    (!state.filters.month || r.month === state.filters.month)
+  )
 )
 
 export const filteredRtData = computed(() =>
@@ -261,6 +299,7 @@ export function dataForSource(source) {
   if (source === 'payment-success') return filteredSuccessPaymentData.value
   if (source === 'payment-all')     return filteredAllPaymentData.value
   if (source === 'rt')              return filteredRtData.value
+  if (source === 'auth')            return filteredAuthData.value
   return []
 }
 

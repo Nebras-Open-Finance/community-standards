@@ -43,6 +43,15 @@ export const NAV_SECTIONS = [
     items: [
       { id: 'payment-volumes', label: 'Payment Volumes' },
       { id: 'payment-errors',  label: 'Payment Errors'  },
+      { id: 'payment-status',  label: 'Payment Status'  },
+    ],
+  },
+  {
+    id: 'authorization',
+    label: 'Authorization',
+    icon: 'auth',
+    items: [
+      { id: 'auth-conversion', label: 'Auth Conversion' },
     ],
   },
 ]
@@ -54,6 +63,8 @@ export const SECTION_META = {
   'api-response-times': { title: 'API Response Times',  description: 'Latency trends, percentiles and endpoint rankings' },
   'payment-volumes':    { title: 'Payment Volumes',     description: 'Payment counts and AED amounts by LFI and TPP' },
   'payment-errors':     { title: 'Payment Errors',      description: 'Failed payments and success rate analysis' },
+  'payment-status':     { title: 'Payment Status',      description: 'Payment breakdown by actual ISO 20022 status' },
+  'auth-conversion':    { title: 'Auth Conversion',     description: 'Authorization success and cancellation rates across LFIs and months' },
 }
 
 // ── Chart registry ────────────────────────────────────────────────────────
@@ -302,6 +313,94 @@ export const CHART_REGISTRY = {
       props: { groupBy: 'tpp', stackBy: 'status', valueKey: 'count' },
       dataSource: 'payment-all',
       hideIfFiltered: 'tpp',
+    },
+  ],
+
+  'payment-status': [
+    {
+      id: 'pay_status_count_lfi',
+      title: 'Payment Count by LFI',
+      component: 'volume',
+      props: { groupBy: 'lfi', stackBy: 'rawStatus', valueKey: 'count' },
+      dataSource: 'payment-all',
+      hideIfFiltered: 'lfi',
+      span: 2,
+      rowSpan: 2,
+      maxHeight: '520px',
+    },
+    {
+      id: 'pay_status_count_month',
+      title: 'Payment Count by Month',
+      component: 'volume',
+      props: { groupBy: 'month', stackBy: 'rawStatus', valueKey: 'count' },
+      dataSource: 'payment-all',
+      hideIfFiltered: 'month',
+    },
+    {
+      id: 'pay_status_amount_month',
+      title: 'Payment Amount by Month (AED)',
+      component: 'volume',
+      props: { groupBy: 'month', stackBy: 'rawStatus', valueKey: 'amount' },
+      dataSource: 'payment-all',
+      hideIfFiltered: 'month',
+    },
+    {
+      id: 'pay_status_count_breakdown',
+      title: 'Payment Count by Status',
+      component: 'volume',
+      props: { groupBy: 'rawStatus', valueKey: 'count' },
+      dataSource: 'payment-all',
+    },
+    {
+      id: 'pay_status_count_tpp',
+      title: 'Payment Count by TPP',
+      component: 'volume',
+      props: { groupBy: 'tpp', stackBy: 'rawStatus', valueKey: 'count' },
+      dataSource: 'payment-all',
+      hideIfFiltered: 'tpp',
+    },
+  ],
+
+  'auth-conversion': [
+    {
+      id: 'auth_count_lfi',
+      title: 'Auth Count by LFI',
+      component: 'volume',
+      props: { groupBy: 'lfi', stackBy: 'type', valueKey: 'count', grouped: true },
+      dataSource: 'auth',
+      hideIfFiltered: 'lfi',
+    },
+    {
+      id: 'auth_conversion_lfi',
+      title: 'Conversion Rate by LFI',
+      component: 'auth-rate',
+      props: { groupBy: 'lfi', numeratorType: 'doConfirm' },
+      dataSource: 'auth',
+      hideIfFiltered: 'lfi',
+    },
+    {
+      id: 'auth_count_month',
+      title: 'Auth Count by Month',
+      component: 'volume',
+      props: { groupBy: 'month', stackBy: 'type', valueKey: 'count', grouped: true },
+      dataSource: 'auth',
+      hideIfFiltered: 'month',
+    },
+    {
+      id: 'auth_conversion_month',
+      title: 'Conversion Rate by Month',
+      component: 'auth-rate',
+      props: { groupBy: 'month', numeratorType: 'doConfirm' },
+      dataSource: 'auth',
+      hideIfFiltered: 'month',
+    },
+    {
+      id: 'auth_cancel_lfi',
+      title: 'Cancellation Rate by LFI',
+      component: 'auth-rate',
+      props: { groupBy: 'lfi', numeratorType: 'doFail' },
+      dataSource: 'auth',
+      hideIfFiltered: 'lfi',
     },
   ],
 }

@@ -27,12 +27,18 @@
 
     <!-- Chart grid -->
     <div class="db-charts__grid">
-      <DashboardChart
+      <div
         v-for="chart in visibleCharts"
         :key="chart.id"
-        :config="chart"
-        :data="dataFor(chart.dataSource)"
-      />
+        class="db-charts__cell"
+        :style="{
+          gridColumn: chart.span    ? `span ${chart.span}`    : undefined,
+          gridRow:    chart.rowSpan ? `span ${chart.rowSpan}` : undefined,
+          maxHeight:  chart.maxHeight || undefined,
+        }"
+      >
+        <DashboardChart :config="chart" :data="dataFor(chart.dataSource)" />
+      </div>
     </div>
 
   </section>
@@ -148,7 +154,30 @@ function dataFor(source) {
 .db-charts__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: minmax(360px, auto);
   gap: 1rem;
+}
+
+.db-charts__cell {
+  display: flex;
+  min-width: 0;
+}
+
+.db-charts__cell > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.db-charts__cell :deep(.chart-wrap) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.db-charts__cell :deep(.chart-container) {
+  flex: 1;
+  min-height: 280px;
+  height: auto;
 }
 
 @media (max-width: 900px) {
