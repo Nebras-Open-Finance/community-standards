@@ -353,7 +353,7 @@ These endpoints are organized into structured categories known as **API families
 
 ### API Family – Payment
 This family includes endpoints related to initiating and managing payments.
-- These endpoints are part of the [Bank Service Initiation](../bank-service-initiation/) functionality and associated with the **BSIP** role.
+- These endpoints are part of the [Bank Service Initiation](/tech/tpp-standards/v2.1/banking/service-initiation/) functionality and associated with the **BSIP** role.
 - Allowed API scopes: `openid payments`
 
 **Consent Endpoints**
@@ -385,7 +385,7 @@ Supported grant types: `authorization_code`, `refresh_token`
 
 ### API Family – Account
 This family includes endpoints related to retrieving bank data e.g. accounts, balances, transactions, etc.
-- These endpoints are part of the [Bank Data Sharing](../bank-data-sharing/) functionality and are associated with the **BDSP** role.
+- These endpoints are part of the [Bank Data Sharing](/tech/tpp-standards/v2.1/banking/data-sharing/) functionality and are associated with the **BDSP** role.
 - Allowed API scopes: `openid accounts`
 - Supported grant types: `authorization_code`, `refresh_token`
 
@@ -418,7 +418,7 @@ These endpoints are used to retrieve account-information.
 
 ### API Family – Confirmation of Payee
 This family includes endpoints related to the discovery and confirmation of bank account details, such as verifying account ownership before initiating payments.
-- These endpoints are part of the [Confirmation of Payee](../confirmation-of-payee/) functionality and are associated with the **BSIP** role.
+- These endpoints are part of the [Confirmation of Payee](/tech/tpp-standards/v2.1/banking/confirmation-of-payee/) functionality and are associated with the **BSIP** role.
 - Allowed API scopes: `openid payments`
 - Supported grant types: `client_credentials`
 
@@ -431,7 +431,7 @@ This family includes endpoints related to the discovery and confirmation of bank
 
 ### API Family – Banking Product Data
 This family includes endpoints related to the discovery of banking products and posting a user who is interested in applying for a banking product.
-- These endpoints are part of the [Banking Products](../banking-products/) functionality and are associated with the **BDSP** role.
+- These endpoints are part of the [Banking Products](/tech/tpp-standards/v2.1/banking/products-leads/) functionality and are associated with the **BDSP** role.
 - Allowed API scopes: `openid accounts`
 - Supported grant types: `client_credentials`
 
@@ -442,10 +442,13 @@ This family includes endpoints related to the discovery of banking products and 
 <br>
 
 
+<!--
 ### API Family – Insurance
 This family includes endpoints related to the insurance policy data and creating an insurance quote for a user who is interested in applying for a insurance product.
 - These endpoints are part of the [Insurance](../insurance/) functionality and are associated with the **ISP** role.
 - Allowed API scopes: `openid insurance`
+-->
+
 
 
 

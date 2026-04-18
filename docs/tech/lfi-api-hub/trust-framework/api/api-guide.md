@@ -24,10 +24,10 @@ These steps can be used, for example, to generate a report that cross-references
 
 Before calling the TrustFramework API, ensure the following requirements are met:
 
-- **Registered [Application](../../../../../trust-framework/application)**
+- **Registered [Application](../application)**
   The application must be created within the Trust Framework.
 
-- **Valid [Transport Certificate](../../../../../trust-framework/certificates)**
+- **Valid [Transport Certificate](../certificates)**
   An active transport certificate must be issued and registered in the Trust Framework to establish secure **mTLS communication**.
 
 

@@ -41,4 +41,4 @@ refresh_token = tokens["refresh_token"]
 
 :::
 
-See [Tokens & Assertions](/tech/tpp-standards/security/tokens) for refresh token lifetimes and rotation policy.
+See [Tokens & Assertions](/tech/tpp-standards/security/tokens/) for refresh token lifetimes and rotation policy.

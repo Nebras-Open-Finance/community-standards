@@ -8,7 +8,7 @@ aside: false
 
 <FunctionalEvidenceDownload />
 
-Complete this document and submit it as part of your integration review. All sections are required unless marked optional. Evidence must be from the [AlTareq Model Bank](../v2.1/banking/testing/model-bank) sandbox environment.
+Complete this document and submit it as part of your integration review. All sections are required unless marked optional. Evidence must be from the [AlTareq Model Bank](../../sandbox/model-bank) sandbox environment.
 
 ## 1. Proposition Overview
 
@@ -90,7 +90,7 @@ For every field you set, explain why it is present. For every permission in `Per
 
 ## 3. Model Bank Evidence
 
-For each endpoint your proposition calls, provide evidence of a successful `200 OK` response from the AlTareq Model Bank. Include the full response body or a clearly readable excerpt. Use the Model Bank accounts for `mits` or `rora` — see [Model Bank credentials](../v2.1/banking/testing/model-bank#model-bank-credentials).
+For each endpoint your proposition calls, provide evidence of a successful `200 OK` response from the AlTareq Model Bank. Include the full response body or a clearly readable excerpt. Use the Model Bank accounts for `mits` or `rora` — see [Model Bank credentials](../../sandbox/model-bank#model-bank-credentials).
 
 ### 3a. Consent Authorized
 

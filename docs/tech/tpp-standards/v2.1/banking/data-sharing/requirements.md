@@ -2,6 +2,7 @@
 next: false
 prev: false
 aside: false
+pageClass: requirements-page
 ---
 
 # Bank Data Sharing - Requirements
@@ -18,18 +19,19 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 
 | # | Field | Rule | Validated by |
 |---|-------|------|-------------|
-| 1 | `consent.ExpirationDateTime` | Must not be in the past. Must be less than one year in the future. | API Hub |
-| 2 | `consent.Permissions` | If any of `ReadBalances`, `ReadBeneficiariesBasic`, `ReadBeneficiariesDetail`, `ReadTransactionsBasic`, `ReadTransactionsDetail`, `ReadProduct`, `ReadScheduledPaymentsBasic`, `ReadScheduledPaymentsDetail`, `ReadDirectDebits`, `ReadStandingOrdersBasic`, `ReadStandingOrdersDetail`, `ReadStatements`, or `ReadProductFinanceRates` are included, at least one of `ReadAccountsBasic` or `ReadAccountsDetail` must also be present. | API Hub |
-| 3 | `consent.AccountType` | Must be a value supported by the target LFI. Supported account types are discoverable via the `AccountTypes` flag on the LFI's authorisation server entry in the [Trust Framework](/tech/tpp-standards/trust-framework/api-discovery). | LFI (`/consent/action/validate`) |
-| 4 | `consent.AccountSubType` | If provided, each value must be a sub-type supported by the target LFI. Supported sub-types are discoverable via the `AccountSubTypes` metadata on the LFI's authorisation server entry in the [Trust Framework](/tech/tpp-standards/trust-framework/api-discovery). | LFI (`/consent/action/validate`) |
-| 5 | `consent.Permissions` (unsupported) | If the provided Permissions include permissions not supported by the target LFI (e.g. the target LFI does not have the endpoint `/accounts/{AccountId}/standing-orders` published to the Trust Framework yet the consent request includes `ReadStandingOrdersBasic` or `ReadStandingOrdersDetail`), the consent validation will fail. | LFI (`/consent/action/validate`) |
-| 6 | `consent.BaseConsentId` | If provided, must reference a previous consent belonging to the **same end user**. If the original consent in the chain already had a `BaseConsentId`, the TPP must reuse that same `BaseConsentId` rather than the immediate prior `ConsentId`. | LFI (`/consent/action/validate`) |
-| 7 | OpenAPI schema | The request must conform exactly to the [POST `/par` OpenAPI schema](/tech/tpp-standards/v2.1/consent/open-api/par). No additional or undocumented parameters are permitted. | API Hub |
-| 8 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
-| 9 | `client_assertion` | Must be included in the POST body (`client_assertion_type`: `urn:ietf:params:oauth:client-assertion-type:jwt-bearer`). Authenticates the TPP application — see [Client Assertion](/tech/tpp-standards/security/tokens/client-assertion). | API Hub |
-| 10 | Request JWT | Must conform to the [Request JWT requirements](/tech/tpp-standards/security/fapi/request-jwt) — correct `aud`, signing algorithm (`PS256`), and expiry window. | API Hub |
-| 11 | `scope` (in Request JWT) | Must be `accounts openid`. | API Hub |
-| 12 | `authorization_details[0].type` (in Request JWT) | Must be `urn:openfinanceuae:account-access-consent:v2.1`. | API Hub |
+| 1 | Request JWT | Must conform to the [Request JWT requirements](/tech/tpp-standards/security/fapi/request-jwt) — correct `aud`, signing algorithm (`PS256`), and expiry window. | API Hub |
+| 2 | `client_assertion` | Must be included in the POST body (`client_assertion_type`: `urn:ietf:params:oauth:client-assertion-type:jwt-bearer`). Authenticates the TPP application — see [Client Assertion](/tech/tpp-standards/security/tokens/client-assertion). | API Hub |
+| 3 | `scope` (in Request JWT) | Must be `accounts openid`. | API Hub |
+| 4 | `authorization_details[0].type` (in Request JWT) | Must be `urn:openfinanceuae:account-access-consent:v2.1`. | API Hub |
+| 5 | API version supported | The consent version in `authorization_details[0].type` (e.g. `urn:openfinanceuae:account-access-consent:v2.1`) restricts the version of the Account Information endpoints the consent can be used to call (specified in the path, e.g. `/open-finance/v2.1/accounts`). It MUST resolve to an `ApiVersion` the LFI has published in the [Trust Framework](/tech/tpp-standards/trust-framework/api-discovery) for the Account Information API family. | LFI (`/consent/action/validate`) |
+| 6 | OpenAPI schema | The request must conform exactly to the [POST `/par` OpenAPI schema](/tech/tpp-standards/v2.1/consent/open-api/par). No additional or undocumented parameters are permitted. | API Hub |
+| 7 | `consent.AccountType` | Must be a value supported by the LFI. Supported account types are discoverable via the `AccountTypes` flag on the LFI's authorisation server entry in the [Trust Framework](/tech/tpp-standards/trust-framework/api-discovery). | LFI (`/consent/action/validate`) |
+| 8 | `consent.AccountSubType` | If provided, each value must be a sub-type supported by the LFI. Supported sub-types are discoverable via the `AccountSubTypes` metadata on the LFI's authorisation server entry in the [Trust Framework](/tech/tpp-standards/trust-framework/api-discovery). | LFI (`/consent/action/validate`) |
+| 9 | `consent.Permissions` | If any of `ReadBalances`, `ReadBeneficiariesBasic`, `ReadBeneficiariesDetail`, `ReadTransactionsBasic`, `ReadTransactionsDetail`, `ReadProduct`, `ReadScheduledPaymentsBasic`, `ReadScheduledPaymentsDetail`, `ReadDirectDebits`, `ReadStandingOrdersBasic`, `ReadStandingOrdersDetail`, `ReadStatements`, or `ReadProductFinanceRates` are included, at least one of `ReadAccountsBasic` or `ReadAccountsDetail` must also be present. | API Hub |
+| 10 | `consent.Permissions` (unsupported) | If the provided Permissions include permissions not supported by the LFI (e.g. the LFI does not have the endpoint `/accounts/{AccountId}/standing-orders` published to the Trust Framework yet the consent request includes `ReadStandingOrdersBasic` or `ReadStandingOrdersDetail`), the consent validation will fail. | LFI (`/consent/action/validate`) |
+| 11 | `consent.BaseConsentId` | If provided, must reference a previous consent belonging to the **same end user**. If the original consent in the chain already had a `BaseConsentId`, the TPP must reuse that same `BaseConsentId` rather than the immediate prior `ConsentId`. | LFI (`/consent/action/validate`) |
+| 12 | `consent.ExpirationDateTime` | Must not be in the past. Must be less than one year in the future. | API Hub |
+| 13 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
 
 ## Authorization — Account Selection
 
@@ -41,7 +43,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 
 | # | Field | Rule | Validated by |
 |---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
+| 1 | `Authorization` | Must contain a valid Bearer access token issued with the `accounts openid` scope. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadAccountsBasic` or `ReadAccountsDetail`. | API Hub |
 | 4 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
@@ -54,7 +56,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 
 | # | Field | Rule | Validated by |
 |---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
+| 1 | `Authorization` | Must contain a valid Bearer access token issued with the `accounts openid` scope. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadAccountsBasic` or `ReadAccountsDetail`. | API Hub |
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
@@ -68,7 +70,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 
 | # | Field | Rule | Validated by |
 |---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
+| 1 | `Authorization` | Must contain a valid Bearer access token issued with the `accounts openid` scope. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadBalances`. | API Hub |
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
@@ -82,7 +84,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 
 | # | Field | Rule | Validated by |
 |---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
+| 1 | `Authorization` | Must contain a valid Bearer access token issued with the `accounts openid` scope. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadBeneficiariesBasic` or `ReadBeneficiariesDetail`. | API Hub |
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
@@ -96,7 +98,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 
 | # | Field | Rule | Validated by |
 |---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
+| 1 | `Authorization` | Must contain a valid Bearer access token issued with the `accounts openid` scope. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadDirectDebits`. | API Hub |
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
@@ -110,7 +112,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 
 | # | Field | Rule | Validated by |
 |---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
+| 1 | `Authorization` | Must contain a valid Bearer access token issued with the `accounts openid` scope. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadProduct`. `ReadProductFinanceRates` is required for finance rate data to be included in the response. | API Hub |
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
@@ -129,7 +131,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 
 | # | Field | Rule | Validated by |
 |---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
+| 1 | `Authorization` | Must contain a valid Bearer access token issued with the `accounts openid` scope. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadScheduledPaymentsBasic` or `ReadScheduledPaymentsDetail`. | API Hub |
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
@@ -143,7 +145,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 
 | # | Field | Rule | Validated by |
 |---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
+| 1 | `Authorization` | Must contain a valid Bearer access token issued with the `accounts openid` scope. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadStandingOrdersBasic` or `ReadStandingOrdersDetail`. | API Hub |
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
@@ -157,7 +159,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 
 | # | Field | Rule | Validated by |
 |---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
+| 1 | `Authorization` | Must contain a valid Bearer access token issued with the `accounts openid` scope. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadTransactionsBasic` or `ReadTransactionsDetail`. `ReadFXTransactionsBasic`, `ReadFXTransactionsDetail`, or `ReadFXRemittanceCharges` are required for FX transaction data to be included. | API Hub |
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
@@ -173,7 +175,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 
 | # | Field | Rule | Validated by |
 |---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
+| 1 | `Authorization` | Must contain a valid Bearer access token issued with the `accounts openid` scope. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadStatements`. | API Hub |
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
@@ -189,7 +191,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 
 | # | Field | Rule | Validated by |
 |---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
+| 1 | `Authorization` | Must contain a valid Bearer access token issued with the `accounts openid` scope. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadParty`, `ReadPartyUser`, or `ReadPartyUserIdentity`. | API Hub |
 | 4 | `AccountId` | Must be a valid account ID shared by the customer — i.e. returned by `GET /accounts` using an access token bound to the same consent. | LFI |
@@ -203,7 +205,7 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 
 | # | Field | Rule | Validated by |
 |---|-------|------|-------------|
-| 1 | `Authorization` | Must contain a valid Bearer access token. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
+| 1 | `Authorization` | Must contain a valid Bearer access token issued with the `accounts openid` scope. The consent bound to the token must be in `Authorized` status and the `ExpirationDateTime` of the Consent must be in the future. | API Hub |
 | 2 | URL version | The version in the request URL path (e.g. `v2.1` in `/open-finance/account-information/v2.1/accounts`) must match the version in the consent's `authorization_details[0].type` (`urn:openfinanceuae:account-access-consent:v2.1`). | API Hub |
 | 3 | `consent.Permissions` | The consent must include `ReadParty`, `ReadPartyUser`, or `ReadPartyUserIdentity`. | API Hub |
 | 4 | `x-fapi-interaction-id` | Should be included. Should be a valid UUID (RFC 4122). An invalid value will not cause a failure but tracing will not be possible. | N/A |
@@ -211,3 +213,15 @@ The consent is submitted inside a signed [Request JWT](/tech/tpp-standards/secur
 | 6 | `x-fapi-customer-ip-address` | Must be sent when the customer is actively present at the time of the call. Must be a valid IPv4 or IPv6 address. | TPP |
 | 7 | `x-customer-user-agent` | Should be sent when the customer is actively present. Should reflect the user-agent of the customer's browser or device. | TPP |
 | 8 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, `Mortgage`. | LFI |
+
+## Account Status Handling
+
+Before returning data on any endpoint under `/accounts/{AccountId}/…`, the LFI checks the account's `Status`. If the account is not readable, the TPP will receive `403` according to the table below. The TPP MUST handle these responses and surface a suitable message to the User.
+
+| Status | Response |
+|--------|----------|
+| `Active`, `Inactive`, `Dormant` | Data is returned normally. |
+| `Suspended` | `403` with `errorCode`: `Consent.AccountTemporarilyBlocked` and `errorMessage`: `The account is temporarily blocked.` |
+| `Unclaimed`, `Deceased`, `Closed` | `403` with `errorCode`: `Consent.PermanentAccountAccessFailure` and `errorMessage`: `The account is permanently inaccessible.` |
+
+`GET /accounts` is exempt from this mapping — it returns all consented accounts regardless of status, with the `Status` field populated on each account. TPPs should observe `Status` from `GET /accounts` before making subsequent calls on a given account.

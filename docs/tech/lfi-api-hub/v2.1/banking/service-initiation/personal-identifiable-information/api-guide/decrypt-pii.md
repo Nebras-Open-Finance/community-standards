@@ -201,7 +201,7 @@ def validate_pii_schema(pii_payload: dict) -> None:
 :::
 
 ::: danger Reject invalid PII
-If the decrypted PII fails schema validation, the LFI MUST reject the consent or payment. Do not attempt to process a payment with malformed PII — return an appropriate error response. See [Requirements](../requirements) for the full set of validation rules.
+If the decrypted PII fails schema validation, the LFI MUST reject the consent or payment. Do not attempt to process a payment with malformed PII — return an appropriate error response. See [Personal Identifiable Information](../) for the full set of validation rules.
 :::
 
 ## Full decryption and validation example

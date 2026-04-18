@@ -8,7 +8,7 @@ aside: false
 
 The [Authentication requirements](/tech/lfi-api-hub/v2.1/consent-journey/authentication/requirements), [Authorization requirements](/tech/lfi-api-hub/v2.1/consent-journey/authorization/requirements), and [User Journeys](./user-journeys) must be adhered to.
 
-The tables below list the rules that apply to Bank Data Sharing. All request validation of the TPP's credentials, access token, and consent is performed by the Hub before your resource server is called. The rules below cover what your resource server must validate and what it must return.
+The tables below list the rules that apply to Bank Data Sharing. All request validation of the TPP's credentials, access token, and consent is performed by the Hub before your Ozone Connect endpoints are called. The rules below cover what your Ozone Connect endpoints must validate and what they must return.
 
 
 ## Consent Validation
@@ -17,9 +17,11 @@ When a TPP creates a consent, the API Hub calls your [`POST /consent/action/vali
 
 This validation runs before the PSU is involved — there is no authentication or authorization at this stage. The purpose is to reject consents early that your systems cannot fulfil.
 
+The field names in the rules below match the Ozone Connect `newConsent` payload the Hub delivers — `standardVersion` sits at the top level of the consent object; `BaseConsentId`, `AccountType`, `AccountSubType`, and `Permissions` sit under `consentBody.Data`.
+
 | # | Rule | Detail |
 |---|------|--------|
-| 1 | Unsupported `standardVersion` | If the consent's `standardVersion` field (a top-level property on the consent object) is not `v2.1`, respond with `invalid`. |
+| 1 | Unsupported `standardVersion` | The consent's `standardVersion` (a top-level property on the consent object) is the URL path version the TPP will call on subsequent data sharing requests. If you do not support that version for the Account Information API family, respond with `invalid`. <br><br> Where you are dual-running multiple versions during a deprecation window (see [Major Version Deprecation](/policy/lfi-deprecation)) — for example `v2.0` alongside `v3.1` — you MUST respond `valid` for every version you serve. <br><br> Minor versions are backward compatible (see [Version Management](/policy/version-management)), so prior minors within each major you run are also valid (e.g. running `v2.0` and `v3.1` means `v2.0`, `v3.0`, and `v3.1` all resolve to `valid`). |
 | 2 | Unsupported `AccountType` | If the consent's `AccountType` array contains a value that is not supported by the API Hub integration the consent was received on, respond with `invalid`. Each API Hub integration is scoped to a single segment (`Retail`, `SME`, or `Corporate`). If the LFI serves multiple segments, each segment MUST be configured as a separate API Hub integration because the API Hub has a single authorization endpoint. Validate that every requested `AccountType` is within scope of the integration that received the consent. |
 | 3 | Unsupported `AccountSubType` | If the consent's `AccountSubType` array contains a value not supported by this LFI, respond with `invalid`. For example, if the LFI does not offer `Mortgage` products but the consent requests `Mortgage`, the consent MUST be rejected at validation. |
 | 4 | Unsupported permissions | If the consent includes permissions that reference an endpoint the LFI has not yet delivered, respond with `invalid`. For example, if the consent includes `ReadStandingOrdersBasic` or `ReadStandingOrdersDetail` but `GET /accounts/{AccountId}/standing-orders` is not yet available, the consent MUST be rejected at validation. |
@@ -50,6 +52,7 @@ During the consent authorization journey, the customer selects which of their ac
 | 4 | `accountNumbers.schemeName` | Must reflect the account identifier type: `IBAN` for `CurrentAccount` and `Savings`; `MaskedPAN` for `CreditCard`; `MortgageReference` for `Mortgage`; `FinanceReference` for `Finance`. |
 | 5 | `customers` | For non-business accounts, `customers` must contain at least one entry. For business accounts, populate `businessCustomer` instead. |
 | 6 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, and `Mortgage`. |
+| 7 | Account status | Return all consented accounts regardless of `Status`. Accounts that are `Inactive`, `Dormant`, `Suspended`, `Unclaimed`, `Deceased`, or `Closed` MUST still be included — the `Status` field on each account reflects the current state so the TPP can observe it. This endpoint is exempt from the [Account Status Handling](#account-status-handling) mapping. |
 
 ## GET `/accounts/{accountId}`
 
@@ -60,6 +63,7 @@ During the consent authorization journey, the customer selects which of their ac
 | 3 | `accountNumbers` | Must contain at least one entry. `schemeName` and `identification` are required on each entry. |
 | 4 | `accountNumbers.schemeName` | Must reflect the account identifier type: `IBAN` for `CurrentAccount` and `Savings`; `MaskedPAN` for `CreditCard`; `MortgageReference` for `Mortgage`; `FinanceReference` for `Finance`. |
 | 5 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, and `Mortgage`. |
+| 6 | Account status | If the account is not `Active`, do not return the resource. Apply the [Account Status Handling](#account-status-handling) mapping to return `403` with the corresponding `errorCode` and `errorMessage`. |
 
 
 ## GET `/accounts/{accountId}/balances`
@@ -71,6 +75,7 @@ During the consent authorization journey, the customer selects which of their ac
 | 3 | Multiple balance types | Return one record per distinct balance type held for the account. More than one record per account is permitted and expected where multiple balance types exist. Include `creditLines` where applicable. |
 | 4 | `InterimAvailable` | For `CurrentAccount` and `Savings` accounts, a record with `balanceType: InterimAvailable` must always be included. This is the real-time available balance on the account. |
 | 5 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, and `Mortgage`. |
+| 6 | Account status | If the account is not `Active`, do not return the resource. Apply the [Account Status Handling](#account-status-handling) mapping to return `403` with the corresponding `errorCode` and `errorMessage`. |
 
 ## GET `/accounts/{accountId}/beneficiaries`
 
@@ -81,6 +86,7 @@ During the consent authorization journey, the customer selects which of their ac
 | 3 | Data completeness | All fields that exist or are derivable must be populated, including `creditorAccount` (with `schemeName` and `identification`), `servicer`, and `reference` where held. |
 | 4 | Empty result | If the account holds no beneficiaries, return `200` with an empty `data` array. Do not return `404`. |
 | 5 | `AccountSubType` | Only supported for `CurrentAccount` and `Savings` accounts. Not available for `CreditCard`, `Finance`, or `Mortgage` accounts. |
+| 6 | Account status | If the account is not `Active`, do not return the resource. Apply the [Account Status Handling](#account-status-handling) mapping to return `403` with the corresponding `errorCode` and `errorMessage`. |
 
 
 ## GET `/accounts/{accountId}/direct-debits`
@@ -92,6 +98,7 @@ During the consent authorization journey, the customer selects which of their ac
 | 3 | Data completeness | Include `previousPaymentDateTime` and `previousPaymentAmount` where available. |
 | 4 | Empty result | If the account holds no direct debits, return `200` with an empty `data` array. Do not return `404`. |
 | 5 | `AccountSubType` | Only supported for `CurrentAccount` and `Savings` accounts. Not available for `CreditCard`, `Finance`, or `Mortgage` accounts. |
+| 6 | Account status | If the account is not `Active`, do not return the resource. Apply the [Account Status Handling](#account-status-handling) mapping to return `403` with the corresponding `errorCode` and `errorMessage`. |
 
 ## GET `/accounts/{accountId}/scheduled-payments`
 
@@ -102,6 +109,7 @@ During the consent authorization journey, the customer selects which of their ac
 | 3 | Data completeness | Include `creditorAccount` (with `schemeName` and `identification`), `creditorAgent`, `creditorReference`, and `debtorReference` where held. |
 | 4 | Empty result | If the account holds no scheduled payments, return `200` with an empty `data` array. Do not return `404`. |
 | 5 | `AccountSubType` | Only supported for `CurrentAccount` and `Savings` accounts. Not available for `CreditCard`, `Finance`, or `Mortgage` accounts. |
+| 6 | Account status | If the account is not `Active`, do not return the resource. Apply the [Account Status Handling](#account-status-handling) mapping to return `403` with the corresponding `errorCode` and `errorMessage`. |
 
 ## GET `/accounts/{accountId}/standing-orders`
 
@@ -112,6 +120,7 @@ During the consent authorization journey, the customer selects which of their ac
 | 3 | Data completeness | Include `nextPaymentDateTime`, `nextPaymentAmount`, `lastPaymentDateTime`, `lastPaymentAmount`, `finalPaymentDateTime`, `finalPaymentAmount`, `numberOfPayments`, `creditorAccount`, `creditorAgent`, and `standingOrderType` where held. |
 | 4 | Empty result | If the account holds no standing orders, return `200` with an empty `data` array. Do not return `404`. |
 | 5 | `AccountSubType` | Only supported for `CurrentAccount` and `Savings` accounts. Not available for `CreditCard`, `Finance`, or `Mortgage` accounts. |
+| 6 | Account status | If the account is not `Active`, do not return the resource. Apply the [Account Status Handling](#account-status-handling) mapping to return `403` with the corresponding `errorCode` and `errorMessage`. |
 
 ## GET `/accounts/{accountId}/statements`
 
@@ -126,6 +135,7 @@ During the consent authorization journey, the customer selects which of their ac
 | 7 | Empty result | If no statements exist within the requested range, return `200` with an empty `data` array. Do not return `404`. |
 | 8 | Pagination | Pagination must be supported. `meta.paginated`, `meta.totalRecords`, and `meta.totalPages` must be accurate. |
 | 9 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, and `Mortgage`. |
+| 10 | Account status | If the account is not `Active`, do not return the resource. Apply the [Account Status Handling](#account-status-handling) mapping to return `403` with the corresponding `errorCode` and `errorMessage`. |
 
 ## GET `/accounts/{accountId}/transactions`
 
@@ -142,6 +152,7 @@ During the consent authorization journey, the customer selects which of their ac
 | 9 | Empty result | If no transactions exist within the requested range, return `200` with an empty `data` array. Do not return `404`. |
 | 10 | Pagination | Pagination must be supported. `meta.paginated`, `meta.totalRecords`, and `meta.totalPages` must be accurate. |
 | 11 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, and `Mortgage`. |
+| 12 | Account status | If the account is not `Active`, do not return the resource. Apply the [Account Status Handling](#account-status-handling) mapping to return `403` with the corresponding `errorCode` and `errorMessage`. |
 
 ## GET `/accounts/{accountId}/products`
 
@@ -154,6 +165,7 @@ During the consent authorization journey, the customer selects which of their ac
 | 5 | Empty result | If no product data exists for the account, return `200` with an empty `data` array. Do not return `404`. |
 | 6 | Pagination | Pagination must be supported. `meta.paginated`, `meta.totalRecords`, and `meta.totalPages` must be accurate. |
 | 7 | `AccountSubType` | Supported for all account subtypes: `CurrentAccount`, `Savings`, `CreditCard`, `Finance`, and `Mortgage`. |
+| 8 | Account status | If the account is not `Active`, do not return the resource. Apply the [Account Status Handling](#account-status-handling) mapping to return `403` with the corresponding `errorCode` and `errorMessage`. |
 
 
 
@@ -169,6 +181,7 @@ During the consent authorization journey, the customer selects which of their ac
 | 6 | Data completeness | All fields that exist or are derivable from your systems must be populated on each customer record. |
 | 7 | Empty result | If no customer records are associated with the account, return `200` with an empty `data` array. Do not return `404`. |
 | 8 | Pagination | `meta.totalRecords` and `meta.totalPages` must be accurate. |
+| 9 | Account status | If the account is not `Active`, do not return the resource. Apply the [Account Status Handling](#account-status-handling) mapping to return `403` with the corresponding `errorCode` and `errorMessage`. |
 
 ## GET `/customer`
 

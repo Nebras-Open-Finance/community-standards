@@ -30,7 +30,9 @@ Before registering with an Authorisation Server, ensure the following requiremen
 - **Selected Authorisation Server**  
   You must identify the Authorisation Server you intend to register with by using [API Discovery](../trust-framework/api-discovery) to locate and select the appropriate endpoint.
 
-
+::: warning Roles are locked in at registration
+The roles assigned to your application (`BSIP`, `BDSP`, `ISP`) determine what it is permitted to do with the LFI. Once registered, editing the application's roles in the Trust Framework has no effect — the registered roles are fixed. If the roles later need to change, you must disable the application, create a new one with the correct roles, and register it again.
+:::
 
 
 ## Retrieving the `registration_endpoint`

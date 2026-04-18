@@ -33,7 +33,7 @@ The LFI's authorisation server interacts with the **Headless Heimdall** API, pro
 |  | After the customer has authenticated and authorized the consent — completes the interaction and triggers the Hub to issue tokens to the TPP |
 |  | If authentication or consent authorization fails — ends the interaction and initiates an error redirect back to the TPP |
 
-See [Authentication & Authorization](./auth/) for the full API guide and reference.
+See [Authentication & Authorization](./consent-journey/api-guide) for the full API guide and reference.
 
 ### Consent
 
@@ -50,7 +50,7 @@ The **Consent Manager API** is provided by the Hub. Your authorisation server ca
 |  | List all consents for a given customer — used to power the CMI consent list view |
 |  | List all consents associated with a given account |
 
-See [Consent](./consent/) for the full API guide and reference.
+See [Consent](./consent-events/) for the full API guide and reference.
 
 #### Consent Events & Actions
 
@@ -61,7 +61,7 @@ Unlike the APIs above, the **Consent Events & Actions API** is implemented by yo
 |  | When a consent is created, modified, or revoked — allows your systems to react to state changes in real time |
 |  | During consent creation — the Hub requests you to validate the consent parameters before the authorization journey proceeds |
 
-See [Consent Events & Actions](./consent/events-and-actions) for the full API guide and reference.
+See [Consent Events & Actions](./consent-events/) for the full API guide and reference.
 
 ### Banking
 

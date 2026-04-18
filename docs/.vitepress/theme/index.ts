@@ -18,6 +18,7 @@ import RedocWrapper from '../../components/RedocWrapper.vue'
 import Carousel from '../../components/Carousel.vue'
 import ProtectedPageWrapper from '../../components/ProtectedPageWrapper.vue'
 import LiveAPIs from '../../components/LiveAPIs.vue'
+import LiveTPPs from '../../components/LiveTPPs.vue'
 import EditableJson from '../../components/EditableJson.vue'
 import ErrataNotice from '../../components/ErrataNotice.vue'
 import OzoneConnectCompatibility from '../../components/OzoneConnectCompatibility.vue'
@@ -106,6 +107,7 @@ export default {
     app.component('Carousel', Carousel)
     app.component('ProtectedPageWrapper', ProtectedPageWrapper)
     app.component('LiveAPIs', LiveAPIs)
+    app.component('LiveTPPs', LiveTPPs)
     app.component('EditableJson', EditableJson)
     app.component('ErrataNotice', ErrataNotice)
     app.component('OzoneConnectCompatibility', OzoneConnectCompatibility)

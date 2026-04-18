@@ -28,7 +28,7 @@ You will see **Ozone** listed as an active TPP. This is an automated health moni
 
 ## Activating a TPP
 
-After a TPP has registered with you — after the `/tpp-registration` endpoint is called successfully (for detail on how a TPP registers, see [Registration API Guide](/tpp/tech-standards/registration/api-guide)) — the TPP is not automatically granted access. The LFI MUST activate the TPP within the Admin Portal for access to be granted.
+After a TPP has registered with you — after the `/tpp-registration` endpoint is called successfully (for detail on how a TPP registers, see [Registration API Guide](/tech/tpp-standards/registration/api-guide)) — the TPP is not automatically granted access. The LFI MUST activate the TPP within the Admin Portal for access to be granted.
 
 The activation is done in three steps and **MUST be performed in this order.**
 

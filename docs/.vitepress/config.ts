@@ -9,6 +9,13 @@ import { apiSpecsSidebar } from './config/sidebars/api-specs'
 import { docRepositorySidebar } from './config/sidebars/doc-repository'
 import { CURRENT_VERSION } from './version'
 
+// TODO: set to the real production domain before launch.
+// Referenced by sitemap, robots.txt, and Open Graph / Twitter meta tags.
+const SITE_URL = 'https://TODO-set-domain.example'
+const SITE_TITLE = 'UAE Open Finance — Community Standards'
+const SITE_DESCRIPTION = 'Community-driven, experimental documentation for the UAE Open Finance standards (TPP, LFI, API Hub). Not the official source of truth.'
+const SITE_OG_IMAGE = `${SITE_URL}/AlTareq.png`
+
 const wellKnownProxyPlugin = {
   name: 'well-known-proxy',
   configureServer(server: any) {
@@ -63,10 +70,28 @@ export default defineConfig({
     },
   },
   title: 'UAE Open Finance',
-  ignoreDeadLinks: true, // <-- temporary
-  description: 'Community-driven, experimental Open Finance documentation',
+  description: SITE_DESCRIPTION,
+  lang: 'en',
   appearance: false,
-  head: [['link', { rel: 'icon', href: '/fav.ico' }]],
+  sitemap: {
+    hostname: SITE_URL,
+  },
+  head: [
+    ['link', { rel: 'icon', href: '/fav.ico' }],
+    ['meta', { name: 'robots', content: 'index, follow' }],
+    // Open Graph
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:site_name', content: SITE_TITLE }],
+    ['meta', { property: 'og:title', content: SITE_TITLE }],
+    ['meta', { property: 'og:description', content: SITE_DESCRIPTION }],
+    ['meta', { property: 'og:url', content: SITE_URL }],
+    ['meta', { property: 'og:image', content: SITE_OG_IMAGE }],
+    // Twitter
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:title', content: SITE_TITLE }],
+    ['meta', { name: 'twitter:description', content: SITE_DESCRIPTION }],
+    ['meta', { name: 'twitter:image', content: SITE_OG_IMAGE }],
+  ],
 
   // Maps source file paths → versioned URL paths.
   // e.g. docs/tech/tpp-standards/banking/index.md → /tech/tpp-standards/v2.1/banking/

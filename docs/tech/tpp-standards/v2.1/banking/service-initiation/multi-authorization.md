@@ -14,32 +14,39 @@ The Open Finance standards support payment journeys that require more than one a
 
 Before initiating a multi-authorization payment, ensure the following are in place:
 
-- **Registered [Application](../../trust-framework/application)**
-  The application must be created within the Trust Framework and assigned the **BSIP role** as defined in [Roles](../../trust-framework/roles).
+- **Registered [Application](../../../trust-framework/application)**
+  The application must be created within the Trust Framework and assigned the **BSIP role** as defined in [Roles](../../../trust-framework/roles).
 
 - **An active payment consent**
   A payment consent must have been created through the relevant [Service Initiation API Guide](./domestic-payments/single-instant-payment/api-guide). Multi-authorization applies after the first authorizer has completed their step.
 
-- **Understanding of the [Consent Lifecycle](../../../consent)**
+- **Understanding of the [Consent Lifecycle](../../consent/)**
   You should understand consent status transitions, including `AwaitingAuthorization`, `Authorized`, and `Rejected`.
 
 ## API Sequence Flow
 
-<APIFlowViewer title="Multi-Authorization">
+<APIFlowViewer title="Multi-Authorization"
+downloadUrl="/images/consent-flows/uae-multi-auth-sequence-diagram.png"
+>
   <APIFlowsMultiAuthorization/>
 </APIFlowViewer>
 
 ## Indicating Multi-Authorization Support
 
-### Step 1 - Setting `IsSingleAuthorization` in the PAR Request
+### Step 1 - Setting `IsSingleAuthorization` and `AuthorizationExpirationDateTime` in the PAR Request
 
 When submitting the Pushed Authorization Request (PAR), the TPP MUST set `IsSingleAuthorization` inside `authorization_details[].consent`:
 
 - `true` — only a single authorizer is supported for the payment.
 - `false` — multiple authorizers are supported (multi-authorization enabled).
 
+When `IsSingleAuthorization` is `false`, the TPP SHOULD also set `AuthorizationExpirationDateTime` inside `authorization_details[].consent`. This field represents the deadline by which **all** remaining authorizers must have acted — that is, the consent MUST reach `Status=Authorized` before this time, otherwise the consent transitions to rejected/expired.
+
+- `AuthorizationExpirationDateTime` MUST NOT be after `ExpirationDateTime`.
+- When `IsSingleAuthorization` is `true`, TPPs SHOULD NOT include `AuthorizationExpirationDateTime`.
+
 ::: tip
-This flag is carried in the Rich Authorization Request (`authorization_details[].consent.IsSingleAuthorization`). See the Authorization Endpoints OpenAPI for the full schema reference.
+These fields are carried in the Rich Authorization Request (`authorization_details[].consent.IsSingleAuthorization`, `authorization_details[].consent.AuthorizationExpirationDateTime`). See the Authorization Endpoints OpenAPI for the full schema reference.
 :::
 
 ## LFI Behavior
@@ -201,12 +208,12 @@ The LFI must PATCH the consent after each additional authorization to reflect pr
 ### Step 5 - Initiating the Payment
 
 - The TPP MAY initiate the payment only after `Status=Authorized`.
-- Additional authorizers must act before the consent's `ExpirationDateTime`.
+- Additional authorizers must act before `AuthorizationExpirationDateTime` if set, otherwise before `ExpirationDateTime`.
 
 ::: tip Tracking consent status
 TPPs can monitor progress by:
 - Subscribing to event notifications; or
-- Polling [`GET /payment-consents/{ConsentId}`](/tech/tpp-standards/v2.1/banking/service-initiation/open-api/payment-consents-ConsentId).
+- Polling [`GET /payment-consents/{ConsentId}`](/tech/tpp-standards/v2.1/consent/open-api/payment-consents-ConsentId).
 :::
 
-Once the consent is `Authorized`, the TPP can exchange the refresh token for a new access token via [`/token`](/tech/tpp-standards/security/tokens) and proceed to initiate the payment.
+Once the consent is `Authorized`, the TPP can exchange the refresh token for a new access token via [`/token`](/tech/tpp-standards/security/tokens/) and proceed to initiate the payment.

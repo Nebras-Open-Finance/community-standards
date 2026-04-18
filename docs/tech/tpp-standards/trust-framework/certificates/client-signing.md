@@ -16,10 +16,10 @@ Every signed JWT must include a `kid` header referencing this certificate's Key 
 
 ## Generating Your Signing Certificate
 
-Follow the [Keys & Certificates](../certificates/) guide to generate your private key and CSR, then upload the CSR to the Trust Framework to receive your certificate.
+Follow the [Keys & Certificates](../certificates) guide to generate your private key and CSR, then upload the CSR to the Trust Framework to receive your certificate.
 
 When selecting the certificate type during generation, choose **Signing**.
 
 ## Using the Signing Key
 
-The **Key ID (`kid`)** of your signing certificate must be included in the JWT header for every signed request. See [Finding Your Key ID](../certificates/#finding-your-key-id-kid) and [Message Signing](../../security/fapi/message-signing) for full details on how this value is used.
+The **Key ID (`kid`)** of your signing certificate must be included in the JWT header for every signed request. See [Finding Your Key ID](../certificates#finding-your-key-id-kid) and [Message Signing](../../security/fapi/message-signing) for full details on how this value is used.

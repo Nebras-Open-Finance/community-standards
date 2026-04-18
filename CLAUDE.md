@@ -153,6 +153,7 @@ Adaptations include:
   - “API Hub”
   - “LFI”
   - “TPP”
+  - “Ozone Connect” — the LFI's backend that exposes banking APIs to the API Hub. This is the correct term for the LFI-operated service; see the terminology rule below.
 - Follow actual request flows strictly
 - Reference OpenAPI specifications frequently
 - Use normative language where appropriate:
@@ -170,6 +171,24 @@ Adaptations include:
 - ❌ Merge API Hub and LFI responsibilities
 - ❌ Create endpoints not defined in OpenAPI
 - ❌ Confuse authentication (LFI) with authorization server (API Hub)
+- ❌ Refer to the LFI's backend as “resource server” — it is **Ozone Connect**. See the terminology rule below.
+
+
+## 📛 Terminology: “Resource Server” vs “Ozone Connect”
+
+UAE Open Finance has two things that can loosely be called a “resource server”, and the docs MUST distinguish them:
+
+| Term | Refers to | Operated by | When to use |
+| --- | --- | --- | --- |
+| **API Hub resource server** (`rs1.{lfiCode}.apihub.openfinance.ae`) | The TPP-facing gateway that fronts the LFI on the Hub | Nebras (API Hub) | Only when referring to the Hub's TPP-facing surface — e.g. the `rs1.*` base URL, the OAuth2 Resource Server role of the Hub, or spec fields like `ResourceServerUrl` returned by `/discovery`. |
+| **Ozone Connect** | The LFI's backend that implements the Open Finance endpoints the Hub calls | The LFI | Any time you are describing what the LFI itself operates or implements — i.e. what receives requests proxied from the Hub. |
+
+### Rules
+
+- ❌ Do NOT call the LFI's backend a “resource server”. It is **Ozone Connect**.
+- ✅ When referring to an action the LFI performs on a specific endpoint, name the endpoint explicitly and link to its page under `docs/tech/lfi-api-hub/**/open-api/` (e.g. “your Ozone Connect [`POST /payments`](/tech/lfi-api-hub/v2.1/banking/service-initiation/open-api/payments) endpoint”), rather than a generic phrase like “your resource server”.
+- ✅ Where a passage covers several endpoints at once (e.g. a requirements page spanning all Data Sharing endpoints), use “your Ozone Connect endpoints” (plural) rather than “your resource server”.
+- ✅ “Resource server” remains correct **only** when referring to the API Hub's TPP-facing surface (the `rs1.*` host, the OAuth2 role, or defined spec fields such as `ResourceServerUrl`). In those cases, prefer “API Hub resource server” for clarity.
 
 
 ## ✍️ Writing Style Guidelines

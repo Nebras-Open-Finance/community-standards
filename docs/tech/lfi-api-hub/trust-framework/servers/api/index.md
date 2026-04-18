@@ -31,7 +31,7 @@ The Open Finance UAE ecosystem organises APIs into **API families**. Each family
 | Pre-production | `https://rs1.{lfiCode}.preprod.apihub.openfinance.ae` |
 | Production | `https://rs1.{lfiCode}.apihub.openfinance.ae` |
 
-When a TPP calls one of these endpoints, the API Hub validates the request and routes it to the corresponding endpoint on your **Ozone Connect** resource server. The tables below show each TPP-facing API resource and the Ozone Connect endpoint it maps to.
+When a TPP calls one of these endpoints, the API Hub validates the request and routes it to the corresponding endpoint on your **Ozone Connect** implementation. The tables below show each TPP-facing API resource and the Ozone Connect endpoint it maps to.
 
 The structure and schema of all available API families can be retrieved from the Trust Framework via [`GET /references/apifamilies`](/tech/lfi-api-hub/trust-framework/api/api-families) — this returns the family definitions, including their endpoint patterns and metadata schemas.
 

@@ -21,6 +21,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
     collapsed: true,
     items: [
       { text: 'LFI Integration Journey', link: `${BASE}/getting-started/` },
+      { text: 'Recommended Bank Rollout Plan', link: `${BASE}/getting-started/bank-rollout-plan` },
     ],
   },
 
@@ -284,6 +285,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         text: 'Payments (Service Initiation)',
         collapsed: true,
         items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/banking/service-initiation/` },
           {
             text: 'Domestic Payments',
             collapsed: true,
@@ -328,6 +330,8 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
             collapsed: true,
             items: [
               { text: 'Overview', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/` },
+              { text: 'Debtor Account', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/debtor-account` },
+              { text: 'Creditor', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/creditor` },
               {
                 text: 'API Guide',
                 collapsed: true,
@@ -372,6 +376,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         text: 'Confirmation of Payee',
         collapsed: true,
         items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/` },
           { text: 'Requirements', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/requirements` },
           { text: 'User Experience', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/user-journeys` },
           { text: 'API Guide', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/api-guide` },
@@ -388,6 +393,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         text: 'Products & Leads',
         collapsed: true,
         items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/banking/products-and-leads/` },
           { text: 'Requirements', link: `${BASE}/${VERSION}/banking/products-and-leads/requirements` },
           { text: 'API Guide', link: `${BASE}/${VERSION}/banking/products-and-leads/api-guide` },
           {
@@ -403,6 +409,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         text: 'ATMs',
         collapsed: true,
         items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/banking/atms/` },
           { text: 'Requirements', link: `${BASE}/${VERSION}/banking/atms/requirements` },
           { text: 'API Guide', link: `${BASE}/${VERSION}/banking/atms/api-guide` },
           {
@@ -457,15 +464,6 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
   },
 
   {
-    text: 'Operational Requirements',
-    collapsed: true,
-    items: [
-      { text: 'Availability', link: `${BASE}/operational-requirements/` },
-      { text: 'API Responsiveness', link: `${BASE}/operational-requirements/api-responsiveness` },
-    ],
-  },
-
-  {
     text: 'Testing & Certification',
     collapsed: true,
     items: [
@@ -497,11 +495,4 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
     ]
   },
 
-  {
-    text: 'CAAP',
-    collapsed: true,
-    items: [
-      { text: 'Overview', link: `${BASE}/${VERSION}/caap/` },
-    ],
-  },
 ]

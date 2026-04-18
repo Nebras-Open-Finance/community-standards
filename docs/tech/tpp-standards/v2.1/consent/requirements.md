@@ -6,7 +6,7 @@ aside: false
 
 # Consent Requirements
 
-These requirements apply to all TPPs operating within UAE Open Finance, regardless of the service type. They are assessed as part of the [Functional Evidence](../../../../testing-certification/functional) certification process.
+These requirements apply to all TPPs operating within UAE Open Finance, regardless of the service type. They are assessed as part of the [Functional Evidence](../../production/testing-certification/functional) certification process.
 
 
 ## Minimal Scope
@@ -16,7 +16,7 @@ A consent must be **minimally scoped** — it may only request the permissions g
 Requesting permissions speculatively, in anticipation of future features, or as a blanket grant is not permitted. If a TPP's service requires only account balances, it must not also request transaction history or beneficiary data.
 
 ::: warning
-LFIs may reject a consent at the `/par` stage if the `authorization_details` object contains values that are unsupported or disproportionate to the service offered and described via the [`/participants` endpoint](../../trust-framework/api-discovery/). This includes:
+LFIs may reject a consent at the `/par` stage if the `authorization_details` object contains values that are unsupported or disproportionate to the service offered and described via the [`/participants` endpoint](../../trust-framework/api-discovery). This includes:
 
 - A `Permissions` set broader than the service the LFI supports
 - Field values the LFI does not support — for example, requesting `AccountSubType: CreditCard` at an LFI that only supports `CurrentAccount` and `Savings`
@@ -42,7 +42,7 @@ Each service type has a defined user experience standard that governs what must 
 
 A TPP must maintain an accurate and up-to-date record of every consent it holds in its own systems. The state of a consent can change at any time — the user may revoke it directly at the LFI, the LFI may suspend it, or it may expire — without the TPP initiating the change.
 
-This record must be kept current and must be accurately reflected in the [Consent Management Interface](./consent-management-interface) the TPP exposes to its users, so that users can always see exactly what they have consented to and take action to revoke or amend it.
+This record must be kept current and must be accurately reflected in the [Consent Management Interface](./consent-management-interface/) the TPP exposes to its users, so that users can always see exactly what they have consented to and take action to revoke or amend it.
 
 TPPs have two mechanisms to keep their records in sync with the LFI:
 
@@ -57,4 +57,4 @@ Polling should be performed at a reasonable interval. Excessive polling rates ar
 
 ### Webhooks (Event Subscriptions)
 
-[Dead link](../dead-link) (NEEDS DOING)
+The TPP subscribes to consent status events and is notified by the API Hub whenever a consent transitions between states (e.g. `Authorised`, `Revoked`, `Expired`). This avoids the latency and overhead of polling. See [Consent Status Event](../webhooks/consent-status/api-guide) for the event payload and subscription model.

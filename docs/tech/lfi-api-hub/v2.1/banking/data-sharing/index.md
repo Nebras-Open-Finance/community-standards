@@ -8,6 +8,11 @@ aside: false
 
 The Open Finance Banking Data Sharing capabilities enable secure, consent-driven access to customer banking data. These services empower licensed third-party providers (TPPs) to deliver account aggregation, financial management tools, lending assessments, and value-added digital services.
 
+::: info Required role: BDSP
+Access to the Bank Data Sharing APIs requires TPPs to hold the **BDSP** (Bank Data Sharing Provider) role. The API Hub validates the role on every request before proxying it to the LFI.
+:::
+
+<LiveTPPs :families="['account-information']" />
 
 ## Endpoint & account type coverage
 
@@ -32,47 +37,10 @@ Not all endpoints are expected to be delivered for every account subtype, and no
 | `GET /accounts/{AccountId}/balances` | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `GET /accounts/{AccountId}/transactions` | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `GET /accounts/{AccountId}/statements` | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `GET /accounts/{AccountId}/product` | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `GET /parties` | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `GET /accounts/{AccountId}/parties` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /accounts/{AccountId}/products` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /customer` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /accounts/{AccountId}/customer` | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `GET /accounts/{AccountId}/beneficiaries` | ✓ | ✓ | — | — | — |
 | `GET /accounts/{AccountId}/direct-debits` | ✓ | ✓ | — | — | — |
 | `GET /accounts/{AccountId}/scheduled-payments` | ✓ | ✓ | — | — | — |
 | `GET /accounts/{AccountId}/standing-orders` | ✓ | ✓ | — | — | — |
-
-## Capabilities
-
-### Account & Balance Information
-
-Provides consented access to core account data, including account identifiers, account types, currency, and status.
-
-Enables retrieval of real-time and available balances, overdraft limits, and related account details.
-
-### Historical Transaction & Statement Data
-
-Provides access to transaction and statement history, including debit and credit entries, references, amounts, running balances, booking and value dates, and associated metadata where available.
-
-Supports filtering by consented date ranges and statement periods.
-
-### Party & Account Holder Information
-
-Allows access to verified account holder details, including name, Emirates ID (where permitted), contact information, and KYC verification status.
-
-Data sharing is subject to explicit consent scope and regulatory data minimisation principles.
-
-### Regular Payments
-
-Provides access to configured payment instructions and beneficiaries, including:
-- Beneficiary details
-- Standing orders
-- Direct debits
-- Scheduled and recurring payments
-
-Enables visibility into existing payment commitments and setup information.
-
-### Product Information
-
-Provides structured information on banking products associated with the account, including fees, charges, rewards, benefits, eligibility criteria, and key product features.
-
-Supports transparency and comparison of product terms under customer consent.
-

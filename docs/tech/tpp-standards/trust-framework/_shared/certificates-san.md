@@ -1,7 +1,7 @@
 # Create a CSR with Subject Alternative Name (SAN)
 
 ::: info This page applies to LFI server certificates
-The Subject Alternative Name (SAN) extension is required on **server-side** certificates — specifically the transport certificates LFIs present at their API Hub endpoints. TPPs generating client certificates (transport, signing, or encryption) do **not** add a SAN; they set the `CN` to their application's Client ID instead. See [Keys and Certificates](./certificates) for client certificate requirements.
+The Subject Alternative Name (SAN) extension is required on **server-side** certificates — specifically the transport certificates LFIs present at their API Hub endpoints. TPPs generating client certificates (transport, signing, or encryption) do **not** add a SAN; they set the `CN` to their application's Client ID instead. See [Keys and Certificates](/tech/tpp-standards/trust-framework/certificates) for client certificate requirements.
 :::
 
 ## Adding a Subject Alternative Name (SAN)

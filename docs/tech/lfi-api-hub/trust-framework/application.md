@@ -17,7 +17,7 @@ As an LFI you will need at least two applications registered in the Trust Framew
 
 ### C3-hh-cm-client
 
-This is the client your LFI uses to make requests to the API Hub's [Headless Heimdall Auth Server](/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall) and [Consent Manager](/tech/lfi-api-hub/v2.1/api-hub/consent-manager/) — for example to call [`GET /auth`](/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/open-api/auth), [`POST /auth/{interactionId}/doConfirm`](/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/open-api/auth-interactionId-doConfirm), or [`PATCH /consents/{consentId}`](/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId). It must be assigned the **LFI role only**. Because this client is used solely to communicate with the API Hub and never redirects end users, the redirect URI and logo are not significant.
+This is the client your LFI uses to make requests to the API Hub's [Headless Heimdall Auth Server](/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/) and [Consent Manager](/tech/lfi-api-hub/v2.1/api-hub/consent-manager/) — for example to call [`GET /auth`](/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/open-api/auth), [`POST /auth/{interactionId}/doConfirm`](/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/open-api/auth-interactionId-doConfirm), or [`PATCH /consents/{consentId}`](/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId). It must be assigned the **LFI role only**. Because this client is used solely to communicate with the API Hub and never redirects end users, the redirect URI and logo are not significant.
 
 <ImageViewer
   src="/images/ozone/hub/c3.png"
@@ -46,4 +46,4 @@ Each application must include the following details:
 | **Version** | The current version of the application or software statement. | `1.0.0` | `1.0.0` |
 | **Federation Entity Management Type** | Specifies how the application's entity is managed within the federation (e.g., self-managed or delegated). | `federation-managed` | `federation-managed` |
 | **Logo** | A PNG or JPEG image uploaded to represent the application. Used in portals and consent screens. | Not used can be set to anything | Displayed to the PSU during consent authorization |
-| **Redirect URI** | Must be a valid HTTPS URI that complies with FAPI standards for redirection after authentication.<br><br>More information on Mobile app [Redirect URIs](../trust-framework/redirect-uri) | Not used can be set to anything | Required — e.g. `https://testapp.example.com/callback` |
+| **Redirect URI** | Must be a valid HTTPS URI that complies with FAPI standards for redirection after authentication.<br><br>More information on Mobile app [Redirect URIs](/tech/tpp-standards/trust-framework/redirect-uri) | Not used can be set to anything | Required — e.g. `https://testapp.example.com/callback` |

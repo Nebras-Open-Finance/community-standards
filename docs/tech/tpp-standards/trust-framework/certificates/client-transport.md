@@ -17,10 +17,10 @@ All API calls you make as a TPP must present this certificate. Without it, LFI e
 
 ## Generating Your Transport Certificate
 
-Follow the [Keys & Certificates](../certificates/) guide to generate your private key and CSR, then upload the CSR to the Trust Framework to receive your certificate.
+Follow the [Keys & Certificates](../certificates) guide to generate your private key and CSR, then upload the CSR to the Trust Framework to receive your certificate.
 
 When selecting the certificate type during generation, choose **Transport**.
 
 ::: tip Using the kid
-Once issued, note the **Key ID (`kid`)** from the certificate detail page — you will need it when configuring your mTLS client. See [Finding Your Key ID](../certificates/#finding-your-key-id-kid).
+Once issued, note the **Key ID (`kid`)** from the certificate detail page — you will need it when configuring your mTLS client. See [Finding Your Key ID](../certificates#finding-your-key-id-kid).
 :::

@@ -2,6 +2,7 @@
 next: false
 prev: false
 aside: false
+pageClass: requirements-page
 ---
 
 # Confirmation of Payee — Requirements

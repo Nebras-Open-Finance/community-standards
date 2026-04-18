@@ -15,7 +15,7 @@ These headers apply to all authenticated API calls made in the UAE Open Finance 
 | `x-fapi-customer-ip-address` | Conditional | All endpoints |
 | `x-fapi-auth-date` | Conditional | Data Sharing, Service Initiation, Confirmation of Payee |
 | `x-customer-user-agent` | Optional | Data Sharing, Service Initiation, Confirmation of Payee |
-| `x-idempotency-key` | Required | [POST /payments](..//banking/service-initiation/open-api/payments) |
+| `x-idempotency-key` | Required | [POST /payments](../v2.1/banking/service-initiation/open-api/payments) |
 
 
 ## x-fapi-interaction-id

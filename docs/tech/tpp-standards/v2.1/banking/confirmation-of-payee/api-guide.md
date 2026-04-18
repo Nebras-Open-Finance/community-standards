@@ -16,19 +16,19 @@ CoP is served by each participating LFI independently. Before calling an LFI dir
 
 Before calling the CoP API, ensure the following requirements are met:
 
-- **Registered [Application](../../../../../trust-framework/application)**
-  The application must be created within the Trust Framework and assigned the **BSIP role** as defined in [Roles](../../../../../trust-framework/roles).
+- **Registered [Application](../../../trust-framework/application)**
+  The application must be created within the Trust Framework and assigned the **BSIP role** as defined in [Roles](../../../trust-framework/roles).
 
-- **Valid [Transport Certificate](../../../../../trust-framework/certificates)**
+- **Valid [Transport Certificate](../../../trust-framework/certificates)**
   An active transport certificate must be issued and registered in the Trust Framework to establish secure **mTLS communication**.
 
-- **Valid [Signing Certificate](../../../../../trust-framework/certificates)**
+- **Valid [Signing Certificate](../../../trust-framework/certificates)**
   An active signing certificate must be issued and registered in the Trust Framework. This certificate is used to sign the confirmation request JWT and client assertions.
 
-- **Registration with the relevant [Authorisation Server](../../../../registration/api-guide)**
+- **Registration with the relevant [Authorisation Server](../../../registration/api-guide)**
   The application must be registered with the Authorisation Server of the LFI that holds the destination account.
 
-- **Understanding of [Tokens & Assertions](../../../../security/tokens)**
+- **Understanding of [Tokens & Assertions](../../../security/tokens/)**
   You should understand how client authentication works with `private_key_jwt` before calling the token endpoint.
 
 ## API Sequence Flow

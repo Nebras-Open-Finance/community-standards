@@ -44,7 +44,7 @@ downloadUrl="/images/consent-flows/uae-data-sharing-sequence-diagram.png"
 
 ### Step 1 — TPP creates the consent via `/par`
 
-The consent journey begins when a TPP sends a Pushed Authorization Request (`POST /par`) to the API Hub. The TPP embeds the consent definition inside a signed Request JWT. See the [TPP Consent API Guide](/tech/tpp-standards/v2.1/consent/api-guide) for the TPP's API Guide and [`POST /par`](/tech//v2.1/consent/open-api/par) for the full `/par` request structure.
+The consent journey begins when a TPP sends a Pushed Authorization Request (`POST /par`) to the API Hub. The TPP embeds the consent definition inside a signed Request JWT. See the [TPP Consent API Guide](/tech/tpp-standards/v2.1/consent/api-guide) for the TPP's API Guide and [`POST /par`](/tech/tpp-standards/v2.1/consent/open-api/par) for the full `/par` request structure.
 
 At this point your LFI systems are not yet involved — the API Hub receives the request and begins processing the consent.
 
@@ -303,7 +303,7 @@ consent = consent_response.json()
 :::
 
 ::: info Encrypted PII
-Some consent types include encrypted personally identifiable information (PII) — for example, debtor or creditor details on payment consents. If the consent contains encrypted PII fields, your LFI MUST decrypt the data and validate that the decrypted values align exactly with the Open Finance API specification. See [Personal Identifiable Information](/tech/lfi-api-hub/v2.1/banking/service-initiation/personal-identifiable-information) for decryption and validation details.
+Some consent types include encrypted personally identifiable information (PII) — for example, debtor or creditor details on payment consents. If the consent contains encrypted PII fields, your LFI MUST decrypt the data and validate that the decrypted values align exactly with the Open Finance API specification. See [Personal Identifiable Information](/tech/lfi-api-hub/v2.1/banking/service-initiation/personal-identifiable-information/) for decryption and validation details.
 :::
 
 See the [`GET /consents/{consentId}` API Reference](/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents-consentId) for the full response schema.

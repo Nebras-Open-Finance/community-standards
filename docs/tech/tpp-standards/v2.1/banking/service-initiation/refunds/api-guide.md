@@ -19,19 +19,19 @@ Before calling the Refunds API, ensure the following requirements are met:
 - **Completed payment consent with `ReadRefundAccount` permission**
   The original payment consent must have been created with `ReadRefundAccount` in the `Permissions` array, and the payment must have been authorised by the user. See the [Payment Consent API Guide](/tech/tpp-standards/v2.1/consent/api-guide).
 
-- **Registered [Application](../../../../../trust-framework/application)**
-  The application must be assigned the **BSIP role** in the Trust Framework. See [Roles](../../../../../trust-framework/roles).
+- **Registered [Application](../../../../trust-framework/application)**
+  The application must be assigned the **BSIP role** in the Trust Framework. See [Roles](../../../../trust-framework/roles).
 
-- **Valid [Transport Certificate](../../../../../trust-framework/certificates)**
+- **Valid [Transport Certificate](../../../../trust-framework/certificates)**
   An active transport certificate for mTLS communication with the LFI.
 
-- **Valid [Signing Certificate](../../../../../trust-framework/certificates)**
+- **Valid [Signing Certificate](../../../../trust-framework/certificates)**
   An active signing certificate for signing client assertions.
 
 - **LFI token endpoint**
   You should already hold the LFI's `token_endpoint` and `ResourceServerUrl` from the original payment consent flow. If not, fetch the LFI's `.well-known/openid-configuration` to resolve them.
 
-- **Understanding of [Tokens & Assertions](../../../../security/tokens)**
+- **Understanding of [Tokens & Assertions](../../../../security/tokens/)**
   Familiarise yourself with `private_key_jwt` client authentication before calling the token endpoint.
 
 ## API Sequence Flow

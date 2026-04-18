@@ -16,7 +16,7 @@ When an LFI or the platform sends an encrypted payload, it encrypts it using the
 
 ## Generating Your Encryption Certificate
 
-Follow the [Keys & Certificates](../certificates/) guide to generate your private key and CSR, then upload the CSR to the Trust Framework to receive your certificate.
+Follow the [Keys & Certificates](../certificates) guide to generate your private key and CSR, then upload the CSR to the Trust Framework to receive your certificate.
 
 When selecting the certificate type during generation, choose **Encryption**.
 

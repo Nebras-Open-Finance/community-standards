@@ -254,7 +254,7 @@ Navigate to the **Auth Flow** folder within **Single Instant Payment** and run t
 After the LFI redirects back to your `redirect_uri`, the URL will contain a `code` query parameter.
 
 1. Copy the `code` value from the redirect URL.
-2. Set it as the `authorizationCode` [collection variable](/tech/tpp-standards/security/tokens) in Postman.
+2. Set it as the `authorizationCode` [collection variable](/tech/tpp-standards/security/tokens/) in Postman.
 3. Send the **token request** to exchange the code for an access token.
 
 <ClientOnly>

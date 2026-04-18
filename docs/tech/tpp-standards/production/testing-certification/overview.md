@@ -21,7 +21,7 @@ Nebras requires all TPPs to complete the following certification areas before pr
 
 | Area | What it covers |
 |------|----------------|
-| [Readiness Checklist](./index) | A structured pre-flight check confirming your Trust Framework setup, security configuration, and API integration are complete and working against the AlTareq Model Bank |
+| [Readiness Checklist](./readiness-checklist) | A structured pre-flight check confirming your Trust Framework setup, security configuration, and API integration are complete and working against the AlTareq Model Bank |
 | [Functional Evidence](./functional) | Documented proof that your proposition calls only the APIs it needs, requests only the minimum permissions required, and handles consent states correctly |
 | [User Experience Evidence](./user-experience) | Evidence that your consent and authorisation flows meet Nebras user experience requirements |
 | [FAPI Conformance](./fapi) | Results from running the OpenID Foundation FAPI conformance test suite against your client configuration |

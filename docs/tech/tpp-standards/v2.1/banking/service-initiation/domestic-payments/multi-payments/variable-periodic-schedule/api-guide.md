@@ -28,7 +28,7 @@ Before initiating a Variable Periodic Schedule payment, ensure the following req
 - **Registration with the relevant [Authorisation Server](../../../../../../registration/api-guide)**
   The application must be registered with the Authorisation Server of the LFI with which you intend to initiate payments.
 
-- **Understanding of the [FAPI Security Profile](../../../../../../security/fapi)** and **[Tokens & Assertions](../../../../../../security/tokens)**
+- **Understanding of the [FAPI Security Profile](../../../../../../security/fapi/)** and **[Tokens & Assertions](../../../../../../security/tokens/)**
   You should understand how request object signing, client authentication, and access token validation underpin secure API interactions.
 
 - **Understanding of [Message Encryption](../../../../../../security/fapi/message-encryption)**
@@ -63,7 +63,7 @@ With the encrypted PII ready, construct the `authorization_details` of type `urn
 | `ConsentId`* | string (uuid) | Unique ID assigned by the TPP (1–128 chars) | `b8f42378-10ac-46a1-8d20-4e020484216d` |
 | `IsSingleAuthorization`* | boolean | Whether the payment requires only one authorizing party | `true` |
 | `ExpirationDateTime`* | date-time | Consent expiry (ISO 8601 with timezone, max 1 year) | `2027-03-02T00:00:00+00:00` |
-| `AuthorizationExpirationDateTime` | date-time | Deadline by which the user must authorize at the LFI | `2026-03-03T10:00:00+00:00` |
+| `AuthorizationExpirationDateTime` | date-time | Deadline by which all authorizers must have acted (multi-authorization only). SHOULD be set when `IsSingleAuthorization` is `false`; SHOULD NOT be set when `IsSingleAuthorization` is `true`. MUST NOT be after `ExpirationDateTime`. | `2026-03-03T10:00:00+00:00` |
 | `BaseConsentId` | string (uuid) | Links to prior consent if renewing — see [Base Consent ID](/knowledge-base/articles/base-consent-id) | — |
 | `Permissions` | array\<enum\> | Optional access permissions granted alongside the payment consent | `ReadAccountsBasic`, `ReadBalances` |
 | `ControlParameters`* | object | Payment controls — **see below** | — |
@@ -108,7 +108,8 @@ Only one payment may be submitted per period. The API Hub will reject a second `
       "IsSingleAuthorization": true,
       "ExpirationDateTime": "2027-03-02T00:00:00+00:00",
 
-      // Deadline for the user to authorize at the bank (optional)
+      // Multi-authorization only: deadline for all authorizers to act.
+      // SHOULD NOT be set when IsSingleAuthorization is true.
       // "AuthorizationExpirationDateTime": "2026-03-03T10:00:00+00:00",
 
       "Permissions": [

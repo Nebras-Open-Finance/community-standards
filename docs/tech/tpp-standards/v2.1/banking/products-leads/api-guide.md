@@ -16,16 +16,16 @@ Once the user selects a product they have two options: **Apply Now**, which dire
 
 Before calling the Products & Leads API, ensure the following requirements are met:
 
-- **Registered [Application](../../../../../trust-framework/application)**
-  The application must be created within the Trust Framework and assigned the **BDSP role** as defined in [Roles](../../../../../trust-framework/roles).
+- **Registered [Application](../../../trust-framework/application)**
+  The application must be created within the Trust Framework and assigned the **BDSP role** as defined in [Roles](../../../trust-framework/roles).
 
-- **Valid [Transport Certificate](../../../../../trust-framework/certificates)**
+- **Valid [Transport Certificate](../../../trust-framework/certificates)**
   An active transport certificate must be issued and registered in the Trust Framework to establish secure **mTLS communication**.
 
-- **Valid [Signing Certificate](../../../../../trust-framework/certificates)**
+- **Valid [Signing Certificate](../../../trust-framework/certificates)**
   An active signing certificate must be issued and registered in the Trust Framework for client authentication.
 
-- **Understanding of [Tokens & Assertions](../../../../security/tokens)**
+- **Understanding of [Tokens & Assertions](../../../security/tokens/)**
   You should understand how client authentication works with `private_key_jwt` before calling the token endpoint.
 
 ## API Sequence Flow

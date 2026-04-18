@@ -43,8 +43,8 @@ Because the API Hub cannot inspect PII, the LFI takes on additional responsibili
 |----------------|-------------|
 | **Decryption** | Decrypt the JWE using the Enc1 private key — see [How to Decrypt PII](./api-guide/decrypt-pii) |
 | **Schema validation** | Validate the decrypted payload against the OpenAPI schema — no additional properties are permitted |
-| **Field validation** | Verify mandatory fields, IBAN format, BIC consistency, and creditor matching rules |
-| **Rejection** | Return an error if PII is malformed, missing required fields, or fails validation |
+| **Field validation** | Verify mandatory fields, IBAN format, BIC consistency, and creditor matching rules — see [Debtor Account](./debtor-account) and [Creditor](./creditor) |
+| **Rejection** | Mark the consent invalid via `POST /consent/action/validate` if PII is malformed, missing required fields, or fails validation |
 
 ## Structure of the PII payload
 
@@ -55,10 +55,10 @@ The decrypted PII contains two top-level sections:
 | `Initiation` | Creditor and debtor account details — structure differs between consent and payment stages |
 | `Risk` | Fraud and risk indicators about the debtor, transaction, and creditor |
 
-**At consent time (`POST /par`):**
+**At consent validation (`POST /consent/action/validate`):**
 - `Initiation.Creditor` is an **array** of 1–10 creditor entries (or omitted for open beneficiary)
 - `Initiation.DebtorAccount` is optionally present
 
-**At payment time (`POST /payments`):**
+**At payment time (Ozone Connect payment instruction):**
 - Creditor fields sit **directly on `Initiation`** as a single creditor (not an array)
 - `DebtorAccount` is **absent** — the debtor account was fixed during consent authorisation

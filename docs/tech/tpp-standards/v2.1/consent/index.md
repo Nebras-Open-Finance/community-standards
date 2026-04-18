@@ -54,7 +54,7 @@ Requests must carry a Bearer access token in the `Authorization` header:
 Authorization: Bearer <access_token>
 ```
 
-Access tokens are short-lived (10-minute lifetime) and are bound to the consent they were issued for. See [Tokens & Assertions](../../../security/tokens/) for the full token lifecycle.
+Access tokens are short-lived (10-minute lifetime) and are bound to the consent they were issued for. See [Tokens & Assertions](../../security/tokens/) for the full token lifecycle.
 
 ### 2. An Authorized Consent
 

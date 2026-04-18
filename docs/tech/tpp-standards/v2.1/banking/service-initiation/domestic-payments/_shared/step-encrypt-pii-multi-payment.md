@@ -12,7 +12,7 @@ The schema defines `PersonalIdentifiableInformation` for `POST /payments` as a `
 ::: warning Domestic Payment PII Schema Object must be strictly followed
 The object you encrypt **MUST** conform exactly to `AEDomesticPaymentPIIProperties`. Field names, nesting, and data types are validated by the LFI after decryption — any deviation will result in payment rejection. Do not add undocumented fields or omit required ones.
 
-See [Personal Identifiable Information](../../../personal-identifiable-information/) for the complete field reference, required vs optional fields, and creditor models for each domestic payment type.
+See [Personal Identifiable Information](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/) for the complete field reference, required vs optional fields, and creditor models for each domestic payment type.
 :::
 
 ::: danger Creditor must match the consent PII
@@ -87,6 +87,6 @@ payment_encrypted_pii = encrypt_pii(payment_pii, LFI_JWKS_URI)
 
 :::
 
-See [Personal Identifiable Information](../../../personal-identifiable-information/) for the complete field reference, required vs optional fields, and creditor models for each domestic payment type.
+See [Personal Identifiable Information](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/) for the complete field reference, required vs optional fields, and creditor models for each domestic payment type.
 
 See [Message Encryption](/tech/tpp-standards/security/fapi/message-encryption) for details on fetching the LFI's JWKS and selecting the correct encryption key.

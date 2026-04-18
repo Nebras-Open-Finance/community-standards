@@ -33,7 +33,7 @@ The Consent Manager is used in three contexts:
 
 During the consent authorisation flow, the LFI's authorisation server calls the Consent Manager to read the consent details and update the consent state after the PSU has authenticated and made their authorisation decision.
 
-For full details on the end-to-end flow — including how the Consent Manager fits alongside the Headless Heimdall Auth Server — see the [Consent Journey API Guide](/tech/lfi-api-hub/v2.1/consent-journey/api-guide/).
+For full details on the end-to-end flow — including how the Consent Manager fits alongside the Headless Heimdall Auth Server — see the [Consent Journey API Guide](/tech/lfi-api-hub/v2.1/consent-journey/api-guide).
 
 ### 2. Consent Management Interface
 

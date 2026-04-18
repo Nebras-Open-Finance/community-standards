@@ -56,11 +56,6 @@ Indicate which digital channels you currently support for PSU authentication and
 Indicate how many business brands you will be implementing. Each brand represents a separate API Hub instance — for example, a bank may have separate brands for retail and corporate, each requiring its own onboarding.
 
 
-## CAAP
-
-Indicate whether you plan to use the **Consent Approval Application Platform (CAAP)** for PSU consent management. CAAP is an API Hub-hosted solution for managing the PSU consent journey. See [CAAP](/tech/lfi-api-hub/v2.1/caap/) for details.
-
-
 ## Supported API Families
 
 Indicate which API families you plan to support. The available families are:

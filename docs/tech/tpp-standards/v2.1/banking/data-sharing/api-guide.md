@@ -13,22 +13,22 @@ aside: false
 
 Before creating a Bank Data Sharing consent, ensure the following requirements are met:
 
-- **Registered [Application](../trust-framework/application)**
-  The application must be created within the Trust Framework and assigned the **BDSP role** as defined in [Roles](../trust-framework/roles).
+- **Registered [Application](../../../trust-framework/application)**
+  The application must be created within the Trust Framework and assigned the **BDSP role** as defined in [Roles](../../../trust-framework/roles).
 
-- **Valid [Transport Certificate](../trust-framework/certificates)**
+- **Valid [Transport Certificate](../../../trust-framework/certificates)**
   An active transport certificate must be issued and registered in the Trust Framework to establish secure **mTLS communication**.
 
-- **Valid [Signing Certificate](../trust-framework/certificates)**
+- **Valid [Signing Certificate](../../../trust-framework/certificates)**
   An active signing certificate must be issued and registered in the Trust Framework. This certificate is used to sign request objects and client assertions.
 
-- **Registration with the relevant [Authorisation Server](../../registration/api-guide)**
+- **Registration with the relevant [Authorisation Server](../../../registration/api-guide)**
   The application must be registered with the Authorisation Server of the LFI for which you intend to create a Bank Data Sharing consent.
 
-- **Understanding of the [FAPI Security Profile](../../security/fapi)** and **[Tokens & Assertions](../../security/tokens)**
+- **Understanding of the [FAPI Security Profile](../../../security/fapi/)** and **[Tokens & Assertions](../../../security/tokens/)**
   You should understand how request object signing, client authentication, and access token validation underpin secure API interactions.
 
-- **Understanding of [Consents](../../consent)**
+- **Understanding of [Consents](../../consent/)**
   You should understand how to create, retrieve, and manage consents, including consent states and lifecycle transitions.
 
 ## API Sequence Flow
@@ -258,7 +258,7 @@ async function buildClientAssertion(): Promise<string> {
 
 :::
 
-See [Tokens & Assertions](/tech/tpp-standards/security/tokens#generating-a-client-assertion) for the full claims reference and [Preparing Your Client Assertion](/tech/tpp-standards/security/tokens/client-assertion) for a step-by-step walkthrough.
+See [Tokens & Assertions](/tech/tpp-standards/security/tokens/#generating-a-client-assertion) for the full claims reference and [Preparing Your Client Assertion](/tech/tpp-standards/security/tokens/client-assertion) for a step-by-step walkthrough.
 
 ### Step 4 - Sending the /par Request
 
@@ -486,7 +486,7 @@ expires_in    = tokens["expires_in"]   # 600 — access token lasts 10 minutes
 Store both tokens securely. The **access token** expires in **10 minutes**; the **refresh token** remains valid for the lifetime of the consent.
 
 ::: tip Token storage
-Never store tokens in `localStorage`. Use `httpOnly` cookies or a server-side session store. See [Tokens & Assertions](/tech/tpp-standards/security/tokens) for the full token lifecycle and expiry guidance.
+Never store tokens in `localStorage`. Use `httpOnly` cookies or a server-side session store. See [Tokens & Assertions](/tech/tpp-standards/security/tokens/) for the full token lifecycle and expiry guidance.
 :::
 
 ## Calling the Account APIs

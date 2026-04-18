@@ -21,7 +21,7 @@ Before calling the ATM API, ensure the following requirements are met:
 - **Valid [Signing Certificate](/tech/tpp-standards/trust-framework/certificates)**
   An active signing certificate must be issued and registered in the Trust Framework for client authentication.
 
-- **Understanding of [Tokens & Assertions](/tech/tpp-standards/security/tokens)**
+- **Understanding of [Tokens & Assertions](/tech/tpp-standards/security/tokens/)**
   You should understand how client authentication works with `private_key_jwt` before calling the token endpoint.
 
 ## API Sequence Flow

@@ -26,6 +26,10 @@ aside: false
 
 1. Select the roles for your application. Roles define what the application is permitted to do. You can assign multiple roles, but only roles that are already assigned to your organisation are available for selection.
 
+::: warning Choose roles carefully — they can't be changed later
+The roles you select here determine what this application is permitted to do. Once the application has been **registered with an LFI**, editing its roles in the Trust Framework has no effect. If the roles later need to change, you must disable the existing application, create a new one with the correct roles, and register it again. Make sure the selected roles (`BSIP`, `BDSP`, `ISP`) match the app's intended functionality before continuing.
+:::
+
 <ClientOnly>
     <Carousel :images="images2" />
   </ClientOnly>

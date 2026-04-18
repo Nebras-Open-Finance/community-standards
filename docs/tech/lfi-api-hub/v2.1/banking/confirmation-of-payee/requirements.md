@@ -8,7 +8,7 @@ aside: false
 
 The [User Journeys](./user-journeys) for this service also apply and must be adhered to.
 
-The tables below list the rules that apply to Confirmation of Payee. The Hub receives and validates the TPP's request, then calls your resource server at `POST /customers/action/cop-query`. You are responsible for returning accurate customer data — the Hub performs name matching.
+The tables below list the rules that apply to Confirmation of Payee. The Hub receives and validates the TPP's request, then calls your Ozone Connect [`POST /customers/action/cop-query`](/tech/lfi-api-hub/v2.1/banking/confirmation-of-payee/open-api/cop-query) endpoint. You are responsible for returning accurate customer data — the Hub performs name matching.
 
 
 ## POST `/customers/action/cop-query`

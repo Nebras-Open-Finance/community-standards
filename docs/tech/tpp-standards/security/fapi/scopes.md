@@ -15,8 +15,8 @@ In UAE Open Finance, scopes are **consent-bound** — the scope alone does not g
 | Scope | API | Description |
 |-------|-----|-------------|
 | `openid` | All | Activates OpenID Connect support. Required on every request — enables the Authorization Server to return an ID Token alongside the access token |
-| `accounts` | [Bank Data Sharing](../../banking/data-sharing/api-guide) | Grants access to account information APIs (`/accounts`, `/balances`, `/transactions`, etc.). The access token is bound to the `account-access-consent` from `authorization_details` |
-| `payments` | [Service Initiation](../../banking/service-initiation/domestic-payments/single-instant-payment/api-guide) | Grants access to payment initiation APIs (`/payments`). The access token is bound to the payment consent from `authorization_details`. Also grants read access to account information required for payment context |
+| `accounts` | [Bank Data Sharing](../../v2.1/banking/data-sharing/api-guide) | Grants access to account information APIs (`/accounts`, `/balances`, `/transactions`, etc.). The access token is bound to the `account-access-consent` from `authorization_details` |
+| `payments` | [Service Initiation](../../v2.1/banking/service-initiation/domestic-payments/single-instant-payment/api-guide) | Grants access to payment initiation APIs (`/payments`). The access token is bound to the payment consent from `authorization_details`. Also grants read access to account information required for payment context |
 | `products` | Products & Leads | Grants access to product discovery and leads APIs. Does not require a user consent flow |
 
 ## Combining Scopes

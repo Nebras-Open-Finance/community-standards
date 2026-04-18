@@ -71,7 +71,7 @@ Each log entry contains detailed metadata. From the request headers alone you ca
 
 The log entries follow the **same pattern for every request**. After reviewing a few traces, you will quickly learn which entries correspond to which stage of processing. Common debugging scenarios:
 
-- **Unexpected error response** — search by interaction ID, locate the LFI response entry, and inspect the status code and body returned by your resource server
+- **Unexpected error response** — search by interaction ID, locate the LFI response entry, and inspect the status code and body returned by your Ozone Connect endpoint
 - **Schema validation failure** — the log will show the validation step that rejected the request or response, with the specific schema error
 - **Consent or token issue** — the validation entries will indicate whether consent or token checks failed, and why
 

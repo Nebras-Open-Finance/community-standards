@@ -39,7 +39,7 @@ When a TPP initiates a consent request, the API Hub creates the consent record a
 During the authorisation journey, your system will typically also call the [Consent Manager](/tech/lfi-api-hub/v2.1/api-hub/consent-manager/) to read the full consent object and update its state. Both APIs work together to complete the journey.
 :::
 
-For the full API flow - see the [Consent Journey API Guide](/tech/lfi-api-hub/v2.1/consent-journey/api-guide/).
+For the full API flow - see the [Consent Journey API Guide](/tech/lfi-api-hub/v2.1/consent-journey/api-guide).
 
 ## API Reference
 

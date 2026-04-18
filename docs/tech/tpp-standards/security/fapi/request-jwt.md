@@ -45,7 +45,7 @@ For a precise per-claim reference covering `aud`, `exp`/`nbf` lifetime windows, 
 | `code_challenge_method` | string | ✓ | PKCE method — only `S256` is supported | `S256` |
 | `code_challenge` | string | ✓ | Base64url-encoded SHA-256 hash of your `code_verifier` | `E9Melhoa2Ow...` |
 | `max_age` | number |  | Maximum age (seconds) of the user's existing authentication session. Capped at `3600` | `3600` |
-| `authorization_details` | array | ✓ | Describes what the user is consenting to — see [Consent](../../consent/api-guide) | `[{...}]` |
+| `authorization_details` | array | ✓ | Describes what the user is consenting to — see [Consent](../../v2.1/consent/api-guide) | `[{...}]` |
 
 ## Generating a PKCE Code Challenge
 

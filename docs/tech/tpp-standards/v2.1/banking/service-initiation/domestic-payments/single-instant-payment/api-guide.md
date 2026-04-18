@@ -14,23 +14,23 @@ A Single Instant Payment is a one-time, immediate domestic payment initiated by 
 
 Before initiating a Single Instant Payment, ensure the following requirements are met:
 
-- **Registered [Application](../../../../../../trust-framework/application)**
-  The application must be created within the Trust Framework and assigned the **BSIP role** as defined in [Roles](../../../../../../trust-framework/roles).
+- **Registered [Application](../../../../../trust-framework/application)**
+  The application must be created within the Trust Framework and assigned the **BSIP role** as defined in [Roles](../../../../../trust-framework/roles).
 
 
-- **Valid [Transport Certificate](../../../../../../trust-framework/certificates)**
+- **Valid [Transport Certificate](../../../../../trust-framework/certificates)**
   An active transport certificate must be issued and registered in the Trust Framework to establish secure **mTLS communication**.
 
-- **Valid [Signing Certificate](../../../../../../trust-framework/certificates)**
+- **Valid [Signing Certificate](../../../../../trust-framework/certificates)**
   An active signing certificate must be issued and registered in the Trust Framework. This certificate is used to sign request objects and client assertions.
 
-- **Registration with the relevant [Authorisation Server](../../../../../../registration/api-guide)**
+- **Registration with the relevant [Authorisation Server](../../../../../registration/api-guide)**
   The application must be registered with the Authorisation Server of the LFI with which you intend to initiate payments.
 
-- **Understanding of the [FAPI Security Profile](../../../../../../security/fapi)** and **[Tokens & Assertions](../../../../../../security/tokens)**
+- **Understanding of the [FAPI Security Profile](../../../../../security/fapi/)** and **[Tokens & Assertions](../../../../../security/tokens/)**
   You should understand how request object signing, client authentication, and access token validation underpin secure API interactions.
 
-- **Understanding of [Message Encryption](../../../../../../security/fapi/message-encryption)**
+- **Understanding of [Message Encryption](../../../../../security/fapi/message-encryption)**
   PII (creditor name and account details) must be encrypted as a JWE before being embedded in the consent. You will need the LFI's public encryption key from their JWKS.
 
 ## API Sequence Flow
@@ -62,7 +62,7 @@ With the encrypted PII ready, construct the `authorization_details` of type `urn
 | `ConsentId`* | string (uuid) | Unique ID assigned by the TPP (1–128 chars) | `b8f42378-10ac-46a1-8d20-4e020484216d` |
 | `IsSingleAuthorization`* | boolean | Whether the payment requires only one authorizing party | `true` |
 | `ExpirationDateTime`* | date-time | Consent expiry (ISO 8601 with timezone, max 1 year) | `2026-05-03T15:46:00+00:00` |
-| `AuthorizationExpirationDateTime` | date-time | Deadline by which the user must authorize at the LFI | `2026-05-03T16:00:00+00:00` |
+| `AuthorizationExpirationDateTime` | date-time | Deadline by which all authorizers must have acted (multi-authorization only). SHOULD be set when `IsSingleAuthorization` is `false`; SHOULD NOT be set when `IsSingleAuthorization` is `true`. MUST NOT be after `ExpirationDateTime`. | `2026-05-03T16:00:00+00:00` |
 | `BaseConsentId` | string (uuid) | Used when amending or renewing an existing consent | — |
 | `Permissions` | array\<enum\> | Optional access permissions granted alongside the payment consent | `ReadAccountsBasic`, `ReadBalances` |
 | `ControlParameters`* | object | Payment schedule and amount. *Described below* | — |
@@ -91,7 +91,8 @@ With the encrypted PII ready, construct the `authorization_details` of type `urn
       "IsSingleAuthorization": true,
       "ExpirationDateTime": "2026-05-03T15:46:00+00:00",
 
-      // Deadline for the user to authorize at the bank (optional)
+      // Multi-authorization only: deadline for all authorizers to act.
+      // SHOULD NOT be set when IsSingleAuthorization is true.
       // "AuthorizationExpirationDateTime": "2026-05-03T16:00:00+00:00",
 
       "Permissions": [
@@ -348,7 +349,7 @@ encrypted_pii = encrypt_pii(pii, LFI_JWKS_URI)
 ```
 :::
 
-See [Personal Identifiable Information](../../../personal-identifiable-information/) for the complete field reference, required vs optional fields, and creditor models for each domestic payment type.
+See [Personal Identifiable Information](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/) for the complete field reference, required vs optional fields, and creditor models for each domestic payment type.
 
 See [Message Encryption](/tech/tpp-standards/security/fapi/message-encryption) for details on fetching the LFI's JWKS and selecting the correct encryption key.
 

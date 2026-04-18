@@ -163,11 +163,11 @@ async function fetchCategory(version, category) {
   const fileMap = new Map() // filename → remote path
 
   for (const { folder } of sorted) {
-    const openApiPath = `dist/${category}/${folder}/openapi`
-    const files = await ghListDir(openApiPath)
+    const versionPath = `dist/${category}/${folder}`
+    const files = await ghListDir(versionPath)
     for (const f of files) {
       if (f.type === 'file' && f.name.endsWith('.yaml')) {
-        fileMap.set(f.name, `${openApiPath}/${f.name}`)
+        fileMap.set(f.name, `${versionPath}/${f.name}`)
       }
     }
   }

@@ -76,19 +76,37 @@
   font-size: 0.75rem !important;
 }
 
+/* .VPNavBar.has-sidebar .content {
+  background-color: #ffffff !important;
+} */
+
 @media (min-width: 1660px) {
-  
+
   .VPNavBar.has-sidebar .title {
     padding-left: calc((100% - 1440px)/2 - 64px) !important;
     width: calc(350px - 64px) !important;
-  }  
-  
+  }
+
   .VPNavBar.has-sidebar .VPNavBarTitle {
     padding-left: calc((100% - 1440px)/2 - 64px) !important;
     width: calc(350px - 64px) !important;
   }
   .VPSidebar {
     padding-left: calc((100% - 1440px)/2 - 64px) !important;
+  }
+}
+
+/* Pages with `aside: false` in frontmatter have no right-hand TOC,
+   so widen the main content column to use the available space. */
+@media (min-width: 960px) {
+  .VPDoc:not(.has-aside) .container {
+    max-width: 1440px !important;
+  }
+  .VPDoc:not(.has-aside) .content {
+    max-width: none !important;
+  }
+  .VPDoc:not(.has-aside) .content-container {
+    max-width: 1360px !important;
   }
 }
 
@@ -101,6 +119,21 @@
 /* .VPNavBarTitle {
   display: none !important;
 } */
+
+/* Cap the Field column (2nd column) in Requirements tables */
+.requirements-page table th:nth-child(2),
+.requirements-page table td:nth-child(2) {
+  max-width: 275px;
+  width: 275px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.requirements-page table th:nth-child(2) code,
+.requirements-page table td:nth-child(2) code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 
 /* HTTP method badges in sidebar API reference items */
 .http-badge {

@@ -73,8 +73,8 @@ The onboarding form includes optional base path fields for each API family. If p
 
 | API Family | Example Endpoints | Path Effect |
 |------------|-------------------|-------------|
-| **[Data Sharing](/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/)** | `/accounts`, `/balances`, `/transactions` | `OzoneConnectURL/<path>/accounts` |
-| **[Service Initiation](/tech/lfi-api-hub/v2.1/banking/service-initiation/open-api/)** | `/domestic-payments`, `/multi-payments` | `OzoneConnectURL/<path>/domestic-payments` |
+| **[Data Sharing](/tech/lfi-api-hub/v2.1/banking/data-sharing/)** | `/accounts`, `/balances`, `/transactions` | `OzoneConnectURL/<path>/accounts` |
+| **[Service Initiation](/tech/lfi-api-hub/v2.1/banking/service-initiation/)** | `/domestic-payments`, `/multi-payments` | `OzoneConnectURL/<path>/domestic-payments` |
 | **[Products](/tech/lfi-api-hub/v2.1/banking/products-and-leads/)** | `/products`, `/leads` | `OzoneConnectURL/<path>/products` |
 | **Consent Events & Notifications** | `/event-notifications` | `OzoneConnectURL/<path>/event-notifications` |
 | **Echo Cert (Health Check)** | `/echo-cert` | `OzoneConnectURL/<path>/echo-cert` |

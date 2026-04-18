@@ -33,4 +33,4 @@ Always use the logo dynamically from `CustomerFriendlyLogoUri` rather than hardc
 `OpenIDDiscoveryDocument` is the **URL** of the LFI's `.well-known/openid-configuration` endpoint — it is a pointer, not the configuration data itself. To obtain the actual endpoints your application needs (such as `authorization_endpoint`, `token_endpoint`, `pushed_authorization_request_endpoint`, and `registration_endpoint`), you must make a separate `GET` request to that URL.
 :::
 
-Additional details about the Discovery endpoint can be found in [Discovery](./well-known/).
+Additional details about the Discovery endpoint can be found in [Discovery](./well-known).

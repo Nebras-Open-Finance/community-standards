@@ -141,11 +141,11 @@
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                   Trust Framework
                 </a>
-                <a href="/tech/tpp-standards/" class="new-doc-link new-doc-link--teal">
+                <a href="/tech/tpp-standards/v2.1/getting-started/" class="new-doc-link new-doc-link--teal">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                   Sandbox Quick-Start
                 </a>
-                <a href="/tech/tpp-standards/" class="new-doc-link new-doc-link--teal">
+                <a href="/tech/tpp-standards/v2.1/getting-started/postman" class="new-doc-link new-doc-link--teal">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                   Postman Collection
                 </a>
@@ -349,13 +349,9 @@
                 </div>
               </div>
               <div class="new-doc-links">
-                <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/" class="new-doc-link new-doc-link--gold">
+                <a href="/tech/lfi-api-hub/v2.1/banking/" class="new-doc-link new-doc-link--gold">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Banking
-                </a>
-                <a href="/tech/lfi-api-hub/v2.1/banking/confirmation-of-payee/" class="new-doc-link new-doc-link--gold">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Insurance
+                  Banking APIs
                 </a>
               </div>
             </div>
@@ -372,16 +368,20 @@
                 </div>
               </div>
               <div class="new-doc-links">
-                <a href="/tech/lfi-api-hub/getting-started/" class="new-doc-link new-doc-link--gold">
+                <a href="/tech/lfi-api-hub/production/testing-certification/overview" class="new-doc-link new-doc-link--gold">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Testing Guide
+                  Testing &amp; Certification Overview
+                </a>
+                <a href="/tech/lfi-api-hub/production/testing-certification/readiness-checklist" class="new-doc-link new-doc-link--gold">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  Readiness Checklist
                 </a>
               </div>
             </div>
 
           </div>
 
-          <a href="/tech/lfi-api-hub/getting-started/" class="new-doc-cta new-doc-cta--gold">
+          <a href="/tech/lfi-api-hub/" class="new-doc-cta new-doc-cta--gold">
             View full LFI documentation →
           </a>
         </div>
@@ -396,6 +396,26 @@
       </div>
 
       <div class="card-grid">
+
+                        <ArticleLink
+          link="https://wio.io/altareq"
+          imageSrc="/images/articles/wio.png" date="16 April 2026"
+          title="Wio Bank has successfully completed its Open Finance enablement under AlTareq, Central Bank of The UAE's Open Finance initiative"
+          text="AlTareq, the UAE’s open finance initiative, is now live and enabled for your Wio account, so you can manage your finances on your terms in a new era of connected financial services." />
+
+        
+                <ArticleLink
+          link="https://www.adib.ae/en/news/2026/apr/uaes-open-finance-altareq-initiative?utm_source=social&oczpid=195a1219-9152-473b-9a3f-55119be2446a"
+          imageSrc="/images/articles/adib-tpp.png" date="16 April 2026"
+          title="ADIB becomes the UAE’s first bank licensed to operate as an open finance provider under the UAE’s Open Finance Altareq Initiative"
+          text="Abu Dhabi Islamic Bank (ADIB), a leading Islamic financial institution, has become the first bank in the UAE to be licensed as a Third‑Party Provider (TPP) or Open Finance Provider under the UAE Central Bank Open Finance AlTareq initiative. This milestone marks a significant step in ADIB’s transformation journey and 2035 vision to build the bank of the future." />
+
+                  <ArticleLink
+          link="https://www.zawya.com/en/press-release/companies-news/adib-becomes-the-uaes-first-bank-licensed-to-operate-as-an-open-finance-provider-under-the-uaes-open-finance-altareq-initiative-ybyjb320"
+          imageSrc="/images/articles/adib-tpp-2.png" date="16 April 2026"
+          title="ADIB becomes the UAE’s first bank licensed to operate as an open finance provider under the UAE’s Open Finance Altareq Initiative"
+          text="Abu Dhabi Islamic Bank (ADIB), a leading Islamic financial institution, has become the first bank in the UAE to be licensed as a Third‑Party Provider (TPP) or Open Finance Provider under the UAE Central Bank Open Finance AlTareq initiative. This milestone marks a significant step in ADIB’s transformation journey and 2035 vision to build the bank of the future." />
+
 
         <ArticleLink
           link="https://www.openbankingexpo.com/news/amazon-expands-uk-payment-options-with-pay-by-bank-via-partnership-with-truelayer/"
@@ -420,31 +440,6 @@
               point for the nation’s financial sector, advancing the UAE’s goal to build a world-class, data-driven
               digital ecosystem as part of the CBUAE’s 2023–2026 strategy." />
 
-
-        <ArticleLink
-          link="https://www.openbankingexpo.com/news/abu-dhabi-islamic-bank-implements-open-finance-with-support-from-altareq/"
-          imageSrc="/images/articles/adib-live.jpg" date="20 Jan 2026"
-          title="Abu Dhabi Islamic Bank implements Open Finance with support from AlTareq" text="Abu Dhabi Islamic Bank (ADIB), a leading Islamic financial institution, has taken another major step in
-              shaping the future of financial services as part of its Vision 2035 by rolling out Open Finance, marking a
-              key milestone in the UAE’s Open Finance journey under AlTareq, the Central Bank of the UAE’s (CBUAE) Open
-              Finance Initiative." />
-
-
-        <ArticleLink
-          link="https://www.linkedin.com/pulse/when-open-finance-became-real-customers-uae-faisal-toukan-9kvsf/?trackingId=rv1pe3NS9%2FveDIbJe71Cag%3D%3D"
-          imageSrc="/images/articles/of-real-zina.png" date="20 Jan 2026"
-          title="When Open Finance Became Real for Customers in the UAE" text="We are witnessing the beginning of a shift in how money moves in the UAE. For the first time, a customer
-              in the country has completed a live, regulated Open Finance payment from inside a Ziina app experience.
-              What was once a policy framework and a technical standard is now a real interaction available to people
-              who use Ziina every day." />
-
-          <ArticleLink
-          link="https://ffnews.com/newsarticle/fintech/adib-becomes-first-islamic-bank-to-implement-open-finance-with-the-support-of-the-cbuaes-open-finance-initiative-altareq/"
-          imageSrc="/images/articles/adib-first.jpg" date="20 Jan 2026" title="ADIB Becomes First Islamic Bank to Implement Open Finance With the Support of the
-              CBUAE’s Open Finance Initiative AlTareq" text="Abu Dhabi Islamic Bank (ADIB), a leading Islamic financial institution, has taken another major step in
-              shaping the future of financial services as part of its Vision 2035 by rolling out Open Finance, marking a
-              key milestone in the UAE’s Open Finance journey under AlTareq, the Central Bank of the UAE’s (CBUAE) Open
-              Finance Initiative." />
 
 
 
@@ -1177,18 +1172,18 @@ const lfiByTypeItems = computed(() => {
 }
 
 .new-kpi-card {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 12px;
   padding: 1.5rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .new-kpi-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.09);
-  border-color: rgba(0, 0, 0, 0.14);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.10);
+  border-color: rgba(15, 23, 42, 0.14);
 }
 
 .new-kpi-label {
@@ -1208,17 +1203,18 @@ const lfiByTypeItems = computed(() => {
   margin-bottom: 0.5rem;
 }
 
-.new-kpi-teal { color: hsl(178, 60%, 30%); }
-.new-kpi-gold { color: hsl(36, 75%, 36%); }
+.new-kpi-teal { color: hsl(178, 70%, 22%); }
+.new-kpi-gold { color: hsl(32, 85%, 28%); }
 
 .new-kpi-delta {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.7rem;
+  font-weight: 500;
   margin-bottom: 0.75rem;
 }
 
-.new-kpi-delta-teal { color: hsl(178, 60%, 30%); }
-.new-kpi-delta-gold { color: hsl(36, 75%, 36%); }
+.new-kpi-delta-teal { color: hsl(178, 55%, 26%); }
+.new-kpi-delta-gold { color: hsl(32, 70%, 30%); }
 
 .new-kpi-desc {
   font-size: 0.8rem;
@@ -1235,11 +1231,11 @@ const lfiByTypeItems = computed(() => {
 }
 
 .new-chart-panel {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 12px;
   padding: 1.5rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .new-chart-tag {
@@ -1297,13 +1293,13 @@ const lfiByTypeItems = computed(() => {
 }
 
 .new-comm-icon--teal {
-  background: rgba(0, 172, 157, 0.14);
-  color: hsl(178, 60%, 30%);
+  background: hsl(178, 55%, 90%);
+  color: hsl(178, 70%, 20%);
 }
 
 .new-comm-icon--gold {
-  background: rgba(180, 120, 20, 0.12);
-  color: hsl(36, 75%, 36%);
+  background: hsl(36, 75%, 90%);
+  color: hsl(32, 85%, 26%);
 }
 
 .new-comm-value {
@@ -1472,15 +1468,15 @@ const lfiByTypeItems = computed(() => {
 }
 
 .new-doc-badge--teal {
-  color: hsl(178, 60%, 30%);
-  border: 1px solid rgba(0, 172, 157, 0.28);
-  background: rgba(0, 172, 157, 0.1);
+  color: hsl(178, 70%, 22%);
+  border: 1px solid rgba(0, 172, 157, 0.35);
+  background: hsl(178, 60%, 95%);
 }
 
 .new-doc-badge--gold {
-  color: hsl(36, 75%, 36%);
-  border: 1px solid rgba(180, 120, 20, 0.25);
-  background: rgba(180, 120, 20, 0.09);
+  color: hsl(32, 85%, 28%);
+  border: 1px solid rgba(180, 120, 20, 0.32);
+  background: hsl(36, 75%, 94%);
 }
 
 .new-doc-cards {
@@ -1490,16 +1486,17 @@ const lfiByTypeItems = computed(() => {
 }
 
 .new-doc-card {
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 10px;
   padding: 1.1rem 1.25rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .new-doc-card:hover {
-  border-color: rgba(0, 0, 0, 0.14);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  border-color: rgba(15, 23, 42, 0.16);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
 }
 
 .new-doc-card-header {
@@ -1520,13 +1517,13 @@ const lfiByTypeItems = computed(() => {
 }
 
 .new-doc-icon--teal {
-  background: rgba(0, 172, 157, 0.14);
-  color: hsl(178, 60%, 30%);
+  background: hsl(178, 55%, 90%);
+  color: hsl(178, 70%, 20%);
 }
 
 .new-doc-icon--gold {
-  background: rgba(180, 120, 20, 0.12);
-  color: hsl(36, 75%, 36%);
+  background: hsl(36, 75%, 90%);
+  color: hsl(32, 85%, 26%);
 }
 
 .new-doc-card-title {
@@ -1554,15 +1551,18 @@ const lfiByTypeItems = computed(() => {
   align-items: center;
   gap: 0.4rem;
   font-size: 0.78rem;
+  font-weight: 500;
   padding: 0.3rem 0.5rem;
   border-radius: 4px;
   text-decoration: none;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.new-doc-link:hover { background: rgba(0, 0, 0, 0.04); }
-.new-doc-link--teal { color: hsl(178, 60%, 30%); }
-.new-doc-link--gold { color: hsl(36, 75%, 36%); }
+.new-doc-link:hover { background: rgba(15, 23, 42, 0.05); }
+.new-doc-link--teal { color: hsl(178, 70%, 22%); }
+.new-doc-link--teal:hover { color: hsl(178, 75%, 16%); }
+.new-doc-link--gold { color: hsl(32, 85%, 28%); }
+.new-doc-link--gold:hover { color: hsl(32, 90%, 22%); }
 
 .new-doc-cta {
   display: inline-block;
@@ -1574,8 +1574,8 @@ const lfiByTypeItems = computed(() => {
 }
 
 .new-doc-cta:hover { text-decoration: underline; }
-.new-doc-cta--teal { color: hsl(178, 60%, 30%); }
-.new-doc-cta--gold { color: hsl(36, 75%, 36%); }
+.new-doc-cta--teal { color: hsl(178, 70%, 22%); }
+.new-doc-cta--gold { color: hsl(32, 85%, 28%); }
 
 @media (max-width: 1024px) {
   .new-kpi-grid { grid-template-columns: repeat(2, 1fr); }

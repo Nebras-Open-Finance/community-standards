@@ -1,0 +1,27 @@
+# lychee config — used by the internal link check in CI.
+# See https://lychee.cli.rs/usage/config/
+
+# PR workflow only checks internal links. External links are covered by
+# the scheduled external-links workflow (if/when added), which can override
+# these settings via CLI flags.
+
+# Don't fail on external URLs in the default PR run — only validate internal paths.
+exclude = [
+  '^https?://',
+  '^mailto:',
+  '^tel:',
+]
+
+# Skip anchors — VitePress generates slugs at build time and lychee's
+# fragment resolution doesn't always match. Revisit if we want stricter checks.
+include_fragments = false
+
+# Don't fail build on cache/transient issues.
+max_retries = 2
+retry_wait_time = 2
+
+# Accept common success codes.
+accept = ['200', '204', '206', '301', '302', '304']
+
+# Quiet noisy output; CI summary is enough.
+no_progress = true

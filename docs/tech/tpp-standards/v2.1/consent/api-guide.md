@@ -10,7 +10,7 @@ aside: false
 
 In UAE Open Finance, a **Consent** is a structured, user-authorized agreement that grants a TPP specific rights to access data or initiate payments on a user's behalf. All API access is consent-bound — you cannot call a resource endpoint without a valid, authorized consent.
 
-Consents are created through the **Pushed Authorization Request** flow ([FAPI 2.0 PAR](../../security/fapi)). Rather than creating a consent resource directly, the TPP embeds the consent definition inside a signed Request JWT and pushes it to the Authorization Server. The user then authenticates at the LFI and explicitly authorizes the consent.
+Consents are created through the **Pushed Authorization Request** flow ([FAPI 2.0 PAR](../../security/fapi/)). Rather than creating a consent resource directly, the TPP embeds the consent definition inside a signed Request JWT and pushes it to the Authorization Server. The user then authenticates at the LFI and explicitly authorizes the consent.
 
 ## Consent Types
 
@@ -163,7 +163,7 @@ refresh_token = tokens["refresh_token"]
 
 :::
 
-The access token is consent-bound — it carries the scope and `ConsentId` granted during authorization. See [Tokens & Assertions](/tech/tpp-standards/security/tokens) for token lifetimes and the refresh flow.
+The access token is consent-bound — it carries the scope and `ConsentId` granted during authorization. See [Tokens & Assertions](/tech/tpp-standards/security/tokens/) for token lifetimes and the refresh flow.
 
 When obtaining an access token you also recieve the current state of the consent (including the status) to confirm it has moved to the `Authorized` state before making resource API calls. 
 

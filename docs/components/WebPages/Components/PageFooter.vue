@@ -47,6 +47,13 @@
   align-items: center;
 }
 
+/* Mobile only */
+@media (max-width: 768px) {
+  .footer-inner {
+    flex-direction: column;
+  }
+}
+
 .footer-logo {
   width: 5rem;
   opacity: 0.7;
@@ -73,6 +80,10 @@
   margin: auto;
   color: rgba(0, 39, 127, 0.5);
   text-align: center;
+  padding-left: 5%;
+  padding-right: 5%;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
 }
 
 .footer-github {

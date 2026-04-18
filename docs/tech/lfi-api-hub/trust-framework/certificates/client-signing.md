@@ -22,4 +22,4 @@ When selecting the certificate type during generation, choose **Signing**.
 
 ## Using the Signing Key
 
-The **Key ID (`kid`)** of your signing certificate must be included in the JWT header for every signed request. See [Finding Your Key ID](../certificates/#finding-your-key-id-kid) and [Message Signing](../../security/fapi/message-signing) for full details on how this value is used.
+The **Key ID (`kid`)** of your signing certificate must be included in the JWT header for every signed request. See [Finding Your Key ID](../certificates/#finding-your-key-id-kid) and [Message Signing](/tech/tpp-standards/security/fapi/message-signing) for full details on how this value is used.

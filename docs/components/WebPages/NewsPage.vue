@@ -11,6 +11,25 @@
 
       <div class="card-grid">
 
+                                <ArticleLink
+          link="https://wio.io/altareq"
+          imageSrc="/images/articles/wio.png" date="16 April 2026"
+          title="Wio Bank has successfully completed its Open Finance enablement under AlTareq, Central Bank of The UAE's Open Finance initiative"
+          text="AlTareq, the UAE’s open finance initiative, is now live and enabled for your Wio account, so you can manage your finances on your terms in a new era of connected financial services." />
+
+
+                <ArticleLink
+          link="https://www.adib.ae/en/news/2026/apr/uaes-open-finance-altareq-initiative?utm_source=social&oczpid=195a1219-9152-473b-9a3f-55119be2446a"
+          imageSrc="/images/articles/adib-tpp.png" date="16 April 2026"
+          title="ADIB becomes the UAE’s first bank licensed to operate as an open finance provider under the UAE’s Open Finance Altareq Initiative"
+          text="Abu Dhabi Islamic Bank (ADIB), a leading Islamic financial institution, has become the first bank in the UAE to be licensed as a Third‑Party Provider (TPP) or Open Finance Provider under the UAE Central Bank Open Finance AlTareq initiative. This milestone marks a significant step in ADIB’s transformation journey and 2035 vision to build the bank of the future." />
+
+                  <ArticleLink
+          link="https://www.zawya.com/en/press-release/companies-news/adib-becomes-the-uaes-first-bank-licensed-to-operate-as-an-open-finance-provider-under-the-uaes-open-finance-altareq-initiative-ybyjb320"
+          imageSrc="/images/articles/adib-tpp-2.png" date="16 April 2026"
+          title="ADIB becomes the UAE’s first bank licensed to operate as an open finance provider under the UAE’s Open Finance Altareq Initiative"
+          text="Abu Dhabi Islamic Bank (ADIB), a leading Islamic financial institution, has become the first bank in the UAE to be licensed as a Third‑Party Provider (TPP) or Open Finance Provider under the UAE Central Bank Open Finance AlTareq initiative. This milestone marks a significant step in ADIB’s transformation journey and 2035 vision to build the bank of the future." />
+
 
         <ArticleLink
           link="https://www.openbankingexpo.com/news/amazon-expands-uk-payment-options-with-pay-by-bank-via-partnership-with-truelayer/"

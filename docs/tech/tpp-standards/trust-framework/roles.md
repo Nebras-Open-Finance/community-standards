@@ -22,4 +22,4 @@ When creating an application, include all relevant roles required for interactio
 |---------|-------------------------|------------------------------------------|--------------------------|
 | **BSIP**<br/>*Bank Service Initiation Provider* | `openid`<br/>`payments` | `urn:openfinanceuae:service-initiation-consent:*` | `client_credentials`<br/>`authorization_code`<br/>`refresh_token` |
 | **BDSP**<br/>*Bank Data Sharing Provider* | `openid`<br/>`accounts` | `urn:openfinanceuae:account-access-consent:*` | `client_credentials`<br/>`authorization_code`<br/>`refresh_token` |
-| **IDSP**<br/>*Insurance Data Sharing Provider* | `openid`<br/>`insurance` | `urn:openfinanceuae:insurance-consent:*` | `client_credentials`<br/>`authorization_code`<br/>`refresh_token` |
+| **ISP**<br/>*Insurance Service Provider* | `openid`<br/>`insurance` | `urn:openfinanceuae:insurance-consent:*` | `client_credentials`<br/>`authorization_code`<br/>`refresh_token` |

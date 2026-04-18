@@ -43,5 +43,5 @@ expires_in    = tokens["expires_in"]    # 600 — access token lasts 10 minutes
 :::
 
 ::: tip Token storage
-Never store tokens in `localStorage`. Use `httpOnly` cookies or a server-side session store. See [Tokens & Assertions](/tech/tpp-standards/security/tokens) for the full token lifecycle.
+Never store tokens in `localStorage`. Use `httpOnly` cookies or a server-side session store. See [Tokens & Assertions](/tech/tpp-standards/security/tokens/) for the full token lifecycle.
 :::

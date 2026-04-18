@@ -8,7 +8,7 @@ aside: false
 
 # Bank Data Sharing - API Guide
 
-Bank Data Sharing lets a TPP retrieve a customer's account list, account details, balances, transactions, statements, beneficiaries, direct debits, scheduled payments, standing orders, products, and customer details from your LFI via the API Hub. This guide covers the LFI-facing (Ozone Connect) endpoints your resource server MUST implement so the Hub can serve TPP requests.
+Bank Data Sharing lets a TPP retrieve a customer's account list, account details, balances, transactions, statements, beneficiaries, direct debits, scheduled payments, standing orders, products, and customer details from your LFI via the API Hub. This guide covers the Ozone Connect endpoints your LFI MUST implement so the Hub can serve TPP requests.
 
 The behavioural rules for each endpoint — including account status handling, required field population, and `AccountSubType` coverage — are in the [Bank Data Sharing Requirements](../requirements). This guide covers the request and response shape of each endpoint.
 
@@ -31,17 +31,9 @@ downloadUrl="/images/consent-flows/uae-data-sharing-sequence-diagram.png">
 
 During consent creation, if your LFI has configured the [`POST /consent/action/validate`](/tech/lfi-api-hub/v2.1/consent-events/open-api/validate) endpoint, the API Hub forwards the full consent payload to your Ozone Connect server **before** the consent is created. The request and response shape, and the overall placement of this call in the consent lifecycle, are covered in the [Consent Journey API Guide — Validate the consent](/tech/lfi-api-hub/v2.1/consent-journey/api-guide#step-2-optional-validate-the-consent).
 
-For Bank Data Sharing consents (`consentType: cbuae-account-access-consents`), your LFI MUST respond with `data.status: invalid` in the following cases. The field names below match the Ozone Connect `newConsent` payload the Hub delivers — `standardVersion` sits at the top level of the consent object; `BaseConsentId`, `AccountType`, `AccountSubType`, and `Permissions` sit under `consentBody.Data`.
+For Bank Data Sharing consents (`consentType: cbuae-account-access-consents`), your LFI MUST respond with `data.status: invalid` in the cases listed in [Bank Data Sharing Requirements — Consent Validation](../requirements#consent-validation).
 
-| # | Check | Rule |
-|---|-------|------|
-| 1 | Unsupported `standardVersion` | If `standardVersion` is not `v2.1`, respond with `invalid` |
-| 2 | Unsupported `AccountType` | If `consentBody.Data.AccountType` contains a value not supported by the API Hub integration that received the consent, respond with `invalid`. Each API Hub integration is scoped to a single segment (`Retail`, `SME`, or `Corporate`). If the LFI serves multiple segments, each MUST be configured as a separate API Hub integration, because the API Hub has a single authorization endpoint. Validate that every requested `AccountType` is within scope of the integration that received the consent |
-| 3 | Unsupported `AccountSubType` | If `consentBody.Data.AccountSubType` contains a value not supported by this LFI, respond with `invalid`. For example, if the LFI does not offer `Mortgage` products but the consent requests `Mortgage`, the consent MUST be rejected at validation |
-| 4 | Unsupported permissions | If `consentBody.Data.Permissions` references an endpoint the LFI has not yet delivered, respond with `invalid`. For example, if the consent includes `ReadStandingOrdersBasic` or `ReadStandingOrdersDetail` but `GET /accounts/{accountId}/standing-orders` is not yet available, the consent MUST be rejected at validation |
-| 5 | Invalid `BaseConsentId` | If `consentBody.Data.BaseConsentId` is present, validate that: the referenced consent exists and is known to the LFI; the referenced consent is itself a Data Sharing consent (its `rarType` matches `urn:openfinanceuae:account-access-consent:*`); the referenced consent does not itself carry a `BaseConsentId` — if it does, the TPP has linked to an intermediate consent in the chain rather than the root. `BaseConsentId` MUST always reference the original root consent. If any of these checks fail, respond with `invalid` |
-
-If the validate endpoint is not configured, the API Hub assumes all consents are valid and creates them immediately — the checks above then cannot be enforced. Configuring the endpoint is strongly recommended for Bank Data Sharing.
+If the validate endpoint is not configured, the API Hub assumes all consents are valid and creates them immediately — those checks then cannot be enforced. Configuring the endpoint is strongly recommended for Bank Data Sharing.
 
 ## Consent Flow
 
@@ -105,17 +97,17 @@ All resource endpoints receive the same set of headers from the API Hub. They ar
 | `o3-ozone-interaction-id` | Yes | Hub-generated interaction ID. Equals `o3-caller-interaction-id` if the TPP provided one |
 | `o3-caller-interaction-id` | No | Interaction ID passed in by the TPP, if present |
 
-Token and consent validation have already been performed by the Hub before the request reaches your resource server. Your LFI does not re-validate the token or consent — it is trusted to be valid. See [Bank Data Sharing Requirements](../requirements) for what your resource server must validate.
+Token and consent validation have already been performed by the Hub before the request reaches your Ozone Connect endpoint. Your LFI does not re-validate the token or consent — it is trusted to be valid. See [Bank Data Sharing Requirements](../requirements) for what your Ozone Connect endpoints must validate.
 
 ### Common error responses
 
-The behaviour below applies to every `/accounts/{accountId}/…` endpoint in this guide. `GET /accounts` is exempt — it returns all consented accounts regardless of status, with the `status` field populated so the TPP can see the current state.
+Every `/accounts/{accountId}/…` endpoint MUST check the account's status before returning data — if the account is not `Active`, the endpoint MUST respond with `403` instead of returning the resource. `GET /accounts` is the only exception: it lists every consented account regardless of status, with the `Status` field populated so the TPP can observe the current state.
 
 All error bodies MUST include `errorCode` and `errorMessage`.
 
 #### `403` — Forbidden
 
-Apply the [Account Status Handling](../requirements#account-status-handling) mapping:
+Return `403` using the [Account Status Handling](../requirements#account-status-handling) mapping:
 
 | `errorCode` | `errorMessage` | When to use |
 |-------------|----------------|-------------|

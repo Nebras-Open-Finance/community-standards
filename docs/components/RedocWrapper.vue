@@ -1,36 +1,32 @@
 <template>
 <div class="api-page">
 
-  <!-- <div class="redocly-header">
-    <h1 style="font-size: 2rem; margin-top: 2rem;">{{ props.title }}</h1>
+  <div class="redoc-toolbar">
+    <a :href="githubHref" class="redoc-toolbar-link" target="_blank" rel="noopener">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" alt="GitHub"
+        class="redoc-toolbar-icon" />
+      View on GitHub
+    </a>
+    <a :href="spec" :download="downloadName" class="redoc-toolbar-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="7 10 12 15 17 10" />
+        <line x1="12" y1="15" x2="12" y2="3" />
+      </svg>
+      Download .yaml
+    </a>
+  </div>
 
-    <div class="nav-links">
-
-      <a :href="backHref" class="nav-link back-link">
-        <svg style=" transform: rotate(180deg);" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-          stroke-linejoin="round">
-          <path d="m9 18 6-6-6-6" />
-        </svg>
-        Back to the Standards
-      </a>
-
-      <a :href="gitHref" class="nav-link git-link" style="margin-left: auto;" target="_blank" rel="noopener">
-        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" alt="GitHub"
-          class="icon" />
-        Go to Git Repository
-      </a>
-    </div>
-
-
-  </div> -->
   <div :id="containerId" class="redoc-wrapper-container" :style="{ height: height, width: '100%' }"></div>
 </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { CURRENT_VERSION } from '../.vitepress/version'
+
+const SPECS_REPO = 'https://github.com/Nebras-Open-Finance/api-specs/tree/main/dist'
 
 const props = defineProps({
   spec: {
@@ -104,25 +100,34 @@ onMounted(() => {
       // 3️⃣ Schema-only mode: build a synthetic path exposing just the named schema
       if (props.filterSchema) {
         const displayKey = props.displayPath || `/${props.filterSchema}`
+
+        // If displayKey matches a real path, inherit its responses/parameters/security
+        const realPathObj = fullSpec.paths?.[displayKey]
+        const realOp = realPathObj?.post || realPathObj?.put || realPathObj?.patch
+
+        const syntheticOp = {
+          summary: realOp?.summary || displayKey,
+          description: realOp?.description,
+          parameters: realOp?.parameters,
+          security: realOp?.security,
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { '$ref': `#/components/schemas/${props.filterSchema}` }
+              }
+            }
+          },
+          responses: realOp?.responses || { '200': { description: 'OK' } }
+        }
+
         finalSpec = {
           openapi: fullSpec.openapi,
           info: fullSpec.info,
+          servers: props.overrideServers ?? fullSpec.servers,
           components: fullSpec.components,
           paths: {
-            [displayKey]: {
-              post: {
-                summary: displayKey,
-                requestBody: {
-                  required: true,
-                  content: {
-                    'application/json': {
-                      schema: { '$ref': `#/components/schemas/${props.filterSchema}` }
-                    }
-                  }
-                },
-                responses: { '200': { description: 'OK' } }
-              }
-            }
+            [displayKey]: { post: syntheticOp }
           }
         }
       } else {
@@ -206,17 +211,20 @@ onMounted(() => {
 
 
 
-const getBackHref = () => {
-  const url = new URL(window.location.href)
-  const segments = url.pathname.split('/').filter(Boolean)
+const downloadName = computed(() => {
+  const parts = props.spec.split('/').filter(Boolean)
+  return parts[parts.length - 1] || 'openapi.yaml'
+})
 
-  segments.pop() // remove last path segment
-  url.pathname = '/' + segments.join('/')
-
-  return url.pathname // relative path is best for SPAs
-}
-
-const backHref = getBackHref()
+const githubHref = computed(() => {
+  // Expected spec path: /openapi/{version}/{category}/{file}.yaml
+  const parts = props.spec.split('/').filter(Boolean)
+  const category = parts[2]
+  if (parts[0] === 'openapi' && category) {
+    return `${SPECS_REPO}/${category}`
+  }
+  return SPECS_REPO
+})
 
 </script>
 
@@ -224,6 +232,59 @@ const backHref = getBackHref()
 .redoc-wrapper-container {
   width: 100%;
   font-family: var(--vp-font-family-base) !important;
+}
+
+.redoc-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 18px;
+  margin-top: 24px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.redoc-toolbar a.redoc-toolbar-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  color: var(--vp-c-text-1);
+}
+
+.redoc-toolbar a.redoc-toolbar-link:hover {
+  color: var(--vp-c-text-1);
+  text-decoration: underline;
+}
+
+.redoc-toolbar-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.redoc-toolbar a.redoc-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  color: #fff;
+  background: var(--vp-c-brand-1);
+  border: none;
+  border-radius: 6px;
+  margin-left: auto;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.redoc-toolbar a.redoc-toolbar-btn:hover {
+  color: #fff;
+  background: var(--vp-c-brand-2);
+  text-decoration: none;
 }
 
 .api-page {
