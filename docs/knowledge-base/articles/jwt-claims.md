@@ -52,6 +52,7 @@ The Request Object is a signed JWT whose payload contains all `/par` authorizati
 | `aud` | string | ✓ | **The Authorization Server's `issuer` value** — from the LFI's `.well-known/openid-configuration`. This is not the token endpoint URL. | `https://auth1.altareq1.sandbox.apihub.openfinance.ae` |
 | `iss` | string | ✓ | Your application's `client_id` from the Trust Framework | `a1b2c3d4-5678-...` |
 | `client_id` | string | ✓ | Same value as `iss` | `a1b2c3d4-5678-...` |
+| `iat` | number | ✓ | Issued At Unix timestamp — when the JWT was created | `1713196113` |
 | `exp` | number | ✓ | Unix timestamp. Must be **no more than 10 minutes after `nbf`**. Recommended: `nbf + 300` (5 minutes) | `1713196423` |
 | `nbf` | number | ✓ | Unix timestamp. Must be **no more than 10 minutes in the past** at the time the Authorization Server processes the request. Recommended: `iat - 10` | `1713196103` |
 | `response_type` | string | ✓ | Must be `code` | `code` |

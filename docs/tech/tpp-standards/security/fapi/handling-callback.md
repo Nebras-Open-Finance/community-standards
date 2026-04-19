@@ -113,6 +113,10 @@ import { buildClientAssertion } from './client-assertion'
 const ISSUER       = process.env.AUTHORIZATION_SERVER_ISSUER!
 const REDIRECT_URI = process.env.REDIRECT_URI!
 
+// Token endpoint is read from .well-known/openid-configuration —
+// not constructed from the issuer URL (it lives on a different host).
+const TOKEN_ENDPOINT = discoveryDoc.token_endpoint
+
 export async function handleCallback(callbackUrl: string, session: {
   storedState: string
   codeVerifier: string
@@ -138,7 +142,7 @@ export async function handleCallback(callbackUrl: string, session: {
   }
 
   // 3. Exchange code for tokens immediately
-  const tokenResponse = await fetch(`${ISSUER}/token`, {
+  const tokenResponse = await fetch(TOKEN_ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
@@ -170,6 +174,10 @@ from urllib.parse import urlparse, parse_qs
 ISSUER       = os.environ["AUTHORIZATION_SERVER_ISSUER"]
 REDIRECT_URI = os.environ["REDIRECT_URI"]
 
+# Token endpoint is read from .well-known/openid-configuration —
+# not constructed from the issuer URL (it lives on a different host).
+TOKEN_ENDPOINT = discovery_doc["token_endpoint"]
+
 def handle_callback(callback_url: str, stored_state: str, code_verifier: str) -> dict:
     params = parse_qs(urlparse(callback_url).query)
 
@@ -190,7 +198,7 @@ def handle_callback(callback_url: str, stored_state: str, code_verifier: str) ->
 
     # 3. Exchange code for tokens immediately
     token_response = httpx.post(
-        f"{ISSUER}/token",
+        TOKEN_ENDPOINT,
         data={
             "grant_type":            "authorization_code",
             "code":                  code,

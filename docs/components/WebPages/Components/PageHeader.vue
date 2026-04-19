@@ -10,7 +10,7 @@
 
       <a href="/policy" class="header-link">Policies</a>
       <div class="header-dropdown">
-        <a href="/tech/overview" class="header-link dropdown-trigger">
+        <a href="/tech/tpp-standards" class="header-link dropdown-trigger">
           Developer Docs
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -18,7 +18,6 @@
           </svg>
         </a>
         <div class="dropdown-menu">
-          <a href="/tech/overview">Technology Architecture &amp; Overview</a>
           <a href="/tech/tpp-standards">TPP – Open Finance Standards</a>
           <a href="/tech/lfi-api-hub">LFI – Integration Guide</a>
           <a :href="`/tech/api-specs/${CURRENT_VERSION}`">API Specs</a>
@@ -50,7 +49,7 @@
     <div class="mobile-menu" :class="{ open: menuOpen }" @click.self="menuOpen = false">
       <div class="mobile-menu-inner">
 
-        <a href="/tech/overview" class="mobile-link mobile-section-label">Developer Docs</a>
+        <a href="/tech/tpp-standards" class="mobile-link mobile-section-label">Developer Docs</a>
           <a href="/tech/tpp-standards" class="mobile-link mobile-indent">TPP – Open Finance Standards</a>
           <a href="/tech/lfi-api-hub" class="mobile-link mobile-indent">LFI – Integration Guide</a>
           <a :href="`/tech/api-specs/${CURRENT_VERSION}`" class="mobile-link mobile-indent">API Specs</a>

@@ -12,6 +12,8 @@ A Fixed Defined Schedule consent authorises a TPP to initiate payments on a **pr
 
 Common use cases include fixed instalment plans, structured loan repayments, and membership or subscription billing where both the dates and exact amounts are known upfront.
 
+Fixed Defined Schedule is the **locked-amount variant** of [Variable Defined Schedule](../variable-defined-schedule/api-guide) — same schedule shape, but each entry carries an exact `Amount` rather than a `MaximumIndividualAmount` ceiling.
+
 ## Prerequisites
 
 Before initiating a Fixed Defined Schedule payment, ensure the following requirements are met:
@@ -46,7 +48,7 @@ Before initiating a Fixed Defined Schedule payment, ensure the following require
 
 ### Step 2 - Constructing Authorization Details
 
-With the encrypted PII ready, construct the `authorization_details` of type `urn:openfinanceuae:service-initiation-consent:v2.1`. Set `Type` to `"FixedDefinedSchedule"`. Unlike a Periodic Schedule, there is no recurring period — instead, the `Schedule` array lists each specific `PaymentExecutionDate` alongside the exact amount to be collected on that date. The TPP submits one `POST /payments` per scheduled entry for exactly the amount defined in the schedule.
+With the encrypted PII ready, construct the `authorization_details` of type `urn:openfinanceuae:service-initiation-consent:v2.1`. Set `PeriodicSchedule.Type` to `"FixedDefinedSchedule"`. Unlike a Periodic Schedule, there is no recurring period — instead, the `Schedule` array lists each specific `PaymentExecutionDate` alongside the exact amount to be collected on that date. The TPP submits one `POST /payments` per scheduled entry for exactly the amount defined in the schedule.
 
 #### authorization_details
 
@@ -74,7 +76,7 @@ With the encrypted PII ready, construct the `authorization_details` of type `urn
 
 #### ControlParameters — Fixed Defined Schedule
 
-`ControlParameters.ConsentSchedule.MultiPayment` carries the control definition. Set `Type` to `"FixedDefinedSchedule"`. The `Schedule` array defines every execution date and its exact payment amount — the TPP submits a payment on each date for precisely the `Amount` specified in that entry.
+`ControlParameters.ConsentSchedule.MultiPayment` carries the control definition. Set `PeriodicSchedule.Type` to `"FixedDefinedSchedule"`. The `Schedule` array defines every execution date and its exact payment amount — the TPP submits a payment on each date for precisely the `Amount` specified in that entry.
 
 **Cumulative Control Parameters** — apply across the entire consent lifetime:
 
@@ -180,7 +182,7 @@ const authorizationDetails = [
     consent: {
       ConsentId: crypto.randomUUID(),
       IsSingleAuthorization: true,
-      ExpirationDateTime: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      ExpirationDateTime: new Date(Date.now() + 364 * 24 * 60 * 60 * 1000).toISOString(),
       Permissions: ['ReadAccountsBasic', 'ReadAccountsDetail', 'ReadBalances'],
       ControlParameters: {
         ConsentSchedule: {
@@ -228,7 +230,7 @@ authorization_details = [
         "consent": {
             "ConsentId": str(uuid.uuid4()),
             "IsSingleAuthorization": True,
-            "ExpirationDateTime": (datetime.now(timezone.utc) + timedelta(days=365)).isoformat(),
+            "ExpirationDateTime": (datetime.now(timezone.utc) + timedelta(days=364)).isoformat(),
             "Permissions": ["ReadAccountsBasic", "ReadAccountsDetail", "ReadBalances"],
             "ControlParameters": {
                 "ConsentSchedule": {

@@ -44,6 +44,43 @@ Before initiating a Variable On-Demand payment, ensure the following requirement
 
 <!--@include: ../../_shared/step-1-encrypt-pii-variable.md-->
 
+::: warning Delegated SCA requires a populated `Risk` block
+Unlike standard payment flows, Delegated SCA **MUST** prove the SCA already performed at the TPP. At minimum, `Risk.DebtorIndicators.Authentication` must demonstrate MFA with two distinct factors, and the wider `Risk` block must be fully populated with everything derivable from your system.
+
+```jsonc
+{
+  "Risk": {
+    "DebtorIndicators": {
+      "Authentication": {
+        "AuthenticationChannel": "App",
+        "AuthenticationFlow":    "MFA",
+        "ChallengeOutcome":      "Pass",
+        "ChallengeDateTime":     "2025-06-19T09:55:44Z",
+        "PossessionFactor": { "IsUsed": true, "Type": "SecureEnclaveKey" },
+        "InherenceFactor":  { "IsUsed": true, "Type": "Fingerprint" }
+      },
+      "GeoLocation":       { "Latitude": "25.1972", "Longitude": "55.2744" },
+      "DeviceInformation": { "DeviceType": "Mobile" /* ... */ }
+      // AppInformation, BiometricCapabilities, AccountRiskIndicators, ...
+    },
+    "TransactionIndicators": {
+      "IsCustomerPresent": true,
+      "Channel":           "Mobile",
+      "ChannelType":       "InApp"
+      // SubChannelType, PaymentProcess, ...
+    },
+    "CreditorIndicators": {
+      "AccountType":         "Retail",
+      "IsCreditorConfirmed": true
+      // IsCreditorPrePopulated, IsVerifiedByTPP, ...
+    }
+  }
+}
+```
+
+See the [Delegated SCA Payment example](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/risk#delegated-sca-payment) for a fully-populated version and the [Risk reference](/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/risk) for the field-by-field schema.
+:::
+
 ### Step 2 - Constructing Authorization Details
 
 With the encrypted PII ready, construct the `authorization_details` of type `urn:openfinanceuae:service-initiation-consent:v2.1`. For Delegated SCA you **must** set `ControlParameters.IsDelegatedAuthentication` to `true` and leave `ConsentSchedule` empty, indicating that the TPP will perform SCA on the user before each `POST /payments` request.
@@ -144,7 +181,7 @@ const authorizationDetails = [
     consent: {
       ConsentId: crypto.randomUUID(),
       IsSingleAuthorization: true,
-      ExpirationDateTime: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      ExpirationDateTime: new Date(Date.now() + 364 * 24 * 60 * 60 * 1000).toISOString(),
       Permissions: ['ReadAccountsBasic', 'ReadAccountsDetail', 'ReadBalances'],
       ControlParameters: {
         IsDelegatedAuthentication: true,
@@ -180,7 +217,7 @@ authorization_details = [
         "consent": {
             "ConsentId": str(uuid.uuid4()),
             "IsSingleAuthorization": True,
-            "ExpirationDateTime": (datetime.now(timezone.utc) + timedelta(days=365)).isoformat(),
+            "ExpirationDateTime": (datetime.now(timezone.utc) + timedelta(days=364)).isoformat(),
             "Permissions": ["ReadAccountsBasic", "ReadAccountsDetail", "ReadBalances"],
             "ControlParameters": {
                 "IsDelegatedAuthentication": True,

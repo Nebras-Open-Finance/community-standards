@@ -12,6 +12,8 @@ A Variable Defined Schedule consent authorises a TPP to initiate payments on a *
 
 Common use cases include milestone-based project billing, staged instalment plans, and seasonal payment programmes where both the dates and indicative amounts are known upfront but the final charge may vary per date.
 
+Variable Defined Schedule is the **ceiling variant** of [Fixed Defined Schedule](../fixed-defined-schedule/api-guide) — same schedule shape, but each entry carries a `MaximumIndividualAmount` rather than a locked `Amount`.
+
 ## Prerequisites
 
 Before initiating a Variable Defined Schedule payment, ensure the following requirements are met:
@@ -46,7 +48,7 @@ Before initiating a Variable Defined Schedule payment, ensure the following requ
 
 ### Step 2 - Constructing Authorization Details
 
-With the encrypted PII ready, construct the `authorization_details` of type `urn:openfinanceuae:service-initiation-consent:v2.1`. Set `Type` to `"VariableDefinedSchedule"`. Unlike a Periodic Schedule, there is no recurring period — instead, the `Schedule` array lists each specific `PaymentExecutionDate` and the maximum amount permitted on that date. The TPP submits one `POST /payments` per scheduled entry.
+With the encrypted PII ready, construct the `authorization_details` of type `urn:openfinanceuae:service-initiation-consent:v2.1`. Set `PeriodicSchedule.Type` to `"VariableDefinedSchedule"`. Unlike a Periodic Schedule, there is no recurring period — instead, the `Schedule` array lists each specific `PaymentExecutionDate` and the maximum amount permitted on that date. The TPP submits one `POST /payments` per scheduled entry.
 
 #### authorization_details
 
@@ -74,7 +76,7 @@ With the encrypted PII ready, construct the `authorization_details` of type `urn
 
 #### ControlParameters — Variable Defined Schedule
 
-`ControlParameters.ConsentSchedule.MultiPayment` carries the control definition. Set `Type` to `"VariableDefinedSchedule"`. The `Schedule` array defines every execution date and its per-date amount ceiling — the TPP submits a payment on or around each date, and the actual amount must be ≤ the `MaximumIndividualAmount` for that entry.
+`ControlParameters.ConsentSchedule.MultiPayment` carries the control definition. Set `PeriodicSchedule.Type` to `"VariableDefinedSchedule"`. The `Schedule` array defines every execution date and its per-date amount ceiling — the TPP submits a payment on or around each date, and the actual amount must be ≤ the `MaximumIndividualAmount` for that entry.
 
 **Cumulative Control Parameters** — apply across the entire consent lifetime:
 
@@ -180,7 +182,7 @@ const authorizationDetails = [
     consent: {
       ConsentId: crypto.randomUUID(),
       IsSingleAuthorization: true,
-      ExpirationDateTime: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      ExpirationDateTime: new Date(Date.now() + 364 * 24 * 60 * 60 * 1000).toISOString(),
       Permissions: ['ReadAccountsBasic', 'ReadAccountsDetail', 'ReadBalances'],
       ControlParameters: {
         ConsentSchedule: {
@@ -228,7 +230,7 @@ authorization_details = [
         "consent": {
             "ConsentId": str(uuid.uuid4()),
             "IsSingleAuthorization": True,
-            "ExpirationDateTime": (datetime.now(timezone.utc) + timedelta(days=365)).isoformat(),
+            "ExpirationDateTime": (datetime.now(timezone.utc) + timedelta(days=364)).isoformat(),
             "Permissions": ["ReadAccountsBasic", "ReadAccountsDetail", "ReadBalances"],
             "ControlParameters": {
                 "ConsentSchedule": {

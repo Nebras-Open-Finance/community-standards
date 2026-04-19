@@ -2,7 +2,8 @@
 
 ```typescript [Node.js]
 // authorization_endpoint from .well-known/openid-configuration
-// e.g. 'https://auth1.altareq1.sandbox.apihub.openfinance.ae/authorize'
+// Each LFI sets its own path — there is no fixed structure
+// e.g. on the altareq1 sandbox: 'https://auth1.altareq1.sandbox.apihub.openfinance.ae/auth'
 const AUTHORIZATION_ENDPOINT = discoveryDoc.authorization_endpoint
 
 const authCodeUrl = `${AUTHORIZATION_ENDPOINT}?client_id=${CLIENT_ID}&response_type=code&scope=openid&request_uri=${encodeURIComponent(request_uri)}`

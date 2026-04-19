@@ -20,10 +20,10 @@ Each audit log entry includes:
 
 Audit logs are particularly important for tracking administrative changes. If a TPP is blocked or a configuration is changed, the audit log provides a complete record of who made the change and when.
 
-<!-- TODO: Add screenshot of the Audit Log page -->
-::: tip Image placeholder
-*Screenshot: Audit Log showing a list of portal actions with user, action type, target, and timestamp*
-:::
+<ImageViewer
+  src="/images/ozone/admin-portal/logs-reports/Audit-logs.png"
+  alt="Audit Log showing a list of portal actions with user, action type, target, and timestamp"
+/>
 
 ## API logs
 
@@ -33,10 +33,10 @@ API logs provide a complete, granular trace of every request that flows through 
 
 Every API request carries an `x-fapi-interaction-id` header. To trace a request, enter this interaction ID in the API logs search field. The portal will return **every log entry** associated with that request — typically hundreds of entries covering every stage of processing.
 
-<!-- TODO: Add screenshot of the API Log search field -->
-::: tip Image placeholder
-*Screenshot: API Log search field with an x-fapi-interaction-id entered*
-:::
+<ImageViewer
+  src="/images/ozone/admin-portal/logs-reports/API-logs.png"
+  alt="API Log search field with an x-fapi-interaction-id entered"
+/>
 
 ### What the logs show
 
@@ -57,15 +57,15 @@ Each log entry contains detailed metadata. From the request headers alone you ca
 | **X-Original-URL** | The API path called, including the API version and resource (e.g. `/account-information/v1.2/accounts/{AccountId}/beneficiaries`) |
 | **X-Cert-DN** | The certificate distinguished name, identifying which TPP made the request |
 
-<!-- TODO: Add screenshot of API Log detail showing log entries for a single interaction ID -->
-::: tip Image placeholder
-*Screenshot: API Log detail view showing the sequence of log entries for a single x-fapi-interaction-id, including request headers and processing steps*
-:::
+<ImageViewer
+  src="/images/ozone/admin-portal/logs-reports/API-logs-detail.png"
+  alt="API Log detail view showing the sequence of log entries for a single x-fapi-interaction-id, including request headers and processing steps"
+/>
 
-<!-- TODO: Add screenshot of a single log entry expanded, showing headers including X-Original-URL and X-Cert-DN -->
-::: tip Image placeholder
-*Screenshot: Expanded log entry showing request headers with host, X-Original-URL, and X-Cert-DN fields*
-:::
+<ImageViewer
+  src="/images/ozone/admin-portal/logs-reports/Log-Entry.png"
+  alt="Expanded log entry showing request headers with host, X-Original-URL, and X-Cert-DN fields"
+/>
 
 ### Debugging with API logs
 

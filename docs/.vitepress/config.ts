@@ -119,7 +119,6 @@ export default defineConfig({
       {
         text: 'Developer Docs',
         items: [
-          { text: 'Technology Architecture & Overview', link: '/tech/overview' },
           { text: 'TPP – Open Finance Standards', link: '/tech/tpp-standards/' },
           { text: 'LFI – Integration Guide', link: '/tech/lfi-api-hub/' },
           { text: 'API Specs', link: `/tech/api-specs/${CURRENT_VERSION}` },          

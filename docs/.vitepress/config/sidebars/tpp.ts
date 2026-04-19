@@ -195,7 +195,14 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
           { text: 'Overview', link: `${BASE}/${VERSION}/banking/data-sharing` },
           { text: 'Requirements', link: `${BASE}/${VERSION}/banking/data-sharing/requirements` },
           { text: 'User Experience', link: `${BASE}/${VERSION}/banking/data-sharing/user-journeys` },
-          { text: 'API Guide', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide` },
+          {
+            text: 'API Guide',
+            collapsed: true,
+            items: [
+              { text: 'Overview', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide` },
+              { text: 'Pagination', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide/pagination` },
+            ],
+          },
           {
             text: 'API Reference',
             collapsed: true,
@@ -229,8 +236,7 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
                 text: 'Overview',
                 collapsed: true,
                 items: [
-                  { text: 'Payment Rails', link: `${BASE}/${VERSION}/banking/service-initiation/domestic-payments/overview/payment-rails` },
-                  { text: 'Payment Status', link: `${BASE}/${VERSION}/banking/service-initiation/domestic-payments/overview/payment-status` },
+                  { text: 'Payment Rails and Status', link: `${BASE}/${VERSION}/banking/service-initiation/domestic-payments/overview/payment-status` },
                 ],
               },
               {

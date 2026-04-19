@@ -13,22 +13,22 @@ aside: false
 
 Before creating a Bank Data Sharing consent, ensure the following requirements are met:
 
-- **Registered [Application](../../../trust-framework/application)**
-  The application must be created within the Trust Framework and assigned the **BDSP role** as defined in [Roles](../../../trust-framework/roles).
+- **Registered [Application](../../../../trust-framework/application)**
+  The application must be created within the Trust Framework and assigned the **BDSP role** as defined in [Roles](../../../../trust-framework/roles).
 
-- **Valid [Transport Certificate](../../../trust-framework/certificates)**
+- **Valid [Transport Certificate](../../../../trust-framework/certificates)**
   An active transport certificate must be issued and registered in the Trust Framework to establish secure **mTLS communication**.
 
-- **Valid [Signing Certificate](../../../trust-framework/certificates)**
+- **Valid [Signing Certificate](../../../../trust-framework/certificates)**
   An active signing certificate must be issued and registered in the Trust Framework. This certificate is used to sign request objects and client assertions.
 
-- **Registration with the relevant [Authorisation Server](../../../registration/api-guide)**
+- **Registration with the relevant [Authorisation Server](../../../../registration/api-guide)**
   The application must be registered with the Authorisation Server of the LFI for which you intend to create a Bank Data Sharing consent.
 
-- **Understanding of the [FAPI Security Profile](../../../security/fapi/)** and **[Tokens & Assertions](../../../security/tokens/)**
+- **Understanding of the [FAPI Security Profile](../../../../security/fapi/)** and **[Tokens & Assertions](../../../../security/tokens/)**
   You should understand how request object signing, client authentication, and access token validation underpin secure API interactions.
 
-- **Understanding of [Consents](../../consent/)**
+- **Understanding of [Consents](../../../consent/)**
   You should understand how to create, retrieve, and manage consents, including consent states and lifecycle transitions.
 
 ## API Sequence Flow
@@ -201,7 +201,7 @@ const authorizationDetails = [
     type: 'urn:openfinanceuae:account-access-consent:v2.1',
     consent: {
       ConsentId: crypto.randomUUID(),
-      ExpirationDateTime: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      ExpirationDateTime: new Date(Date.now() + 364 * 24 * 60 * 60 * 1000).toISOString(),
       Permissions: [
         'ReadAccountsBasic',
         'ReadAccountsDetail',
@@ -271,7 +271,9 @@ Include `x-fapi-interaction-id` — a UUID v4 you generate per request. The API 
 ```typescript [Node.js]
 import crypto from 'node:crypto'
 
-const PAR_ENDPOINT = `${ISSUER}/par`
+// PAR endpoint is read from .well-known/openid-configuration —
+// not constructed from the issuer URL (it lives on a different host).
+const PAR_ENDPOINT = discoveryDoc.pushed_authorization_request_endpoint
 
 const parResponse = await fetch(PAR_ENDPOINT, {
   method: 'POST',
@@ -294,8 +296,12 @@ const { request_uri, expires_in } = await parResponse.json()
 ```python [Python]
 import httpx, uuid
 
+# PAR endpoint is read from .well-known/openid-configuration —
+# not constructed from the issuer URL (it lives on a different host).
+par_endpoint = discovery_doc["pushed_authorization_request_endpoint"]
+
 par_response = httpx.post(
-    f"{ISSUER}/par",
+    par_endpoint,
     headers={
         "x-fapi-interaction-id": str(uuid.uuid4()),
     },
@@ -335,8 +341,8 @@ Use the `request_uri` returned by `/par` to build the redirect URL. The `authori
 
 ```typescript [Node.js]
 // authorization_endpoint is discovered from the LFI's .well-known/openid-configuration
-// See /.well-known for how to fetch and cache discovery documents
-// e.g. 'https://auth1.altareq1.sandbox.apihub.openfinance.ae/authorize'
+// Each LFI sets its own path — there is no fixed structure
+// e.g. on the altareq1 sandbox: 'https://auth1.altareq1.sandbox.apihub.openfinance.ae/auth'
 const AUTHORIZATION_ENDPOINT = discoveryDoc.authorization_endpoint
 
 const response_type = 'code'
@@ -353,7 +359,8 @@ window.location.href = authCodeUrl
 import urllib.parse
 
 # authorization_endpoint from .well-known/openid-configuration
-# e.g. 'https://auth1.altareq1.sandbox.apihub.openfinance.ae/authorize'
+# Each LFI sets its own path — there is no fixed structure
+# e.g. on the altareq1 sandbox: 'https://auth1.altareq1.sandbox.apihub.openfinance.ae/auth'
 AUTHORIZATION_ENDPOINT = discovery_doc["authorization_endpoint"]
 
 auth_code_url = (
@@ -369,7 +376,7 @@ auth_code_url = (
 :::
 
 ::: tip User Experience
-See [User Experience](./user-journeys) for screen mockups of the **Consent** and **Authorization** pages the user sees at the bank, including an interactive example where you can edit the consent JSON and preview the resulting UI.
+See [User Experience](../user-journeys) for screen mockups of the **Consent** and **Authorization** pages the user sees at the bank, including an interactive example where you can edit the consent JSON and preview the resulting UI.
 :::
 
 After redirecting, the user will:
@@ -435,7 +442,9 @@ Exchange the authorization code for an access token and refresh token. Include t
 ::: code-group
 
 ```typescript [Node.js]
-const TOKEN_ENDPOINT = `${ISSUER}/token`
+// Token endpoint is read from .well-known/openid-configuration —
+// not constructed from the issuer URL (it lives on a different host).
+const TOKEN_ENDPOINT = discoveryDoc.token_endpoint
 
 const tokenResponse = await fetch(TOKEN_ENDPOINT, {
   method: 'POST',
@@ -462,8 +471,12 @@ const {
 ```
 
 ```python [Python]
+# Token endpoint is read from .well-known/openid-configuration —
+# not constructed from the issuer URL (it lives on a different host).
+token_endpoint = discovery_doc["token_endpoint"]
+
 token_response = httpx.post(
-    f"{ISSUER}/token",
+    token_endpoint,
     data={
         "grant_type":            "authorization_code",
         "code":                  code,
@@ -606,8 +619,9 @@ Access tokens expire after **10 minutes**. Track the `expires_in` value returned
 ::: code-group
 
 ```typescript [Node.js]
+// Reuse the TOKEN_ENDPOINT discovered in Step 7 (discoveryDoc.token_endpoint).
 async function refreshAccessToken(refreshToken: string) {
-  const response = await fetch(`${ISSUER}/token`, {
+  const response = await fetch(TOKEN_ENDPOINT, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -629,9 +643,10 @@ async function refreshAccessToken(refreshToken: string) {
 ```
 
 ```python [Python]
+# Reuse the token_endpoint discovered in Step 7 (discovery_doc["token_endpoint"]).
 def refresh_access_token(refresh_token: str) -> dict:
     response = httpx.post(
-        f"{ISSUER}/token",
+        token_endpoint,
         data={
             "grant_type":            "refresh_token",
             "refresh_token":         refresh_token,

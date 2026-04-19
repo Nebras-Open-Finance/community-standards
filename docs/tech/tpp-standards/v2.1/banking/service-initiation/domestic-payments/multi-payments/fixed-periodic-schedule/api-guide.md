@@ -46,7 +46,7 @@ Before initiating a Fixed Periodic Schedule payment, ensure the following requir
 
 ### Step 2 - Constructing Authorization Details
 
-With the encrypted PII ready, construct the `authorization_details` of type `urn:openfinanceuae:service-initiation-consent:v2.1`. Set `Type` to `"FixedPeriodicSchedule"`. The payment amount **is fixed at consent time** via `PeriodicSchedule.Amount` — every `POST /payments` call under this consent must use exactly this amount, and only one payment may be submitted per period.
+With the encrypted PII ready, construct the `authorization_details` of type `urn:openfinanceuae:service-initiation-consent:v2.1`. Set `PeriodicSchedule.Type` to `"FixedPeriodicSchedule"`. The payment amount **is fixed at consent time** via `PeriodicSchedule.Amount` — every `POST /payments` call under this consent must use exactly this amount, and only one payment may be submitted per period.
 
 #### authorization_details
 
@@ -74,15 +74,15 @@ With the encrypted PII ready, construct the `authorization_details` of type `urn
 
 #### ControlParameters — Fixed Periodic Schedule
 
-`ControlParameters.ConsentSchedule.MultiPayment` carries the control definition. Set `Type` to `"FixedPeriodicSchedule"`. Only **one payment is permitted per period**. There is no `Controls` block — the period itself acts as the limiting boundary.
+`ControlParameters.ConsentSchedule.MultiPayment` carries the control definition. Set `PeriodicSchedule.Type` to `"FixedPeriodicSchedule"`. Only **one payment is permitted per period**. There is no `Controls` block — the period itself acts as the limiting boundary.
 
 **Cumulative Control Parameters** — apply across the entire consent lifetime:
 
 | Field | Required | Description | Example |
 |-------|----------|-------------|---------|
+| `MaximumCumulativeNumberOfPayments` | **Yes** | Maximum total number of payments over the consent lifetime | `24` |
 | `MaximumCumulativeValueOfPayments.Amount` | No | Maximum total value of all payments over the consent lifetime | `3600.00` |
 | `MaximumCumulativeValueOfPayments.Currency` | No | ISO 4217 currency code | `AED` |
-| `MaximumCumulativeNumberOfPayments` | No | Maximum total number of payments over the consent lifetime | `24` |
 
 **Periodic Schedule Parameters** — define the fixed amount and period, set directly inside `PeriodicSchedule`:
 
@@ -121,13 +121,12 @@ Only one payment may be submitted per period. The API Hub will reject a second `
       "ControlParameters": {
         "ConsentSchedule": {
           "MultiPayment": {
-            "Type": "FixedPeriodicSchedule",
-
-            // Optional consent-lifetime cumulative caps:
+            "MaximumCumulativeNumberOfPayments": 24,
+            // Optional consent-lifetime cumulative value cap:
             // "MaximumCumulativeValueOfPayments": { "Amount": "3600.00", "Currency": "AED" },
-            // "MaximumCumulativeNumberOfPayments": 24,
 
             "PeriodicSchedule": {
+              "Type": "FixedPeriodicSchedule",
               "PeriodType": "Month",
               "PeriodStartDate": "2026-03-01",
               "Amount": { "Amount": "150.00", "Currency": "AED" }
@@ -168,19 +167,20 @@ const authorizationDetails = [
     consent: {
       ConsentId: crypto.randomUUID(),
       IsSingleAuthorization: true,
-      ExpirationDateTime: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      ExpirationDateTime: new Date(Date.now() + 364 * 24 * 60 * 60 * 1000).toISOString(),
       Permissions: ['ReadAccountsBasic', 'ReadAccountsDetail', 'ReadBalances'],
       ControlParameters: {
         ConsentSchedule: {
           MultiPayment: {
-            Type: 'FixedPeriodicSchedule',
+            MaximumCumulativeNumberOfPayments: 24,
+            // Optional consent-lifetime cumulative value cap:
+            // MaximumCumulativeValueOfPayments: { Amount: '3600.00', Currency: 'AED' },
             PeriodicSchedule: {
+              Type: 'FixedPeriodicSchedule',
               PeriodType: 'Month',
               PeriodStartDate: '2026-03-01',
               Amount: { Amount: '150.00', Currency: 'AED' },
             },
-            // MaximumCumulativeValueOfPayments: { Amount: '3600.00', Currency: 'AED' },
-            // MaximumCumulativeNumberOfPayments: 24,
           },
         },
       },
@@ -214,19 +214,20 @@ authorization_details = [
         "consent": {
             "ConsentId": str(uuid.uuid4()),
             "IsSingleAuthorization": True,
-            "ExpirationDateTime": (datetime.now(timezone.utc) + timedelta(days=365)).isoformat(),
+            "ExpirationDateTime": (datetime.now(timezone.utc) + timedelta(days=364)).isoformat(),
             "Permissions": ["ReadAccountsBasic", "ReadAccountsDetail", "ReadBalances"],
             "ControlParameters": {
                 "ConsentSchedule": {
                     "MultiPayment": {
-                        "Type": "FixedPeriodicSchedule",
+                        "MaximumCumulativeNumberOfPayments": 24,
+                        # Optional consent-lifetime cumulative value cap:
+                        # "MaximumCumulativeValueOfPayments": {"Amount": "3600.00", "Currency": "AED"},
                         "PeriodicSchedule": {
+                            "Type": "FixedPeriodicSchedule",
                             "PeriodType": "Month",
                             "PeriodStartDate": "2026-03-01",
                             "Amount": {"Amount": "150.00", "Currency": "AED"},
                         },
-                        # "MaximumCumulativeValueOfPayments": {"Amount": "3600.00", "Currency": "AED"},
-                        # "MaximumCumulativeNumberOfPayments": 24,
                     }
                 }
             },

@@ -3,7 +3,11 @@
 ::: code-group
 
 ```typescript [Node.js]
-const tokenResponse = await fetch(`${ISSUER}/token`, {
+// Token endpoint is read from .well-known/openid-configuration —
+// not constructed from the issuer URL (it lives on a different host).
+const TOKEN_ENDPOINT = discoveryDoc.token_endpoint
+
+const tokenResponse = await fetch(TOKEN_ENDPOINT, {
   method: 'POST',
   headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
   body: new URLSearchParams({
@@ -21,8 +25,12 @@ const { access_token, refresh_token, expires_in } = await tokenResponse.json()
 ```
 
 ```python [Python]
+# Token endpoint is read from .well-known/openid-configuration —
+# not constructed from the issuer URL (it lives on a different host).
+token_endpoint = discovery_doc["token_endpoint"]
+
 token_response = httpx.post(
-    f"{ISSUER}/token",
+    token_endpoint,
     data={
         "grant_type":            "authorization_code",
         "code":                  code,

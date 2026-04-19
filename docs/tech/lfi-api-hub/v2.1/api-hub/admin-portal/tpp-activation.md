@@ -17,13 +17,8 @@ All three levels — TPP, software statement, and client — MUST be active for 
 
 The TPP List shows every TPP organisation that has registered with your API Hub. Each TPP entry represents an organisation from the Trust Framework. A single TPP organisation may have multiple software statements (applications) and multiple clients.
 
-<!-- TODO: Add screenshot of the TPP List page -->
-::: tip Image placeholder
-*Screenshot: TPP Management > TPP List showing registered TPP organisations and their status*
-:::
-
-::: info Ozone Health Probe
-You will see **Ozone** listed as an active TPP. This is an automated health monitoring client that periodically tests your API Hub. It SHOULD remain active. If the health probe's requests are causing any issues, contact Nebras before blocking the client.
+::: info Nebras and Ozone internal clients
+You will see TPP entries for **Nebras** and **Ozone** with active clients against them. These are used internally to validate and monitor your API Hub — they MUST remain active. If any of these clients' requests are causing issues, contact Nebras before blocking them.
 :::
 
 ## Activating a TPP
@@ -73,17 +68,12 @@ To restore access, open the blocked entity and click **Activate**.
 Do NOT block a TPP, software statement, or client without explicit instruction from Nebras. If you observe issues with a specific TPP's traffic, raise it with Nebras first. In cases where the Central Bank revokes a TPP's licence, Nebras will remove the TPP from the ecosystem centrally — no LFI action is required.
 :::
 
-<!-- TODO: Add screenshot of the Block confirmation dialog -->
-::: tip Image placeholder
-*Screenshot: Client detail page showing the Block button and confirmation dialog*
-:::
-
 <script setup>
 const images1 =  [
   {
     src: new URL('/images/ozone/admin-portal/1.png', import.meta.url).href,
     alt: 'Step 1',
-    title: 'Go to TPP Management > TPP List > Click on the TPP name'
+    title: 'Go to TPP Management > TPP List > Click on the TPP name. If it is not active, click Activate.'
   },
    {
     src: new URL('/images/ozone/admin-portal/2.png', import.meta.url).href,
@@ -101,7 +91,7 @@ const images2 =  [
   {
     src: new URL('/images/ozone/admin-portal/4.png', import.meta.url).href,
     alt: 'Step 1',
-    title: 'Go to TPP Management > Software Statement > Click on the Software Statement name'
+    title: 'Go to TPP Management > Software Statement > Click on the Software Statement name. If it is not active, click Activate.'
   },
    {
     src: new URL('/images/ozone/admin-portal/5.png', import.meta.url).href,
@@ -119,7 +109,7 @@ const images3 =  [
   {
     src: new URL('/images/ozone/admin-portal/7.png', import.meta.url).href,
     alt: 'Step 1',
-    title: 'Go to TPP Management > Clients > Click on the Client name'
+    title: 'Go to TPP Management > Clients > Click on the Client name. If it is not active, click Activate.'
   },
    {
     src: new URL('/images/ozone/admin-portal/8.png', import.meta.url).href,

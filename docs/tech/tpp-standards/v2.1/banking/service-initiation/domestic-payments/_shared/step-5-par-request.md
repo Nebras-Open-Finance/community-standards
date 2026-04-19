@@ -7,7 +7,11 @@ Include `x-fapi-interaction-id` on the request — the API Hub echoes it in the 
 ```typescript [Node.js]
 import crypto from 'node:crypto'
 
-const parResponse = await fetch(`${ISSUER}/par`, {
+// PAR endpoint is read from .well-known/openid-configuration —
+// not constructed from the issuer URL (it lives on a different host).
+const PAR_ENDPOINT = discoveryDoc.pushed_authorization_request_endpoint
+
+const parResponse = await fetch(PAR_ENDPOINT, {
   method: 'POST',
   headers: {
     'Content-Type':          'application/x-www-form-urlencoded',
@@ -27,8 +31,12 @@ const { request_uri, expires_in } = await parResponse.json()
 ```python [Python]
 import httpx, uuid
 
+# PAR endpoint is read from .well-known/openid-configuration —
+# not constructed from the issuer URL (it lives on a different host).
+par_endpoint = discovery_doc["pushed_authorization_request_endpoint"]
+
 par_response = httpx.post(
-    f"{ISSUER}/par",
+    par_endpoint,
     headers={
         "x-fapi-interaction-id": str(uuid.uuid4()),
     },

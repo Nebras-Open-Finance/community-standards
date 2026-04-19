@@ -116,6 +116,8 @@ With a token for each LFI, call `GET /products` for all of them simultaneously. 
 
 Include `x-fapi-interaction-id` and `x-fapi-customer-ip-address` on every request. The `x-fapi-customer-ip-address` header is required because `GET /products` can only be called while a customer is in a live session with the TPP. See [Request Headers](/tech/tpp-standards/security/request-headers).
 
+Each LFI's `apiBase` is its API Hub resource server — `https://rs1.<lfiCode>.apihub.openfinance.ae` (production) or `https://rs1.<lfiCode>.sandbox.apihub.openfinance.ae` (sandbox). Resolve the `<lfiCode>` from the [Trust Framework Directory](/tech/tpp-standards/trust-framework/api-discovery). See [API Resources](/tech/tpp-standards/trust-framework/api-resources) for the full endpoint format.
+
 ### Query parameters
 
 | Parameter | Type | Description |
@@ -261,21 +263,23 @@ const leadResponse = await fetch(
       'x-fapi-customer-ip-address': customerIpAddress,
     },
     body: JSON.stringify({
-      Email:             'user@example.com',
-      EmiratesId:        '784-1990-1234567-1',
-      PhoneNumber:       '+971501234567',
-      MarketingOptOut:   false,
-      ProductCategories: ['SavingsAccount'],
-      Name: {
-        GivenName: 'Ibrahim',
-        LastName:  'Al Suwaidi',
+      Data: {
+        Email:             'user@example.com',
+        EmiratesId:        '784-1990-1234567-1',
+        PhoneNumber:       '+971501234567',
+        MarketingOptOut:   false,
+        ProductCategories: ['SavingsAccount'],
+        Name: {
+          GivenName: 'Ibrahim',
+          LastName:  'Al Suwaidi',
+        },
       },
     }),
     // agent: new https.Agent({ cert: transportCert, key: transportKey }),
   }
 )
 
-const { LeadId } = await leadResponse.json()  // HTTP 201
+const { Data: { LeadId } } = await leadResponse.json()  // HTTP 201
 ```
 
 ```python [Python]
@@ -290,20 +294,22 @@ lead_response = httpx.post(
         "x-fapi-customer-ip-address": customer_ip_address,
     },
     json={
-        "Email":             "user@example.com",
-        "EmiratesId":        "784-1990-1234567-1",
-        "PhoneNumber":       "+971501234567",
-        "MarketingOptOut":   False,
-        "ProductCategories": ["SavingsAccount"],
-        "Name": {
-            "GivenName": "Ibrahim",
-            "LastName":  "Al Suwaidi",
+        "Data": {
+            "Email":             "user@example.com",
+            "EmiratesId":        "784-1990-1234567-1",
+            "PhoneNumber":       "+971501234567",
+            "MarketingOptOut":   False,
+            "ProductCategories": ["SavingsAccount"],
+            "Name": {
+                "GivenName": "Ibrahim",
+                "LastName":  "Al Suwaidi",
+            },
         },
     },
     # cert=("transport.crt", "transport.key"),
 )
 
-lead_id = lead_response.json()["LeadId"]  # HTTP 201
+lead_id = lead_response.json()["Data"]["LeadId"]  # HTTP 201
 ```
 
 :::

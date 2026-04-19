@@ -7,6 +7,7 @@ const BASE = `/tech/api-specs/${CURRENT_VERSION}`
 export const apiSpecsSidebar: DefaultTheme.SidebarItem[] = [
     {
         text: 'TPP - Standards',
+        link: `${BASE}/tpp/`,
         items: [
             {
                 text: 'Trust Framework',
@@ -111,6 +112,7 @@ export const apiSpecsSidebar: DefaultTheme.SidebarItem[] = [
     },
     {
         text: 'API Hub',
+        link: `${BASE}/api-hub/`,
         items: [
             {
                 text: 'Headless Heimdall Auth Server',
@@ -163,6 +165,69 @@ export const apiSpecsSidebar: DefaultTheme.SidebarItem[] = [
                             apiRef('PATCH', '/payment-log/{id}', `${BASE}/api-hub/consent-manager/open-api/payment-log-id`),
                         ],
                     },
+                ],
+            },
+        ],
+    },
+    {
+        text: 'Ozone Connect',
+        link: `${BASE}/ozone-connect/`,
+        items: [
+            {
+                text: 'Consent Events',
+                collapsed: true,
+                items: [
+                    apiRef('POST', '/consent/action/validate', `${BASE}/ozone-connect/consent-events/validate`),
+                    apiRef('POST', '/consent/event/{operation}', `${BASE}/ozone-connect/consent-events/event-op`),
+                ],
+            },
+            {
+                text: 'Bank Data Sharing',
+                collapsed: true,
+                items: [
+                    apiRef('GET', '/accounts',                                `${BASE}/ozone-connect/data-sharing/accounts`),
+                    apiRef('GET', '/accounts/{AccountId}',                    `${BASE}/ozone-connect/data-sharing/accounts-AccountId`),
+                    apiRef('GET', '/accounts/{AccountId}/balances',           `${BASE}/ozone-connect/data-sharing/accounts-AccountId-balances`),
+                    apiRef('GET', '/accounts/{AccountId}/beneficiaries',      `${BASE}/ozone-connect/data-sharing/accounts-AccountId-beneficiaries`),
+                    apiRef('GET', '/customer',                                `${BASE}/ozone-connect/data-sharing/customer`),
+                    apiRef('GET', '/accounts/{AccountId}/customer',           `${BASE}/ozone-connect/data-sharing/accounts-AccountId-customer`),
+                    apiRef('GET', '/accounts/{AccountId}/direct-debits',      `${BASE}/ozone-connect/data-sharing/accounts-AccountId-direct-debits`),
+                    apiRef('GET', '/accounts/{AccountId}/products',           `${BASE}/ozone-connect/data-sharing/accounts-AccountId-products`),
+                    apiRef('GET', '/accounts/{AccountId}/scheduled-payments', `${BASE}/ozone-connect/data-sharing/accounts-AccountId-scheduled-payments`),
+                    apiRef('GET', '/accounts/{AccountId}/standing-orders',    `${BASE}/ozone-connect/data-sharing/accounts-AccountId-standing-orders`),
+                    apiRef('GET', '/accounts/{AccountId}/statements',         `${BASE}/ozone-connect/data-sharing/accounts-AccountId-statements`),
+                    apiRef('GET', '/accounts/{AccountId}/transactions',       `${BASE}/ozone-connect/data-sharing/accounts-AccountId-transactions`),
+                ],
+            },
+            {
+                text: 'Bank Service Initiation',
+                collapsed: true,
+                items: [
+                    apiRef('POST', '/payments',                            `${BASE}/ozone-connect/service-initiation/payments`),
+                    apiRef('GET',  '/payments/{PaymentId}',                `${BASE}/ozone-connect/service-initiation/payments-PaymentId`),
+                    apiRef('GET',  '/payment-consents/{ConsentId}/refund', `${BASE}/ozone-connect/service-initiation/payment-consents-ConsentId-refund`),
+                ],
+            },
+            {
+                text: 'Confirmation of Payee',
+                collapsed: true,
+                items: [
+                    apiRef('POST', '/customers/action/cop-query', `${BASE}/ozone-connect/confirmation-of-payee/cop-query`),
+                ],
+            },
+            {
+                text: 'Products & Leads',
+                collapsed: true,
+                items: [
+                    apiRef('GET',  '/products', `${BASE}/ozone-connect/products-and-leads/products`),
+                    apiRef('POST', '/leads',    `${BASE}/ozone-connect/products-and-leads/leads`),
+                ],
+            },
+            {
+                text: 'ATMs',
+                collapsed: true,
+                items: [
+                    apiRef('GET', '/atm', `${BASE}/ozone-connect/atms/atm`),
                 ],
             },
         ],

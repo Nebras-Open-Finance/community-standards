@@ -384,7 +384,7 @@ The Hub sends a plain JSON payload (not a JWS) containing the payment details, t
 | `paymentType` | string | Yes | The payment type. MUST be `cbuae-payment` for domestic Single Instant Payment |
 | `request.Data` | object | Yes | The payment payload — see `request.Data` below |
 | `requestHeaders` | object | Yes | The complete set of HTTP headers the TPP sent to the API Hub. The TPP's FAPI headers live here — see [Reading the FAPI customer headers](#reading-the-fapi-customer-headers) |
-| `tpp` | object | Yes | The TPP's directory record (`clientId`, `orgId`, `tppId`, `tppName`, `softwareStatementId`, `decodedSsa`, optional `directoryRecord`) |
+| `tpp` | object | Yes | The TPP's directory record (`clientId`, `orgId`, `tppId`, `tppName`, `softwareStatementId`, `decodedSsa`, optional `directoryRecord`). Not required for payment execution — see [The `tpp` and `decodedSsa` Context Blocks](/knowledge-base/articles/tpp-context-block) for field-by-field detail and the situations where an LFI uses them |
 | `supplementaryInformation` | object | No | Free-form pass-through context. The LFI MUST safely ignore unrecognised properties |
 
 #### request.Data

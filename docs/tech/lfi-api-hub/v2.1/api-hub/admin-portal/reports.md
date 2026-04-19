@@ -28,19 +28,19 @@ Each row includes:
 
 Response times represent the **end-to-end request duration** as observed by the API Hub — from receiving the inbound request to returning the response. This includes the LFI's response time.
 
-<!-- TODO: Add screenshot of the Performance report -->
-::: tip Image placeholder
-*Screenshot: Performance report showing a table of endpoints with response time metrics, filtered by date range*
-:::
+<ImageViewer
+  src="/images/ozone/admin-portal/logs-reports/OFP-performance.png"
+  alt="Performance report showing a table of endpoints with response time metrics, filtered by date range"
+/>
 
 ### LFI performance
 
 A separate **LFI Performance** report isolates your response times by removing API Hub processing latency. This report shows only the time between the API Hub forwarding the request to your Ozone Connect endpoint and receiving your response — giving you a clear view of your own system's performance.
 
-<!-- TODO: Add screenshot of the LFI Performance report -->
-::: tip Image placeholder
-*Screenshot: LFI Performance report showing isolated LFI response times per endpoint*
-:::
+<ImageViewer
+  src="/images/ozone/admin-portal/logs-reports/LFI-performance.png"
+  alt="LFI Performance report showing isolated LFI response times per endpoint"
+/>
 
 ## API error rates
 
@@ -50,19 +50,19 @@ The error rates report provides a breakdown of failed requests by endpoint, TPP,
 - TPPs that are consistently sending malformed requests
 - Trends in error volumes over time
 
-<!-- TODO: Add screenshot of the API Error Rates report -->
-::: tip Image placeholder
-*Screenshot: API Error Rates report showing error breakdown by endpoint and response code*
-:::
+<ImageViewer
+  src="/images/ozone/admin-portal/logs-reports/API-error-rates.png"
+  alt="API Error Rates report showing error breakdown by endpoint and response code"
+/>
 
 ## API call volumes
 
 The call volumes report shows the total number of API requests over a given period, broken down by endpoint and TPP. This is useful for understanding traffic patterns and capacity usage.
 
-<!-- TODO: Add screenshot of the API Call Volumes report -->
-::: tip Image placeholder
-*Screenshot: API Call Volumes report showing request counts by endpoint and TPP*
-:::
+<ImageViewer
+  src="/images/ozone/admin-portal/logs-reports/API-call-volume.png"
+  alt="API Call Volumes report showing request counts by endpoint and TPP"
+/>
 
 ## Payment reports
 
@@ -70,28 +70,23 @@ The call volumes report shows the total number of API requests over a given peri
 
 The payment values report shows the monetary value of payments processed through the API Hub, broken down by payment type, TPP, and time period.
 
-<!-- TODO: Add screenshot of the Payment Values report -->
-::: tip Image placeholder
-*Screenshot: Payment Values report showing total payment amounts by TPP and payment type*
-:::
+<ImageViewer
+  src="/images/ozone/admin-portal/logs-reports/Payment-values.png"
+  alt="Payment Values report showing total payment amounts by TPP and payment type"
+/>
 
 ### Payment volumes
 
 The payment volumes report shows the number of payment transactions processed, broken down by payment type, TPP, status, and time period.
 
-<!-- TODO: Add screenshot of the Payment Volumes report -->
-::: tip Image placeholder
-*Screenshot: Payment Volumes report showing transaction counts by payment type and status*
-:::
-
 ## Consent statistics
 
 The consent statistics report provides an overview of consent activity — including consents created, authorised, expired, revoked, and consumed — broken down by consent type, TPP, and time period.
 
-<!-- TODO: Add screenshot of the Consent Statistics report -->
-::: tip Image placeholder
-*Screenshot: Consent Statistics report showing consent status breakdown by type and TPP*
-:::
+<ImageViewer
+  src="/images/ozone/admin-portal/logs-reports/Consent-statistics.png"
+  alt="Consent Statistics report showing consent status breakdown by type and TPP"
+/>
 
 ## Working with reports
 

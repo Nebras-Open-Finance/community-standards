@@ -16,6 +16,10 @@ const tpps = ref([])
 const loading = ref(true)
 const error = ref(null)
 
+const paymentOnly = computed(
+  () => props.families.length === 1 && props.families[0] === 'payment'
+)
+
 // Maps the family keys used by LiveAPIs (and the prop) to the URL prefix
 // segment in api-log.json. e.g. 'confirmation' -> 'confirmation-of-payee'.
 const familyUrlPrefix = {
@@ -34,17 +38,65 @@ const familyLabels = {
   'atm': 'ATM',
 }
 
+const prettifyConsentType = (s) =>
+  String(s).replace(/([a-z])([A-Z])/g, '$1 $2')
+
 onMounted(async () => {
   try {
-    const response = await fetch('/api/api-log.json')
+    const url = paymentOnly.value ? '/api/payments-log.json' : '/api/api-log.json'
+    const response = await fetch(url)
     const data = await response.json()
-    tpps.value = processData(data)
+    tpps.value = paymentOnly.value ? processPayments(data) : processData(data)
   } catch (e) {
     error.value = e.message
   } finally {
     loading.value = false
   }
 })
+
+function processPayments(data) {
+  const latestMs = data.reduce((max, row) => {
+    const t = Date.parse(row.date)
+    return t > max ? t : max
+  }, 0)
+  const cutoffMs = latestMs - (props.days - 1) * 24 * 60 * 60 * 1000
+
+  const tppMap = new Map()
+
+  for (const row of data) {
+    if (!row.tppname || !row.tppname.trim()) continue
+    const ts = Date.parse(row.date)
+    if (ts < cutoffMs) continue
+
+    const count = Number(row.count) || 0
+
+    if (!tppMap.has(row.tppname)) {
+      tppMap.set(row.tppname, {
+        name: row.tppname,
+        lfis: new Set(),
+        consentTypes: new Map(),
+        totalPayments: 0,
+        expanded: false,
+      })
+    }
+    const tpp = tppMap.get(row.tppname)
+    tpp.lfis.add(row.lfinamekey)
+    tpp.totalPayments += count
+
+    const type = row.paymentconsenttype || 'Unknown'
+    tpp.consentTypes.set(type, (tpp.consentTypes.get(type) || 0) + count)
+  }
+
+  return Array.from(tppMap.values())
+    .map((tpp) => ({
+      ...tpp,
+      lfis: Array.from(tpp.lfis).sort(),
+      consentTypes: Array.from(tpp.consentTypes.entries())
+        .map(([type, count]) => ({ type, count }))
+        .sort((a, b) => b.count - a.count),
+    }))
+    .sort((a, b) => b.totalPayments - a.totalPayments)
+}
 
 function processData(data) {
   const allowedPrefixes = props.families
@@ -135,6 +187,9 @@ function processData(data) {
 }
 
 const introText = computed(() => {
+  if (paymentOnly.value) {
+    return `The following TPPs have initiated payments in the last ${props.days} days:`
+  }
   const labels = props.families.map(f => familyLabels[f]).filter(Boolean)
   if (labels.length === 0 || labels.length === Object.keys(familyLabels).length) {
     return `The following TPPs currently consume live Open Finance services (last ${props.days} days):`
@@ -158,6 +213,44 @@ const toggleVersion = (v) => { v.expanded = !v.expanded }
     <div v-if="loading" class="tpp-empty">Loading…</div>
     <div v-else-if="error" class="tpp-empty">Could not load API log: {{ error }}</div>
     <div v-else-if="tpps.length === 0" class="tpp-empty">No TPP activity in the selected window.</div>
+
+    <div v-else-if="paymentOnly" class="tpp-table payment-mode">
+      <div class="tpp-table-header">
+        <span>TPP</span>
+        <span>LFIs Consumed</span>
+        <span>Payment Types</span>
+        <span class="text-right">Payments</span>
+        <span></span>
+      </div>
+
+      <template v-for="tpp in tpps" :key="tpp.name">
+        <div class="tpp-row" @click="toggleTPP(tpp)" :class="{ 'is-expanded': tpp.expanded }">
+          <span class="tpp-name">{{ tpp.name }}</span>
+          <span class="tpp-lfis">
+            <span v-for="lfi in tpp.lfis" :key="lfi" class="badge badge-lfi">{{ lfi }}</span>
+          </span>
+          <span class="tpp-services">
+            <span v-for="ct in tpp.consentTypes" :key="ct.type" class="badge badge-consent-type">
+              {{ prettifyConsentType(ct.type) }}
+            </span>
+          </span>
+          <span class="tpp-requests">{{ formatNumber(tpp.totalPayments) }}</span>
+          <span class="toggle-icon" :class="{ 'is-open': tpp.expanded }">›</span>
+        </div>
+
+        <div v-if="tpp.expanded" class="tpp-detail">
+          <div class="detail-service">
+            <div class="detail-service-name">Payments by consent type</div>
+            <ul class="endpoints">
+              <li v-for="ct in tpp.consentTypes" :key="ct.type">
+                <code>{{ prettifyConsentType(ct.type) }}</code>
+                <span class="endpoint-count">{{ formatNumber(ct.count) }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </template>
+    </div>
 
     <div v-else class="tpp-table">
       <div class="tpp-table-header">
@@ -325,6 +418,16 @@ const toggleVersion = (v) => { v.expanded = !v.expanded }
   color: var(--vp-c-text-2);
   border: 1px solid var(--vp-c-divider);
   font-weight: 400;
+}
+
+.badge-consent-type {
+  background: var(--vp-c-yellow-soft);
+  color: var(--vp-c-yellow-1);
+}
+
+.tpp-table.payment-mode .tpp-table-header,
+.tpp-table.payment-mode .tpp-row {
+  grid-template-columns: 1.5fr 2fr 2fr 5rem 1.5rem;
 }
 
 .toggle-icon {

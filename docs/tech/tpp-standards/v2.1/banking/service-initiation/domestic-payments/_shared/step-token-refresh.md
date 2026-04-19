@@ -5,7 +5,11 @@ The initial access token expires after 10 minutes. For subsequent on-demand paym
 ::: code-group
 
 ```typescript [Node.js]
-const refreshResponse = await fetch(`${ISSUER}/token`, {
+// Token endpoint is read from .well-known/openid-configuration —
+// not constructed from the issuer URL (it lives on a different host).
+const TOKEN_ENDPOINT = discoveryDoc.token_endpoint
+
+const refreshResponse = await fetch(TOKEN_ENDPOINT, {
   method: 'POST',
   headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
   body: new URLSearchParams({
@@ -22,8 +26,12 @@ const { access_token: newToken, refresh_token: newRefresh } = await refreshRespo
 ```
 
 ```python [Python]
+# Token endpoint is read from .well-known/openid-configuration —
+# not constructed from the issuer URL (it lives on a different host).
+token_endpoint = discovery_doc["token_endpoint"]
+
 refresh_response = httpx.post(
-    f"{ISSUER}/token",
+    token_endpoint,
     data={
         "grant_type":            "refresh_token",
         "refresh_token":         stored_refresh_token,

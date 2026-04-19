@@ -123,6 +123,10 @@ access_token = token_response.json()["access_token"]
 
 Call the endpoint with the access token. Include `x-fapi-interaction-id` on every request. See [Request Headers](/tech/tpp-standards/security/request-headers).
 
+`x-fapi-customer-ip-address` is **not** required for ATMs — the data is static and public, so no PSU is involved in the call.
+
+`LFI_API_BASE` is the LFI's API Hub resource server — `https://rs1.<lfiCode>.apihub.openfinance.ae` (production) or `https://rs1.<lfiCode>.sandbox.apihub.openfinance.ae` (sandbox). Resolve the `<lfiCode>` from the [Trust Framework Directory](/tech/tpp-standards/trust-framework/api-discovery). See [API Resources](/tech/tpp-standards/trust-framework/api-resources) for the full endpoint format.
+
 ::: code-group
 
 ```typescript [Node.js]

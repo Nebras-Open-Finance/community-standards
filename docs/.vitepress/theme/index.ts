@@ -52,6 +52,8 @@ import APIFlowsProductsLeads from '../../components/APIFlows/ProductsLeads.vue'
 import APIFlowsAPIHubArchitecture from '../../components/APIFlows/APIHubArchitecture.vue'
 import APIFlowsConsentValidate from '../../components/APIFlows/ConsentValidate.vue'
 import APIFlowsConsentEventLFI from '../../components/APIFlows/ConsentEventLFI.vue'
+import APIFlowsConnectivityCertificates from '../../components/APIFlows/ConnectivityCertificates.vue'
+import APIFlowsConnectivityEncryption from '../../components/APIFlows/ConnectivityEncryption.vue'
 
 
 // UIs
@@ -137,6 +139,8 @@ export default {
     app.component('APIFlowsAPIHubArchitecture', APIFlowsAPIHubArchitecture)
     app.component('APIFlowsConsentValidate', APIFlowsConsentValidate)
     app.component('APIFlowsConsentEventLFI', APIFlowsConsentEventLFI)
+    app.component('APIFlowsConnectivityCertificates', APIFlowsConnectivityCertificates)
+    app.component('APIFlowsConnectivityEncryption', APIFlowsConnectivityEncryption)
 
     // UI
     app.component('ConsentBankDataSharing', ConsentBankDataSharing)

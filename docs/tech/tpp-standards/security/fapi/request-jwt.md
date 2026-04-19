@@ -33,6 +33,7 @@ For a precise per-claim reference covering `aud`, `exp`/`nbf` lifetime windows, 
 | Claim | Type | Required | Description | Example |
 |-------|------|:--------:|-------------|---------|
 | `aud` | string | ✓ | The `issuer` of the Authorization Server — found via [API Discovery](../../trust-framework/api-discovery) | `https://auth1.[LFICode].apihub.openfinance.ae` |
+| `iat` | number | ✓ | Issued At Unix timestamp — when the JWT was created | `1713196113` |
 | `exp` | number | ✓ | Expiry as a Unix timestamp. Must be shortly after `nbf` — maximum **5 minutes** | `1713196423` |
 | `iss` | string | ✓ | Your application's Client ID from the Trust Framework | `your-client-id` |
 | `client_id` | string | ✓ | Your application's Client ID (same as `iss`) | `your-client-id` |
@@ -126,6 +127,7 @@ export async function buildRequestJWT({
     authorization_details: authorizationDetails,
 
     // Timing
+    iat: now,
     nbf: now - 10,
     exp: now + 300,  // 5-minute expiry
   })
@@ -150,7 +152,7 @@ const authorizationDetails = [
     type: 'urn:openfinanceuae:account-access-consent:v2.1',
     consent: {
       ConsentId: crypto.randomUUID(),
-      ExpirationDateTime: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      ExpirationDateTime: new Date(Date.now() + 364 * 24 * 60 * 60 * 1000).toISOString(),
       Permissions: ['ReadAccountsBasic', 'ReadBalances', 'ReadTransactionsBasic'],
       OpenFinanceBilling: {
         UserType: 'Retail',
@@ -168,7 +170,9 @@ const requestJWT = await buildRequestJWT({
 })
 
 // 4. Send to /par
-const response = await fetch(`${authServerBaseUrl}/par`, {
+// Endpoints are read from .well-known/openid-configuration —
+// not constructed from the issuer URL (they live on different hosts).
+const response = await fetch(discoveryDoc.pushed_authorization_request_endpoint, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/x-www-form-urlencoded',
@@ -178,7 +182,7 @@ const response = await fetch(`${authServerBaseUrl}/par`, {
 const { request_uri, expires_in } = await response.json()
 
 // 5. Redirect the user
-const authorizeUrl = new URL(`${authServerBaseUrl}/authorize`)
+const authorizeUrl = new URL(discoveryDoc.authorization_endpoint)
 authorizeUrl.searchParams.set('client_id', CLIENT_ID)
 authorizeUrl.searchParams.set('request_uri', request_uri)
 window.location.href = authorizeUrl.toString()

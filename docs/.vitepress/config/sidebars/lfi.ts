@@ -294,8 +294,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
                 text: 'Overview',
                 collapsed: true,
                 items: [
-                  { text: 'Payment Rails', link: `${BASE}/${VERSION}/banking/service-initiation/domestic-payments/overview/payment-rails` },
-                  { text: 'Payment Status', link: `${BASE}/${VERSION}/banking/service-initiation/domestic-payments/overview/payment-status` },
+                  { text: 'Payment Rails and Status', link: `${BASE}/${VERSION}/banking/service-initiation/domestic-payments/overview/payment-status` },
                 ],
               },
               {
@@ -400,7 +399,8 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
             text: 'API Reference',
             collapsed: true,
             items: [
-
+              apiRef('GET', '/products', `${BASE}/${VERSION}/banking/products-and-leads/open-api/products`),
+              apiRef('POST', '/leads', `${BASE}/${VERSION}/banking/products-and-leads/open-api/leads`),
             ],
           },
         ],

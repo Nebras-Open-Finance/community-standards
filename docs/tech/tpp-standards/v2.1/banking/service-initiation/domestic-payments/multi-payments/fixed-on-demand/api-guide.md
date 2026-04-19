@@ -74,7 +74,7 @@ With the encrypted PII ready, construct the `authorization_details` of type `urn
 
 #### ControlParameters — Fixed On-Demand
 
-`ControlParameters.ConsentSchedule.MultiPayment` carries the control definition. Set `Type` to `"FixedOnDemand"`. The payment amount **is fixed at consent time** via `PeriodicSchedule.Amount` — every `POST /payments` call under this consent must use exactly this amount.
+`ControlParameters.ConsentSchedule.MultiPayment` carries the control definition. Set `PeriodicSchedule.Type` to `"FixedOnDemand"`. The payment amount **is fixed at consent time** via `PeriodicSchedule.Amount` — every `POST /payments` call under this consent must use exactly this amount.
 
 **Cumulative Control Parameters** — apply across the entire consent lifetime:
 
@@ -83,6 +83,12 @@ With the encrypted PII ready, construct the `authorization_details` of type `urn
 | `MaximumCumulativeValueOfPayments.Amount` | No | Maximum total value of all payments over the consent lifetime | `10000.00` |
 | `MaximumCumulativeValueOfPayments.Currency` | No | ISO 4217 currency code | `AED` |
 | `MaximumCumulativeNumberOfPayments` | No | Maximum total number of payments over the consent lifetime | `24` |
+
+::: info How `PeriodType` governs the periodic controls
+`PeriodicSchedule.PeriodType` sets the **unit** for the periodic controls — change it from `"Month"` to `"Week"`, `"Day"`, or `"Year"` and the per-period caps (`MaximumCumulativeValueOfPaymentsPerPeriod`, `MaximumCumulativeNumberOfPaymentsPerPeriod`) rescope to that unit. For example, with `PeriodType: "Month"` and `MaximumCumulativeNumberOfPaymentsPerPeriod: 3`, the TPP may submit at most 3 payments in any calendar month under this consent.
+
+`PeriodType` **does not schedule payments** — the TPP still triggers each `POST /payments` on-demand. This differs from the periodic variants ([FixedPeriodicSchedule](../fixed-periodic-schedule/api-guide), [VariablePeriodicSchedule](../variable-periodic-schedule/api-guide)) and the defined variants ([FixedDefinedSchedule](../fixed-defined-schedule/api-guide), [VariableDefinedSchedule](../variable-defined-schedule/api-guide)), where the schedule itself governs when payments may be submitted.
+:::
 
 **Periodic Control Parameters** — apply per recurring period, defined inside `PeriodicSchedule`:
 
@@ -125,13 +131,12 @@ At least one of `MaximumCumulativeValueOfPaymentsPerPeriod` or `MaximumCumulativ
       "ControlParameters": {
         "ConsentSchedule": {
           "MultiPayment": {
-            "Type": "FixedOnDemand",
-
             // Optional consent-lifetime cumulative caps:
             // "MaximumCumulativeValueOfPayments": { "Amount": "10000.00", "Currency": "AED" },
             // "MaximumCumulativeNumberOfPayments": 24,
 
             "PeriodicSchedule": {
+              "Type": "FixedOnDemand",
               "PeriodType": "Month",
               "PeriodStartDate": "2026-03-01",
               "Amount": { "Amount": "150.00", "Currency": "AED" },
@@ -177,13 +182,13 @@ const authorizationDetails = [
     consent: {
       ConsentId: crypto.randomUUID(),
       IsSingleAuthorization: true,
-      ExpirationDateTime: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      ExpirationDateTime: new Date(Date.now() + 364 * 24 * 60 * 60 * 1000).toISOString(),
       Permissions: ['ReadAccountsBasic', 'ReadAccountsDetail', 'ReadBalances'],
       ControlParameters: {
         ConsentSchedule: {
           MultiPayment: {
-            Type: 'FixedOnDemand',
             PeriodicSchedule: {
+              Type: 'FixedOnDemand',
               PeriodType: 'Month',
               PeriodStartDate: '2026-03-01',
               Amount: { Amount: '150.00', Currency: 'AED' },
@@ -227,13 +232,13 @@ authorization_details = [
         "consent": {
             "ConsentId": str(uuid.uuid4()),
             "IsSingleAuthorization": True,
-            "ExpirationDateTime": (datetime.now(timezone.utc) + timedelta(days=365)).isoformat(),
+            "ExpirationDateTime": (datetime.now(timezone.utc) + timedelta(days=364)).isoformat(),
             "Permissions": ["ReadAccountsBasic", "ReadAccountsDetail", "ReadBalances"],
             "ControlParameters": {
                 "ConsentSchedule": {
                     "MultiPayment": {
-                        "Type": "FixedOnDemand",
                         "PeriodicSchedule": {
+                            "Type": "FixedOnDemand",
                             "PeriodType": "Month",
                             "PeriodStartDate": "2026-03-01",
                             "Amount": {"Amount": "150.00", "Currency": "AED"},

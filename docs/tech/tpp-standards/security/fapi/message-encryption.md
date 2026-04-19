@@ -186,8 +186,10 @@ const signedJWT = await signJWT({
 const nestedJWT = await encryptRequestObject(signedJWT, jwksUri)
 
 // 3. Send to /par
+// PAR endpoint is read from .well-known/openid-configuration —
+// not constructed from the issuer URL (it lives on a different host).
 const params = new URLSearchParams({ request: nestedJWT })
-const response = await fetch(`${authServerBaseUrl}/par`, {
+const response = await fetch(discoveryDoc.pushed_authorization_request_endpoint, {
   method: 'POST',
   headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
   body: params,

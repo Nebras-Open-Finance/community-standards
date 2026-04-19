@@ -33,7 +33,11 @@ Push the signed Request JWT to the Authorization Server. The `authorization_deta
 ::: code-group
 
 ```typescript [Node.js]
-const parResponse = await fetch(`${ISSUER}/par`, {
+// PAR endpoint is read from .well-known/openid-configuration —
+// not constructed from the issuer URL (it lives on a different host).
+const PAR_ENDPOINT = discoveryDoc.pushed_authorization_request_endpoint
+
+const parResponse = await fetch(PAR_ENDPOINT, {
   method: 'POST',
   headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
   body: new URLSearchParams({
@@ -50,8 +54,12 @@ const { request_uri } = await parResponse.json()
 ```python [Python]
 import httpx
 
+# PAR endpoint is read from .well-known/openid-configuration —
+# not constructed from the issuer URL (it lives on a different host).
+par_endpoint = discovery_doc["pushed_authorization_request_endpoint"]
+
 par_response = httpx.post(
-    f"{ISSUER}/par",
+    par_endpoint,
     data={
         "request":               request_jwt,
         "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
@@ -81,7 +89,8 @@ Build the authorization URL using the `authorization_endpoint` from the LFI's `.
 
 ```typescript [Node.js]
 // authorization_endpoint from .well-known/openid-configuration
-// e.g. 'https://auth1.altareq1.sandbox.apihub.openfinance.ae/authorize'
+// Each LFI sets its own path — there is no fixed structure
+// e.g. on the altareq1 sandbox: 'https://auth1.altareq1.sandbox.apihub.openfinance.ae/auth'
 const AUTHORIZATION_ENDPOINT = discoveryDoc.authorization_endpoint
 
 const authCodeUrl = `${AUTHORIZATION_ENDPOINT}?client_id=${CLIENT_ID}&response_type=code&scope=openid&request_uri=${encodeURIComponent(request_uri)}`
@@ -125,7 +134,11 @@ Exchange the authorization code for an access token and refresh token. The `code
 ::: code-group
 
 ```typescript [Node.js]
-const tokenResponse = await fetch(`${ISSUER}/token`, {
+// Token endpoint is read from .well-known/openid-configuration —
+// not constructed from the issuer URL (it lives on a different host).
+const TOKEN_ENDPOINT = discoveryDoc.token_endpoint
+
+const tokenResponse = await fetch(TOKEN_ENDPOINT, {
   method: 'POST',
   headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
   body: new URLSearchParams({
@@ -143,8 +156,12 @@ const { access_token, refresh_token, expires_in } = await tokenResponse.json()
 ```
 
 ```python [Python]
+# Token endpoint is read from .well-known/openid-configuration —
+# not constructed from the issuer URL (it lives on a different host).
+token_endpoint = discovery_doc["token_endpoint"]
+
 token_response = httpx.post(
-    f"{ISSUER}/token",
+    token_endpoint,
     data={
         "grant_type":            "authorization_code",
         "code":                  code,
@@ -193,7 +210,8 @@ const params = new URLSearchParams({
   client_assertion:      await buildClientAssertion(),
 })
 
-const tokenResponse = await fetch(`${ISSUER}/token`, {
+// Reuse the TOKEN_ENDPOINT discovered above (discoveryDoc.token_endpoint).
+const tokenResponse = await fetch(TOKEN_ENDPOINT, {
   method:  'POST',
   headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
   body:    params.toString(),
@@ -204,8 +222,9 @@ const { access_token } = await tokenResponse.json()
 ```
 
 ```python [Python]
+# Reuse the token_endpoint discovered above (discovery_doc["token_endpoint"]).
 token_response = httpx.post(
-    f"{ISSUER}/token",
+    token_endpoint,
     data={
         "grant_type":            "client_credentials",
         "scope":                 "accounts",   # or "payments" for service initiation
