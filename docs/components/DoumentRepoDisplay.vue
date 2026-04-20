@@ -1,90 +1,229 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 
 const props = defineProps({
-  files: {
-    type: Array,
+  orgId: {
+    type: String,
     required: true
   },
-  public: {
-    type: Boolean,
-    default: true
+  visibility: {
+    type: String,
+    required: true,
+    validator: (v) => v === 'public' || v === 'private'
+  },
+  name: {
+    type: String,
+    required: true
+  },
+  legalName: {
+    type: String,
+    required: true
+  },
+  logo: {
+    type: String,
+    default: ''
   }
 })
 
+const DOCS_API = 'https://docs.nebras-open-finance.com'
+
+const LOGIN_MARKER_KEY = 'nebras_docs_login_attempt'
+const LOGIN_COOLDOWN_MS = 30_000
+
+const files = ref([])
+const loading = ref(true)
+const redirecting = ref(false)
+const error = ref('')
+const forbidden = ref(false)
+const loopDetected = ref(false)
 const search = ref('')
 
-const visibleFiles = computed(() =>
-  props.files.filter((file) => (props.public ? file.isPublic : !file.isPublic))
-)
+async function loadFiles() {
+  loading.value = true
+  redirecting.value = false
+  error.value = ''
+  forbidden.value = false
+  loopDetected.value = false
+  try {
+    const res = await fetch(`${DOCS_API}/${props.orgId}/${props.visibility}`, {
+      credentials: 'include',
+    })
+
+    if (res.status === 401 && props.visibility === 'private') {
+      const marker = Number(sessionStorage.getItem(LOGIN_MARKER_KEY) || 0)
+      if (marker && Date.now() - marker < LOGIN_COOLDOWN_MS) {
+        sessionStorage.removeItem(LOGIN_MARKER_KEY)
+        loopDetected.value = true
+        files.value = []
+        return
+      }
+      sessionStorage.setItem(LOGIN_MARKER_KEY, String(Date.now()))
+      redirecting.value = true
+      const redirect = encodeURIComponent(window.location.href)
+      window.location.href = `${DOCS_API}/login?redirect=${redirect}`
+      return
+    }
+    sessionStorage.removeItem(LOGIN_MARKER_KEY)
+    if (res.status === 403 && props.visibility === 'private') {
+      forbidden.value = true
+      files.value = []
+      return
+    }
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.error || `HTTP ${res.status}`)
+    }
+    files.value = await res.json()
+  } catch (e) {
+    error.value = e.message
+    files.value = []
+  } finally {
+    if (!redirecting.value) loading.value = false
+  }
+}
+
+onMounted(loadFiles)
+watch(() => [props.orgId, props.visibility], loadFiles)
 
 const filteredFiles = computed(() => {
   const query = search.value.toLowerCase().trim()
-  if (!query) return visibleFiles.value
-  return visibleFiles.value.filter((file) =>
-    fileName(file.filepath).toLowerCase().includes(query)
-  )
+  if (!query) return files.value
+  return files.value.filter((f) => f.name.toLowerCase().includes(query))
 })
 
-const fileName = (filepath) => {
-  const parts = filepath.split('/')
-  return parts[parts.length - 1] || filepath
+const fileType = (name) => {
+  const ext = name.split('.').pop()
+  return ext && ext !== name ? ext.toUpperCase() : ''
 }
 
-const fileType = (filepath) => {
-  const ext = filepath.split('.').pop()
-  return ext ? ext.toUpperCase() : ''
+const formatDate = (iso) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toISOString().slice(0, 10)
 }
 
-const downloadHref = (filepath) =>
-  filepath.startsWith('docs/public')
-    ? filepath.replace(/^docs\/public/, '')
-    : filepath
+const downloadHref = (file) =>
+  `${DOCS_API}/${props.orgId}/${props.visibility}/${file}`
+
+function retrySignIn() {
+  sessionStorage.removeItem(LOGIN_MARKER_KEY)
+  loadFiles()
+}
+
+const titleSuffix = computed(() =>
+  props.visibility === 'private' ? 'Private Documents' : 'Public Documents'
+)
+const descriptionPrefix = computed(() =>
+  props.visibility === 'private' ? 'Private' : 'Public'
+)
 </script>
 
 <template>
-  <div class="search-box">
-    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input
-      v-model="search"
-      type="text"
-      placeholder="Search documents..."
-    />
+  <div v-if="visibility === 'private' && (loading || redirecting)" class="access-check">
+    <div class="access-check-spinner"></div>
+    <div class="access-check-text">{{ redirecting ? 'Redirecting to sign-in…' : 'Checking access…' }}</div>
   </div>
 
-  <div class="doc-table">
-    <div class="doc-table-header">
-      <span>File Name</span>
-      <span>Type</span>
-      <span>Date</span>
-      <span>Action</span>
+  <div v-else-if="forbidden" class="doc-forbidden">
+    <div class="doc-forbidden-header">You don't have access to this space</div>
+    <div class="doc-forbidden-body">Your account isn't a member of this organisation. If you believe this is a mistake, contact your organisation's administrator.</div>
+  </div>
+
+  <div v-else-if="loopDetected" class="doc-forbidden">
+    <div class="doc-forbidden-header">Sign-in didn't complete</div>
+    <div class="doc-forbidden-body">We tried to sign you in but the session didn't stick. Try again, and if this keeps happening, check that third-party cookies are allowed for this site.</div>
+    <button class="doc-action-button doc-retry-button" @click="retrySignIn">Try again</button>
+  </div>
+
+  <template v-else>
+    <div class="org-header">
+      <img v-if="logo" class="org-logo" :src="logo" alt="logo" />
+      <h1>{{ name }} — {{ titleSuffix }}</h1>
     </div>
 
-    <div v-if="filteredFiles.length" class="doc-rows">
-      <div
-        v-for="file in filteredFiles"
-        :key="file.filepath"
-        class="doc-table-row"
-      >
-        <span class="doc-table-item doc-name">{{ fileName(file.filepath) }}</span>
-        <span class="doc-table-item">{{ fileType(file.filepath) }}</span>
-        <span class="doc-table-item">{{ file.date }}</span>
-        <a
-          class="doc-action-button"
-          :href="downloadHref(file.filepath)"
-          download
-        >
-          <svg class="doc-download-icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download
-        </a>
+    <p>{{ descriptionPrefix }} documentation for <strong>{{ legalName }}</strong>.</p>
+
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input
+        v-model="search"
+        type="text"
+        placeholder="Search documents..."
+      />
+    </div>
+
+    <div class="doc-table">
+      <div class="doc-table-header">
+        <span>File Name</span>
+        <span>Type</span>
+        <span>Date</span>
+        <span>Action</span>
       </div>
-    </div>
 
-    <div v-else class="doc-empty">No documents available.</div>
-  </div>
+      <div v-if="loading" class="doc-rows">
+        <div v-for="n in 3" :key="n" class="doc-table-row doc-skeleton-row">
+          <span class="skeleton skeleton-name"></span>
+          <span class="skeleton skeleton-small"></span>
+          <span class="skeleton skeleton-small"></span>
+          <span class="skeleton skeleton-button"></span>
+        </div>
+      </div>
+      <div v-else-if="error" class="doc-empty">Could not load documents: {{ error }}</div>
+
+      <div v-else-if="filteredFiles.length" class="doc-rows">
+        <div
+          v-for="file in filteredFiles"
+          :key="file.file"
+          class="doc-table-row"
+        >
+          <span class="doc-table-item doc-name">{{ file.name }}</span>
+          <span class="doc-table-item">{{ fileType(file.name) }}</span>
+          <span class="doc-table-item">{{ formatDate(file.date) }}</span>
+          <a
+            class="doc-action-button"
+            :href="downloadHref(file.file)"
+            download
+          >
+            <svg class="doc-download-icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download
+          </a>
+        </div>
+      </div>
+
+      <div v-else class="doc-empty">No documents available.</div>
+    </div>
+  </template>
 </template>
 
 <style scoped>
+.access-check {
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.access-check-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #1043b3;
+  border-radius: 50%;
+  animation: access-spin 0.8s linear infinite;
+}
+
+.access-check-text {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+@keyframes access-spin {
+  to { transform: rotate(360deg); }
+}
+
 .search-box {
   position: relative;
   width: calc(100% - 2px);
@@ -192,5 +331,64 @@ const downloadHref = (filepath) =>
 .doc-empty {
   padding: 14px 16px;
   color: #6b7280;
+}
+
+.doc-forbidden {
+  padding: 48px 24px;
+  text-align: center;
+  color: #991b1b;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.doc-forbidden-header {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.doc-forbidden-body {
+  color: #6b7280;
+  max-width: 480px;
+}
+
+.doc-retry-button {
+  margin-top: 16px;
+  border: none;
+  cursor: pointer;
+}
+
+.skeleton {
+  display: block;
+  height: 14px;
+  background: linear-gradient(90deg, #e2e8f0 0%, #edf2f7 50%, #e2e8f0 100%);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-name {
+  justify-self: start;
+  width: 70%;
+  max-width: 220px;
+}
+
+.skeleton-small {
+  width: 50%;
+  max-width: 80px;
+}
+
+.skeleton-button {
+  width: 100px;
+  height: 32px;
+  border-radius: 6px;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 </style>

@@ -20,7 +20,13 @@
         <button v-if="query" class="dr-search-clear" @click="query = ''" aria-label="Clear search">✕</button>
       </div>
 
-      <template v-if="filteredOrgs.length > 0">
+      <div v-if="loading" class="dr-empty">Loading organisations…</div>
+
+      <div v-else-if="error" class="dr-empty">
+        Could not load organisations from the document service. <strong>{{ error }}</strong>
+      </div>
+
+      <template v-else-if="filteredOrgs.length > 0">
         <div class="card-grid">
           <a v-for="org in filteredOrgs" :key="org.id" :href="org.link" class="dr-card">
             <div class="dr-card-top">
@@ -28,7 +34,6 @@
               <div v-else class="dr-card-logo-placeholder">{{ org.name.charAt(0) }}</div>
               <h3 class="dr-card-title">{{ org.name }}</h3>
             </div>
-            <p class="dr-card-desc">{{ org.docCount }} public document{{ org.docCount !== 1 ? 's' : '' }}</p>
             <span class="dr-card-arrow">View documents →</span>
           </a>
         </div>
@@ -43,43 +48,34 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import PageHeader from './Components/PageHeader.vue'
-import trustFramework from '../../public/api/trust-framework.json'
 
-// Build org data from doc-repository folders and trust framework
-// We import the index.json for each org at build time via glob import
-const docModules = import.meta.glob('../../doc-repository/*/index.json', { eager: true })
+const DOCS_API = 'https://docs.nebras-open-finance.com'
 
-const organisations = computed(() => {
-  const logoMap = {}
-  const nameMap = {}
-  for (const org of trustFramework.organisations) {
-    if (!nameMap[org.OrganisationId] || org.isProduction) {
-      nameMap[org.OrganisationId] = org.OrganisationName
-      if (org.LogoUri) logoMap[org.OrganisationId] = org.LogoUri
-    }
+const organisations = ref([])
+const loading = ref(true)
+const error = ref('')
+
+onMounted(async () => {
+  try {
+    const res = await fetch(`${DOCS_API}/`)
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const data = await res.json()
+    organisations.value = data
+      .filter(o => o.Status === 'Active')
+      .map(o => ({
+        id: o.OrganisationId,
+        name: o.OrganisationName,
+        logo: o.LogoUri || '',
+        link: `/doc-repository/${o.OrganisationId}/public`,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  } catch (e) {
+    error.value = e.message
+  } finally {
+    loading.value = false
   }
-
-  const orgs = []
-  for (const [path, mod] of Object.entries(docModules)) {
-    // Extract UUID from path like ../../doc-repository/{uuid}/index.json
-    const match = path.match(/doc-repository\/([^/]+)\/index\.json$/)
-    if (!match) continue
-    const id = match[1]
-    const files = mod.default || mod
-    const publicDocs = files.filter(f => f.isPublic)
-
-    orgs.push({
-      id,
-      name: nameMap[id] || id,
-      logo: logoMap[id] || '',
-      docCount: publicDocs.length,
-      link: `/doc-repository/${id}/public`,
-    })
-  }
-
-  return orgs.sort((a, b) => a.name.localeCompare(b.name))
 })
 
 const query = ref('')
@@ -210,13 +206,6 @@ const filteredOrgs = computed(() => {
   line-height: 1.35;
   color: rgba(0, 39, 127, 0.95);
   margin: 0;
-}
-
-.dr-card-desc {
-  font-size: 0.9rem;
-  line-height: 1.6;
-  opacity: 0.65;
-  flex: 1;
 }
 
 .dr-card-arrow {
