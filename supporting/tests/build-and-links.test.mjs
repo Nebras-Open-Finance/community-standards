@@ -36,7 +36,7 @@ describe('Internal links', {
   it('lychee passes on built dist', { timeout: 300_000 }, () => {
     const r = spawnSync(
       'lychee',
-      ['--config', 'supporting/lychee.toml', '--base', 'docs/.vitepress/dist', 'docs/.vitepress/dist'],
+      ['--config', 'supporting/lychee.toml', '--root-dir', DIST, 'docs/.vitepress/dist'],
       { cwd: ROOT, encoding: 'utf-8' }
     )
     assert.strictEqual(

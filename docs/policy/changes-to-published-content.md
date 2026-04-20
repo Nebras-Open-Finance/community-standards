@@ -35,7 +35,7 @@ For any **published** documentation version, content may only be changed through
 <ErrataNotice
   :affected="true"
   errata-id="v2.1-001"
-  errata-url="/erratas"
+  errata-url="/tech/erratas/v2.1"
 >
   <h3>Consent State Transitions</h3>
 

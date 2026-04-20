@@ -6,7 +6,8 @@ on:
     branches: [main]
 
 jobs:
-  validate:
+  validateExpected:
+    name: validateExpected
     runs-on: ubuntu-latest
     timeout-minutes: 15
 

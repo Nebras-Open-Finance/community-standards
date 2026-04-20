@@ -16,6 +16,11 @@ exclude = [
 # fragment resolution doesn't always match. Revisit if we want stricter checks.
 include_fragments = false
 
+# VitePress is configured with cleanUrls, so internal hrefs like `/foo/bar`
+# resolve to `/foo/bar.html` in the built output. Tell lychee to try that
+# extension before declaring the link broken.
+fallback_extensions = ['html']
+
 # Don't fail build on cache/transient issues.
 max_retries = 2
 retry_wait_time = 2

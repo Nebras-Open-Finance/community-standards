@@ -27,9 +27,9 @@ const navTitle = computed(() => {
   if (path.startsWith('/knowledge-base'))
     return { title: 'Knowledge Base', link: '/knowledge-base/' }
   if (path.startsWith('/tech/erratas'))
-    return { title: `Erratas – ${CURRENT_VERSION}`, link: '/tech/erratas/' }
+    return { title: `Erratas – ${CURRENT_VERSION}`, link: `/tech/erratas/${CURRENT_VERSION}` }
   if (path.startsWith('/tech/api-specs'))
-    return { title: `API Specs – ${CURRENT_VERSION}`, link: '/tech/api-sepcs/' }
+    return { title: `API Specs – ${CURRENT_VERSION}`, link: `/tech/api-specs/${CURRENT_VERSION}` }
 
 
   if (path.startsWith('/doc-repository'))
