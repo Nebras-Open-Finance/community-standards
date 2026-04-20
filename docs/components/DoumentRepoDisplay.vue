@@ -38,6 +38,13 @@ const forbidden = ref(false)
 const loopDetected = ref(false)
 const search = ref('')
 
+const isNebras = ref(false)
+const uploadFiles = ref([])
+const uploading = ref(false)
+const uploadError = ref('')
+const uploadSuccess = ref('')
+const fileInput = ref(null)
+
 async function loadFiles() {
   loading.value = true
   redirecting.value = false
@@ -82,7 +89,68 @@ async function loadFiles() {
   }
 }
 
-onMounted(loadFiles)
+async function loadSession() {
+  try {
+    const res = await fetch(`${DOCS_API}/me`, { credentials: 'include' })
+    if (!res.ok) return
+    const body = await res.json()
+    isNebras.value = body.authenticated === true && body.isNebras === true
+  } catch {
+    // ignore; upload UI simply won't show
+  }
+}
+
+async function handleUpload() {
+  if (!uploadFiles.value.length) return
+  uploading.value = true
+  uploadError.value = ''
+  uploadSuccess.value = ''
+  const results = { ok: 0, failed: [] }
+  try {
+    for (const file of uploadFiles.value) {
+      const encodedName = file.name.split('/').map(encodeURIComponent).join('/')
+      const url = `${DOCS_API}/${props.orgId}/${props.visibility}/${encodedName}`
+      const res = await fetch(url, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': file.type || 'application/octet-stream',
+        },
+        body: file,
+      })
+      if (res.ok) {
+        results.ok++
+      } else {
+        const body = await res.json().catch(() => ({}))
+        results.failed.push(`${file.name}: ${body.error || `HTTP ${res.status}`}`)
+      }
+    }
+    if (results.failed.length) {
+      uploadError.value = results.failed.join('; ')
+    }
+    if (results.ok) {
+      uploadSuccess.value = `Uploaded ${results.ok} file${results.ok === 1 ? '' : 's'}.`
+      uploadFiles.value = []
+      if (fileInput.value) fileInput.value.value = ''
+      await loadFiles()
+    }
+  } catch (e) {
+    uploadError.value = e.message
+  } finally {
+    uploading.value = false
+  }
+}
+
+function onFilesSelected(e) {
+  uploadFiles.value = Array.from(e.target.files || [])
+  uploadError.value = ''
+  uploadSuccess.value = ''
+}
+
+onMounted(() => {
+  loadSession()
+  loadFiles()
+})
 watch(() => [props.orgId, props.visibility], loadFiles)
 
 const filteredFiles = computed(() => {
@@ -143,6 +211,32 @@ const descriptionPrefix = computed(() =>
     </div>
 
     <p>{{ descriptionPrefix }} documentation for <strong>{{ legalName }}</strong>.</p>
+
+    <div v-if="isNebras" class="upload-panel">
+      <div class="upload-header">
+        <span class="upload-title">Upload documents</span>
+        <span class="upload-hint">Files go to <code>{{ orgId }}/{{ visibility }}/</code></span>
+      </div>
+      <div class="upload-row">
+        <input
+          ref="fileInput"
+          type="file"
+          multiple
+          class="upload-input"
+          @change="onFilesSelected"
+          :disabled="uploading"
+        />
+        <button
+          class="doc-action-button upload-button"
+          :disabled="uploading || !uploadFiles.length"
+          @click="handleUpload"
+        >
+          {{ uploading ? 'Uploading…' : `Upload${uploadFiles.length ? ` (${uploadFiles.length})` : ''}` }}
+        </button>
+      </div>
+      <div v-if="uploadError" class="upload-error">{{ uploadError }}</div>
+      <div v-if="uploadSuccess" class="upload-success">{{ uploadSuccess }}</div>
+    </div>
 
     <div class="search-box">
       <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -359,6 +453,78 @@ const descriptionPrefix = computed(() =>
   margin-top: 16px;
   border: none;
   cursor: pointer;
+}
+
+.upload-panel {
+  margin: 20px 0 16px 0;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.upload-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.upload-title {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.upload-hint {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.upload-hint code {
+  background: rgba(16, 67, 179, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.upload-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.upload-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px;
+  background: #fff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.upload-button {
+  border: none;
+}
+
+.upload-button:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+.upload-error {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #991b1b;
+}
+
+.upload-success {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #166534;
 }
 
 .skeleton {
