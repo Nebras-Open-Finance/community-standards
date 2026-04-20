@@ -378,35 +378,39 @@ import { SignJWT } from 'jose'
 
 const LFI_API_BASE = process.env.LFI_API_BASE_URL!
 
-// Build the payment payload
+// Build the payment payload — wrapped in `message` per AEPaymentRequestSigned
 const paymentPayload = {
-  Data: {
-    ConsentId: consentId,                        // must exactly match the authorized consent
-    Instruction: {
-      Amount: {
-        Amount:   '100.00',                      // must exactly match SinglePayment.Amount.Amount
-        Currency: 'AED',                         // must exactly match SinglePayment.Amount.Currency
+  message: {
+    Data: {
+      ConsentId: consentId,                        // must exactly match the authorized consent
+      Instruction: {
+        Amount: {
+          Amount:   '100.00',                      // must exactly match SinglePayment.Amount.Amount
+          Currency: 'AED',                         // must exactly match SinglePayment.Amount.Currency
+        },
       },
-    },
-    PersonalIdentifiableInformation: paymentEncryptedPII,  // from Step 9a
-    PaymentPurposeCode: 'ACM',                   // must exactly match consent.PaymentPurposeCode
-    DebtorReference:    'Invoice 1234',          // must exactly match consent.DebtorReference
-    CreditorReference:  'Invoice 1234',          // must exactly match consent.CreditorReference
-    OpenFinanceBilling: {
-      Type: 'PushP2P',                           // must exactly match consent.OpenFinanceBilling.Type
+      PersonalIdentifiableInformation: paymentEncryptedPII,  // from Step 9a
+      PaymentPurposeCode: 'ACM',                   // must exactly match consent.PaymentPurposeCode
+      DebtorReference:    'Invoice 1234',          // must exactly match consent.DebtorReference
+      CreditorReference:  'Invoice 1234',          // must exactly match consent.CreditorReference
+      OpenFinanceBilling: {
+        Type: 'PushP2P',                           // must exactly match consent.OpenFinanceBilling.Type
+      },
     },
   },
 }
 
 // Sign the payload as a JWT using your private signing key
+// AUTHORIZATION_SERVER_ISSUER is the `issuer` value from the LFI's .well-known/openid-configuration
 const signedPayment = await new SignJWT(paymentPayload)
-  .setProtectedHeader({ alg: 'PS256', kid: SIGNING_KEY_ID })
+  .setProtectedHeader({ alg: 'PS256', kid: SIGNING_KEY_ID, typ: 'JWT' })
   .setIssuedAt()
   .setIssuer(CLIENT_ID)
+  .setAudience(AUTHORIZATION_SERVER_ISSUER)
   .setExpirationTime('5m')
   .sign(signingKey)
 
-const paymentResponse = await fetch(`${LFI_API_BASE}/open-finance/v2.1/payments`, {
+const paymentResponse = await fetch(`${LFI_API_BASE}/open-finance/payment/v2.1/payments`, {
   method: 'POST',
   headers: {
     'Authorization':               `Bearer ${access_token}`,
@@ -431,37 +435,46 @@ from jose import jwt as jose_jwt
 
 LFI_API_BASE = os.environ["LFI_API_BASE_URL"]
 
-# Build the payment payload
+# Build the payment payload — wrapped in `message` per AEPaymentRequestSigned
 payment_payload = {
-    "Data": {
-        "ConsentId":   consent_id,               # must exactly match the authorized consent
-        "Instruction": {
-            "Amount": {
-                "Amount":   "100.00",            # must exactly match SinglePayment.Amount.Amount
-                "Currency": "AED",               # must exactly match SinglePayment.Amount.Currency
-            }
-        },
-        "PersonalIdentifiableInformation": payment_encrypted_pii,  # from Step 9a
-        "PaymentPurposeCode": "ACM",             # must exactly match consent.PaymentPurposeCode
-        "DebtorReference":    "Invoice 1234",    # must exactly match consent.DebtorReference
-        "CreditorReference":  "Invoice 1234",    # must exactly match consent.CreditorReference
-        "OpenFinanceBilling": {
-            "Type": "PushP2P",                   # must exactly match consent.OpenFinanceBilling.Type
-        },
+    "message": {
+        "Data": {
+            "ConsentId":   consent_id,               # must exactly match the authorized consent
+            "Instruction": {
+                "Amount": {
+                    "Amount":   "100.00",            # must exactly match SinglePayment.Amount.Amount
+                    "Currency": "AED",               # must exactly match SinglePayment.Amount.Currency
+                }
+            },
+            "PersonalIdentifiableInformation": payment_encrypted_pii,  # from Step 9a
+            "PaymentPurposeCode": "ACM",             # must exactly match consent.PaymentPurposeCode
+            "DebtorReference":    "Invoice 1234",    # must exactly match consent.DebtorReference
+            "CreditorReference":  "Invoice 1234",    # must exactly match consent.CreditorReference
+            "OpenFinanceBilling": {
+                "Type": "PushP2P",                   # must exactly match consent.OpenFinanceBilling.Type
+            },
+        }
     }
 }
 
 # Sign the payload as a JWT using your private signing key
+# AUTHORIZATION_SERVER_ISSUER is the `issuer` value from the LFI's .well-known/openid-configuration
 now = int(time.time())
 signed_payment = jose_jwt.encode(
-    {**payment_payload, "iss": CLIENT_ID, "iat": now, "exp": now + 300},
+    {
+        **payment_payload,
+        "iss": CLIENT_ID,
+        "aud": AUTHORIZATION_SERVER_ISSUER,
+        "iat": now,
+        "exp": now + 300,
+    },
     signing_key,
     algorithm="PS256",
-    headers={"kid": SIGNING_KEY_ID},
+    headers={"kid": SIGNING_KEY_ID, "typ": "JWT"},
 )
 
 payment_response = httpx.post(
-    f"{LFI_API_BASE}/open-finance/v2.1/payments",
+    f"{LFI_API_BASE}/open-finance/payment/v2.1/payments",
     headers={
         "Authorization":               f"Bearer {access_token}",
         "Content-Type":                "application/jwt",
@@ -488,7 +501,7 @@ The payment request is validated at two points. The API Hub checks that `Consent
 
 ### A successful POST /payments
 
-A `201 Created` response is returned as a signed JWT (`application/jwt`).
+A `201 Created` response is returned as a signed JWT (`application/jwt`). The verified JWT body is a `message` envelope wrapping `Data` and `Links` per `AEPaymentIdResponseSigned`.
 
 #### Response body — `Data`
 
@@ -508,26 +521,28 @@ A `201 Created` response is returned as a signed JWT (`application/jwt`).
 
 ```json
 {
-  "Data": {
-    "PaymentId": "83b47199-90c2-4c05-9ef1-aeae68b0fc7c",
-    "ConsentId": "b8f42378-10ac-46a1-8d20-4e020484216d",
-    "Status": "Pending",
-    "StatusUpdateDateTime": "2026-05-03T15:46:01+00:00",
-    "CreationDateTime": "2026-05-03T15:46:01+00:00",
-    "Instruction": {
-      "Amount": {
-        "Amount": "100.00",
-        "Currency": "AED"
+  "message": {
+    "Data": {
+      "PaymentId": "83b47199-90c2-4c05-9ef1-aeae68b0fc7c",
+      "ConsentId": "b8f42378-10ac-46a1-8d20-4e020484216d",
+      "Status": "Pending",
+      "StatusUpdateDateTime": "2026-05-03T15:46:01+00:00",
+      "CreationDateTime": "2026-05-03T15:46:01+00:00",
+      "Instruction": {
+        "Amount": {
+          "Amount": "100.00",
+          "Currency": "AED"
+        }
+      },
+      "PaymentPurposeCode": "ACM",
+      "DebtorReference": "Invoice 1234",
+      "OpenFinanceBilling": {
+        "Type": "PushP2P"
       }
     },
-    "PaymentPurposeCode": "ACM",
-    "DebtorReference": "Invoice 1234",
-    "OpenFinanceBilling": {
-      "Type": "PushP2P"
+    "Links": {
+      "Self": "https://api.lfi.example/open-finance/payment/v2.1/payments/83b47199-90c2-4c05-9ef1-aeae68b0fc7c"
     }
-  },
-  "Links": {
-    "Self": "https://api.lfi.example/open-finance/v2.1/payments/83b47199-90c2-4c05-9ef1-aeae68b0fc7c",
   }
 }
 ```

@@ -137,7 +137,7 @@ def fetch_all_transactions(account_id: str, from_booking_date_time: str) -> list
 :::
 
 ::: tip Reuse the access token across pages
-The access token is valid for the same 10-minute window used elsewhere. For very large result sets, refresh proactively using the refresh token flow in [Step 10 — Refreshing the Access Token](/tech/tpp-standards/v2.1/banking/data-sharing/api-guide#step-10-refreshing-the-access-token) rather than waiting for a `401` mid-loop.
+The access token is valid for the same 10-minute window used elsewhere. For very large result sets, refresh proactively using the refresh token flow in [Step 10 — Refreshing the Access Token](/tech/tpp-standards/v2.1/banking/data-sharing/api-guide/#step-10-refreshing-the-access-token) rather than waiting for a `401` mid-loop.
 :::
 
 ::: warning Rate limits and bounded retries

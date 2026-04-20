@@ -34,19 +34,19 @@ The participant directory and certificate authority that underpins the ecosystem
 
 ### [API Hub](./v2.1/api-hub/)
 
-Everything the Hub provides to your LFI: connectivity and mTLS setup, application-layer authentication, environment-specific configuration, the **Admin Portal** for TPP management and operational reporting, the **[Headless Heimdall](./v2.1/api-hub/headless-heimdall)** auth-server API used during the consent journey, and the **[Consent Manager](./v2.1/api-hub/consent-manager/)** API for reading and managing consents from your authorisation server and CMI.
+Everything the Hub provides to your LFI: connectivity and mTLS setup, application-layer authentication, environment-specific configuration, the **Admin Portal** for TPP management and operational reporting, the **[Headless Heimdall](./v2.1/api-hub/headless-heimdall/)** auth-server API used during the consent journey, and the **[Consent Manager](./v2.1/api-hub/consent-manager/)** API for reading and managing consents from your authorisation server and CMI.
 
-### [Ozone Connect — Banking](./v2.1/banking)
+### [Ozone Connect — Banking](./v2.1/banking/)
 
 The Ozone Connect APIs your LFI implements for the Hub to call on behalf of authorised TPPs:
 
-- **[Data Sharing](./v2.1/banking/data-sharing)** — accounts, balances, transactions, beneficiaries, standing orders, statements, customer data (BDSP, consented).
+- **[Data Sharing](./v2.1/banking/data-sharing/)** — accounts, balances, transactions, beneficiaries, standing orders, statements, customer data (BDSP, consented).
 - **[Payments (Service Initiation)](./v2.1/banking/service-initiation/)** — single instant payments and the multi-payment family (variable/fixed × on-demand/periodic/defined), plus refunds, PII handling, and multi-authorization (BSIP, consented).
 - **[Confirmation of Payee](./v2.1/banking/confirmation-of-payee/)** — pre-payment payee verification (BSIP, client credentials).
 - **[Products & Leads](./v2.1/banking/products-and-leads/)** — open product catalogue and lead capture (BDSP, client credentials).
 - **[ATMs](./v2.1/banking/atms/)** — ATM location data (BDSP, client credentials).
 
-### [Ozone Connect — Consent Events](./v2.1/consent-events)
+### [Ozone Connect — Consent Events](./v2.1/consent-events/)
 
 The events-and-actions API your LFI implements so the Hub can validate consents at creation time and notify your systems when consents are created, modified, or revoked. This is the LFI's hook into the consent lifecycle owned by the Hub.
 
@@ -64,4 +64,4 @@ The certification evidence required before going live (functional, user experien
 
 ## OpenAPI is the source of truth
 
-Every endpoint described in this guide is defined normatively in the OpenAPI specifications. Where the guide and the spec disagree, the spec wins. See the [API Specs](../api-specs/v2.1) section for the full catalogue, split by audience (Standards, API Hub, Ozone Connect).
+Every endpoint described in this guide is defined normatively in the OpenAPI specifications. Where the guide and the spec disagree, the spec wins. See the [API Specs](../api-specs/v2.1/) section for the full catalogue, split by audience (Standards, API Hub, Ozone Connect).

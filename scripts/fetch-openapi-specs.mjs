@@ -23,7 +23,7 @@ import { fileURLToPath } from 'url'
 
 // Load .env file (no dependency required)
 function loadEnv() {
-  const envPath = resolve(dirname(fileURLToPath(import.meta.url)), '..', '.env')
+  const envPath = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'supporting', '.env')
   if (!existsSync(envPath)) return
   for (const line of readFileSync(envPath, 'utf-8').split('\n')) {
     const trimmed = line.trim()

@@ -76,9 +76,9 @@
   font-size: 0.75rem !important;
 }
 
-/* .VPNavBar.has-sidebar .content {
-  background-color: #ffffff !important;
-} */
+.VPNavBar.has-sidebar .content-body {
+  background-color: var(--vp-c-bg) !important;
+}
 
 @media (min-width: 1660px) {
 
@@ -93,6 +93,11 @@
   }
   .VPSidebar {
     padding-left: calc((100% - 1440px)/2 - 64px) !important;
+  }
+
+  .VPNavBar.has-sidebar .content-body {
+    margin-right: calc((1440px - 100vw) / 2) !important;
+    padding-right: calc((100vw - 1440px) / 2) !important;
   }
 }
 

@@ -6,10 +6,11 @@
   "type": "module",
   "scripts": {
     "fetch:specs": "node scripts/fetch-openapi-specs.mjs",
-    "validate:specs": "node scripts/validate-openapi-specs.mjs",
     "dev:docs": "node scripts/fetch-openapi-specs.mjs && vitepress dev docs",
     "docs:build": "node scripts/fetch-openapi-specs.mjs --force && vitepress build docs",
-    "docs:serve": "vitepress serve docs"
+    "docs:serve": "vitepress serve docs",
+    "pretest": "npm run fetch:specs",
+    "test": "node --test --test-concurrency=1 supporting/tests/**/*.test.mjs"
   },
   "repository": {
     "type": "git",

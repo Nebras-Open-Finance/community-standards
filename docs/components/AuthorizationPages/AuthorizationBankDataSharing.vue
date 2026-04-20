@@ -669,7 +669,7 @@
                 </div>
             </div>
         </div>
-     <div v-else class="auth-page-button-with-description">
+     <div v-else class="auth-page-button-with-description auth-page-button-with-description--error">
                     <div class="auth-page-button">
                 <div class="auth-page-button-text-section">
                     <svg class="auth-page-button-icon" width="22" height="23" viewBox="0 0 22 23" fill="none"
@@ -755,8 +755,8 @@ const show_finance_rates = ref(false)
 
 // --- Dynamic accounts ---
 const DEFAULT_ACCOUNTS = [
-  { id: 1, type: 'CurrentAccount', iban: 'AE07 0331 2345 6123 4567 890', balance: 5000, secondary: 1500, currency: 'AED' },
-  { id: 2, type: 'Savings',        iban: 'AE07 0331 2345 6123 4567 891', balance: 25000, secondary: null, currency: 'AED' },
+  { id: 1, type: 'CurrentAccount', iban: 'AE07 0331 2345 6789 0123 456', balance: 5000, secondary: 1500, currency: 'AED' },
+  { id: 2, type: 'Savings',        iban: 'AE07 0331 2345 6789 0123 457', balance: 25000, secondary: null, currency: 'AED' },
 ]
 const TYPE_LABELS = {
   CurrentAccount: 'Current Account',
@@ -821,7 +821,7 @@ function toggleSelected(id) {
     zoom: 0.6;
 
     width: 372px;
-    /* height: 1023px; */
+    min-height: 800px;
 
     background: #F4F8FB;
 
@@ -1440,6 +1440,10 @@ height: 14.7px; */
     flex: none;
     order: 3;
     flex-grow: 0;
+}
+
+.auth-page-button-with-description--error {
+    margin-top: auto;
 }
 
 .auth-page-accounts-section {

@@ -209,6 +209,10 @@ UAE Open Finance has two things that can loosely be called a “resource server�
 - Vague phrasing
 - Unsupported assumptions
 
+### Internal Links
+
+`cleanUrls: true` is enabled. Links to a directory's `index.md` MUST end with a trailing slash (e.g. `../data-sharing/api-guide/`), or the VitePress build fails. Links to regular `.md` files do not need a slash.
+
 
 ## 🔁 Consent Lifecycle (Canonical)
 

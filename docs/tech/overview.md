@@ -44,7 +44,7 @@ The OpenAPI specifications are the **source of truth** for every API in the ecos
 - **API Hub** — what the API Hub exposes to LFIs
 - **Ozone Connect** — what LFIs must implement for the Hub to call
 
-[Go to API Specs →](/tech/api-specs/v2.1)
+[Go to API Specs →](/tech/api-specs/v2.1/)
 
 ## Knowledge Base
 
@@ -56,4 +56,4 @@ Practical, searchable articles that sit alongside the standards — deep dives, 
 
 The authoritative register of post-publication corrections to published versions of the TPP Standards and LFI Integration Guide. Each entry records what changed, why, and when it became effective.
 
-[Go to Erratas →](/tech/erratas/v2.1)
+[Go to Erratas →](/tech/erratas/v2.1/)

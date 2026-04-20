@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://TODO-set-domain.example/sitemap.xml
+Sitemap: https://nebras-open-finance.com/sitemap.xml

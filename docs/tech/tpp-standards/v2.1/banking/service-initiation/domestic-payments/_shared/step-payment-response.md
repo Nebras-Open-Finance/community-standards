@@ -6,7 +6,7 @@ A `201 Created` response is returned as a signed JWT (`application/jwt`). Verify
 
 | Header | Description |
 |--------|-------------|
-| `Location` | URL of the created payment resource — `/open-finance/v2.1/payments/{PaymentId}` |
+| `Location` | URL of the created payment resource — `/open-finance/payment/v2.1/payments/{PaymentId}` |
 | `x-fapi-interaction-id` | Echo of the interaction ID from the request |
 | `x-idempotency-key` | Echo of the idempotency key from the request |
 
@@ -45,29 +45,33 @@ A `201 Created` response is returned as a signed JWT (`application/jwt`). Verify
 
 #### Example response payload
 
+The payload is the verified body of the signed JWT. Per `AEPaymentIdResponseSigned`, `Data` and `Links` are wrapped in a `message` envelope.
+
 ```json
 {
-  "Data": {
-    "PaymentId": "83b47199-90c2-4c05-9ef1-aeae68b0fc7c",
-    "ConsentId": "b8f42378-10ac-46a1-8d20-4e020484216d",
-    "Status": "Pending",
-    "StatusUpdateDateTime": "2026-05-03T15:46:01+00:00",
-    "CreationDateTime": "2026-05-03T15:46:01+00:00",
-    "Instruction": {
-      "Amount": {
-        "Amount": "100.00",
-        "Currency": "AED"
+  "message": {
+    "Data": {
+      "PaymentId": "83b47199-90c2-4c05-9ef1-aeae68b0fc7c",
+      "ConsentId": "b8f42378-10ac-46a1-8d20-4e020484216d",
+      "Status": "Pending",
+      "StatusUpdateDateTime": "2026-05-03T15:46:01+00:00",
+      "CreationDateTime": "2026-05-03T15:46:01+00:00",
+      "Instruction": {
+        "Amount": {
+          "Amount": "100.00",
+          "Currency": "AED"
+        }
+      },
+      "PaymentPurposeCode": "ACM",
+      "DebtorReference": "Invoice 1234",
+      "OpenFinanceBilling": {
+        "Type": "PushP2P"
       }
     },
-    "PaymentPurposeCode": "ACM",
-    "DebtorReference": "Invoice 1234",
-    "OpenFinanceBilling": {
-      "Type": "PushP2P"
+    "Links": {
+      "Self": "https://api.lfi.example/open-finance/payment/v2.1/payments/83b47199-90c2-4c05-9ef1-aeae68b0fc7c",
+      "Related": "https://api.lfi.example/open-finance/v2.1/payment-consents/b8f42378-10ac-46a1-8d20-4e020484216d"
     }
-  },
-  "Links": {
-    "Self": "https://api.lfi.example/open-finance/v2.1/payments/83b47199-90c2-4c05-9ef1-aeae68b0fc7c",
-    "Related": "https://api.lfi.example/open-finance/v2.1/payment-consents/b8f42378-10ac-46a1-8d20-4e020484216d"
   }
 }
 ```

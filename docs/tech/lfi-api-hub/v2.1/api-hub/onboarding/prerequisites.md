@@ -96,16 +96,16 @@ Consent Pre-Validation is **strongly recommended** for all LFI implementations. 
 
 See [Consent Events & Actions](/tech/lfi-api-hub/v2.1/consent-events/) for details.
 
-
-
 ### Consent Event Notification
 
 Enables asynchronous notification of consent lifecycle events to your Ozone Connect implementation. When enabled, the API Hub sends event notifications when consents are created, authorized, revoked, or otherwise modified.
 
 See [Consent Events & Actions](/tech/lfi-api-hub/v2.1/consent-events/) for details.
 
-<br/>
+### Consent Augmentation
 
-::: info Consent Augmentation
-The Consent Events & Actions API also defines a **Consent Augmentation** endpoint (`POST /consent/action/augment`). This endpoint is **not currently recommended for implementation**. LFIs SHOULD NOT enable this feature unless specifically advised to do so by Nebras. It may be revisited in a future version of the specification.
+Enables the `POST /consent/action/augment` endpoint on your Ozone Connect implementation, which the API Hub calls to request an augmented consent payload during consent creation.
+
+::: warning Not currently recommended
+LFIs SHOULD NOT enable Consent Augmentation. Select **No** on the onboarding form unless Nebras has specifically advised you to enable it. The feature may be revisited in a future version of the specification.
 :::

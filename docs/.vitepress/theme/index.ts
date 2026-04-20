@@ -1,6 +1,7 @@
 import './index.css'
 import DefaultTheme from 'vitepress/theme'
 import Layout from './Layout.vue'
+import { resetSharedState } from '../../components/Composables/useSharedState.ts'
 
 // Pages
 import HomePage from '../../components/WebPages/HomePage.vue'
@@ -92,7 +93,13 @@ import COPPiiBlock from '../../components/COPPiiBlock.vue'
 export default {
   extends: DefaultTheme,
   Layout,
-  enhanceApp({ app }) {
+  enhanceApp({ app, router }) {
+    if (router) {
+      router.onBeforeRouteChange = () => {
+        resetSharedState()
+      }
+    }
+
     //pages
     app.component('HomePage', HomePage)
     app.component('NewsPage', NewsPage)

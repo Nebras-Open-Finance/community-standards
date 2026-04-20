@@ -1,7 +1,9 @@
-# Certificates & Confluence for testing
-certs/
-confluence/
-internal_helpers/
+# Local-only material under supporting/ — certs, scratch helpers, Confluence
+# exports, .env. Tracked configs (lychee.toml, tests/) stay committed.
+supporting/certs/
+supporting/confluence/
+supporting/internal_helpers/
+supporting/.env
 .claude/
 docs/public/doc-repo/
 # Fetched OpenAPI specs (all versioned folders — see scripts/fetch-openapi-specs.mjs)

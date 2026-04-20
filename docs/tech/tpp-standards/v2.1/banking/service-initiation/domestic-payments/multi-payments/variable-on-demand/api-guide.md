@@ -95,7 +95,7 @@ With the encrypted PII ready, construct the `authorization_details` of type `urn
 | Field | Required | Description | Example |
 |-------|----------|-------------|---------|
 | `PeriodicSchedule.PeriodType` | Yes | The period length: `Day`, `Week`, `Month`, or `Year` | `Month` |
-| `PeriodicSchedule.PeriodStartDate` | Yes | The date from which the period starts. For `Day` and `Year`, this is when payments may begin | `2026-03-01` |
+| `PeriodicSchedule.PeriodStartDate` | Yes | The date from which the period starts. For `Day` and `Year`, this is when payments may begin. Must not be in the past (today is accepted) and must be before `ExpirationDateTime` | `2027-01-01` |
 | `PeriodicSchedule.Controls.MaximumIndividualAmount.Amount` | At least one of three | Maximum amount permitted per individual payment | `500.00` |
 | `PeriodicSchedule.Controls.MaximumIndividualAmount.Currency` | At least one of three | ISO 4217 currency code | `AED` |
 | `PeriodicSchedule.Controls.MaximumCumulativeValueOfPaymentsPerPeriod.Amount` | No | Maximum cumulative value of payments within the period. Must be greater than `MaximumIndividualAmount` when both are provided | `2000.00` |
@@ -138,7 +138,7 @@ At least one of `MaximumIndividualAmount`, `MaximumCumulativeValueOfPaymentsPerP
             "PeriodicSchedule": {
               "Type": "VariableOnDemand",
               "PeriodType": "Month",
-              "PeriodStartDate": "2026-03-01",
+              "PeriodStartDate": "2027-01-01",
               "Controls": {
                 // At least ONE of the following three must be provided:
                 "MaximumIndividualAmount": { "Amount": "500.00", "Currency": "AED" }
@@ -191,7 +191,7 @@ const authorizationDetails = [
             PeriodicSchedule: {
               Type: 'VariableOnDemand',
               PeriodType: 'Month',
-              PeriodStartDate: '2026-03-01',
+              PeriodStartDate: '2027-01-01',
               Controls: {
                 MaximumIndividualAmount: { Amount: '500.00', Currency: 'AED' },
                 // MaximumCumulativeValueOfPaymentsPerPeriod: { Amount: '2000.00', Currency: 'AED' },
@@ -241,7 +241,7 @@ authorization_details = [
                         "PeriodicSchedule": {
                             "Type": "VariableOnDemand",
                             "PeriodType": "Month",
-                            "PeriodStartDate": "2026-03-01",
+                            "PeriodStartDate": "2027-01-01",
                             "Controls": {
                                 "MaximumIndividualAmount": {"Amount": "500.00", "Currency": "AED"},
                                 # "MaximumCumulativeValueOfPaymentsPerPeriod": {"Amount": "2000.00", "Currency": "AED"},
@@ -336,33 +336,38 @@ async function initiateVariablePayment(
   paymentEncryptedPII: string,  // from the PII step above
   idempotencyKey: string,
 ) {
+  // Wrapped in `message` per AEPaymentRequestSigned
   const paymentPayload = {
-    Data: {
-      ConsentId: consentId,                    // must match the authorized consent
-      Instruction: {
-        Amount: {
-          Amount:   amount,                  // must be within consent parameters
-          Currency: 'AED',
+    message: {
+      Data: {
+        ConsentId: consentId,                    // must match the authorized consent
+        Instruction: {
+          Amount: {
+            Amount:   amount,                  // must be within consent parameters
+            Currency: 'AED',
+          },
         },
-      },
-      PersonalIdentifiableInformation: paymentEncryptedPII,
-      PaymentPurposeCode: 'ACM',
-      DebtorReference:    'Subscription',
-      CreditorReference:  'Subscription',
-      OpenFinanceBilling: {
-        Type: 'PushP2P',
+        PersonalIdentifiableInformation: paymentEncryptedPII,
+        PaymentPurposeCode: 'ACM',
+        DebtorReference:    'Subscription',
+        CreditorReference:  'Subscription',
+        OpenFinanceBilling: {
+          Type: 'PushP2P',
+        },
       },
     },
   }
 
+  // AUTHORIZATION_SERVER_ISSUER is the `issuer` value from the LFI's .well-known/openid-configuration
   const signedPayment = await new SignJWT(paymentPayload)
-    .setProtectedHeader({ alg: 'PS256', kid: SIGNING_KEY_ID })
+    .setProtectedHeader({ alg: 'PS256', kid: SIGNING_KEY_ID, typ: 'JWT' })
     .setIssuedAt()
     .setIssuer(CLIENT_ID)
+    .setAudience(AUTHORIZATION_SERVER_ISSUER)
     .setExpirationTime('5m')
     .sign(signingKey)
 
-  const paymentResponse = await fetch(`${LFI_API_BASE}/open-finance/v2.1/payments`, {
+  const paymentResponse = await fetch(`${LFI_API_BASE}/open-finance/payment/v2.1/payments`, {
     method: 'POST',
     headers: {
       Authorization:                `Bearer ${accessToken}`,
@@ -398,35 +403,45 @@ def initiate_variable_payment(
     payment_encrypted_pii: str,  # from the PII step above
     idempotency_key: str,
 ) -> dict:
+    # Wrapped in `message` per AEPaymentRequestSigned
     payment_payload = {
-        "Data": {
-            "ConsentId":   consent_id,               # must match the authorized consent
-            "Instruction": {
-                "Amount": {
-                    "Amount":   amount,            # must be within consent parameters
-                    "Currency": "AED",
-                }
-            },
-            "PersonalIdentifiableInformation": payment_encrypted_pii,
-            "PaymentPurposeCode": "ACM",
-            "DebtorReference":    "Subscription",
-            "CreditorReference":  "Subscription",
-            "OpenFinanceBilling": {
-                "Type": "PushP2P",
-            },
+        "message": {
+            "Data": {
+                "ConsentId":   consent_id,               # must match the authorized consent
+                "Instruction": {
+                    "Amount": {
+                        "Amount":   amount,            # must be within consent parameters
+                        "Currency": "AED",
+                    }
+                },
+                "PersonalIdentifiableInformation": payment_encrypted_pii,
+                "PaymentPurposeCode": "ACM",
+                "DebtorReference":    "Subscription",
+                "CreditorReference":  "Subscription",
+                "OpenFinanceBilling": {
+                    "Type": "PushP2P",
+                },
+            }
         }
     }
 
+    # AUTHORIZATION_SERVER_ISSUER is the `issuer` value from the LFI's .well-known/openid-configuration
     now = int(time.time())
     signed_payment = jose_jwt.encode(
-        {**payment_payload, "iss": CLIENT_ID, "iat": now, "exp": now + 300},
+        {
+            **payment_payload,
+            "iss": CLIENT_ID,
+            "aud": AUTHORIZATION_SERVER_ISSUER,
+            "iat": now,
+            "exp": now + 300,
+        },
         signing_key,
         algorithm="PS256",
-        headers={"kid": SIGNING_KEY_ID},
+        headers={"kid": SIGNING_KEY_ID, "typ": "JWT"},
     )
 
     response = httpx.post(
-        f"{LFI_API_BASE}/open-finance/v2.1/payments",
+        f"{LFI_API_BASE}/open-finance/payment/v2.1/payments",
         headers={
             "Authorization":               f"Bearer {access_token}",
             "Content-Type":                "application/jwt",

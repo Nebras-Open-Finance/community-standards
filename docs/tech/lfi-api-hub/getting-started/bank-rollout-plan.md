@@ -77,7 +77,7 @@ Key endpoints:
 | [`POST /payments`](../v2.1/banking/service-initiation/open-api/payments) | Execute an authorised payment |
 | [`GET /payments/{PaymentId}`](../v2.1/banking/service-initiation/open-api/payments-PaymentId) | Retrieve the status of a payment |
 
-See the [Single Instant Payment API Guide](../v2.1/banking/service-initiation/domestic-payments/single-instant-payment/api-guide), [payment rails](../v2.1/banking/service-initiation/domestic-payments/overview/payment-rails), [payment status](../v2.1/banking/service-initiation/domestic-payments/overview/payment-status), and the [Personal Identifiable Information](../v2.1/banking/service-initiation/personal-identifiable-information/) guide for PII decryption.
+See the [Single Instant Payment API Guide](../v2.1/banking/service-initiation/domestic-payments/single-instant-payment/api-guide), [Payment Rails and Status](../v2.1/banking/service-initiation/domestic-payments/overview/payment-status), and the [Personal Identifiable Information](../v2.1/banking/service-initiation/personal-identifiable-information/) guide for PII decryption.
 
 Extend `POST /consent/action/validate` to accept Single Instant Payment consents.
 

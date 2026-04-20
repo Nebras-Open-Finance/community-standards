@@ -22,7 +22,46 @@ When a TPP processes payments on behalf of a merchant (e.g. a payment aggregator
 | **Not passed in** | No merchant information is shown. Only the creditor details are displayed. *(See Examples 1, 2 & 3)* |
 
 
-### LFI Warnings & Priority
+### Creditor Configuration
+
+The presence or absence of creditors in `Initiation.Creditor` in `domestic_payment_pii` determines how the LFI presents payment recipient information to the user.
+
+| `Initiation.Creditor` | LFI Authorisation Page Behaviour |
+|---|---|
+| **1 creditor** | The single payee's name and account details are displayed under "Who you're paying". *(See Example 1)* |
+| **2–10 defined creditors** | :x: **Not Supported** |
+| **Undefined** (absent or empty) | :x: **Not Supported** |
+
+
+### Trusted Payees Wording
+
+The wording of the "Add to my list of Trusted Payees" checkbox is driven by `Initiation.Creditor[].CreditorAccount.Type` in `domestic_payment_pii`. Whether the checkbox is shown at all is a separate, account-driven behaviour — see [Trusted Payees](#trusted-payees) under *UI Behaviour Driven by Account State*.
+
+| `CreditorAccount.Type` | Checkbox Text |
+|---|---|
+| `Individual` | Add person to my list of Trusted Payees |
+| `Merchant` | Add merchant to my list of Trusted Payees |
+| `Business` | Add business to my list of Trusted Payees |
+| `Charity` | Add charity to my list of Trusted Payees |
+| `GovernmentBody` | Add government body to my list of Trusted Payees |
+| `Other` or not provided | Add to my list of Trusted Payees |
+
+
+### Permissions and Data Access
+
+The table below describes the text shown to users on the Consent Page.
+
+<ServiceInitiationPermissionText />
+
+
+## UI Behaviour Driven by Account State
+
+Some Authorisation Page behaviours are not driven by fields in the consent request — they are driven by the customer's account state or account-level settings at the LFI. The TPP cannot control these; the LFI determines them at the point of authorisation.
+
+Use the **Simulated Accounts Behaviour** panel above to preview each state.
+
+
+### Warnings & Priority
 
 The LFI may surface one of three warnings on the Authorisation Page based on the account and payment state. Only one warning is shown at a time, with the following priority order:
 
@@ -35,19 +74,11 @@ The LFI may surface one of three warnings on the Authorisation Page based on the
 If a higher-priority warning applies, lower-priority warnings are suppressed. For example, if both a payment limit breach and a duplicate are detected, only the Payment Limit Exceeded warning is shown.
 
 
-### Creditor Configuration
+### Trusted Payees
 
-The presence or absence of creditors in `Initiation.Creditor` in `domestic_payment_pii` determines how the LFI presents payment recipient information to the user.
+The LFI shows the "Add to my list of Trusted Payees" checkbox only if the creditor is not already a trusted payee on the customer's account. If the creditor is already a trusted payee, the checkbox is suppressed. The wording of the checkbox label is driven by an API field — see [Trusted Payees Wording](#trusted-payees-wording) under *UI Behaviour Driven by API Fields*.
 
-| `Initiation.Creditor` | LFI Authorisation Page Behaviour |
+| Creditor status on the customer's account | Authorisation Page Behaviour |
 |---|---|
-| **1 creditor** | The single payee's name and account details are displayed under "Who you're paying". *(See Example 1)* |
-| **2–10 defined creditors** | :x: **Not Supported** |
-| **Undefined** (absent or empty) | :x: **Not Supported** |
-
-
-### Permissions and Data Access
-
-The table below describes the text shown to users on the Consent Page.
-
-<ServiceInitiationPermissionText />
+| **Not** already a trusted payee | The checkbox is shown. |
+| **Already** a trusted payee | The checkbox is suppressed. |

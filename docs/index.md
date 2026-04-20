@@ -1,5 +1,6 @@
 ---
 layout: false
+titleTemplate: false
 ---
 
 <div class="home-page-wrapper">

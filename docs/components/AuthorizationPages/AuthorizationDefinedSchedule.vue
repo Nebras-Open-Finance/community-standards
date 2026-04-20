@@ -62,7 +62,7 @@
                 </div>
             </div>
         </div>
-        <div class="auth-page-text-frame">
+        <div v-if="!debtorMismatch" class="auth-page-text-frame">
             <div class="auth-page-text-inner-frame">
                 <div class="auth-page-text-header">
                     Flexi-Pay Setup
@@ -219,108 +219,87 @@
 
 
 
-        <div  class="auth-page-text-frame">
+        <div v-if="debtorMismatch" class="auth-page-text-frame">
             <div class="auth-page-text-inner-frame">
                 <div class="auth-page-text-header">
-                    {{ sharedState?.pii?.Initiation?.DebtorAccount?.Identification ? 'Account selected for the payment' : 'Please select the account to pay from' }}
+                    Something went wrong
+                </div>
+                <div class="auth-page-error-image-container">
+                    <svg class="auth-page-error-image" width="78" height="78" viewBox="0 0 78 78" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M44.9596 51.8971L32.2422 39.1797" stroke="black" stroke-width="2.06452" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M44.8327 39.3086L32.1152 52.026" stroke="#0C1441" stroke-width="2.06452" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M32.1143 19.2697H44.9602C51.3832 19.2697 51.3832 16.0582 51.3832 12.8468C51.3832 6.42383 48.1717 6.42383 44.9602 6.42383H32.1143C28.9029 6.42383 25.6914 6.42383 25.6914 12.8468C25.6914 19.2697 28.9029 19.2697 32.1143 19.2697Z" stroke="#0C1441" stroke-width="2.06452" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M51.3839 12.9102C62.0781 13.4882 67.4412 17.4383 67.4412 32.1147V51.3836C67.4412 64.2294 64.2297 70.6524 48.1724 70.6524H28.9036C12.8462 70.6524 9.63477 64.2294 9.63477 51.3836V32.1147C9.63477 17.4704 14.9979 13.4882 25.6921 12.9102" stroke="#0C1441" stroke-width="2.06452" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="auth-page-text">
+                    The account specified by {{ sharedState?.consent?.OnBehalfOf?.TradingName || '[TPP Trading Name]' }} doesn't match any of your accounts. Please go back and try again.
+                </div>
+            </div>
+        </div>
+
+        <div v-else class="auth-page-text-frame">
+            <div class="auth-page-text-inner-frame">
+                <div class="auth-page-text-header">
+                    {{ matchedDebtorAccount ? 'Account selected for the payment' : 'Please select the account to pay from' }}
                 </div>
                 <div class="auth-page-accounts-section">
-                    <div v-if="sharedState?.pii?.Initiation?.DebtorAccount?.Identification" class="auth-page-account-card">
+                    <div v-if="matchedDebtorAccount" class="auth-page-account-card">
                         <div class="auth-page-account-title">
                             <div class="auth-page-account-title-text">
-                                Current Account
+                                {{ TYPE_LABELS[matchedDebtorAccount.type] }}
                             </div>
                         </div>
                         <div class="auth-page-account-subtext-container">
                             <div class="auth-page-account-subtext-container-2">
-                                <div class="auth-page-account-subtext">{{ sharedState?.pii?.Initiation?.DebtorAccount?.Identification?.match(/.{1,4}/g)?.join(" ") }}</div>
+                                <div class="auth-page-account-subtext">{{ formatIban(matchedDebtorAccount.iban) }}</div>
                             </div>
                             <div class="auth-page-account-subtext-container-2">
                                 <div class="auth-page-account-subtext-part">Balance</div>
                                 <div class="auth-page-account-amount-container">
-                                    <DirhamAmount amount="5,000" />
+                                    <DirhamAmount :amount="matchedDebtorAccount.balance" />
                                 </div>
                             </div>
-                            <div class="auth-page-account-subtext-container-2">
+                            <div v-if="matchedDebtorAccount.type === 'CurrentAccount'" class="auth-page-account-subtext-container-2">
                                 <div class="auth-page-account-subtext-part">Overdraft</div>
                                 <div class="auth-page-account-amount-container">
-                                    <DirhamAmount amount="1,500" />
+                                    <DirhamAmount :amount="matchedDebtorAccount.secondary || 0" />
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <template v-else>
-                    <div class="auth-page-account-card" style="cursor: pointer;" @click="selected = 'current_account'">
+                    <div v-for="account in paymentAccounts" :key="account.id" class="auth-page-account-card" style="cursor: pointer;" @click="selected = account.id">
                         <div class="auth-page-account-title">
                             <div class="auth-page-account-title-text">
-                                Current Account
+                                {{ TYPE_LABELS[account.type] }}
                             </div>
                             <div class="auth-page-account-checkbox-2">
-                                <div class="auth-page-account-checkbox-inactive-2" :class="{ 'is-active': selected === 'current_account' }">
+                                <div class="auth-page-account-checkbox-inactive-2" :class="{ 'is-active': selected === account.id }">
                                     <div class="auth-page-account-checkbox-selected">
-
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="auth-page-account-subtext-container">
                             <div class="auth-page-account-subtext-container-2">
-                                <div class="auth-page-account-subtext">AE07 0331 2345 6123 4567 890</div>
-
+                                <div class="auth-page-account-subtext">{{ formatIban(account.iban) }}</div>
                             </div>
                             <div class="auth-page-account-subtext-container-2">
                                 <div class="auth-page-account-subtext-part">Balance</div>
                                 <div class="auth-page-account-amount-container">
-                                    <DirhamAmount amount="5,000" />
-
+                                    <DirhamAmount :amount="account.balance" />
                                 </div>
-
                             </div>
-
-                            <div class="auth-page-account-subtext-container-2">
+                            <div v-if="account.type === 'CurrentAccount'" class="auth-page-account-subtext-container-2">
                                 <div class="auth-page-account-subtext-part">Overdraft</div>
                                 <div class="auth-page-account-amount-container">
-                                    <DirhamAmount amount="1,500" />
-
+                                    <DirhamAmount :amount="account.secondary || 0" />
                                 </div>
-
                             </div>
-
                         </div>
                     </div>
-
-                    <div class="auth-page-account-card" style="cursor: pointer;" @click="selected = 'savings_account'">
-                        <div class="auth-page-account-title">
-                            <div class="auth-page-account-title-text">
-                                Savings
-                            </div>
-                            <div class="auth-page-account-checkbox-2">
-                                <div class="auth-page-account-checkbox-inactive-2" :class="{ 'is-active': selected === 'savings_account' }">
-                                    <div class="auth-page-account-checkbox-selected">
-
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="auth-page-account-subtext-container">
-                            <div class="auth-page-account-subtext-container-2">
-                                <div class="auth-page-account-subtext">AE07 0331 2345 6123 4567 891</div>
-
-                            </div>
-                            <div class="auth-page-account-subtext-container-2">
-                                <div class="auth-page-account-subtext-part">Balance</div>
-                                <div class="auth-page-account-amount-container">
-                                    <DirhamAmount amount="25,000" />
-
-                                </div>
-
-                            </div>
-
-
-                        </div>
-                    </div>
-
                     </template>
                 </div>
 
@@ -332,7 +311,7 @@
 
 
 
-        <div v-if="authPermissionText" class="auth-page-text-frame-2">
+        <div v-if="!debtorMismatch && authPermissionText" class="auth-page-text-frame-2">
                 <div class="auth-page-text-bottom">
                     {{ authPermissionText }}
                 </div>
@@ -361,7 +340,7 @@
 
 
 
-        <div v-if="!sharedState?.consent?.AccountSubType || sharedState?.consent?.AccountSubType.includes('CurrentAccount') || sharedState?.consent?.AccountSubType.includes('Savings')" class="auth-page-button-with-description">
+        <div v-if="!debtorMismatch" class="auth-page-button-with-description">
             <div class="auth-page-button">
                 <div class="auth-page-button-text-section">
                     <svg class="auth-page-button-icon" width="22" height="23" viewBox="0 0 22 23" fill="none"
@@ -423,7 +402,7 @@
                 </div>
             </div>
         </div>
-     <div v-else class="auth-page-button-with-description">
+     <div v-else class="auth-page-button-with-description auth-page-button-with-description--error">
                     <div class="auth-page-button">
                 <div class="auth-page-button-text-section">
                     <svg class="auth-page-button-icon" width="22" height="23" viewBox="0 0 22 23" fill="none"
@@ -507,6 +486,38 @@ const scheduleType = computed(() => props.scheduleType)
 const selected = ref(null)
 const benefListOpen = ref(true)
 
+const TYPE_LABELS = {
+    CurrentAccount: 'Current Account',
+    Savings: 'Savings',
+}
+
+function normalizeIban(s) {
+    return (s || '').replace(/\s+/g, '').toUpperCase()
+}
+
+function formatIban(s) {
+    return (s || '').replace(/\s+/g, '').match(/.{1,4}/g)?.join(' ') || ''
+}
+
+const paymentAccounts = computed(() => {
+    const all = Array.isArray(sharedState.value?.accounts) ? sharedState.value.accounts : []
+    return all.filter(a => a.type === 'CurrentAccount' || a.type === 'Savings')
+})
+
+const debtorIdentification = computed(() =>
+    sharedState.value?.pii?.Initiation?.DebtorAccount?.Identification
+)
+
+const matchedDebtorAccount = computed(() => {
+    const ident = normalizeIban(debtorIdentification.value)
+    if (!ident) return null
+    return paymentAccounts.value.find(a => normalizeIban(a.iban) === ident) || null
+})
+
+const debtorMismatch = computed(() =>
+    !!debtorIdentification.value && !matchedDebtorAccount.value
+)
+
 const schedule = computed(() => consentData.value?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.Schedule ?? [])
 const visibleCount = ref(5)
 const visibleSchedule = computed(() => schedule.value.slice(0, visibleCount.value))
@@ -529,7 +540,7 @@ const authPermissionText = computed(() =>
     zoom: 0.6;
 
     width: 372px;
-    /* height: 1023px; */
+    min-height: 800px;
 
     background: #F4F8FB;
 
@@ -1214,6 +1225,10 @@ flex-grow: 0;
     flex: none;
     order: 3;
     flex-grow: 0;
+}
+
+.auth-page-button-with-description--error {
+    margin-top: auto;
 }
 
 .auth-page-accounts-section {

@@ -75,7 +75,7 @@ request_uri = par_response.json()["request_uri"]
 
 For the full construction of `authorization_details` — including field tables, PII encryption, and code examples — see the specific API guides, for example:
 
-- [Bank Data Sharing — API Guide](../banking/data-sharing/api-guide)
+- [Bank Data Sharing — API Guide](../banking/data-sharing/api-guide/)
 - [Single Instant Payment — API Guide](../banking/service-initiation/domestic-payments/single-instant-payment/api-guide)
 
 

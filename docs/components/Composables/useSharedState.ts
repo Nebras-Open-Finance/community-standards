@@ -3,6 +3,13 @@ import { ref, computed } from 'vue'
 // Shared across imports
 const sharedState = ref({})
 
+// Reset on SPA navigation so state seeded by one page (e.g. Data Sharing writing
+// sharedState.consent) doesn't leak into another page that reads different keys
+// (e.g. payment pages write sharedState.value). Wired from the theme router hook.
+export function resetSharedState() {
+  sharedState.value = {}
+}
+
 export function useSharedState() {
 
   function updateField(field, newValue) {

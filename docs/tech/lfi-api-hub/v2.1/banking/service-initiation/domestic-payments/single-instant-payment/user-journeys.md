@@ -74,6 +74,11 @@ watch(simulatePaymentLimitExceeded, (val) => {
   sharedState.value.simulatedBehaviour = { ...sharedState.value.simulatedBehaviour, paymentLimitExceeded: val }
 }, { immediate: true })
 
+const simulateAlreadyTrustedPayee = ref(false)
+watch(simulateAlreadyTrustedPayee, (val) => {
+  sharedState.value.simulatedBehaviour = { ...sharedState.value.simulatedBehaviour, alreadyTrustedPayee: val }
+}, { immediate: true })
+
 const myCustomValidator = (value) => {
   if (
     !value.Data ||
@@ -211,6 +216,10 @@ const initialFormDataPII = ref({
     <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.85rem; color: #1a202c; user-select: none;">
       <input type="checkbox" v-model="simulatePaymentLimitExceeded" style="width: 15px; height: 15px; cursor: pointer; accent-color: rgba(0,39,127,0.7);" />
       <span>Payment Limit Exceeded</span>
+    </label>
+    <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.85rem; color: #1a202c; user-select: none;">
+      <input type="checkbox" v-model="simulateAlreadyTrustedPayee" style="width: 15px; height: 15px; cursor: pointer; accent-color: rgba(0,39,127,0.7);" />
+      <span>Already a Trusted Payee</span>
     </label>
   </div>
 </div>

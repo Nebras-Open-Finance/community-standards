@@ -7,7 +7,7 @@ prev: false
 
 # Account Permissions in a Payment Consent
 
-A payment consent can optionally include a small set of account-reading permissions. This allows a TPP to read the payer's account details and balance using the **same access token** issued for the payment — without creating a separate [Bank Data Sharing](../../tech/tpp-standards/v2.1/banking/data-sharing/api-guide) consent.
+A payment consent can optionally include a small set of account-reading permissions. This allows a TPP to read the payer's account details and balance using the **same access token** issued for the payment — without creating a separate [Bank Data Sharing](../../tech/tpp-standards/v2.1/banking/data-sharing/api-guide/) consent.
 
 
 
@@ -133,7 +133,7 @@ const { Data: { Balance } } = await fetch(
 
 ## Relationship to Bank Data Sharing
 
-These permissions follow the same permission model as [Bank Data Sharing](../../tech/tpp-standards/v2.1/banking/data-sharing/api-guide) but are scoped to the payment context:
+These permissions follow the same permission model as [Bank Data Sharing](../../tech/tpp-standards/v2.1/banking/data-sharing/api-guide/) but are scoped to the payment context:
 
 - Access **expires when the payment consent expires**.
 - Access is **limited to the accounts the user authorized** at the LFI.

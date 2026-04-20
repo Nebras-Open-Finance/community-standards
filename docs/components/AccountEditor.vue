@@ -1,11 +1,22 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useSharedState } from './Composables/useSharedState.ts'
+
+const props = defineProps({
+  allowedTypes: {
+    type: Array,
+    default: () => ['CurrentAccount', 'Savings', 'CreditCard', 'Mortgage', 'Finance'],
+  },
+  allowedCurrencies: {
+    type: Array,
+    default: () => ['AED', 'USD', 'EUR', 'GBP', 'INR', 'SAR'],
+  },
+})
 
 const { updateField } = useSharedState()
 
-const ACCOUNT_TYPES = ['CurrentAccount', 'Savings', 'CreditCard', 'Mortgage', 'Finance']
-const CURRENCIES = ['AED', 'USD', 'EUR', 'GBP', 'INR', 'SAR']
+const ACCOUNT_TYPES = computed(() => props.allowedTypes)
+const CURRENCIES = computed(() => props.allowedCurrencies)
 const TYPE_LABELS = {
   CurrentAccount: 'Current Account',
   Savings: 'Savings',
@@ -16,7 +27,7 @@ const TYPE_LABELS = {
 const MAX_ACCOUNTS = 5
 
 function genIban(n) {
-  return 'AE07 0331 2345 6123 4567 8' + String(90 + n).padStart(2, '0')
+  return 'AE07 0331 2345 6789 0123 4' + String(56 + n).padStart(2, '0')
 }
 function genPan(n) {
   return '**** **** **** ' + String(1000 + (n % 9000))
@@ -79,12 +90,15 @@ function onTypeChange(account, newType) {
 function addAccount() {
   if (accounts.value.length >= MAX_ACCOUNTS) return
   const idx = accounts.value.length
+  const defaultType = ACCOUNT_TYPES.value[0] || 'CurrentAccount'
+  const defaultCurrency = CURRENCIES.value[0] || 'AED'
   accounts.value.push({
     id: nextId++,
-    type: 'CurrentAccount',
+    type: defaultType,
     balance: 1000,
-    secondary: 0,
-    ...makeIdentifier('CurrentAccount', idx),
+    secondary: defaultType === 'CurrentAccount' || defaultType === 'CreditCard' ? 0 : null,
+    currency: defaultCurrency,
+    ...makeIdentifier(defaultType, idx),
   })
 }
 
@@ -109,9 +123,10 @@ watch(accounts, (val) => updateField('accounts', JSON.stringify(val)), { deep: t
         <!-- Type selector -->
         <div class="ae-field ae-field-type">
           <label class="ae-label">Type</label>
-          <select class="ae-select" :value="account.type" @change="onTypeChange(account, $event.target.value)">
+          <select v-if="ACCOUNT_TYPES.length > 1" class="ae-select" :value="account.type" @change="onTypeChange(account, $event.target.value)">
             <option v-for="t in ACCOUNT_TYPES" :key="t" :value="t">{{ TYPE_LABELS[t] }}</option>
           </select>
+          <input v-else class="ae-input" :value="TYPE_LABELS[account.type]" readonly />
         </div>
 
         <!-- IBAN (CurrentAccount / Savings) -->
@@ -123,9 +138,10 @@ watch(accounts, (val) => updateField('accounts', JSON.stringify(val)), { deep: t
         <!-- Currency (CurrentAccount / Savings) -->
         <div v-if="account.type === 'CurrentAccount' || account.type === 'Savings'" class="ae-field ae-field-currency">
           <label class="ae-label">Currency</label>
-          <select class="ae-select" v-model="account.currency">
+          <select v-if="CURRENCIES.length > 1" class="ae-select" v-model="account.currency">
             <option v-for="c in CURRENCIES" :key="c" :value="c">{{ c }}</option>
           </select>
+          <input v-else class="ae-input" :value="account.currency" readonly />
         </div>
 
         <!-- Credit Card: Masked PAN + Card Name -->

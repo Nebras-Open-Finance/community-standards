@@ -6,7 +6,7 @@ Poll the payment status using the `PaymentId` returned in Step 9:
 
 ```typescript [Node.js]
 const statusResponse = await fetch(
-  `${LFI_API_BASE}/open-finance/v2.1/payments/${paymentId}`,
+  `${LFI_API_BASE}/open-finance/payment/v2.1/payments/${paymentId}`,
   {
     headers: { Authorization: `Bearer ${access_token}` },
     // agent: new https.Agent({ cert: transportCert, key: transportKey }),
@@ -18,7 +18,7 @@ const { Data: { Status, StatusUpdateDateTime } } = await statusResponse.json()
 
 ```python [Python]
 status_response = httpx.get(
-    f"{LFI_API_BASE}/open-finance/v2.1/payments/{payment_id}",
+    f"{LFI_API_BASE}/open-finance/payment/v2.1/payments/{payment_id}",
     headers={"Authorization": f"Bearer {access_token}"},
     # cert=("transport.crt", "transport.key"),
 )
