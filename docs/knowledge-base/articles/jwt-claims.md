@@ -1,6 +1,13 @@
 ---
 title: "JWT Claim Rules — Request Object and Client Assertion"
 description: "Per-claim reference for both JWTs sent to /par and /token: aud, jti, lifetime windows, sub rules, and the most common rejection causes."
+category: Security
+readTime: "12 min"
+updated: "2026-04-21"
+tags:
+  - JWT
+  - FAPI
+  - PAR
 next: false
 prev: false
 ---

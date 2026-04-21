@@ -1,6 +1,13 @@
 ---
 title: "Choosing a Payment Type"
 description: "Guide to the seven UAE Open Finance payment types — Single Instant Payment and the six Multi-Payment variants — with a decision framework for selecting the right one and notes on the Delegated SCA overlay."
+category: Payments
+readTime: "10 min"
+updated: "2026-04-21"
+tags:
+  - Payments
+  - Multi-Payment
+  - Decision Guide
 next: false
 prev: false
 ---

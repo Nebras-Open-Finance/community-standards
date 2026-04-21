@@ -1,6 +1,13 @@
 ---
 title: "mtls_endpoint_aliases — what it is and when it matters"
 description: "FYI explainer for the mtls_endpoint_aliases object returned by .well-known/openid-configuration. Today the aliases match the top-level endpoints, but the FAPI 2.0 spec allows them to diverge — preferring the alias keeps your client future-proof."
+category: Security
+readTime: "5 min"
+updated: "2026-04-21"
+tags:
+  - mTLS
+  - Discovery
+  - FAPI 2.0
 next: false
 prev: false
 ---

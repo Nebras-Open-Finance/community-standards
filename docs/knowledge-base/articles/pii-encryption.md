@@ -1,6 +1,13 @@
 ---
 title: "Payment PII Encryption — Why It Exists and What It Means for You"
 description: "Why personal identifiable information in payment consents is encrypted end-to-end, what that means for LFI validation responsibility, TPP onboarding care, and how creditor rules differ by payment type."
+category: Security
+readTime: "8 min"
+updated: "2026-04-21"
+tags:
+  - PII
+  - Encryption
+  - JWE
 next: false
 prev: false
 ---

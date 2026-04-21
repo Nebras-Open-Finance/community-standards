@@ -1,6 +1,13 @@
 ---
 title: "O3 Sandbox Utilities — Signing and Encryption Helpers"
 description: "What the O3 Util endpoints are, why they exist, and how to use them in Postman to test message signing, PII encryption, and client assertions without writing your own cryptographic code."
+category: Integration
+readTime: "6 min"
+updated: "2026-04-21"
+tags:
+  - Sandbox
+  - Tooling
+  - JWT
 next: false
 prev: false
 ---

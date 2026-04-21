@@ -1,6 +1,13 @@
 ---
 title: "Multi-Segment LFIs — How to Structure API Hubs Across Customer Segments"
 description: "When an LFI serves multiple customer segments (e.g. retail and SME) with different authentication endpoints, they need one API Hub per segment but can share a single Ozone Connect — minimising LFI-maintained certificates."
+category: Integration
+readTime: "8 min"
+updated: "2026-04-21"
+tags:
+  - API Hub
+  - LFI
+  - Topology
 next: false
 prev: false
 ---

@@ -1,6 +1,13 @@
 ---
 title: "The tpp and decodedSsa Context Blocks on Ozone Connect Calls"
 description: "Every call the API Hub makes to your Ozone Connect endpoints carries a tpp object identifying the calling TPP, plus its decoded Software Statement Assertion. This article explains what each field is, why it's there, and the operational reasons an LFI might want to use it — even though none are required for payment execution."
+category: Integration
+readTime: "7 min"
+updated: "2026-04-21"
+tags:
+  - TPP
+  - SSA
+  - Context
 next: false
 prev: false
 ---

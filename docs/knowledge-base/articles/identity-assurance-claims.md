@@ -1,6 +1,13 @@
 ---
 title: "Identity Assurance Claims — OIDC IDA as the response format for customer data"
 description: "Why GET /customer, GET /accounts/{AccountId}/customer, and the CoP query response all share a verifiedClaims envelope derived from OpenID Connect for Identity Assurance 1.0."
+category: Integration
+readTime: "9 min"
+updated: "2026-04-21"
+tags:
+  - OIDC IDA
+  - Customer Data
+  - Ozone Connect
 next: false
 prev: false
 ---

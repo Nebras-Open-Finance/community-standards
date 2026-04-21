@@ -1,6 +1,13 @@
 ---
 title: "Consent Identifiers — Why PSU and Account IDs Must Be Opaque"
 description: "Why any identifier patched onto a consent (psuIdentifiers, accountIds) must be an opaque, non-sensitive, stable LFI-defined value."
+category: Consents
+readTime: "6 min"
+updated: "2026-04-21"
+tags:
+  - Consents
+  - PSU Identifiers
+  - Data Protection
 next: false
 prev: false
 ---

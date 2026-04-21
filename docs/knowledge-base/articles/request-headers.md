@@ -1,6 +1,13 @@
 ---
 title: "FAPI Request Headers — Traceability, Context, and Safe Retries"
 description: "What the FAPI and Open Finance request headers are for, why x-fapi-interaction-id is the most important one to get right, and a one-line guide to each of the others."
+category: Security
+readTime: "7 min"
+updated: "2026-04-21"
+tags:
+  - FAPI
+  - Headers
+  - Traceability
 next: false
 prev: false
 ---

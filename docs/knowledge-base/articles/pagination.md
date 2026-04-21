@@ -1,6 +1,13 @@
 ---
 title: "Pagination — LFI `meta` to TPP `Links`"
 description: "How page-based pagination flows from the LFI's Ozone Connect response through the API Hub, converted into the Links envelope consumed by the TPP."
+category: Integration
+readTime: "7 min"
+updated: "2026-04-21"
+tags:
+  - Pagination
+  - Ozone Connect
+  - Data Sharing
 next: false
 prev: false
 ---
