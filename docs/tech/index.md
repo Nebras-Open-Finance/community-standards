@@ -52,8 +52,8 @@ Practical, searchable articles that sit alongside the standards — deep dives, 
 
 [Go to Knowledge Base →](/knowledge-base/)
 
-## Erratas
+## Release Notes & Erratas
 
-The authoritative register of post-publication corrections to published versions of the TPP Standards and LFI Integration Guide. Each entry records what changed, why, and when it became effective.
+The authoritative registers of post-publication changes. **Release Notes** track deployments to the API Hub, Trust Framework, and supporting infrastructure. **Erratas** track corrections to the published TPP Standards and LFI Integration Guide.
 
-[Go to Erratas →](/tech/erratas/v2.1/)
+[Go to Release Notes & Erratas →](/tech/release-notes-and-erratas/)

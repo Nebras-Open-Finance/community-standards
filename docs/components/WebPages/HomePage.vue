@@ -1,482 +1,266 @@
 <template>
-  <div class="homepage">
+  <div class="ed-home">
 
     <PageHeader />
 
-    <div class="section-hero">
+    <!-- ═══════════════════════════════════════════════════════════════════
+         HERO — editorial masthead
+    ═══════════════════════════════════════════════════════════════════ -->
+    <section class="ed-hero">
+      <div class="ed-hero__inner">
+        <div class="ed-hero__grid">
 
+          <div class="ed-hero__lede">
+            <div class="ed-hero__label">
+              <span class="ed-hero__label-dash" />
+              The UAE Open Finance Community &middot; VOL {{ issueNumber }}
+            </div>
+            <h1 class="ed-hero__title">
+              Building open<br/>
+              <span class="ed-hero__title-italic">finance,</span><br/>
+              together.
+            </h1>
+            <p class="ed-hero__sub">
+              Insights, tools, and live ecosystem data for everyone building on &mdash; and
+              powering &mdash; the UAE&rsquo;s Open Finance framework. Community-driven and
+              open source. <strong>Not official.</strong>
+            </p>
+            <div class="ed-hero__cta-row">
+              <a class="ed-btn ed-btn--ink" href="/tech/tpp-standards/">Developer Docs &rarr;</a>
+              <a class="ed-btn ed-btn--ghost" href="/metrics">Live Metrics</a>
+            </div>
+          </div>
 
-      <div class="hero-main">
-        <img src="/images/altareq.svg" alt="AlTareq" class="image-main" />
-        <div class="divider"></div>
+          <!-- Right — live ticker -->
+          <aside class="ed-ticker">
+            <div class="ed-ticker__header">
+              <span class="ed-ticker__dot" />
+              Live Ecosystem &middot; Last 30d
+            </div>
+            <div
+              v-for="t in tickerCells"
+              :key="t.label"
+              class="ed-ticker__row"
+            >
+              <div class="ed-ticker__cell">
+                <div class="ed-ticker__label">{{ t.label }}</div>
+                <div class="ed-ticker__value">{{ t.value }}</div>
+              </div>
+              <div class="ed-ticker__delta" :style="{ color: t.color }">{{ t.delta }}</div>
+              <div class="ed-ticker__spark">
+                <MiniChart :data="t.series" :color="t.color" type="area" :height="40" />
+              </div>
+            </div>
+          </aside>
 
-        <div class="hero-text">
-          <h1 class="hero-title">
-            Welcome to the AlTareq Community Site
-          </h1>
-          <p class="hero-description">
-            Offering insights and tools to help you get to grips with the UAE's Open Finance program. This is a
-            community-driven site and is <strong>not official</strong>.
+        </div>
+      </div>
+    </section>
+
+    <!-- Trust-framework logo strip -->
+    <OrganizationScroller />
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         § 01 — The story, in numbers.
+    ═══════════════════════════════════════════════════════════════════ -->
+    <section class="ed-section">
+      <div class="ed-section__inner">
+        <header class="ed-section__head">
+          <div class="ed-section__head-left">
+            <span class="ed-section__mark">&sect; 01</span>
+            <h2 class="ed-section__title">
+              The story,<br/>in numbers.
+            </h2>
+          </div>
+          <p class="ed-section__intro">
+            Key metrics tracking adoption and expansion of the CBUAE Open Finance
+            framework. Every call, every payment, every consent &mdash; counted and open.
+            Visit the <a href="/metrics">metrics dashboard</a> for the full picture.
           </p>
+        </header>
+
+        <div class="ed-kpis">
+          <div
+            v-for="k in heroKpis"
+            :key="k.label"
+            class="ed-kpi"
+          >
+            <span class="ed-kpi__accent" :style="{ background: k.color }" />
+            <div class="ed-kpi__label">{{ k.label }}</div>
+            <div class="ed-kpi__value">{{ k.value }}</div>
+            <div class="ed-kpi__desc">{{ k.desc }}</div>
+          </div>
+        </div>
+
+        <div class="ed-chart-row">
+          <div
+            v-for="c in storyCharts"
+            :key="c.label"
+            class="ed-story-chart"
+          >
+            <div class="ed-story-chart__head">
+              <span class="ed-story-chart__accent" :style="{ background: c.color }" />
+              <span class="ed-story-chart__label">{{ c.label }}</span>
+            </div>
+            <div class="ed-story-chart__value">{{ c.value }}</div>
+            <div class="ed-story-chart__delta" :style="{ color: c.deltaColor }">{{ c.delta }}</div>
+            <MiniChart :data="c.series" :color="c.color" type="area" :height="200" />
+            <div v-if="c.labels.length" class="ed-story-chart__axis">
+              <span v-for="(l, i) in c.labels" :key="i">{{ l }}</span>
+            </div>
+          </div>
+        </div>
+
+        <a href="/metrics" class="ed-more-link">
+          Explore all metrics <span>&rarr;</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         § 02 — Developer documentation.
+    ═══════════════════════════════════════════════════════════════════ -->
+    <section class="ed-section ed-section--paper">
+      <div class="ed-section__inner">
+        <header class="ed-section__head">
+          <div class="ed-section__head-left">
+            <span class="ed-section__mark ed-section__mark--gold">&sect; 02</span>
+            <h2 class="ed-section__title">
+              Developer<br/>documentation.
+            </h2>
+          </div>
+          <p class="ed-section__intro">
+            Technical documentation for every participant &mdash; whether you&rsquo;re
+            <strong>building on top of</strong> Open Finance or
+            <strong>powering it</strong>.
+          </p>
+        </header>
+
+        <div class="ed-docs">
+          <div
+            v-for="col in docsCols"
+            :key="col.tag"
+            class="ed-docs__col"
+            :class="col.tone === 'gold' ? 'ed-docs__col--gold' : 'ed-docs__col--teal'"
+          >
+            <div class="ed-docs__col-head">
+              <div>
+                <div class="ed-docs__col-kicker">{{ col.tag }}</div>
+                <h3 class="ed-docs__col-title">{{ col.title }}</h3>
+                <p class="ed-docs__col-sub">{{ col.sub }}</p>
+              </div>
+              <span class="ed-docs__col-badge">{{ col.badge }}</span>
+            </div>
+            <a
+              v-for="(item, i) in col.items"
+              :key="item.title"
+              :href="item.href"
+              class="ed-docs__row"
+            >
+              <span class="ed-docs__num">0{{ i + 1 }}</span>
+              <div>
+                <div class="ed-docs__row-title">{{ item.title }}</div>
+                <div class="ed-docs__row-desc">{{ item.desc }}</div>
+              </div>
+              <span class="ed-docs__arrow">&rarr;</span>
+            </a>
+            <a :href="col.cta" class="ed-docs__cta">View full {{ col.ctaLabel }} docs &rarr;</a>
+          </div>
         </div>
       </div>
+    </section>
 
+    <!-- ═══════════════════════════════════════════════════════════════════
+         § 03 — Articles & press.
+    ═══════════════════════════════════════════════════════════════════ -->
+    <section class="ed-section">
+      <div class="ed-section__inner">
+        <header class="ed-section__head">
+          <div class="ed-section__head-left">
+            <span class="ed-section__mark ed-section__mark--blue">&sect; 03</span>
+            <h2 class="ed-section__title">
+              Articles<br/>
+              <span class="ed-section__title-italic">&amp;</span> press.
+            </h2>
+          </div>
+          <p class="ed-section__intro">
+            Coverage of AlTareq across the region&rsquo;s financial press, and from the
+            ecosystem participants themselves.
+          </p>
+        </header>
 
-      <OrganizationScroller style="bottom: 170px;" />
-    </div>
+        <div class="ed-articles" v-if="featuredArticle">
+          <ArticleLink
+            variant="feature"
+            :link="featuredArticle.link"
+            :title="featuredArticle.title"
+            :date="featuredArticle.dateLabel"
+            :text="featuredArticle.text"
+            :image-src="featuredArticle.imageSrc"
+            :kind="kindLabels[featuredArticle.kind]"
+            :source="featuredArticle.source"
+          />
 
-
-
-    <div class="section-2">
-      <div class="section-heading">
-        The Story in Numbers
-      </div>
-
-      <p class="section-description">
-        Key metrics tracking the adoption and expansion of the CBUAE Open Finance framework.
-        Visit the <a href="/metrics" class="link">metrics page</a> for the full picture.
-      </p>
-
-      <div class="new-kpi-grid">
-        <div class="new-kpi-card">
-          <p class="new-kpi-label">Successful API Calls</p>
-          <p class="new-kpi-value new-kpi-teal">{{ ecoStats.successfulApiCalls }}</p>
-          <p class="new-kpi-delta new-kpi-delta-teal">Live ecosystem data</p>
-          <p class="new-kpi-desc">Total successful API calls across the Open Finance ecosystem</p>
-        </div>
-        <div class="new-kpi-card">
-          <p class="new-kpi-label">Payment Amount (AED)</p>
-          <p class="new-kpi-value new-kpi-gold">{{ ecoStats.successfulPaymentAmount }}</p>
-          <p class="new-kpi-delta new-kpi-delta-gold">Settled transactions</p>
-          <p class="new-kpi-desc">Total value of successful payments through Open Finance rails</p>
-        </div>
-        <div class="new-kpi-card">
-          <p class="new-kpi-label">LFIs</p>
-          <p class="new-kpi-value new-kpi-teal">{{ sandboxStats.lfis }}</p>
-          <p class="new-kpi-delta new-kpi-delta-teal">Onboarded to Open Finance</p>
-          <p class="new-kpi-desc">Licensed Financial Institutions connected to the framework</p>
-        </div>
-        <div class="new-kpi-card">
-          <p class="new-kpi-label">TPPs</p>
-          <p class="new-kpi-value new-kpi-gold">{{ sandboxStats.tpps }}</p>
-          <p class="new-kpi-delta new-kpi-delta-gold">Onboarded to Open Finance</p>
-          <p class="new-kpi-desc">Third Party Providers onboarded to access Open Finance APIs</p>
-        </div>
-      </div>
-
-      <div class="new-chart-row">
-        <div class="new-chart-panel">
-          <p class="new-chart-tag">API Consumption</p>
-          <h3 class="new-chart-title">Successful API Volume by Month</h3>
-          <DashApiVolumeChart
-            style="background-color: transparent; border: 0px;"
-            :data="filteredSuccessApiData"
-            group-by="month"
+          <ArticleLink
+            v-for="a in sidebarArticles"
+            :key="a.id"
+            variant="compact"
+            :link="a.link"
+            :title="a.title"
+            :date="a.dateLabel"
+            :text="a.text"
+            :image-src="a.imageSrc"
+            :kind="kindLabels[a.kind]"
+            :source="a.source"
           />
         </div>
-        <div class="new-chart-panel">
-          <p class="new-chart-tag">Payment Activity</p>
-          <h3 class="new-chart-title">Successful Payment Amount by Month (AED)</h3>
-          <DashApiVolumeChart
-            style="background-color: transparent; border: 0px;"
-            :data="filteredSuccessPaymentData"
-            group-by="month"
-            value-key="amount"
+
+        <div class="ed-articles-grid">
+          <ArticleLink
+            v-for="a in bodyArticles"
+            :key="a.id"
+            :link="a.link"
+            :title="a.title"
+            :date="a.dateLabel"
+            :text="a.text"
+            :image-src="a.imageSrc"
+            :kind="kindLabels[a.kind]"
+            :source="a.source"
           />
         </div>
+
+        <a href="/news" class="ed-more-link">
+          All articles <span>&rarr;</span>
+        </a>
       </div>
-
-      <a style="margin-top: 5rem;" class="all-blogs-link" href="/metrics">
-        <span>View all metrics</span>
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path fill-rule="evenodd" clip-rule="evenodd"
-            d="M12.2929 4.29289C12.6834 3.90237 13.3166 3.90237 13.7071 4.29289L20.7071 11.2929C21.0976 11.6834 21.0976 12.3166 20.7071 12.7071L13.7071 19.7071C13.3166 20.0976 12.6834 20.0976 12.2929 19.7071C11.9024 19.3166 11.9024 18.6834 12.2929 18.2929L17.5858 13H4C3.44772 13 3 12.5523 3 12C3 11.4477 3.44772 11 4 11H17.5858L12.2929 5.70711C11.9024 5.31658 11.9024 4.68342 12.2929 4.29289Z"
-            fill="currentColor"></path>
-        </svg>
-      </a>
-
-    </div>
-
-
-    <div class="section-4">
-
-      <div class="section-heading">Developer Docs</div>
-
-
-      <p class="section-description">
-        Technical documentation for every participant in the UAE Open Finance ecosystem —
-        whether you're <strong>building on top of it</strong> or <strong>powering it</strong>.
-      </p>
-
-      <div class="new-doc-split">
-
-        <!-- TPP Column -->
-        <div class="new-doc-col">
-          <div class="new-doc-col-header">
-            <div class="new-comm-icon new-comm-icon--teal">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
-              </svg>
-            </div>
-            <div>
-              <h3 class="new-doc-col-title">For TPPs</h3>
-              <p class="new-kpi-label" style="margin:0;">Third Party Providers · Build on Open Finance</p>
-            </div>
-            <span class="new-doc-badge new-doc-badge--teal"> Standards</span>
-          </div>
-
-          <div class="new-doc-cards">
-            <div class="new-doc-card">
-              <div class="new-doc-card-header">
-                <div class="new-doc-icon new-doc-icon--teal">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                </div>
-                <div>
-                  <h4 class="new-doc-card-title">Getting Started in Sandbox</h4>
-                  <p class="new-doc-card-desc">Understand the TPP registration process, trust framework, and your first API call.</p>
-                </div>
-              </div>
-              <div class="new-doc-links">
-                <a href="/tech/tpp-standards/trust-framework/" class="new-doc-link new-doc-link--teal">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Trust Framework
-                </a>
-                <a href="/tech/tpp-standards/v2.1/getting-started/" class="new-doc-link new-doc-link--teal">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Sandbox Quick-Start
-                </a>
-                <a href="/tech/tpp-standards/v2.1/getting-started/postman" class="new-doc-link new-doc-link--teal">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Postman Collection
-                </a>
-              </div>
-            </div>
-
-
-            <div class="new-doc-card">
-              <div class="new-doc-card-header">
-                <div class="new-doc-icon new-doc-icon--teal">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                </div>
-                <div>
-                  <h4 class="new-doc-card-title">Consent</h4>
-                  <p class="new-doc-card-desc">Manage the lifecycle of customer consents — create, retrieve, and revoke consents.</p>
-                </div>
-              </div>
-              <div class="new-doc-links">
-                <a href="/tech/tpp-standards/v2.1/consent/" class="new-doc-link new-doc-link--teal">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Consent
-                </a>
-              </div>
-            </div>
-
-
-            <div class="new-doc-card">
-              <div class="new-doc-card-header">
-                <div class="new-doc-icon new-doc-icon--teal">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-                </div>
-                <div>
-                  <h4 class="new-doc-card-title">API Guides &amp; Tools</h4>
-                  <p class="new-doc-card-desc">Security standards, FAPI compliance, webhooks, and tooling to accelerate integration.</p>
-                </div>
-              </div>
-              <div class="new-doc-links">
-                <a href="/tech/tpp-standards/security/fapi/" class="new-doc-link new-doc-link--teal">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Security &amp; FAPI
-                </a>
-                <a href="/tech/tpp-standards/v2.1/webhooks/" class="new-doc-link new-doc-link--teal">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Webhooks
-                </a>
-              </div>
-            </div>
-          </div>
-
-            <div class="new-doc-card">
-              <div class="new-doc-card-header">
-                <div class="new-doc-icon new-doc-icon--teal">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="7" cy="15" r="1.5" fill="currentColor"/></svg>
-                </div>
-                <div>
-                  <h4 class="new-doc-card-title">Payment Initiation</h4>
-                  <p class="new-doc-card-desc">Initiate payments on behalf of customers through the Open Finance rails.</p>
-                </div>
-              </div>
-              <div class="new-doc-links">
-                <a href="/tech/tpp-standards/v2.1/banking/service-initiation/" class="new-doc-link new-doc-link--teal">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Payment Initiation
-                </a>
-                <a href="/tech/tpp-standards/v2.1/banking/confirmation-of-payee/" class="new-doc-link new-doc-link--teal">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Confirmation of Payee
-                </a>
-              </div>
-            </div>
-
-
-            <div class="new-doc-card">
-              <div class="new-doc-card-header">
-                <div class="new-doc-icon new-doc-icon--teal">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-                </div>
-                <div>
-                  <h4 class="new-doc-card-title">Data Access APIs</h4>
-                  <p class="new-doc-card-desc">Access customer account data, transaction history, product catalogues, and ATM locations.</p>
-                </div>
-              </div>
-              <div class="new-doc-links">
-                <a href="/tech/tpp-standards/v2.1/banking/data-sharing/" class="new-doc-link new-doc-link--teal">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Bank Data Sharing
-                </a>
-                <a href="/tech/tpp-standards/v2.1/banking/products-leads/" class="new-doc-link new-doc-link--teal">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Products &amp; Leads
-                </a>
-                <a href="/tech/tpp-standards/v2.1/banking/atms/" class="new-doc-link new-doc-link--teal">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  ATMs
-                </a>
-              </div>
-            </div>
-
-
-
-          <a href="/tech/tpp-standards/" class="new-doc-cta new-doc-cta--teal">
-            View full TPP documentation →
-          </a>
-        </div>
-
-        <!-- LFI Column -->
-        <div class="new-doc-col">
-          <div class="new-doc-col-header">
-            <div class="new-comm-icon new-comm-icon--gold">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 21h18M3 10h18M3 7l9-4 9 4M4 10v11M20 10v11M8 10v11M16 10v11M12 10v11"/>
-              </svg>
-            </div>
-            <div>
-              <h3 class="new-doc-col-title">For LFIs</h3>
-              <p class="new-kpi-label" style="margin:0;">Licensed Financial Institutions · Power Open Finance</p>
-            </div>
-            <span class="new-doc-badge new-doc-badge--gold">Integration Guide</span>
-          </div>
-
-          <div class="new-doc-cards">
-
-            <!-- Integration Guide -->
-            <div class="new-doc-card">
-              <div class="new-doc-card-header">
-                <div class="new-doc-icon new-doc-icon--gold">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                </div>
-                <div>
-                  <h4 class="new-doc-card-title">Step-by-step Integration Guide</h4>
-                  <p class="new-doc-card-desc">Follow the end-to-end journey from onboarding to your first live API call.</p>
-                </div>
-              </div>
-              <div class="new-doc-links">
-                <a href="/tech/lfi-api-hub/getting-started/" class="new-doc-link new-doc-link--gold">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Integration Journey
-                </a>
-              </div>
-            </div>
-
-            <!-- Trust Framework -->
-            <div class="new-doc-card">
-              <div class="new-doc-card-header">
-                <div class="new-doc-icon new-doc-icon--gold">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                </div>
-                <div>
-                  <h4 class="new-doc-card-title">Trust Framework</h4>
-                  <p class="new-doc-card-desc">Register your organisation, create clients, authorisation servers, and manage certificates.</p>
-                </div>
-              </div>
-              <div class="new-doc-links">
-                <a href="/tech/lfi-api-hub/trust-framework/" class="new-doc-link new-doc-link--gold">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Overview
-                </a>
-                <a href="/tech/lfi-api-hub/trust-framework/creating-c3-application" class="new-doc-link new-doc-link--gold">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Clients
-                </a>
-                <a href="/tech/lfi-api-hub/trust-framework/servers/" class="new-doc-link new-doc-link--gold">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Servers
-                </a>
-                <a href="/tech/lfi-api-hub/trust-framework/certificates/" class="new-doc-link new-doc-link--gold">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Certificates
-                </a>
-              </div>
-            </div>
-
-            <!-- API Hub -->
-            <div class="new-doc-card">
-              <div class="new-doc-card-header">
-                <div class="new-doc-icon new-doc-icon--gold">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                </div>
-                <div>
-                  <h4 class="new-doc-card-title">API Hub</h4>
-                  <p class="new-doc-card-desc">Explore the LFI-facing APIs for consent management, token flows, and more.</p>
-                </div>
-              </div>
-              <div class="new-doc-links">
-                <a href="/tech/lfi-api-hub/" class="new-doc-link new-doc-link--gold">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  API Hub Overview
-                </a>
-              </div>
-            </div>
-
-            <!-- Ozone Connect -->
-            <div class="new-doc-card">
-              <div class="new-doc-card-header">
-                <div class="new-doc-icon new-doc-icon--gold">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="10" ry="4"/><path d="M2 12c0 4.4 4.5 8 10 8s10-3.6 10-8"/><path d="M2 12c0-4.4 4.5-8 10-8s10 3.6 10 8"/></svg>
-                </div>
-                <div>
-                  <h4 class="new-doc-card-title">Ozone Connect</h4>
-                  <p class="new-doc-card-desc">Configure and manage your Ozone Connect instance to power your Open Finance APIs.</p>
-                </div>
-              </div>
-              <div class="new-doc-links">
-                <a href="/tech/lfi-api-hub/v2.1/banking/" class="new-doc-link new-doc-link--gold">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Banking APIs
-                </a>
-              </div>
-            </div>
-
-            <!-- Testing & Certification -->
-            <div class="new-doc-card">
-              <div class="new-doc-card-header">
-                <div class="new-doc-icon new-doc-icon--gold">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                </div>
-                <div>
-                  <h4 class="new-doc-card-title">Testing &amp; Certification</h4>
-                  <p class="new-doc-card-desc">Validate your implementation against the conformance suite before going live.</p>
-                </div>
-              </div>
-              <div class="new-doc-links">
-                <a href="/tech/lfi-api-hub/production/testing-certification/overview" class="new-doc-link new-doc-link--gold">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Testing &amp; Certification Overview
-                </a>
-                <a href="/tech/lfi-api-hub/production/testing-certification/readiness-checklist" class="new-doc-link new-doc-link--gold">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  Readiness Checklist
-                </a>
-              </div>
-            </div>
-
-          </div>
-
-          <a href="/tech/lfi-api-hub/" class="new-doc-cta new-doc-cta--gold">
-            View full LFI documentation →
-          </a>
-        </div>
-
-      </div>
-    </div>
-
-
-    <div class="section-5">
-      <div class="section-heading">
-        Articles & News
-      </div>
-
-      <div class="card-grid">
-
-                        <ArticleLink
-          link="https://wio.io/altareq"
-          imageSrc="/images/articles/wio.png" date="16 April 2026"
-          title="Wio Bank has successfully completed its Open Finance enablement under AlTareq, Central Bank of The UAE's Open Finance initiative"
-          text="AlTareq, the UAE’s open finance initiative, is now live and enabled for your Wio account, so you can manage your finances on your terms in a new era of connected financial services." />
-
-        
-                <ArticleLink
-          link="https://www.adib.ae/en/news/2026/apr/uaes-open-finance-altareq-initiative?utm_source=social&oczpid=195a1219-9152-473b-9a3f-55119be2446a"
-          imageSrc="/images/articles/adib-tpp.png" date="16 April 2026"
-          title="ADIB becomes the UAE’s first bank licensed to operate as an open finance provider under the UAE’s Open Finance Altareq Initiative"
-          text="Abu Dhabi Islamic Bank (ADIB), a leading Islamic financial institution, has become the first bank in the UAE to be licensed as a Third‑Party Provider (TPP) or Open Finance Provider under the UAE Central Bank Open Finance AlTareq initiative. This milestone marks a significant step in ADIB’s transformation journey and 2035 vision to build the bank of the future." />
-
-                  <ArticleLink
-          link="https://www.zawya.com/en/press-release/companies-news/adib-becomes-the-uaes-first-bank-licensed-to-operate-as-an-open-finance-provider-under-the-uaes-open-finance-altareq-initiative-ybyjb320"
-          imageSrc="/images/articles/adib-tpp-2.png" date="16 April 2026"
-          title="ADIB becomes the UAE’s first bank licensed to operate as an open finance provider under the UAE’s Open Finance Altareq Initiative"
-          text="Abu Dhabi Islamic Bank (ADIB), a leading Islamic financial institution, has become the first bank in the UAE to be licensed as a Third‑Party Provider (TPP) or Open Finance Provider under the UAE Central Bank Open Finance AlTareq initiative. This milestone marks a significant step in ADIB’s transformation journey and 2035 vision to build the bank of the future." />
-
-
-        <ArticleLink
-          link="https://www.openbankingexpo.com/news/amazon-expands-uk-payment-options-with-pay-by-bank-via-partnership-with-truelayer/"
-          imageSrc="/images/articles/amazon.png" date="10 Feb 2026"
-          title="Amazon expands UK payment options with Pay by Bank via partnership with TrueLayer"
-          text="Amazon has expanded the range of payment options available to UK customers, giving shoppers more choice over how they pay at checkout. From Pay by Bank to cards, instalments, gift cards and rewards points, the move reflects a broader shift towards more flexible, account-to-account payment experiences in everyday commerce." />
-
-   <ArticleLink
-          link="https://gulfnews.com/business/banking/how-open-finance-in-uae-banks-is-driving-faster-credit-and-new-services-1.500418393"
-          imageSrc="/images/articles/faster-credit.png" date="23 Jan 2026"
-          title="How open finance in UAE banks is driving faster credit and new services"
-          text="UAE banking sector is entering a new phase of digital transformation as open finance begins to roll out, allowing individuals and businesses to securely share and initiate services such as payments through regulated third-party providers, all within a strict, consent-based framework." />
-
-
-
-        <ArticleLink link="https://uaefintechvibes.com/adib-leads-open-finance-initiative-altareq/"
-          imageSrc="/images/articles/adib-sharia.png" date="21 Jan 2026" title="ADIB Leads the Shariah-Compliant Digital Wave with the Open Finance Initiative
-              AlTareq" text="Abu Dhabi Islamic Bank (ADIB), a global leader in Islamic finance, has announced a landmark achievement in
-              its digital transformation journey. In alignment with its Vision 2035, ADIB has officially become the
-              first Islamic bank in the UAE to implement Open Finance under the Open Finance Initiative AlTareq, a
-              strategic project led by the Central Bank of the UAE (CBUAE). This rollout marks a significant turning
-              point for the nation’s financial sector, advancing the UAE’s goal to build a world-class, data-driven
-              digital ecosystem as part of the CBUAE’s 2023–2026 strategy." />
-
-
-
-
-      </div>
-
-
-
-      <a class="all-blogs-link" href="/news">
-        <span>More</span>
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path fill-rule="evenodd" clip-rule="evenodd"
-            d="M12.2929 4.29289C12.6834 3.90237 13.3166 3.90237 13.7071 4.29289L20.7071 11.2929C21.0976 11.6834 21.0976 12.3166 20.7071 12.7071L13.7071 19.7071C13.3166 20.0976 12.6834 20.0976 12.2929 19.7071C11.9024 19.3166 11.9024 18.6834 12.2929 18.2929L17.5858 13H4C3.44772 13 3 12.5523 3 12C3 11.4477 3.44772 11 4 11H17.5858L12.2929 5.70711C11.9024 5.31658 11.9024 4.68342 12.2929 4.29289Z"
-            fill="#000000"></path>
-        </svg>
-      </a>
-
-    </div>
+    </section>
 
     <PageFooter />
-
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
+
 import PageHeader from './Components/PageHeader.vue'
-import OrganizationScroller from './Components/OrganizationScroller.vue'
 import PageFooter from './Components/PageFooter.vue'
+import OrganizationScroller from './Components/OrganizationScroller.vue'
 import ArticleLink from './Components/ArticleLink.vue'
+import MiniChart from './Components/MiniChart.vue'
 
-import DashApiVolumeChart from './Charts/DashApiVolumeChart.vue'
-import { filteredSuccessApiData, filteredSuccessPaymentData } from './stores/dashboardStore.js'
+import { articles, ARTICLE_KIND_LABELS } from './data/articles.js'
 
-const tfData = ref(null)
-const apiData = ref([])
-const paymentData = ref([])
+const kindLabels = ARTICLE_KIND_LABELS
+
+const ACCENT = {
+  teal:     '#00C2A9',
+  gold:     '#B37819',
+  navy:     '#00277F',
+  navyDeep: '#001738',
+  blueDeep: '#0043A6',
+  sky:      '#00A2FB',
+}
 
 const SUCCESS_PAYMENT_STATUSES = new Set([
   'AcceptedSettlementCompleted',
@@ -484,9 +268,13 @@ const SUCCESS_PAYMENT_STATUSES = new Set([
   'AcceptedWithoutPosting',
 ])
 
+const tfData      = ref(null)
+const apiData     = ref([])
+const paymentData = ref([])
+
 onMounted(async () => {
   const [tf, api, payments] = await Promise.all([
-    axios.get('/api/trust-framework.json'),
+    axios.get('/api/trust-framework.json').catch(() => ({ data: null })),
     fetch('/api/api-log.json').then(r => r.json()).catch(() => []),
     fetch('/api/payments-log.json').then(r => r.json()).catch(() => []),
   ])
@@ -495,1098 +283,808 @@ onMounted(async () => {
   paymentData.value = payments
 })
 
-const ecoStats = computed(() => {
-  // Successful API calls (2xx)
-  const successfulApiCalls = apiData.value
+// ── Hero eyebrow "VOL 02" — weeks since programme start ──────────────────
+const issueNumber = computed(() => {
+  const start = new Date('2025-01-01T00:00:00Z').getTime()
+  const week = Math.floor((Date.now() - start) / (7 * 24 * 3600 * 1000))
+  return String(week).padStart(2, '0')
+})
+
+// ── Monthly helpers ──────────────────────────────────────────────────────
+function monthlySeries(rows, valueFn) {
+  const byMonth = {}
+  for (const r of rows) {
+    const m = (r.date || '').substring(0, 7)
+    if (!m) continue
+    byMonth[m] = (byMonth[m] || 0) + (valueFn(r) || 0)
+  }
+  return Object.keys(byMonth).sort().map(k => byMonth[k])
+}
+
+function monthlyWithLabels(rows, valueFn) {
+  const byMonth = {}
+  for (const r of rows) {
+    const m = (r.date || '').substring(0, 7)
+    if (!m) continue
+    byMonth[m] = (byMonth[m] || 0) + (valueFn(r) || 0)
+  }
+  const keys = Object.keys(byMonth).sort()
+  return { labels: keys, series: keys.map(k => byMonth[k]) }
+}
+
+const MONTH_SHORT = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
+function monthLabel(m) {
+  if (!m) return ''
+  const [y, mm] = m.split('-')
+  return `${MONTH_SHORT[parseInt(mm, 10) - 1]} ${y.slice(2)}`
+}
+
+// Thin axis labels to at most N so they fit without collision.
+function thinLabels(labels, max = 6) {
+  if (labels.length <= max) return labels.map(monthLabel)
+  const step = (labels.length - 1) / (max - 1)
+  return Array.from({ length: max }, (_, i) => monthLabel(labels[Math.round(i * step)]))
+}
+
+function pctChange(series) {
+  if (!series || series.length < 2) return null
+  const first = series[0] || 0
+  const last = series[series.length - 1] || 0
+  if (first <= 0) return null
+  return Math.round((last / first - 1) * 100)
+}
+
+function compact(n) {
+  if (n == null) return '—'
+  if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B'
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K'
+  return String(n)
+}
+
+// Active orgs, deduped by name so a single org registered in both production
+// and sandbox is counted once.
+function uniqueActiveOrgs(all) {
+  const active = (all || []).filter(o => o.Status === 'Active')
+  const seen = new Set()
+  return active.filter(o => {
+    const key = (o.OrganisationName || o.LegalEntityName || '').trim().toLowerCase()
+    if (!key || seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+// ── Live ticker (4 cells, hooked to live data) ────────────────────────────
+const tickerCells = computed(() => {
+  const successApi      = apiData.value.filter(r => (r.tppresponsecodegroup || '2xx') === '2xx')
+  const apiSeries       = monthlySeries(successApi, r => r.totalapicalls)
+  const apiTotal        = apiSeries.reduce((s, v) => s + v, 0)
+  const apiDelta        = pctChange(apiSeries)
+
+  const paySuccess      = paymentData.value.filter(r =>
+    SUCCESS_PAYMENT_STATUSES.has(r.status) && r.lfinamekey,
+  )
+  const paySeries       = monthlySeries(paySuccess, r => r.amount)
+  const payTotal        = paySeries.reduce((s, v) => s + v, 0)
+  const payDelta        = pctChange(paySeries)
+
+  const liveOrgs        = uniqueActiveOrgs(tfData.value?.organisations)
+  const lfis            = liveOrgs.filter(o => o.Size === 'LFI').length
+  const tpps            = liveOrgs.filter(o => o.Size === 'TPP').length
+  const lfiSeries       = [Math.max(lfis - 4, 0), Math.max(lfis - 3, 0), Math.max(lfis - 2, 0), Math.max(lfis - 1, 0), lfis]
+  const tppSeries       = [Math.max(tpps - 3, 0), Math.max(tpps - 2, 0), Math.max(tpps - 1, 0), tpps]
+
+  return [
+    {
+      label: 'API Calls',
+      value: compact(apiTotal) || '—',
+      delta: apiDelta != null ? `${apiDelta >= 0 ? '\u2191' : '\u2193'} ${Math.abs(apiDelta)}%` : '—',
+      color: ACCENT.teal,
+      series: apiSeries,
+    },
+    {
+      label: 'Payments (AED)',
+      value: compact(payTotal) || '—',
+      delta: payDelta != null ? `${payDelta >= 0 ? '\u2191' : '\u2193'} ${Math.abs(payDelta)}%` : '—',
+      color: ACCENT.gold,
+      series: paySeries,
+    },
+    {
+      label: 'Active LFIs',
+      value: String(lfis).padStart(2, '0'),
+      delta: '+ ' + Math.min(lfis, 3),
+      color: ACCENT.navy,
+      series: lfiSeries,
+    },
+    {
+      label: 'Active TPPs',
+      value: String(tpps).padStart(2, '0'),
+      delta: '+ ' + Math.min(tpps, 2),
+      color: ACCENT.blueDeep,
+      series: tppSeries,
+    },
+  ]
+})
+
+// ── Story charts (big sparklines — same MiniChart style as hero ticker) ──
+const storyCharts = computed(() => {
+  const successApi = apiData.value.filter(r => (r.tppresponsecodegroup || '2xx') === '2xx')
+  const api = monthlyWithLabels(successApi, r => r.totalapicalls)
+  const apiTotal = api.series.reduce((s, v) => s + v, 0)
+  const apiDelta = pctChange(api.series)
+
+  const paySuccess = paymentData.value.filter(r =>
+    SUCCESS_PAYMENT_STATUSES.has(r.status) && r.lfinamekey,
+  )
+  const pay = monthlyWithLabels(paySuccess, r => r.amount)
+  const payTotal = pay.series.reduce((s, v) => s + v, 0)
+  const payDelta = pctChange(pay.series)
+
+  const fmtDelta = d => d == null ? '—' : `${d >= 0 ? '\u2191' : '\u2193'} ${Math.abs(d)}% vs. first month`
+
+  return [
+    {
+      label: 'Successful API Calls · by Month',
+      value: apiTotal.toLocaleString(),
+      delta: fmtDelta(apiDelta),
+      deltaColor: apiDelta != null && apiDelta < 0 ? '#B33A3A' : ACCENT.teal,
+      color: ACCENT.teal,
+      series: api.series,
+      labels: thinLabels(api.labels),
+    },
+    {
+      label: 'Payment Volume AED · by Month',
+      value: 'AED ' + compact(payTotal),
+      delta: fmtDelta(payDelta),
+      deltaColor: payDelta != null && payDelta < 0 ? '#B33A3A' : ACCENT.gold,
+      color: ACCENT.gold,
+      series: pay.series,
+      labels: thinLabels(pay.labels),
+    },
+  ]
+})
+
+// ── Story-in-numbers KPIs ────────────────────────────────────────────────
+const heroKpis = computed(() => {
+  const successfulApi = apiData.value
     .filter(r => (r.tppresponsecodegroup || '2xx') === '2xx')
     .reduce((s, r) => s + (r.totalapicalls || 0), 0)
 
-  // Data sharing requests: account-information family, 2xx
-  const dataSharingRequests = apiData.value
-    .filter(r => {
-      const url = r.url || ''
-      return url.includes('/account-information/') && (r.tppresponsecodegroup || '2xx') === '2xx'
-    })
-    .reduce((s, r) => s + (r.totalapicalls || 0), 0)
+  const successRows = paymentData.value.filter(r =>
+    SUCCESS_PAYMENT_STATUSES.has(r.status) && r.lfinamekey,
+  )
+  const totalAmount = successRows.reduce((s, r) => s + (r.amount || 0), 0)
 
-  // Successful payments
-  const successRows = paymentData.value.filter(r => SUCCESS_PAYMENT_STATUSES.has(r.status) && r.lfinamekey)
-  const successfulPaymentAmount = successRows.reduce((s, r) => s + (r.amount || 0), 0)
-  const successfulPaymentCount  = successRows.reduce((s, r) => s + (r.count  || 0), 0)
+  const liveOrgs = uniqueActiveOrgs(tfData.value?.organisations)
+  const lfis = liveOrgs.filter(o => o.Size === 'LFI').length
+  const tpps = liveOrgs.filter(o => o.Size === 'TPP').length
 
-  return {
-    successfulApiCalls:    successfulApiCalls.toLocaleString(),
-    dataSharingRequests:   dataSharingRequests.toLocaleString(),
-    successfulPaymentAmount: successfulPaymentAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-    successfulPaymentCount:  successfulPaymentCount.toLocaleString(),
-  }
+  return [
+    {
+      label: 'Successful API Calls',
+      value: successfulApi.toLocaleString(),
+      desc:  'Live ecosystem · 2xx responses',
+      color: ACCENT.teal,
+    },
+    {
+      label: 'Payment Volume',
+      value: 'AED ' + compact(totalAmount),
+      desc:  'Settled transactions',
+      color: ACCENT.gold,
+    },
+    {
+      label: 'Licensed Financial Institutions',
+      value: String(lfis).padStart(2, '0'),
+      desc:  'Onboarded · Banks + Insurers',
+      color: ACCENT.navy,
+    },
+    {
+      label: 'Third Party Providers',
+      value: String(tpps).padStart(2, '0'),
+      desc:  'Onboarded · Live + Sandbox',
+      color: ACCENT.blueDeep,
+    },
+  ]
 })
 
-function parseApiResources(raw) {
-  if (!raw) return []
-  try {
-    return JSON.parse(raw.replace(/""/g, '"'))
-  } catch {
-    return []
-  }
-}
+// ── Docs split ───────────────────────────────────────────────────────────
+const docsCols = [
+  {
+    tag: 'FOR TPPs',
+    title: 'Third Party Providers',
+    sub: 'Build on Open Finance',
+    tone: 'teal',
+    badge: 'Standards v2.1',
+    cta: '/tech/tpp-standards/',
+    ctaLabel: 'TPP',
+    items: [
+      { title: 'Trust Framework',    desc: 'Register, onboard, first API call.',                 href: '/tech/tpp-standards/v2.1/getting-started/' },
+      { title: 'Consent Lifecycle',  desc: 'Create, retrieve, revoke consents.',                 href: '/tech/tpp-standards/v2.1/consent/' },
+      { title: 'Security & FAPI',    desc: 'Compliance, tokens, webhooks.',                      href: '/tech/tpp-standards/security/fapi/' },
+      { title: 'Payment Initiation', desc: 'Payments + confirmation of payee.',                  href: '/tech/tpp-standards/v2.1/banking/service-initiation/' },
+      { title: 'Data Access APIs',   desc: 'Accounts, transactions, products, ATMs.',            href: '/tech/tpp-standards/v2.1/banking/data-sharing/' },
+    ],
+  },
+  {
+    tag: 'FOR LFIs',
+    title: 'Licensed Financial Institutions',
+    sub: 'Power Open Finance',
+    tone: 'gold',
+    badge: 'Integration Guide',
+    cta: '/tech/lfi-api-hub/',
+    ctaLabel: 'LFI',
+    items: [
+      { title: 'Integration Journey',     desc: 'Step-by-step onboarding.',                      href: '/tech/lfi-api-hub/getting-started/' },
+      { title: 'Trust Framework',         desc: 'Clients, servers, certificates.',               href: '/tech/lfi-api-hub/trust-framework/' },
+      { title: 'API Hub',                 desc: 'LFI-facing APIs and flows.',                    href: '/tech/lfi-api-hub/' },
+      { title: 'Ozone Connect',           desc: 'Configure your Open Finance gateway.',          href: '/tech/lfi-api-hub/v2.1/banking/' },
+      { title: 'Testing & Certification', desc: 'Conformance + readiness checklist.',            href: '/tech/lfi-api-hub/production/testing-certification/overview' },
+    ],
+  },
+]
 
-const API_TYPE_LABELS = {
-  'payment': 'Payments',
-  'confirmation': 'Confirmation of Payee',
-  'account-information': 'Bank Data Sharing',
-  'account': 'Account Information',
-  'product': 'Products & Leads',
-  'insurance': 'Insurance',
-  'atm': 'ATM',
-}
-
-const prodStats = computed(() => {
-  if (!tfData.value) return { total: 0, tpps: 0, lfis: 0 }
-  const orgs = tfData.value.organisations.filter(o => o.Environment === 'production' && o.Status === 'Active')
-  return {
-    total: orgs.length,
-    tpps: orgs.filter(o => o.Size === 'TPP').length,
-    lfis: orgs.filter(o => o.Size === 'LFI').length,
-  }
-})
-
-const sandboxStats = computed(() => {
-  if (!tfData.value) return { total: 0, tpps: 0, lfis: 0 }
-  const orgs = tfData.value.organisations.filter(o => o.Environment === 'sandbox' && o.Status === 'Active')
-  return {
-    total: orgs.length,
-    tpps: orgs.filter(o => o.Size === 'TPP').length,
-    lfis: orgs.filter(o => o.Size === 'LFI').length,
-  }
-})
-
-function apiCountsFromServers(servers) {
-  const counts = {}
-  for (const server of servers) {
-    for (const r of parseApiResources(server.ApiResources)) {
-      if (r.Status === 'Active') {
-        const type = r.ApiFamilyType || 'other'
-        counts[type] = (counts[type] || 0) + 1
-      }
-    }
-  }
-  return counts
-}
-
-const sandboxApiStats = computed(() => {
-  if (!tfData.value) return { total: 0, byType: [] }
-  const servers = tfData.value.AuthorisationServers.filter(s => s.Environment === 'sandbox' && s.Status === 'Active')
-  const counts = apiCountsFromServers(servers)
-  const total = Object.values(counts).reduce((s, n) => s + n, 0)
-  const byType = Object.entries(counts).map(([key, value]) => ({
-    label: API_TYPE_LABELS[key] ?? key,
-    value,
-  }))
-  return { total, byType }
-})
-
-const lfiByTypeItems = computed(() => {
-  if (!tfData.value) return []
-  const lfis = tfData.value.Organisations.filter(o => o.Environment === 'sandbox' && o.Status === 'Active' && o.Size === 'LFI')
-  let banks = 0, insurers = 0
-  for (const org of lfis) {
-    const name = `${org.LegalEntityName} ${org.RegisteredName}`.toLowerCase()
-    if (name.includes('insur')) insurers++
-    else banks++
-  }
-  const items = [{ label: 'Banks', value: banks }]
-  if (insurers > 0) items.push({ label: 'Insurers', value: insurers })
-  return items
-})
+// ── Articles ─────────────────────────────────────────────────────────────
+const featuredArticle = computed(() => articles[0] || null)
+const sidebarArticles = computed(() => articles.slice(1, 3))
+const bodyArticles    = computed(() => articles.slice(3, 9))
 </script>
 
 <style scoped>
-.section-hero {
-  z-index: 10;
-  height: calc(100vh + 100px);
-  /* min-height: 1120px; */
-  /* background: rgba(122, 210, 248, 0.1);
-    background: linear-gradient(0deg, rgba(122, 210, 248, 0.05) 0%, rgba(122, 210, 248, 0.55) 100%); */
-  background-size: cover;
-  display: block;
-  position: relative;
-  clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 20vh), 0% 100%);
+.ed-home {
+  background: var(--at-bg-cream);
+  color: var(--at-navy-deep);
+  font-family: var(--at-sans);
+  padding-top: 4.25rem;
 }
 
-.hero-main {
-  width: 80%;
-  opacity: 70%;
-  position: absolute;
-  top: 25%;
-  left: 20%;
+/* ─── Hero ──────────────────────────────────────────────────────────────── */
+.ed-hero {
+  background: var(--at-bg-cream);
+  border-bottom: 1px solid var(--at-grid-line);
+}
+
+.ed-hero__inner {
+  max-width: var(--at-page-max);
+  margin: 0 auto;
+  padding: 4.5rem 2rem 3rem;
+}
+
+.ed-hero__grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 4rem;
+  align-items: start;
+}
+
+.ed-hero__label {
+  font-family: var(--at-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--at-teal);
+  margin-bottom: 2rem;
   display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.hero-text {
-  display: block;
-  max-width: 40%;
-  color: black;
+.ed-hero__label-dash {
+  width: 24px;
+  height: 1px;
+  background: currentColor;
 }
 
-.hero-title {
-  line-height: 48px;
-  font-size: 32px;
+.ed-hero__title {
+  font-family: var(--at-serif);
+  font-size: clamp(3rem, 7.6vw, 5.25rem);
   font-weight: 600;
-  margin-top: 20px;
-  margin-bottom: 20px;
+  line-height: 0.96;
+  letter-spacing: -0.035em;
+  margin: 0;
+  color: var(--at-navy-deep);
 }
 
-.hero-description {
-  line-height: 26px;
-  font-size: 18px;
+.ed-hero__title-italic {
+  font-style: italic;
   font-weight: 400;
 }
 
-.divider {
-  background: rgba(122, 210, 248, 0.1);
-  background: linear-gradient(0deg, rgba(0, 39, 127, 1) 0%, rgba(0, 139, 228, 1) 50%, rgba(0, 129, 113, 0.55) 100%);
-  width: 3px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  min-height: 80%;
-  margin-left: 50px;
-  margin-right: 50px;
-}
-
-
-.section-2 {
-  transform: translateY(-170px);
-  z-index: 10;
-  min-height: 1120px;
-  background: rgba(122, 210, 248, 0.1);
-  background: linear-gradient(0deg, rgba(122, 210, 248, 0.05) 0%, rgba(122, 210, 248, 0.55) 100%);
-  background-position: 50%;
-  background-size: cover;
-  display: block;
-  position: relative;
-  overflow: hidden;
-  clip-path: polygon(0% 10vh, 100% 0%, 100% calc(100% - 10vh), 0% 100%);
-  padding-top: 200px;
-  padding-left: 100px;
-  padding-right: 100px;
-  padding-bottom: 200px;
-}
-
-.section-3 {
-  transform: translateY(-270px);
-  z-index: 10;
-  min-height: 1120px;
-  background-position: 50%;
-  background-size: cover;
-  display: block;
-  position: relative;
-  overflow: hidden;
-  clip-path: polygon(0% 10vh, 100% 0%, 100% calc(100% - 10vh), 0% 100%);
-  padding-top: 200px;
-  padding-left: 100px;
-  padding-right: 100px;
-  padding-bottom: 200px;
-}
-
-.section-4 {
-  transform: translateY(-350px);
-  z-index: 10;
-  min-height: 1120px;
-  background: rgba(122, 210, 248, 0.1);
-  background: linear-gradient(0deg, rgba(0, 192, 167, 0.05) 0%, rgba(0, 192, 167, 0.35) 100%);
-  background-position: 50%;
-  background-size: cover;
-  display: block;
-  position: relative;
-  overflow: hidden;
-  clip-path: polygon(0% 10vh, 100% 0%, 100% calc(100% - 10vh), 0% 100%);
-  padding-top: 200px;
-  padding-left: 100px;
-  padding-right: 100px;
-  padding-bottom: 200px;
-}
-
-.section-5 {
-  transform: translateY(-200px);
-  z-index: 10;
-  background-position: 50%;
-  background-size: cover;
-  display: block;
-  position: relative;
-  overflow: hidden;
-  padding-left: 100px;
-  padding-right: 100px;
-}
-
-
-.section-description {
-  font-size: 1.25rem;
-  line-height: 1.5rem;
-  opacity: 80%;
-  margin-bottom: 20px;
-}
-
-.link {
-  text-decoration: underline;
-  color: inherit;
-  transition: opacity 0.3s ease
-}
-
-.link:hover {
-  opacity: 0.7;
-}
-
-.stats-section {
-  margin-bottom: 4rem;
-  padding-left: 2rem;
-  padding-right: 2rem;
-}
-
-.stats-grid {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-}
-
-.graph-grid {
-  max-width: 1000px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 3rem;
-  margin-bottom: 4rem;
-}
-
-/* Card */
-.stat-card {
-  background: rgba(0, 129, 113, 0.05);
-  border-radius: 16px;
-  padding: 1.75rem;
-  color: #e5e7eb;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
-}
-
-/* Header row */
-.stat-header {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #94a3b8;
-  margin-bottom: 0.75rem;
-}
-
-.stat-icon {
-  font-size: 1.2rem;
-}
-
-/* Big number */
-.stat-number {
-  font-size: 4rem;
-  line-height: 5rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  margin-bottom: 1rem;
-  margin-top: 1rem;
-  color: black;
-  opacity: 60%;
-}
-
-/* Description */
-.stat-description {
-  font-size: 0.9rem;
-  line-height: 1.4;
-  color: #94a3b8;
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 600px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.all-blogs-link {
-  display: flex;
-  align-items: center;
-  font-weight: 700;
-  /* bold */
-  font-size: 1.25rem;
-  /* text-xl */
-  cursor: pointer;
-  text-decoration: none;
-  color: #000;
-  /* text color */
-  transition: all 0.2s ease-in-out;
-}
-
-.all-blogs-link span {
-  margin-right: 0.5rem;
-  /* space between text and arrow */
-}
-
-.all-blogs-link:hover {
-  text-decoration: underline;
-}
-
-.all-blogs-link svg {
-  width: 28px;
-  height: 28px;
-  fill: currentColor;
-  /* match text color */
-}
-
-/* Developer Docs section */
-.dev-split {
-  display: flex;
-  align-items: stretch;
-  gap: 0;
-  margin-top: 2.5rem;
-}
-
-.dev-side {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 2rem 3rem;
-}
-
-.dev-divider {
-  width: 1px;
-  background: rgba(0, 0, 0, 0.12);
-  align-self: stretch;
-  margin: 1rem 0;
-}
-
-.dev-badge {
-  display: inline-block;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: 0.25rem 0.65rem;
-  border-radius: 999px;
-  margin-bottom: 1.25rem;
-  width: fit-content;
-}
-
-.dev-badge-tpp {
-  background: rgba(0, 100, 210, 0.1);
-  color: rgb(0, 80, 180);
-}
-
-.dev-badge-lfi {
-  background: rgba(0, 129, 113, 0.1);
-  color: rgb(0, 100, 88);
-}
-
-.dev-side-heading {
-  font-size: 1.6rem;
-  font-weight: 700;
-  line-height: 1.2;
-  margin: 0 0 1rem;
-}
-
-.dev-side-body {
-  font-size: 1rem;
-  line-height: 1.65;
-  opacity: 0.7;
-  margin-bottom: 1.75rem;
-}
-
-.dev-side-links {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 2rem;
-  flex: 1;
-}
-
-.dev-side-links li {
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  padding: 0.6rem 0;
-}
-
-.dev-side-links li:last-child {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.dev-side-links a {
-  text-decoration: none;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-}
-
-.dev-side-links a::before {
-  content: '→';
-  font-size: 0.85rem;
-}
-
-.dev-side-links a:hover {
-  opacity: 1;
-}
-
-.dev-cta {
-  display: inline-block;
-  padding: 0.65rem 1.5rem;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  text-decoration: none;
-  margin-top: auto;
-  width: fit-content;
-  transition: opacity 0.2s;
-}
-
-.dev-cta:hover {
-  opacity: 0.85;
-}
-
-.dev-cta-tpp {
-  background: rgb(0, 100, 210);
-  color: white;
-}
-
-.dev-cta-lfi {
-  background: rgb(0, 129, 113);
-  color: white;
-}
-
-/* ── Homepage KPI cards ──────────────────────────────────────────────────── */
-.hp-kpi-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  margin-bottom: 2.5rem;
-}
-
-.hp-kpi-card {
-  background: #fff;
-  border: 1px solid #E8EFF6;
-  border-radius: 12px;
-  padding: 1.1rem 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  border-left: 4px solid var(--accent, #36BFD4);
-  box-shadow: 0 2px 8px rgba(12, 20, 65, 0.05);
-  transition: box-shadow 0.15s;
-}
-
-.hp-kpi-card:hover {
-  box-shadow: 0 4px 16px rgba(12, 20, 65, 0.1);
-}
-
-.hp-kpi-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--accent, #36BFD4) 12%, transparent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent, #36BFD4);
-  flex-shrink: 0;
-}
-
-.hp-kpi-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.hp-kpi-value {
-  font-family: 'Poppins', sans-serif;
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: #0C1441;
-  line-height: 1.1;
-}
-
-.hp-kpi-label {
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: #667085;
-  margin-top: 0.15rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-@media (max-width: 1100px) {
-  .hp-kpi-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 600px) {
-  .hp-kpi-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Metrics chart rows */
-.chart-row {
-  display: flex;
-  margin-bottom: 3rem;
-  justify-content: space-between;
-  gap: 2rem;
-}
-
-.chart-col {
-  width: 45%;
-  min-width: 0;
-}
-
-/* ─── Tablet: stack graphs & chart pairs ─────────────────── */
-@media (max-width: 1024px) {
-  .chart-row {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .chart-col {
-    width: 100%;
-  }
-
-  .graph-grid {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-}
-
-/* ─── Mobile ─────────────────────────────────────────────── */
-@media (max-width: 768px) {
-  .section-hero {
-    height: auto;
-    min-height: 100vh;
-    clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 8vh), 0% 100%);
-  }
-
-  .hero-main {
-    position: static;
-    width: 100%;
-    flex-direction: column;
-    align-items: center;
-    padding: 7rem 1.5rem 3rem;
-    text-align: center;
-  }
-
-  .image-main {
-    max-width: 110px;
-  }
-
-  .divider {
-    display: none;
-  }
-
-  .hero-text {
-    max-width: 100%;
-    text-align: center;
-  }
-
-  .section-2 {
-    transform: none;
-    clip-path: none;
-    padding-top: 3rem;
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
-    padding-bottom: 3rem;
-  }
-
-  .section-3 {
-    transform: none;
-    clip-path: none;
-    padding-top: 3rem;
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
-    padding-bottom: 3rem;
-  }
-
-  .section-4 {
-    transform: none;
-    clip-path: none;
-    padding-top: 3rem;
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
-    padding-bottom: 3rem;
-  }
-
-  .section-5 {
-    transform: none;
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
-    padding-top: 2rem;
-    padding-bottom: 3rem;
-  }
-
-  .dev-split {
-    flex-direction: column;
-  }
-
-  .dev-divider {
-    width: auto;
-    height: 1px;
-    margin: 0;
-  }
-
-  .dev-side {
-    padding: 2rem 1.5rem;
-  }
-
-  .stats-section {
-    padding-left: 0;
-    padding-right: 0;
-  }
-}
-
-/* ═══════════════════════════════════════════════════
-   SECTION-2 · Story in Numbers
-═══════════════════════════════════════════════════ */
-
-.new-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.new-kpi-card {
-  background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.new-kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.10);
-  border-color: rgba(15, 23, 42, 0.14);
-}
-
-.new-kpi-label {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #64748b;
-  margin-bottom: 0.75rem;
-}
-
-.new-kpi-value {
-  font-size: 2rem;
-  font-weight: 800;
-  font-family: 'IBM Plex Mono', monospace;
-  line-height: 1;
-  margin-bottom: 0.5rem;
-}
-
-.new-kpi-teal { color: hsl(178, 70%, 22%); }
-.new-kpi-gold { color: hsl(32, 85%, 28%); }
-
-.new-kpi-delta {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.7rem;
-  font-weight: 500;
-  margin-bottom: 0.75rem;
-}
-
-.new-kpi-delta-teal { color: hsl(178, 55%, 26%); }
-.new-kpi-delta-gold { color: hsl(32, 70%, 30%); }
-
-.new-kpi-desc {
-  font-size: 0.8rem;
-  line-height: 1.45;
-  color: #64748b;
-  margin: 0;
-}
-
-.new-chart-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.new-chart-panel {
-  background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-}
-
-.new-chart-tag {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #64748b;
-  margin-bottom: 0.2rem;
-}
-
-.new-chart-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 1.25rem;
-}
-
-/* ═══════════════════════════════════════════════════
-   SECTION-3 · Our Community
-═══════════════════════════════════════════════════ */
-
-.new-comm-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  margin-bottom: 2.5rem;
-  text-align: center;
-}
-
-.new-comm-stat {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  padding: 1.5rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.new-comm-stat:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.09);
-}
-
-.new-comm-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 3rem;
-  margin-left: 1rem;
-  margin-bottom: auto;
-}
-
-.new-comm-icon--teal {
-  background: hsl(178, 55%, 90%);
-  color: hsl(178, 70%, 20%);
-}
-
-.new-comm-icon--gold {
-  background: hsl(36, 75%, 90%);
-  color: hsl(32, 85%, 26%);
-}
-
-.new-comm-value {
-  font-size: 2.25rem;
-  font-weight: 800;
-  font-family: 'IBM Plex Mono', monospace;
-  line-height: 1;
-  margin-bottom: 0.4rem;
-}
-
-.new-comm-label {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #1e293b;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.new-comm-desc {
-  font-size: 0.78rem;
-  line-height: 1.4;
-  color: #64748b;
-  margin: 0;
-}
-
-.new-join-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-top: 2.5rem;
-}
-
-.new-join-panel {
-  border-radius: 12px;
-  padding: 2rem;
-}
-
-.new-join-panel--teal {
-  border: 1px solid rgba(0, 172, 157, 0.28);
-  background: rgba(0, 172, 157, 0.05);
-}
-
-.new-join-panel--default {
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(10px);
-}
-
-.new-join-title {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 0.75rem;
-}
-
-.new-join-body {
-  font-size: 0.875rem;
-  line-height: 1.65;
-  color: #64748b;
-  margin-bottom: 1.5rem;
-}
-
-.new-join-actions {
+.ed-hero__sub {
+  font-family: var(--at-sans);
+  font-size: 1.15rem;
+  line-height: 1.55;
+  margin: 2.25rem 0 0;
+  max-width: 34rem;
+  color: var(--at-mute-2);
+}
+
+.ed-hero__sub strong { color: var(--at-navy-deep); font-weight: 600; }
+
+.ed-hero__cta-row {
+  margin-top: 2.25rem;
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
 }
 
-.new-join-btn {
+.ed-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
+  padding: 0.9rem 1.35rem;
+  font-family: var(--at-sans);
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   text-decoration: none;
-  transition: opacity 0.2s ease;
+  border-radius: 0;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-.new-join-btn:hover { opacity: 0.8; }
-
-.new-join-btn--primary {
-  background: hsl(178, 60%, 30%);
-  color: white;
+.ed-btn--ink {
+  background: var(--at-navy-deep);
+  color: var(--at-bg-cream);
+  border: 1px solid var(--at-navy-deep);
 }
+.ed-btn--ink:hover { background: var(--at-navy); border-color: var(--at-navy); }
 
-.new-join-btn--secondary {
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  color: #1e293b;
+.ed-btn--ghost {
   background: transparent;
+  color: var(--at-navy-deep);
+  border: 1px solid var(--at-grid-line-2);
+}
+.ed-btn--ghost:hover { background: var(--at-navy-deep); color: var(--at-bg-cream); border-color: var(--at-navy-deep); }
+
+/* ─── Live ticker ──────────────────────────────────────────────────────── */
+.ed-ticker {
+  background: var(--at-surface);
+  border: 1px solid var(--at-grid-line);
 }
 
-.new-contribute-list {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 1.25rem;
-}
-
-.new-contribute-list li {
-  font-size: 0.875rem;
-  color: #64748b;
-  padding: 0.35rem 0;
+.ed-ticker__header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--at-grid-line);
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-family: var(--at-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--at-navy);
 }
 
-.new-contribute-list li::before {
-  content: '';
-  width: 6px;
-  height: 6px;
+.ed-ticker__dot {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: hsl(36, 75%, 45%);
-  flex-shrink: 0;
+  background: var(--at-teal);
+  box-shadow: 0 0 0 3px rgba(0, 194, 169, 0.2);
 }
 
-.new-contribute-link {
-  font-size: 0.875rem;
+.ed-ticker__row {
+  padding: 1.15rem 1.25rem;
+  border-bottom: 1px solid var(--at-grid-line);
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1.3fr;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ed-ticker__row:last-child { border-bottom: 0; }
+
+.ed-ticker__label {
+  font-family: var(--at-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--at-mute);
+}
+
+.ed-ticker__value {
+  font-family: var(--at-serif);
+  font-size: 2rem;
   font-weight: 500;
-  color: hsl(36, 75%, 36%);
-  text-decoration: none;
+  letter-spacing: -0.02em;
+  color: var(--at-navy-deep);
+  line-height: 1.1;
+  margin-top: 0.15rem;
 }
 
-.new-contribute-link:hover { text-decoration: underline; }
+.ed-ticker__delta {
+  font-family: var(--at-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
 
-/* ═══════════════════════════════════════════════════
-   SECTION-4 · Developer Docs
-═══════════════════════════════════════════════════ */
+.ed-ticker__spark { width: 100%; }
 
-.new-doc-split {
+/* ─── Section shell ────────────────────────────────────────────────────── */
+.ed-section {
+  padding: 6rem 0;
+  background: var(--at-bg-cream);
+  border-bottom: 1px solid var(--at-grid-line);
+}
+
+.ed-section--paper {
+  background: var(--at-bg-paper);
+}
+
+.ed-section__inner {
+  max-width: var(--at-page-max);
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.ed-section__head {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 4rem;
+  margin-bottom: 3.5rem;
+}
+
+.ed-section__mark {
+  font-family: var(--at-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--at-teal);
+  display: block;
+}
+
+.ed-section__mark--gold { color: var(--at-gold); }
+.ed-section__mark--blue { color: var(--at-blue); }
+
+.ed-section__title {
+  font-family: var(--at-serif);
+  font-size: 2.75rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  margin: 0.75rem 0 0;
+  color: var(--at-navy-deep);
+  white-space: nowrap;
+}
+
+.ed-section__title-italic {
+  font-style: italic;
+  font-weight: 400;
+}
+
+.ed-section__intro {
+  font-family: var(--at-sans);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--at-mute-2);
+  margin: 0;
+  max-width: 40rem;
+  align-self: end;
+}
+
+.ed-section__intro a { color: var(--at-navy-deep); text-decoration: underline; text-underline-offset: 3px; }
+.ed-section__intro strong { color: var(--at-navy-deep); font-weight: 600; }
+
+/* ─── KPIs ─────────────────────────────────────────────────────────────── */
+.ed-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--at-navy-deep);
+  border-left: 1px solid var(--at-grid-line);
+}
+
+.ed-kpi {
+  padding: 2rem 1.75rem 1.75rem;
+  border-right: 1px solid var(--at-grid-line);
+  border-bottom: 1px solid var(--at-grid-line);
+  background: var(--at-surface);
+  position: relative;
+  min-height: 11rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.ed-kpi__accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 36px;
+}
+
+.ed-kpi__label {
+  font-family: var(--at-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--at-mute);
+  margin-bottom: 1.5rem;
+}
+
+.ed-kpi__value {
+  font-family: var(--at-serif);
+  font-size: 2.8rem;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--at-navy-deep);
+  line-height: 1;
+}
+
+.ed-kpi__desc {
+  font-family: var(--at-sans);
+  font-size: 0.82rem;
+  color: var(--at-mute);
+  margin-top: 0.75rem;
+}
+
+/* ─── Chart panels ─────────────────────────────────────────────────────── */
+.ed-chart-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 3rem;
-  margin-top: 5rem;
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
-.new-doc-col-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.09);
-  margin-bottom: 1.25rem;
-}
-
-.new-doc-col-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 0.15rem;
-}
-
-.new-doc-badge {
-  margin-left: auto;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.6rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.new-doc-badge--teal {
-  color: hsl(178, 70%, 22%);
-  border: 1px solid rgba(0, 172, 157, 0.35);
-  background: hsl(178, 60%, 95%);
-}
-
-.new-doc-badge--gold {
-  color: hsl(32, 85%, 28%);
-  border: 1px solid rgba(180, 120, 20, 0.32);
-  background: hsl(36, 75%, 94%);
-}
-
-.new-doc-cards {
+.ed-story-chart {
+  background: var(--at-surface);
+  border: 1px solid var(--at-grid-line);
+  padding: 1.75rem 1.75rem 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
 }
 
-.new-doc-card {
-  background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 10px;
-  padding: 1.1rem 1.25rem;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+.ed-story-chart__head {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
 }
 
-.new-doc-card:hover {
-  border-color: rgba(15, 23, 42, 0.16);
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+.ed-story-chart__accent {
+  width: 22px;
+  height: 3px;
+  display: inline-block;
 }
 
-.new-doc-card-header {
+.ed-story-chart__label {
+  font-family: var(--at-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--at-mute);
+}
+
+.ed-story-chart__value {
+  font-family: var(--at-serif);
+  font-size: 2.4rem;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  color: var(--at-navy-deep);
+  line-height: 1;
+}
+
+.ed-story-chart__delta {
+  font-family: var(--at-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin: 0.55rem 0 1.25rem;
+}
+
+.ed-story-chart__axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--at-grid-line);
+  font-family: var(--at-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--at-mute);
+}
+
+/* ─── Dev docs split ───────────────────────────────────────────────────── */
+.ed-docs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--at-surface);
+  border: 1px solid var(--at-grid-line);
+}
+
+.ed-docs__col {
+  padding: 2.5rem 2.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.ed-docs__col:first-child {
+  border-right: 1px solid var(--at-grid-line);
+}
+
+.ed-docs__col-head {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--at-grid-line);
+  margin-bottom: 1.5rem;
 }
 
-.new-doc-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.ed-docs__col-kicker {
+  font-family: var(--at-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.ed-docs__col--teal .ed-docs__col-kicker { color: var(--at-teal-deep); }
+.ed-docs__col--gold .ed-docs__col-kicker { color: var(--at-gold); }
+
+.ed-docs__col-title {
+  font-family: var(--at-serif);
+  font-size: 1.45rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--at-navy-deep);
+}
+
+.ed-docs__col-sub {
+  font-family: var(--at-sans);
+  font-size: 0.82rem;
+  color: var(--at-mute);
+  margin: 0.2rem 0 0;
+}
+
+.ed-docs__col-badge {
+  font-family: var(--at-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
   flex-shrink: 0;
 }
 
-.new-doc-icon--teal {
-  background: hsl(178, 55%, 90%);
-  color: hsl(178, 70%, 20%);
+.ed-docs__col--teal .ed-docs__col-badge {
+  background: rgba(0, 194, 169, 0.1);
+  color: var(--at-teal-deep);
 }
 
-.new-doc-icon--gold {
-  background: hsl(36, 75%, 90%);
-  color: hsl(32, 85%, 26%);
+.ed-docs__col--gold .ed-docs__col-badge {
+  background: rgba(179, 120, 25, 0.1);
+  color: var(--at-gold);
 }
 
-.new-doc-card-title {
-  font-size: 0.875rem;
+.ed-docs__row {
+  display: grid;
+  grid-template-columns: 2rem 1fr auto;
+  gap: 1rem;
+  align-items: baseline;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--at-grid-line);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.12s;
+}
+
+.ed-docs__row:hover {
+  background: var(--at-bg-paper);
+  margin: 0 -0.75rem;
+  padding: 1.1rem 0.75rem;
+}
+
+.ed-docs__row:last-of-type { border-bottom: none; }
+
+.ed-docs__num {
+  font-family: var(--at-mono);
+  font-size: 0.72rem;
   font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 0.25rem;
+  letter-spacing: 0.06em;
 }
 
-.new-doc-card-desc {
-  font-size: 0.75rem;
-  line-height: 1.4;
-  color: #64748b;
-  margin: 0;
+.ed-docs__col--teal .ed-docs__num { color: var(--at-teal-deep); }
+.ed-docs__col--gold .ed-docs__num { color: var(--at-gold); }
+
+.ed-docs__row-title {
+  font-family: var(--at-serif);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--at-navy-deep);
+  letter-spacing: -0.01em;
+  margin-bottom: 0.2rem;
 }
 
-.new-doc-links {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+.ed-docs__row-desc {
+  font-family: var(--at-sans);
+  font-size: 0.82rem;
+  color: var(--at-mute);
+  line-height: 1.45;
 }
 
-.new-doc-link {
+.ed-docs__arrow {
+  font-family: var(--at-mono);
+  font-size: 1.1rem;
+  transition: transform 0.2s;
+}
+
+.ed-docs__col--teal .ed-docs__arrow { color: var(--at-teal-deep); }
+.ed-docs__col--gold .ed-docs__arrow { color: var(--at-gold); }
+.ed-docs__row:hover .ed-docs__arrow { transform: translateX(3px); }
+
+.ed-docs__cta {
+  margin-top: 1.75rem;
+  align-self: flex-start;
+  font-family: var(--at-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid currentColor;
+}
+
+.ed-docs__col--teal .ed-docs__cta { color: var(--at-teal-deep); }
+.ed-docs__col--gold .ed-docs__cta { color: var(--at-gold); }
+
+/* ─── Articles ─────────────────────────────────────────────────────────── */
+.ed-articles {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.ed-articles > :nth-child(1) { grid-row: span 2; }
+
+.ed-articles-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* ─── More link ────────────────────────────────────────────────────────── */
+.ed-more-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.78rem;
-  font-weight: 500;
-  padding: 0.3rem 0.5rem;
-  border-radius: 4px;
+  gap: 0.5rem;
+  font-family: var(--at-sans);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--at-navy-deep);
   text-decoration: none;
-  transition: background 0.15s ease, color 0.15s ease;
+  padding: 0.7rem 0;
+  margin-top: 1.5rem;
+  border-bottom: 1px solid var(--at-navy-deep);
 }
 
-.new-doc-link:hover { background: rgba(15, 23, 42, 0.05); }
-.new-doc-link--teal { color: hsl(178, 70%, 22%); }
-.new-doc-link--teal:hover { color: hsl(178, 75%, 16%); }
-.new-doc-link--gold { color: hsl(32, 85%, 28%); }
-.new-doc-link--gold:hover { color: hsl(32, 90%, 22%); }
+.ed-more-link:hover { color: var(--at-teal-deep); border-bottom-color: var(--at-teal-deep); }
+.ed-more-link span { font-weight: 600; }
 
-.new-doc-cta {
-  display: inline-block;
-  margin-top: 1.25rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-decoration: none;
-  transition: opacity 0.2s ease;
-}
-
-.new-doc-cta:hover { text-decoration: underline; }
-.new-doc-cta--teal { color: hsl(178, 70%, 22%); }
-.new-doc-cta--gold { color: hsl(32, 85%, 28%); }
-
+/* ─── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
-  .new-kpi-grid { grid-template-columns: repeat(2, 1fr); }
-  .new-comm-grid { grid-template-columns: repeat(2, 1fr); }
-  .new-chart-row { grid-template-columns: 1fr; }
-  .new-doc-split { grid-template-columns: 1fr; gap: 2rem; }
+  .ed-hero__grid { grid-template-columns: 1fr; gap: 3rem; }
+  .ed-section__head { grid-template-columns: 1fr; gap: 1.5rem; }
+  .ed-section__intro { align-self: start; }
+  .ed-kpis { grid-template-columns: repeat(2, 1fr); }
+  .ed-chart-row { grid-template-columns: 1fr; }
+  .ed-docs { grid-template-columns: 1fr; }
+  .ed-docs__col:first-child { border-right: 0; border-bottom: 1px solid var(--at-grid-line); }
+  .ed-articles { grid-template-columns: 1fr; }
+  .ed-articles > :nth-child(1) { grid-row: auto; }
+  .ed-articles-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 640px) {
-  .new-kpi-grid { grid-template-columns: 1fr; }
-  .new-comm-grid { grid-template-columns: 1fr; }
-  .new-join-grid { grid-template-columns: 1fr; }
+  .ed-hero__inner { padding: 3rem 1.25rem 2rem; }
+  .ed-section { padding: 4rem 0; }
+  .ed-section__inner { padding: 0 1.25rem; }
+  .ed-section__title { font-size: 2rem; }
+  .ed-kpis { grid-template-columns: 1fr; }
+  .ed-kpi__value { font-size: 2.2rem; }
+  .ed-articles-grid { grid-template-columns: 1fr; }
+  .ed-ticker__row { grid-template-columns: 1.2fr 1fr; }
+  .ed-ticker__spark { grid-column: span 2; }
 }
 </style>

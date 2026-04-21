@@ -1932,7 +1932,7 @@ paths:
       - $ref: "#/components/parameters/x-customer-user-agent"
     get:
       summary: Returns public key for SSO integrations
-      description: '''Returns an application/x-pem-file format public key. This is the public portion of the key used to sign requests to any IDP configured on the directory for SSO'''
+      description: Returns an application/x-pem-file format public key. This is the public portion of the key used to sign requests to any IDP configured on the directory for SSO
       operationId: retrieveSsoPublicKey
       tags:
         - Reference Data
@@ -1972,7 +1972,7 @@ paths:
       - $ref: "#/components/parameters/x-customer-user-agent"
     get:
       summary: Lists all IDPs configured as sso providers in the platform
-      description: '''Retrieves IDPs configured for SSO on the platform along with some basic identifiable information for further querying'''
+      description: Retrieves IDPs configured for SSO on the platform along with some basic identifiable information for further querying
       operationId: listSsoConfigurations
       parameters:
         - $ref: "#/components/parameters/PageNumber"
@@ -2018,7 +2018,7 @@ paths:
       - $ref: "#/components/parameters/SsoConfigurationIdPathParameter"
     get:
       summary: Retrieves a specific member of the set of all IDPs configured as sso providers in the platform
-      description: '''Retrieves a specific member of the set of all IDPs configured for SSO on the platform along with some basic identifiable information for further querying'''
+      description: Retrieves a specific member of the set of all IDPs configured for SSO on the platform along with some basic identifiable information for further querying
       operationId: getSsoConfiguration
       parameters:
         - $ref: "#/components/parameters/PageNumber"
@@ -2063,9 +2063,9 @@ paths:
       - $ref: "#/components/parameters/x-customer-user-agent"
     get:
       summary: Lists all groups configured in the platform
-      description: '''Retrieves all user groups configured for the current deployment. Filtering by management type is 
+      description: Retrieves all user groups configured for the current deployment. Filtering by management type is
         supported where only users with Ecosystem-level permissions able to retrieve a set that may include raidiam-managed
-        groups'''
+        groups
       operationId: listUserGroups
       parameters:
         - $ref: "#/components/parameters/PageNumber"
@@ -2109,7 +2109,7 @@ paths:
         type: "aws_proxy"
     post:
       summary: Creates a new directory-managed user group
-      description: '''Creates a new directory-managed user group'''
+      description: Creates a new directory-managed user group
       operationId: createUserGroup
       tags:
         - Reference Data
@@ -2157,9 +2157,9 @@ paths:
           $ref: "#/components/schemas/UserGroupID"
     get:
       summary: Retrieves a given user group configured in the platform
-      description: '''Retrieves all user groups configured for the current deployment. Filtering by management type is 
+      description: Retrieves all user groups configured for the current deployment. Filtering by management type is
         supported where only users with Ecosystem-level permissions able to retrieve a set that may include raidiam-managed
-        groups'''
+        groups
       operationId: getUserGroup
       tags:
         - Reference Data
@@ -2193,7 +2193,7 @@ paths:
         type: "aws_proxy"
     put:
       summary: Updates a directory-managed user group configured in the platform
-      description: '''Updates an existing directory-managed user group'''
+      description: Updates an existing directory-managed user group
       operationId: updateUserGroup
       tags:
         - Reference Data
@@ -2229,7 +2229,7 @@ paths:
         type: "aws_proxy"
     delete:
       summary: Deletes a directory-managed user group configured in the platform
-      description: '''Deletes an existing directory-managed user group'''
+      description: Deletes an existing directory-managed user group
       operationId: deleteUserGroup
       tags:
         - Reference Data
@@ -2275,8 +2275,8 @@ paths:
           $ref: "#/components/schemas/UserGroupID"
     get:
       summary: Lists all IDPs bound to a specific group
-      description: '''Retrieves a paginated set of all IDP Configurations that are bound to a specific user group. Note
-      that a given IDP may be bound to multiple groups'''
+      description: Retrieves a paginated set of all IDP Configurations that are bound to a specific user group. Note
+        that a given IDP may be bound to multiple groups
       operationId: listUserGroupIDPBindings
       parameters:
         - $ref: "#/components/parameters/PageNumber"
@@ -2314,8 +2314,8 @@ paths:
         type: "aws_proxy"
     post:
       summary: Creates a new binding between an IDP and a Group
-      description: '''Creates a new mapping between a given IDP Configuration and a user group. No group may have the 
-      same IDP Configuration mapped to it multiple times.'''
+      description: Creates a new mapping between a given IDP Configuration and a user group. No group may have the
+        same IDP Configuration mapped to it multiple times.
       operationId: createUserGroupIDPBinding
       tags:
         - Reference Data
@@ -2368,7 +2368,7 @@ paths:
           $ref: "#/components/schemas/UserGroupIDPBindingID"
     delete:
       summary: Deletes a binding between an IDP and a user group
-      description: '''Deletes a binding between a given IDP Configuration Entity and User Group'''
+      description: Deletes a binding between a given IDP Configuration Entity and User Group
       operationId: deleteUserGroupIDPBinding
       tags:
         - Reference Data
@@ -2414,8 +2414,8 @@ paths:
           $ref: "#/components/schemas/UserGroupID"
     get:
       summary: Lists all organisations mapped to a specific group
-      description: '''Retrieves a paginated set of all Organisations that have a mapping to the subject User Group.
-      Any users in this group will be able to assume the granted permissions in the specified organisation'''
+      description: Retrieves a paginated set of all Organisations that have a mapping to the subject User Group.
+        Any users in this group will be able to assume the granted permissions in the specified organisation
       operationId: listUserGroupOrganisationBindings
       parameters:
         - $ref: "#/components/parameters/PageNumber"
@@ -2453,8 +2453,8 @@ paths:
         type: "aws_proxy"
     post:
       summary: Creates a new binding between an Organisation and a Group
-      description: '''Creates a new mapping between a given Organisation and a user group. No group may have the 
-      same Organisation mapped to it multiple times.'''
+      description: Creates a new mapping between a given Organisation and a user group. No group may have the
+        same Organisation mapped to it multiple times.
       operationId: createUserGroupOrganisationBinding
       tags:
         - Reference Data
@@ -2507,7 +2507,7 @@ paths:
           $ref: "#/components/schemas/UserGroupOrganisationBindingID"
     delete:
       summary: Deletes a binding between an Organisation and a user group
-      description: '''Deletes a binding between a given Organisation and User Group'''
+      description: Deletes a binding between a given Organisation and User Group
       operationId: deleteUserGroupOrganisationBinding
       tags:
         - Reference Data
@@ -2553,7 +2553,7 @@ paths:
           $ref: "#/components/schemas/UserGroupID"
     get:
       summary: Lists all permissions associated with a specific group
-      description: '''Retrieves a paginated set of all permissions that members of a given user group will be assigned'''
+      description: Retrieves a paginated set of all permissions that members of a given user group will be assigned
       operationId: listUserGroupPermissions
       parameters:
         - $ref: "#/components/parameters/PageNumber"
@@ -2591,7 +2591,7 @@ paths:
         type: "aws_proxy"
     post:
       summary: Assigns a new permission to the group
-      description: '''Assigns a new permission to the group. Members of the group will be granted this permission.'''
+      description: Assigns a new permission to the group. Members of the group will be granted this permission.
       operationId: createUserGroupPermission
       tags:
         - Reference Data
@@ -2644,7 +2644,7 @@ paths:
           $ref: "#/components/schemas/UserGroupPermissionID"
     delete:
       summary: Removes a permission assignment from a group
-      description: '''Deletes the assignment of a given permission to a user group'''
+      description: Deletes the assignment of a given permission to a user group
       operationId: deleteUserGroupPermission
       tags:
         - Reference Data
@@ -2690,7 +2690,7 @@ paths:
           $ref: "#/components/schemas/UserGroupID"
     get:
       summary: Lists all user identifiers of current group members
-      description: '''Returns a paginated set of all user identifiers representing users currently assigned to that group'''
+      description: Returns a paginated set of all user identifiers representing users currently assigned to that group
       operationId: listUserGroupMembership
       parameters:
         - $ref: "#/components/parameters/PageNumber"
@@ -2745,7 +2745,7 @@ paths:
           $ref: "#/components/schemas/UserGroupMembershipID"
     delete:
       summary: Deletes a user from a user group
-      description: '''Removes a user from the target user group'''
+      description: Removes a user from the target user group
       operationId: deleteUserGroupMember
       tags:
         - Reference Data
@@ -8633,8 +8633,8 @@ paths:
       - $ref: "#/components/parameters/x-customer-user-agent"
     get:
       summary: Retrieves all instances of sso configuration for a given authorisation server.
-      description: '''Retrieves all instances of sso configuration for a given authorisation server. While a server is 
-      unlikely to have multiple in production, it can be a useful mechanism for deprecating an old service'''
+      description: Retrieves all instances of sso configuration for a given authorisation server. While a server is
+        unlikely to have multiple in production, it can be a useful mechanism for deprecating an old service
       operationId: getAllAuthorisationServerSsoConfiguration
       tags:
         - Organisations
@@ -8675,9 +8675,9 @@ paths:
 
     post:
       summary: Creates an instance of sso configuration for a given authorisation server.
-      description: '''Creates an instance of sso configuration for a given authorisation server. When combined with an 
-        approved `SSO Configuration Version` the subject authorisation server is able to act as an SSO provider to the 
-        platform'''
+      description: Creates an instance of sso configuration for a given authorisation server. When combined with an
+        approved `SSO Configuration Version` the subject authorisation server is able to act as an SSO provider to the
+        platform
       operationId: createAuthorisationServerSsoConfiguration
       tags:
         - Organisations
@@ -8727,7 +8727,7 @@ paths:
       - $ref: "#/components/parameters/x-customer-user-agent"
     get:
       summary: Retrieves a specific instance of sso configuration for a given authorisation server.
-      description: '''Retrieves a specific instance of sso configuration for a given authorisation server'''
+      description: Retrieves a specific instance of sso configuration for a given authorisation server
       operationId: getAuthorisationServerSsoConfiguration
       tags:
         - Organisations
@@ -8766,7 +8766,7 @@ paths:
 
     put:
       summary: Updates a specific instance of sso configuration for a given authorisation server.
-      description: '''Updates a specific instance of sso configuration for a given authorisation server.'''
+      description: Updates a specific instance of sso configuration for a given authorisation server.
       operationId: updateAuthorisationServerSsoConfiguration
       tags:
         - Organisations
@@ -8811,10 +8811,10 @@ paths:
 
     delete:
       summary: Deletes a specific instance of sso configuration for a given authorisation server.
-      description: '''Deletes a specific instance of sso configuration for a given authorisation server. Only possible 
-      for authorisation servers who have never had any approved configuration versions. For servers that have 
-      historically had approved configuration versions deletion is no longer possible and instead the resource should 
-      be deactivated '''
+      description: Deletes a specific instance of sso configuration for a given authorisation server. Only possible
+        for authorisation servers who have never had any approved configuration versions. For servers that have
+        historically had approved configuration versions deletion is no longer possible and instead the resource should
+        be deactivated
       operationId: deleteAuthorisationServerSsoConfiguration
       tags:
         - Organisations
@@ -8866,8 +8866,8 @@ paths:
       - $ref: "#/components/parameters/x-customer-user-agent"
     get:
       summary: Retrieves all historical configuration of a given sso configuration for a given authorisation server.
-      description: '''Retrieves all historical configuration of a given sso configuration for a given authorisation server. 
-      The response will by default by ordered by version in descending order'''
+      description: Retrieves all historical configuration of a given sso configuration for a given authorisation server.
+        The response will by default by ordered by version in descending order
       operationId: getAllAuthorisationServerSsoConfigurationVersions
       tags:
         - Organisations
@@ -8909,9 +8909,9 @@ paths:
 
     post:
       summary: Creates a new version of sso configuration for a given authorisation server.
-      description: '''Creates a new version of sso configuration for a given sso configured authorisation server. The 
-      new version will need approval before being considered active. A newly created unapproved version is suspended
-      until approval.'''
+      description: Creates a new version of sso configuration for a given sso configured authorisation server. The
+        new version will need approval before being considered active. A newly created unapproved version is suspended
+        until approval.
       operationId: createAuthorisationServerSsoConfigurationVersion
       tags:
         - Organisations
@@ -8962,8 +8962,8 @@ paths:
       - $ref: "#/components/parameters/x-customer-user-agent"
     get:
       summary: Retrieves a specific version of sso configuration for a given sso configured authorisation server.
-      description: '''Retrieves a specific version of sso configuration for a given sso configured authorisation 
-      server'''
+      description: Retrieves a specific version of sso configuration for a given sso configured authorisation
+        server
       operationId: getAuthorisationServerSsoConfigurationVersion
       tags:
         - Organisations
@@ -9002,10 +9002,10 @@ paths:
 
     put:
       summary: Updates a specific instance of sso configuration for a given authorisation server.
-      description: '''Updates a specific version of configuration for a given sso enabled authorisation server. Once 
-      approved, changes to any field beyond status are no longer possible. Approval of a configuration version will set
-       the status of a prior version to suspended automatically. Setting any approved version to active status suspends
-        the currently active version. Only approved versions may be active.'''
+      description: Updates a specific version of configuration for a given sso enabled authorisation server. Once
+        approved, changes to any field beyond status are no longer possible. Approval of a configuration version will set
+        the status of a prior version to suspended automatically. Setting any approved version to active status suspends
+        the currently active version. Only approved versions may be active.
       operationId: updateAuthorisationServerSsoConfigurationVersion
       tags:
         - Organisations
@@ -9050,8 +9050,8 @@ paths:
 
     delete:
       summary: Deletes a specific version of configuration for a given sso-enabled authorisation server.
-      description: '''Deletes a specific version of sso configuration for a given sso-enabled authorisation server. 
-      Only possible for versions that are unapproved. For approved versions, deactivate instead.'''
+      description: Deletes a specific version of sso configuration for a given sso-enabled authorisation server.
+        Only possible for versions that are unapproved. For approved versions, deactivate instead.
       operationId: deleteAuthorisationServerSsoConfigurationVersion
       tags:
         - Organisations
@@ -16040,9 +16040,9 @@ components:
       type: boolean
       default: false
       nullable: false
-      description: '''Denotes if the entity should be omitted from the subject ecosystem. For example, an 
-      authorisation server with this flag set to true would not appear in the participants endpoint or 
-      OpenID Federation offerings'''
+      description: Denotes if the entity should be omitted from the subject ecosystem. For example, an
+        authorisation server with this flag set to true would not appear in the participants endpoint or
+        OpenID Federation offerings
 
     FlagIDArray:
       type: array
@@ -17035,7 +17035,7 @@ components:
       type: boolean
       default: false
       description: 'When true, prevents the creation of users directly on the organisation and mandates all users 
-      are managed by SSO Configured IDPs'
+        are managed by SSO Configured IDPs'
 
     OrganisationConformanceTest:
       type: object
@@ -21142,57 +21142,22 @@ x-amazon-apigateway-binary-media-types: [ "application/x-pem-file" ]
 x-amazon-apigateway-gateway-responses:
   BAD_REQUEST_BODY:
     responseTemplates:
-      application/json: "{
-        \"errors\": [
-          \"$context.error.message: $context.error.validationErrorString\"
-        ],
-        \"requestId\": \"$context.requestId\"
-      }"
+      application/json: "{ \"errors\": [ \"$context.error.message: $context.error.validationErrorString\" ], \"requestId\": \"$context.requestId\" }"
   BAD_REQUEST_PARAMETERS:
     responseTemplates:
-      application/json: "{
-        \"errors\": [
-          \"$context.error.message: $context.error.validationErrorString\"
-        ],
-        \"requestId\": \"$context.requestId\"
-      }"
+      application/json: "{ \"errors\": [ \"$context.error.message: $context.error.validationErrorString\" ], \"requestId\": \"$context.requestId\" }"
   DEFAULT_4XX:
     responseTemplates:
-      application/json: "{
-        \"errors\": [
-          \"There is an issue with your request.\"
-        ],
-        \"requestId\": \"$context.requestId\"
-      }"
+      application/json: "{ \"errors\": [ \"There is an issue with your request.\" ], \"requestId\": \"$context.requestId\" }"
   UNAUTHORIZED:
     responseTemplates:
-      application/json: "{
-        \"errors\": [
-          \"Authorizer failed to authorize request.\"
-        ],
-        \"requestId\": \"$context.requestId\"
-      }"
+      application/json: "{ \"errors\": [ \"Authorizer failed to authorize request.\" ], \"requestId\": \"$context.requestId\" }"
   DEFAULT_5XX:
     responseTemplates:
-      application/json: "{
-        \"errors\": [
-          \"A server error occurred.\"
-        ],
-        \"requestId\": \"$context.requestId\"
-      }"
+      application/json: "{ \"errors\": [ \"A server error occurred.\" ], \"requestId\": \"$context.requestId\" }"
   THROTTLED:
     responseTemplates:
-      application/json: "{
-        \"errors\": [
-          \"There are no available services to process your request and maximum number of configured processing instances has been reached. Your request is now throttled. Please try again.\"
-        ],
-        \"requestId\": \"$context.requestId\"
-      }"
+      application/json: "{ \"errors\": [ \"There are no available services to process your request and maximum number of configured processing instances has been reached. Your request is now throttled. Please try again.\" ], \"requestId\": \"$context.requestId\" }"
   INTEGRATION_TIMEOUT:
     responseTemplates:
-      application/json: "{
-        \"errors\": [
-          \"There are no available services to process your request. This increase in demand is resulting more resources being initialised to increase capacity. Please try again in 30 seconds.\"
-        ],
-        \"requestId\": \"$context.requestId\"
-      }"
+      application/json: "{ \"errors\": [ \"There are no available services to process your request. This increase in demand is resulting more resources being initialised to increase capacity. Please try again in 30 seconds.\" ], \"requestId\": \"$context.requestId\" }"

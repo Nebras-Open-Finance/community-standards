@@ -5,9 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "fetch:specs": "node scripts/fetch-openapi-specs.mjs",
-    "dev:docs": "node scripts/fetch-openapi-specs.mjs && vitepress dev docs",
-    "docs:build": "node scripts/fetch-openapi-specs.mjs --force && vitepress build docs",
+    "fetch:specs": "node scripts/fetch-openapi-specs.mjs && node scripts/generate-openapi-xlsx.mjs",
+    "dev:docs": "node scripts/fetch-openapi-specs.mjs && node scripts/generate-openapi-xlsx.mjs && vitepress dev docs",
+    "docs:build": "node scripts/fetch-openapi-specs.mjs --force && node scripts/generate-openapi-xlsx.mjs && vitepress build docs",
     "docs:serve": "vitepress serve docs",
     "pretest": "npm run fetch:specs",
     "test": "node --test --test-concurrency=1 supporting/tests/**/*.test.mjs"
@@ -34,6 +34,7 @@
     "chart.js": "^4.5.1",
     "mermaid": "^11.12.3",
     "vue3-tel-input": "^1.0.4",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "yaml": "^2.8.2"
   }
 }

@@ -213,13 +213,6 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
           },
         ],
       },
-      {
-        text: 'Deployments',
-        collapsed: true,
-        items: [
-          { text: '2026', link: `${BASE}/${VERSION}/api-hub/deployments/2026` }
-        ]
-      },
     ],
   },
 

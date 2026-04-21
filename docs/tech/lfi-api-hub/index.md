@@ -8,7 +8,7 @@ aside: false
 
 The implementation guide for **Licensed Financial Institutions (LFIs)** connecting to UAE Open Finance. It covers the APIs your bank exposes, the API Hub services your bank consumes, the Trust Framework registrations required to participate, and the onboarding and certification path from sandbox through to live production traffic.
 
-If you are a TPP, see the [TPP Standards](../tpp-standards/) instead. For the wider architecture, start with the [Open Finance Architecture overview](../overview).
+If you are a TPP, see the [TPP Standards](../tpp-standards/) instead. For the wider architecture, start with the [Open Finance Architecture overview](../).
 
 ## Where the LFI sits
 

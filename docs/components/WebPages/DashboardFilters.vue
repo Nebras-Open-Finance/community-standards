@@ -1,7 +1,6 @@
 <template>
   <div class="db-filters">
 
-    <!-- Filter controls -->
     <div class="db-filters__controls">
 
       <div class="db-filters__group" v-for="f in filterDefs" :key="f.key">
@@ -33,7 +32,6 @@
       </button>
     </div>
 
-    <!-- Active filter chips -->
     <div v-if="hasActiveFilters" class="db-filters__chips">
       <span
         v-for="[key, val] in activeEntries"
@@ -102,12 +100,12 @@ const hasActiveFilters = computed(() => activeEntries.value.length > 0)
 }
 
 .db-filters__label {
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.62rem;
-  font-weight: 600;
+  font-family: var(--at-mono);
+  font-size: 0.6rem;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #667085;
+  letter-spacing: 0.16em;
+  color: var(--at-mute);
 }
 
 .db-filters__select-wrap {
@@ -118,51 +116,54 @@ const hasActiveFilters = computed(() => activeEntries.value.length > 0)
 
 .db-filters__select {
   appearance: none;
-  padding: 0.3rem 1.75rem 0.3rem 0.6rem;
-  font-family: 'Poppins', sans-serif;
+  padding: 0.35rem 1.75rem 0.35rem 0.65rem;
+  font-family: var(--at-sans);
   font-size: 0.78rem;
-  border: 1px solid #E8EFF6;
-  border-radius: 6px;
-  background: #fff;
-  color: #0C1441;
+  border: 1px solid var(--at-grid-line-2);
+  border-radius: 0;
+  background: var(--at-surface);
+  color: var(--at-navy-deep);
   cursor: pointer;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
   min-width: 130px;
 }
 
 .db-filters__select:focus {
-  border-color: #36BFD4;
-  box-shadow: 0 0 0 3px rgba(54, 191, 212, 0.1);
+  border-color: var(--at-teal);
+  box-shadow: 0 0 0 3px rgba(0, 194, 169, 0.15);
 }
 
 .db-filters__chevron {
   position: absolute;
-  right: 0.5rem;
+  right: 0.55rem;
   pointer-events: none;
-  color: #94a3b8;
+  color: var(--at-mute);
 }
 
 .db-filters__reset {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.7rem;
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.75rem;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  font-family: var(--at-mono);
+  font-size: 0.65rem;
   font-weight: 500;
-  border: 1px solid #E8EFF6;
-  border-radius: 6px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid var(--at-grid-line-2);
+  border-radius: 0;
   background: transparent;
-  color: #94a3b8;
+  color: var(--at-mute);
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
 }
 
 .db-filters__reset:not(:disabled):hover {
-  border-color: #EF4444;
-  color: #EF4444;
+  border-color: var(--at-navy-deep);
+  color: var(--at-navy-deep);
+  background: var(--at-bg-paper);
 }
 
 .db-filters__reset:disabled {
@@ -181,19 +182,18 @@ const hasActiveFilters = computed(() => activeEntries.value.length > 0)
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.18rem 0.55rem;
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.7rem;
+  padding: 0.2rem 0.6rem;
+  font-family: var(--at-mono);
+  font-size: 0.65rem;
   font-weight: 500;
-  border-radius: 999px;
-  background: rgba(54, 191, 212, 0.1);
-  color: #36BFD4;
+  letter-spacing: 0.08em;
+  border: 1px solid var(--at-teal);
+  background: rgba(0, 194, 169, 0.1);
+  color: var(--at-teal-deep);
   cursor: pointer;
   user-select: none;
   transition: opacity 0.15s;
 }
 
-.db-filters__chip:hover {
-  opacity: 0.7;
-}
+.db-filters__chip:hover { opacity: 0.75; }
 </style>

@@ -2,20 +2,31 @@
 <div class="api-page">
 
   <div class="redoc-toolbar">
-    <a :href="githubHref" class="redoc-toolbar-link" target="_blank" rel="noopener">
+    <a v-if="showDownloads" :href="githubHref" class="redoc-toolbar-link" target="_blank" rel="noopener">
       <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" alt="GitHub"
         class="redoc-toolbar-icon" />
       View on GitHub
     </a>
-    <a :href="spec" :download="downloadName" class="redoc-toolbar-btn">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-        <polyline points="7 10 12 15 17 10" />
-        <line x1="12" y1="15" x2="12" y2="3" />
-      </svg>
-      Download .yaml
-    </a>
+    <div v-if="showDownloads" class="redoc-toolbar-downloads">
+      <a :href="spec" download class="redoc-toolbar-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        Download .yaml
+      </a>
+      <a v-if="xlsxButtonEnabled" :href="xlsxHref" download class="redoc-toolbar-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        Download .xlsx
+      </a>
+    </div>
   </div>
 
   <div :id="containerId" class="redoc-wrapper-container" :style="{ height: height, width: '100%' }"></div>
@@ -27,6 +38,8 @@ import { computed, onMounted } from 'vue'
 import { CURRENT_VERSION } from '../.vitepress/version'
 
 const SPECS_REPO = 'https://github.com/Nebras-Open-Finance/api-specs/tree/main/dist'
+
+const xlsxButtonEnabled = false
 
 const props = defineProps({
   spec: {
@@ -211,10 +224,11 @@ onMounted(() => {
 
 
 
-const downloadName = computed(() => {
-  const parts = props.spec.split('/').filter(Boolean)
-  return parts[parts.length - 1] || 'openapi.yaml'
-})
+// Downloads are only offered for versioned specs served out of /openapi/v*/...
+// Unversioned assets (e.g. /openapi/trust-framework.yaml) aren't exported as
+// .xlsx by the generator and shouldn't surface a .yaml download either.
+const showDownloads = computed(() => /^\/openapi\/v/.test(props.spec || ''))
+const xlsxHref = computed(() => props.spec.replace(/\.ya?ml$/i, '.xlsx'))
 
 const githubHref = computed(() => {
   // Expected spec path: /openapi/{version}/{category}/{file}.yaml
@@ -264,6 +278,13 @@ const githubHref = computed(() => {
   height: 18px;
 }
 
+.redoc-toolbar-downloads {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
 .redoc-toolbar a.redoc-toolbar-btn {
   display: inline-flex;
   align-items: center;
@@ -276,7 +297,6 @@ const githubHref = computed(() => {
   background: var(--vp-c-brand-1);
   border: none;
   border-radius: 6px;
-  margin-left: auto;
   cursor: pointer;
   transition: background 0.2s;
 }

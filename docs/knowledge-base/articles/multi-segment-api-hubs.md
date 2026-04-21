@@ -45,8 +45,6 @@ The recommended pattern for a multi-segment LFI is:
 - **One shared `C3-hh-cm-client` application** — both Hubs use the same client registration. This means the LFI's client-side identity and signing material is created once and reused.
 - **One shared Ozone Connect deployment** — the LFI exposes a single set of Ozone Connect APIs, and routes incoming Hub requests to the correct downstream core using the `o3-provider-id` header.
 
-<!-- TODO: architecture diagram — two API Hubs (Retail, SME) pointing at a single Ozone Connect, which routes to retail/SME cores based on o3-provider-id. Show certificate placement: shared C3/S4/Sig4/Enc1, per-Hub S1. -->
-
 
 ## Certificate Footprint
 
@@ -84,14 +82,18 @@ Net effect: the LFI's own certificate maintenance burden does not grow as additi
 
 ## Single Ozone Connect with `o3-provider-id` Routing
 
+<APIFlowViewer title="Multi-Segment LFI — Request Routing via o3-provider-id">
+  <APIFlowsMultiSegmentApiHubs/>
+</APIFlowViewer>
+
 Because the LFI uses a single shared Ozone Connect deployment, incoming requests from the multiple Hubs arrive at the same set of endpoints. The Ozone Connect layer must identify which Hub the request came from and route internally to the appropriate downstream core (retail core vs SME core, for example).
 
-The API Hub tells the LFI which Hub the request originated from via the **`o3-provider-id`** request header. Each Hub is configured with a distinct `o3-provider-id` — for example `retail` and `sme` — and includes that value on every call into Ozone Connect.
+The API Hub tells the LFI which Hub the request originated from via the **`o3-provider-id`** request header. Each Hub is configured with a distinct `o3-provider-id` — an LFI-chosen code agreed with Nebras during onboarding, typically formed by concatenating the LFI's short code and the segment (e.g. `{lfi}retail` and `{lfi}sme` as a single lowercase token).
 
 | Request | `o3-provider-id` value (example) | LFI action |
 |---------|---------------------------------|------------|
-| Retail Hub → Ozone Connect | `retail` | Route to retail core banking system |
-| SME Hub → Ozone Connect | `sme` | Route to SME / business core banking system |
+| Retail Hub → Ozone Connect | `{lfi}retail` | Route to retail core banking system |
+| SME Hub → Ozone Connect | `{lfi}sme` | Route to SME / business core banking system |
 
 ### Implementation guidance
 

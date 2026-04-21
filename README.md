@@ -63,7 +63,7 @@ A live dashboard view of ecosystem-wide metrics (API Hub availability, request v
 | An **LFI implementer** integrating the API Hub | [LFI Integration Guide → Getting started](docs/tech/lfi-api-hub/getting-started/) |
 | A **vendor** or **system integrator** writing client or server code against the APIs | [API Specifications](docs/tech/api-specs/v2.1/) |
 | An **ops** or **risk** stakeholder tracking ecosystem health | [Metrics & Monitoring](docs/metrics/) |
-| A **reviewer** looking for the architectural ground rules | [Architecture overview](docs/tech/overview.md) and [CLAUDE.md](CLAUDE.md) |
+| A **reviewer** looking for the architectural ground rules | [Architecture overview](docs/tech/index.md) and [CLAUDE.md](CLAUDE.md) |
 
 ---
 

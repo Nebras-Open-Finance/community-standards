@@ -1,4 +1,5 @@
 import './index.css'
+import '../../components/WebPages/editorial.css'
 import DefaultTheme from 'vitepress/theme'
 import Layout from './Layout.vue'
 import { resetSharedState } from '../../components/Composables/useSharedState.ts'
@@ -22,6 +23,7 @@ import LiveAPIs from '../../components/LiveAPIs.vue'
 import LiveTPPs from '../../components/LiveTPPs.vue'
 import EditableJson from '../../components/EditableJson.vue'
 import ErrataNotice from '../../components/ErrataNotice.vue'
+import ErrataSections from '../../components/ErrataSections.vue'
 import OzoneConnectCompatibility from '../../components/OzoneConnectCompatibility.vue'
 import ConsentAuthLayout from '../../components/ConsentAuthLayout.vue'
 import DoumentRepoDisplay from '../../components/DoumentRepoDisplay.vue'
@@ -55,6 +57,7 @@ import APIFlowsConsentValidate from '../../components/APIFlows/ConsentValidate.v
 import APIFlowsConsentEventLFI from '../../components/APIFlows/ConsentEventLFI.vue'
 import APIFlowsConnectivityCertificates from '../../components/APIFlows/ConnectivityCertificates.vue'
 import APIFlowsConnectivityEncryption from '../../components/APIFlows/ConnectivityEncryption.vue'
+import APIFlowsMultiSegmentApiHubs from '../../components/APIFlows/MultiSegmentApiHubs.vue'
 
 
 // UIs
@@ -119,6 +122,7 @@ export default {
     app.component('LiveTPPs', LiveTPPs)
     app.component('EditableJson', EditableJson)
     app.component('ErrataNotice', ErrataNotice)
+    app.component('ErrataSections', ErrataSections)
     app.component('OzoneConnectCompatibility', OzoneConnectCompatibility)
     app.component('TPPPostmanScriptBuilder', TPPPostmanScriptBuilder)
     app.component('ConsentAuthLayout', ConsentAuthLayout)
@@ -148,6 +152,7 @@ export default {
     app.component('APIFlowsConsentEventLFI', APIFlowsConsentEventLFI)
     app.component('APIFlowsConnectivityCertificates', APIFlowsConnectivityCertificates)
     app.component('APIFlowsConnectivityEncryption', APIFlowsConnectivityEncryption)
+    app.component('APIFlowsMultiSegmentApiHubs', APIFlowsMultiSegmentApiHubs)
 
     // UI
     app.component('ConsentBankDataSharing', ConsentBankDataSharing)

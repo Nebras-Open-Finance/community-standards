@@ -5,7 +5,7 @@ import { tppSidebar } from './config/sidebars/tpp'
 import { lfiSidebar } from './config/sidebars/lfi'
 import { policySidebar, processesSidebar } from './config/sidebars/policy'
 import { kbSidebar } from './config/sidebars/kb'
-import { erratasSidebar } from './config/sidebars/erratas'
+import { releaseNotesAndErratasSidebar } from './config/sidebars/release-notes-and-erratas'
 import { apiSpecsSidebar } from './config/sidebars/api-specs'
 import { docRepositorySidebar } from './config/sidebars/doc-repository'
 import { CURRENT_VERSION } from './version'
@@ -146,6 +146,13 @@ export default defineConfig({
   },
   head: [
     ['link', { rel: 'icon', href: '/fav.ico' }],
+    // Editorial type system: Fraunces (display), Inter (body), IBM Plex Mono (caption/code)
+    ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
+    ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
+    ['link', {
+      rel: 'stylesheet',
+      href: 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap',
+    }],
     // Site-wide Open Graph (per-page og:title/og:description/og:url are emitted in transformPageData)
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:site_name', content: SITE_TITLE }],
@@ -239,15 +246,15 @@ export default defineConfig({
       {
         text: 'Developer Docs',
         items: [
-          { text: 'TPP – Open Finance Standards', link: '/tech/tpp-standards/' },
-          { text: 'LFI – Integration Guide', link: '/tech/lfi-api-hub/' },
+          { text: 'Open Finance Standards', link: '/tech/tpp-standards/' },
+          { text: 'Integration Guide', link: '/tech/lfi-api-hub/' },
           { text: 'API Specs', link: `/tech/api-specs/${CURRENT_VERSION}` },          
           { text: 'Knowledge Base', link: '/knowledge-base/' },
-          { text: 'Erratas', link: `/tech/erratas/${CURRENT_VERSION}` },
+          { text: 'Release Notes & Erratas', link: '/tech/release-notes-and-erratas/' },
         ],
       },
-      { text: 'Metrics & Monitoring', link: '/metrics' },
-      { text: 'Articles & News', link: '/news' },
+      { text: 'Metrics', link: '/metrics' },
+      { text: 'News', link: '/news' },
     ],
 
     socialLinks: [
@@ -259,21 +266,21 @@ export default defineConfig({
     },
 
     sidebar: {
-      '/tech/overview': [
+      '/tech/tpp-standards/': tppSidebar,
+      '/tech/lfi-api-hub/': lfiSidebar,
+      '/tech/release-notes-and-erratas/': releaseNotesAndErratasSidebar,
+      [`/tech/api-specs/${CURRENT_VERSION}/`]: apiSpecsSidebar,
+      '/tech/': [
         { text: 'TPP - Open Finance Standards', link: '/tech/tpp-standards/' },
         { text: 'LFI - Integration Guide', link: '/tech/lfi-api-hub/' },
-        { text: 'API Specs', link: `/tech/api-specs/${CURRENT_VERSION}` },          
+        { text: 'API Specs', link: `/tech/api-specs/${CURRENT_VERSION}` },
         { text: 'Knowledge Base', link: '/knowledge-base/' },
-        { text: 'Erratas', link: `/tech/erratas/${CURRENT_VERSION}` },
+        { text: 'Release Notes & Erratas', link: '/tech/release-notes-and-erratas/' },
       ],
-      '/tech/tpp-standards': tppSidebar,
-      '/tech/lfi-api-hub': lfiSidebar,
       '/policy': policySidebar,
       '/processes': processesSidebar,
-      '/tech/erratas': erratasSidebar,
       '/knowledge-base': kbSidebar,
       '/doc-repository': docRepositorySidebar,
-      [`/tech/api-specs/${CURRENT_VERSION}`]: apiSpecsSidebar,
     },
   },
 })

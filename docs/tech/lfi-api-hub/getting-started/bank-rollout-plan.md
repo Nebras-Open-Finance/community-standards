@@ -197,4 +197,4 @@ Implement [Multi-Authorization](../v2.1/banking/service-initiation/multi-authori
 
 ## After Phase 4
 
-By the end of Phase 4 you will have delivered all of the current Open Finance capabilities across both retail and SME propositions. From here, ongoing work is driven by version upgrades, new API families, errata, and regulatory changes — continue to track the [Deployments](../v2.1/api-hub/deployments/2026) schedule and plan subsequent work against your own delivery cycles.
+By the end of Phase 4 you will have delivered all of the current Open Finance capabilities across both retail and SME propositions. From here, ongoing work is driven by version upgrades, new API families, errata, and regulatory changes — continue to track the [API Hub Release Notes](/tech/release-notes-and-erratas/release-notes/api-hub/2026) schedule and plan subsequent work against your own delivery cycles.

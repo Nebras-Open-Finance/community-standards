@@ -1,13 +1,15 @@
-# Local-only material under supporting/ — certs, scratch helpers, Confluence
-# exports, .env. Tracked configs (lychee.toml, tests/) stay committed.
-supporting/certs/
-supporting/confluence/
-supporting/internal_helpers/
-supporting/.env
+# Local-only material under supporting/ — everything is ignored by default.
+# Only lychee.toml and tests/ are tracked; anything else (certs, scratch
+# helpers, Confluence exports, .env, assets, webpages) stays local.
+supporting/*
+!supporting/lychee.toml
+!supporting/tests/
 .claude/
 docs/public/doc-repo/
 # Fetched OpenAPI specs (all versioned folders — see scripts/fetch-openapi-specs.mjs)
 docs/public/openapi/v*/
+# Generated .xlsx exports (see scripts/generate-openapi-xlsx.mjs)
+docs/public/openapi/**/*.xlsx
 CLAUDE.md
 
 # Logs

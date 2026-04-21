@@ -1,27 +1,26 @@
-<!--
-  DashboardCharts.vue
-  ─────────────────────────────────────────────────────────────────────────
-  Reads the active section from the store, looks up the chart configs for
-  that section, applies hideIfFiltered rules, and renders a grid of
-  DashboardChart components.
-
-  Data flow:
-    state.activeSection → CHART_REGISTRY[section] → visibleCharts
-    filteredApiData / filteredPaymentData / filteredRtData → dataFor()
-    → DashboardChart (config + data)
--->
-
 <template>
   <section class="db-charts">
 
     <!-- Section header -->
     <div class="db-charts__header">
-      <div>
+      <div class="db-charts__title-block">
+        <span class="db-charts__eyebrow">§ {{ sectionEyebrow }}</span>
         <h2 class="db-charts__title">{{ meta.title }}</h2>
         <p class="db-charts__desc">{{ meta.description }}</p>
       </div>
-      <div class="db-charts__count">
-        {{ recordCount.toLocaleString() }} records
+      <div class="db-charts__actions">
+        <span class="db-charts__count">{{ recordCount.toLocaleString() }} records</span>
+        <button
+          v-if="csvExport"
+          class="db-charts__csv"
+          :disabled="!csvExport.rows.length"
+          @click="downloadActiveCsv"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+            <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          {{ csvExport.label }}
+        </button>
       </div>
     </div>
 
@@ -56,13 +55,20 @@ import {
 } from './stores/dashboardStore.js'
 import { CHART_REGISTRY, SECTION_META } from './config/dashboardCharts.js'
 import DashboardChart from './DashboardChart.vue'
+import { downloadCsv, datedFilename } from './utils/csv.js'
 
-// ── Meta for the active section ──────────────────────────────────────────
 const meta = computed(() =>
   SECTION_META[state.activeSection] || { title: '', description: '' }
 )
 
-// ── Apply hideIfFiltered / showOnlyIfFiltered rules ──────────────────────
+const sectionEyebrow = computed(() => {
+  const s = state.activeSection
+  if (s.startsWith('payment')) return 'Payments'
+  if (s.startsWith('auth'))    return 'Authentication'
+  if (s.startsWith('rt') || s === 'response-time') return 'Performance'
+  return 'API Hub'
+})
+
 const visibleCharts = computed(() => {
   const configs = CHART_REGISTRY[state.activeSection] || []
   const hasAnyFilter = Object.values(state.filters).some(v => v != null)
@@ -70,7 +76,6 @@ const visibleCharts = computed(() => {
 
   return configs
     .filter(c => {
-      // 'hideIfFiltered: month' charts are never hidden — if month is active they switch to by-day below
       if (c.hideIfFiltered && c.hideIfFiltered !== 'month' && state.filters[c.hideIfFiltered]) return false
       if (c.showOnlyIfFiltered === true && !hasAnyFilter) return false
       if (typeof c.showOnlyIfFiltered === 'string' && !state.filters[c.showOnlyIfFiltered]) return false
@@ -78,7 +83,6 @@ const visibleCharts = computed(() => {
     })
     .map(c => {
       if (!monthFiltered) return c
-      // Detect charts that group by month (volume charts via groupBy prop, or RT avg-line mode)
       const isByMonth =
         c.props?.groupBy === 'month' ||
         c.hideIfFiltered === 'month' ||
@@ -92,7 +96,6 @@ const visibleCharts = computed(() => {
     })
 })
 
-// ── Record count for the section header ──────────────────────────────────
 const recordCount = computed(() => {
   const section = state.activeSection
   if (section === 'api-volumes')     return filteredSuccessApiData.value.length
@@ -101,7 +104,34 @@ const recordCount = computed(() => {
   return filteredRtData.value.length
 })
 
-// ── Data accessor (called during render — Vue tracks the reactive deps) ──
+// ── CSV export config keyed off the active section ──────────────────────────
+const csvExport = computed(() => {
+  const s = state.activeSection
+  if (s.startsWith('payment')) {
+    return {
+      label: 'Download payments log',
+      filename: datedFilename('payments-log'),
+      rows: filteredPaymentData.value,
+      columns: ['day', 'month', 'lfi', 'tpp', 'consentType', 'status', 'rawStatus', 'count', 'amount', 'successCount', 'failCount'],
+    }
+  }
+  if (s.startsWith('api') || s === 'response-time' || s.startsWith('rt')) {
+    return {
+      label: 'Download API log',
+      filename: datedFilename('api-log'),
+      rows: filteredApiData.value,
+      columns: ['day', 'month', 'lfi', 'tpp', 'family', 'version', 'endpoint', 'status', 'volume', 'errors', 'avgMs', 'p50', 'p95', 'p99'],
+    }
+  }
+  return null
+})
+
+function downloadActiveCsv() {
+  if (!csvExport.value) return
+  const { filename, rows, columns } = csvExport.value
+  downloadCsv(filename, rows, columns)
+}
+
 function dataFor(source) {
   return dataForSource(source)
 }
@@ -119,35 +149,93 @@ function dataFor(source) {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #E8EFF6;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--at-grid-line-2);
+  flex-wrap: wrap;
+}
+
+.db-charts__title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.db-charts__eyebrow {
+  font-family: var(--at-mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--at-teal);
 }
 
 .db-charts__title {
-  font-family: 'Poppins', sans-serif;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #0C1441;
-  margin: 0 0 0.15rem;
-  letter-spacing: -0.01em;
+  font-family: var(--at-serif);
+  font-size: 1.6rem;
+  font-weight: 500;
+  color: var(--at-navy-deep);
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 
 .db-charts__desc {
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.75rem;
-  color: #667085;
+  font-family: var(--at-sans);
+  font-size: 0.82rem;
+  color: var(--at-mute-2);
   margin: 0;
+  max-width: 60ch;
+  line-height: 1.45;
+}
+
+.db-charts__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-shrink: 0;
 }
 
 .db-charts__count {
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #94a3b8;
+  font-family: var(--at-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--at-mute);
   white-space: nowrap;
-  flex-shrink: 0;
+}
+
+.db-charts__csv {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem;
+  font-family: var(--at-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid var(--at-navy-deep);
+  background: var(--at-navy-deep);
+  color: var(--at-bg-cream);
+  border-radius: 0;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.db-charts__csv:not(:disabled):hover {
+  background: var(--at-teal);
+  border-color: var(--at-teal);
+  color: var(--at-navy-deep);
+}
+
+.db-charts__csv:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 /* ── Grid ───────────────────────────────────────────────────────────────── */
@@ -181,14 +269,12 @@ function dataFor(source) {
 }
 
 @media (max-width: 900px) {
-  .db-charts__grid {
-    grid-template-columns: 1fr;
-  }
+  .db-charts__grid { grid-template-columns: 1fr; }
+  .db-charts__header { align-items: flex-start; }
 }
 
 @media (max-width: 600px) {
-  .db-charts {
-    padding: 1rem;
-  }
+  .db-charts { padding: 1rem; }
+  .db-charts__title { font-size: 1.3rem; }
 }
 </style>

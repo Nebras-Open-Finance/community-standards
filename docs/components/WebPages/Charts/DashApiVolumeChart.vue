@@ -1,31 +1,3 @@
-<!--
-  DashApiVolumeChart.vue
-  ─────────────────────────────────────────────────────────────────────────
-  Example of how filter-reactive charts work in the dashboard:
-
-  1. The PARENT (OpenFinanceDashboard) holds the central filter state and
-     computes `filteredApiData` from the raw mock data by applying all
-     active filters (LFI, TPP, month, API family).
-
-  2. The PARENT passes the already-filtered array down as the `:data` prop.
-
-  3. This component watches `data` and re-renders the Chart.js chart
-     whenever the array reference changes.
-
-  4. The chart NEVER queries filters directly — it only knows about `data`.
-     Grouping/stacking is controlled by the `groupBy` and `stackBy` props.
-
-  Usage examples:
-    <!-- Stacked bar: months on X, API family as stacks -->
-    <DashApiVolumeChart :data="filteredApiData" group-by="month" stack-by="family" title="Volume by Month" />
-
-    <!-- Simple bar: one bar per LFI (hidden when filters.lfi is set) -->
-    <DashApiVolumeChart v-if="!filters.lfi" :data="filteredApiData" group-by="lfi" title="Volume by LFI" />
-
-    <!-- Errors: success/error stacked -->
-    <DashApiVolumeChart :data="filteredApiData" group-by="month" value-key="errors" title="Errors by Month" />
--->
-
 <template>
   <div class="chart-wrap">
     <div class="chart-title">{{ title }}</div>
@@ -50,45 +22,40 @@ import {
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
 
-// ── Props ────────────────────────────────────────────────────────────────
 const props = defineProps({
-  /** Pre-filtered data array from the parent dashboard */
-  data: { type: Array, required: true },
-
-  /**
-   * Which field to use as X-axis categories.
-   * One of: 'month' | 'lfi' | 'tpp' | 'version' | 'family'
-   */
-  groupBy: { type: String, default: 'month' },
-
-  /**
-   * Optional: which field to use for stacked series.
-   * One of: 'family' | 'lfi' | 'tpp' | null
-   */
-  stackBy: { type: String, default: null },
-  grouped: { type: Boolean, default: false },
-
-  /**
-   * Which numeric field to sum.
-   * One of: 'volume' | 'errors'
-   */
+  data:     { type: Array,  required: true },
+  groupBy:  { type: String, default: 'month' },
+  stackBy:  { type: String, default: null },
+  grouped:  { type: Boolean, default: false },
   valueKey: { type: String, default: 'volume' },
-
-  title: { type: String, default: '' },
+  title:    { type: String, default: '' },
 })
 
-// ── State ────────────────────────────────────────────────────────────────
 const canvasRef = ref(null)
 let chart = null
 
 const PALETTE = [
-  '#4F46E5', '#10B981', '#F59E0B', '#3B82F6',
-  '#EC4899', '#8B5CF6', '#F97316', '#14B8A6',
+  '#00277F',
+  '#00C2A9',
+  '#008BE4',
+  '#B37819',
+  '#0043A6',
+  '#00A2FB',
+  '#008B78',
+  '#5F6A8F',
 ]
 
-// ── Aggregation ──────────────────────────────────────────────────────────
+const TOOLTIP = {
+  backgroundColor: '#001738',
+  titleColor: '#FAFAF7',
+  bodyColor: '#D7DEE8',
+  borderRadius: 0,
+  padding: 10,
+  titleFont: { family: 'IBM Plex Mono, monospace', size: 10, weight: '500' },
+  bodyFont: { family: 'Poppins, sans-serif', size: 11 },
+}
+
 function aggregate(data, groupBy, stackBy, valueKey) {
-  // bucket[groupKey][stackKey] = summed value
   const bucket = {}
   const stackKeys = new Set()
 
@@ -111,8 +78,8 @@ function aggregate(data, groupBy, stackBy, valueKey) {
     data: groupLabels.map(g => bucket[g]?.[sKey] || 0),
     backgroundColor: PALETTE[i % PALETTE.length],
     borderColor: PALETTE[i % PALETTE.length],
-    borderWidth: 1,
-    borderRadius: 6,
+    borderWidth: 0,
+    borderRadius: 0,
     maxBarThickness: 60,
     ...(stackBy && !props.grouped ? { stack: 'stack' } : {}),
   }))
@@ -120,12 +87,10 @@ function aggregate(data, groupBy, stackBy, valueKey) {
   return { groupLabels, datasets }
 }
 
-// ── Total for subtitle ───────────────────────────────────────────────────
 const total = computed(() =>
   props.data.reduce((s, r) => s + (Number(r[props.valueKey]) || 0), 0)
 )
 
-// ── Chart lifecycle ──────────────────────────────────────────────────────
 function render() {
   if (!canvasRef.value) return
   const { groupLabels, datasets } = aggregate(props.data, props.groupBy, props.stackBy, props.valueKey)
@@ -147,12 +112,15 @@ function render() {
         legend: {
           display: !!props.stackBy,
           position: 'bottom',
-          labels: { boxWidth: 12, font: { size: 11 } },
+          labels: {
+            boxWidth: 10,
+            boxHeight: 10,
+            font: { family: 'Poppins, sans-serif', size: 11 },
+            color: '#001738',
+          },
         },
         tooltip: {
-          backgroundColor: '#1F2937',
-          titleColor: '#F3F4F6',
-          bodyColor: '#D1D5DB',
+          ...TOOLTIP,
           callbacks: {
             label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}`,
           },
@@ -162,16 +130,19 @@ function render() {
         y: {
           stacked: !!props.stackBy && !props.grouped,
           beginAtZero: true,
-          grid: { color: 'rgba(0,0,0,0.05)' },
+          grid: { color: 'rgba(0,39,127,0.06)' },
+          ticks: { color: 'rgba(0,23,56,0.55)', font: { family: 'Poppins, sans-serif', size: 10 } },
           title: {
             display: true,
             text: props.valueKey === 'errors' ? 'Errors' : 'API Calls',
-            font: { size: 11 },
+            font: { family: 'IBM Plex Mono, monospace', size: 10, weight: '500' },
+            color: 'rgba(0,23,56,0.55)',
           },
         },
         x: {
           stacked: !!props.stackBy && !props.grouped,
           grid: { display: false },
+          ticks: { color: 'rgba(0,23,56,0.72)', font: { family: 'Poppins, sans-serif', size: 10 } },
         },
       },
     },
@@ -179,39 +150,37 @@ function render() {
 }
 
 onMounted(render)
-
-// ── React to filtered data changes ───────────────────────────────────────
-// This is the key: whenever the parent re-computes filteredApiData (because
-// a filter changed), `data` prop changes and this watch fires.
 watch(() => props.data, render, { deep: false })
-
 onBeforeUnmount(() => { chart?.destroy() })
 </script>
 
 <style scoped>
 .chart-wrap {
-  background: var(--vp-c-bg, #fff);
-  border: 1px solid var(--vp-c-divider, #e2e8f0);
-  border-radius: 12px;
+  background: var(--at-surface);
+  border: 1px solid var(--at-grid-line);
+  border-radius: 0;
   padding: 1.25rem;
   box-sizing: border-box;
 }
 
 .chart-title {
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-family: var(--at-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--vp-c-text-2, #94a3b8);
-  margin-bottom: 0.2rem;
+  letter-spacing: 0.14em;
+  color: var(--at-mute);
+  margin-bottom: 0.35rem;
 }
 
 .chart-meta {
+  font-family: var(--at-serif);
   font-size: 1.4rem;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: -0.03em;
-  color: var(--vp-c-text-1, #1e293b);
-  margin-bottom: 0.75rem;
+  color: var(--at-navy-deep);
+  margin-bottom: 0.85rem;
+  line-height: 1.1;
 }
 
 .chart-container {

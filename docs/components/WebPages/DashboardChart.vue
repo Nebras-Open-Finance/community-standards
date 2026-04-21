@@ -1,22 +1,4 @@
-<!--
-  DashboardChart.vue
-  ─────────────────────────────────────────────────────────────────────────
-  Config-driven chart renderer. Receives a single chart config object and
-  a pre-filtered data array. Switches on config.component to render the
-  correct chart type.
-
-  Supported component values:
-    'volume'       → DashApiVolumeChart
-    'rt'           → DashResponseTimeChart
-    'error-rate'   → inline bar+line (API calls + error rate %)
-    'error-codes'  → inline doughnut (HTTP error code distribution)
-    'success-rate' → inline bar+line (payment count + success rate %)
-    'pay-status'   → inline doughnut (payment status split)
-    'rt-ranked'    → ranked list of slowest endpoints
--->
-
 <template>
-  <!-- ── Delegated chart components ───────────────────────────────────── -->
   <DashApiVolumeChart
     v-if="config.component === 'volume'"
     :data="data"
@@ -31,7 +13,6 @@
     :title="config.title"
   />
 
-  <!-- ── Inline canvas: Error Rate ────────────────────────────────────── -->
   <div v-else-if="config.component === 'error-rate'" class="chart-card">
     <div class="chart-card__title">{{ config.title }}</div>
     <div class="chart-card__meta">{{ avgErrorRate }}% avg error rate</div>
@@ -40,7 +21,6 @@
     </div>
   </div>
 
-  <!-- ── Inline canvas: Error Codes ───────────────────────────────────── -->
   <div v-else-if="config.component === 'error-codes'" class="chart-card">
     <div class="chart-card__title">{{ config.title }}</div>
     <div class="chart-card__canvas">
@@ -48,7 +28,6 @@
     </div>
   </div>
 
-  <!-- ── Inline canvas: Success Rate ──────────────────────────────────── -->
   <div v-else-if="config.component === 'success-rate'" class="chart-card">
     <div class="chart-card__title">{{ config.title }}</div>
     <div class="chart-card__canvas">
@@ -56,7 +35,6 @@
     </div>
   </div>
 
-  <!-- ── Inline canvas: Payment Status ────────────────────────────────── -->
   <div v-else-if="config.component === 'pay-status'" class="chart-card">
     <div class="chart-card__title">{{ config.title }}</div>
     <div class="chart-card__canvas">
@@ -64,7 +42,6 @@
     </div>
   </div>
 
-  <!-- ── Inline canvas: Auth Rate ──────────────────────────────────────── -->
   <div v-else-if="config.component === 'auth-rate'" class="chart-card">
     <div class="chart-card__title">{{ config.title }}</div>
     <div class="chart-card__meta">{{ authRateSummary }}</div>
@@ -73,7 +50,6 @@
     </div>
   </div>
 
-  <!-- ── Ranked list: Slowest Endpoints ───────────────────────────────── -->
   <div v-else-if="config.component === 'rt-ranked'" class="chart-card">
     <div class="chart-card__title">{{ config.title }}</div>
     <div class="ranked-list">
@@ -82,7 +58,7 @@
         :key="item.endpoint"
         class="ranked-row"
       >
-        <span class="rank-num">{{ idx + 1 }}</span>
+        <span class="rank-num">{{ String(idx + 1).padStart(2, '0') }}</span>
         <div class="rank-content">
           <div class="rank-top">
             <span class="rank-label">{{ item.endpoint }}</span>
@@ -122,27 +98,44 @@ Chart.register(
   Tooltip, Legend,
 )
 
-// ── Props ────────────────────────────────────────────────────────────────
 const props = defineProps({
   config: { type: Object, required: true },
   data:   { type: Array,  required: true },
 })
 
-// ── Canvas + chart instance ──────────────────────────────────────────────
 const canvasRef = ref(null)
 let chartInstance = null
 
 const INLINE_TYPES = ['error-rate', 'error-codes', 'success-rate', 'pay-status', 'auth-rate']
 
-const TOOLTIP = {
-  backgroundColor: '#0C1441',
-  titleColor: '#F4F8FB',
-  bodyColor: '#CBD5E1',
-  borderRadius: 8,
-  padding: 10,
+const ACCENT = {
+  teal:     '#00C2A9',
+  tealDeep: '#008B78',
+  gold:     '#B37819',
+  navy:     '#00277F',
+  navyDeep: '#001738',
+  blue:     '#008BE4',
+  sky:      '#00A2FB',
+  blueDeep: '#0043A6',
+  mute:     'rgba(0,23,56,0.45)',
 }
 
-// ── Derived values ───────────────────────────────────────────────────────
+const TOOLTIP = {
+  backgroundColor: ACCENT.navyDeep,
+  titleColor: '#FAFAF7',
+  bodyColor: '#D7DEE8',
+  borderRadius: 0,
+  padding: 10,
+  titleFont: { family: 'IBM Plex Mono, monospace', size: 10, weight: '500' },
+  bodyFont: { family: 'Poppins, sans-serif', size: 11 },
+}
+
+const AXIS_TICK  = { color: 'rgba(0,23,56,0.55)', font: { family: 'Poppins, sans-serif', size: 10 } }
+const AXIS_LABEL = { color: 'rgba(0,23,56,0.72)', font: { family: 'Poppins, sans-serif', size: 10 } }
+const AXIS_TITLE = { font: { family: 'IBM Plex Mono, monospace', size: 10, weight: '500' }, color: 'rgba(0,23,56,0.55)' }
+const GRID       = { color: 'rgba(0,39,127,0.06)' }
+const LEGEND     = { boxWidth: 10, boxHeight: 10, font: { family: 'Poppins, sans-serif', size: 11 }, color: ACCENT.navyDeep }
+
 const avgErrorRate = computed(() => {
   const vol = props.data.filter(r => r.status !== 'error').reduce((s, r) => s + (r.volume || 0), 0)
   const err = props.data.filter(r => r.status === 'error').reduce((s, r) => s + (r.volume || 0), 0)
@@ -164,7 +157,6 @@ const slowestEndpoints = computed(() => {
     .slice(0, 8)
 })
 
-// ── Chart builders ───────────────────────────────────────────────────────
 function destroyChart() {
   chartInstance?.destroy()
   chartInstance = null
@@ -189,17 +181,17 @@ function buildErrorRate() {
     data: {
       labels,
       datasets: [
-        { type: 'bar',  label: 'API Calls',      data: volumes, backgroundColor: '#36BFD4', borderRadius: 6, maxBarThickness: 50, yAxisID: 'yVol' },
-        { type: 'line', label: 'Error Rate (%)',  data: rates,   borderColor: '#EF4444', backgroundColor: 'rgba(239,68,68,0.07)', borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#EF4444', yAxisID: 'yRate', tension: 0.3, fill: false },
+        { type: 'bar',  label: 'API Calls',       data: volumes, backgroundColor: ACCENT.navy, borderRadius: 0, maxBarThickness: 50, yAxisID: 'yVol' },
+        { type: 'line', label: 'Error Rate (%)',  data: rates,   borderColor: ACCENT.gold, backgroundColor: 'rgba(179,120,25,0.08)', borderWidth: 2, pointRadius: 4, pointBackgroundColor: ACCENT.gold, pointBorderColor: '#fff', pointBorderWidth: 1, yAxisID: 'yRate', tension: 0.3, fill: false },
       ],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }, tooltip: TOOLTIP },
+      plugins: { legend: { display: true, position: 'bottom', labels: LEGEND }, tooltip: TOOLTIP },
       scales: {
-        yVol:  { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, title: { display: true, text: 'API Calls', font: { size: 11 } } },
-        yRate: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '%', font: { size: 11 } }, ticks: { callback: v => `${v}%` } },
-        x: { grid: { display: false } },
+        yVol:  { beginAtZero: true, grid: GRID, ticks: AXIS_TICK, title: { display: true, text: 'API Calls', ...AXIS_TITLE } },
+        yRate: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { ...AXIS_TICK, callback: v => `${v}%` }, title: { display: true, text: '%', ...AXIS_TITLE } },
+        x: { grid: { display: false }, ticks: AXIS_LABEL },
       },
     },
   })
@@ -210,11 +202,16 @@ function buildErrorCodes() {
     type: 'doughnut',
     data: {
       labels: ['400 Bad Request', '401 Unauthorized', '403 Forbidden', '429 Rate Limit', '500 Server Error', '503 Unavailable'],
-      datasets: [{ data: [38, 22, 15, 11, 9, 5], backgroundColor: ['#36BFD4','#4F8EF7','#F59E0B','#F97316','#EF4444','#8B5CF6'], borderWidth: 0 }],
+      datasets: [{
+        data: [38, 22, 15, 11, 9, 5],
+        backgroundColor: [ACCENT.navy, ACCENT.blue, ACCENT.teal, ACCENT.sky, ACCENT.gold, ACCENT.blueDeep],
+        borderWidth: 2,
+        borderColor: '#FAFAF7',
+      }],
     },
     options: {
       responsive: true, maintainAspectRatio: false, cutout: '65%',
-      plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 }, padding: 8 } }, tooltip: TOOLTIP },
+      plugins: { legend: { position: 'right', labels: { ...LEGEND, padding: 8 } }, tooltip: TOOLTIP },
     },
   })
 }
@@ -236,17 +233,17 @@ function buildSuccessRate() {
     data: {
       labels,
       datasets: [
-        { type: 'bar',  label: 'Payment Count',   data: counts, backgroundColor: '#10B981', borderRadius: 6, maxBarThickness: 50, yAxisID: 'yCount' },
-        { type: 'line', label: 'Success Rate (%)', data: rates,  borderColor: '#36BFD4', borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#36BFD4', yAxisID: 'yRate', tension: 0.3, fill: false },
+        { type: 'bar',  label: 'Payment Count',    data: counts, backgroundColor: ACCENT.navy, borderRadius: 0, maxBarThickness: 50, yAxisID: 'yCount' },
+        { type: 'line', label: 'Success Rate (%)', data: rates,  borderColor: ACCENT.teal, borderWidth: 2, pointRadius: 4, pointBackgroundColor: ACCENT.teal, pointBorderColor: '#fff', pointBorderWidth: 1, yAxisID: 'yRate', tension: 0.3, fill: false },
       ],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }, tooltip: TOOLTIP },
+      plugins: { legend: { display: true, position: 'bottom', labels: LEGEND }, tooltip: TOOLTIP },
       scales: {
-        yCount: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, title: { display: true, text: 'Count', font: { size: 11 } } },
-        yRate:  { beginAtZero: false, min: 80, max: 100, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '%', font: { size: 11 } }, ticks: { callback: v => `${v}%` } },
-        x: { grid: { display: false } },
+        yCount: { beginAtZero: true, grid: GRID, ticks: AXIS_TICK, title: { display: true, text: 'Count', ...AXIS_TITLE } },
+        yRate:  { beginAtZero: false, min: 80, max: 100, position: 'right', grid: { drawOnChartArea: false }, ticks: { ...AXIS_TICK, callback: v => `${v}%` }, title: { display: true, text: '%', ...AXIS_TITLE } },
+        x: { grid: { display: false }, ticks: AXIS_LABEL },
       },
     },
   })
@@ -258,18 +255,23 @@ function buildPayStatus() {
     const s = r.status || 'Unknown'
     statusMap[s] = (statusMap[s] || 0) + (r.count || 0)
   }
-  const COLORS = { Successful: '#10B981', Pending: '#F59E0B', Failed: '#EF4444' }
+  const COLORS = { Successful: ACCENT.teal, Pending: ACCENT.gold, Failed: ACCENT.blueDeep }
   const labels = Object.keys(statusMap)
 
   chartInstance = new Chart(canvasRef.value, {
     type: 'doughnut',
     data: {
       labels,
-      datasets: [{ data: labels.map(k => statusMap[k]), backgroundColor: labels.map(k => COLORS[k] || '#94A3B8'), borderWidth: 0 }],
+      datasets: [{
+        data: labels.map(k => statusMap[k]),
+        backgroundColor: labels.map(k => COLORS[k] || ACCENT.mute),
+        borderWidth: 2,
+        borderColor: '#FAFAF7',
+      }],
     },
     options: {
       responsive: true, maintainAspectRatio: false, cutout: '65%',
-      plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 }, padding: 10 } }, tooltip: TOOLTIP },
+      plugins: { legend: { position: 'right', labels: { ...LEGEND, padding: 10 } }, tooltip: TOOLTIP },
     },
   })
 }
@@ -291,7 +293,7 @@ function buildAuthRate() {
   const groupBy = props.config.props?.groupBy || 'lfi'
   const numeratorType = props.config.props?.numeratorType || 'doConfirm'
   const rateLabel = numeratorType === 'doConfirm' ? 'Conversion Rate (%)' : 'Cancellation Rate (%)'
-  const barColor = numeratorType === 'doConfirm' ? '#10B981' : '#EF4444'
+  const lineColor = numeratorType === 'doConfirm' ? ACCENT.teal : ACCENT.gold
 
   const byGroup = {}
   for (const r of props.data) {
@@ -310,17 +312,17 @@ function buildAuthRate() {
     data: {
       labels,
       datasets: [
-        { type: 'bar', label: 'Auth Requests', data: authCounts, backgroundColor: '#94A3B8', borderRadius: 6, maxBarThickness: 50, yAxisID: 'yCount' },
-        { type: 'line', label: rateLabel, data: rates, borderColor: barColor, borderWidth: 2, pointRadius: 4, pointBackgroundColor: barColor, yAxisID: 'yRate', tension: 0.3, fill: false },
+        { type: 'bar',  label: 'Auth Requests', data: authCounts, backgroundColor: ACCENT.blueDeep, borderRadius: 0, maxBarThickness: 50, yAxisID: 'yCount' },
+        { type: 'line', label: rateLabel, data: rates, borderColor: lineColor, borderWidth: 2, pointRadius: 4, pointBackgroundColor: lineColor, pointBorderColor: '#fff', pointBorderWidth: 1, yAxisID: 'yRate', tension: 0.3, fill: false },
       ],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }, tooltip: TOOLTIP },
+      plugins: { legend: { display: true, position: 'bottom', labels: LEGEND }, tooltip: TOOLTIP },
       scales: {
-        yCount: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, title: { display: true, text: 'Auth Requests', font: { size: 11 } } },
-        yRate:  { beginAtZero: true, max: 100, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '%', font: { size: 11 } }, ticks: { callback: v => `${v}%` } },
-        x: { grid: { display: false } },
+        yCount: { beginAtZero: true, grid: GRID, ticks: AXIS_TICK, title: { display: true, text: 'Auth Requests', ...AXIS_TITLE } },
+        yRate:  { beginAtZero: true, max: 100, position: 'right', grid: { drawOnChartArea: false }, ticks: { ...AXIS_TICK, callback: v => `${v}%` }, title: { display: true, text: '%', ...AXIS_TITLE } },
+        x: { grid: { display: false }, ticks: AXIS_LABEL },
       },
     },
   })
@@ -355,33 +357,33 @@ onBeforeUnmount(destroyChart)
 </script>
 
 <style scoped>
-/* ── Chart card shell ───────────────────────────────────────────────────── */
 .chart-card {
-  background: #fff;
-  border: 1px solid #E8EFF6;
-  border-radius: 12px;
+  background: var(--at-surface);
+  border: 1px solid var(--at-grid-line);
+  border-radius: 0;
   padding: 1.25rem;
   height: 100%;
   box-sizing: border-box;
 }
 
 .chart-card__title {
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-family: var(--at-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: #667085;
-  margin-bottom: 0.2rem;
+  letter-spacing: 0.14em;
+  color: var(--at-mute);
+  margin-bottom: 0.35rem;
 }
 
 .chart-card__meta {
-  font-family: 'Poppins', sans-serif;
-  font-size: 1.3rem;
-  font-weight: 700;
+  font-family: var(--at-serif);
+  font-size: 1.4rem;
+  font-weight: 500;
   letter-spacing: -0.03em;
-  color: #0C1441;
-  margin-bottom: 0.75rem;
+  color: var(--at-navy-deep);
+  margin-bottom: 0.85rem;
+  line-height: 1.1;
 }
 
 .chart-card__canvas {
@@ -393,69 +395,66 @@ onBeforeUnmount(destroyChart)
 .ranked-list {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.7rem;
   margin-top: 0.75rem;
 }
 
 .ranked-row {
   display: flex;
   align-items: flex-start;
-  gap: 0.6rem;
+  gap: 0.7rem;
 }
 
 .rank-num {
-  min-width: 1.2rem;
+  min-width: 1.4rem;
   padding-top: 1px;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--at-mono);
   font-size: 0.65rem;
-  font-weight: 700;
-  color: #36BFD4;
-  text-align: center;
+  font-weight: 600;
+  color: var(--at-teal);
+  letter-spacing: 0.1em;
+  text-align: left;
   flex-shrink: 0;
 }
 
-.rank-content {
-  flex: 1;
-  min-width: 0;
-}
+.rank-content { flex: 1; min-width: 0; }
 
 .rank-top {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: 0.5rem;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 }
 
 .rank-label {
-  font-family: 'Courier New', monospace;
-  font-size: 0.74rem;
-  color: #0C1441;
+  font-family: var(--at-mono);
+  font-size: 0.72rem;
+  color: var(--at-navy-deep);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .rank-value {
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.74rem;
-  font-weight: 600;
-  color: #36BFD4;
+  font-family: var(--at-serif);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--at-teal-deep);
   white-space: nowrap;
   flex-shrink: 0;
+  letter-spacing: -0.01em;
 }
 
 .rank-bar-track {
-  height: 3px;
-  background: #EEF4FB;
-  border-radius: 999px;
+  height: 2px;
+  background: var(--at-grid-line);
   overflow: hidden;
 }
 
 .rank-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #36BFD4 0%, #4F8EF7 100%);
-  border-radius: 999px;
+  background: var(--at-gradient);
   transition: width 0.4s ease;
 }
 </style>

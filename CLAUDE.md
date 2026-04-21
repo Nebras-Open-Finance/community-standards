@@ -214,6 +214,13 @@ UAE Open Finance has two things that can loosely be called a “resource server�
 `cleanUrls: true` is enabled. Links to a directory's `index.md` MUST end with a trailing slash (e.g. `../data-sharing/api-guide/`), or the VitePress build fails. Links to regular `.md` files do not need a slash.
 
 
+## 📝 TODOs
+
+- New TODOs go in [supporting/internal_helpers/todo.md](supporting/internal_helpers/todo.md) under the most relevant section.
+- Do NOT leave TODO/FIXME comments inline in code or templates — the todo.md is the single source of truth.
+- Keep each entry brief: one bullet, one-line description, link to the file it concerns.
+
+
 ## 🔁 Consent Lifecycle (Canonical)
 
 1. TPP creates consent (via PAR)

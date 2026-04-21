@@ -1,28 +1,8 @@
-<!--
-  DashResponseTimeChart.vue
-  ─────────────────────────────────────────────────────────────────────────
-  Filter-reactive chart component for API response time metrics.
-
-  Modes
-  ─────
-  • avg-line       — average latency by month (area line chart)
-  • avg-bar        — average latency by any group field (bar chart)
-  • p-percentiles  — p50 / p95 / p99 multi-line chart by month
-  • histogram      — request distribution across latency buckets (bar)
-
-  Usage examples
-  ──────────────
-  <DashResponseTimeChart :data="filteredRtData" mode="avg-line" title="Avg Latency by Month" />
-  <DashResponseTimeChart :data="filteredRtData" mode="avg-bar" group-by="lfi" title="Avg by LFI" />
-  <DashResponseTimeChart :data="filteredRtData" mode="p-percentiles" title="p50 / p95 / p99" />
-  <DashResponseTimeChart :data="filteredRtData" mode="histogram" title="Distribution" />
--->
-
 <template>
-  <div class="rt-wrap">
-    <div class="rt-title">{{ title }}</div>
-    <div class="rt-meta" v-if="metaValue">{{ metaValue }}</div>
-    <div class="rt-container">
+  <div class="chart-wrap">
+    <div class="chart-title">{{ title }}</div>
+    <div class="chart-meta" v-if="metaValue">{{ metaValue }}</div>
+    <div class="chart-container">
       <canvas ref="canvasRef"></canvas>
     </div>
   </div>
@@ -50,43 +30,45 @@ Chart.register(
   Tooltip, Legend,
 )
 
-// ── Props ────────────────────────────────────────────────────────────────
 const props = defineProps({
   data:    { type: Array,  required: true },
-  mode:    { type: String, default: 'avg-line' }, // avg-line | avg-bar | p-percentiles | histogram
-  groupBy: { type: String, default: 'month' },    // avg-line/percentiles group field; avg-bar group field
+  mode:    { type: String, default: 'avg-line' },
+  groupBy: { type: String, default: 'month' },
   title:   { type: String, default: '' },
 })
 
-// ── State ────────────────────────────────────────────────────────────────
 const canvasRef = ref(null)
 let chart = null
 
-// ── Brand colours (align with ConsentDefinedSchedule palette) ────────────
-const C_TEAL  = '#36BFD4'
-const C_AMBER = '#F59E0B'
-const C_RED   = '#EF4444'
-const C_NAVY  = '#0C1441'
-const C_BLUE  = '#4F8EF7'
-const C_ORG   = '#F97316'
+const C_TEAL     = '#00C2A9'
+const C_TEAL_DK  = '#008B78'
+const C_GOLD     = '#B37819'
+const C_NAVY     = '#00277F'
+const C_NAVY_DK  = '#001738'
+const C_BLUE     = '#008BE4'
+const C_BLUE_DK  = '#0043A6'
+const C_SKY      = '#00A2FB'
 
 const TOOLTIP = {
-  backgroundColor: C_NAVY,
-  titleColor: '#F4F8FB',
-  bodyColor: '#CBD5E1',
-  borderRadius: 8,
+  backgroundColor: C_NAVY_DK,
+  titleColor: '#FAFAF7',
+  bodyColor: '#D7DEE8',
+  borderRadius: 0,
   padding: 10,
+  titleFont: { family: 'IBM Plex Mono, monospace', size: 10, weight: '500' },
+  bodyFont: { family: 'Poppins, sans-serif', size: 11 },
 }
 
-// ── Subtitle value (avg latency for most modes) ──────────────────────────
+const AXIS_TICK = { color: 'rgba(0,23,56,0.55)', font: { family: 'Poppins, sans-serif', size: 10 } }
+const AXIS_TITLE = { font: { family: 'IBM Plex Mono, monospace', size: 10, weight: '500' }, color: 'rgba(0,23,56,0.55)' }
+const GRID = { color: 'rgba(0,39,127,0.06)' }
+
 const metaValue = computed(() => {
   if (!props.data.length) return ''
   if (props.mode === 'histogram') return `${props.data.length.toLocaleString()} samples`
   const sum = props.data.reduce((s, r) => s + (r.avgMs || 0), 0)
   return `${Math.round(sum / props.data.length)}ms avg`
 })
-
-// ── Chart builders ───────────────────────────────────────────────────────
 
 function buildAvgLine() {
   const field = props.groupBy || 'month'
@@ -108,10 +90,12 @@ function buildAvgLine() {
         label: 'Avg Latency',
         data: values,
         borderColor: C_TEAL,
-        backgroundColor: 'rgba(54,191,212,0.07)',
-        borderWidth: 2.5,
-        pointRadius: 4,
+        backgroundColor: 'rgba(0, 194, 169, 0.10)',
+        borderWidth: 2,
+        pointRadius: 3,
         pointBackgroundColor: C_TEAL,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 1,
         fill: true,
         tension: 0.35,
       }],
@@ -124,13 +108,8 @@ function buildAvgLine() {
         tooltip: { ...TOOLTIP, callbacks: { label: ctx => `${ctx.parsed.y}ms` } },
       },
       scales: {
-        y: {
-          beginAtZero: true,
-          grid: { color: 'rgba(0,0,0,0.04)' },
-          ticks: { callback: v => `${v}ms` },
-          title: { display: true, text: 'ms', font: { size: 11 } },
-        },
-        x: { grid: { display: false } },
+        y: { beginAtZero: true, grid: GRID, ticks: { ...AXIS_TICK, callback: v => `${v}ms` }, title: { display: true, text: 'ms', ...AXIS_TITLE } },
+        x: { grid: { display: false }, ticks: { ...AXIS_TICK, color: 'rgba(0,23,56,0.72)' } },
       },
     },
   })
@@ -147,13 +126,12 @@ function buildAvgBar() {
   }
   const labels = Object.keys(byGroup).sort()
   const values = labels.map(k => Math.round(byGroup[k].total / byGroup[k].n))
-  // Colour bars by value: fastest → teal, slowest → orange-red
   const max = Math.max(...values)
   const colors = values.map(v => {
     const ratio = max > 0 ? v / max : 0
     if (ratio < 0.4) return C_TEAL
-    if (ratio < 0.7) return C_AMBER
-    return C_RED
+    if (ratio < 0.7) return C_GOLD
+    return C_BLUE_DK
   })
 
   return new Chart(canvasRef.value, {
@@ -164,7 +142,7 @@ function buildAvgBar() {
         label: 'Avg Latency',
         data: values,
         backgroundColor: colors,
-        borderRadius: 6,
+        borderRadius: 0,
         maxBarThickness: 60,
       }],
     },
@@ -176,12 +154,8 @@ function buildAvgBar() {
         tooltip: { ...TOOLTIP, callbacks: { label: ctx => `${ctx.parsed.y}ms` } },
       },
       scales: {
-        y: {
-          beginAtZero: true,
-          grid: { color: 'rgba(0,0,0,0.04)' },
-          ticks: { callback: v => `${v}ms` },
-        },
-        x: { grid: { display: false } },
+        y: { beginAtZero: true, grid: GRID, ticks: { ...AXIS_TICK, callback: v => `${v}ms` } },
+        x: { grid: { display: false }, ticks: { ...AXIS_TICK, color: 'rgba(0,23,56,0.72)' } },
       },
     },
   })
@@ -198,19 +172,20 @@ function buildPercentiles() {
     byGroup[key].p99 += r.p99 || 0
     byGroup[key].n++
   }
-  const byMonth = byGroup
-  const labels = Object.keys(byMonth).sort()
+  const labels = Object.keys(byGroup).sort()
 
   const mkDs = (field, color, dash) => ({
     type: 'line',
     label: field.toUpperCase(),
-    data: labels.map(m => Math.round(byMonth[m][field] / byMonth[m].n)),
+    data: labels.map(m => Math.round(byGroup[m][field] / byGroup[m].n)),
     borderColor: color,
     backgroundColor: 'transparent',
     borderWidth: 2,
     borderDash: dash || [],
     pointRadius: 3,
     pointBackgroundColor: color,
+    pointBorderColor: '#fff',
+    pointBorderWidth: 1,
     fill: false,
     tension: 0.3,
   })
@@ -221,8 +196,8 @@ function buildPercentiles() {
       labels,
       datasets: [
         mkDs('p50', C_TEAL),
-        mkDs('p95', C_AMBER, [5, 3]),
-        mkDs('p99', C_RED,   [2, 2]),
+        mkDs('p95', C_BLUE, [5, 3]),
+        mkDs('p99', C_BLUE_DK, [2, 2]),
       ],
     },
     options: {
@@ -232,7 +207,7 @@ function buildPercentiles() {
         legend: {
           display: true,
           position: 'bottom',
-          labels: { boxWidth: 12, font: { size: 11 } },
+          labels: { boxWidth: 10, boxHeight: 10, font: { family: 'Poppins, sans-serif', size: 11 }, color: '#001738' },
         },
         tooltip: {
           ...TOOLTIP,
@@ -240,13 +215,8 @@ function buildPercentiles() {
         },
       },
       scales: {
-        y: {
-          beginAtZero: true,
-          grid: { color: 'rgba(0,0,0,0.04)' },
-          ticks: { callback: v => `${v}ms` },
-          title: { display: true, text: 'ms', font: { size: 11 } },
-        },
-        x: { grid: { display: false } },
+        y: { beginAtZero: true, grid: GRID, ticks: { ...AXIS_TICK, callback: v => `${v}ms` }, title: { display: true, text: 'ms', ...AXIS_TITLE } },
+        x: { grid: { display: false }, ticks: { ...AXIS_TICK, color: 'rgba(0,23,56,0.72)' } },
       },
     },
   })
@@ -274,8 +244,8 @@ function buildHistogram() {
       datasets: [{
         label: 'Requests',
         data: counts,
-        backgroundColor: [C_TEAL, C_BLUE, C_AMBER, C_ORG, C_RED],
-        borderRadius: 6,
+        backgroundColor: [C_TEAL, C_SKY, C_BLUE, C_BLUE_DK, C_GOLD],
+        borderRadius: 0,
         maxBarThickness: 70,
       }],
     },
@@ -290,28 +260,23 @@ function buildHistogram() {
         },
       },
       scales: {
-        y: {
-          beginAtZero: true,
-          grid: { color: 'rgba(0,0,0,0.04)' },
-          title: { display: true, text: 'Requests', font: { size: 11 } },
-        },
-        x: { grid: { display: false } },
+        y: { beginAtZero: true, grid: GRID, ticks: AXIS_TICK, title: { display: true, text: 'Requests', ...AXIS_TITLE } },
+        x: { grid: { display: false }, ticks: { ...AXIS_TICK, color: 'rgba(0,23,56,0.72)' } },
       },
     },
   })
 }
 
-// ── Render dispatcher ────────────────────────────────────────────────────
 function render() {
   if (!canvasRef.value) return
   chart?.destroy()
   chart = null
   if (!props.data.length) return
 
-  if (props.mode === 'avg-line')       chart = buildAvgLine()
-  else if (props.mode === 'avg-bar')   chart = buildAvgBar()
+  if (props.mode === 'avg-line')           chart = buildAvgLine()
+  else if (props.mode === 'avg-bar')       chart = buildAvgBar()
   else if (props.mode === 'p-percentiles') chart = buildPercentiles()
-  else if (props.mode === 'histogram') chart = buildHistogram()
+  else if (props.mode === 'histogram')     chart = buildHistogram()
 }
 
 onMounted(render)
@@ -320,35 +285,36 @@ onBeforeUnmount(() => { chart?.destroy() })
 </script>
 
 <style scoped>
-.rt-wrap {
-  background: #fff;
-  border: 1px solid #E8EFF6;
-  border-radius: 12px;
+.chart-wrap {
+  background: var(--at-surface);
+  border: 1px solid var(--at-grid-line);
+  border-radius: 0;
   padding: 1.25rem;
   height: 100%;
   box-sizing: border-box;
 }
 
-.rt-title {
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.72rem;
-  font-weight: 600;
+.chart-title {
+  font-family: var(--at-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: #667085;
-  margin-bottom: 0.2rem;
+  letter-spacing: 0.14em;
+  color: var(--at-mute);
+  margin-bottom: 0.35rem;
 }
 
-.rt-meta {
-  font-family: 'Poppins', sans-serif;
-  font-size: 1.35rem;
-  font-weight: 700;
+.chart-meta {
+  font-family: var(--at-serif);
+  font-size: 1.4rem;
+  font-weight: 500;
   letter-spacing: -0.03em;
-  color: #0C1441;
-  margin-bottom: 0.75rem;
+  color: var(--at-navy-deep);
+  margin-bottom: 0.85rem;
+  line-height: 1.1;
 }
 
-.rt-container {
+.chart-container {
   height: 280px;
   position: relative;
 }

@@ -9,6 +9,11 @@
   color: black;
 }
 
+/* Editorial cream for table headers — pulls from editorial.css tokens. */
+.vp-doc th {
+  background-color: var(--at-bg-cream);
+}
+
 
 .actor {
   fill: rgba(0, 200, 175, 0.4) !important;

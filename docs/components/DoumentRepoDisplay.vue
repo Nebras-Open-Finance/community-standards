@@ -39,11 +39,19 @@ const loopDetected = ref(false)
 const search = ref('')
 
 const isNebras = ref(false)
-const uploadFiles = ref([])
+const catalog = ref([])
+const selectedSlug = ref('')
+const uploadFile = ref(null)
 const uploading = ref(false)
 const uploadError = ref('')
 const uploadSuccess = ref('')
 const fileInput = ref(null)
+
+function fileExtension(name) {
+  const idx = name.lastIndexOf('.')
+  if (idx <= 0 || idx === name.length - 1) return ''
+  return name.slice(idx + 1)
+}
 
 async function loadFiles() {
   loading.value = true
@@ -100,40 +108,56 @@ async function loadSession() {
   }
 }
 
+async function loadCatalog() {
+  try {
+    const res = await fetch(`${DOCS_API}/catalog`)
+    if (!res.ok) return
+    const body = await res.json()
+    catalog.value = Array.isArray(body[props.visibility]) ? body[props.visibility] : []
+  } catch {
+    catalog.value = []
+  }
+}
+
 async function handleUpload() {
-  if (!uploadFiles.value.length) return
+  if (!selectedSlug.value || !uploadFile.value) return
+  const ext = fileExtension(uploadFile.value.name)
+  if (!ext) {
+    uploadError.value = 'File must have an extension.'
+    return
+  }
+
+  const slug = selectedSlug.value
+  const existing = files.value.find((f) => f.name.startsWith(`${slug}.`))
+  if (existing) {
+    const label = catalog.value.find((c) => c.slug === slug)?.label || slug
+    const ok = window.confirm(`This will replace the existing ${label} (${existing.name}). Continue?`)
+    if (!ok) return
+  }
+
   uploading.value = true
   uploadError.value = ''
   uploadSuccess.value = ''
-  const results = { ok: 0, failed: [] }
   try {
-    for (const file of uploadFiles.value) {
-      const encodedName = file.name.split('/').map(encodeURIComponent).join('/')
-      const url = `${DOCS_API}/${props.orgId}/${props.visibility}/${encodedName}`
-      const res = await fetch(url, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': file.type || 'application/octet-stream',
-        },
-        body: file,
-      })
-      if (res.ok) {
-        results.ok++
-      } else {
-        const body = await res.json().catch(() => ({}))
-        results.failed.push(`${file.name}: ${body.error || `HTTP ${res.status}`}`)
-      }
+    const path = `${encodeURIComponent(slug)}.${encodeURIComponent(ext)}`
+    const url = `${DOCS_API}/${props.orgId}/${props.visibility}/${path}`
+    const res = await fetch(url, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: {
+        'Content-Type': uploadFile.value.type || 'application/octet-stream',
+      },
+      body: uploadFile.value,
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.error || `HTTP ${res.status}`)
     }
-    if (results.failed.length) {
-      uploadError.value = results.failed.join('; ')
-    }
-    if (results.ok) {
-      uploadSuccess.value = `Uploaded ${results.ok} file${results.ok === 1 ? '' : 's'}.`
-      uploadFiles.value = []
-      if (fileInput.value) fileInput.value.value = ''
-      await loadFiles()
-    }
+    uploadSuccess.value = 'Upload complete.'
+    selectedSlug.value = ''
+    uploadFile.value = null
+    if (fileInput.value) fileInput.value.value = ''
+    await loadFiles()
   } catch (e) {
     uploadError.value = e.message
   } finally {
@@ -141,17 +165,21 @@ async function handleUpload() {
   }
 }
 
-function onFilesSelected(e) {
-  uploadFiles.value = Array.from(e.target.files || [])
+function onFileSelected(e) {
+  uploadFile.value = e.target.files?.[0] || null
   uploadError.value = ''
   uploadSuccess.value = ''
 }
 
 onMounted(() => {
   loadSession()
+  loadCatalog()
   loadFiles()
 })
-watch(() => [props.orgId, props.visibility], loadFiles)
+watch(() => [props.orgId, props.visibility], () => {
+  loadCatalog()
+  loadFiles()
+})
 
 const filteredFiles = computed(() => {
   const query = search.value.toLowerCase().trim()
@@ -185,6 +213,15 @@ const titleSuffix = computed(() =>
 const descriptionPrefix = computed(() =>
   props.visibility === 'private' ? 'Private' : 'Public'
 )
+
+const selectedLabel = computed(() =>
+  catalog.value.find((c) => c.slug === selectedSlug.value)?.label || ''
+)
+
+const willOverwrite = computed(() => {
+  if (!selectedSlug.value) return false
+  return files.value.some((f) => f.name.startsWith(`${selectedSlug.value}.`))
+})
 </script>
 
 <template>
@@ -214,26 +251,43 @@ const descriptionPrefix = computed(() =>
 
     <div v-if="isNebras" class="upload-panel">
       <div class="upload-header">
-        <span class="upload-title">Upload documents</span>
-        <span class="upload-hint">Files go to <code>{{ orgId }}/{{ visibility }}/</code></span>
+        <span class="upload-title">Upload {{ descriptionPrefix }} Document</span>
+        <span class="upload-hint">Pick a document type, then choose a file to upload.</span>
       </div>
-      <div class="upload-row">
-        <input
-          ref="fileInput"
-          type="file"
-          multiple
-          class="upload-input"
-          @change="onFilesSelected"
-          :disabled="uploading"
-        />
-        <button
-          class="doc-action-button upload-button"
-          :disabled="uploading || !uploadFiles.length"
-          @click="handleUpload"
-        >
-          {{ uploading ? 'Uploading…' : `Upload${uploadFiles.length ? ` (${uploadFiles.length})` : ''}` }}
-        </button>
+      <div v-if="!catalog.length" class="upload-empty">
+        No {{ visibility }} document types are configured yet.
       </div>
+      <template v-else>
+        <div class="upload-row">
+          <select
+            v-model="selectedSlug"
+            class="upload-select"
+            :disabled="uploading"
+          >
+            <option value="" disabled>Select document type…</option>
+            <option v-for="entry in catalog" :key="entry.slug" :value="entry.slug">
+              {{ entry.label }}
+            </option>
+          </select>
+          <input
+            ref="fileInput"
+            type="file"
+            class="upload-input"
+            @change="onFileSelected"
+            :disabled="uploading || !selectedSlug"
+          />
+          <button
+            class="doc-action-button upload-button"
+            :disabled="uploading || !selectedSlug || !uploadFile"
+            @click="handleUpload"
+          >
+            {{ uploading ? 'Uploading…' : 'Upload' }}
+          </button>
+        </div>
+        <div v-if="willOverwrite" class="upload-warning">
+          Uploading will replace the existing <strong>{{ selectedLabel }}</strong>.
+        </div>
+      </template>
       <div v-if="uploadError" class="upload-error">{{ uploadError }}</div>
       <div v-if="uploadSuccess" class="upload-success">{{ uploadSuccess }}</div>
     </div>
@@ -496,6 +550,20 @@ const descriptionPrefix = computed(() =>
   flex-wrap: wrap;
 }
 
+.upload-select {
+  min-width: 220px;
+  padding: 8px 10px;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.upload-select:disabled {
+  background: #f1f5f9;
+  cursor: not-allowed;
+}
+
 .upload-input {
   flex: 1;
   min-width: 200px;
@@ -513,6 +581,21 @@ const descriptionPrefix = computed(() =>
 .upload-button:disabled {
   background: #94a3b8;
   cursor: not-allowed;
+}
+
+.upload-empty {
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.upload-warning {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #92400e;
+  background: #fef3c7;
+  padding: 8px 12px;
+  border-radius: 6px;
 }
 
 .upload-error {
