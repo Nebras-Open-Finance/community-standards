@@ -129,6 +129,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
             collapsed: true,
             items: [
               { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/onboarding/environment-specific` },
+              { text: 'Trust Framework CAs', link: `${BASE}/${VERSION}/api-hub/onboarding/environment-specific/trust-framework-cas` },
               { text: 'Certificate Walkthroughs', link: `${BASE}/${VERSION}/api-hub/onboarding/environment-specific/certificate-walkthroughs` },
               { text: 'Ozone Connect Base URL', link: `${BASE}/${VERSION}/api-hub/onboarding/environment-specific/ozone-connect-url` },
               { text: 'Authorization Endpoint', link: `${BASE}/${VERSION}/api-hub/onboarding/environment-specific/auth-endpoint` },

@@ -130,7 +130,7 @@ Used by the API Hub to identify itself to the LFI when calling Ozone Connect end
 | JWKS URL | Ozone | Ozone provides the JWKS URL from their Trust Framework organisation. |
 | KID | Ozone | Ozone provides the KID. |
 
-**LFI action:** None — this certificate is in Ozone's organisation. Record the JWKS URL and KID provided by Ozone for your mTLS validation configuration.
+**LFI action:** None — this certificate is in Ozone's organisation. Record the JWKS URL and KID provided by Ozone for your mTLS validation configuration. See [Trust Framework CAs](./trust-framework-cas#_4b-pin-the-connection-to-the-api-hub-s-c4-client) for guidance on pinning your Ozone Connect server to the C4 client certificate.
 
 ### Sig2 — Signing Certificate
 
