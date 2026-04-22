@@ -4,15 +4,9 @@ prev: false
 aside: false
 ---
 
-# Trust Framework Certificate Authorities
+# Configuring Inbound mTLS
 
-The Open Finance UAE Trust Framework operates two separate Public Key Infrastructures — one for each environment — that issue the transport and signing certificates used across the ecosystem. This page documents the Certificate Authorities (CAs) of each PKI and how the LFI MUST configure inbound mTLS on its Ozone Connect server to trust them.
-
-For how each certificate named below (C4, S4, etc.) fits into the overall network architecture, see [API Hub Connectivity & Certificates](/tech/lfi-api-hub/v2.1/api-hub/connectivity/).
-
-::: info On-the-wire naming
-Trust Framework CA certificates use the **"Al Tareq"** brand in their `CN` and `OU` — this is the legacy name of the Nebras Open Finance Company and remains in the currently deployed certificate chain across both environments. Certificate chains presented to your Ozone Connect server will display `Al Tareq {Environment} Trust Framework ...` rather than `Open Finance UAE ...`. This is expected.
-:::
+This page describes how the LFI MUST configure inbound mutual TLS (mTLS) on its Ozone Connect server so that calls from the API Hub are authenticated and all other calls are rejected.
 
 
 ## 1. Why the LFI MUST configure inbound mTLS
@@ -32,11 +26,22 @@ The API Hub does not terminate TLS on the LFI's behalf for the API Hub → Ozone
 :::
 
 
-## 2. Production Trust Framework CAs
+## 2. Trust Framework Certificate Authorities
 
-### Root CA
+Each API Hub environment pairs with a distinct Trust Framework PKI:
 
-The self-signed root of trust for the Production PKI.
+- **Production** API Hub → **Production** Trust Framework
+- **Pre-production** API Hub → **Sandbox** Trust Framework
+
+To validate the C4 client certificate, the LFI MUST configure its Ozone Connect server with the Root and Issuing CA of the Trust Framework that pairs with the API Hub environment in use.
+
+### Production
+
+The Production API Hub uses certificates issued by the **Production Trust Framework**. Its CAs are below.
+
+#### Root CA
+
+The self-signed root of trust for the Production Trust Framework PKI.
 
 | Field | Value |
 |-------|-------|
@@ -46,9 +51,9 @@ The self-signed root of trust for the Production PKI.
 | **Valid from** | 2024-10-01 |
 | **Valid until** | 2039-09-28 |
 
-### Issuing CA
+#### Issuing CA
 
-The subordinate CA that signs all participant certificates (C1, C3, C4, S1, S3, S4, Sig1–Sig4, Enc1, Enc2).
+The subordinate CA that signs all participant certificates on Production (C1, C3, C4, S1, S3, S4, Sig1–Sig4, Enc1, Enc2).
 
 | Field | Value |
 |-------|-------|
@@ -61,12 +66,11 @@ The subordinate CA that signs all participant certificates (C1, C3, C4, S1, S3, 
 | **Valid from** | 2024-10-01 |
 | **Valid until** | 2034-09-29 |
 
+### Pre-production
 
-## 3. Sandbox Trust Framework CAs
+#### Root CA
 
-### Root CA
-
-The self-signed root of trust for the Sandbox PKI. Used for all pre-production certificates.
+The self-signed root of trust for the Pre-production PKI.
 
 | Field | Value |
 |-------|-------|
@@ -76,9 +80,9 @@ The self-signed root of trust for the Sandbox PKI. Used for all pre-production c
 | **Valid from** | 2024-08-22 |
 | **Valid until** | 2039-08-19 |
 
-### Issuing CA
+#### Issuing CA
 
-The subordinate CA that signs all Sandbox participant certificates.
+The subordinate CA that signs all participant certificates on Pre-production.
 
 | Field | Value |
 |-------|-------|
@@ -92,21 +96,21 @@ The subordinate CA that signs all Sandbox participant certificates.
 | **Valid until** | 2034-08-20 |
 
 
-## 4. Configuring your Ozone Connect server
+## 3. Configuring your Ozone Connect server
 
 Inbound mTLS configuration has two parts:
 
-1. **Trust the Trust Framework CA bundle** so the handshake accepts C4 and is rejected for anything else signed outside the Trust Framework.
+1. **Trust the Trust Framework CA bundle** so the handshake accepts C4 and is rejected for anything not signed by the Trust Framework.
 2. **Pin the connection to the API Hub's C4 client** so that a certificate signed by the same Trust Framework — but belonging to a different participant — cannot reach your endpoints.
 
-### 4a. Trust the Trust Framework CA bundle
+### 3a. Trust the CA bundle
 
 Assemble a single PEM bundle containing the **Issuing CA** first, then the **Root CA**. This bundle is what your TLS-terminating component loads as its trusted client-CA file.
 
-::: tip Bundle for the Sandbox environment
+::: tip Bundle for Pre-production
 ```bash
-curl -sSL https://crl.sandbox.pki.openfinance.ae/issuer-ca.pem  > trust-framework-sandbox.pem
-curl -sSL https://crl.sandbox.pki.openfinance.ae/root-ca.pem   >> trust-framework-sandbox.pem
+curl -sSL https://crl.sandbox.pki.openfinance.ae/issuer-ca.pem  > trust-framework-preprod.pem
+curl -sSL https://crl.sandbox.pki.openfinance.ae/root-ca.pem   >> trust-framework-preprod.pem
 ```
 
 For Production, fetch the equivalent files from `https://crl.pki.openfinance.ae/`.
@@ -125,36 +129,24 @@ Configure the component that terminates TLS in front of Ozone Connect to **requi
 The Trust Framework roots are **private** — they are not present in operating-system or browser trust stores. Your component MUST be configured with the Trust Framework bundle explicitly.
 :::
 
-Once the bundle is in place, the API Hub's C4 certificate will validate on every inbound call. The handshake will now also validate **any** other Trust Framework participant's certificate — which is what section 4b addresses.
+Once the bundle is in place, the API Hub's C4 certificate will validate on every inbound call. The handshake will now also validate **any** other Trust Framework participant's certificate — which is what section 3b addresses.
 
-### 4b. Pin the connection to the API Hub's C4 client
+### 3b. Pin to the C4 client
 
-Trusting the Trust Framework CA means that every TPP, every other LFI, and every client certificate issued by the same Issuing CA satisfies the handshake. To ensure that only the API Hub — and specifically your own API Hub instance's egress — can call your Ozone Connect endpoints, the LFI SHOULD additionally pin the connection to the C4 client certificate.
+Trusting the Trust Framework CA means that every TPP, every other LFI, and every client certificate issued by the same Issuing CA satisfies the handshake. To ensure that only the API Hub — and specifically your own API Hub instance's egress — can reach your Ozone Connect endpoints, the LFI SHOULD additionally pin the connection to the C4 client's subject `OU`.
 
-There are two ways to do this.
+The subject of the C4 certificate contains the Ozone organisation's identifier in its `OU`. Ozone provides this identifier as part of [environment-specific onboarding](./environment-specific/#c4-transport-client-certificate) — the JWKS URL and KID for C4 are supplied by Ozone on the Service Desk ticket; the OU of the certificate in that keystore is the value to pin against.
 
-#### By certificate subject OU (recommended)
+Most reverse proxies expose the client-certificate subject as a variable during the request — for example, nginx exposes `$ssl_client_s_dn`. The LFI rejects any request whose client certificate subject `OU` does not equal the documented Ozone organisation OU.
 
-The subject of the C4 certificate contains the Ozone organisation's identifier in its `OU`. Ozone provides this identifier as part of [environment-specific onboarding](./#c4-transport-client-certificate) (the JWKS URL and KID for C4 are supplied by Ozone on the Service Desk ticket; the OU of the certificate in that keystore is what you pin against).
-
-Most reverse proxies expose the client-certificate subject as a variable during the request — for example, nginx exposes `$ssl_client_s_dn`. The LFI rejects any request whose client certificate subject OU does not equal the documented Ozone organisation OU.
-
-::: tip Prefer the OU approach
-OU-based pinning survives C4 certificate rotation — when Ozone rotates the C4 leaf (for instance at scheduled renewal) the OU remains the same, so no LFI-side configuration change is needed. This is the lower-maintenance option and matches the pattern used by the Nebras reference implementation.
-:::
-
-#### By certificate thumbprint
-
-Alternatively, pin the **SHA-256 fingerprint** of the C4 leaf certificate. This is more precise — it excludes any future certificate in the same organisation — but the fingerprint changes whenever the C4 certificate rotates, and the LFI MUST coordinate the cutover with Ozone each time. Choose this option only if your security policy requires leaf-level pinning.
-
-::: warning Production and Sandbox C4 certificates are different
-The C4 certificate is issued separately in each environment. **OU values and fingerprints from Sandbox will not match Production.** Configure each environment against the values Ozone has provided you for **that** environment, and do not assume a value carried from pre-production will work in production.
-:::
+Pinning by the C4 leaf certificate's SHA-256 fingerprint is **not** required. The OU pin above is sufficient and survives C4 rotation without any LFI-side configuration change.
 
 
-## Related pages
+## 4. Verification
 
-- [API Hub Connectivity & Certificates](/tech/lfi-api-hub/v2.1/api-hub/connectivity/) — the certificate model across the full ecosystem
-- [Environment Specific Configuration](./) — all information exchanged during onboarding, including the C4 JWKS URL and KID
-- [Certificate Walkthroughs](./certificate-walkthroughs) — step-by-step examples of creating S1 and S4
-- [Keys & Certificates](/tech/lfi-api-hub/trust-framework/certificates/) — how to generate keys and upload CSRs in the Trust Framework
+Ozone verifies both layers of your inbound mTLS configuration end-to-end as part of [Connectivity Validation](./environment-specific/#connectivity-validation). The API Hub is only considered set up for an environment once **both** of the following are exercised successfully:
+
+1. The CA-trust layer rejects any connection that does not present a Trust Framework-issued client certificate (section 3a).
+2. The pinning layer rejects any Trust Framework-issued certificate whose subject OU does not match the API Hub's C4 organisation OU, and accepts the legitimate C4 certificate (section 3b).
+
+If either case fails, the environment-specific onboarding ticket remains open until the configuration is corrected.
