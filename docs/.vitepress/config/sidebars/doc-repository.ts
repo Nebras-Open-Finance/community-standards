@@ -8,20 +8,19 @@ const TF_PATH = resolve(__dirname, '../../../public/api/trust-framework.json')
 const BASE = '/doc-repository'
 
 interface Organisation {
-  OrganisationId: string
-  OrganisationName: string
-  Status: string
+  id: string
+  name: string
   isProduction: boolean
 }
 
-const data = JSON.parse(readFileSync(TF_PATH, 'utf-8'))
-const orgs: Organisation[] = data.organisations
-  .filter((o: Organisation) => o.isProduction === true && o.Status === 'Active')
-  .sort((a: Organisation, b: Organisation) => a.OrganisationName.localeCompare(b.OrganisationName))
+const data: Organisation[] = JSON.parse(readFileSync(TF_PATH, 'utf-8'))
+const orgs = data
+  .filter(o => o.isProduction === true)
+  .sort((a, b) => a.name.localeCompare(b.name))
 
 const orgItems: DefaultTheme.SidebarItem[] = orgs.map(o => ({
-  text: o.OrganisationName,
-  link: `${BASE}/${o.OrganisationId}/`,
+  text: o.name,
+  link: `${BASE}/${o.id}/`,
 }))
 
 export const docRepositorySidebar: DefaultTheme.SidebarItem[] = [

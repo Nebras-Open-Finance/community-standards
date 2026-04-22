@@ -268,17 +268,17 @@ const SUCCESS_PAYMENT_STATUSES = new Set([
   'AcceptedWithoutPosting',
 ])
 
-const tfData      = ref(null)
+const tfData      = ref([])
 const apiData     = ref([])
 const paymentData = ref([])
 
 onMounted(async () => {
   const [tf, api, payments] = await Promise.all([
-    axios.get('/api/trust-framework.json').catch(() => ({ data: null })),
+    axios.get('/api/trust-framework.json').catch(() => ({ data: [] })),
     fetch('/api/api-log.json').then(r => r.json()).catch(() => []),
     fetch('/api/payments-log.json').then(r => r.json()).catch(() => []),
   ])
-  tfData.value = tf.data
+  tfData.value = Array.isArray(tf.data) ? tf.data : []
   apiData.value = api
   paymentData.value = payments
 })
@@ -342,17 +342,13 @@ function compact(n) {
   return String(n)
 }
 
-// Active orgs, deduped by name so a single org registered in both production
-// and sandbox is counted once.
-function uniqueActiveOrgs(all) {
-  const active = (all || []).filter(o => o.Status === 'Active')
-  const seen = new Set()
-  return active.filter(o => {
-    const key = (o.OrganisationName || o.LegalEntityName || '').trim().toLowerCase()
-    if (!key || seen.has(key)) return false
-    seen.add(key)
-    return true
-  })
+// Orgs are pre-filtered (active only) and pre-deduped (one entry per id) by the
+// upstream pull. An LFI with a tppGoLiveDate is counted as *both* an LFI and a TPP.
+function countLfis(orgs) {
+  return (orgs || []).filter(o => o.type === 'LFI').length
+}
+function countTpps(orgs) {
+  return (orgs || []).filter(o => o.type === 'TPP' || !!o.tppGoLiveDate).length
 }
 
 // ── Live ticker (4 cells, hooked to live data) ────────────────────────────
@@ -369,9 +365,8 @@ const tickerCells = computed(() => {
   const payTotal        = paySeries.reduce((s, v) => s + v, 0)
   const payDelta        = pctChange(paySeries)
 
-  const liveOrgs        = uniqueActiveOrgs(tfData.value?.organisations)
-  const lfis            = liveOrgs.filter(o => o.Size === 'LFI').length
-  const tpps            = liveOrgs.filter(o => o.Size === 'TPP').length
+  const lfis            = countLfis(tfData.value)
+  const tpps            = countTpps(tfData.value)
   const lfiSeries       = [Math.max(lfis - 4, 0), Math.max(lfis - 3, 0), Math.max(lfis - 2, 0), Math.max(lfis - 1, 0), lfis]
   const tppSeries       = [Math.max(tpps - 3, 0), Math.max(tpps - 2, 0), Math.max(tpps - 1, 0), tpps]
 
@@ -456,9 +451,8 @@ const heroKpis = computed(() => {
   )
   const totalAmount = successRows.reduce((s, r) => s + (r.amount || 0), 0)
 
-  const liveOrgs = uniqueActiveOrgs(tfData.value?.organisations)
-  const lfis = liveOrgs.filter(o => o.Size === 'LFI').length
-  const tpps = liveOrgs.filter(o => o.Size === 'TPP').length
+  const lfis = countLfis(tfData.value)
+  const tpps = countTpps(tfData.value)
 
   return [
     {

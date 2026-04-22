@@ -33,6 +33,7 @@ const publicError    = ref('')
 const privateError   = ref('')
 
 const catalog        = ref({ public: [], private: [] })
+const maxUploadBytes = ref(5 * 1024 * 1024)
 
 const activeTab = ref('public')
 const search    = ref('')
@@ -48,6 +49,14 @@ function fileExtension(name) {
   const idx = name.lastIndexOf('.')
   if (idx <= 0 || idx === name.length - 1) return ''
   return name.slice(idx + 1)
+}
+
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B'
+  const mb = bytes / (1024 * 1024)
+  if (mb >= 1) return `${Number.isInteger(mb) ? mb : mb.toFixed(1)} MB`
+  const kb = bytes / 1024
+  return `${Number.isInteger(kb) ? kb : kb.toFixed(0)} KB`
 }
 
 async function bootstrap() {
@@ -134,6 +143,9 @@ async function loadCatalog() {
       public:  Array.isArray(body.public)  ? body.public  : [],
       private: Array.isArray(body.private) ? body.private : [],
     }
+    if (Number.isFinite(body.maxUploadBytes) && body.maxUploadBytes > 0) {
+      maxUploadBytes.value = body.maxUploadBytes
+    }
   } catch {
     catalog.value = { public: [], private: [] }
   }
@@ -214,6 +226,10 @@ async function handleUpload() {
   const ext = fileExtension(uploadFile.value.name)
   if (!ext) {
     uploadError.value = 'File must have an extension.'
+    return
+  }
+  if (uploadFile.value.size > maxUploadBytes.value) {
+    uploadError.value = `File exceeds the ${formatBytes(maxUploadBytes.value)} upload limit.`
     return
   }
 
@@ -401,7 +417,7 @@ const typeColor = computed(() => {
                 Upload {{ activeTab === 'private' ? 'private' : 'public' }} document
               </span>
               <span class="ed-doc-upload__hint">
-                Pick a document type, then choose a file to upload.
+                Pick a document type, then choose a file up to {{ formatBytes(maxUploadBytes) }}.
               </span>
             </div>
             <div v-if="!activeCatalog.length" class="ed-doc-upload__empty">

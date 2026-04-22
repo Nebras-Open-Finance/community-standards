@@ -84,16 +84,14 @@
               :key="org.id"
               :href="org.link"
               class="ed-kb-card"
-              :style="{ '--kb-card-color': colorFor(org.size) }"
+              :style="{ '--kb-card-color': colorFor(org.type) }"
             >
-              <span class="ed-kb-card__top" :style="{ background: colorFor(org.size) }" />
+              <span class="ed-kb-card__top" :style="{ background: colorFor(org.type) }" />
 
               <div class="ed-kb-card__meta">
-                <span class="ed-kb-card__cat" :style="{ color: colorFor(org.size) }">
-                  {{ sizeLabel(org.size) }}
+                <span class="ed-kb-card__cat" :style="{ color: colorFor(org.type) }">
+                  {{ typeLabel(org.type) }}
                 </span>
-                <span v-if="org.type && org.type !== 'TPP'" class="ed-kb-card__dot">&middot;</span>
-                <span v-if="org.type && org.type !== 'TPP'" class="ed-kb-card__read">{{ org.type }}</span>
               </div>
 
               <div class="ed-kb-card__head">
@@ -112,17 +110,17 @@
                   :key="tag"
                   class="ed-kb-card__tag"
                   :style="{
-                    background: tagBackground(org.size),
-                    color: colorFor(org.size),
+                    background: tagBackground(org.type),
+                    color: colorFor(org.type),
                   }"
                 >{{ tag }}</span>
               </div>
 
               <div class="ed-kb-card__foot">
-                <span v-if="org.joined" class="ed-kb-card__updated">
-                  Joined {{ formatJoined(org.joined) }}
+                <span v-if="earliestGoLive(org)" class="ed-kb-card__updated">
+                  Live since {{ formatGoLive(earliestGoLive(org)) }}
                 </span>
-                <span class="ed-kb-card__arrow" :style="{ color: colorFor(org.size) }">&rarr;</span>
+                <span class="ed-kb-card__arrow" :style="{ color: colorFor(org.type) }">&rarr;</span>
               </div>
             </a>
           </div>
@@ -155,14 +153,14 @@ const CATEGORY_ORDER = ['LFI', 'TPP']
 const CATEGORY_COLORS = {
   LFI: 'var(--at-teal)',
   TPP: 'var(--at-gold)',
-  TSP: 'var(--at-blue-deep)',
+  Authority: 'var(--at-blue-deep)',
 }
 const CATEGORY_TAG_BG = {
   LFI: 'rgba(0, 194, 169, 0.10)',
   TPP: 'rgba(179, 120, 25, 0.10)',
-  TSP: 'rgba(0, 67, 166, 0.10)',
+  Authority: 'rgba(0, 67, 166, 0.10)',
 }
-const SIZE_LABEL = { LFI: 'LFI', TPP: 'TPP', TSP: 'Authority' }
+const TYPE_LABEL = { LFI: 'LFI', TPP: 'TPP', Authority: 'Authority' }
 
 const organisations = ref([])
 const loading = ref(true)
@@ -175,28 +173,25 @@ onMounted(async () => {
     const res = await fetch(`${DOCS_API}/`)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const data = await res.json()
-    organisations.value = data
-      .filter(o => o.Status === 'Active')
+    // Document repository pages only exist for production participants.
+    // Sandbox participants appear in the homepage scroller/counts only.
+    const list = Array.isArray(data) ? data : []
+    organisations.value = list
+      .filter(o => o.isProduction === true)
       .map(o => {
-        const shariah = (o.Flags || [])
-          .some(f => f.Name === 'shariah_compliant' && String(f.Value).toLowerCase() === 'true')
-        const type = classify(o)
-        const tags = []
-        if (type) tags.push(type)
-        if (shariah) tags.push('Shariah')
-        if (o.City) tags.push(o.City)
+        const tags = [o.type]
+        // An LFI with a tppGoLiveDate is also acting as a TPP — surface both.
+        if (o.type === 'LFI' && o.tppGoLiveDate) tags.push('TPP')
         return {
-          id: o.OrganisationId,
-          name: o.OrganisationName,
-          legalName: o.LegalEntityName || o.RegisteredName || o.OrganisationName,
-          logo: o.LogoUri || '',
-          size: o.Size || 'Other',
-          type,
-          shariah,
-          city: o.City || '',
+          id: o.id,
+          name: o.name,
+          legalName: o.legalName,
+          logo: o.logoUri || '',
+          type: o.type,
           tags,
-          joined: o.CreatedOn || '',
-          link: `/doc-repository/${o.OrganisationId}/`,
+          lfiGoLiveDate: o.lfiGoLiveDate || '',
+          tppGoLiveDate: o.tppGoLiveDate || '',
+          link: `/doc-repository/${o.id}/`,
         }
       })
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -207,27 +202,16 @@ onMounted(async () => {
   }
 })
 
-function classify(o) {
-  if (o.Authority) return 'Authority'
-  if (o.Size === 'TPP') return 'TPP'
-  if (o.Size === 'LFI') {
-    const n = (o.LegalEntityName || o.RegisteredName || o.OrganisationName || '').toLowerCase()
-    return /insurance|insurer|takaful/.test(n) ? 'Insurer' : 'Bank'
-  }
-  return ''
-}
-
 const categories = computed(() => {
   const counts = {}
   for (const o of organisations.value) {
-    if (!CATEGORY_ORDER.includes(o.size)) continue
-    counts[o.size] = (counts[o.size] || 0) + 1
+    counts[o.type] = (counts[o.type] || 0) + 1
   }
   const ordered = CATEGORY_ORDER
     .filter(id => counts[id] > 0)
     .map(id => ({
       id,
-      label: SIZE_LABEL[id] || id,
+      label: TYPE_LABEL[id] || id,
       count: counts[id],
       color: CATEGORY_COLORS[id] || 'var(--at-navy)',
     }))
@@ -240,12 +224,11 @@ const categories = computed(() => {
 const filteredOrgs = computed(() => {
   const q = query.value.trim().toLowerCase()
   return organisations.value.filter(o => {
-    if (activeCategory.value !== 'all' && o.size !== activeCategory.value) return false
+    if (activeCategory.value !== 'all' && o.type !== activeCategory.value) return false
     if (!q) return true
     return (
       o.name.toLowerCase().includes(q) ||
       o.legalName.toLowerCase().includes(q) ||
-      (o.city || '').toLowerCase().includes(q) ||
       o.tags.some(t => t.toLowerCase().includes(q))
     )
   })
@@ -256,22 +239,26 @@ const activeColor = computed(() => {
   return hit ? hit.color : 'var(--at-navy)'
 })
 
-function colorFor(size) {
-  return CATEGORY_COLORS[size] || 'var(--at-navy)'
+function colorFor(type) {
+  return CATEGORY_COLORS[type] || 'var(--at-navy)'
 }
-function tagBackground(size) {
-  return CATEGORY_TAG_BG[size] || 'rgba(0, 39, 127, 0.06)'
+function tagBackground(type) {
+  return CATEGORY_TAG_BG[type] || 'rgba(0, 39, 127, 0.06)'
 }
-function sizeLabel(size) {
-  return SIZE_LABEL[size] || size
+function typeLabel(type) {
+  return TYPE_LABEL[type] || type
 }
 
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-function formatJoined(iso) {
+function formatGoLive(iso) {
   if (!iso) return ''
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
-  return `${MONTH_SHORT[d.getUTCMonth()]} ${d.getUTCFullYear()}`
+  return `${d.getUTCDate()} ${MONTH_SHORT[d.getUTCMonth()]} ${d.getUTCFullYear()}`
+}
+function earliestGoLive(org) {
+  const dates = [org.lfiGoLiveDate, org.tppGoLiveDate].filter(Boolean).sort()
+  return dates[0] || ''
 }
 </script>
 

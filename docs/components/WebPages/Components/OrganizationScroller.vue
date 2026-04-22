@@ -81,32 +81,22 @@ function onLogoError(org) {
 onMounted(async () => {
   try {
     const { data } = await axios.get('/api/trust-framework.json')
-    const active = (data.organisations || []).filter(o =>
-      o.Status === 'Active' && (o.Size === 'LFI' || o.Size === 'TPP')
-    )
-    const seen = new Set()
-    const unique = active
+    const list = Array.isArray(data) ? data : []
+    // Upstream is already active-only and deduped by id. Show LFIs and TPPs
+    // (including LFIs acting as TPPs); skip Authority entries. Production first
+    // so live participants lead the strip.
+    const participants = list
+      .filter(o => o.type === 'LFI' || o.type === 'TPP')
       .slice()
       .sort((a, b) => Number(b.isProduction === true) - Number(a.isProduction === true))
-      .map(o => {
-        const name = (o.OrganisationName || o.LegalEntityName || '').trim()
-        if (!name) return null
-        return {
-          id: o.OrganisationId,
-          name,
-          initials: initialsFor(name),
-          logoUri: o.LogoUri || null,
-        }
-      })
-      .filter(o => {
-        if (!o) return false
-        const key = o.name.toLowerCase()
-        if (seen.has(key)) return false
-        seen.add(key)
-        return true
-      })
-    totalCount.value = unique.length
-    orgs.value = unique
+      .map(o => ({
+        id: o.id,
+        name: o.name,
+        initials: initialsFor(o.name),
+        logoUri: o.logoUri || null,
+      }))
+    totalCount.value = participants.length
+    orgs.value = participants
   } catch { /* silent — strip is decorative */ }
 })
 </script>

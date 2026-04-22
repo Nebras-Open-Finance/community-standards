@@ -10,6 +10,8 @@ docs/public/doc-repo/
 docs/public/openapi/v*/
 # Generated .xlsx exports (see scripts/generate-openapi-xlsx.mjs)
 docs/public/openapi/**/*.xlsx
+# Fetched trust-framework organisations (see scripts/fetch-organisations.mjs)
+docs/public/api/trust-framework.json
 CLAUDE.md
 
 # Logs
