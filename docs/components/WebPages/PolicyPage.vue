@@ -10,12 +10,13 @@
       <div class="ed-kb-hero__inner">
         <div class="ed-kb-hero__label">
           <span class="ed-kb-hero__label-dash" />
-          Directory &middot; Participants &middot; Documents
+          Govern &middot; Operate &middot; Evolve
         </div>
-        <h1 class="ed-kb-hero__title">Document Repository</h1>
+        <h1 class="ed-kb-hero__title">Policies</h1>
         <p class="ed-kb-hero__sub">
-          Public documentation from Licensed Financial Institutions and Third-Party Providers
-          participating in UAE Open Finance.
+          Governance and operational policies for participants in the UAE Open Finance
+          ecosystem &mdash; Licensed Financial Institutions, Third-Party Providers, and the
+          technology service providers that support them.
         </p>
 
         <div class="ed-kb-search">
@@ -26,8 +27,8 @@
             <path d="m21 21-4.35-4.35" />
           </svg>
           <input v-model="query" class="ed-kb-search__input" type="search"
-            placeholder="Search organisations&hellip;"
-            aria-label="Search organisations" />
+            placeholder="Search policies&hellip;"
+            aria-label="Search policies" />
           <button v-if="query" class="ed-kb-search__clear" @click="query = ''"
             aria-label="Clear search">&times;</button>
         </div>
@@ -55,87 +56,67 @@
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         ORGANISATIONS
+         POLICIES
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ed-kb-articles">
       <div class="ed-kb-articles__inner">
 
-        <div v-if="loading" class="ed-kb-empty">
-          <div class="ed-kb-empty__icon">&#x29D6;</div>
-          <h3 class="ed-kb-empty__title">Loading organisations&hellip;</h3>
+        <div class="ed-kb-count" :style="{ color: activeColor }">
+          {{ filteredPolicies.length }}
+          {{ filteredPolicies.length === 1 ? 'Policy' : 'Policies' }}
+          <template v-if="query">&middot; Search: "{{ query }}"</template>
         </div>
 
-        <div v-else-if="error" class="ed-kb-empty">
-          <div class="ed-kb-empty__icon">&#x26A0;</div>
-          <h3 class="ed-kb-empty__title">Could not load organisations</h3>
-          <p class="ed-kb-empty__sub"><strong>{{ error }}</strong></p>
+        <div v-if="filteredPolicies.length > 0" class="ed-kb-grid">
+          <a
+            v-for="policy in filteredPolicies"
+            :key="policy.slug"
+            :href="policy.url"
+            class="ed-kb-card"
+            :style="{ '--kb-card-color': colorFor(policy.category) }"
+          >
+            <span class="ed-kb-card__top" :style="{ background: colorFor(policy.category) }" />
+
+            <div class="ed-kb-card__meta">
+              <span class="ed-kb-card__cat" :style="{ color: colorFor(policy.category) }">
+                {{ policy.category || 'Uncategorised' }}
+              </span>
+              <span v-if="policy.readTime" class="ed-kb-card__dot">&middot;</span>
+              <span v-if="policy.readTime" class="ed-kb-card__read">{{ policy.readTime }}</span>
+            </div>
+
+            <h3 class="ed-kb-card__title">{{ policy.title }}</h3>
+            <p class="ed-kb-card__desc">{{ policy.purpose }}</p>
+
+            <div v-if="policy.appliesToShort && policy.appliesToShort.length" class="ed-kb-card__tags">
+              <span
+                v-for="tag in policy.appliesToShort"
+                :key="tag"
+                class="ed-kb-card__tag"
+                :style="{
+                  background: tagBackground(policy.category),
+                  color: colorFor(policy.category),
+                }"
+              >{{ tag }}</span>
+            </div>
+
+            <div class="ed-kb-card__foot">
+              <span v-if="policy.updated" class="ed-kb-card__updated">
+                Updated {{ formatUpdated(policy.updated) }}
+              </span>
+              <span class="ed-kb-card__arrow" :style="{ color: colorFor(policy.category) }">&rarr;</span>
+            </div>
+          </a>
         </div>
 
-        <template v-else>
-          <div class="ed-kb-count" :style="{ color: activeColor }">
-            {{ filteredOrgs.length }}
-            {{ filteredOrgs.length === 1 ? 'Organisation' : 'Organisations' }}
-            <template v-if="query">&middot; Search: "{{ query }}"</template>
-          </div>
-
-          <div v-if="filteredOrgs.length > 0" class="ed-kb-grid">
-            <a
-              v-for="org in filteredOrgs"
-              :key="org.id"
-              :href="org.link"
-              class="ed-kb-card"
-              :style="{ '--kb-card-color': colorFor(org.size) }"
-            >
-              <span class="ed-kb-card__top" :style="{ background: colorFor(org.size) }" />
-
-              <div class="ed-kb-card__meta">
-                <span class="ed-kb-card__cat" :style="{ color: colorFor(org.size) }">
-                  {{ sizeLabel(org.size) }}
-                </span>
-                <span v-if="org.type && org.type !== 'TPP'" class="ed-kb-card__dot">&middot;</span>
-                <span v-if="org.type && org.type !== 'TPP'" class="ed-kb-card__read">{{ org.type }}</span>
-              </div>
-
-              <div class="ed-kb-card__head">
-                <img v-if="org.logo" :src="org.logo" :alt="org.name" class="ed-kb-card__logo" />
-                <div v-else class="ed-kb-card__logo ed-kb-card__logo--placeholder">
-                  {{ org.name.charAt(0) }}
-                </div>
-                <h3 class="ed-kb-card__title">{{ org.name }}</h3>
-              </div>
-
-              <p class="ed-kb-card__desc">{{ org.legalName }}</p>
-
-              <div v-if="org.tags.length" class="ed-kb-card__tags">
-                <span
-                  v-for="tag in org.tags"
-                  :key="tag"
-                  class="ed-kb-card__tag"
-                  :style="{
-                    background: tagBackground(org.size),
-                    color: colorFor(org.size),
-                  }"
-                >{{ tag }}</span>
-              </div>
-
-              <div class="ed-kb-card__foot">
-                <span v-if="org.joined" class="ed-kb-card__updated">
-                  Joined {{ formatJoined(org.joined) }}
-                </span>
-                <span class="ed-kb-card__arrow" :style="{ color: colorFor(org.size) }">&rarr;</span>
-              </div>
-            </a>
-          </div>
-
-          <div v-else class="ed-kb-empty">
-            <div class="ed-kb-empty__icon">&#x2315;</div>
-            <h3 class="ed-kb-empty__title">No organisations found</h3>
-            <p class="ed-kb-empty__sub">
-              <template v-if="query">No matches for <strong>"{{ query }}"</strong>. </template>
-              Try adjusting your search or filter criteria.
-            </p>
-          </div>
-        </template>
+        <div v-else class="ed-kb-empty">
+          <div class="ed-kb-empty__icon">&#x2315;</div>
+          <h3 class="ed-kb-empty__title">No policies found</h3>
+          <p class="ed-kb-empty__sub">
+            <template v-if="query">No matches for <strong>"{{ query }}"</strong>. </template>
+            Try adjusting your search or filter criteria.
+          </p>
+        </div>
 
       </div>
     </section>
@@ -145,108 +126,55 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import PageHeader from './Components/PageHeader.vue'
 import PageFooter from './Components/PageFooter.vue'
+import { data as policies } from '../../policy/policy.data.ts'
 
-const DOCS_API = 'https://docs.nebras-open-finance.com'
-
-const CATEGORY_ORDER = ['LFI', 'TPP']
+const CATEGORY_ORDER = ['Participants', 'Nebras']
 const CATEGORY_COLORS = {
-  LFI: 'var(--at-teal)',
-  TPP: 'var(--at-gold)',
-  TSP: 'var(--at-blue-deep)',
+  Participants: 'var(--at-teal)',
+  Nebras:       'var(--at-navy)',
 }
 const CATEGORY_TAG_BG = {
-  LFI: 'rgba(0, 194, 169, 0.10)',
-  TPP: 'rgba(179, 120, 25, 0.10)',
-  TSP: 'rgba(0, 67, 166, 0.10)',
+  Participants: 'rgba(0, 194, 169, 0.10)',
+  Nebras:       'rgba(0, 39, 127, 0.10)',
 }
-const SIZE_LABEL = { LFI: 'LFI', TPP: 'TPP', TSP: 'Authority' }
 
-const organisations = ref([])
-const loading = ref(true)
-const error = ref('')
 const query = ref('')
 const activeCategory = ref('all')
 
-onMounted(async () => {
-  try {
-    const res = await fetch(`${DOCS_API}/`)
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data = await res.json()
-    organisations.value = data
-      .filter(o => o.Status === 'Active')
-      .map(o => {
-        const shariah = (o.Flags || [])
-          .some(f => f.Name === 'shariah_compliant' && String(f.Value).toLowerCase() === 'true')
-        const type = classify(o)
-        const tags = []
-        if (type) tags.push(type)
-        if (shariah) tags.push('Shariah')
-        if (o.City) tags.push(o.City)
-        return {
-          id: o.OrganisationId,
-          name: o.OrganisationName,
-          legalName: o.LegalEntityName || o.RegisteredName || o.OrganisationName,
-          logo: o.LogoUri || '',
-          size: o.Size || 'Other',
-          type,
-          shariah,
-          city: o.City || '',
-          tags,
-          joined: o.CreatedOn || '',
-          link: `/doc-repository/${o.OrganisationId}/`,
-        }
-      })
-      .sort((a, b) => a.name.localeCompare(b.name))
-  } catch (e) {
-    error.value = e.message
-  } finally {
-    loading.value = false
-  }
-})
-
-function classify(o) {
-  if (o.Authority) return 'Authority'
-  if (o.Size === 'TPP') return 'TPP'
-  if (o.Size === 'LFI') {
-    const n = (o.LegalEntityName || o.RegisteredName || o.OrganisationName || '').toLowerCase()
-    return /insurance|insurer|takaful/.test(n) ? 'Insurer' : 'Bank'
-  }
-  return ''
-}
-
 const categories = computed(() => {
   const counts = {}
-  for (const o of organisations.value) {
-    if (!CATEGORY_ORDER.includes(o.size)) continue
-    counts[o.size] = (counts[o.size] || 0) + 1
+  for (const p of policies) {
+    if (!p.category) continue
+    counts[p.category] = (counts[p.category] || 0) + 1
   }
   const ordered = CATEGORY_ORDER
-    .filter(id => counts[id] > 0)
-    .map(id => ({
-      id,
-      label: SIZE_LABEL[id] || id,
-      count: counts[id],
-      color: CATEGORY_COLORS[id] || 'var(--at-navy)',
+    .filter(name => counts[name] > 0)
+    .map(name => ({
+      id:    name,
+      label: name,
+      count: counts[name],
+      color: CATEGORY_COLORS[name] ?? 'var(--at-navy)',
     }))
   return [
-    { id: 'all', label: 'All', count: organisations.value.length, color: 'var(--at-navy)' },
+    { id: 'all', label: 'All Policies', count: policies.length, color: 'var(--at-navy)' },
     ...ordered,
   ]
 })
 
-const filteredOrgs = computed(() => {
+const filteredPolicies = computed(() => {
   const q = query.value.trim().toLowerCase()
-  return organisations.value.filter(o => {
-    if (activeCategory.value !== 'all' && o.size !== activeCategory.value) return false
+  return policies.filter(p => {
+    if (activeCategory.value !== 'all' && p.category !== activeCategory.value) return false
     if (!q) return true
     return (
-      o.name.toLowerCase().includes(q) ||
-      o.legalName.toLowerCase().includes(q) ||
-      (o.city || '').toLowerCase().includes(q) ||
-      o.tags.some(t => t.toLowerCase().includes(q))
+      p.title.toLowerCase().includes(q) ||
+      (p.purpose || '').toLowerCase().includes(q) ||
+      (p.category || '').toLowerCase().includes(q) ||
+      (p.appliesToShort || []).some(t => t.toLowerCase().includes(q)) ||
+      (p.appliesTo || []).some(t => t.toLowerCase().includes(q))
     )
   })
 })
@@ -256,22 +184,20 @@ const activeColor = computed(() => {
   return hit ? hit.color : 'var(--at-navy)'
 })
 
-function colorFor(size) {
-  return CATEGORY_COLORS[size] || 'var(--at-navy)'
+function colorFor(category) {
+  return CATEGORY_COLORS[category] || 'var(--at-navy)'
 }
-function tagBackground(size) {
-  return CATEGORY_TAG_BG[size] || 'rgba(0, 39, 127, 0.06)'
-}
-function sizeLabel(size) {
-  return SIZE_LABEL[size] || size
+function tagBackground(category) {
+  return CATEGORY_TAG_BG[category] || 'rgba(0, 39, 127, 0.06)'
 }
 
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-function formatJoined(iso) {
+function formatUpdated(iso) {
   if (!iso) return ''
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return ''
-  return `${MONTH_SHORT[d.getUTCMonth()]} ${d.getUTCFullYear()}`
+  const [y, m, d] = iso.split('-')
+  if (!y || !m || !d) return iso
+  const mm = MONTH_SHORT[parseInt(m, 10) - 1] || m
+  return `${parseInt(d, 10)} ${mm} ${y}`
 }
 </script>
 
@@ -411,9 +337,10 @@ function formatJoined(iso) {
 }
 
 .ed-kb-chip:hover { border-color: var(--at-grid-line-2); }
+
 .ed-kb-chip--active { cursor: default; }
 
-/* ─── Cards ─────────────────────────────────────────────────────────────── */
+/* ─── Articles ──────────────────────────────────────────────────────────── */
 .ed-kb-articles {
   padding: 4rem 0 5rem;
   background: var(--at-bg-cream);
@@ -440,6 +367,7 @@ function formatJoined(iso) {
   gap: 1.5rem;
 }
 
+/* ─── Card ──────────────────────────────────────────────────────────────── */
 .ed-kb-card {
   position: relative;
   display: flex;
@@ -480,33 +408,6 @@ function formatJoined(iso) {
 .ed-kb-card__dot { color: var(--at-mute); opacity: 0.5; }
 .ed-kb-card__read { color: var(--at-mute); }
 
-.ed-kb-card__head {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  margin-bottom: 0.85rem;
-}
-
-.ed-kb-card__logo {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-  background: var(--at-bg-cream);
-  border: 1px solid var(--at-grid-line);
-  flex-shrink: 0;
-}
-
-.ed-kb-card__logo--placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--at-serif);
-  font-weight: 600;
-  font-size: 1.2rem;
-  color: var(--at-navy);
-  background: var(--at-bg-cream);
-}
-
 .ed-kb-card__title {
   font-family: var(--at-serif);
   font-size: 1.35rem;
@@ -514,7 +415,7 @@ function formatJoined(iso) {
   line-height: 1.2;
   letter-spacing: -0.02em;
   color: var(--at-navy-deep);
-  margin: 0;
+  margin: 0 0 0.75rem;
 }
 
 .ed-kb-card__desc {
@@ -566,7 +467,7 @@ function formatJoined(iso) {
 
 .ed-kb-card:hover .ed-kb-card__arrow { transform: translateX(4px); }
 
-/* ─── Empty / loading ───────────────────────────────────────────────────── */
+/* ─── Empty state ───────────────────────────────────────────────────────── */
 .ed-kb-empty {
   padding: 5rem 2rem;
   text-align: center;

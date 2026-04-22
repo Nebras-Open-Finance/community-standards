@@ -248,7 +248,7 @@ export default defineConfig({
         items: [
           { text: 'Open Finance Standards', link: '/tech/tpp-standards/' },
           { text: 'Integration Guide', link: '/tech/lfi-api-hub/' },
-          { text: 'API Specs', link: `/tech/api-specs/${CURRENT_VERSION}` },          
+          { text: 'API Specs', link: '/tech/api-specs/' },
           { text: 'Knowledge Base', link: '/knowledge-base/' },
           { text: 'Release Notes & Erratas', link: '/tech/release-notes-and-erratas/' },
         ],
@@ -273,7 +273,7 @@ export default defineConfig({
       '/tech/': [
         { text: 'TPP - Open Finance Standards', link: '/tech/tpp-standards/' },
         { text: 'LFI - Integration Guide', link: '/tech/lfi-api-hub/' },
-        { text: 'API Specs', link: `/tech/api-specs/${CURRENT_VERSION}` },
+        { text: 'API Specs', link: '/tech/api-specs/' },
         { text: 'Knowledge Base', link: '/knowledge-base/' },
         { text: 'Release Notes & Erratas', link: '/tech/release-notes-and-erratas/' },
       ],

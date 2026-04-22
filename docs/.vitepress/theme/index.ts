@@ -10,6 +10,11 @@ import NewsPage from '../../components/WebPages/NewsPage.vue'
 import OpenFinanceDashboard from '../../components/WebPages/OpenFinanceDashboard.vue'
 import KnowledgeBasePage from '../../components/WebPages/KnowledgeBasePage.vue'
 import DocumentRepoPage from '../../components/WebPages/DocumentRepoPage.vue'
+import PolicyPage from '../../components/WebPages/PolicyPage.vue'
+import LfiGuidePage from '../../components/WebPages/LfiGuidePage.vue'
+import TppStandardsPage from '../../components/WebPages/TppStandardsPage.vue'
+import ApiSpecsPage from '../../components/WebPages/ApiSpecsPage.vue'
+import ReleaseNotesPage from '../../components/WebPages/ReleaseNotesPage.vue'
 
 //components
 import ImageViewer from '../../components/ImageViewer.vue'
@@ -26,7 +31,7 @@ import ErrataNotice from '../../components/ErrataNotice.vue'
 import ErrataSections from '../../components/ErrataSections.vue'
 import OzoneConnectCompatibility from '../../components/OzoneConnectCompatibility.vue'
 import ConsentAuthLayout from '../../components/ConsentAuthLayout.vue'
-import DoumentRepoDisplay from '../../components/DoumentRepoDisplay.vue'
+import DocumentRepoDisplay from '../../components/DocumentRepoDisplay.vue'
 
 
 // Forms
@@ -109,6 +114,11 @@ export default {
     app.component('KnowledgeBasePage', KnowledgeBasePage)
     app.component('OpenFinanceDashboard', OpenFinanceDashboard)
     app.component('DocumentRepoPage', DocumentRepoPage)
+    app.component('PolicyPage', PolicyPage)
+    app.component('LfiGuidePage', LfiGuidePage)
+    app.component('TppStandardsPage', TppStandardsPage)
+    app.component('ApiSpecsPage', ApiSpecsPage)
+    app.component('ReleaseNotesPage', ReleaseNotesPage)
 
     //components
     app.component('ImageViewer', ImageViewer)
@@ -128,7 +138,7 @@ export default {
     app.component('ConsentAuthLayout', ConsentAuthLayout)
     app.component('OnboardingOrganisationForm', OnboardingOrganisationForm)
     app.component('OnboardingAdminForm', OnboardingAdminForm)
-    app.component('DoumentRepoDisplay', DoumentRepoDisplay)
+    app.component('DocumentRepoDisplay', DocumentRepoDisplay)
 
     // API Flows
     app.component('APIFlowsRegistration', APIFlowsRegistration)

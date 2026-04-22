@@ -44,7 +44,7 @@ The OpenAPI specifications are the **source of truth** for every API in the ecos
 - **API Hub** — what the API Hub exposes to LFIs
 - **Ozone Connect** — what LFIs must implement for the Hub to call
 
-[Go to API Specs →](/tech/api-specs/v2.1/)
+[Go to API Specs →](/tech/api-specs/)
 
 ## Knowledge Base
 

@@ -1,6 +1,8 @@
 ---
 next: false
 prev: false
+readTime: "3 min"
+updated: "2026-04-21"
 ---
 
 # Secure Management of Keys and Credentials in UAE Open Finance
@@ -10,8 +12,8 @@ prev: false
 - **Licensed Financial Institutions (LFIs)**
 - **Third-Party Providers (TPPs)**
 - **System Integrators and Technology Service Providers**
-- **API Hub** 
-- **Trust Framework** 
+- **Ozone (API Hub)**
+- **Raidiam (Trust Framework)**
 
 ## Purpose
 This document establishes **mandatory and recommended practices** for the secure management of cryptographic keys and credentials within the **UAE Open Finance ecosystem**.  

@@ -35,7 +35,7 @@
               <span class="ed-nav__menu-kicker">For LFIs</span>
               <span class="ed-nav__menu-label">Integration Guide</span>
             </a>
-            <a :href="`/tech/api-specs/${CURRENT_VERSION}`" class="ed-nav__menu-item">
+            <a href="/tech/api-specs/" class="ed-nav__menu-item">
               <span class="ed-nav__menu-kicker">Reference</span>
               <span class="ed-nav__menu-label">API Specs</span>
             </a>
@@ -88,7 +88,7 @@
         <div class="ed-drawer__section">Developer Docs</div>
         <a href="/tech/tpp-standards" class="ed-drawer__sublink">TPP — Open Finance Standards</a>
         <a href="/tech/lfi-api-hub" class="ed-drawer__sublink">LFI — Integration Guide</a>
-        <a :href="`/tech/api-specs/${CURRENT_VERSION}`" class="ed-drawer__sublink">API Specs</a>
+        <a href="/tech/api-specs/" class="ed-drawer__sublink">API Specs</a>
         <a href="/knowledge-base" class="ed-drawer__sublink">Knowledge Base</a>
         <a href="/tech/release-notes-and-erratas/" class="ed-drawer__sublink">Release Notes &amp; Erratas</a>
 
@@ -108,7 +108,6 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { CURRENT_VERSION } from '../../../.vitepress/version'
 
 const menuOpen = ref(false)
 const docsOpen = ref(false)

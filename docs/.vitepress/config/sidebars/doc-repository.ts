@@ -21,11 +21,7 @@ const orgs: Organisation[] = data.organisations
 
 const orgItems: DefaultTheme.SidebarItem[] = orgs.map(o => ({
   text: o.OrganisationName,
-  collapsed: true,
-  items: [
-    { text: 'Public Documents', link: `${BASE}/${o.OrganisationId}/public` },
-    { text: 'Private Documents', link: `${BASE}/${o.OrganisationId}/private` },
-  ],
+  link: `${BASE}/${o.OrganisationId}/`,
 }))
 
 export const docRepositorySidebar: DefaultTheme.SidebarItem[] = [

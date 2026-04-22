@@ -1,6 +1,8 @@
 ---
 next: false
 prev: false
+readTime: "2 min"
+updated: "2026-04-21"
 ---
 
 # Changes to Published Documentation Policy

@@ -1,6 +1,8 @@
 ---
 next: false
 prev: false
+readTime: "6 min"
+updated: "2026-04-21"
 ---
 
 # Major Version Deprecation Policy

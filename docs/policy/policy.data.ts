@@ -4,6 +4,22 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
+const SHORT_NAMES: Record<string, string> = {
+  'Licensed Financial Institutions (LFIs)': 'LFI',
+  'Third-Party Providers (TPPs)': 'TPP',
+  'System Integrators and Technology Service Providers': 'Integrators',
+  Nebras: 'Nebras',
+  'Ozone (API Hub)': 'Ozone',
+  'Raidiam (Trust Framework)': 'Raidiam',
+}
+
+function shortName(actor: string): string {
+  if (SHORT_NAMES[actor]) return SHORT_NAMES[actor]
+  const paren = /^(.+?)\s*\(/.exec(actor)
+  if (paren) return paren[1].trim()
+  return actor
+}
+
 function extractTitle(content: string): string {
   const m = /^# (.+)$/m.exec(content)
   return m ? m[1].trim() : ''
@@ -32,6 +48,13 @@ function parsePurpose(section: string): string {
   return lines[0]?.replace(/\*\*/g, '').trim() || ''
 }
 
+function parseFrontmatterField(content: string, field: string): string {
+  const fm = /^---\n([\s\S]*?)\n---/.exec(content)
+  if (!fm) return ''
+  const m = new RegExp(`^${field}:\\s*"?([^"\\n]+)"?\\s*$`, 'm').exec(fm[1])
+  return m ? m[1].trim() : ''
+}
+
 const ORDER = [
   'version-management',
   'lfi-deprecation',
@@ -47,12 +70,23 @@ export default {
       .map(file => {
         const content = readFileSync(resolve(__dirname, file), 'utf-8')
         const slug = file.replace('.md', '')
+        const appliesTo = parseAppliesTo(extractSection(content, /^## [Aa]p+lies [Tt]o:?.*$/m))
+        const appliesToShort = appliesTo.map(shortName)
+        const isNebrasOnly = appliesToShort.length > 0
+          && appliesToShort.every(a => a === 'Nebras')
+        const category = appliesToShort.length === 0
+          ? ''
+          : isNebrasOnly ? 'Nebras' : 'Participants'
         return {
           slug,
           title: extractTitle(content),
           url: `/policy/${slug}`,
-          appliesTo: parseAppliesTo(extractSection(content, /^## [Aa]p+lies [Tt]o:?.*$/m)),
+          appliesTo,
+          appliesToShort,
+          category,
           purpose: parsePurpose(extractSection(content, /^## Purpose.*$/m)),
+          readTime: parseFrontmatterField(content, 'readTime'),
+          updated: parseFrontmatterField(content, 'updated'),
         }
       })
       .sort((a, b) => {
@@ -63,5 +97,5 @@ export default {
         if (bi === -1) return -1
         return ai - bi
       })
-  }
+  },
 }

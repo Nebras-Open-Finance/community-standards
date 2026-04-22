@@ -35,7 +35,7 @@
           <aside class="ed-ticker">
             <div class="ed-ticker__header">
               <span class="ed-ticker__dot" />
-              Live Ecosystem &middot; Last 30d
+              Live Ecosystem
             </div>
             <div
               v-for="t in tickerCells"

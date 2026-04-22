@@ -1,6 +1,8 @@
 ---
 next: false
 prev: false
+readTime: "5 min"
+updated: "2026-04-21"
 ---
 
 # Version Management Policy

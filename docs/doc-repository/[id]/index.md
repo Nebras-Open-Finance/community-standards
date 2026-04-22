@@ -1,13 +1,11 @@
 ---
-next: false
-prev: false
-aside: false
+layout: false
 ---
 
-<DoumentRepoDisplay
+<DocumentRepoDisplay
   :org-id="$params.id"
-  visibility="public"
   :name="$params.name"
   :legal-name="$params.legalName"
   :logo="$params.logo"
+  :type="$params.type"
 />

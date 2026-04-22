@@ -8,9 +8,6 @@ import ErrataUpdateBanner from '../../components/ErrataUpdateBanner.vue'
 
 const route = useRoute()
 
-// Mirrors VersionDropdown's currentVersion — update both together when releasing.
-const CURRENT_VERSION = 'v2.1'
-
 // Always returns { title, link } — safe to destructure in template.
 const navTitle = computed(() => {
   const path = route.path ?? ''
@@ -30,7 +27,7 @@ const navTitle = computed(() => {
   if (path.startsWith('/tech/release-notes-and-erratas'))
     return { title: 'Release Notes & Erratas', link: '/tech/release-notes-and-erratas/' }
   if (path.startsWith('/tech/api-specs'))
-    return { title: 'API Specs', link: `/tech/api-specs/${CURRENT_VERSION}` }
+    return { title: 'API Specs', link: '/tech/api-specs/' }
   if (path.startsWith('/metrics'))
     return { title: 'Metrics', link: '/metrics' }
   if (path.startsWith('/news'))
