@@ -88,7 +88,7 @@
 
           <p class="ed-lfi-featured__desc">
             If this is your first time on this guide, follow the Integration Journey end-to-end.
-            It sequences the work into three phases &mdash; <strong>Sandbox build &amp; integrate</strong>,
+            It sequences the work into three phases &mdash; <strong>Pre-production build &amp; integrate</strong>,
             <strong>Certification</strong>, and <strong>Production launch</strong> &mdash; and links
             out to every section below at the right point in the journey.
           </p>
@@ -96,7 +96,7 @@
           <div class="ed-lfi-featured__phases">
             <div class="ed-lfi-featured__phase">
               <span class="ed-lfi-featured__phase-num">1</span>
-              <span class="ed-lfi-featured__phase-label">Sandbox build &amp; integrate</span>
+              <span class="ed-lfi-featured__phase-label">Pre-production build &amp; integrate</span>
             </div>
             <div class="ed-lfi-featured__phase-sep">&rarr;</div>
             <div class="ed-lfi-featured__phase">
