@@ -13,6 +13,7 @@ import DocumentRepoPage from '../../components/WebPages/DocumentRepoPage.vue'
 import PolicyPage from '../../components/WebPages/PolicyPage.vue'
 import LfiGuidePage from '../../components/WebPages/LfiGuidePage.vue'
 import TppStandardsPage from '../../components/WebPages/TppStandardsPage.vue'
+import TechIndexPage from '../../components/WebPages/TechIndexPage.vue'
 import ApiSpecsPage from '../../components/WebPages/ApiSpecsPage.vue'
 import ReleaseNotesPage from '../../components/WebPages/ReleaseNotesPage.vue'
 
@@ -29,7 +30,6 @@ import LiveTPPs from '../../components/LiveTPPs.vue'
 import EditableJson from '../../components/EditableJson.vue'
 import ErrataNotice from '../../components/ErrataNotice.vue'
 import ErrataSections from '../../components/ErrataSections.vue'
-import OzoneConnectCompatibility from '../../components/OzoneConnectCompatibility.vue'
 import ConsentAuthLayout from '../../components/ConsentAuthLayout.vue'
 import DocumentRepoDisplay from '../../components/DocumentRepoDisplay.vue'
 
@@ -117,6 +117,7 @@ export default {
     app.component('PolicyPage', PolicyPage)
     app.component('LfiGuidePage', LfiGuidePage)
     app.component('TppStandardsPage', TppStandardsPage)
+    app.component('TechIndexPage', TechIndexPage)
     app.component('ApiSpecsPage', ApiSpecsPage)
     app.component('ReleaseNotesPage', ReleaseNotesPage)
 
@@ -133,7 +134,6 @@ export default {
     app.component('EditableJson', EditableJson)
     app.component('ErrataNotice', ErrataNotice)
     app.component('ErrataSections', ErrataSections)
-    app.component('OzoneConnectCompatibility', OzoneConnectCompatibility)
     app.component('TPPPostmanScriptBuilder', TPPPostmanScriptBuilder)
     app.component('ConsentAuthLayout', ConsentAuthLayout)
     app.component('OnboardingOrganisationForm', OnboardingOrganisationForm)

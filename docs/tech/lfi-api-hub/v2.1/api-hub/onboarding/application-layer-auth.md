@@ -99,4 +99,4 @@ JWT Auth is the **recommended** method. It offers the following advantages:
 When selecting JWT Auth, you MAY also choose to send JWT Auth headers on your requests to the Consent Manager and Headless Heimdall Auth Server. This is configured separately — indicate your preference on the Service Desk ticket.
 :::
 
-For full technical detail on constructing and validating JWT Auth tokens, see [JWT Auth — Technical Detail](./jwt-auth).
+For full technical detail on constructing and validating JWT Auth tokens, see [JWT Auth — Server-side](./configuring-authentication/jwt-server) (your Ozone Connect server validating tokens from the API Hub) and [JWT Auth — Client-side](./configuring-authentication/jwt-client) (your authorisation server sending tokens to the API Hub).

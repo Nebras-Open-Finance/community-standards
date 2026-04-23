@@ -8,17 +8,17 @@ const mermaidDefinition = `
 flowchart LR
     subgraph Nebras["Nebras"]
         RH[Retail API Hub]
-        SH[SME API Hub]
+        SH[Business API Hub]
     end
 
     subgraph LFI["LFI"]
         OC[Ozone Connect]
         RC[Retail Core Banking]
-        SC[SME Core Banking]
+        SC[Business Core Banking]
     end
 
-    RH -->|"o3-provider-id: {lfi}retail"| OC
-    SH -->|"o3-provider-id: {lfi}sme"| OC
+    RH -->|"o3-provider-id: fabretail"| OC
+    SH -->|"o3-provider-id: fabbusiness"| OC
     OC --> RC
     OC --> SC
 

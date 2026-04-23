@@ -12,7 +12,29 @@
       <!-- Desktop nav -->
       <nav class="ed-nav" aria-label="Primary">
 
-        <a href="/policy" class="ed-nav__link">Policies</a>
+        <div class="ed-nav__group">
+          <button
+            type="button"
+            class="ed-nav__link ed-nav__trigger ed-nav__trigger--compact"
+            :aria-expanded="programOpen ? 'true' : 'false'"
+            @click="programOpen = !programOpen"
+          >
+            Program
+            <svg width="10" height="7" viewBox="0 0 10 7" fill="none" aria-hidden="true">
+              <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div class="ed-nav__menu" :class="{ open: programOpen }">
+            <a href="/policy" class="ed-nav__menu-item">
+              <span class="ed-nav__menu-kicker">Governance</span>
+              <span class="ed-nav__menu-label">Policies</span>
+            </a>
+            <a href="/doc-repository/" class="ed-nav__menu-item">
+              <span class="ed-nav__menu-kicker">Participants</span>
+              <span class="ed-nav__menu-label">Document Repository</span>
+            </a>
+          </div>
+        </div>
 
         <div class="ed-nav__group">
           <button
@@ -83,7 +105,10 @@
     <div class="ed-drawer" :class="{ open: menuOpen }" @click.self="menuOpen = false">
       <div class="ed-drawer__inner">
         <div class="ed-drawer__label">Navigation</div>
-        <a href="/policy" class="ed-drawer__link">Policies</a>
+
+        <div class="ed-drawer__section">Program</div>
+        <a href="/policy" class="ed-drawer__sublink">Policies</a>
+        <a href="/doc-repository/" class="ed-drawer__sublink">Document Repository</a>
 
         <div class="ed-drawer__section">Developer Docs</div>
         <a href="/tech/tpp-standards" class="ed-drawer__sublink">TPP — Open Finance Standards</a>
@@ -111,9 +136,13 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 
 const menuOpen = ref(false)
 const docsOpen = ref(false)
+const programOpen = ref(false)
 
 function handleClickOutside(e) {
-  if (!e.target.closest('.ed-nav__group')) docsOpen.value = false
+  if (!e.target.closest('.ed-nav__group')) {
+    docsOpen.value = false
+    programOpen.value = false
+  }
 }
 onMounted(() => document.addEventListener('click', handleClickOutside))
 onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
@@ -210,6 +239,13 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 .ed-nav__group { position: relative; }
 
 .ed-nav__trigger { font: inherit; }
+
+.ed-nav__trigger--compact {
+  font-family: var(--at-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
 
 .ed-nav__menu {
   position: absolute;

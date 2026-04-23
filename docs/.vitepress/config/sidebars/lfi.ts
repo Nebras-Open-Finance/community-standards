@@ -116,14 +116,7 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         items: [
           { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/onboarding/` },
           { text: 'Prerequisites Questionnaire', link: `${BASE}/${VERSION}/api-hub/onboarding/prerequisites` },
-          {
-            text: 'Application Layer Authentication',
-            collapsed: true,
-            items: [
-              { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/onboarding/application-layer-auth` },
-              { text: 'JWT Auth', link: `${BASE}/${VERSION}/api-hub/onboarding/jwt-auth` },
-            ]
-          },
+          { text: 'Application Layer Authentication', link: `${BASE}/${VERSION}/api-hub/onboarding/application-layer-auth` },
           {
             text: 'Environment Specific',
             collapsed: true,
@@ -134,7 +127,16 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
               { text: 'Authorization Endpoint', link: `${BASE}/${VERSION}/api-hub/onboarding/environment-specific/auth-endpoint` },
             ]
           },
-          { text: 'Configuring mTLS', link: `${BASE}/${VERSION}/api-hub/onboarding/configuring-mtls` },
+          {
+            text: 'Configuring Authentication',
+            collapsed: true,
+            items: [
+              { text: 'mTLS — Server-side', link: `${BASE}/${VERSION}/api-hub/onboarding/configuring-authentication/mtls-server` },
+              { text: 'mTLS — Client-side', link: `${BASE}/${VERSION}/api-hub/onboarding/configuring-authentication/mtls-client` },
+              { text: 'JWT — Server-side', link: `${BASE}/${VERSION}/api-hub/onboarding/configuring-authentication/jwt-server` },
+              { text: 'JWT — Client-side', link: `${BASE}/${VERSION}/api-hub/onboarding/configuring-authentication/jwt-client` },
+            ],
+          },
         ]
       },
       {
@@ -215,6 +217,23 @@ export const lfiSidebar: DefaultTheme.SidebarItem[] = [
         ],
       },
     ],
+  },
+
+  {
+      text: 'Ozone Connect | Health Check',
+      collapsed: true,
+      items: [
+        { text: 'Overview', link: `${BASE}/${VERSION}/health-check/` },
+        {
+            text: 'API Reference',
+            collapsed: true,
+            items: [
+              apiRef('GET', '/hello', `${BASE}/${VERSION}/health-check/open-api/hello`),
+              apiRef('GET', '/hello-mtls', `${BASE}/${VERSION}/health-check/open-api/hello-mtls`),
+              apiRef('GET', '/echo-cert', `${BASE}/${VERSION}/health-check/open-api/echo-cert`),
+            ],
+          },
+      ]
   },
 
   {

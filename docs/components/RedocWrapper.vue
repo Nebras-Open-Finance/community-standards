@@ -39,7 +39,7 @@ import { CURRENT_VERSION } from '../.vitepress/version'
 
 const SPECS_REPO = 'https://github.com/Nebras-Open-Finance/api-specs/tree/main/dist'
 
-const xlsxButtonEnabled = false
+const xlsxButtonEnabled = true
 
 const props = defineProps({
   spec: {

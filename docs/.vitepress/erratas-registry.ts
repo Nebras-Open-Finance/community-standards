@@ -426,6 +426,33 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     ],
     affectedPaths: [],
   },
+  {
+    errataId: 'v2.1-errata1',
+    version: 'v2.1',
+    number: 13,
+    title: 'Ozone Connect Health Check — echo-cert clientCertificate described as mTLS client cert, not server cert',
+    summary: 'The clientCertificate.subject description and example on GET /echo-cert now describe the caller’s mTLS client certificate; the issuer example has been refreshed to the Sandbox Trust Framework issuing CA.',
+    description:
+      'The clientCertificate.subject and clientCertificate.issuer descriptions and examples on the HealthCheckCertResponse schema (GET /echo-cert) have been corrected. The subject previously read "The subject of the certificate, which should equate to a DNS name." with an example of CN = auth.open-finance-apihub.ae — prose that described a server certificate rather than the client certificate the endpoint actually echoes. The description now states that the field carries the Distinguished Name of the client certificate presented by the caller during the mTLS handshake, and that for Open Finance UAE callers the OU contains the caller’s organisation ID from the Trust Framework directory. The example has been updated to a representative Open Finance UAE client-cert DN (C=UK, O=OZONE FINANCIAL TECHNOLOGY LIMITED, OU=<organisation-id>), and the issuer example has been refreshed to the Sandbox Trust Framework issuing CA for symmetry. The schema shape is unchanged.',
+    rationale:
+      'The endpoint echoes the client certificate the server received during the mTLS handshake, but the published prose and example described a DNS-in-CN server certificate. In the Open Finance UAE trust framework the caller’s identity is carried in the OU as the Trust Framework organisation ID, not in the CN as a DNS name — so the example would have misled integrators inspecting /echo-cert output during onboarding. The correction is documentation-only; no wire contract has changed.',
+    effectiveDate: 'To be confirmed on merge to main.',
+    spec: 'uae-ozone-connect-health-check-openapi',
+    endpoints: [
+      { label: 'GET /echo-cert', path: '/tech/api-specs/v2.1/ozone-connect/health-check/echo-cert' },
+    ],
+    schemas: ['HealthCheckCertResponse'],
+    githubSources: [
+      {
+        label: 'dist/ozone-connect/v2.1.x-errata1/uae-ozone-connect-health-check-openapi.yaml',
+        url: `${OZONE}/dist/ozone-connect/v2.1.x-errata1/uae-ozone-connect-health-check-openapi.yaml`,
+      },
+    ],
+    affectedPaths: [
+      '/tech/api-specs/v2.1/ozone-connect/health-check/echo-cert',
+      '/tech/lfi-api-hub/v2.1/health-check/open-api/echo-cert',
+    ],
+  },
 ]
 
 // Normalise a route path for comparison: strip trailing slash (except for root) and .html suffix.

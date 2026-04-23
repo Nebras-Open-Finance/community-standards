@@ -22,7 +22,7 @@ Without this:
 - If the server's default trust store is used (operating system CA bundle, public Web PKI roots), the Trust Framework roots are not present and **every** API Hub call is rejected at the handshake.
 
 ::: warning This is the LFI's responsibility
-The API Hub does not terminate TLS on the LFI's behalf for the API Hub → Ozone Connect leg. Ozone Connect is the party that validates the C4 client certificate. LFIs sometimes assume the Hub handles all mTLS — it does not.
+The API Hub does not terminate TLS on the LFI's behalf for the API Hub → Ozone Connect leg. Ozone Connect is the party that validates the API Hub's C4 client certificate. LFIs sometimes assume the Hub handles all mTLS — it does not.
 :::
 
 
@@ -33,7 +33,7 @@ Each API Hub environment pairs with a distinct Trust Framework PKI:
 - **Production** API Hub → **Production** Trust Framework
 - **Pre-production** API Hub → **Sandbox** Trust Framework
 
-To validate the C4 client certificate, the LFI MUST configure its Ozone Connect server with the Root and Issuing CA of the Trust Framework that pairs with the API Hub environment in use.
+To validate the API Hub's C4 client certificate, the LFI MUST configure its Ozone Connect server with the Root and Issuing CA of the Trust Framework that pairs with the API Hub environment in use.
 
 ### Production
 
@@ -131,11 +131,11 @@ The Trust Framework roots are **private** — they are not present in operating-
 
 Once the bundle is in place, the API Hub's C4 certificate will validate on every inbound call. The handshake will now also validate **any** other Trust Framework participant's certificate — which is what section 3b addresses.
 
-### 3b. Pin to the C4 client
+### 3b. Pin to the API Hub's C4 client
 
-Trusting the Trust Framework CA means that every TPP, every other LFI, and every client certificate issued by the same Issuing CA satisfies the handshake. To ensure that only the API Hub — and specifically your own API Hub instance's egress — can reach your Ozone Connect endpoints, the LFI SHOULD additionally pin the connection to the C4 client's subject `OU`.
+Trusting the Trust Framework CA means that every TPP, every other LFI, and every client certificate issued by the same Issuing CA satisfies the handshake. To ensure that only the API Hub — and specifically your own API Hub instance's egress — can reach your Ozone Connect endpoints, the LFI SHOULD additionally pin the connection to the API Hub's C4 client subject `OU`.
 
-The subject of the C4 certificate contains the Ozone organisation's identifier in its `OU`. Ozone provides this identifier as part of [environment-specific onboarding](./environment-specific/#c4-transport-client-certificate) — the JWKS URL and KID for C4 are supplied by Ozone on the Service Desk ticket; the OU of the certificate in that keystore is the value to pin against.
+The subject of the C4 certificate contains the Ozone organisation's identifier in its `OU`. Ozone provides this identifier as part of [environment-specific onboarding](../environment-specific/#c4-transport-client-certificate) — the JWKS URL and KID for C4 are supplied by Ozone on the Service Desk ticket; the OU of the certificate in that keystore is the value to pin against.
 
 Most reverse proxies expose the client-certificate subject as a variable during the request — for example, nginx exposes `$ssl_client_s_dn`. The LFI rejects any request whose client certificate subject `OU` does not equal the documented Ozone organisation OU.
 
@@ -144,7 +144,7 @@ Pinning by the C4 leaf certificate's SHA-256 fingerprint is **not** required. Th
 
 ## 4. Verification
 
-Ozone verifies both layers of your inbound mTLS configuration end-to-end as part of [Connectivity Validation](./environment-specific/#connectivity-validation). The API Hub is only considered set up for an environment once **both** of the following are exercised successfully:
+Ozone verifies both layers of your inbound mTLS configuration end-to-end as part of [Connectivity Validation](../environment-specific/#connectivity-validation). The API Hub is only considered set up for an environment once **both** of the following are exercised successfully:
 
 1. The CA-trust layer rejects any connection that does not present a Trust Framework-issued client certificate (section 3a).
 2. The pinning layer rejects any Trust Framework-issued certificate whose subject OU does not match the API Hub's C4 organisation OU, and accepts the legitimate C4 certificate (section 3b).

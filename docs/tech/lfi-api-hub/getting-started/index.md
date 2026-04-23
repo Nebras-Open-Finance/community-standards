@@ -58,7 +58,7 @@ The UAE Open Finance [API Hub](../v2.1/api-hub/) (operated by Nebras, with vendo
 **What to do**
 - Complete the [Prerequisites Questionnaire](../v2.1/api-hub/onboarding/prerequisites).
 - Set up [Connectivity & Certificates](../v2.1/api-hub/connectivity/).
-- Configure [Application Layer Authentication](../v2.1/api-hub/onboarding/application-layer-auth), including [JWT Auth](../v2.1/api-hub/onboarding/jwt-auth).
+- Configure [Application Layer Authentication](../v2.1/api-hub/onboarding/application-layer-auth), then implement the [mTLS and JWT Auth layers](../v2.1/api-hub/onboarding/configuring-authentication/mtls-server).
 - Apply the [Environment-Specific configuration](../v2.1/api-hub/onboarding/environment-specific/) for pre-production (Ozone Connect base URL, authorization endpoint, certificate walkthroughs).
 
 **Done when**
