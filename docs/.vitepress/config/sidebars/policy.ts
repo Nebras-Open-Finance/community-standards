@@ -6,6 +6,9 @@ export const policySidebar: DefaultTheme.SidebarItem[] = [
   { text: 'Version Management', link: '/policy/version-management' },
   { text: 'Changes to Published Documentation', link: '/policy/changes-to-published-content' },
   { text: 'Major Version Deprecation', link: '/policy/lfi-deprecation' },
+  { text: 'Ozone Connect Availability', link: '/policy/ozone-connect-availability' },
+  { text: 'Ozone Connect Response Time', link: '/policy/ozone-connect-response-time' },
+  { text: 'Ozone Connect Data Quality', link: '/policy/ozone-connect-data-quality' },
 ]
 
 export const processesSidebar: DefaultTheme.SidebarItem[] = [

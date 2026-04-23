@@ -242,7 +242,13 @@ export default defineConfig({
   themeConfig: {
     siteTitle: false,
     nav: [
-      { text: 'Policies', link: '/policy' },
+      {
+        text: 'Program',
+        items: [
+          { text: 'Policies', link: '/policy' },
+          { text: 'Document Repository', link: '/doc-repository/' },
+        ],
+      },
       {
         text: 'Developer Docs',
         items: [

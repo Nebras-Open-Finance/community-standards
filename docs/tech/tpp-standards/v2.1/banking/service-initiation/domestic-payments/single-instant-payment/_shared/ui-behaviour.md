@@ -5,8 +5,6 @@
 
 The presence or absence of `Initiation.DebtorAccount` in `domestic_payment_pii` determines whether the user selects their account at the LFI or if it is pre-selected by the TPP.
 
-<DebtorAccountSelectionTable />
-
 ::: tip
 Passing a `DebtorAccount` reduces friction for users who have already selected their account within the TPP's own interface, but removes the user's ability to choose a different account at the LFI.
 :::

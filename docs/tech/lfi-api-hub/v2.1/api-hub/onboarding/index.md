@@ -65,7 +65,7 @@ You MUST select an application layer authentication method to secure communicati
 - Client Credentials Grant
 - **JWT Auth** (recommended)
 
-See [Application Layer Authentication](./application-layer-auth) for a comparison of methods, and [JWT Auth — Technical Detail](./jwt-auth) for implementation guidance if you select JWT Auth.
+See [Application Layer Authentication](./application-layer-auth) for a comparison of methods, and [Configuring Authentication](./configuring-authentication/mtls-server) for implementation guidance on the mTLS and JWT Auth layers.
 
 ### 3. Environment-Specific Configuration
 

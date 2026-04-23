@@ -26,8 +26,9 @@
               open source. <strong>Not official.</strong>
             </p>
             <div class="ed-hero__cta-row">
-              <a class="ed-btn ed-btn--ink" href="/tech/tpp-standards/">Developer Docs &rarr;</a>
-              <a class="ed-btn ed-btn--ghost" href="/metrics">Live Metrics</a>
+              <a class="ed-btn ed-btn--ink" href="/tech/tpp-standards/">Open Finance Standards</a>
+              <a class="ed-btn ed-btn--ink" href="/tech/lfi-api-hub/">LFI Integration Guide</a>
+              <a class="ed-btn ed-btn--ghost" href="/metrics">Metrics</a>
             </div>
           </div>
 
