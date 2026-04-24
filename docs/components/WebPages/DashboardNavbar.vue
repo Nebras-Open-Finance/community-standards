@@ -29,7 +29,7 @@ defineEmits(['toggle-sidebar'])
 .db-navbar {
   position: sticky;
   top: 4.25rem;
-  left: 240px;
+  margin-left: 240px;
   z-index: 30;
   display: flex;
   align-items: center;
@@ -104,7 +104,7 @@ defineEmits(['toggle-sidebar'])
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
-    left: 0;
+    margin-left: 0;
   }
   .db-navbar__menu-btn { display: flex; }
   .db-navbar__right { width: 100%; justify-content: flex-start; }

@@ -3,5 +3,5 @@ layout: false
 ---
 
 <div class="home-page-wrapper">
-  <APIHubReleaseNotesPage year="2026" />
+  <ErratasPage version="v2.1" />
 </div>

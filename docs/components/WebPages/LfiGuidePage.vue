@@ -14,7 +14,7 @@
         </div>
         <h1 class="ed-lfi-hero__title">
           LFI &mdash; Integration Guide
-          <span class="ed-lfi-hero__badge">v2.1</span>
+          <span class="ed-lfi-hero__badge">{{ selectedVersion }}</span>
         </h1>
         <p class="ed-lfi-hero__sub">
           The implementation guide for <strong>Licensed Financial Institutions (LFIs)</strong>
@@ -229,8 +229,12 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import PageHeader from './Components/PageHeader.vue'
 import PageFooter from './Components/PageFooter.vue'
+import { useSelectedVersion } from '../Composables/useSelectedVersion'
+
+const { selectedVersion } = useSelectedVersion()
 
 const pillars = [
   {
@@ -250,7 +254,7 @@ const pillars = [
   },
 ]
 
-const sections = [
+const sections = computed(() => [
   {
     category: 'Identity',
     color: 'var(--at-gold)',
@@ -263,7 +267,7 @@ const sections = [
     category: 'Hub',
     color: 'var(--at-teal)',
     title: 'API Hub',
-    url: '/tech/lfi-api-hub/v2.1/api-hub/',
+    url: `/tech/lfi-api-hub/${selectedVersion.value}/api-hub/`,
     desc: 'Everything the Hub provides to your LFI: connectivity and mTLS setup, application-layer authentication, environment-specific configuration, the Admin Portal for TPP management and operational reporting, the Headless Heimdall auth-server API used during the consent journey, and the Consent Manager API for reading and managing consents.',
     tags: ['Onboarding', 'Headless Heimdall', 'Consent Manager', 'Admin Portal'],
   },
@@ -271,33 +275,33 @@ const sections = [
     category: 'Ozone Connect',
     color: 'var(--at-navy-deep)',
     title: 'Ozone Connect - Banking',
-    url: '/tech/lfi-api-hub/v2.1/banking/',
+    url: `/tech/lfi-api-hub/${selectedVersion.value}/banking/`,
     desc: 'The Ozone Connect APIs your LFI implements for the Hub to call on behalf of authorised TPPs.',
     subItems: [
       {
         label: 'Data Sharing',
         hint: 'accounts, balances, transactions, beneficiaries, standing orders, statements, customer data (BDSP, consented)',
-        url: '/tech/lfi-api-hub/v2.1/banking/data-sharing/',
+        url: `/tech/lfi-api-hub/${selectedVersion.value}/banking/data-sharing/`,
       },
       {
         label: 'Payments (Service Initiation)',
         hint: 'single instant &amp; multi-payments, refunds, PII, multi-authorization (BSIP, consented)',
-        url: '/tech/lfi-api-hub/v2.1/banking/service-initiation/',
+        url: `/tech/lfi-api-hub/${selectedVersion.value}/banking/service-initiation/`,
       },
       {
         label: 'Confirmation of Payee',
         hint: 'pre-payment payee verification (BSIP, client credentials)',
-        url: '/tech/lfi-api-hub/v2.1/banking/confirmation-of-payee/',
+        url: `/tech/lfi-api-hub/${selectedVersion.value}/banking/confirmation-of-payee/`,
       },
       {
         label: 'Products &amp; Leads',
         hint: 'open product catalogue and lead capture (BDSP, client credentials)',
-        url: '/tech/lfi-api-hub/v2.1/banking/products-and-leads/',
+        url: `/tech/lfi-api-hub/${selectedVersion.value}/banking/products-and-leads/`,
       },
       {
         label: 'ATMs',
         hint: 'ATM location data (BDSP, client credentials)',
-        url: '/tech/lfi-api-hub/v2.1/banking/atms/',
+        url: `/tech/lfi-api-hub/${selectedVersion.value}/banking/atms/`,
       },
     ],
   },
@@ -305,7 +309,7 @@ const sections = [
     category: 'Ozone Connect',
     color: 'var(--at-navy-deep)',
     title: 'Ozone Connect - Consent Events',
-    url: '/tech/lfi-api-hub/v2.1/consent-events/',
+    url: `/tech/lfi-api-hub/${selectedVersion.value}/consent-events/`,
     desc: 'The events-and-actions API your LFI implements so the Hub can validate consents at creation time and notify your systems when consents are created, modified, or revoked. This is the LFI\'s hook into the consent lifecycle owned by the Hub.',
     tags: ['Validate', 'Event dispatch'],
   },
@@ -313,7 +317,7 @@ const sections = [
     category: 'PSU Journey',
     color: 'var(--at-blue-deep)',
     title: 'Consent Journey',
-    url: '/tech/lfi-api-hub/v2.1/consent-journey/api-guide',
+    url: `/tech/lfi-api-hub/${selectedVersion.value}/consent-journey/api-guide`,
     desc: 'The customer journey at the LFI between PAR and token issuance: authentication (including Strong Customer Authentication), authorization, and the Headless Heimdall handoff back to the Hub.',
     tags: ['Authentication', 'SCA', 'Authorization'],
   },
@@ -321,7 +325,7 @@ const sections = [
     category: 'PSU Journey',
     color: 'var(--at-blue-deep)',
     title: 'Consent Management Interface',
-    url: '/tech/lfi-api-hub/v2.1/consent-management-interface/',
+    url: `/tech/lfi-api-hub/${selectedVersion.value}/consent-management-interface/`,
     desc: 'Requirements, user experience, and API guide for the consent management surface every LFI must expose to its customers &mdash; the place where PSUs view and revoke active Open Finance consents.',
     tags: ['Requirements', 'UX', 'API guide'],
   },
@@ -333,7 +337,7 @@ const sections = [
     desc: 'The certification evidence required before going live &mdash; functional, user experience, performance, and security validation &mdash; and the production live-proving steps (attestation, self-testing, TPP buddying) that follow.',
     tags: ['Functional', 'UX', 'Performance', 'Security', 'TPP buddying'],
   },
-]
+])
 
 function withAlpha(cssVar, alpha) {
   // Best-effort alpha overlay using color-mix — falls back to a subtle tint.

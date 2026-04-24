@@ -1,10 +1,7 @@
 // Single source of truth for errata items.
 // - The ErrataUpdateBanner component uses `affectedPaths` to decide whether to show a banner.
-// - The ErrataSections component renders the body of each errata page from this file.
-//
-// To add a new errata: append an entry below and (if the errata page doesn't yet exist)
-// create a thin markdown shim at docs/tech/release-notes-and-erratas/erratas/{version}/{errataId}.md
-// that just mounts <ErrataSections errata-id="..." />.
+// - ErratasPage renders every section for a version, grouped by errataId, with anchors
+//   produced by anchorFor(). Deep-links go to /erratas/{version}/#{anchor}.
 
 export interface ErrataEndpoint {
   label: string           // e.g. "GET /account-access-consents"
@@ -463,11 +460,11 @@ function normalise(path: string): string {
 }
 
 export function anchorFor(section: ErrataSection): string {
-  return `section-${section.number}`
+  return `${section.errataId}-section-${section.number}`
 }
 
 export function errataPageUrl(section: ErrataSection): string {
-  return `/tech/release-notes-and-erratas/erratas/${section.version}/${section.errataId}#${anchorFor(section)}`
+  return `/tech/release-notes-and-erratas/erratas/${section.version}/#${anchorFor(section)}`
 }
 
 export function sectionsFor(errataId: string): ErrataSection[] {

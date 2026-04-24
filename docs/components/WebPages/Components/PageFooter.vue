@@ -40,7 +40,7 @@
 
     <div class="ed-footer__base">
       <span>&copy; {{ year }} &middot; Community project &middot; Not an official CBUAE publication</span>
-      <span class="ed-footer__base-mono">v{{ CURRENT_VERSION }}</span>
+      <span class="ed-footer__base-mono">Author Thomas Catchpole</span>
     </div>
   </footer>
 </template>

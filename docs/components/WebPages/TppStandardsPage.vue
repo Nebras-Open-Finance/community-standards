@@ -14,7 +14,7 @@
         </div>
         <h1 class="ed-tpp-hero__title">
           TPP Standards
-          <span class="ed-tpp-hero__badge">v2.1</span>
+          <span class="ed-tpp-hero__badge">{{ selectedVersion }}</span>
         </h1>
         <p class="ed-tpp-hero__sub">
           The Open Finance Standards in the United Arab Emirates form the technical and operational
@@ -53,7 +53,7 @@
           <h2 class="ed-tpp-sections__title">Sections</h2>
           <p class="ed-tpp-sections__lede">
             Work through each area of the TPP integration. Start with
-            <a href="/tech/tpp-standards/v2.1/getting-started/" class="ed-tpp-sections__lede-link">
+            <a :href="`/tech/tpp-standards/${selectedVersion}/getting-started/`" class="ed-tpp-sections__lede-link">
               Getting Started
             </a>
             to register your sandbox client and generate a ready-to-use Postman collection,
@@ -147,15 +147,19 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import PageHeader from './Components/PageHeader.vue'
 import PageFooter from './Components/PageFooter.vue'
+import { useSelectedVersion } from '../Composables/useSelectedVersion'
 
-const sections = [
+const { selectedVersion } = useSelectedVersion()
+
+const sections = computed(() => [
   {
     category: 'Start here',
     color: 'var(--at-teal)',
     title: 'Getting Started',
-    url: '/tech/tpp-standards/v2.1/getting-started/',
+    url: `/tech/tpp-standards/${selectedVersion.value}/getting-started/`,
     desc: 'Enter your sandbox client details and generate a ready-to-use Postman collection so you can call the APIs end-to-end in minutes. Includes the Sandbox Quickstart, the Postman Guide, and the Sandbox Model Bank reference data.',
     tags: ['Sandbox', 'Postman', 'Model Bank'],
   },
@@ -187,7 +191,7 @@ const sections = [
     category: 'Consent',
     color: 'var(--at-navy)',
     title: 'Consent',
-    url: '/tech/tpp-standards/v2.1/consent/',
+    url: `/tech/tpp-standards/${selectedVersion.value}/consent/`,
     desc: 'Create, manage, and revoke customer consents through the API Hub. Covers PAR, account-access and payment consents, the Consent Management Interface your customers see, and the patch flow for consent state transitions.',
     tags: ['PAR', 'Account access', 'Payment consents', 'CMI'],
   },
@@ -195,33 +199,33 @@ const sections = [
     category: 'Core APIs',
     color: 'var(--at-navy-deep)',
     title: 'Banking',
-    url: '/tech/tpp-standards/v2.1/banking',
+    url: `/tech/tpp-standards/${selectedVersion.value}/banking/`,
     desc: 'The banking APIs the API Hub exposes to TPPs on behalf of authorised customers.',
     subItems: [
       {
         label: 'Data Sharing',
         hint: 'accounts, balances, transactions, beneficiaries, statements, parties',
-        url: '/tech/tpp-standards/v2.1/banking/data-sharing/',
+        url: `/tech/tpp-standards/${selectedVersion.value}/banking/data-sharing/`,
       },
       {
         label: 'Payments (Service Initiation)',
         hint: 'single instant &amp; multi-payments, refunds, PII, multi-authorization',
-        url: '/tech/tpp-standards/v2.1/banking/service-initiation/',
+        url: `/tech/tpp-standards/${selectedVersion.value}/banking/service-initiation/`,
       },
       {
         label: 'Confirmation of Payee',
         hint: 'pre-payment payee verification',
-        url: '/tech/tpp-standards/v2.1/banking/confirmation-of-payee/',
+        url: `/tech/tpp-standards/${selectedVersion.value}/banking/confirmation-of-payee/`,
       },
       {
         label: 'Products and Leads',
         hint: 'open product catalogue, lead capture',
-        url: '/tech/tpp-standards/v2.1/banking/products-leads/',
+        url: `/tech/tpp-standards/${selectedVersion.value}/banking/products-leads/`,
       },
       {
         label: 'ATMs',
         hint: 'ATM location data',
-        url: '/tech/tpp-standards/v2.1/banking/atms/',
+        url: `/tech/tpp-standards/${selectedVersion.value}/banking/atms/`,
       },
     ],
   },
@@ -229,7 +233,7 @@ const sections = [
     category: 'Events',
     color: 'var(--at-teal-deep)',
     title: 'Event Notifications &amp; Webhooks',
-    url: '/tech/tpp-standards/v2.1/webhooks/',
+    url: `/tech/tpp-standards/${selectedVersion.value}/webhooks/`,
     desc: 'Receive real-time notifications from the API Hub when consent or payment state changes. Covers the webhook payload contracts, delivery guarantees, and the validation your endpoint must perform.',
     tags: ['Consent status', 'Payment status'],
   },
@@ -241,7 +245,7 @@ const sections = [
     desc: 'The required certifications before going live &mdash; Trust Framework checklist, functional evidence, user experience evidence, FAPI conformance, and security validation &mdash; followed by the production live-proving step.',
     tags: ['Functional', 'UX', 'FAPI', 'Security', 'Live proving'],
   },
-]
+])
 
 function withAlpha(cssVar, alpha) {
   return `color-mix(in srgb, ${cssVar} ${Math.round(alpha * 100)}%, transparent)`

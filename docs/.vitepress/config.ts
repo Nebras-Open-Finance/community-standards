@@ -5,7 +5,6 @@ import { tppSidebar } from './config/sidebars/tpp'
 import { lfiSidebar } from './config/sidebars/lfi'
 import { policySidebar, processesSidebar } from './config/sidebars/policy'
 import { kbSidebar } from './config/sidebars/kb'
-import { releaseNotesAndErratasSidebar } from './config/sidebars/release-notes-and-erratas'
 import { apiSpecsSidebar } from './config/sidebars/api-specs'
 import { docRepositorySidebar } from './config/sidebars/doc-repository'
 import { CURRENT_VERSION } from './version'
@@ -274,7 +273,6 @@ export default defineConfig({
     sidebar: {
       '/tech/tpp-standards/': tppSidebar,
       '/tech/lfi-api-hub/': lfiSidebar,
-      '/tech/release-notes-and-erratas/': releaseNotesAndErratasSidebar,
       [`/tech/api-specs/${CURRENT_VERSION}/`]: apiSpecsSidebar,
       '/tech/': [
         { text: 'TPP - Open Finance Standards', link: '/tech/tpp-standards/' },
