@@ -59,8 +59,7 @@ function select(id) {
   padding-top: 4.6rem;
   width: 240px;
   flex-shrink: 0;
-  background: rgba(0, 0, 0, 0.05);
-  color: var(--at-bg-cream);
+  background: var(--at-bg-paper);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -69,7 +68,7 @@ function select(id) {
   overflow-y: auto;
   transition: width 0.2s ease;
   z-index: 10;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid var(--at-grid-line);
 }
 
 /* ── Nav ───────────────────────────────────────────────────────────────── */
@@ -78,7 +77,7 @@ function select(id) {
 .db-sidebar__group { padding: 0 0 0.25rem; }
 
 .db-sidebar__group + .db-sidebar__group {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--at-grid-line);
   margin-top: 0.25rem;
   padding-top: 0.75rem;
 }
@@ -94,7 +93,7 @@ function select(id) {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--at-mute);
 }
 
 .db-sidebar__group-icon { display: flex; align-items: center; color: inherit; }
@@ -117,21 +116,21 @@ function select(id) {
   background: none;
   border: none;
   cursor: pointer;
-  color: rgba(0, 0, 0, 0.7);
+  color: var(--at-mute-2);
   border-radius: 0;
   transition: color 0.15s, background 0.15s;
   position: relative;
 }
 
 .db-sidebar__item:hover {
-  color: rgba(0, 0, 0, 0.9);
-  background: rgba(0, 0, 0, 0.04);
+  color: var(--at-navy-deep);
+  background: color-mix(in srgb, var(--at-teal) 8%, transparent);
 }
 
 .db-sidebar__item-dot {
   width: 4px;
   height: 4px;
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--at-grid-line-2);
   flex-shrink: 0;
   transition: background 0.15s, transform 0.15s;
 }

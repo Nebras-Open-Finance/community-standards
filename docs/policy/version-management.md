@@ -1,6 +1,7 @@
 ---
 next: false
 prev: false
+sidebar: false
 readTime: "5 min"
 updated: "2026-04-21"
 ---
