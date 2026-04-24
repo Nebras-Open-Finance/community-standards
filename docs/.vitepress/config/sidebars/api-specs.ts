@@ -174,6 +174,15 @@ export const apiSpecsSidebar: DefaultTheme.SidebarItem[] = [
         link: `${BASE}/ozone-connect/`,
         items: [
             {
+                text: 'Health Check',
+                collapsed: true,
+                items: [
+                    apiRef('GET', '/hello',      `${BASE}/ozone-connect/health-check/hello`),
+                    apiRef('GET', '/hello-mtls', `${BASE}/ozone-connect/health-check/hello-mtls`),
+                    apiRef('GET', '/echo-cert',  `${BASE}/ozone-connect/health-check/echo-cert`),
+                ],
+            },
+            {
                 text: 'Consent Events',
                 collapsed: true,
                 items: [

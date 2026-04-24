@@ -21,7 +21,7 @@ Where `{lfiCode}` is the LFI Code assigned during [API Hub onboarding](/tech/lfi
 
 All requests to the Consent Manager MUST be made using the **C3-hh-cm-client** application registered in the Trust Framework. This is the same client used to call the [Headless Heimdall Auth Server](/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/).
 
-Requests MUST be made over **mutual TLS** using the **C3** transport client certificate. If your API Hub is configured for [JWT Auth](/tech/lfi-api-hub/v2.1/api-hub/onboarding/jwt-auth), you MUST also include a signed JWT in the `Authorization` header, signed with the **Sig4** signing key.
+Requests MUST be made over **mutual TLS** using the **C3** transport client certificate. If your API Hub is configured for [JWT Auth](/tech/lfi-api-hub/v2.1/api-hub/onboarding/configuring-authentication/jwt-client), you MUST also include a signed JWT in the `Authorization` header, signed with the **Sig4** signing key.
 
 See [Connectivity & Certificates](/tech/lfi-api-hub/v2.1/api-hub/connectivity/) for the full certificate mapping, and [Creating the C3-hh-cm-client Application](/tech/lfi-api-hub/trust-framework/creating-c3-application) for setup instructions.
 

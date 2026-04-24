@@ -58,6 +58,9 @@ function parseFrontmatterField(content: string, field: string): string {
 const ORDER = [
   'version-management',
   'lfi-deprecation',
+  'ozone-connect-availability',
+  'ozone-connect-response-time',
+  'ozone-connect-data-quality',
   'changes-to-published-content',
   'secure-management',
   'open-license-contribution-agreement',

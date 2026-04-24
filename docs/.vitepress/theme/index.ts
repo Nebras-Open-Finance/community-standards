@@ -3,6 +3,7 @@ import '../../components/WebPages/editorial.css'
 import DefaultTheme from 'vitepress/theme'
 import Layout from './Layout.vue'
 import { resetSharedState } from '../../components/Composables/useSharedState.ts'
+import { resetSelectedVersion } from '../../components/Composables/useSelectedVersion.ts'
 
 // Pages
 import HomePage from '../../components/WebPages/HomePage.vue'
@@ -13,8 +14,12 @@ import DocumentRepoPage from '../../components/WebPages/DocumentRepoPage.vue'
 import PolicyPage from '../../components/WebPages/PolicyPage.vue'
 import LfiGuidePage from '../../components/WebPages/LfiGuidePage.vue'
 import TppStandardsPage from '../../components/WebPages/TppStandardsPage.vue'
+import TechIndexPage from '../../components/WebPages/TechIndexPage.vue'
 import ApiSpecsPage from '../../components/WebPages/ApiSpecsPage.vue'
 import ReleaseNotesPage from '../../components/WebPages/ReleaseNotesPage.vue'
+import APIHubReleaseNotesPage from '../../components/WebPages/APIHubReleaseNotesPage.vue'
+import TrustFrameworkReleaseNotesPage from '../../components/WebPages/TrustFrameworkReleaseNotesPage.vue'
+import ErratasPage from '../../components/WebPages/ErratasPage.vue'
 
 //components
 import ImageViewer from '../../components/ImageViewer.vue'
@@ -28,8 +33,6 @@ import LiveAPIs from '../../components/LiveAPIs.vue'
 import LiveTPPs from '../../components/LiveTPPs.vue'
 import EditableJson from '../../components/EditableJson.vue'
 import ErrataNotice from '../../components/ErrataNotice.vue'
-import ErrataSections from '../../components/ErrataSections.vue'
-import OzoneConnectCompatibility from '../../components/OzoneConnectCompatibility.vue'
 import ConsentAuthLayout from '../../components/ConsentAuthLayout.vue'
 import DocumentRepoDisplay from '../../components/DocumentRepoDisplay.vue'
 
@@ -103,7 +106,11 @@ export default {
   Layout,
   enhanceApp({ app, router }) {
     if (router) {
-      router.onBeforeRouteChange = () => {
+      router.onBeforeRouteChange = (to: string) => {
+        const from = router.route?.path ?? ''
+        if (from.startsWith('/tech/') && !to.startsWith('/tech/')) {
+          resetSelectedVersion()
+        }
         resetSharedState()
       }
     }
@@ -117,8 +124,12 @@ export default {
     app.component('PolicyPage', PolicyPage)
     app.component('LfiGuidePage', LfiGuidePage)
     app.component('TppStandardsPage', TppStandardsPage)
+    app.component('TechIndexPage', TechIndexPage)
     app.component('ApiSpecsPage', ApiSpecsPage)
     app.component('ReleaseNotesPage', ReleaseNotesPage)
+    app.component('APIHubReleaseNotesPage', APIHubReleaseNotesPage)
+    app.component('TrustFrameworkReleaseNotesPage', TrustFrameworkReleaseNotesPage)
+    app.component('ErratasPage', ErratasPage)
 
     //components
     app.component('ImageViewer', ImageViewer)
@@ -132,8 +143,6 @@ export default {
     app.component('LiveTPPs', LiveTPPs)
     app.component('EditableJson', EditableJson)
     app.component('ErrataNotice', ErrataNotice)
-    app.component('ErrataSections', ErrataSections)
-    app.component('OzoneConnectCompatibility', OzoneConnectCompatibility)
     app.component('TPPPostmanScriptBuilder', TPPPostmanScriptBuilder)
     app.component('ConsentAuthLayout', ConsentAuthLayout)
     app.component('OnboardingOrganisationForm', OnboardingOrganisationForm)

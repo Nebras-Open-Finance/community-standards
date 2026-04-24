@@ -98,7 +98,7 @@
           <h2 class="ed-spec-sections__title">Sections</h2>
           <p class="ed-spec-sections__lede">
             Specifications are organised by the audience that consumes them. The current
-            version across all three categories is <strong>v2.1</strong>.
+            version across all three categories is <strong>{{ selectedVersion }}</strong>.
           </p>
         </div>
 
@@ -181,9 +181,9 @@
             <h3 class="ed-spec-ref__tile-title">Versioning &amp; errata</h3>
             <p class="ed-spec-ref__tile-body">
               Specifications follow a <code>vMAJOR.MINOR</code> scheme. The same logical release
-              spans all three categories &mdash; <code>dist/api-hub/v2.1.x/</code>,
-              <code>dist/ozone-connect/v2.1.x/</code>, and <code>dist/standards/v2.1/</code>.
-              Errata releases (for example <code>dist/standards/v2.1-errata1/</code>) contain
+              spans all three categories &mdash; <code>dist/api-hub/{{ selectedVersion }}.x/</code>,
+              <code>dist/ozone-connect/{{ selectedVersion }}.x/</code>, and <code>dist/standards/{{ selectedVersion }}/</code>.
+              Errata releases (for example <code>dist/standards/{{ selectedVersion }}-errata1/</code>) contain
               targeted corrections; <strong>where an errata folder exists, the files inside it
               supersede the corresponding base version</strong>.
             </p>
@@ -215,8 +215,12 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import PageHeader from './Components/PageHeader.vue'
 import PageFooter from './Components/PageFooter.vue'
+import { useSelectedVersion } from '../Composables/useSelectedVersion'
+
+const { selectedVersion } = useSelectedVersion()
 
 const repoPaths = [
   { name: 'dist/standards/',     desc: 'APIs the API Hub exposes <strong>to TPPs</strong>.' },
@@ -224,12 +228,12 @@ const repoPaths = [
   { name: 'dist/ozone-connect/', desc: 'APIs <strong>LFIs must implement</strong> for the API Hub to call.' },
 ]
 
-const sections = [
+const sections = computed(() => [
   {
     category: 'TPP-facing',
     color: 'var(--at-gold)',
     title: 'Open Finance Standards',
-    url: '/tech/api-specs/v2.1/tpp/',
+    url: `/tech/api-specs/${selectedVersion.value}/tpp/`,
     desc: 'The APIs the API Hub exposes to TPPs. TPPs use these endpoints to access financial data and initiate services on behalf of their customers &mdash; Trust Framework discovery, registration, token exchange, consent, bank data sharing, service initiation, Confirmation of Payee, ATMs, and event notifications.',
     flowFrom: 'TPP',
     flowTo: 'API Hub',
@@ -240,7 +244,7 @@ const sections = [
     category: 'LFI-facing (Hub)',
     color: 'var(--at-teal)',
     title: 'API Hub',
-    url: '/tech/api-specs/v2.1/api-hub/',
+    url: `/tech/api-specs/${selectedVersion.value}/api-hub/`,
     desc: 'The APIs the API Hub exposes to LFIs. An LFI calls these endpoints during the authorization journey &mdash; notably Headless Heimdall (for delegating PSU authentication) and the Consent Manager (for looking up and updating consents).',
     flowFrom: 'LFI',
     flowTo: 'API Hub',
@@ -251,14 +255,14 @@ const sections = [
     category: 'LFI-implemented',
     color: 'var(--at-navy-deep)',
     title: 'Ozone Connect',
-    url: '/tech/api-specs/v2.1/ozone-connect/',
+    url: `/tech/api-specs/${selectedVersion.value}/ozone-connect/`,
     desc: 'The APIs LFIs must implement for the API Hub to call. When a TPP makes a valid request to the API Hub, the Hub proxies that request to the relevant LFI using these endpoints &mdash; consent events, data sharing, service initiation, Confirmation of Payee, products &amp; leads, and ATMs.',
     flowFrom: 'API Hub',
     flowTo: 'LFI',
     distPath: 'dist/ozone-connect/',
     audience: 'LFI engineering',
   },
-]
+])
 
 function withAlpha(cssVar, alpha) {
   return `color-mix(in srgb, ${cssVar} ${Math.round(alpha * 100)}%, transparent)`

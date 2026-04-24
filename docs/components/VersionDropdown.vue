@@ -5,9 +5,10 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 const route = useRoute()
 const router = useRouter()
 
-import { VERSIONS, CURRENT_VERSION } from '../.vitepress/version'
+import { VERSIONS } from '../.vitepress/version'
+import { useSelectedVersion } from './Composables/useSelectedVersion'
 
-const currentVersion = CURRENT_VERSION
+const { selectedVersion, setSelectedVersion } = useSelectedVersion()
 
 const showVersion = computed(() =>
   route.path.startsWith('/tech/') || route.path.startsWith('/tech/lfi-api-hub/')
@@ -18,9 +19,13 @@ const dropdownEl = ref<HTMLElement | null>(null)
 
 function selectVersion(v: string) {
   isOpen.value = false
-  if (!currentVersion || v === currentVersion) return
-  const newPath = route.path.replace(`/${currentVersion}/`, `/${v}/`)
-  router.go(newPath)
+  const oldVersion = selectedVersion.value
+  setSelectedVersion(v)
+  if (!oldVersion || v === oldVersion) return
+  if (route.path.includes(`/${oldVersion}/`)) {
+    const newPath = route.path.replace(`/${oldVersion}/`, `/${v}/`)
+    router.go(newPath)
+  }
 }
 
 function handleOutsideClick(e: MouseEvent) {
@@ -36,7 +41,7 @@ onUnmounted(() => document.removeEventListener('click', handleOutsideClick, true
 <template>
   <div v-if="showVersion" ref="dropdownEl" class="vd-wrap" :class="{ open: isOpen }">
     <button class="vd-btn" :aria-expanded="isOpen" @click.stop="isOpen = !isOpen">
-      {{ currentVersion }}
+      {{ selectedVersion }}
       <svg class="vd-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12"
         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
         stroke-linecap="round" stroke-linejoin="round">
@@ -50,11 +55,11 @@ onUnmounted(() => document.removeEventListener('click', handleOutsideClick, true
         :key="v"
         role="option"
         class="vd-item"
-        :class="{ active: v === currentVersion }"
+        :class="{ active: v === selectedVersion }"
         @click="selectVersion(v)"
       >
         {{ v }}
-        <svg v-if="v === currentVersion" class="vd-check" xmlns="http://www.w3.org/2000/svg"
+        <svg v-if="v === selectedVersion" class="vd-check" xmlns="http://www.w3.org/2000/svg"
           width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="20 6 9 17 4 12" />

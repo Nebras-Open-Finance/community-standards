@@ -84,7 +84,14 @@ The API Hub is the **single source of truth** for consent state. Your local copy
 Your LFI MUST return `204 No Content` to acknowledge receipt.
 
 ::: info No retry, no rollback
-If your endpoint returns an error (e.g. `400` or `500`), the API Hub will **not** retry the notification and will **not** roll back the consent change. The consent state in the Hub proceeds regardless. If your system misses an event, you can retrieve the current consent state from the [Consent Manager API](/tech/lfi-api-hub/v2.1/api-hub/consent-manager/).
+If your endpoint returns an error (e.g. `400` or `500`), the API Hub will **not** retry the notification and will **not** roll back the consent change. The consent state in the Hub proceeds regardless.
+
+Because the Hub is the source of truth and your local copy is a cache, any missed event can be reconciled by reading from the Consent Manager:
+
+- **Handler received the payload but failed to process it** — you have the `consentId`, so call [`GET /consents/{consentId}`](/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents-consentId) to fetch the latest state.
+- **Your system was offline and never received the event** — reconcile lazily at PSU login by calling [`GET /psu/{userId}/consents`](/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/psu-userId-consents) before rendering the CMI.
+
+LFIs that do not maintain a local consent cache do not need to reconcile — read from the Consent Manager on demand.
 :::
 
 ## API Reference

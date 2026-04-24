@@ -95,19 +95,21 @@ Net effect: the LFI's own certificate maintenance burden does not grow as additi
 
 Because the LFI uses a single shared Ozone Connect deployment, incoming requests from the multiple Hubs arrive at the same set of endpoints. The Ozone Connect layer must identify which Hub the request came from and route internally to the appropriate downstream core (retail core vs SME core, for example).
 
-The API Hub tells the LFI which Hub the request originated from via the **`o3-provider-id`** request header. Each Hub is configured with a distinct `o3-provider-id` — an LFI-chosen code agreed with Nebras during onboarding, typically formed by concatenating the LFI's short code and the segment (e.g. `{lfi}retail` and `{lfi}sme` as a single lowercase token).
+The API Hub tells the LFI which Hub the request originated from via the **`o3-provider-id`** request header. The value sent on every request **is the LFI Code** for the Hub that originated it — the same code that forms part of that Hub's TPP-facing and LFI-facing hostnames (see [Prerequisites — LFI Code](/tech/lfi-api-hub/v2.1/api-hub/onboarding/prerequisites#lfi-code)). Because each segment Hub is onboarded with its own LFI Code, Ozone Connect can use `o3-provider-id` directly to identify the segment.
 
-| Request | `o3-provider-id` value (example) | LFI action |
-|---------|---------------------------------|------------|
-| Retail Hub → Ozone Connect | `{lfi}retail` | Route to retail core banking system |
-| SME Hub → Ozone Connect | `{lfi}sme` | Route to SME / business core banking system |
+For example, FAB operates separate retail and business Hubs in production with LFI Codes `fabretail` and `fabbusiness` respectively — Ozone Connect receives those exact values in the `o3-provider-id` header on each request.
+
+| Request                      | `o3-provider-id` value (FAB example) | LFI action                                    |
+|------------------------------|--------------------------------------|-----------------------------------------------|
+| Retail Hub → Ozone Connect   | `fabretail`                          | Route to retail core banking system           |
+| Business Hub → Ozone Connect | `fabbusiness`                        | Route to SME / business core banking system   |
 
 ### Implementation guidance
 
-- Agree the `o3-provider-id` value for each Hub with Nebras / Ozone during onboarding and record it as part of your environment-specific configuration.
+- The `o3-provider-id` value is fixed at onboarding when each Hub's LFI Code is agreed with Nebras. There is no separate configuration step.
 - Treat `o3-provider-id` as the **first branching decision** inside Ozone Connect. All downstream logic (account lookup, customer lookup, payment execution, consent validation) should resolve through the segment's own core.
 - Validate the header on every request — reject calls with a missing or unknown `o3-provider-id`.
-- Keep segment boundaries clean: a consent created via the retail Hub MUST be served by the retail core; a consent created via the SME Hub MUST be served by the SME core. Do not allow cross-segment resolution.
+- Keep segment boundaries clean: a consent created via the retail Hub MUST be served by the retail core; a consent created via the business Hub MUST be served by the business core. Do not allow cross-segment resolution.
 - `o3-provider-id` is the supported identifier. `o3-aspsp-id` is a deprecated alias retained for backward compatibility only — see the request header tables in each API guide (e.g. [Bank Data Sharing API Guide](/tech/lfi-api-hub/v2.1/banking/data-sharing/api-guide/)).
 
 

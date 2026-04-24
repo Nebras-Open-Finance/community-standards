@@ -1,16 +1,6 @@
 <template>
   <aside class="db-sidebar" :class="{ 'is-collapsed': collapsed }">
 
-    <div class="db-sidebar__brand">
-      <span class="db-sidebar__brand-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-          <path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </span>
-      <span class="db-sidebar__brand-text">Open Finance</span>
-    </div>
-
     <nav class="db-sidebar__nav">
       <div v-for="group in sections" :key="group.id" class="db-sidebar__group">
 
@@ -82,29 +72,8 @@ function select(id) {
   border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* ── Brand ─────────────────────────────────────────────────────────────── */
-.db-sidebar__brand {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 1.1rem 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--at-teal);
-}
-
-.db-sidebar__brand-icon { display: flex; align-items: center; flex-shrink: 0; }
-
-.db-sidebar__brand-text {
-  font-family: var(--at-mono);
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--at-teal);
-}
-
 /* ── Nav ───────────────────────────────────────────────────────────────── */
-.db-sidebar__nav { padding: 2.5rem 0; flex: 1; }
+.db-sidebar__nav { padding: 6rem 0 2.5rem; flex: 1; }
 
 .db-sidebar__group { padding: 0 0 0.25rem; }
 
