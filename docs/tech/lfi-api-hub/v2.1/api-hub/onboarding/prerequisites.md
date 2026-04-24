@@ -25,9 +25,23 @@ Ensure your organisation is registered in the Trust Framework before starting th
 
 ## LFI Code
 
-Your **LFI Code** forms part of the URL for both the TPP-facing and LFI-facing domain names — including your API Hub's well-known discovery document URI (see [Environment Specific Configuration](/tech/lfi-api-hub/v2.1/api-hub/onboarding/environment-specific/)).
+Your **LFI Code** is the short identifier that represents your institution across the API Hub. It is used in two places:
 
-If your institution operates multiple brands (e.g. retail and business), each brand will have its own API Hub and its own LFI Code. Each brand is onboarded separately.
+1. **Hostnames.** It forms part of the URL for both the TPP-facing and LFI-facing domain names — including your API Hub's well-known discovery document URI. See [Environment Specific Configuration](/tech/lfi-api-hub/v2.1/api-hub/onboarding/environment-specific/) for the full list of `auth1.{lfiCode}.*`, `rs1.{lfiCode}.*`, `hh.{lfiCode}.*`, `cm.{lfiCode}.*`, and `admin.{lfiCode}.*` hostnames.
+2. **The `o3-provider-id` request header.** Every request the API Hub forwards to your Ozone Connect endpoints carries `o3-provider-id` set to your LFI Code, so Ozone Connect can identify which Hub the call originated from. This matters most for [multi-segment LFIs](/knowledge-base/articles/multi-segment-api-hubs).
+
+### Choosing a value
+
+Pick a code that is:
+
+- **Short** — typically 3–8 characters. It will appear in every TPP integration and every URL.
+- **Lowercase alphanumeric** — no spaces, hyphens, underscores, or special characters (it must be DNS-safe).
+- **Recognisable as your brand** — usually an abbreviation of your legal or trading name.
+- **Stable** — once you go live, the LFI Code is effectively immutable. Changing it later means re-issuing every URL TPPs depend on, and is highly disruptive.
+
+### Multi-brand institutions
+
+If your institution operates multiple brands (e.g. retail and business), each brand will have its own API Hub and its own LFI Code, and each brand is onboarded separately. The common convention is to take your single-brand short code and append the segment as a single lowercase token — for example, FAB uses `fabretail` for its retail Hub and `fabbusiness` for its business Hub. See [Multi-Segment LFIs](/knowledge-base/articles/multi-segment-api-hubs) for the full deployment model.
 
 
 ## Infrastructure
@@ -75,11 +89,11 @@ The following health check endpoints are **mandatory** for all LFI implementatio
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /hello` | Basic connectivity check. |
-| `GET /hello-mtls` | Verifies mutual TLS is correctly configured. |
-| `GET /echo-cert` | Returns the client certificate details received by your server, used to verify certificate propagation. |
+| [`GET /hello`](/tech/lfi-api-hub/v2.1/health-check/open-api/hello) | Basic connectivity check. |
+| [`GET /hello-mtls`](/tech/lfi-api-hub/v2.1/health-check/open-api/hello-mtls) | Verifies mutual TLS is correctly configured. |
+| [`GET /echo-cert`](/tech/lfi-api-hub/v2.1/health-check/open-api/echo-cert) | Returns the client certificate details received by your server, used to verify certificate propagation. |
 
-These endpoints MUST be implemented and reachable before your integration can proceed to testing.
+These endpoints MUST be implemented and reachable before your integration can proceed to testing. See [Ozone Connect — Health Check](/tech/lfi-api-hub/v2.1/health-check/) for full API reference and usage.
 
 
 ## Optional Features

@@ -49,39 +49,44 @@
           >
             <span class="ed-rn-reg__top" />
 
-            <div class="ed-rn-reg__meta">
-              <span class="ed-rn-reg__meta-dot" />
-              {{ reg.category }}
-            </div>
+            <component
+              :is="reg.url ? 'a' : 'div'"
+              :href="reg.url || undefined"
+              class="ed-rn-reg__head"
+              :class="{ 'ed-rn-reg__head--static': !reg.url }"
+            >
+              <div class="ed-rn-reg__meta">
+                <span class="ed-rn-reg__meta-dot" />
+                {{ reg.category }}
+              </div>
 
-            <h3 class="ed-rn-reg__title">{{ reg.title }}</h3>
+              <h3 class="ed-rn-reg__title">{{ reg.title }}</h3>
 
-            <p class="ed-rn-reg__desc" v-html="reg.desc" />
+              <p class="ed-rn-reg__desc" v-html="reg.desc" />
 
-            <div class="ed-rn-reg__scope">
-              <span class="ed-rn-reg__scope-label">Covers</span>
-              <span class="ed-rn-reg__scope-body" v-html="reg.scope" />
-            </div>
+              <div class="ed-rn-reg__scope">
+                <span class="ed-rn-reg__scope-label">Covers</span>
+                <span class="ed-rn-reg__scope-body" v-html="reg.scope" />
+              </div>
+            </component>
 
-            <div class="ed-rn-reg__subs">
-              <div class="ed-rn-reg__subs-label">{{ reg.subsLabel }}</div>
-              <a
-                v-for="sub in reg.subs"
-                :key="sub.url"
-                :href="sub.url"
-                class="ed-rn-reg__sub"
-              >
-                <div class="ed-rn-reg__sub-main">
-                  <span class="ed-rn-reg__sub-title">{{ sub.title }}</span>
-                  <span class="ed-rn-reg__sub-hint">{{ sub.hint }}</span>
-                </div>
-                <span class="ed-rn-reg__sub-arrow">&rarr;</span>
-              </a>
-            </div>
+            <ul v-if="reg.subs.length" class="ed-rn-reg__subs">
+              <li class="ed-rn-reg__subs-label">{{ reg.subsLabel }}</li>
+              <li v-for="sub in reg.subs" :key="sub.title">
+                <a :href="sub.url" class="ed-rn-reg__sub">
+                  <span class="ed-rn-reg__sub-marker" />
+                  <span class="ed-rn-reg__sub-main">
+                    <span class="ed-rn-reg__sub-title">{{ sub.title }}</span>
+                    <span class="ed-rn-reg__sub-hint">{{ sub.hint }}</span>
+                  </span>
+                  <span class="ed-rn-reg__sub-arrow" aria-hidden="true">&rarr;</span>
+                </a>
+              </li>
+            </ul>
 
-            <a :href="reg.url" class="ed-rn-reg__cta">
-              <span>{{ reg.ctaLabel }}</span>
-              <span class="ed-rn-reg__cta-arrow">&rarr;</span>
+            <a v-if="reg.url" :href="reg.url" class="ed-rn-reg__foot">
+              <span class="ed-rn-reg__foot-cta">{{ reg.footCta }}</span>
+              <span class="ed-rn-reg__foot-arrow" aria-hidden="true">&rarr;</span>
             </a>
           </div>
         </div>
@@ -143,14 +148,38 @@
 <script setup>
 import PageHeader from './Components/PageHeader.vue'
 import PageFooter from './Components/PageFooter.vue'
+import { CURRENT_VERSION } from '../../.vitepress/version'
+import { ERRATA_SECTIONS } from '../../.vitepress/erratas-registry'
+import {
+  latestApiHubYear,
+  latestTrustFrameworkYear,
+} from '../../.vitepress/release-notes-years'
+
+function humanizeErrataId(id) {
+  const m = id.match(/^(v[\d.]+)-errata(\d+)$/)
+  if (!m) return id
+  return `${m[1]} errata ${m[2]}`
+}
+
+const errataSubs = (() => {
+  const ids = new Set()
+  for (const s of ERRATA_SECTIONS) {
+    if (s.version === CURRENT_VERSION) ids.add(s.errataId)
+  }
+  return [...ids].sort().map((id) => ({
+    title: humanizeErrataId(id),
+    hint: `Correction entries in ${id}`,
+    url: `/tech/release-notes-and-erratas/erratas/${CURRENT_VERSION}/${id}`,
+  }))
+})()
 
 const registers = [
   {
     tone: 'teal',
     category: 'Operational systems',
     title: 'Release Notes',
-    url: '/tech/release-notes-and-erratas/release-notes/',
-    ctaLabel: 'Browse Release Notes',
+    url: null,
+    footCta: 'Open Release Notes register',
     desc: 'Changes deployed to the <strong>operational systems</strong> participants integrate with &mdash; the API Hub platform, the Trust Framework, and any supporting infrastructure. Each entry describes what was deployed, when it became effective, and the impact on TPPs and LFIs.',
     scope: 'Deployments, platform behaviour changes, Trust Framework directory releases.',
     subsLabel: 'Organised by component &mdash; then by calendar year',
@@ -158,12 +187,12 @@ const registers = [
       {
         title: 'API Hub',
         hint: 'OIDC authorization server, Consent Manager, gateway',
-        url: '/tech/release-notes-and-erratas/release-notes/api-hub/2026',
+        url: `/tech/release-notes-and-erratas/release-notes/api-hub/${latestApiHubYear}`,
       },
       {
         title: 'Trust Framework',
-        hint: 'Directory, certificate authority, roles &amp; scopes (Raidiam)',
-        url: '/tech/release-notes-and-erratas/release-notes/trust-framework/2026',
+        hint: 'Directory, certificate authority, roles & scopes (Raidiam)',
+        url: `/tech/release-notes-and-erratas/release-notes/trust-framework/${latestTrustFrameworkYear}`,
       },
     ],
   },
@@ -171,18 +200,12 @@ const registers = [
     tone: 'gold',
     category: 'Published documentation',
     title: 'Erratas',
-    url: '/tech/release-notes-and-erratas/erratas/',
-    ctaLabel: 'Browse Erratas',
+    url: `/tech/release-notes-and-erratas/erratas/${CURRENT_VERSION}/`,
+    footCta: 'Open Erratas register',
     desc: 'Corrections to <strong>published documentation</strong> &mdash; the TPP Standards, LFI Integration Guide, and OpenAPI specifications. Each entry records what was corrected, why the change was required, and the effective date.',
     scope: 'Documentation corrections against a published standard version.',
-    subsLabel: 'Organised by standard version',
-    subs: [
-      {
-        title: 'v2.1',
-        hint: 'Errata entries against the v2.1 line',
-        url: '/tech/release-notes-and-erratas/erratas/v2.1/v2.1-errata1',
-      },
-    ],
+    subsLabel: `Errata releases for ${CURRENT_VERSION}`,
+    subs: errataSubs,
   },
 ]
 
@@ -327,14 +350,10 @@ const policies = [
   flex-direction: column;
   background: var(--at-bg-cream);
   border: 1px solid var(--at-grid-line);
-  padding: 2.25rem 2rem 1.75rem;
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.ed-rn-reg:hover {
-  border-color: var(--reg-color, var(--at-navy));
-  transform: translateY(-2px);
-}
+.ed-rn-reg:hover { border-color: var(--reg-color, var(--at-navy)); }
 
 .ed-rn-reg--teal { --reg-color: var(--at-teal); }
 .ed-rn-reg--gold { --reg-color: var(--at-gold); }
@@ -346,7 +365,30 @@ const policies = [
   width: 64px;
   height: 3px;
   background: var(--reg-color);
+  z-index: 1;
 }
+
+/* Head link (meta + title + desc + scope) */
+.ed-rn-reg__head {
+  display: block;
+  padding: 2.25rem 2rem 1.5rem;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid var(--at-grid-line);
+  transition: background 0.18s ease;
+}
+
+.ed-rn-reg__head:not(.ed-rn-reg__head--static):hover {
+  background: color-mix(in srgb, var(--reg-color) 5%, var(--at-bg-cream));
+}
+
+.ed-rn-reg__head:not(.ed-rn-reg__head--static):focus-visible {
+  outline: none;
+  background: color-mix(in srgb, var(--reg-color) 8%, var(--at-bg-cream));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--reg-color) 50%, transparent);
+}
+
+.ed-rn-reg__head--static { cursor: default; }
 
 .ed-rn-reg__meta {
   display: flex;
@@ -377,7 +419,10 @@ const policies = [
   line-height: 1.1;
   color: var(--at-navy-deep);
   margin: 0 0 0.85rem;
+  transition: color 0.15s ease;
 }
+
+.ed-rn-reg__head:not(.ed-rn-reg__head--static):hover .ed-rn-reg__title { color: var(--reg-color); }
 
 .ed-rn-reg__desc {
   font-family: var(--at-sans);
@@ -395,7 +440,6 @@ const policies = [
   align-items: baseline;
   gap: 0.85rem;
   padding: 0.7rem 0.9rem;
-  margin-bottom: 1.5rem;
   background: color-mix(in srgb, var(--reg-color) 6%, transparent);
   border-left: 2px solid var(--reg-color);
 }
@@ -417,12 +461,13 @@ const policies = [
   color: var(--at-mute-2);
 }
 
+/* Sub-items (each its own link) */
 .ed-rn-reg__subs {
+  list-style: none;
+  margin: 0;
+  padding: 0.4rem 2rem 0.4rem;
   display: flex;
   flex-direction: column;
-  gap: 0;
-  margin-bottom: 1.5rem;
-  border-top: 1px solid var(--at-grid-line);
 }
 
 .ed-rn-reg__subs-label {
@@ -432,31 +477,49 @@ const policies = [
   text-transform: uppercase;
   font-weight: 600;
   color: var(--at-mute);
-  padding: 0.85rem 0 0.6rem;
+  padding: 0.85rem 0 0.55rem;
 }
 
 .ed-rn-reg__sub {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.85rem 0;
+  gap: 0.85rem;
+  padding: 0.75rem 0.65rem;
+  margin: 0 -0.65rem;
   border-top: 1px solid var(--at-grid-line);
   text-decoration: none;
   color: inherit;
-  transition: padding 0.2s ease;
+  transition: background 0.15s ease;
 }
 
 .ed-rn-reg__sub:hover {
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-  background: color-mix(in srgb, var(--reg-color) 5%, transparent);
+  background: color-mix(in srgb, var(--reg-color) 7%, transparent);
 }
+
+.ed-rn-reg__sub:focus-visible {
+  outline: none;
+  background: color-mix(in srgb, var(--reg-color) 10%, transparent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--reg-color) 45%, transparent);
+}
+
+.ed-rn-reg__sub-marker {
+  width: 6px;
+  height: 6px;
+  background: var(--reg-color);
+  border-radius: 50%;
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.ed-rn-reg__sub:hover .ed-rn-reg__sub-marker { opacity: 1; transform: scale(1.2); }
 
 .ed-rn-reg__sub-main {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .ed-rn-reg__sub-title {
@@ -477,32 +540,59 @@ const policies = [
   font-family: var(--at-mono);
   font-size: 1rem;
   color: var(--reg-color);
-  transition: transform 0.2s;
+  flex-shrink: 0;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-.ed-rn-reg__sub:hover .ed-rn-reg__sub-arrow { transform: translateX(4px); }
+.ed-rn-reg__sub:hover .ed-rn-reg__sub-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
 
-.ed-rn-reg__cta {
-  display: inline-flex;
+/* Foot link */
+.ed-rn-reg__foot {
+  display: flex;
   align-items: center;
-  gap: 0.6rem;
-  align-self: flex-start;
-  padding: 0.85rem 1.3rem;
-  background: var(--reg-color);
-  color: var(--at-navy-deep);
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: auto;
+  padding: 1rem 2rem;
+  background: color-mix(in srgb, var(--reg-color) 5%, transparent);
+  border-top: 1px solid var(--at-grid-line);
   text-decoration: none;
+  color: inherit;
+  transition: background 0.15s ease;
+}
+
+.ed-rn-reg__foot:hover {
+  background: color-mix(in srgb, var(--reg-color) 14%, transparent);
+}
+
+.ed-rn-reg__foot:focus-visible {
+  outline: none;
+  background: color-mix(in srgb, var(--reg-color) 14%, transparent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--reg-color) 45%, transparent);
+}
+
+.ed-rn-reg__foot-cta {
   font-family: var(--at-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   font-weight: 700;
-  transition: transform 0.2s;
+  color: var(--at-navy-deep);
 }
 
-.ed-rn-reg__cta:hover { transform: translateY(-1px); }
+.ed-rn-reg__foot-arrow {
+  font-family: var(--at-mono);
+  font-size: 1.15rem;
+  color: var(--reg-color);
+  transition: transform 0.18s ease;
+}
 
-.ed-rn-reg__cta-arrow { transition: transform 0.2s; }
-.ed-rn-reg__cta:hover .ed-rn-reg__cta-arrow { transform: translateX(3px); }
+.ed-rn-reg__foot:hover .ed-rn-reg__foot-arrow { transform: translateX(4px); }
 
 /* ─── Reference ─────────────────────────────────────────────────────────── */
 .ed-rn-ref {
@@ -686,7 +776,9 @@ const policies = [
   .ed-rn-hero__inner { padding: 3rem 1.25rem 2rem; }
   .ed-rn-registers { padding: 3rem 0 3.5rem; }
   .ed-rn-registers__inner { padding: 0 1.25rem; }
-  .ed-rn-reg { padding: 2rem 1.5rem 1.5rem; }
+  .ed-rn-reg__head { padding: 2rem 1.5rem 1.4rem; }
+  .ed-rn-reg__subs { padding: 0.4rem 1.5rem; }
+  .ed-rn-reg__foot { padding: 0.95rem 1.5rem; }
   .ed-rn-ref { padding: 3rem 0 4rem; }
   .ed-rn-ref__inner { padding: 0 1.25rem; }
   .ed-rn-ref__tip { flex-direction: column; gap: 0.5rem; }

@@ -27,7 +27,7 @@ Before calling the TrustFramework API, ensure the following requirements are met
 - **Registered [Application](../application)**
   The application must be created within the Trust Framework.
 
-- **Valid [Transport Certificate](../certificates)**
+- **Valid [Transport Certificate](../certificates/)**
   An active transport certificate must be issued and registered in the Trust Framework to establish secure **mTLS communication**.
 
 

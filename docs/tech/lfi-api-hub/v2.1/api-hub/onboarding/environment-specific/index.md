@@ -77,7 +77,7 @@ The onboarding form includes optional base path fields for each API family. If p
 | **[Service Initiation](/tech/lfi-api-hub/v2.1/banking/service-initiation/)** | `/domestic-payments`, `/multi-payments` | `OzoneConnectURL/<path>/domestic-payments` |
 | **[Products](/tech/lfi-api-hub/v2.1/banking/products-and-leads/)** | `/products`, `/leads` | `OzoneConnectURL/<path>/products` |
 | **Consent Events & Notifications** | `/event-notifications` | `OzoneConnectURL/<path>/event-notifications` |
-| **Echo Cert (Health Check)** | `/echo-cert` | `OzoneConnectURL/<path>/echo-cert` |
+| **[Health Check](/tech/lfi-api-hub/v2.1/health-check/)** | `/hello`, `/hello-mtls`, `/echo-cert` | `OzoneConnectURL/<path>/echo-cert` |
 
 All fields are optional. For any API families without a path specified — either because the field was left blank or because the family does not appear in the form — the API Hub sends requests directly to `OzoneConnectURL/<endpoint>`.
 
@@ -130,7 +130,7 @@ Used by the API Hub to identify itself to the LFI when calling Ozone Connect end
 | JWKS URL | Ozone | Ozone provides the JWKS URL from their Trust Framework organisation. |
 | KID | Ozone | Ozone provides the KID. |
 
-**LFI action:** None — this certificate is in Ozone's organisation. Record the JWKS URL and KID provided by Ozone for your mTLS validation configuration.
+**LFI action:** None — this certificate is in Ozone's organisation. Record the JWKS URL and KID provided by Ozone for your mTLS validation configuration. See [Configuring Inbound mTLS](../configuring-authentication/mtls-server#_3b-pin-to-the-api-hub-s-c4-client) for guidance on pinning your Ozone Connect server to the API Hub's C4 client certificate.
 
 ### Sig2 — Signing Certificate
 
@@ -261,7 +261,7 @@ If your institution operates multiple API Hub instances (e.g. for retail and bus
 
 Once all certificates have been created and the required details have been added to the Service Desk ticket, Ozone will perform **end-to-end connectivity validation** in both directions:
 
-1. **API Hub to LFI** — The API Hub will make requests to your Ozone Connect endpoints (e.g. the health check endpoints `/hello`, `/hello-mtls`, `/echo-cert`) to verify that transport certificates, network routing, and application layer authentication are correctly configured.
+1. **API Hub to LFI** — The API Hub will make requests to your Ozone Connect endpoints (e.g. the [health check endpoints](/tech/lfi-api-hub/v2.1/health-check/) `/hello`, `/hello-mtls`, `/echo-cert`) to verify that transport certificates, network routing, and application layer authentication are correctly configured.
 2. **LFI to API Hub** — Your integration will make requests to the API Hub's Consent Manager and Headless Heimdall Auth Server endpoints to verify that mTLS and application layer authentication are correctly configured in the reverse direction.
 
 ::: warning Ticket closure

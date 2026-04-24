@@ -26,8 +26,9 @@
               open source. <strong>Not official.</strong>
             </p>
             <div class="ed-hero__cta-row">
-              <a class="ed-btn ed-btn--ink" href="/tech/tpp-standards/">Developer Docs &rarr;</a>
-              <a class="ed-btn ed-btn--ghost" href="/metrics">Live Metrics</a>
+              <a class="ed-btn ed-btn--ink" href="/tech/tpp-standards/">Open Finance Standards</a>
+              <a class="ed-btn ed-btn--ink" href="/tech/lfi-api-hub/">LFI Integration Guide</a>
+              <a class="ed-btn ed-btn--ghost" href="/metrics">Metrics</a>
             </div>
           </div>
 
@@ -250,6 +251,9 @@ import ArticleLink from './Components/ArticleLink.vue'
 import MiniChart from './Components/MiniChart.vue'
 
 import { articles, ARTICLE_KIND_LABELS } from './data/articles.js'
+import { useSelectedVersion } from '../Composables/useSelectedVersion'
+
+const { selectedVersion } = useSelectedVersion()
 
 const kindLabels = ARTICLE_KIND_LABELS
 
@@ -268,20 +272,46 @@ const SUCCESS_PAYMENT_STATUSES = new Set([
   'AcceptedWithoutPosting',
 ])
 
+// doConfirm's success response is a 3xx redirect back to the Hub; 2xx is kept for resilience.
+const CONSENT_AUTH_URL = '/auth/:interactionId/doConfirm'
+const CONSENT_SUCCESS_CODES = new Set(['2xx', '3xx'])
+const AUTH_START_URL = '/auth'
+
 const tfData      = ref([])
 const apiData     = ref([])
 const paymentData = ref([])
+const authData    = ref([])
 
 onMounted(async () => {
-  const [tf, api, payments] = await Promise.all([
+  const [tf, api, payments, auth] = await Promise.all([
     axios.get('/api/trust-framework.json').catch(() => ({ data: [] })),
     fetch('/api/api-log.json').then(r => r.json()).catch(() => []),
     fetch('/api/payments-log.json').then(r => r.json()).catch(() => []),
+    fetch('/api/auth-log.json').then(r => r.json()).catch(() => []),
   ])
   tfData.value = Array.isArray(tf.data) ? tf.data : []
   apiData.value = api
   paymentData.value = payments
+  authData.value = auth
 })
+
+function isConsentAuthorised(r) {
+  return r.url === CONSENT_AUTH_URL && CONSENT_SUCCESS_CODES.has(r.tppresponsecodegroup)
+}
+
+function isAuthStart(r) {
+  return r.url === AUTH_START_URL && r.tppresponsecodegroup === '2xx'
+}
+
+function monthlyTotals(rows, valueFn) {
+  const byMonth = {}
+  for (const r of rows) {
+    const m = (r.date || '').substring(0, 7)
+    if (!m) continue
+    byMonth[m] = (byMonth[m] || 0) + (valueFn(r) || 0)
+  }
+  return byMonth
+}
 
 // ── Hero eyebrow "VOL 02" — weeks since programme start ──────────────────
 const issueNumber = computed(() => {
@@ -404,100 +434,123 @@ const tickerCells = computed(() => {
 
 // ── Story charts (big sparklines — same MiniChart style as hero ticker) ──
 const storyCharts = computed(() => {
-  const successApi = apiData.value.filter(r => (r.tppresponsecodegroup || '2xx') === '2xx')
-  const api = monthlyWithLabels(successApi, r => r.totalapicalls)
-  const apiTotal = api.series.reduce((s, v) => s + v, 0)
-  const apiDelta = pctChange(api.series)
+  const consentSuccess = authData.value.filter(isConsentAuthorised)
+  const consents = monthlyWithLabels(consentSuccess, r => r.totalapicalls)
+  const consentsTotal = consents.series.reduce((s, v) => s + v, 0)
+  const consentsDelta = pctChange(consents.series)
 
-  const paySuccess = paymentData.value.filter(r =>
-    SUCCESS_PAYMENT_STATUSES.has(r.status) && r.lfinamekey,
-  )
-  const pay = monthlyWithLabels(paySuccess, r => r.amount)
-  const payTotal = pay.series.reduce((s, v) => s + v, 0)
-  const payDelta = pctChange(pay.series)
+  const confByMonth  = monthlyTotals(authData.value.filter(isConsentAuthorised), r => r.totalapicalls)
+  const startByMonth = monthlyTotals(authData.value.filter(isAuthStart),         r => r.totalapicalls)
+  const rateMonths   = Object.keys(startByMonth).sort()
+  const rateSeries   = rateMonths.map(m => {
+    const s = startByMonth[m] || 0
+    return s > 0 ? ((confByMonth[m] || 0) / s) * 100 : 0
+  })
+  const totalStarts  = Object.values(startByMonth).reduce((s, v) => s + v, 0)
+  const totalConf    = Object.values(confByMonth).reduce((s, v) => s + v, 0)
+  const overallRate  = totalStarts > 0 ? (totalConf / totalStarts) * 100 : null
+  const ratePpDelta  = rateSeries.length >= 2 ? rateSeries[rateSeries.length - 1] - rateSeries[0] : null
 
   const fmtDelta = d => d == null ? '—' : `${d >= 0 ? '\u2191' : '\u2193'} ${Math.abs(d)}% vs. first month`
 
   return [
     {
-      label: 'Successful API Calls · by Month',
-      value: apiTotal.toLocaleString(),
-      delta: fmtDelta(apiDelta),
-      deltaColor: apiDelta != null && apiDelta < 0 ? '#B33A3A' : ACCENT.teal,
+      label: 'Consents Authorised · by Month',
+      value: consentsTotal.toLocaleString(),
+      delta: fmtDelta(consentsDelta),
+      deltaColor: consentsDelta != null && consentsDelta < 0 ? '#B33A3A' : ACCENT.teal,
       color: ACCENT.teal,
-      series: api.series,
-      labels: thinLabels(api.labels),
+      series: consents.series,
+      labels: thinLabels(consents.labels),
     },
     {
-      label: 'Payment Volume AED · by Month',
-      value: 'AED ' + compact(payTotal),
-      delta: fmtDelta(payDelta),
-      deltaColor: payDelta != null && payDelta < 0 ? '#B33A3A' : ACCENT.gold,
-      color: ACCENT.gold,
-      series: pay.series,
-      labels: thinLabels(pay.labels),
+      label: 'Consent Success Rate · by Month',
+      value: overallRate == null ? '—' : `${overallRate.toFixed(1)}%`,
+      delta: ratePpDelta == null
+        ? '—'
+        : `${ratePpDelta >= 0 ? '↑' : '↓'} ${Math.abs(ratePpDelta).toFixed(1)}pp vs. first month`,
+      deltaColor: ratePpDelta != null && ratePpDelta < 0 ? '#B33A3A' : ACCENT.sky,
+      color: ACCENT.sky,
+      series: rateSeries,
+      labels: thinLabels(rateMonths),
     },
   ]
 })
 
 // ── Story-in-numbers KPIs ────────────────────────────────────────────────
 const heroKpis = computed(() => {
-  const successfulApi = apiData.value
-    .filter(r => (r.tppresponsecodegroup || '2xx') === '2xx')
+  const consentsAuthorised = authData.value
+    .filter(isConsentAuthorised)
     .reduce((s, r) => s + (r.totalapicalls || 0), 0)
 
-  const successRows = paymentData.value.filter(r =>
-    SUCCESS_PAYMENT_STATUSES.has(r.status) && r.lfinamekey,
-  )
-  const totalAmount = successRows.reduce((s, r) => s + (r.amount || 0), 0)
+  const authStarts = authData.value
+    .filter(isAuthStart)
+    .reduce((s, r) => s + (r.totalapicalls || 0), 0)
+  const successRate = authStarts > 0 ? (consentsAuthorised / authStarts) * 100 : null
 
-  const lfis = countLfis(tfData.value)
-  const tpps = countTpps(tfData.value)
+  // Unique LFIs/TPPs that sent or received *any* API call in the trailing 30
+  // days, anchored to the latest date in the log (data may lag real time).
+  let activeLfis = 0, activeTpps = 0
+  if (apiData.value.length) {
+    const maxDate = apiData.value.reduce((m, r) => r.date > m ? r.date : m, apiData.value[0].date)
+    const d = new Date(maxDate + 'T00:00:00Z')
+    d.setUTCDate(d.getUTCDate() - 30)
+    const windowStart = d.toISOString().substring(0, 10)
+    const lfiSet = new Set(), tppSet = new Set()
+    for (const r of apiData.value) {
+      if (r.date >= windowStart) {
+        if (r.lfinamekey) lfiSet.add(r.lfinamekey)
+        if (r.tppname) tppSet.add(r.tppname)
+      }
+    }
+    activeLfis = lfiSet.size
+    activeTpps = tppSet.size
+  }
 
   return [
     {
-      label: 'Successful API Calls',
-      value: successfulApi.toLocaleString(),
-      desc:  'Live ecosystem · 2xx responses',
+      label: 'Consents Authorised',
+      value: consentsAuthorised.toLocaleString(),
+      desc:  'Successful customer authorisations',
       color: ACCENT.teal,
     },
     {
-      label: 'Payment Volume',
-      value: 'AED ' + compact(totalAmount),
-      desc:  'Settled transactions',
-      color: ACCENT.gold,
+      label: 'Consent Success Rate',
+      value: successRate == null ? '—' : `${successRate.toFixed(1)}%`,
+      desc:  'Customers completing authorisation',
+      color: ACCENT.sky,
     },
     {
-      label: 'Licensed Financial Institutions',
-      value: String(lfis).padStart(2, '0'),
-      desc:  'Onboarded · Banks + Insurers',
+      label: 'Active LFIs · 30d',
+      value: String(activeLfis).padStart(2, '0'),
+      desc:  'Serving live API traffic',
       color: ACCENT.navy,
     },
     {
-      label: 'Third Party Providers',
-      value: String(tpps).padStart(2, '0'),
-      desc:  'Onboarded · Live + Sandbox',
+      label: 'Active TPPs · 30d',
+      value: String(activeTpps).padStart(2, '0'),
+      desc:  'Calling live APIs',
       color: ACCENT.blueDeep,
     },
   ]
 })
 
 // ── Docs split ───────────────────────────────────────────────────────────
-const docsCols = [
+const docsCols = computed(() => [
   {
     tag: 'FOR TPPs',
     title: 'Third Party Providers',
     sub: 'Build on Open Finance',
     tone: 'teal',
-    badge: 'Standards v2.1',
+    badge: `Standards ${selectedVersion.value}`,
     cta: '/tech/tpp-standards/',
     ctaLabel: 'TPP',
     items: [
-      { title: 'Trust Framework',    desc: 'Register, onboard, first API call.',                 href: '/tech/tpp-standards/v2.1/getting-started/' },
-      { title: 'Consent Lifecycle',  desc: 'Create, retrieve, revoke consents.',                 href: '/tech/tpp-standards/v2.1/consent/' },
+      { title: 'Trust Framework',    desc: 'Register, onboard, first API call.',                 href: `/tech/tpp-standards/${selectedVersion.value}/getting-started/` },
+      { title: 'Consent Lifecycle',  desc: 'Create, retrieve, revoke consents.',                 href: `/tech/tpp-standards/${selectedVersion.value}/consent/` },
       { title: 'Security & FAPI',    desc: 'Compliance, tokens, webhooks.',                      href: '/tech/tpp-standards/security/fapi/' },
-      { title: 'Payment Initiation', desc: 'Payments + confirmation of payee.',                  href: '/tech/tpp-standards/v2.1/banking/service-initiation/' },
-      { title: 'Data Access APIs',   desc: 'Accounts, transactions, products, ATMs.',            href: '/tech/tpp-standards/v2.1/banking/data-sharing/' },
+      { title: 'Payment Initiation', desc: 'Payments + confirmation of payee.',                  href: `/tech/tpp-standards/${selectedVersion.value}/banking/service-initiation/` },
+      { title: 'Data Access APIs',   desc: 'Accounts, transactions, products, ATMs.',            href: `/tech/tpp-standards/${selectedVersion.value}/banking/data-sharing/` },
     ],
   },
   {
@@ -512,11 +565,11 @@ const docsCols = [
       { title: 'Integration Journey',     desc: 'Step-by-step onboarding.',                      href: '/tech/lfi-api-hub/getting-started/' },
       { title: 'Trust Framework',         desc: 'Clients, servers, certificates.',               href: '/tech/lfi-api-hub/trust-framework/' },
       { title: 'API Hub',                 desc: 'LFI-facing APIs and flows.',                    href: '/tech/lfi-api-hub/' },
-      { title: 'Ozone Connect',           desc: 'Configure your Open Finance gateway.',          href: '/tech/lfi-api-hub/v2.1/banking/' },
+      { title: 'Ozone Connect',           desc: 'Configure your Open Finance gateway.',          href: `/tech/lfi-api-hub/${selectedVersion.value}/banking/` },
       { title: 'Testing & Certification', desc: 'Conformance + readiness checklist.',            href: '/tech/lfi-api-hub/production/testing-certification/overview' },
     ],
   },
-]
+])
 
 // ── Articles ─────────────────────────────────────────────────────────────
 const featuredArticle = computed(() => articles[0] || null)

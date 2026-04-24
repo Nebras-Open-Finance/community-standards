@@ -30,8 +30,9 @@ jobs:
 
       - name: Build site
         env:
-          # Authenticated requests avoid GitHub API rate limits when fetching specs.
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Read-only PAT for cross-repo reads against Nebras-Open-Finance/api-specs.
+          # Provisioned by terraform-controller (github/actions_secrets.tf).
+          GITHUB_TOKEN: ${{ secrets.SPECS_READ_TOKEN }}
         run: npm run docs:build
 
       - name: Deploy to Cloudflare Pages
