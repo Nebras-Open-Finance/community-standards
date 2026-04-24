@@ -10,7 +10,7 @@ This page outlines the end-to-end journey for a Licensed Financial Institution (
 
 The journey is organised into three phases. Each step builds on the previous one, and each phase should be completed before progressing to the next.
 
-- **Phase A — Sandbox: Build & Integrate.** Register, connect, and develop against the pre-production environment.
+- **Phase A — Pre-production: Build & Integrate.** Register, connect, and develop against the pre-production environment.
 - **Phase B — Certification.** Evidence that your implementation meets the functional, user experience, performance, and security standards.
 - **Phase C — Production: Launch.** Repeat onboarding in production, validate, publish your resources, and prove live with TPPs.
 
@@ -21,7 +21,7 @@ Steps 1, 2, 5 and 6 (Trust Framework and API Hub onboarding) are one-off activit
 :::
 
 
-## Phase A — Sandbox: Build & Integrate
+## Phase A — Pre-production: Build & Integrate
 
 
 ### Step 1. Onboard to the Sandbox Trust Framework
@@ -77,7 +77,7 @@ This is the core build phase. It covers both directions of integration between t
 Because API Hub is the single source of truth for consent, your LFI does not maintain independent consent state — it queries the Hub for consent details and writes lifecycle events back to the Hub as the PSU journey progresses.
 
 **Prerequisites**
-- Step 2 complete (end-to-end sandbox connectivity verified).
+- Step 2 complete (end-to-end connectivity verified).
 - Product scope agreed (which account types, payment types, and optional APIs are in scope for launch).
 - Internal teams aligned on the [consent journey](../v2.1/consent-journey/api-guide) user experience and the [Consent Management Interface](../v2.1/consent-management-interface/) your LFI will provide to customers.
 
@@ -140,7 +140,7 @@ Repeat the API Hub connectivity setup in production.
 
 **Done when**
 - An mTLS handshake and authenticated test request succeed between the production Hub and your production environment.
-- No sandbox credentials or endpoints remain referenced in production configuration.
+- No Pre-production credentials or endpoints remain referenced in production configuration.
 
 
 ### Step 7. Validate Your APIs in Production
@@ -155,7 +155,7 @@ A pre-live validation pass against the production environment using controlled, 
 **What to do**
 - Execute the [attestation and self-testing](../production/testing-certification/self-testing) flows against production.
 - Walk through full consent, data sharing, and payment journeys end-to-end.
-- Verify error mapping, logging, and observability behave as in sandbox.
+- Verify that error mapping, logging, and observability behave as in Pre-production.
 
 **Done when**
 - All critical flows succeed in production with controlled accounts.
