@@ -10,7 +10,7 @@ This page outlines the end-to-end journey for a Licensed Financial Institution (
 
 The journey is organised into three phases. Each step builds on the previous one, and each phase should be completed before progressing to the next.
 
-- **Phase A — Sandbox: Build & Integrate.** Register, connect, and develop against the pre-production environment.
+- **Phase A — Pre-production: Build & Integrate.** Register, connect, and develop against the pre-production environment.
 - **Phase B — Certification.** Evidence that your implementation meets the functional, user experience, performance, and security standards.
 - **Phase C — Production: Launch.** Repeat onboarding in production, validate, publish your resources, and prove live with TPPs.
 
