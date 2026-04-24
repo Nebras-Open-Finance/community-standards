@@ -1,12 +1,31 @@
 <script setup>
 import DefaultTheme from 'vitepress/theme'
-import { useRoute } from 'vitepress'
-import { computed } from 'vue'
+import { useData, useRoute } from 'vitepress'
+import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import VersionDropdown from '../../components/VersionDropdown.vue'
 import DocRepositorySearch from '../../components/DocRepositorySearch.vue'
 import ErrataUpdateBanner from '../../components/ErrataUpdateBanner.vue'
+import PageHeader from '../../components/WebPages/Components/PageHeader.vue'
+import PageFooter from '../../components/WebPages/Components/PageFooter.vue'
 
 const route = useRoute()
+const { frontmatter } = useData()
+
+// Editorial-doc re-skin applies to every MD-sourced page rendered through
+// Layout.vue. Pages with `layout: false` in frontmatter (HomePage, Erratas,
+// Policies index, etc.) use their own Vue components and bypass this file,
+// so they remain unaffected.
+const isEditorialDoc = computed(() => true)
+
+function applyEditorialDocClass(active) {
+  if (typeof document === 'undefined') return
+  document.documentElement.classList.toggle('editorial-doc', active)
+  document.body.classList.toggle('editorial-doc', active)
+}
+
+onMounted(() => applyEditorialDocClass(isEditorialDoc.value))
+watch(isEditorialDoc, (v) => applyEditorialDocClass(v))
+onBeforeUnmount(() => applyEditorialDocClass(false))
 
 // Always returns { title, link } — safe to destructure in template.
 const navTitle = computed(() => {
@@ -41,10 +60,16 @@ const navTitle = computed(() => {
 })
 
 const isDocRepository = computed(() => (route.path ?? '').startsWith('/doc-repository'))
+
+const showEditorialFooter = computed(() => isEditorialDoc.value && frontmatter.value?.sidebar === false)
 </script>
 
 <template>
   <DefaultTheme.Layout>
+    <template #layout-top>
+      <PageHeader v-if="isEditorialDoc" />
+    </template>
+
     <template #nav-bar-title-before>
       <div class="dynamic-title">
         <a :href="navTitle.link">{{ navTitle.title }}</a>
@@ -55,8 +80,11 @@ const isDocRepository = computed(() => (route.path ?? '').startsWith('/doc-repos
       <VersionDropdown />
     </template>
 
-    <template v-if="isDocRepository" #sidebar-nav-before>
-      <DocRepositorySearch />
+    <template #sidebar-nav-before>
+      <DocRepositorySearch v-if="isDocRepository" />
+      <div v-else-if="isEditorialDoc" class="editorial-sidebar-title">
+        <a :href="navTitle.link">{{ navTitle.title }}</a>
+      </div>
     </template>
 
     <template #nav-bar-content-before>
@@ -67,6 +95,10 @@ const isDocRepository = computed(() => (route.path ?? '').startsWith('/doc-repos
 
     <template #doc-before>
       <ErrataUpdateBanner />
+    </template>
+
+    <template #layout-bottom>
+      <PageFooter v-if="showEditorialFooter" />
     </template>
   </DefaultTheme.Layout>
 </template>

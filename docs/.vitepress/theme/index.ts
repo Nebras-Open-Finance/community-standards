@@ -1,5 +1,6 @@
 import './index.css'
 import '../../components/WebPages/editorial.css'
+import './editorial-doc.css'
 import DefaultTheme from 'vitepress/theme'
 import Layout from './Layout.vue'
 import { resetSharedState } from '../../components/Composables/useSharedState.ts'
