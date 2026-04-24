@@ -136,7 +136,7 @@ async function loadPrivate() {
 
 async function loadCatalog() {
   try {
-    const res = await fetch(`${DOCS_API}/catalog`)
+    const res = await fetch(`${DOCS_API}/catalog?orgId=${encodeURIComponent(props.orgId)}`)
     if (!res.ok) return
     const body = await res.json()
     catalog.value = {
@@ -213,6 +213,25 @@ function formatDate(iso) {
 function downloadHref(file) {
   const visibility = activeTab.value
   return `${DOCS_API}/${props.orgId}/${visibility}/${file}`
+}
+
+async function handleDownload(file) {
+  const url = downloadHref(file)
+  try {
+    const res = await fetch(url, { credentials: 'include' })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const blob = await res.blob()
+    const objectUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = objectUrl
+    a.download = file
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(objectUrl)
+  } catch {
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
 }
 
 function onFileSelected(e) {
@@ -511,13 +530,13 @@ const typeColor = computed(() => {
                     <span v-if="file.date">{{ formatDate(file.date) }}</span>
                   </div>
                 </div>
-                <a
+                <button
+                  type="button"
                   class="ed-doc-button"
-                  :href="downloadHref(file.file)"
-                  download
+                  @click="handleDownload(file.file)"
                 >
                   Download
-                </a>
+                </button>
               </div>
             </template>
 

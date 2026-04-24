@@ -240,6 +240,7 @@ export default defineConfig({
 
   themeConfig: {
     siteTitle: false,
+    sidebarMenuLabel: 'Sidebar',
     nav: [
       {
         text: 'Program',
