@@ -261,17 +261,7 @@
                           {{ formatNumber(v.requests) }} requests
                         </span>
                       </div>
-                      <button
-                        v-if="v.endpoints.length"
-                        type="button"
-                        class="ed-le-card__endpoints-toggle"
-                        :aria-expanded="v.expanded ? 'true' : 'false'"
-                        @click="v.expanded = !v.expanded"
-                      >
-                        <span class="ed-le-chev ed-le-chev--small" :class="{ 'is-open': v.expanded }">›</span>
-                        {{ v.expanded ? 'Hide' : 'Show' }} endpoints ({{ v.endpoints.length }})
-                      </button>
-                      <ul v-if="v.expanded" class="ed-le-card__endpoints">
+                      <ul v-if="v.endpoints.length" class="ed-le-card__endpoints">
                         <li v-for="ep in v.endpoints" :key="ep.key">
                           <code>{{ ep.key }}</code>
                           <span class="ed-le-card__endpoint-count">{{ formatNumber(ep.count) }}</span>
@@ -1332,8 +1322,9 @@ const prettifyConsentType = (s) => String(s).replace(/([a-z])([A-Z])/g, '$1 $2')
 
 .ed-le-card__endpoint-count {
   font-family: var(--at-mono);
-  font-size: 0.7rem;
-  color: var(--at-mute);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--at-navy-deep);
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
