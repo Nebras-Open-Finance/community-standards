@@ -12,4 +12,6 @@ The ATM API allows LFIs to publish ATM location and service data to TPPs. It is 
 Access to the ATM API requires TPPs to hold the **BDSP** (Bank Data Sharing Provider) role. The API Hub validates the role on every request before proxying it to the LFI.
 :::
 
-<LiveTPPs :families="['atm']" />
+::: tip See who's live
+[**Which TPPs are consuming ATM data** →](/program/whats-live?type=tpp&family=atm)
+:::

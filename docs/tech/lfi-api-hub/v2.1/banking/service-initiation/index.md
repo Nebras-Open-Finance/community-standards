@@ -14,4 +14,6 @@ Access to the Payment Service Initiation APIs requires TPPs to hold the **BSIP**
 If the consent also includes data-sharing permissions (`ReadAccountsBasic`, `ReadAccountsDetail`, `ReadBalances`), TPPs additionally require the **BDSP** role.
 :::
 
-<LiveTPPs :families="['payment']" />
+::: tip See who's live
+[**Which TPPs are initiating Payments** →](/program/whats-live?type=tpp&family=payment)
+:::

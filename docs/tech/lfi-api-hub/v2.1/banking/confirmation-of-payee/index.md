@@ -12,4 +12,6 @@ Confirmation of Payee (CoP) lets a TPP verify that an IBAN belongs to the named 
 Access to the Confirmation of Payee API requires TPPs to hold the **BSIP** (Bank Service Initiation Provider) role. The API Hub validates the role on every request before proxying it to the LFI.
 :::
 
-<LiveTPPs :families="['confirmation']" />
+::: tip See who's live
+[**Which TPPs are using Confirmation of Payee** →](/program/whats-live?type=tpp&family=confirmation)
+:::

@@ -16,7 +16,9 @@ Access to the Payment Service Initiation APIs requires the **BSIP** (Bank Servic
 Note - Within payments there is the ability to receive a small amount of data sharing permissions. If your consent includes `ReadAccountsBasic`, `ReadAccountsDetail`, or `ReadBalances`, in order to access this functionality you will also need the **BDSP role**.
 :::
 
-<LiveAPIs :families="['payment']" />
+::: tip See who's live
+[**Which LFIs are live for Payment Initiation** →](/program/whats-live?family=payment)
+:::
 
 
 ### Single Instant Payment

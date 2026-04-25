@@ -7,8 +7,9 @@
   "scripts": {
     "fetch:specs": "node scripts/fetch-openapi-specs.mjs && node scripts/generate-openapi-xlsx.mjs",
     "fetch:orgs": "node scripts/fetch-organisations.mjs",
-    "dev:docs": "node scripts/fetch-organisations.mjs && node scripts/fetch-openapi-specs.mjs && node scripts/generate-openapi-xlsx.mjs && vitepress dev docs",
-    "docs:build": "node scripts/fetch-organisations.mjs && node scripts/fetch-openapi-specs.mjs --force && node scripts/generate-openapi-xlsx.mjs && vitepress build docs",
+    "fetch:github": "node scripts/fetch-github-stats.mjs",
+    "dev:docs": "node scripts/fetch-organisations.mjs && node scripts/fetch-github-stats.mjs && node scripts/fetch-openapi-specs.mjs && node scripts/generate-openapi-xlsx.mjs && vitepress dev docs",
+    "docs:build": "node scripts/fetch-organisations.mjs && node scripts/fetch-github-stats.mjs && node scripts/fetch-openapi-specs.mjs --force && node scripts/generate-openapi-xlsx.mjs && vitepress build docs",
     "docs:serve": "vitepress serve docs",
     "pretest": "npm run fetch:specs && npm run fetch:orgs",
     "test": "node --test --test-concurrency=1 supporting/tests/**/*.test.mjs"

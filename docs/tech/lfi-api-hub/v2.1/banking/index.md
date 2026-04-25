@@ -8,7 +8,9 @@ aside: false
 
 The Open Finance Banking capabilities enable secure and efficient financial data sharing, payment initiation, and verification — empowering third-party providers (TPPs) with the tools they need to enhance user experience and financial services. These services operate under strict consent management and granular data access permissions, all mediated and validated by the API Hub.
 
-<LiveTPPs />
+::: tip See who's live
+[**Which TPPs are consuming Open Finance services** →](/program/whats-live?type=tpp)
+:::
 
 ### Bank Data Sharing (Account Information)
 

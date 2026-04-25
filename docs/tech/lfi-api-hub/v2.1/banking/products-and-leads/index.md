@@ -12,4 +12,6 @@ The Products & Leads API allows LFIs to publish their banking product catalogue 
 Access to the Products & Leads API requires TPPs to hold the **BDSP** (Bank Data Sharing Provider) role. The API Hub validates the role on every request before proxying it to the LFI.
 :::
 
-<LiveTPPs :families="['product']" />
+::: tip See who's live
+[**Which TPPs are consuming Products & Leads** →](/program/whats-live?type=tpp&family=product)
+:::

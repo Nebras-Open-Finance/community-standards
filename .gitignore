@@ -12,6 +12,8 @@ docs/public/openapi/v*/
 docs/public/openapi/**/*.xlsx
 # Fetched trust-framework organisations (see scripts/fetch-organisations.mjs)
 docs/public/api/trust-framework.json
+# Fetched GitHub org stats (see scripts/fetch-github-stats.mjs)
+docs/public/api/github-stats.json
 CLAUDE.md
 
 # Logs

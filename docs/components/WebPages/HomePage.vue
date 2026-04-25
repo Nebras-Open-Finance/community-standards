@@ -172,13 +172,122 @@
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         § 03 — Articles & press.
+         § 03 — Community & contributions.
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ed-section">
       <div class="ed-section__inner">
         <header class="ed-section__head">
           <div class="ed-section__head-left">
-            <span class="ed-section__mark ed-section__mark--blue">&sect; 03</span>
+            <span class="ed-section__mark ed-section__mark--navy">&sect; 03</span>
+            <h2 class="ed-section__title">
+              Community<br/>
+              <span class="ed-section__title-italic">&amp;</span> contributions.
+            </h2>
+          </div>
+          <p class="ed-section__intro">
+            This site is community-driven and open source &mdash; built by the LFIs,
+            TPPs, and Hub operator working within the ecosystem. Every contribution
+            makes the framework more legible for everyone.
+          </p>
+        </header>
+
+        <div class="ed-community__grid">
+          <!-- Col 1: GitHub activity -->
+          <div class="ed-community__card">
+            <div class="ed-community__card-head">
+              <div class="ed-community__kicker ed-community__kicker--teal">
+                github &middot; nebras-open-finance
+              </div>
+              <h3 class="ed-community__card-title">Contribute to docs &amp; standards</h3>
+            </div>
+            <div class="ed-community__stats">
+              <div
+                v-for="s in communityStatRows"
+                :key="s.label"
+                class="ed-community__stat"
+              >
+                <div class="ed-community__stat-label">{{ s.label }}</div>
+                <div class="ed-community__stat-value">{{ s.value }}</div>
+              </div>
+            </div>
+            <a
+              :href="`https://github.com/${communityOrg}`"
+              class="ed-community__link ed-community__link--teal"
+              target="_blank"
+              rel="noopener"
+            >
+              View on GitHub <span>&rarr;</span>
+            </a>
+          </div>
+
+          <!-- Col 2: Drafting — what we're building next -->
+          <div class="ed-community__card">
+            <div class="ed-community__card-head">
+              <div class="ed-community__kicker ed-community__kicker--blue">drafting</div>
+              <h3 class="ed-community__card-title">What&rsquo;s next&hellip;</h3>
+            </div>
+            <div class="ed-community__list">
+              <div
+                v-for="(d, i) in communityDrafts"
+                :key="d.title"
+                class="ed-community__item"
+              >
+                <div class="ed-community__item-num ed-community__item-num--blue">0{{ i + 1 }}</div>
+                <div>
+                  <div class="ed-community__item-title">{{ d.title }}</div>
+                  <div class="ed-community__item-desc">{{ d.desc }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Col 3: How to participate -->
+          <div class="ed-community__card ed-community__card--accent">
+            <div class="ed-community__card-head">
+              <div class="ed-community__kicker ed-community__kicker--gold">get involved</div>
+              <h3 class="ed-community__card-title">How to participate</h3>
+            </div>
+            <div class="ed-community__list">
+              <div
+                v-for="(w, i) in communityWays"
+                :key="w.title"
+                class="ed-community__item"
+              >
+                <div class="ed-community__item-num ed-community__item-num--gold">0{{ i + 1 }}</div>
+                <div>
+                  <div class="ed-community__item-title">{{ w.title }}</div>
+                  <div class="ed-community__item-desc">{{ w.desc }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reach-out CTA -->
+        <a :href="`mailto:${SUPPORT_EMAIL}`" class="ed-community__reachout">
+          <div class="ed-community__reachout-text">
+            <div class="ed-community__reachout-label">First time here?</div>
+            <div class="ed-community__reachout-title">
+              Not sure how to get started? No worries &mdash; just ask.
+            </div>
+            <div class="ed-community__reachout-sub">
+              Email <span class="ed-community__reachout-email">{{ SUPPORT_EMAIL }}</span>
+              and we&rsquo;ll point you in the right direction.
+            </div>
+          </div>
+          <span class="ed-community__reachout-cta">Email us <span>&rarr;</span></span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         § 04 — Articles & press.
+    ═══════════════════════════════════════════════════════════════════ -->
+    <section class="ed-section ed-section--paper">
+      <div class="ed-section__inner">
+        <header class="ed-section__head">
+          <div class="ed-section__head-left">
+            <span class="ed-section__mark ed-section__mark--blue">&sect; 04</span>
             <h2 class="ed-section__title">
               Articles<br/>
               <span class="ed-section__title-italic">&amp;</span> press.
@@ -575,6 +684,61 @@ const docsCols = computed(() => [
 const featuredArticle = computed(() => articles[0] || null)
 const sidebarArticles = computed(() => articles.slice(1, 3))
 const bodyArticles    = computed(() => articles.slice(3, 9))
+
+// ── Community section ────────────────────────────────────────────────────
+const SUPPORT_EMAIL = 'support@nebrasopenfinance.ae'
+const communityOrg = 'Nebras-Open-Finance'
+
+const communityStats = ref({
+  openPRs: null,
+  openIssues: null,
+  contributors: null,
+  recentCommits: null,
+})
+
+onMounted(async () => {
+  try {
+    const res = await fetch('/api/github-stats.json')
+    if (!res.ok) return
+    const d = await res.json()
+    communityStats.value = {
+      openPRs:       d.openPRs       ?? null,
+      openIssues:    d.openIssues    ?? null,
+      contributors:  d.contributors  ?? null,
+      recentCommits: d.recentCommits ?? null,
+    }
+  } catch { /* soft-fail: dashes render until data arrives */ }
+})
+
+const fmtStat = n => n == null ? '—' : String(n)
+
+const communityStatRows = computed(() => [
+  { label: 'Open pull requests',      value: fmtStat(communityStats.value.openPRs) },
+  { label: 'Open issues & erratas',   value: fmtStat(communityStats.value.openIssues) },
+  { label: 'Contributors · all time', value: fmtStat(communityStats.value.contributors) },
+  { label: 'Commits · last 30d',      value: fmtStat(communityStats.value.recentCommits) },
+])
+
+const communityDrafts = [
+  {
+    title: 'Machine-readable specification',
+    desc: 'The standard, as code. OpenAPI + JSON Schema + an executable conformance suite, so "compliant" means something a CI pipeline can prove.',
+  },
+  {
+    title: 'Bulk & Batch Payments',
+    desc: 'One consent, many payments. Payroll, supplier runs, and recurring disbursements without re-prompting the customer for every transfer.',
+  },
+  {
+    title: 'International Payments, reimagined',
+    desc: 'A ground-up redesign of the cross-border flow — FX transparency, beneficiary verification, and SWIFT/instant rails treated as first-class citizens.',
+  },
+]
+
+const communityWays = [
+  { title: 'File an errata',             desc: 'Spot an error or ambiguity in the published specs? Open an issue.' },
+  { title: 'Improve the docs',           desc: 'Clarify integration guides, add examples, fix typos — every PR counts.' },
+  { title: 'Share implementation notes', desc: 'What tripped you up? How did you test? Document it for the next team.' },
+]
 </script>
 
 <style scoped>
@@ -781,6 +945,7 @@ const bodyArticles    = computed(() => articles.slice(3, 9))
 
 .ed-section__mark--gold { color: var(--at-gold); }
 .ed-section__mark--blue { color: var(--at-blue); }
+.ed-section__mark--navy { color: var(--at-navy); }
 
 .ed-section__title {
   font-family: var(--at-serif);
@@ -1091,6 +1256,224 @@ const bodyArticles    = computed(() => articles.slice(3, 9))
   margin-bottom: 2rem;
 }
 
+/* ─── Community section ────────────────────────────────────────────────── */
+.ed-community__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: var(--at-surface);
+  border: 1px solid var(--at-grid-line);
+}
+
+.ed-community__card {
+  padding: 2.25rem 2rem;
+  border-right: 1px solid var(--at-grid-line);
+  display: flex;
+  flex-direction: column;
+}
+
+.ed-community__card:last-child { border-right: none; }
+
+.ed-community__card--accent { background: var(--at-bg-paper); }
+
+.ed-community__card-head {
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--at-grid-line);
+}
+
+.ed-community__kicker {
+  font-family: var(--at-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 0.55rem;
+}
+
+.ed-community__kicker--teal { color: var(--at-teal-deep); }
+.ed-community__kicker--gold { color: var(--at-gold); }
+.ed-community__kicker--blue { color: var(--at-blue-deep); }
+
+.ed-community__card-title {
+  font-family: var(--at-serif);
+  font-size: 1.4rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--at-navy-deep);
+  margin: 0;
+}
+
+/* Stats list (col 1) */
+.ed-community__stats {
+  flex: 1;
+  margin-bottom: 1.5rem;
+}
+
+.ed-community__stat {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--at-grid-line);
+}
+
+.ed-community__stat:last-child { border-bottom: none; }
+
+.ed-community__stat-label {
+  font-family: var(--at-sans);
+  font-size: 0.85rem;
+  color: var(--at-mute-2);
+}
+
+.ed-community__stat-value {
+  font-family: var(--at-mono);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--at-navy-deep);
+}
+
+/* Drafts + Ways (col 2 + col 3) — share the same item layout */
+.ed-community__list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.ed-community__item {
+  display: grid;
+  grid-template-columns: 1.75rem 1fr;
+  gap: 0.85rem;
+  align-items: start;
+}
+
+.ed-community__item-num {
+  font-family: var(--at-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding-top: 0.18rem;
+}
+
+.ed-community__item-num--blue { color: var(--at-blue-deep); }
+.ed-community__item-num--gold { color: var(--at-gold); }
+
+.ed-community__item-title {
+  font-family: var(--at-serif);
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--at-navy-deep);
+  margin-bottom: 0.25rem;
+}
+
+.ed-community__item-desc {
+  font-family: var(--at-sans);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--at-mute);
+}
+
+/* GitHub link at bottom of col 1 */
+.ed-community__link {
+  margin-top: auto;
+  align-self: flex-start;
+  font-family: var(--at-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid currentColor;
+}
+
+.ed-community__link--teal { color: var(--at-teal-deep); }
+
+/* Reach-out CTA (replaces event banner) */
+.ed-community__reachout {
+  margin-top: 2rem;
+  padding: 1.75rem 2rem;
+  background: var(--at-surface);
+  border: 1px solid var(--at-grid-line);
+  border-left: 3px solid var(--at-gold);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2.5rem;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s ease;
+}
+
+.ed-community__reachout:hover { background: var(--at-bg-paper); }
+
+.ed-community__reachout-label {
+  font-family: var(--at-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--at-gold);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.ed-community__reachout-title {
+  font-family: var(--at-serif);
+  font-size: 1.45rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--at-navy-deep);
+  line-height: 1.25;
+  margin-bottom: 0.5rem;
+}
+
+.ed-community__reachout-sub {
+  font-family: var(--at-sans);
+  font-size: 0.92rem;
+  color: var(--at-mute-2);
+  line-height: 1.55;
+}
+
+.ed-community__reachout-email {
+  font-family: var(--at-mono);
+  font-size: 0.85rem;
+  color: var(--at-navy-deep);
+  font-weight: 600;
+}
+
+.ed-community__reachout-cta {
+  font-family: var(--at-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  padding: 0.85rem 1.4rem;
+  background: var(--at-navy-deep);
+  color: var(--at-bg-cream);
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.ed-community__reachout:hover .ed-community__reachout-cta {
+  background: var(--at-navy);
+}
+
+/* Attribution */
+.ed-community__attribution {
+  margin: 2rem auto 0;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--at-grid-line);
+  font-family: var(--at-sans);
+  font-style: italic;
+  font-size: 0.85rem;
+  line-height: 1.65;
+  color: var(--at-mute);
+  max-width: 45rem;
+  text-align: center;
+}
+
 /* ─── More link ────────────────────────────────────────────────────────── */
 .ed-more-link {
   display: inline-flex;
@@ -1118,6 +1501,11 @@ const bodyArticles    = computed(() => articles.slice(3, 9))
   .ed-chart-row { grid-template-columns: 1fr; }
   .ed-docs { grid-template-columns: 1fr; }
   .ed-docs__col:first-child { border-right: 0; border-bottom: 1px solid var(--at-grid-line); }
+  .ed-community__grid { grid-template-columns: 1fr; }
+  .ed-community__card { border-right: 0; border-bottom: 1px solid var(--at-grid-line); }
+  .ed-community__card:last-child { border-bottom: 0; }
+  .ed-community__reachout { grid-template-columns: 1fr; gap: 1.25rem; }
+  .ed-community__reachout-cta { justify-self: start; }
   .ed-articles { grid-template-columns: 1fr; }
   .ed-articles > :nth-child(1) { grid-row: auto; }
   .ed-articles-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1131,6 +1519,8 @@ const bodyArticles    = computed(() => articles.slice(3, 9))
   .ed-kpis { grid-template-columns: 1fr; }
   .ed-kpi__value { font-size: 2.2rem; }
   .ed-articles-grid { grid-template-columns: 1fr; }
+  .ed-community__card { padding: 1.75rem 1.25rem; }
+  .ed-community__reachout { padding: 1.5rem 1.25rem; }
   .ed-ticker__row { grid-template-columns: 1.2fr 1fr; }
   .ed-ticker__spark { grid-column: span 2; }
 }

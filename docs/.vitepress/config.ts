@@ -258,6 +258,7 @@ export default defineConfig({
           { text: 'Pricing', link: '/pricing/' },
           { text: 'Policies', link: '/policy' },
           { text: 'Document Repository', link: '/doc-repository/' },
+          { text: 'Live Ecosystem', link: '/program/whats-live' },
         ],
       },
       {

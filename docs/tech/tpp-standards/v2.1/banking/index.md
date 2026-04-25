@@ -10,7 +10,9 @@ The Open Finance Banking capabilities enable secure and efficient financial data
 
 
 
-<LiveAPIs />
+::: tip See who's live
+[**Which LFIs are live on Open Finance** →](/program/whats-live)
+:::
 
 
 ### Bank Data Sharing (Account Information)

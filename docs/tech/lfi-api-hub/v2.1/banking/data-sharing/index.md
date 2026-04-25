@@ -12,7 +12,9 @@ The Open Finance Banking Data Sharing capabilities enable secure, consent-driven
 Access to the Bank Data Sharing APIs requires TPPs to hold the **BDSP** (Bank Data Sharing Provider) role. The API Hub validates the role on every request before proxying it to the LFI.
 :::
 
-<LiveTPPs :families="['account-information']" />
+::: tip See who's live
+[**Which TPPs are consuming Account Information** →](/program/whats-live?type=tpp&family=account-information)
+:::
 
 ## Endpoint & account type coverage
 

@@ -9,6 +9,7 @@ import { resetSelectedVersion } from '../../components/Composables/useSelectedVe
 // Pages
 import HomePage from '../../components/WebPages/HomePage.vue'
 import NewsPage from '../../components/WebPages/NewsPage.vue'
+import LiveEcosystemPage from '../../components/WebPages/LiveEcosystemPage.vue'
 import OpenFinanceDashboard from '../../components/WebPages/OpenFinanceDashboard.vue'
 import KnowledgeBasePage from '../../components/WebPages/KnowledgeBasePage.vue'
 import DocumentRepoPage from '../../components/WebPages/DocumentRepoPage.vue'
@@ -34,8 +35,6 @@ import ConsentConnectionsEditor from '../../components/ConsentConnectionsEditor.
 import RedocWrapper from '../../components/RedocWrapper.vue'
 import Carousel from '../../components/Carousel.vue'
 import ProtectedPageWrapper from '../../components/ProtectedPageWrapper.vue'
-import LiveAPIs from '../../components/LiveAPIs.vue'
-import LiveTPPs from '../../components/LiveTPPs.vue'
 import EditableJson from '../../components/EditableJson.vue'
 import ErrataNotice from '../../components/ErrataNotice.vue'
 import ConsentAuthLayout from '../../components/ConsentAuthLayout.vue'
@@ -123,6 +122,7 @@ export default {
     //pages
     app.component('HomePage', HomePage)
     app.component('NewsPage', NewsPage)
+    app.component('LiveEcosystemPage', LiveEcosystemPage)
     app.component('KnowledgeBasePage', KnowledgeBasePage)
     app.component('OpenFinanceDashboard', OpenFinanceDashboard)
     app.component('DocumentRepoPage', DocumentRepoPage)
@@ -148,8 +148,6 @@ export default {
     app.component('RedocWrapper', RedocWrapper)
     app.component('Carousel', Carousel)
     app.component('ProtectedPageWrapper', ProtectedPageWrapper)
-    app.component('LiveAPIs', LiveAPIs)
-    app.component('LiveTPPs', LiveTPPs)
     app.component('EditableJson', EditableJson)
     app.component('ErrataNotice', ErrataNotice)
     app.component('TPPPostmanScriptBuilder', TPPPostmanScriptBuilder)

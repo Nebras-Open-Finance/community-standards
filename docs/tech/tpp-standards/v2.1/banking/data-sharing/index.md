@@ -14,7 +14,9 @@ All data access operates under explicit customer consent, with granular permissi
 Access to the Bank Data Sharing APIs requires the **BDSP** (Bank Data Sharing Provider) role. This role must be assigned to your application in the Trust Framework before making any account information requests. See [Roles](/tech/tpp-standards/trust-framework/roles) for the full list of scopes and grant types this role permits.
 :::
 
-<LiveAPIs :families="['account-information']" />
+::: tip See who's live
+[**Which LFIs are live for Account Information** →](/program/whats-live?family=account-information)
+:::
 
 ## Endpoint & account type coverage
 

@@ -12,7 +12,9 @@ The ATM API lets a TPP retrieve ATM location and service data published by LFIs.
 Access to the ATM API requires the **BDSP** (Bank Data Sharing Provider) role. This role must be assigned to your application in the Trust Framework before calling the endpoint. See [Roles](/tech/tpp-standards/trust-framework/roles) for the full list of scopes and grant types this role permits.
 :::
 
-<LiveAPIs :families="['atm']" />
+::: tip See who's live
+[**Which LFIs are live with ATM data** →](/program/whats-live?family=atm)
+:::
 
 ## What the API returns
 

@@ -12,7 +12,9 @@ The Products & Leads API lets a TPP retrieve publicly available banking products
 Access to the Products & Leads API requires the **BDSP** (Bank Data Sharing Provider) role. This role must be assigned to your application in the Trust Framework before calling either endpoint. See [Roles](/tech/tpp-standards/trust-framework/roles) for the full list of scopes and grant types this role permits.
 :::
 
-<LiveAPIs :families="['product']" />
+::: tip See who's live
+[**Which LFIs are live for Products & Leads** →](/program/whats-live?family=product)
+:::
 
 ## How it works
 

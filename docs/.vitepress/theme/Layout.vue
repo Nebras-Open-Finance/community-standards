@@ -51,6 +51,8 @@ const navTitle = computed(() => {
     return { title: 'Metrics', link: '/metrics' }
   if (path.startsWith('/news'))
     return { title: 'News', link: '/news' }
+  if (path.startsWith('/program/whats-live'))
+    return { title: 'Live Ecosystem', link: '/program/whats-live' }
 
 
   if (path.startsWith('/doc-repository'))
