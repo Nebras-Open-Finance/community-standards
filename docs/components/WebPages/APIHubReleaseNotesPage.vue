@@ -472,7 +472,8 @@ function resetFilters() {
 // ─── URL helpers ─────────────────────────────────────────────────────────
 function sectionUrl(ref) {
   const target = ref.target === 'lfi' ? 'lfi-api-hub' : 'tpp-standards'
-  return `/tech/${target}/${selectedVersion.value}/${ref.path}`
+  const versionSegment = ref.versioned === false ? '' : `${selectedVersion.value}/`
+  return `/tech/${target}/${versionSegment}${ref.path}`
 }
 
 function anchorFor(entry) { return anchorForEntry(entry) }

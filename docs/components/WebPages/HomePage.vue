@@ -416,14 +416,14 @@ const tickerCells = computed(() => {
       series: paySeries,
     },
     {
-      label: 'Active LFIs',
+      label: 'Onboarded LFIs',
       value: String(lfis).padStart(2, '0'),
       delta: '+ ' + Math.min(lfis, 3),
       color: ACCENT.navy,
       series: lfiSeries,
     },
     {
-      label: 'Active TPPs',
+      label: 'Onboarded TPPs',
       value: String(tpps).padStart(2, '0'),
       delta: '+ ' + Math.min(tpps, 2),
       color: ACCENT.blueDeep,

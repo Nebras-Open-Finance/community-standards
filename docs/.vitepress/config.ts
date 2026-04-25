@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import { defineConfig } from 'vitepress'
 import { tppSidebar } from './config/sidebars/tpp'
 import { lfiSidebar } from './config/sidebars/lfi'
-import { policySidebar, processesSidebar } from './config/sidebars/policy'
+import { processesSidebar } from './config/sidebars/policy'
 import { kbSidebar } from './config/sidebars/kb'
 import { apiSpecsSidebar } from './config/sidebars/api-specs'
 import { docRepositorySidebar } from './config/sidebars/doc-repository'
@@ -166,6 +166,12 @@ export default defineConfig({
     const urlPath = relativePathToUrlPath(relPath)
     const canonicalUrl = `${SITE_URL}${urlPath}`
 
+    if (relPath.startsWith('knowledge-base/articles/')) {
+      pageData.frontmatter.sidebar = false
+      pageData.frontmatter.prev = false
+      pageData.frontmatter.next = false
+    }
+
     let description = (pageData.frontmatter.description as string | undefined)?.trim()
     if (!description) {
       const absPath = resolve(ctx.siteConfig.srcDir, pageData.relativePath)
@@ -241,10 +247,15 @@ export default defineConfig({
   themeConfig: {
     siteTitle: false,
     sidebarMenuLabel: 'Sidebar',
+    // Hide prev/next doc navigation by default. Pages that want it can opt
+    // back in via frontmatter, e.g. `prev: { text: '...', link: '...' }`.
+    docFooter: { prev: false, next: false },
     nav: [
       {
         text: 'Program',
         items: [
+          { text: 'Service Desk', link: '/support-service-desk/' },
+          { text: 'Pricing', link: '/pricing/' },
           { text: 'Policies', link: '/policy' },
           { text: 'Document Repository', link: '/doc-repository/' },
         ],
@@ -282,7 +293,6 @@ export default defineConfig({
         { text: 'Knowledge Base', link: '/knowledge-base/' },
         { text: 'Release Notes & Erratas', link: '/tech/release-notes-and-erratas/' },
       ],
-      '/policy': policySidebar,
       '/processes': processesSidebar,
       '/knowledge-base': kbSidebar,
       '/doc-repository': docRepositorySidebar,

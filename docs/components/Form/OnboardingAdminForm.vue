@@ -33,10 +33,14 @@
     </div>
 
     <div class="actions">
-      <button class="consent-style-button" @click="submit">
-        <span class="consent-style-button-inner">
-          <span class="consent-style-button-text">Print / Save as PDF</span>
-        </span>
+      <button class="ed-cta" @click="submit">
+        <svg class="ed-cta__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="6 9 6 2 18 2 18 9" />
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+          <rect x="6" y="14" width="12" height="8" />
+        </svg>
+        <span class="ed-cta__text">Print / Save as PDF</span>
       </button>
     </div>
 
@@ -151,37 +155,46 @@ async function submit() {
 .actions {
   display: flex;
   justify-content: center;
-  padding-top: 4px;
+  padding-top: 0.5rem;
 }
 
-.consent-style-button {
-  border: none;
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
-}
-
-.consent-style-button-inner {
+/* Editorial CTA — matches .ed-action__primary / .ed-sd-repo__cta */
+.ed-cta {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-width: 320px;
-  height: 48px;
-  padding: 10px 24px;
-  border-radius: 66px;
-  background: linear-gradient(84.64deg, #00c8af 0%, #015ad7 41.05%, #000000 82.6%);
-  box-shadow: 0 10px 20px rgba(1, 90, 215, 0.18);
-  color: #ffffff;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  gap: 0.7rem;
+  padding: 0.95rem 1.5rem;
+  background: var(--at-navy-deep);
+  color: var(--at-bg-cream);
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  font-family: var(--at-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
-.consent-style-button:hover .consent-style-button-inner {
-  opacity: 80%;
+.ed-cta:hover:not(:disabled) {
+  background: var(--at-navy);
+  transform: translateY(-1px);
 }
 
-.consent-style-button-text {
-  font-size: 14px;
+.ed-cta:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ed-cta__icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.ed-cta__text {
+  white-space: nowrap;
 }
 
 @media (max-width: 640px) {

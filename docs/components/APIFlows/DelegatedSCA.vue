@@ -72,7 +72,7 @@ onMounted(async () => {
 
   if (mermaidContainer.value) {
     try {
-      const { svg } = await mermaid.render('on-demand-diagram', mermaidDefinition)
+      const { svg } = await mermaid.render('delegated-sca-diagram', mermaidDefinition)
       mermaidContainer.value.innerHTML = svg
     } catch (err) {
       console.error(err)

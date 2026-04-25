@@ -10,21 +10,25 @@
 
 export type ReleaseAudience = 'TPP' | 'LFI' | 'Both'
 
-// `path` is relative to the standards root, with no leading slash and no
-// version segment — the version is supplied at render time from the version
-// composable. `target` picks which standards root to resolve against:
-//   - 'tpp'  → /tech/tpp-standards/{version}/{path}
-//   - 'lfi'  → /tech/lfi-api-hub/{version}/{path}
+// `path` is relative to the standards root, with no leading slash. `target`
+// picks which standards root to resolve against, and `versioned` controls
+// whether the selected version segment is inserted:
+//   - versioned !== false → /tech/{target}/{version}/{path}   (default)
+//   - versioned === false → /tech/{target}/{path}
+// Use versioned: false for areas that live outside the per-version tree
+// (security/, trust-framework/, registration/, sandbox/, production/).
 export interface ReleaseSectionRef {
   label: string
   path: string
   target?: 'tpp' | 'lfi'
+  versioned?: boolean
 }
 
 export interface ReleaseEndpoint {
   label: string
   path: string
   target?: 'tpp' | 'lfi'
+  versioned?: boolean
 }
 
 export interface ReleaseEntry {
@@ -75,12 +79,12 @@ export const API_HUB_RELEASES: ReleaseEntry[] = [
     audience: 'TPP',
     areas: [AREAS.serviceInitiation, AREAS.tokens],
     sections: [
-      { label: 'Tokens & Assertions', path: 'security/tokens' },
+      { label: 'Tokens & Assertions', path: 'security/tokens', versioned: false },
       { label: 'Single Instant Payment', path: 'banking/service-initiation/domestic-payments/single-instant-payment/api-guide' },
       { label: 'Multi Authorization', path: 'banking/service-initiation/multi-authorization' },
     ],
     endpoints: [
-      { label: 'POST /token', path: 'security/tokens/open-api/token' },
+      { label: 'POST /token', path: 'security/tokens/open-api/token', versioned: false },
       { label: 'POST /payments', path: 'banking/service-initiation/open-api/payments' },
     ],
   },

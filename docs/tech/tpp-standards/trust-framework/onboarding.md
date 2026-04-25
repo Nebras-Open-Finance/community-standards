@@ -14,11 +14,35 @@ The onboarding process to the **Trust Framework** works in tandem with the **lic
 
 As a **Third-Party Provider (TPP)**, you may begin onboarding to the appropriate Trust Framework environment based on your licensing status:
 
-- **Sandbox Environment:**
-  You may onboard to the [Sandbox Trust Framework](https://web.sandbox.directory.openfinance.ae/) once the CBUAE has **confirmed receipt** of your **licence application** and **business plan**.
+<div class="ed-card-grid">
 
-- **Production Environment:**
-  You may onboard to the [Production Trust Framework](https://web.directory.openfinance.ae/) once the CBUAE has **approved your licence.**
+<a href="#requesting-sandbox-onboarding" class="ed-card" style="--ed-card-color: var(--at-teal);">
+  <span class="ed-card__top"></span>
+  <div class="ed-card__meta">
+    <span class="ed-card__cat">01 &middot; Sandbox</span>
+  </div>
+  <h3 class="ed-card__title">Sandbox Environment</h3>
+  <p class="ed-card__desc">You may onboard to the Sandbox Trust Framework once the CBUAE has confirmed receipt of your licence application and business plan. Request onboarding by emailing support@nebrasopenfinance.ae.</p>
+  <div class="ed-card__foot">
+    <span class="ed-card__cta">View email template</span>
+    <span class="ed-card__arrow">&nearr;</span>
+  </div>
+</a>
+
+<a href="https://servicedesk.nebrasopenfinance.ae/servicedesk/customer/portal/2/create/38" target="_blank" rel="noopener" class="ed-card" style="--ed-card-color: var(--at-blue-deep);">
+  <span class="ed-card__top"></span>
+  <div class="ed-card__meta">
+    <span class="ed-card__cat">02 &middot; Production</span>
+  </div>
+  <h3 class="ed-card__title">Production Environment</h3>
+  <p class="ed-card__desc">You may onboard to the Production Trust Framework once the CBUAE has approved your licence. Request onboarding by raising a Service Desk ticket.</p>
+  <div class="ed-card__foot">
+    <span class="ed-card__cta">Raise a Service Desk ticket</span>
+    <span class="ed-card__arrow">&nearr;</span>
+  </div>
+</a>
+
+</div>
 
 If you have not yet started your Open Finance licensing process and are interested in finding out more, please contact [connect@nebrasopenfinance.ae](mailto:connect@nebrasopenfinance.ae).
 
@@ -26,7 +50,7 @@ If you have not yet started your Open Finance licensing process and are interest
 
 Once the CBUAE has confirmed receipt of your licence application, send the following to [support@nebrasopenfinance.ae](mailto:support@nebrasopenfinance.ae) to begin sandbox onboarding:
 
-::: info Email template
+::: info 📨 Email template
 
 **To:** [support@nebrasopenfinance.ae](mailto:support@nebrasopenfinance.ae)
 

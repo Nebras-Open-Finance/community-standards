@@ -232,13 +232,15 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     errataId: 'v2.1-errata1',
     version: 'v2.1',
     number: 6,
-    title: 'Monetary Amount pattern — double-escaped regex corrected across five specs',
-    summary: 'The Amount monetary regex, previously published with doubled backslashes, is corrected to ^\\d{1,13}$|^\\d{1,13}\\.\\d{1,5}$ across the affected specs.',
+    title: 'Over-escaped regex patterns — doubled-backslash defect corrected across affected schemas',
+    summary: 'Regex patterns published with doubled-backslash YAML escapes — the monetary Amount pattern across five specs, and the rarType and CoP response patterns on Ozone Connect User Operations — have been corrected to their canonical single-backslash form.',
     description:
-      'The monetary Amount schema carried a doubled-backslash pattern (a YAML-escape artefact) that no JSON-Schema validator would have interpreted as the intended numeric regex. The pattern is corrected to ^\\d{1,13}$|^\\d{1,13}\\.\\d{1,5}$ — matching the canonical regex used by every conforming implementation.\n\n' +
-      'The correction spans five specs that each carried the same defect: uae-fx-service-initiation-openapi, uae-api-hub-consent-manager-openapi, uae-ozone-connect-bank-service-initiation-openapi, uae-ozone-connect-consent-events-actions-openapi, and uae-ozone-connect-user-operations-openapi.',
+      'A family of regex patterns carried doubled-backslash YAML-escape artefacts that no JSON-Schema validator would have interpreted as the intended expression. The patterns are corrected to their canonical single-backslash form, matching what every conforming implementation relies on.\n\n' +
+      'Monetary Amount (^\\d{1,13}$|^\\d{1,13}\\.\\d{1,5}$): fixed across five specs — uae-fx-service-initiation-openapi, uae-api-hub-consent-manager-openapi, uae-ozone-connect-bank-service-initiation-openapi, uae-ozone-connect-consent-events-actions-openapi, and uae-ozone-connect-user-operations-openapi.\n\n' +
+      'rarType (^urn:openfinanceuae:(?:account-access|insurance|service-initiation)-consent:v[0-9]+\\.[0-9]+$): fixed on five rarType occurrences in uae-ozone-connect-user-operations-openapi.\n\n' +
+      'CoP response (^.+\\..+\\..+$): fixed on OzoneConnectConsentEventActionAPIs.AEConfirmationOfPayeeResponse in uae-ozone-connect-user-operations-openapi.',
     rationale:
-      'The published regex was non-functional: strict validators either rejected every amount or accepted any string depending on how they handled the literal backslash sequences. Production systems rely on the canonical single-backslash form; the correction brings every Amount definition on these five specs into line with that canonical form, tracked as OF-6288.',
+      'The published regexes were non-functional: strict validators either rejected legitimate inputs or accepted any string depending on how they handled the literal backslash sequences. Production systems rely on the canonical single-backslash form; the correction brings every affected pattern into line with that form. The monetary Amount corrections are tracked as OF-6288; the rarType and CoP response corrections roll up under the same v2.1.3 change bullet on User Operations.',
     effectiveDate: 'To be confirmed on merge to main.',
     specs: [
       'uae-fx-service-initiation-openapi',
@@ -253,23 +255,49 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
         url: `${OZONE}/dist/standards/v2.1-errata1/uae-fx-service-initiation-openapi.yaml`,
       },
       {
-        label: 'dist/api-hub/v2.1.x-errata1/uae-api-hub-consent-manager-openapi.yaml',
-        url: `${OZONE}/dist/api-hub/v2.1.x-errata1/uae-api-hub-consent-manager-openapi.yaml`,
+        label: 'dist/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi.yaml',
+        url: `${OZONE}/dist/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi.yaml`,
       },
       {
-        label: 'dist/ozone-connect/v2.1.x-errata1/uae-ozone-connect-bank-service-initiation-openapi.yaml',
-        url: `${OZONE}/dist/ozone-connect/v2.1.x-errata1/uae-ozone-connect-bank-service-initiation-openapi.yaml`,
+        label: 'dist/ozone-connect/v2.1.x/uae-ozone-connect-bank-service-initiation-openapi.yaml',
+        url: `${OZONE}/dist/ozone-connect/v2.1.x/uae-ozone-connect-bank-service-initiation-openapi.yaml`,
       },
       {
-        label: 'dist/ozone-connect/v2.1.x-errata1/uae-ozone-connect-consent-events-actions-openapi.yaml',
-        url: `${OZONE}/dist/ozone-connect/v2.1.x-errata1/uae-ozone-connect-consent-events-actions-openapi.yaml`,
+        label: 'dist/ozone-connect/v2.1.x/uae-ozone-connect-consent-events-actions-openapi.yaml',
+        url: `${OZONE}/dist/ozone-connect/v2.1.x/uae-ozone-connect-consent-events-actions-openapi.yaml`,
       },
       {
-        label: 'dist/ozone-connect/v2.1.x-errata1/uae-ozone-connect-user-operations-openapi.yaml',
-        url: `${OZONE}/dist/ozone-connect/v2.1.x-errata1/uae-ozone-connect-user-operations-openapi.yaml`,
+        label: 'dist/ozone-connect/v2.1.x/uae-ozone-connect-user-operations-openapi.yaml',
+        url: `${OZONE}/dist/ozone-connect/v2.1.x/uae-ozone-connect-user-operations-openapi.yaml`,
       },
     ],
-    affectedPaths: [],
+    affectedPaths: [
+      // API Hub Consent Manager — operations whose payloads carry the Amount schema
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents-consentId',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/payment-log',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/payment-log-id',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consents',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consents-consentId',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/payment-log',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/payment-log-id',
+      // Ozone Connect Bank Service Initiation
+      '/tech/lfi-api-hub/v2.1/banking/service-initiation/open-api/payments',
+      '/tech/lfi-api-hub/v2.1/banking/service-initiation/open-api/payments-PaymentId',
+      '/tech/lfi-api-hub/v2.1/banking/service-initiation/open-api/payment-consents-ConsentId-refund',
+      '/tech/api-specs/v2.1/ozone-connect/service-initiation/payments',
+      '/tech/api-specs/v2.1/ozone-connect/service-initiation/payments-PaymentId',
+      '/tech/api-specs/v2.1/ozone-connect/service-initiation/payment-consents-ConsentId-refund',
+      // Ozone Connect Consent Events Actions
+      '/tech/lfi-api-hub/v2.1/consent-events/open-api/validate',
+      '/tech/lfi-api-hub/v2.1/consent-events/open-api/event-op',
+      '/tech/api-specs/v2.1/ozone-connect/consent-events/validate',
+      '/tech/api-specs/v2.1/ozone-connect/consent-events/event-op',
+    ],
   },
   {
     errataId: 'v2.1-errata1',
@@ -322,111 +350,26 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     schemas: ['AERiskExternalAccountIdentificationCode'],
     githubSources: [
       {
-        label: 'dist/api-hub/v2.1.x-errata1/uae-api-hub-consent-manager-openapi.yaml',
-        url: `${OZONE}/dist/api-hub/v2.1.x-errata1/uae-api-hub-consent-manager-openapi.yaml`,
+        label: 'dist/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi.yaml',
+        url: `${OZONE}/dist/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi.yaml`,
       },
     ],
-    affectedPaths: [],
+    affectedPaths: [
+      // Consent Manager — consent operations whose RAR payloads carry risk identifiers
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents-consentId',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consents',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consents-consentId',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents',
+    ],
   },
   {
     errataId: 'v2.1-errata1',
     version: 'v2.1',
     number: 9,
-    title: 'API Hub Consent Manager — AEExternalAccountTypeCode collapsed into AEAccountTypeCode; SME added',
-    summary: 'The duplicate AEExternalAccountTypeCode enum has been folded into AEAccountTypeCode, which now declares [Retail, SME, Corporate].',
-    description:
-      'Two overlapping AccountType enums have been consolidated. AEAccountTypeCode (previously [Retail, Corporate], referenced by the stored consentBody) and AEExternalAccountTypeCode (previously [Retail, SME, Corporate], referenced by the RAR request body) are now a single AEAccountTypeCode declaring [Retail, SME, Corporate]. The RAR request body has been repointed to AEAccountTypeCode.',
-    rationale:
-      'The split caused internal inconsistency — a RAR request carrying AccountType: SME validated against the request schema but failed against the consentBody schema in the same payload. Collapsing the two and adopting SME on the canonical enum lets a single AccountType value flow through the whole consent lifecycle cleanly.',
-    effectiveDate: 'To be confirmed on merge to main.',
-    spec: 'uae-api-hub-consent-manager-openapi',
-    schemas: ['AEAccountTypeCode'],
-    githubSources: [
-      {
-        label: 'dist/api-hub/v2.1.x-errata1/uae-api-hub-consent-manager-openapi.yaml',
-        url: `${OZONE}/dist/api-hub/v2.1.x-errata1/uae-api-hub-consent-manager-openapi.yaml`,
-      },
-    ],
-    affectedPaths: [],
-  },
-  {
-    errataId: 'v2.1-errata1',
-    version: 'v2.1',
-    number: 10,
-    title: 'API Hub Consent Manager — duplicate OnBehalfOf collapsed into AEOnBehalfOf',
-    summary: 'The unprefixed OnBehalfOf schema has been folded into the canonical AEOnBehalfOf.',
-    description:
-      'Two structurally equivalent OnBehalfOf schemas have been consolidated. The unprefixed OnBehalfOf (used only by the Insurance RAR) has been deleted, and the Insurance RAR repointed to the canonical AEOnBehalfOf already used by Bank Data Sharing and the consent body paths. Both carried the same TradingName / LegalName / IdentifierType / Identifier shape and the same IdentifierType: [Other] constraint.',
-    rationale:
-      'Two definitions of the same shape invited silent drift between the Bank and Insurance RAR contracts. The collapse eliminates that risk without changing any wire contract.',
-    effectiveDate: 'To be confirmed on merge to main.',
-    spec: 'uae-api-hub-consent-manager-openapi',
-    schemas: ['AEOnBehalfOf'],
-    githubSources: [
-      {
-        label: 'dist/api-hub/v2.1.x-errata1/uae-api-hub-consent-manager-openapi.yaml',
-        url: `${OZONE}/dist/api-hub/v2.1.x-errata1/uae-api-hub-consent-manager-openapi.yaml`,
-      },
-    ],
-    affectedPaths: [],
-  },
-  {
-    errataId: 'v2.1-errata1',
-    version: 'v2.1',
-    number: 11,
-    title: 'Consent Manager & Consent Events Actions — duplicate EventNotification and Amount schemas collapsed',
-    summary: 'Two pairs of duplicate schemas have been consolidated on the canonical AE-prefixed definitions.',
-    description:
-      'Two pairs of structurally identical schemas have been consolidated across the Consent Manager and the Ozone Connect Consent Events Actions spec:\n\n' +
-      '- EventNotification (the Webhook subscription shape — Webhook.Url + Webhook.IsActive) has been folded into AEEventNotification. The Data Sharing, Insurance, and Service Initiation AuthorizationDetails schemas have been repointed.\n\n' +
-      '- Amount (monetary-amount string pattern) has been folded into AEActiveOrHistoricAmount. The Service Initiation RemittanceAmount has been repointed.',
-    rationale:
-      'Carrying two definitions of the same shape in each spec invited silent drift between the families that referenced each side. The collapse leaves a single canonical AE-prefixed definition per concept across both specs.',
-    effectiveDate: 'To be confirmed on merge to main.',
-    specs: [
-      'uae-api-hub-consent-manager-openapi',
-      'uae-ozone-connect-consent-events-actions-openapi',
-    ],
-    schemas: ['AEEventNotification', 'AEActiveOrHistoricAmount'],
-    githubSources: [
-      {
-        label: 'dist/api-hub/v2.1.x-errata1/uae-api-hub-consent-manager-openapi.yaml',
-        url: `${OZONE}/dist/api-hub/v2.1.x-errata1/uae-api-hub-consent-manager-openapi.yaml`,
-      },
-      {
-        label: 'dist/ozone-connect/v2.1.x-errata1/uae-ozone-connect-consent-events-actions-openapi.yaml',
-        url: `${OZONE}/dist/ozone-connect/v2.1.x-errata1/uae-ozone-connect-consent-events-actions-openapi.yaml`,
-      },
-    ],
-    affectedPaths: [],
-  },
-  {
-    errataId: 'v2.1-errata1',
-    version: 'v2.1',
-    number: 12,
-    title: 'Ozone Connect User Operations — duplicate AEAddressItem and Amount schemas collapsed',
-    summary: 'Two pairs of duplicate schemas under the OzoneConnectConsentEventActionAPIs namespace have been consolidated.',
-    description:
-      'Two pairs of structurally identical schemas under the OzoneConnectConsentEventActionAPIs namespace have been consolidated:\n\n' +
-      '- AEAddressItem (array-of-postal-address) has been folded into AEAddress. Debtor.PostalAddress and Creditor.PostalAddress have been repointed.\n\n' +
-      '- Amount (monetary-amount string pattern) has been folded into AEActiveOrHistoricAmount.',
-    rationale:
-      'Two definitions of the same shape in the same spec invited silent drift. The collapse leaves a single canonical definition per concept.',
-    effectiveDate: 'To be confirmed on merge to main.',
-    spec: 'uae-ozone-connect-user-operations-openapi',
-    schemas: ['AEAddress', 'AEActiveOrHistoricAmount'],
-    githubSources: [
-      {
-        label: 'dist/ozone-connect/v2.1.x-errata1/uae-ozone-connect-user-operations-openapi.yaml',
-        url: `${OZONE}/dist/ozone-connect/v2.1.x-errata1/uae-ozone-connect-user-operations-openapi.yaml`,
-      },
-    ],
-    affectedPaths: [],
-  },
-  {
-    errataId: 'v2.1-errata1',
-    version: 'v2.1',
-    number: 13,
     title: 'Ozone Connect Health Check — echo-cert clientCertificate described as mTLS client cert, not server cert',
     summary: 'The clientCertificate.subject description and example on GET /echo-cert now describe the caller’s mTLS client certificate; the issuer example has been refreshed to the Sandbox Trust Framework issuing CA.',
     description:
@@ -441,13 +384,39 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     schemas: ['HealthCheckCertResponse'],
     githubSources: [
       {
-        label: 'dist/ozone-connect/v2.1.x-errata1/uae-ozone-connect-health-check-openapi.yaml',
-        url: `${OZONE}/dist/ozone-connect/v2.1.x-errata1/uae-ozone-connect-health-check-openapi.yaml`,
+        label: 'dist/ozone-connect/v2.1.x/uae-ozone-connect-health-check-openapi.yaml',
+        url: `${OZONE}/dist/ozone-connect/v2.1.x/uae-ozone-connect-health-check-openapi.yaml`,
       },
     ],
     affectedPaths: [
       '/tech/api-specs/v2.1/ozone-connect/health-check/echo-cert',
       '/tech/lfi-api-hub/v2.1/health-check/open-api/echo-cert',
+    ],
+  },
+  {
+    errataId: 'v2.1-errata1',
+    version: 'v2.1',
+    number: 10,
+    title: 'Ozone Connect Bank Data Sharing — meta block added to GET /accounts/{AccountId}/statements',
+    summary: 'The GET /accounts/{AccountId}/statements response now carries an optional meta block with firstAvailableDateTime and lastAvailableDateTime, letting LFIs advertise the date range of available statement data on the account.',
+    description:
+      'The GET /accounts/{AccountId}/statements response on Ozone Connect Bank Data Sharing has been extended with an optional meta block. The block composes the shared Meta schema via allOf and adds two date-time properties — firstAvailableDateTime and lastAvailableDateTime — carrying the first and last date-times for which the LFI can return statement data on the account.',
+    rationale:
+      'Statement history depth varies across LFIs and across accounts within an LFI. Without a response-level signal, consumers have to discover the available range by probing. Surfacing the range on the response lets the Hub (and, downstream, TPPs) bound requests to data that is known to exist. The addition is backward-compatible: meta is optional and existing consumers that ignore it see no change.',
+    effectiveDate: 'To be confirmed on merge to main.',
+    spec: 'uae-ozone-connect-bank-data-sharing-openapi',
+    endpoints: [
+      { label: 'GET /accounts/{AccountId}/statements', path: '/tech/api-specs/v2.1/ozone-connect/data-sharing/accounts-AccountId-statements' },
+    ],
+    githubSources: [
+      {
+        label: 'dist/ozone-connect/v2.1.x/uae-ozone-connect-bank-data-sharing-openapi.yaml',
+        url: `${OZONE}/dist/ozone-connect/v2.1.x/uae-ozone-connect-bank-data-sharing-openapi.yaml`,
+      },
+    ],
+    affectedPaths: [
+      '/tech/api-specs/v2.1/ozone-connect/data-sharing/accounts-AccountId-statements',
+      '/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/accounts-AccountId-statements',
     ],
   },
 ]

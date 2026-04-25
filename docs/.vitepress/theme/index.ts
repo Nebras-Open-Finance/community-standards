@@ -13,6 +13,10 @@ import OpenFinanceDashboard from '../../components/WebPages/OpenFinanceDashboard
 import KnowledgeBasePage from '../../components/WebPages/KnowledgeBasePage.vue'
 import DocumentRepoPage from '../../components/WebPages/DocumentRepoPage.vue'
 import PolicyPage from '../../components/WebPages/PolicyPage.vue'
+import SupportServiceDeskPage from '../../components/WebPages/SupportServiceDeskPage.vue'
+import PricingPage from '../../components/WebPages/PricingPage.vue'
+import LFIRatesPage from '../../components/WebPages/LFIRatesPage.vue'
+import EndpointPricingPage from '../../components/WebPages/EndpointPricingPage.vue'
 import LfiGuidePage from '../../components/WebPages/LfiGuidePage.vue'
 import TppStandardsPage from '../../components/WebPages/TppStandardsPage.vue'
 import TechIndexPage from '../../components/WebPages/TechIndexPage.vue'
@@ -36,6 +40,7 @@ import EditableJson from '../../components/EditableJson.vue'
 import ErrataNotice from '../../components/ErrataNotice.vue'
 import ConsentAuthLayout from '../../components/ConsentAuthLayout.vue'
 import DocumentRepoDisplay from '../../components/DocumentRepoDisplay.vue'
+import GitHubRepoCard from '../../components/GitHubRepoCard.vue'
 
 
 // Forms
@@ -83,7 +88,6 @@ import ConsentDataSharingPermissions from '../../components/ConsentPages/Consent
 import ConsentPaymentPermissions from '../../components/ConsentPages/ConsentPaymentPermissions.vue'
 
 // Certification Docs
-import ReadinessChecklistDownload from '../../components/CertificationDocuments/ReadinessChecklistDownload.vue'
 import FunctionalEvidenceDownload from '../../components/CertificationDocuments/FunctionalEvidenceDownload.vue'
 
 import AuthorizationBankDataSharing from '../../components/AuthorizationPages/AuthorizationBankDataSharing.vue'
@@ -123,6 +127,10 @@ export default {
     app.component('OpenFinanceDashboard', OpenFinanceDashboard)
     app.component('DocumentRepoPage', DocumentRepoPage)
     app.component('PolicyPage', PolicyPage)
+    app.component('SupportServiceDeskPage', SupportServiceDeskPage)
+    app.component('PricingPage', PricingPage)
+    app.component('LFIRatesPage', LFIRatesPage)
+    app.component('EndpointPricingPage', EndpointPricingPage)
     app.component('LfiGuidePage', LfiGuidePage)
     app.component('TppStandardsPage', TppStandardsPage)
     app.component('TechIndexPage', TechIndexPage)
@@ -149,6 +157,7 @@ export default {
     app.component('OnboardingOrganisationForm', OnboardingOrganisationForm)
     app.component('OnboardingAdminForm', OnboardingAdminForm)
     app.component('DocumentRepoDisplay', DocumentRepoDisplay)
+    app.component('GitHubRepoCard', GitHubRepoCard)
 
     // API Flows
     app.component('APIFlowsRegistration', APIFlowsRegistration)
@@ -199,7 +208,6 @@ export default {
     app.component('COPPiiBlock', COPPiiBlock)
     app.component('ConsentSIPCOP', ConsentSIPCOP)
     app.component('AuthorizationSIPCOP', AuthorizationSIPCOP)
-    app.component('ReadinessChecklistDownload', ReadinessChecklistDownload)
     app.component('FunctionalEvidenceDownload', FunctionalEvidenceDownload)
 
   }

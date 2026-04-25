@@ -399,7 +399,6 @@ export const tppSidebar: DefaultTheme.SidebarItem[] = [
     collapsed: true,
     items: [
       { text: 'Overview', link: `${BASE}/production/testing-certification/overview` },
-      { text: 'TrustFramework Checklist', link: `${BASE}/production/testing-certification/readiness-checklist` },
       {
         text: 'Functional Evidence',
         collapsed: true,

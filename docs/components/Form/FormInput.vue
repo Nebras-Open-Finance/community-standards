@@ -98,13 +98,13 @@ export default {
   font-size: 1rem;
   line-height: 1.5rem;
   border: 1px solid #dadce0;
-  box-shadow: 0 0 4px rgba(17, 85, 113, 1);
+  box-shadow: 0 0 4px var(--at-navy);
   padding: 17px;
   padding-left: 24px;
   border-radius: 4px;
   width: 100%;
-  color: rgba(17, 85, 113, 1) !important; /* primary colour */
-  border-color: rgba(17, 85, 113, 1); /* primary colour */
+  color: var(--at-navy) !important;
+  border-color: var(--at-navy);
 }
 
 [class*="-disabled"] input,
@@ -124,7 +124,7 @@ export default {
 [class^="field-wrapper"] textarea:focus,
 [class^="field-wrapper"] ul:focus {
   outline: none !important;
-  border: 2px solid rgba(17, 85, 113, 1);
+  border: 2px solid var(--at-navy);
 }
 
 [class*="-error"] input:focus,
@@ -159,16 +159,16 @@ export default {
   text-align: left;
   margin-left: 8px;
   cursor: text;
-  color: rgba(17, 85, 113, 1);
+  color: var(--at-navy);
 }
 
 [class^="field-wrapper"] input:not([disabled]):focus ~ .field-placeholder,
 [class^="field-wrapper"] textarea:not([disabled]):focus ~ .field-placeholder,
 [class^="field-wrapper-hasValue"] .field-placeholder {
-  color: rgba(17, 85, 113, 1); /* primary colour */
+  color: var(--at-navy);
   -webkit-transform: translateY(-29px) scale(0.75) translateX(-15%);
   transform: translateY(-29px) scale(0.75) translateX(-15%);
-  border: 1px solid rgba(17, 85, 113, 1);
+  border: 1px solid var(--at-navy);
   padding-top: 1px;
   padding-bottom: 2px;
   background: #ffffff;
@@ -181,8 +181,8 @@ export default {
 [class^="field-wrapper"] input:-webkit-autofill:hover,
 [class^="field-wrapper"] input:-webkit-autofill:focus,
 [class^="field-wrapper"] input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 30px white inset, 0 0 4px rgba(17, 85, 113, 1) !important;
-  -webkit-text-fill-color: rgba(17, 85, 113, 1);
+  -webkit-box-shadow: 0 0 0 30px white inset, 0 0 4px var(--at-navy) !important;
+  -webkit-text-fill-color: var(--at-navy);
 }
 
 [class*="-disabled"] input:-webkit-autofill,
@@ -190,7 +190,7 @@ export default {
 [class*="-disabled"] input:-webkit-autofill:focus,
 [class*="-disabled"] input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 30px rgba(224, 224, 224, 1) inset,
-    0 0 4px rgba(17, 85, 113, 1) !important;
-  -webkit-text-fill-color: rgba(17, 85, 113, 1);
+    0 0 4px var(--at-navy) !important;
+  -webkit-text-fill-color: var(--at-navy);
 }
 </style>

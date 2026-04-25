@@ -11,12 +11,16 @@
 //      self-referential loop, not real navigation from outside the section.
 //
 // From those roots we BFS through markdown links, @include directives, and
-// href attributes inside .md files. Anything unreached — and not a partial
-// under _shared/ or a dynamic-route file under [param]/ — is an orphan.
+// href attributes inside .md files. When a reachable .md uses a Vue component
+// (e.g. <PolicyPage />), we also follow hrefs rendered by that component —
+// including template literal prefixes like `/foo/${x}` → every .md under
+// docs/foo/ — and recurse into nested components and imported data files.
+// Anything unreached — and not a partial under _shared/ or a dynamic-route
+// file under [param]/ — is an orphan.
 import { describe, it, before } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync, readdirSync, statSync, existsSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs'
-import { resolve, dirname, join, relative } from 'node:path'
+import { resolve, dirname, join, relative, basename } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { build } from 'esbuild'
@@ -87,9 +91,8 @@ async function loadSidebarConfig() {
   writeFileSync(entry, `
     export { tppSidebar } from ${JSON.stringify(join(SIDEBAR_DIR, 'tpp.ts'))}
     export { lfiSidebar } from ${JSON.stringify(join(SIDEBAR_DIR, 'lfi.ts'))}
-    export { policySidebar, processesSidebar } from ${JSON.stringify(join(SIDEBAR_DIR, 'policy.ts'))}
+    export { processesSidebar } from ${JSON.stringify(join(SIDEBAR_DIR, 'policy.ts'))}
     export { kbSidebar } from ${JSON.stringify(join(SIDEBAR_DIR, 'kb.ts'))}
-    export { releaseNotesAndErratasSidebar } from ${JSON.stringify(join(SIDEBAR_DIR, 'release-notes-and-erratas.ts'))}
     export { apiSpecsSidebar } from ${JSON.stringify(join(SIDEBAR_DIR, 'api-specs.ts'))}
     export { docRepositorySidebar } from ${JSON.stringify(join(SIDEBAR_DIR, 'doc-repository.ts'))}
     export { CURRENT_VERSION } from ${JSON.stringify(VERSION_FILE)}
@@ -126,16 +129,40 @@ function collectLinksFromSidebarTree(node, acc = new Set()) {
   return acc
 }
 
-// The top nav AND the inline `/tech/` fallback sidebar live in config.ts (not exported
-// as modules). Scan the whole file for `link:` — the only places that pattern appears
-// are nav entries and inline sidebar entries, so no unrelated matches.
+// The inline `/tech/` fallback sidebar lives in config.ts (not exported as a module),
+// so we scan the file for `link:`. The top `nav: [...]` block is deliberately excluded:
+// Layout.vue / editorial-doc.css hide VitePress's default nav bar, so themeConfig.nav
+// entries never render to users — treating them as reachability roots would mask real
+// orphans (e.g. a page listed only in the dead nav).
 function collectConfigLinks() {
   const src = readFileSync(CONFIG_FILE, 'utf-8')
+  const navRange = findNavArrayRange(src)
   const links = new Set()
   const re = /\blink\s*:\s*([`'"])([^`'"]+)\1/g
   let m
-  while ((m = re.exec(src)) !== null) links.add(m[2])
+  while ((m = re.exec(src)) !== null) {
+    if (navRange && m.index >= navRange.start && m.index < navRange.end) continue
+    links.add(m[2])
+  }
   return links
+}
+
+// Locate the `nav: [ ... ]` array in config.ts by counting brackets.
+// Returns { start, end } byte offsets of the array body, or null if not found.
+function findNavArrayRange(src) {
+  const m = /\bnav\s*:\s*\[/.exec(src)
+  if (!m) return null
+  const start = m.index + m[0].length - 1 // position of opening '['
+  let depth = 0
+  for (let i = start; i < src.length; i++) {
+    const c = src[i]
+    if (c === '[') depth++
+    else if (c === ']') {
+      depth--
+      if (depth === 0) return { start, end: i + 1 }
+    }
+  }
+  return null
 }
 
 // Scan global-chrome Vue components for href attributes (static `href="..."` and
@@ -206,6 +233,112 @@ function extractLinksFromMarkdown(src) {
   return refs
 }
 
+// Map PascalCase component name → .vue file path.
+function discoverComponents() {
+  const map = new Map()
+  for (const f of walk(resolve(DOCS, 'components'), /\.vue$/)) {
+    map.set(basename(f, '.vue'), f)
+  }
+  return map
+}
+
+// Find <PascalCaseName ...> tags (Vue components) in markdown or .vue source.
+function extractComponentTags(src) {
+  const names = new Set()
+  const re = /<([A-Z][A-Za-z0-9]*)\b[^>]*>/g
+  let m
+  while ((m = re.exec(src)) !== null) names.add(m[1])
+  return names
+}
+
+// Extract site-relative URLs from .vue / .ts source. Returns:
+//   links[]    — static paths: href="/foo/bar", `/foo/bar`
+//   prefixes[] — directory prefixes from interpolated template literals:
+//                `/foo/${slug}` → "/foo/"
+function extractComponentRefs(src) {
+  const links = new Set()
+  const prefixes = new Set()
+  const hrefPatterns = [
+    /\shref\s*=\s*"([^"#?]+)(?:[#?][^"]*)?"/g,
+    /\s:href\s*=\s*"'([^'"#?]+)(?:[#?][^'"]*)?'"/g,
+  ]
+  for (const re of hrefPatterns) {
+    let m
+    while ((m = re.exec(src)) !== null) if (m[1].startsWith('/')) links.add(m[1])
+  }
+  const tplRe = /`(\/[^`]*?)`/g
+  let m
+  while ((m = tplRe.exec(src)) !== null) {
+    const tpl = m[1]
+    const dollar = tpl.indexOf('${')
+    if (dollar === -1) {
+      links.add(tpl)
+    } else {
+      const prefix = tpl.slice(0, dollar)
+      if (prefix.length > 1) prefixes.add(prefix)
+    }
+  }
+  return { links, prefixes }
+}
+
+// Resolve relative `from '...'` imports in .vue / .ts source to abs .ts paths.
+function extractRelativeImports(file, src) {
+  const dir = dirname(file)
+  const out = []
+  const re = /\bfrom\s+["'](\.[^"']+)["']/g
+  let m
+  while ((m = re.exec(src)) !== null) {
+    const spec = m[1]
+    const candidates = [
+      resolve(dir, spec),
+      resolve(dir, spec + '.ts'),
+      resolve(dir, spec + '.data.ts'),
+      resolve(dir, spec, 'index.ts'),
+    ]
+    for (const c of candidates) {
+      if (existsSync(c) && statSync(c).isFile()) { out.push(c); break }
+    }
+  }
+  return out
+}
+
+// All .md files under docs/<prefix>/ — used to seed pages reachable via
+// interpolated URLs like `/foo/${slug}`.
+function mdFilesUnderPrefix(prefix) {
+  const bare = prefix.replace(/^\//, '').replace(/\/$/, '')
+  if (!bare) return []
+  const dir = join(DOCS, bare)
+  if (!existsSync(dir) || !statSync(dir).isDirectory()) return []
+  return walk(dir, /\.md$/)
+}
+
+function followComponent(file, visited, registry, seed) {
+  if (visited.has(file) || !existsSync(file)) return
+  visited.add(file)
+  const src = readFileSync(file, 'utf-8')
+  const { links, prefixes } = extractComponentRefs(src)
+  for (const link of links) {
+    const target = resolveSiteLink(link)
+    if (target) seed(target)
+  }
+  for (const prefix of prefixes) for (const md of mdFilesUnderPrefix(prefix)) seed(md)
+  for (const name of extractComponentTags(src)) {
+    const sub = registry.get(name)
+    if (sub) followComponent(sub, visited, registry, seed)
+  }
+  for (const imp of extractRelativeImports(file, src)) {
+    if (visited.has(imp) || !/\.(ts|mjs|js)$/.test(imp)) continue
+    visited.add(imp)
+    const impSrc = readFileSync(imp, 'utf-8')
+    const { links: l2, prefixes: p2 } = extractComponentRefs(impSrc)
+    for (const link of l2) {
+      const target = resolveSiteLink(link)
+      if (target) seed(target)
+    }
+    for (const prefix of p2) for (const md of mdFilesUnderPrefix(prefix)) seed(md)
+  }
+}
+
 async function computeReachable() {
   const reachable = new Set()
   const queue = []
@@ -227,6 +360,9 @@ async function computeReachable() {
     if (target) seed(target)
   }
 
+  const componentRegistry = discoverComponents()
+  const visitedComponents = new Set()
+
   while (queue.length) {
     const file = queue.shift()
     const src = readFileSync(file, 'utf-8')
@@ -237,6 +373,10 @@ async function computeReachable() {
         ? resolveSiteLink(ref)
         : resolveRelativeLink(file, ref)
       if (target) seed(target)
+    }
+    for (const name of extractComponentTags(src)) {
+      const comp = componentRegistry.get(name)
+      if (comp) followComponent(comp, visitedComponents, componentRegistry, seed)
     }
   }
 

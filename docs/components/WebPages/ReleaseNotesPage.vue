@@ -41,20 +41,17 @@
         </div>
 
         <div class="ed-rn-registers__grid">
-          <div
+          <component
+            :is="reg.url ? 'a' : 'div'"
             v-for="reg in registers"
             :key="reg.title"
+            :href="reg.url || undefined"
             class="ed-rn-reg"
             :class="`ed-rn-reg--${reg.tone}`"
           >
             <span class="ed-rn-reg__top" />
 
-            <component
-              :is="reg.url ? 'a' : 'div'"
-              :href="reg.url || undefined"
-              class="ed-rn-reg__head"
-              :class="{ 'ed-rn-reg__head--static': !reg.url }"
-            >
+            <div class="ed-rn-reg__head">
               <div class="ed-rn-reg__meta">
                 <span class="ed-rn-reg__meta-dot" />
                 {{ reg.category }}
@@ -68,7 +65,14 @@
                 <span class="ed-rn-reg__scope-label">Covers</span>
                 <span class="ed-rn-reg__scope-body" v-html="reg.scope" />
               </div>
-            </component>
+
+              <div v-if="reg.items && reg.items.length" class="ed-rn-reg__items">
+                <span class="ed-rn-reg__items-label">{{ reg.itemsLabel }}</span>
+                <ul class="ed-rn-reg__items-list">
+                  <li v-for="id in reg.items" :key="id">{{ id }}</li>
+                </ul>
+              </div>
+            </div>
 
             <ul v-if="reg.subs.length" class="ed-rn-reg__subs">
               <li class="ed-rn-reg__subs-label">{{ reg.subsLabel }}</li>
@@ -84,11 +88,11 @@
               </li>
             </ul>
 
-            <a v-if="reg.url" :href="reg.url" class="ed-rn-reg__foot">
+            <div v-if="reg.url" class="ed-rn-reg__foot">
               <span class="ed-rn-reg__foot-cta">{{ reg.footCta }}</span>
               <span class="ed-rn-reg__foot-arrow" aria-hidden="true">&rarr;</span>
-            </a>
-          </div>
+            </div>
+          </component>
         </div>
       </div>
     </section>
@@ -155,23 +159,11 @@ import {
   latestTrustFrameworkYear,
 } from '../../.vitepress/release-notes-years'
 
-function humanizeErrataId(id) {
-  const m = id.match(/^(v[\d.]+)-errata(\d+)$/)
-  if (!m) return id
-  return `${m[1]} errata ${m[2]}`
-}
-
-const errataSubs = (() => {
-  const ids = new Set()
-  for (const s of ERRATA_SECTIONS) {
-    if (s.version === CURRENT_VERSION) ids.add(s.errataId)
-  }
-  return [...ids].sort().map((id) => ({
-    title: humanizeErrataId(id),
-    hint: `Correction entries in ${id}`,
-    url: `/tech/release-notes-and-erratas/erratas/${CURRENT_VERSION}/${id}`,
-  }))
-})()
+const errataIds = [...new Set(
+  ERRATA_SECTIONS
+    .filter((s) => s.version === CURRENT_VERSION)
+    .map((s) => s.errataId)
+)].sort()
 
 const registers = [
   {
@@ -204,8 +196,9 @@ const registers = [
     footCta: 'Open Erratas register',
     desc: 'Corrections to <strong>published documentation</strong> &mdash; the TPP Standards, LFI Integration Guide, and OpenAPI specifications. Each entry records what was corrected, why the change was required, and the effective date.',
     scope: 'Documentation corrections against a published standard version.',
-    subsLabel: `Errata releases for ${CURRENT_VERSION}`,
-    subs: errataSubs,
+    subs: [],
+    items: errataIds,
+    itemsLabel: `Erratas in ${CURRENT_VERSION}`,
   },
 ]
 
@@ -355,6 +348,21 @@ const policies = [
 
 .ed-rn-reg:hover { border-color: var(--reg-color, var(--at-navy)); }
 
+a.ed-rn-reg { text-decoration: none; color: inherit; }
+
+a.ed-rn-reg:hover .ed-rn-reg__title { color: var(--reg-color); }
+
+a.ed-rn-reg:hover .ed-rn-reg__foot {
+  background: color-mix(in srgb, var(--reg-color) 14%, transparent);
+}
+
+a.ed-rn-reg:hover .ed-rn-reg__foot-arrow { transform: translateX(4px); }
+
+a.ed-rn-reg:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--reg-color) 45%, transparent);
+}
+
 .ed-rn-reg--teal { --reg-color: var(--at-teal); }
 .ed-rn-reg--gold { --reg-color: var(--at-gold); }
 
@@ -460,6 +468,30 @@ const policies = [
   line-height: 1.5;
   color: var(--at-mute-2);
 }
+
+.ed-rn-reg__items { margin-top: 0.9rem; }
+
+.ed-rn-reg__items-label {
+  display: block;
+  font-family: var(--at-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--at-mute);
+  margin-bottom: 0.4rem;
+}
+
+.ed-rn-reg__items-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: var(--at-mono);
+  font-size: 0.85rem;
+  color: var(--at-navy-deep);
+}
+
+.ed-rn-reg__items-list li { padding: 0.15rem 0; }
 
 /* Sub-items (each its own link) */
 .ed-rn-reg__subs {

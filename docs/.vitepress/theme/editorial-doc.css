@@ -383,7 +383,8 @@ html.editorial-doc .VPSidebar {
   background: var(--at-bg-cream);
   border-right: 1px solid var(--at-grid-line);
   width: var(--vp-sidebar-width) !important;
-  padding: 5rem 1.25rem 2rem 3rem !important;
+  top: 4.25rem !important;
+  padding: 1.75rem 1.25rem 2rem 3rem !important;
 }
 
 html.editorial-doc .VPSidebar .curtain {
@@ -504,11 +505,13 @@ html.editorial-doc .VPSidebarItem.level-2 > .item .text {
 }
 
 html.editorial-doc .VPSidebarItem.level-3 > .item,
-html.editorial-doc .VPSidebarItem.level-4 > .item {
+html.editorial-doc .VPSidebarItem.level-4 > .item,
+html.editorial-doc .VPSidebarItem.level-5 > .item {
   padding: 0.25rem 0;
 }
 html.editorial-doc .VPSidebarItem.level-3 > .item .text,
-html.editorial-doc .VPSidebarItem.level-4 > .item .text {
+html.editorial-doc .VPSidebarItem.level-4 > .item .text,
+html.editorial-doc .VPSidebarItem.level-5 > .item .text {
   font-family: var(--at-sans) !important;
   font-size: 0.82rem !important;
   font-weight: 400;
@@ -579,10 +582,19 @@ html.editorial-doc .VPSidebarItem .caret-icon {
 
 html.editorial-doc .VPSidebarItem.level-1 .items,
 html.editorial-doc .VPSidebarItem.level-2 .items,
-html.editorial-doc .VPSidebarItem.level-3 .items {
+html.editorial-doc .VPSidebarItem.level-3 .items,
+html.editorial-doc .VPSidebarItem.level-4 .items {
   border-left: 1px solid var(--at-grid-line);
   margin-left: 0.35rem;
   padding-left: 0.55rem;
+}
+
+/* Breathing room after the last child in an expanded sidebar group;
+   tighten the gap above the first child slightly */
+html.editorial-doc .VPSidebarItem > .items {
+  padding-top: 0;
+  margin-top: -0.15rem;
+  padding-bottom: 0.75rem;
 }
 
 /* ── HTTP method badges (preserve colour, tighten type) ─────────────── */
@@ -689,10 +701,20 @@ html.editorial-doc .afv-hint {
 }
 
 /* Overlay is teleported to body; still pick up editorial class from body. */
+
+/* The editorial PageHeader is `position: fixed; z-index: 99999`, which is
+   higher than the overlay's own 9999. Drop the overlay below the header so
+   the toolbar (including the close button) is not occluded, and cap the
+   dialog height so it still fits within the remaining viewport. */
+body.editorial-doc .afv-overlay {
+  top: 4.25rem !important;
+}
+
 body.editorial-doc .afv-box {
   border-radius: 0 !important;
   background: var(--at-bg-paper) !important;
   border: 1px solid var(--at-grid-line) !important;
+  max-height: calc(100vh - 4.25rem - 4vh) !important;
 }
 
 body.editorial-doc .afv-toolbar {
@@ -1498,4 +1520,249 @@ html.editorial-doc .errata-block .errata-link:hover {
 html.editorial-doc .errata-block .errata-content {
   color: var(--at-mute-2) !important;
   font-family: var(--at-sans) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Reusable doc cards
+
+   Drop-in card grid for index-style listings inside markdown content
+   pages. Mirrors the policy / knowledge-base aesthetic. Per-card accent
+   colour can be overridden inline via `style="--ed-card-color: var(--at-teal)"`.
+
+   Markup:
+
+     <div class="ed-card-grid">
+       <a href="..." class="ed-card" style="--ed-card-color: var(--at-teal)">
+         <span class="ed-card__top" />
+         <div class="ed-card__meta">
+           <span class="ed-card__cat">Category</span>
+         </div>
+         <h3 class="ed-card__title">Title</h3>
+         <p class="ed-card__desc">Description.</p>
+         <div class="ed-card__foot">
+           <span class="ed-card__cta">Open</span>
+           <span class="ed-card__arrow">&nearr;</span>
+         </div>
+       </a>
+     </div>
+   ═══════════════════════════════════════════════════════════════════════ */
+
+html.editorial-doc .vp-doc .ed-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+html.editorial-doc .vp-doc .ed-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--at-surface);
+  border: 1px solid var(--at-grid-line);
+  padding: 2rem 1.75rem 1.5rem;
+  text-decoration: none !important;
+  color: inherit !important;
+  font-weight: 400;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+html.editorial-doc .vp-doc .ed-card:hover {
+  border-color: var(--ed-card-color, var(--at-navy));
+  transform: translateY(-2px);
+}
+
+html.editorial-doc .vp-doc .ed-card__top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 48px;
+  height: 3px;
+  background: var(--ed-card-color, var(--at-navy));
+}
+
+html.editorial-doc .vp-doc .ed-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+  font-family: var(--at-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+html.editorial-doc .vp-doc .ed-card__cat {
+  font-weight: 600;
+  color: var(--ed-card-color, var(--at-navy));
+}
+
+html.editorial-doc .vp-doc .ed-card__title {
+  font-family: var(--at-serif);
+  font-size: 1.35rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--at-navy-deep);
+  margin: 0 0 0.75rem;
+  padding: 0;
+  border: none;
+}
+
+html.editorial-doc .vp-doc .ed-card__desc {
+  font-family: var(--at-sans);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--at-mute-2);
+  margin: 0 0 1.25rem;
+  flex: 1;
+}
+
+html.editorial-doc .vp-doc .ed-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+  border-top: 1px solid var(--at-grid-line);
+}
+
+html.editorial-doc .vp-doc .ed-card__cta {
+  font-family: var(--at-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--at-mute);
+  transition: color 0.15s ease;
+}
+
+html.editorial-doc .vp-doc .ed-card:hover .ed-card__cta {
+  color: var(--at-navy-deep);
+}
+
+html.editorial-doc .vp-doc .ed-card__arrow {
+  font-family: var(--at-mono);
+  font-size: 1rem;
+  color: var(--ed-card-color, var(--at-navy));
+  transition: transform 0.2s;
+}
+
+html.editorial-doc .vp-doc .ed-card:hover .ed-card__arrow {
+  transform: translate(3px, -3px);
+}
+
+@media (max-width: 640px) {
+  html.editorial-doc .vp-doc .ed-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Reusable action callout
+
+   Sidebar-style block with a body and a primary CTA on the right.
+   Shares the editorial palette so it sits naturally next to .ed-card grids.
+
+   Markup:
+
+     <div class="ed-action">
+       <div class="ed-action__body">
+         <div class="ed-action__eyebrow">Eyebrow</div>
+         <div class="ed-action__title">Title</div>
+         <p class="ed-action__desc">Body copy.</p>
+       </div>
+       <div class="ed-action__actions">
+         <a class="ed-action__primary" href="...">Primary CTA <span class="ed-action__arrow">&nearr;</span></a>
+       </div>
+     </div>
+   ═══════════════════════════════════════════════════════════════════════ */
+
+html.editorial-doc .vp-doc .ed-action {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1.5rem 2rem;
+  align-items: center;
+  margin: 2rem 0;
+  padding: 1.5rem 1.75rem;
+  background: var(--at-surface);
+  border: 1px solid var(--at-grid-line);
+  border-left: 3px solid var(--ed-action-color, var(--at-teal));
+}
+
+html.editorial-doc .vp-doc .ed-action__eyebrow {
+  font-family: var(--at-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--ed-action-color, var(--at-teal-deep));
+  margin-bottom: 0.4rem;
+}
+
+html.editorial-doc .vp-doc .ed-action__title {
+  font-family: var(--at-serif);
+  font-size: 1.25rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--at-navy-deep);
+  margin-bottom: 0.5rem;
+}
+
+html.editorial-doc .vp-doc .ed-action__desc {
+  font-family: var(--at-sans);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--at-mute-2);
+  margin: 0;
+}
+
+html.editorial-doc .vp-doc .ed-action__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 14rem;
+}
+
+html.editorial-doc .vp-doc .ed-action__primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.85rem 1.15rem;
+  background: var(--at-navy-deep);
+  color: var(--at-bg-cream) !important;
+  text-decoration: none !important;
+  font-family: var(--at-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  transition: background 0.15s, transform 0.15s;
+}
+
+html.editorial-doc .vp-doc .ed-action__primary:hover {
+  background: var(--at-navy);
+  transform: translateY(-1px);
+  color: var(--at-bg-cream) !important;
+}
+
+html.editorial-doc .vp-doc .ed-action__arrow {
+  font-size: 0.9rem;
+  transition: transform 0.15s;
+}
+
+html.editorial-doc .vp-doc .ed-action__primary:hover .ed-action__arrow {
+  transform: translate(2px, -2px);
+}
+
+@media (max-width: 720px) {
+  html.editorial-doc .vp-doc .ed-action {
+    grid-template-columns: 1fr;
+    padding: 1.25rem;
+  }
+  html.editorial-doc .vp-doc .ed-action__actions {
+    min-width: 0;
+  }
 }

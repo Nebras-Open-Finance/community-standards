@@ -70,7 +70,7 @@ onMounted(async () => {
 
   if (mermaidContainer.value) {
     try {
-      const { svg } = await mermaid.render('pure-diagram', mermaidDefinition)
+      const { svg } = await mermaid.render('bank-data-sharing-diagram', mermaidDefinition)
       mermaidContainer.value.innerHTML = svg
     } catch (err) {
       console.error(err)

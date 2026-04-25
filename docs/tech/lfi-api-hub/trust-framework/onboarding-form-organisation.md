@@ -1,8 +1,7 @@
 ---
-next: false
-prev:
-  text: '← Onboarding'
-  link: '/tech/lfi-api-hub/trust-framework/onboarding'
+backLink:
+  text: Onboarding
+  link: /tech/lfi-api-hub/trust-framework/onboarding
 aside: false
 ---
 

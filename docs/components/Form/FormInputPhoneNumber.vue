@@ -160,7 +160,7 @@ export default {
   text-align: left;
   margin-left: 8px;
   cursor: text;
-  color: rgba(17, 85, 113, 1);
+  color: var(--at-navy);
 }
 
 .active-placeholder {
@@ -181,10 +181,10 @@ export default {
   text-align: left;
   margin-left: 8px;
   cursor: text;
-  color: rgba(17, 85, 113, 1);
+  color: var(--at-navy);
   -webkit-transform: translateY(-29px) scale(0.75) translateX(-15%);
   transform: translateY(-29px) scale(0.75) translateX(-15%);
-  border: 1px solid rgba(17, 85, 113, 1) !important;
+  border: 1px solid var(--at-navy) !important;
   padding-top: 1px;
   padding-bottom: 2px;
   background: #ffffff;
@@ -204,14 +204,14 @@ export default {
 
 .vue-tel-input {
   border-color: inherit !important;
-  border: 1px solid rgba(17, 85, 113, 1) !important;
-  box-shadow: 0 0 4px rgba(17, 85, 113, 1) !important;
+  border: 1px solid var(--at-navy) !important;
+  box-shadow: 0 0 4px var(--at-navy) !important;
 }
 
 .vue-tel-input:focus-within {
   border-color: inherit !important;
-  border: 1px solid rgba(17, 85, 113, 1) !important;
-  box-shadow: 0 0 4px rgba(17, 85, 113, 1) !important;
+  border: 1px solid var(--at-navy) !important;
+  box-shadow: 0 0 4px var(--at-navy) !important;
 }
 
 .phone-wrapper-error .vue-tel-input,
@@ -223,7 +223,7 @@ export default {
 .vti__input:focus~.field-placeholder {
   -webkit-transform: translateY(-29px) scale(0.75) translateX(-15%);
   transform: translateY(-29px) scale(0.75) translateX(-15%);
-  border: 1px solid rgba(17, 85, 113, 1);
+  border: 1px solid var(--at-navy);
   padding-top: 1px;
   padding-bottom: 2px;
   background: #ffffff;

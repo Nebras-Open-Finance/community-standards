@@ -18,8 +18,8 @@
       <div class="ed-footer__col ed-footer__col--links">
         <div class="ed-footer__heading">Sections</div>
         <a class="ed-footer__link" href="/tech/">Developer docs</a>
+        <a class="ed-footer__link" href="/support-service-desk/">Service Desk</a>
         <a class="ed-footer__link" href="/metrics">Metrics</a>
-        <a class="ed-footer__link" href="/news">News</a>
       </div>
 
       <div class="ed-footer__col ed-footer__col--links">
@@ -40,7 +40,7 @@
 
     <div class="ed-footer__base">
       <span>&copy; {{ year }} &middot; Community project &middot; Not an official CBUAE publication</span>
-      <span class="ed-footer__base-mono">Author Thomas Catchpole</span>
+      <span class="ed-footer__base-mono">Author &middot; Thomas Catchpole</span>
     </div>
   </footer>
 </template>

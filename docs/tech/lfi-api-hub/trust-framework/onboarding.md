@@ -26,7 +26,7 @@ If you have not yet started your Open Finance licensing process and are interest
 
 Once the CBUAE has confirmed receipt of your licence application, send the following to [support@nebrasopenfinance.ae](mailto:support@nebrasopenfinance.ae) to begin sandbox onboarding:
 
-::: info Email template
+::: info 📨 Email template
 
 **To:** [support@nebrasopenfinance.ae](mailto:support@nebrasopenfinance.ae)
 

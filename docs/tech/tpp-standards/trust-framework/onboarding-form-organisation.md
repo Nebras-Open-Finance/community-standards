@@ -1,8 +1,7 @@
 ---
-next: false
-prev:
-  text: '← Onboarding'
-  link: '/tech/tpp-standards/trust-framework/onboarding'
+backLink:
+  text: Onboarding
+  link: /tech/tpp-standards/trust-framework/onboarding
 aside: false
 ---
 

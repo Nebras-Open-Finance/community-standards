@@ -61,6 +61,27 @@ const navTitle = computed(() => {
 
 const isDocRepository = computed(() => (route.path ?? '').startsWith('/doc-repository'))
 
+// Pages can declare a back link via frontmatter, e.g.
+//   backLink:
+//     text: Onboarding
+//     link: /tech/tpp-standards/trust-framework/onboarding
+// This renders as the "← Onboarding" pill above the page title and is the
+// preferred mechanism over VitePress's prev/next doc footer.
+const backLink = computed(() => {
+  const fm = frontmatter.value?.backLink
+  if (fm && fm.link) {
+    return { text: fm.text || 'Back', link: fm.link }
+  }
+  const path = route.path ?? ''
+  if (path.startsWith('/knowledge-base/articles/')) {
+    return { text: 'All knowledge base articles', link: '/knowledge-base/' }
+  }
+  if (path.startsWith('/policy/') && path.length > '/policy/'.length) {
+    return { text: 'All policies', link: '/policy' }
+  }
+  return null
+})
+
 const showEditorialFooter = computed(() => isEditorialDoc.value && frontmatter.value?.sidebar === false)
 </script>
 
@@ -94,6 +115,10 @@ const showEditorialFooter = computed(() => isEditorialDoc.value && frontmatter.v
     </template>
 
     <template #doc-before>
+      <a v-if="backLink" :href="backLink.link" class="editorial-back-link">
+        <span class="editorial-back-link__arrow">&larr;</span>
+        <span class="editorial-back-link__text">{{ backLink.text }}</span>
+      </a>
       <ErrataUpdateBanner />
     </template>
 
@@ -109,5 +134,34 @@ const showEditorialFooter = computed(() => isEditorialDoc.value && frontmatter.v
   margin-left: 20px;
   cursor: pointer;
   opacity: 70%;
+}
+
+.editorial-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  color: var(--at-mute-2);
+  font-family: var(--at-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin: 0 0 1.5rem;
+  transition: color 0.15s;
+}
+
+.editorial-back-link:hover {
+  color: var(--at-navy-deep);
+}
+
+.editorial-back-link__arrow {
+  font-family: var(--at-mono);
+  font-size: 0.95rem;
+  transition: transform 0.15s;
+}
+
+.editorial-back-link:hover .editorial-back-link__arrow {
+  transform: translateX(-3px);
 }
 </style>

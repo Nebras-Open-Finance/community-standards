@@ -51,8 +51,8 @@
           <h2 class="ed-er-search__title">Find a correction</h2>
           <p class="ed-er-search__lede">
             Narrow by <strong>audience</strong>, <strong>functional area</strong>, or
-            <strong>spec</strong>. Add a keyword to refine further. Click any chip on a
-            result row to toggle that spec as a filter.
+            <strong>section</strong>. Add a keyword to refine further. Click a section
+            chip on a result row to open the page the correction applies to.
           </p>
         </div>
 
@@ -100,24 +100,24 @@
           </div>
         </div>
 
-        <!-- Spec facet -->
+        <!-- Section facet -->
         <div class="ed-er-facet">
-          <div class="ed-er-facet__label">Spec</div>
-          <div class="ed-er-facet__pills ed-er-facet__pills--mono">
+          <div class="ed-er-facet__label">Section</div>
+          <div class="ed-er-facet__pills">
             <button
-              v-for="sp in availableSpecs"
-              :key="sp"
+              v-for="sec in availableSections"
+              :key="sec.label"
               type="button"
-              class="ed-er-pill ed-er-pill--mono"
+              class="ed-er-pill"
               :class="{
-                'ed-er-pill--active': specFilter.has(sp),
-                'ed-er-pill--disabled': specPillCount(sp) === 0,
+                'ed-er-pill--active': sectionFilter.has(sec.label),
+                'ed-er-pill--disabled': sectionPillCount(sec.label) === 0,
               }"
-              :disabled="specPillCount(sp) === 0 && !specFilter.has(sp)"
-              @click="toggleSpec(sp)"
+              :disabled="sectionPillCount(sec.label) === 0 && !sectionFilter.has(sec.label)"
+              @click="toggleSection(sec.label)"
             >
-              <span class="ed-er-pill__text">{{ sp }}</span>
-              <span class="ed-er-pill__count">{{ specPillCount(sp) }}</span>
+              <span class="ed-er-pill__text">{{ sec.label }}</span>
+              <span class="ed-er-pill__count">{{ sectionPillCount(sec.label) }}</span>
             </button>
           </div>
         </div>
@@ -189,29 +189,31 @@
               </div>
             </div>
 
-            <a
+            <article
               v-for="s in group.sections"
               :id="anchorFor(s)"
               :key="s.number"
-              :href="errataPageUrl(s)"
               class="ed-er-row"
             >
               <div class="ed-er-row__num">&sect;{{ s.number }}</div>
 
               <div class="ed-er-row__body">
-                <div class="ed-er-row__title" v-html="highlight(s.title)" />
+                <a
+                  :href="errataPageUrl(s)"
+                  class="ed-er-row__title-link"
+                >
+                  <span class="ed-er-row__title" v-html="highlight(s.title)" />
+                </a>
                 <div class="ed-er-row__summary" v-html="highlight(s.summary)" />
 
                 <div class="ed-er-row__chips">
-                  <button
-                    v-for="spec in specsOf(s)"
-                    :key="`spec-${spec}`"
-                    class="ed-er-chip ed-er-chip--spec"
-                    :class="{ 'ed-er-chip--on': specFilter.has(spec) }"
-                    type="button"
-                    :title="`Toggle filter: ${spec}`"
-                    @click.prevent.stop="toggleSpec(spec)"
-                  >{{ spec }}</button>
+                  <a
+                    v-for="sec in sectionsForErrata(s)"
+                    :key="`sec-${sec.label}`"
+                    :href="sec.path"
+                    class="ed-er-chip ed-er-chip--sec"
+                    :title="`Open ${sec.label}`"
+                  >{{ sec.label }} &rarr;</a>
 
                   <button
                     v-for="ep in s.endpoints || []"
@@ -219,7 +221,7 @@
                     class="ed-er-chip ed-er-chip--ep"
                     type="button"
                     :title="`Search keyword: ${ep.label}`"
-                    @click.prevent.stop="setQuery(ep.label)"
+                    @click="setQuery(ep.label)"
                   >{{ ep.label }}</button>
 
                   <button
@@ -228,13 +230,17 @@
                     class="ed-er-chip ed-er-chip--sc"
                     type="button"
                     :title="`Search keyword: ${schema}`"
-                    @click.prevent.stop="setQuery(schema)"
+                    @click="setQuery(schema)"
                   >{{ schema }}</button>
                 </div>
               </div>
 
-              <div class="ed-er-row__arrow">&rarr;</div>
-            </a>
+              <a
+                :href="errataPageUrl(s)"
+                class="ed-er-row__arrow-link"
+                :aria-label="`View errata details for §${s.number}`"
+              >&rarr;</a>
+            </article>
           </div>
         </div>
       </div>
@@ -389,6 +395,84 @@ function areasOf(s) {
   return [...out]
 }
 
+// ─── Section derivation from affectedPaths ────────────────────────────────
+// A "section" is a destination doc page in TPP Standards or LFI Integration
+// Guide. The api-specs viewer paths are intentionally excluded from this
+// facet — the banner still appears on those pages, but the facet stays
+// focused on the human-facing standards/guide surface.
+const SEGMENT_LABELS = {
+  'consent': 'Consent',
+  'banking': 'Banking',
+  'data-sharing': 'Data Sharing',
+  'confirmation-of-payee': 'Confirmation of Payee',
+  'service-initiation': 'Service Initiation',
+  'webhooks': 'Webhooks',
+  'consent-status': 'Consent Status',
+  'payment-status': 'Payment Status',
+  'security': 'Security',
+  'tokens': 'Tokens',
+  'api-hub': 'API Hub',
+  'consent-manager': 'Consent Manager',
+  'consent-events': 'Consent Events',
+  'health-check': 'Health Check',
+  'atms': 'ATMs',
+  'products-leads': 'Products & Leads',
+  'registration': 'Registration',
+  'trust-framework': 'Trust Framework',
+}
+
+function prettifySegment(seg) {
+  if (SEGMENT_LABELS[seg]) return SEGMENT_LABELS[seg]
+  return seg.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+}
+
+function endpointLabelMap(s) {
+  const map = new Map()
+  for (const ep of s.endpoints || []) {
+    const trailing = ep.path.split('/').pop()
+    if (trailing) map.set(trailing, ep.label)
+  }
+  return map
+}
+
+function parseAffectedPath(path, epLabels) {
+  const m = path.match(/^\/tech\/(tpp-standards|lfi-api-hub)\/(.+)$/)
+  if (!m) return null
+  const audience = m[1] === 'tpp-standards' ? 'TPP' : 'LFI'
+  let segments = m[2].split('/').filter(Boolean)
+  if (segments[0] && /^v\d+(?:\.\d+)*$/.test(segments[0])) segments = segments.slice(1)
+
+  const oaIdx = segments.indexOf('open-api')
+  let areaSegments
+  let endpointSlug
+  if (oaIdx === -1) {
+    areaSegments = segments.slice(0, -1)
+    endpointSlug = segments[segments.length - 1]
+  } else {
+    areaSegments = segments.slice(0, oaIdx)
+    endpointSlug = segments.slice(oaIdx + 1).join('/')
+  }
+
+  const area = areaSegments.map(prettifySegment).join(' · ')
+  const endpointLabel = endpointSlug ? (epLabels.get(endpointSlug) || endpointSlug) : null
+  const labelParts = [audience, area, endpointLabel].filter(Boolean)
+  return { label: labelParts.join(' · '), path }
+}
+
+function sectionsForErrata(s) {
+  const epLabels = endpointLabelMap(s)
+  const seen = new Set()
+  const out = []
+  for (const p of s.affectedPaths || []) {
+    const parsed = parseAffectedPath(p, epLabels)
+    if (!parsed) continue
+    if (seen.has(parsed.label)) continue
+    seen.add(parsed.label)
+    out.push(parsed)
+  }
+  return out
+}
+
 function haystack(s) {
   const parts = [
     s.title,
@@ -397,6 +481,7 @@ function haystack(s) {
     s.rationale,
     s.errataId,
     ...specsOf(s),
+    ...sectionsForErrata(s).map((sec) => sec.label),
     ...(s.schemas || []),
     ...(s.endpoints || []).flatMap((e) => [e.label, e.path]),
     ...(s.githubSources || []).map((g) => g.label),
@@ -409,7 +494,7 @@ function haystack(s) {
 const query = ref('')
 const audienceFilter = ref(null)             // null | 'TPP' | 'LFI'
 const areaFilter = reactive(new Set())
-const specFilter = reactive(new Set())
+const sectionFilter = reactive(new Set())    // section labels
 const searchInput = ref(null)
 
 // ─── Base set & top-line stats ────────────────────────────────────────────
@@ -450,9 +535,9 @@ function matchesAreas(s, areas) {
   return sectionAreas.some((a) => areas.has(a))
 }
 
-function matchesSpecs(s, specs) {
-  if (specs.size === 0) return true
-  return specsOf(s).some((sp) => specs.has(sp))
+function matchesSections(s, sections) {
+  if (sections.size === 0) return true
+  return sectionsForErrata(s).some((sec) => sections.has(sec.label))
 }
 
 function matchesQuery(s, q) {
@@ -465,7 +550,7 @@ const filteredSections = computed(() => {
   return versionSections.value.filter((s) =>
     matchesAudience(s, audienceFilter.value) &&
     matchesAreas(s, areaFilter) &&
-    matchesSpecs(s, specFilter) &&
+    matchesSections(s, sectionFilter) &&
     matchesQuery(s, q),
   )
 })
@@ -484,11 +569,11 @@ function countWith(overrides) {
   const q = (overrides.query !== undefined ? overrides.query : query.value).trim().toLowerCase()
   const audience = overrides.audience !== undefined ? overrides.audience : audienceFilter.value
   const areas = overrides.areas !== undefined ? overrides.areas : areaFilter
-  const specs = overrides.specs !== undefined ? overrides.specs : specFilter
+  const sections = overrides.sections !== undefined ? overrides.sections : sectionFilter
   return versionSections.value.filter((s) =>
     matchesAudience(s, audience) &&
     matchesAreas(s, areas) &&
-    matchesSpecs(s, specs) &&
+    matchesSections(s, sections) &&
     matchesQuery(s, q),
   ).length
 }
@@ -503,23 +588,27 @@ function areaCount(area) {
   return countWith({ areas: next })
 }
 
-function specPillCount(sp) {
-  const next = new Set(specFilter)
-  next.add(sp)
-  return countWith({ specs: next })
+function sectionPillCount(label) {
+  const next = new Set(sectionFilter)
+  next.add(label)
+  return countWith({ sections: next })
 }
 
-// ─── Available facet values (only show areas/specs that exist for this version) ─
+// ─── Available facet values (only show areas/sections that exist for this version) ─
 const availableAreas = computed(() => {
   const seen = new Set()
   for (const s of versionSections.value) for (const a of areasOf(s)) seen.add(a)
   return [...seen].sort()
 })
 
-const availableSpecs = computed(() => {
-  const seen = new Set()
-  for (const s of versionSections.value) for (const sp of specsOf(s)) seen.add(sp)
-  return [...seen].sort()
+const availableSections = computed(() => {
+  const map = new Map()
+  for (const s of versionSections.value) {
+    for (const sec of sectionsForErrata(s)) {
+      if (!map.has(sec.label)) map.set(sec.label, sec)
+    }
+  }
+  return [...map.values()].sort((a, b) => a.label.localeCompare(b.label))
 })
 
 // ─── Toggles ──────────────────────────────────────────────────────────────
@@ -532,9 +621,9 @@ function toggleArea(area) {
   else areaFilter.add(area)
 }
 
-function toggleSpec(sp) {
-  if (specFilter.has(sp)) specFilter.delete(sp)
-  else specFilter.add(sp)
+function toggleSection(label) {
+  if (sectionFilter.has(label)) sectionFilter.delete(label)
+  else sectionFilter.add(label)
 }
 
 function setQuery(value) {
@@ -543,14 +632,14 @@ function setQuery(value) {
 }
 
 const anyFilterActive = computed(() =>
-  !!query.value || !!audienceFilter.value || areaFilter.size > 0 || specFilter.size > 0,
+  !!query.value || !!audienceFilter.value || areaFilter.size > 0 || sectionFilter.size > 0,
 )
 
 function resetFilters() {
   query.value = ''
   audienceFilter.value = null
   areaFilter.clear()
-  specFilter.clear()
+  sectionFilter.clear()
 }
 
 // ─── Result rendering helpers ─────────────────────────────────────────────
@@ -585,8 +674,8 @@ function readFromUrl() {
   if (aud === 'TPP' || aud === 'LFI') audienceFilter.value = aud
   const areas = params.get('area')
   if (areas) for (const a of areas.split(',').filter(Boolean)) areaFilter.add(a)
-  const specs = params.get('spec')
-  if (specs) for (const sp of specs.split(',').filter(Boolean)) specFilter.add(sp)
+  const sections = params.get('section')
+  if (sections) for (const sec of sections.split('|').filter(Boolean)) sectionFilter.add(sec)
 }
 
 function writeToUrl() {
@@ -596,13 +685,13 @@ function writeToUrl() {
   query.value ? sp.set('q', query.value) : sp.delete('q')
   audienceFilter.value ? sp.set('audience', audienceFilter.value) : sp.delete('audience')
   areaFilter.size ? sp.set('area', [...areaFilter].join(',')) : sp.delete('area')
-  specFilter.size ? sp.set('spec', [...specFilter].join(',')) : sp.delete('spec')
+  sectionFilter.size ? sp.set('section', [...sectionFilter].join('|')) : sp.delete('section')
   window.history.replaceState({}, '', url.toString())
 }
 
 onMounted(() => readFromUrl())
 
-watch([query, audienceFilter, () => [...areaFilter], () => [...specFilter]], writeToUrl)
+watch([query, audienceFilter, () => [...areaFilter], () => [...sectionFilter]], writeToUrl)
 </script>
 
 <style scoped>
@@ -1040,13 +1129,14 @@ watch([query, audienceFilter, () => [...areaFilter], () => [...specFilter]], wri
   align-items: start;
   padding: 1.4rem 1.4rem;
   border-top: 1px solid var(--at-grid-line);
-  text-decoration: none;
-  color: inherit;
-  transition: background 0.15s ease;
 }
 
 .ed-er-row:first-of-type { border-top: 0; }
-.ed-er-row:hover { background: color-mix(in srgb, var(--at-gold) 6%, transparent); }
+.ed-er-row:hover { background: color-mix(in srgb, var(--at-gold) 4%, transparent); }
+.ed-er-row:target {
+  background: color-mix(in srgb, var(--at-gold) 10%, transparent);
+  box-shadow: inset 3px 0 0 var(--at-gold);
+}
 
 .ed-er-row__num {
   font-family: var(--at-mono);
@@ -1056,6 +1146,15 @@ watch([query, audienceFilter, () => [...areaFilter], () => [...specFilter]], wri
   padding-top: 0.15rem;
 }
 
+.ed-er-row__title-link {
+  display: inline-block;
+  text-decoration: none;
+  color: inherit;
+  margin-bottom: 0.4rem;
+}
+
+.ed-er-row__title-link:hover .ed-er-row__title { color: var(--at-gold); }
+
 .ed-er-row__title {
   font-family: var(--at-serif);
   font-size: 1.1rem;
@@ -1063,7 +1162,7 @@ watch([query, audienceFilter, () => [...areaFilter], () => [...specFilter]], wri
   letter-spacing: -0.012em;
   line-height: 1.3;
   color: var(--at-navy-deep);
-  margin-bottom: 0.4rem;
+  transition: color 0.15s ease;
 }
 
 .ed-er-row__summary {
@@ -1103,6 +1202,20 @@ watch([query, audienceFilter, () => [...areaFilter], () => [...specFilter]], wri
 
 .ed-er-chip--ep { letter-spacing: 0; }
 
+.ed-er-chip--sec {
+  letter-spacing: 0;
+  font-family: var(--at-sans);
+  font-size: 0.75rem;
+  text-decoration: none;
+  color: var(--at-navy-deep);
+}
+
+.ed-er-chip--sec:hover {
+  border-color: var(--at-gold);
+  background: color-mix(in srgb, var(--at-gold) 12%, transparent);
+  color: var(--at-navy-deep);
+}
+
 .ed-er-chip--on {
   background: var(--at-gold);
   border-color: var(--at-gold);
@@ -1111,15 +1224,17 @@ watch([query, audienceFilter, () => [...areaFilter], () => [...specFilter]], wri
 
 .ed-er-chip--on:hover { background: var(--at-gold); }
 
-.ed-er-row__arrow {
+.ed-er-row__arrow-link {
   font-family: var(--at-mono);
   font-size: 1.15rem;
   color: var(--at-gold);
   padding-top: 0.15rem;
+  text-decoration: none;
+  display: inline-block;
   transition: transform 0.18s ease;
 }
 
-.ed-er-row:hover .ed-er-row__arrow { transform: translateX(4px); }
+.ed-er-row__arrow-link:hover { transform: translateX(4px); }
 
 .ed-er-mark {
   background: color-mix(in srgb, var(--at-gold) 35%, transparent);
@@ -1372,7 +1487,7 @@ watch([query, audienceFilter, () => [...areaFilter], () => [...specFilter]], wri
     gap: 0.85rem;
     padding: 1.2rem 1rem;
   }
-  .ed-er-row__arrow { display: none; }
+  .ed-er-row__arrow-link { display: none; }
   .ed-er-input__field { padding: 0.8rem 2.6rem 0.8rem 2.6rem; font-size: 0.82rem; }
   .ed-er-input__field::placeholder { font-size: 0.74rem; }
   .ed-er-rules { padding: 1.25rem 1.1rem; }

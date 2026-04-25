@@ -4,11 +4,11 @@
     <div class="form-section">
       <FormInput placeholder="Enter your Client Id" ref="inputClientId" name="client_id" :input="formData.client_id"
         :error="!!showError('client_id')" @output="setClientId" />
-      <InfoTooltip style="position: absolute; right: 10px; top: 10px;" :icon-size="40">
-        <strong>Client ID</strong> - Use the client_id from your Trust Framework application detail page.<br />
+      <InfoTooltip class="field-tooltip" icon-color="#00277F" :icon-size="18">
+        <strong>Client ID</strong> &mdash; use the client_id from your Trust Framework application detail page.<br />
         See: <a href="/tech/tpp-standards/trust-framework/creating-an-application#your-client-id">Trust Framework client_id</a>
       </InfoTooltip>
-            <div v-if="showError('client_id') === ''" class="field-error" style="color: rgba(17, 85, 113, 1);"
+      <div v-if="showError('client_id') === ''" class="field-error" style="color: var(--at-navy);"
         aria-live="polite">Your Client Id should look like: <span style="font-style: italic;">https://rp.sandbox.directory.openfinance.ae/openid_relying_party/c6fb03a0-e987-49d5-94e2-76cfec02c522</span>
       </div>
       <div class="field-error" aria-live="polite">{{ showError('client_id') }}</div>
@@ -23,19 +23,19 @@
           {{ opt }}
         </button>
       </div>
-      <InfoTooltip style="position: absolute; right: 10px; top: 30px;" :icon-size="40">
-        <strong>Client Roles</strong> - Choose the roles assigned to your app (BDSP for data sharing, BSIP for payments/service initiation).<br />
+      <InfoTooltip class="field-tooltip field-tooltip--label" icon-color="#00277F" :icon-size="18">
+        <strong>Client Roles</strong> &mdash; choose the roles assigned to your app (BDSP for data sharing, BSIP for payments/service initiation).<br />
         See: <a href="/tech/tpp-standards/trust-framework/roles">roles reference</a>
       </InfoTooltip>
-      
+
       <div class="field-error" aria-live="polite">{{ showError('role') }}</div>
     </div>
 
     <div class="form-section">
       <FormInput placeholder="Enter your Redirect URI" ref="inputRedirectURI" name="redirect_uri"
         :input="formData.redirect_uri" :error="!!showError('redirect_uri')" @output="setRedirectURI" />
-      <InfoTooltip style="position: absolute; right: 10px; top: 10px;" :icon-size="40">
-        <strong>Redirect URI</strong> - Must exactly match a redirect URI registered on your Trust Framework application.<br />
+      <InfoTooltip class="field-tooltip" icon-color="#00277F" :icon-size="18">
+        <strong>Redirect URI</strong> &mdash; must exactly match a redirect URI registered on your Trust Framework application.<br />
         See: <a href="/tech/tpp-standards/trust-framework/redirect-uri">redirect URI guidance</a>
       </InfoTooltip>
       <div class="field-error" aria-live="polite">{{ showError('redirect_uri') }}</div>
@@ -44,8 +44,8 @@
     <div class="form-section">
       <FormInput placeholder="Enter your Client Transport Key ID" ref="inputTransportKeyId" name="transport_key_id"
         :input="formData.transport_key_id" :error="!!showError('transport_key_id')" @output="setTransportKeyID" />
-      <InfoTooltip style="position: absolute; right: 10px; top: 10px;" :icon-size="40">
-        <strong>Transport key ID</strong> - - The kid from your transport certificate details in the Trust Framework.<br />
+      <InfoTooltip class="field-tooltip" icon-color="#00277F" :icon-size="18">
+        <strong>Transport key ID</strong> &mdash; the kid from your transport certificate details in the Trust Framework.<br />
         See: <a href="/tech/tpp-standards/trust-framework/certificates">mTLS certificates</a>
       </InfoTooltip>
       <div class="field-error" aria-live="polite">{{ showError('transport_key_id') }}</div>
@@ -54,8 +54,8 @@
     <div class="form-section">
       <FormInput placeholder="Enter your Client Signing Key ID" ref="inputSigningKeyId" name="signing_key_id"
         :input="formData.signing_key_id" :error="!!showError('signing_key_id')" @output="setSigningKeyID" />
-      <InfoTooltip style="position: absolute; right: 10px; top: 10px;" :icon-size="40">
-        <strong>Signing key ID</strong> - The kid from your signing certificate details in the Trust Framework.<br />
+      <InfoTooltip class="field-tooltip" icon-color="#00277F" :icon-size="18">
+        <strong>Signing key ID</strong> &mdash; the kid from your signing certificate details in the Trust Framework.<br />
         See: <a href="/tech/tpp-standards/trust-framework/certificates#finding-your-key-id-kid">finding your key ID (kid)</a>
       </InfoTooltip>
       <div class="field-error" aria-live="polite">{{ showError('signing_key_id') }}</div>
@@ -80,15 +80,15 @@
     <div class="form-section">
       <FormInput placeholder="Enter the LFI's Discovery Endpoint" ref="inputDiscoveryURI" name="discovery_uri"
         :input="formData.discovery_uri" :error="!!showError('discovery_uri') || !!discoveryError" @output="setDiscoveryURI" />
-      <InfoTooltip style="position: absolute; right: 10px; top: 10px;" :icon-size="40">
-        <strong>LFI Discovery URL</strong> - The .well-known endpoint of the target LFI; model bank URL is prefilled.<br />
+      <InfoTooltip class="field-tooltip" icon-color="#00277F" :icon-size="18">
+        <strong>LFI Discovery URL</strong> &mdash; the .well-known endpoint of the target LFI; the model bank URL is prefilled.<br />
         See: <a href="/tech/tpp-standards/trust-framework/well-known">The .well-known Endpoint</a>
       </InfoTooltip>
-      <div v-if="showError('discovery_uri') === ''" class="field-error" style="color: rgba(17, 85, 113, 1);"
+      <div v-if="showError('discovery_uri') === ''" class="field-error" style="color: var(--at-navy);"
         aria-live="polite">The discovery uri for the model bank is: <br />
         <span style="font-style: italic; padding-left: 12px;">https://auth1.altareq1.sandbox.apihub.openfinance.ae/.well-known/openid-configuration</span>
-        <br /> 
-        for an LFI's preprod environment it will be 
+        <br />
+        for an LFI's preprod environment it will be
         <br />
         <span style="font-style: italic; padding-left: 12px;">https://auth1.<span style="background-color: rgba(255,255,0,0.6);">[LFI  CODE]</span>.preprod.apihub.openfinance.ae/.well-known/openid-configuration</span>
       </div>
@@ -98,57 +98,12 @@
 
 
     <div class="actions">
-      <button class="consent-style-button" :disabled="isDownloading" @click="submit">
-        <span class="consent-style-button-inner">
-          <svg class="consent-style-button-icon" width="22" height="23" viewBox="0 0 22 23" fill="none"
-            xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path
-              d="M11 0C4.92501 0 0 4.93861 0 11.0306C0 17.1225 4.92501 22.0611 11 22.0611C17.075 22.0611 22 17.1225 22 11.0306C22 4.93861 17.075 0 11 0Z"
-              fill="white" />
-            <path
-              d="M14.8042 14.8454H7.19727V7.21704H14.8056V14.8454H14.8042ZM8.95837 13.078H13.0417V8.98435H8.95837V13.078Z"
-              fill="url(#paint0_linear_2_496)" />
-            <path
-              d="M5.4292 5.44275V16.6169H16.5723V5.44275H5.4292ZM14.8042 14.8454H7.19727V7.2171H14.8056V14.8454H14.8042Z"
-              fill="url(#paint1_linear_2_496)" />
-            <path
-              d="M3.66125 3.6698V18.3899H18.3404V3.6698H3.66125ZM16.5724 16.6183H5.42793V5.44416H16.5724V16.6183Z"
-              fill="url(#paint2_linear_2_496)" />
-            <path d="M22 22.0611L13.0416 13.0781H8.95831L17.9166 22.0611H22Z"
-              fill="url(#paint3_radial_2_496)" />
-            <defs>
-              <linearGradient id="paint0_linear_2_496" x1="7.02442" y1="10.9465" x2="14.6294" y2="10.9465"
-                gradientUnits="userSpaceOnUse">
-                <stop stop-color="#4083E1" />
-                <stop offset="0.08" stop-color="#3E8BDD" />
-                <stop offset="0.48" stop-color="#36B1CC" />
-                <stop offset="0.8" stop-color="#31C9C1" />
-                <stop offset="1" stop-color="#30D2BE" />
-              </linearGradient>
-              <linearGradient id="paint1_linear_2_496" x1="5.42781" y1="11.0305" x2="16.5723" y2="11.0305"
-                gradientUnits="userSpaceOnUse">
-                <stop stop-color="#80ACEB" />
-                <stop offset="0.3" stop-color="#7BC0E1" />
-                <stop offset="0.73" stop-color="#76D8D7" />
-                <stop offset="1" stop-color="#75E1D4" />
-              </linearGradient>
-              <linearGradient id="paint2_linear_2_496" x1="3.65987" y1="11.0305" x2="18.3404" y2="11.0305"
-                gradientUnits="userSpaceOnUse">
-                <stop stop-color="#BFD6F5" />
-                <stop offset="0.55" stop-color="#BBE7ED" />
-                <stop offset="1" stop-color="#BAF0E9" />
-              </linearGradient>
-              <radialGradient id="paint3_radial_2_496" cx="0" cy="0" r="1"
-                gradientTransform="matrix(9.09232 8.98302 -65.3309 67.979 10.8846 13.0781)"
-                gradientUnits="userSpaceOnUse">
-                <stop stop-color="#40E0C7" />
-                <stop offset="0.304248" stop-color="#0050C8" />
-                <stop offset="0.623256" stop-color="white" />
-              </radialGradient>
-            </defs>
-          </svg>
-          <span class="consent-style-button-text">Download your Postman Collection</span>
-        </span>
+      <button class="postman-button" :disabled="isDownloading" @click="submit">
+        <svg class="postman-button__logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path fill="currentColor" d="M13.527.099C6.955-.744.942 3.9.099 10.473c-.843 6.572 3.8 12.584 10.373 13.428 6.573.843 12.587-3.801 13.428-10.374C24.744 6.955 20.101.943 13.527.099zm2.471 7.485a.855.855 0 0 0-.593.25l-4.453 4.453-.307-.307-.643-.643c4.389-4.376 5.18-4.418 5.996-3.753zm-4.863 4.861l4.44-4.44a.62.62 0 1 1 .847.903l-4.699 4.125-.588-.588zm.33.694l-1.1.238a.06.06 0 0 1-.067-.032.06.06 0 0 1 .01-.073l.645-.645.512.512zm-2.803-.459l1.172-1.172.879.878-1.979.426a.074.074 0 0 1-.085-.039.072.072 0 0 1 .013-.093zm-3.646 6.058a.076.076 0 0 1-.069-.083.077.077 0 0 1 .022-.046h.002l.946-.946 1.222 1.222-2.123-.147zm2.425-1.256a.227.227 0 0 0-.117.061l-.32.319-1.314-1.314.32-.319c.16-.16.42-.16.58 0l.851.851a.227.227 0 0 0 0 .402zm6.272-3.124-2.79 2.79c-.063.063-.16.072-.232.022l-.582-.412 4.012-4.012c.099.108.165.245.187.392.04.408-.215.799-.595 1.22zm3.491-3.328l-1.578 1.395-1.083-1.083 1.397-1.58c.27-.31.737-.34 1.043-.072.31.27.34.737.072 1.043z"/>
+        </svg>
+        <span class="postman-button__text">{{ isDownloading ? 'Preparing…' : 'Download Postman Collection' }}</span>
+        <span class="postman-button__arrow">&nearr;</span>
       </button>
     </div>
     <div class="version-hint">
@@ -722,6 +677,18 @@ export default {
   gap: 8px;
 }
 
+/* InfoTooltip placement (replaces inline absolute styles) */
+.field-tooltip {
+  position: absolute;
+  right: 12px;
+  top: 16px;
+  z-index: 5;
+}
+
+.field-tooltip--label {
+  top: 0;
+}
+
 .two-col {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -750,13 +717,13 @@ export default {
   font-weight: 400;
   line-height: 1.75rem;
   border: 1px solid #dadce0;
-  box-shadow: 0 0 4px rgba(17, 85, 113, 1);
+  box-shadow: 0 0 4px var(--at-navy);
   padding: 15px;
   padding-left: 24px;
   padding-right: 24px;
   border-radius: 4px;
-  color: rgba(17, 85, 113, 1) !important;
-  border-color: rgba(17, 85, 113, 1);
+  color: var(--at-navy) !important;
+  border-color: var(--at-navy);
 }
 
 .role-chip.active {
@@ -791,13 +758,13 @@ export default {
   font-weight: 400;
   line-height: 1.75rem;
   border: 1px solid #dadce0;
-  box-shadow: 0 0 4px rgba(17, 85, 113, 1);
+  box-shadow: 0 0 4px var(--at-navy);
   padding: 7px;
   padding-left: 12px;
   padding-right: 12px;
   border-radius: 4px;
-  color: rgba(17, 85, 113, 1) !important;
-  border-color: rgba(17, 85, 113, 1);
+  color: var(--at-navy) !important;
+  border-color: var(--at-navy);
 }
 
 .file-button.error {
@@ -821,7 +788,7 @@ export default {
 }
 
 .field-hint.strong {
-  color: rgba(17, 85, 113, 1);
+  color: var(--at-navy);
 }
 
 .field-error {
@@ -839,54 +806,62 @@ export default {
 }
 
 .version-hint a {
-  color: rgba(17, 85, 113, 1);
+  color: var(--at-navy);
   text-decoration: underline;
 }
 
+/* ── Postman-branded CTA (matches service-desk-support .ed-sd-repo__cta) ── */
 .actions {
   display: flex;
   justify-content: center;
   padding-top: 4px;
 }
 
-.consent-style-button {
-  border: none;
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
-}
-
-.consent-style-button-inner {
+.postman-button {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 400px;
-  height: 48px;
-  padding: 10px 10px 10px 20px;
-  border-radius: 66px;
-  background: linear-gradient(84.64deg, #00c8af 0%, #015ad7 41.05%, #000000 82.6%);
-  box-shadow: 0 10px 20px rgba(1, 90, 215, 0.18);
-  color: #ffffff;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  gap: 0.7rem;
+  padding: 0.95rem 1.5rem;
+  background: #FF6C37;
+  color: var(--at-bg-cream);
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  font-family: var(--at-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
-.consent-style-button:hover .consent-style-button-inner {
- opacity: 80%;
+.postman-button:hover:not(:disabled) {
+  background: var(--at-navy-deep);
+  transform: translateY(-1px);
 }
 
-.consent-style-button:disabled {
+.postman-button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-.consent-style-button-icon {
+.postman-button__logo {
+  width: 22px;
+  height: 22px;
   flex: none;
 }
 
-.consent-style-button-text {
-  font-size: 14px;
+.postman-button__text {
+  white-space: nowrap;
+}
+
+.postman-button__arrow {
+  font-size: 1rem;
+  transition: transform 0.15s ease;
+}
+
+.postman-button:hover:not(:disabled) .postman-button__arrow {
+  transform: translate(2px, -2px);
 }
 </style>
 

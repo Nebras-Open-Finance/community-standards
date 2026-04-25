@@ -25,6 +25,14 @@
             </svg>
           </button>
           <div class="ed-nav__menu" :class="{ open: programOpen }">
+            <a href="/support-service-desk/" class="ed-nav__menu-item">
+              <span class="ed-nav__menu-kicker">Support</span>
+              <span class="ed-nav__menu-label">Service Desk</span>
+            </a>
+            <a href="/pricing/" class="ed-nav__menu-item">
+              <span class="ed-nav__menu-kicker">Pricing</span>
+              <span class="ed-nav__menu-label">Commercial Model</span>
+            </a>
             <a href="/policy" class="ed-nav__menu-item">
               <span class="ed-nav__menu-kicker">Governance</span>
               <span class="ed-nav__menu-label">Policies</span>
@@ -108,6 +116,8 @@
         <div class="ed-drawer__label">Navigation</div>
 
         <div class="ed-drawer__section">Program</div>
+        <a href="/support-service-desk/" class="ed-drawer__sublink">Service Desk</a>
+        <a href="/pricing/" class="ed-drawer__sublink">Pricing</a>
         <a href="/policy" class="ed-drawer__sublink">Policies</a>
         <a href="/doc-repository/" class="ed-drawer__sublink">Document Repository</a>
 
