@@ -4,7 +4,7 @@ prev: false
 aside: false
 ---
 
-🕒 **15 minute read**
+🕒 **5 minute read**
 
 # Variable On-Demand — API Guide
 

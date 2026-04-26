@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **6 minute read**
+
 # Consent Management Interface — Requirements
 
 The tables below define the display, labelling, and behavioural requirements for the TPP Consent Management Interface (CMI). See the [User Experience](./user-experience) page for interactive wireframes of the dashboard and detail pages.

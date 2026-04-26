@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **8 minute read**
+
 # Authorization Endpoint
 
 The **Authorization Endpoint** is the HTTPS URL to which the PSU (customer) is redirected during consent authorisation flows. It is the entry point to the LFI's authentication and consent authorisation experience.

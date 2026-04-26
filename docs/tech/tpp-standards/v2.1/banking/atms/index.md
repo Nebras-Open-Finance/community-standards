@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # ATMs
 
 The ATM API lets a TPP retrieve ATM location and service data published by LFIs. It is a read-only, public-data API — no user consent or redirect is required. 

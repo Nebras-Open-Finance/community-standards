@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **9 minute read**
+
 # Environment Specific Configuration
 
 Each API Hub instance requires environment-specific configuration that is exchanged between the LFI and Ozone during onboarding. This configuration MUST be completed **separately for each environment**:

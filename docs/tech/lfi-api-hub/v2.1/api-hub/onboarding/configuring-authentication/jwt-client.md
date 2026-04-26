@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # JWT Auth — Client-side (LFI Sending a Token)
 
 This page describes how your authorisation server constructs and sends JWT Auth tokens when calling the API Hub's Consent Manager and Headless Heimdall Auth Server endpoints. See [Application Layer Authentication](../application-layer-auth) for an overview of all available methods and when to select JWT Auth.

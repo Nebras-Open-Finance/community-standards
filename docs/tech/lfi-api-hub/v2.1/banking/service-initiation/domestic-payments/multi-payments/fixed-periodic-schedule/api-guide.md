@@ -4,7 +4,7 @@ prev: false
 aside: false
 ---
 
-🕒 **20 minute read**
+🕒 **14 minute read**
 
 # Fixed Periodic Schedule - API Guide
 

@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **3 minute read**
+
 # Authorization
 
 Once the PSU has been [authenticated](/tech/lfi-api-hub/v2.1/consent-journey/authentication/), the LFI presents the consent details so the PSU can review and approve (or decline) the request. This is the **authorization** step — the PSU makes an informed decision about granting the TPP access to their accounts or authorizing a payment.

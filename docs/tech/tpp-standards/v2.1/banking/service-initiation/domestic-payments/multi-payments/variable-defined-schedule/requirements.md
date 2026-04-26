@@ -5,6 +5,8 @@ aside: false
 pageClass: requirements-page
 ---
 
+🕒 **6 minute read**
+
 # Variable Defined Schedule - Requirements
 
 The [Consent requirements](/tech/tpp-standards/v2.1/consent/requirements) and the [User Journeys](./user-journeys) for this payment type also apply and must be adhered to.

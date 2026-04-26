@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Consent Management Interface — User Experience
 
 LFIs must provide a consent management interface where customers can see their existing connections to third party providers, review status, and manage active consent relationships.

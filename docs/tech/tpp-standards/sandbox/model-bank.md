@@ -4,7 +4,7 @@ prev: false
 aside: false
 ---
 
-🕒 **7 minute read**
+🕒 **2 minute read**
 
 # Sandbox | Model Bank
 

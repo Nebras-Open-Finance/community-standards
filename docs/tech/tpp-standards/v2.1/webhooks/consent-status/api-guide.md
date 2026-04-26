@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **3 minute read**
+
 # Consent Status Event - API Guide
 
 ## Prerequisites

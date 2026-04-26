@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Headless Heimdall Auth Server
 
 The **Headless Heimdall Auth Server** is an API provided by the API Hub that powers the consent authorisation journey. It shields your authorisation server from the complexity of raw OIDC and FAPI 2.0 — your system calls three endpoints at the appropriate points in the customer journey and the API Hub handles the rest.

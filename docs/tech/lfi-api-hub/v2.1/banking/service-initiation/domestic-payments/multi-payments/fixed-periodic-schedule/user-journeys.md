@@ -4,6 +4,7 @@ prev: false
 aside: false
 ---
 
+🕒 **4 minute read**
 
 # Fixed Periodic Schedule - User Experience
 

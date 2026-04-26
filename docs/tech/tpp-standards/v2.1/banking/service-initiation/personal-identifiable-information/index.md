@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **3 minute read**
+
 # Personal Identifiable Information (PII)
 
 Every payment instruction carries sensitive data about who is paying and who is receiving the funds. This data — the creditor account details, optional debtor account, and risk indicators — is collectively referred to as **Personal Identifiable Information (PII)**.

@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Bank Data Sharing
 
 The Open Finance Banking Data Sharing capabilities enable secure, consent-driven access to customer banking data. These services empower licensed third-party providers (TPPs) to deliver account aggregation, financial management tools, lending assessments, and value-added digital services.

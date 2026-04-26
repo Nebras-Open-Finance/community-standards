@@ -4,6 +4,8 @@ next: false
 aside: false
 ---
 
+🕒 **4 minute read**
+
 # Consent
 
 A **Consent** is an authorisation object that represents a user's explicit permission for a TPP to access their data or initiate services at an LFI. Every protected resource request in UAE Open Finance is bound to a consent — there is no access without one.

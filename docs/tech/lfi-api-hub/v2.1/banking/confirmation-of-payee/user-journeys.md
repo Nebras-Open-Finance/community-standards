@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Confirmation of Payee — User Experience
 
 You must display the Confirmation of Payee result next to the Payees Name in the Authorization Page faithfully aligned with the demo and examples below.

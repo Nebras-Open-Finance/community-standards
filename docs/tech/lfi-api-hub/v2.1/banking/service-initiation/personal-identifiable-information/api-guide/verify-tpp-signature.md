@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Verifying the TPP JWS Signature
 
 ::: info This step is optional

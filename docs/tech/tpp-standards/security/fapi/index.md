@@ -3,6 +3,8 @@ prev: false
 next: false
 ---
 
+🕒 **2 minute read**
+
 # FAPI Security Profile
 
 UAE Open Finance mandates the **FAPI 2.0 Security Profile** ([Financial-grade API](https://openid.net/specs/fapi/2.0/fapi-2_0-security-profile-03.html)) as the security foundation for all API interactions. FAPI 2.0 is an extension of OAuth 2.0 and OpenID Connect designed specifically for high-value financial APIs, where the consequences of a security breach are significant.

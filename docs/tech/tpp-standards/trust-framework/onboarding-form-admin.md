@@ -5,6 +5,8 @@ backLink:
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Primary Organisation Admin Details Form
 
 Complete this form and attach it to your [sandbox onboarding request email](./onboarding#requesting-sandbox-onboarding).

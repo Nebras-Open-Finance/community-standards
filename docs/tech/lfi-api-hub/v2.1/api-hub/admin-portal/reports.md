@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Reports
 
 The Admin Portal provides a set of operational reports covering API performance, error rates, call volumes, payment activity, and consent statistics. All reports can be filtered by date range, sorted by any column, and exported to **CSV** for further analysis.

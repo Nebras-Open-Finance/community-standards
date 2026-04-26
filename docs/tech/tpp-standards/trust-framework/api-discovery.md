@@ -4,7 +4,7 @@ prev: false
 aside: false
 ---
 
-🕒 **15 minute read**
+🕒 **2 minute read**
 
 # Trust Framework - API Discovery
 

@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Payment Refunds — Requirements
 
 The tables below list the rules that apply to the Payment Refunds endpoint. The Hub validates authorization and consent permissions before calling your Ozone Connect server — your LFI is responsible for retrieving and returning the debtor's account details.

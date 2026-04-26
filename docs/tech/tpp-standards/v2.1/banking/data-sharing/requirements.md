@@ -5,6 +5,8 @@ aside: false
 pageClass: requirements-page
 ---
 
+🕒 **15 minute read**
+
 # Bank Data Sharing - Requirements
 
 The [Consent requirements](/tech/tpp-standards/v2.1/consent/requirements) and the [User Journeys](./user-journeys) must be adhered to.

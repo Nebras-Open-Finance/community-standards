@@ -4,7 +4,7 @@ prev: false
 aside: false
 ---
 
-🕒 **20 minute read**
+🕒 **15 minute read**
 
 # Fixed On Demand - API Guide
 

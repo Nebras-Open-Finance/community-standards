@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # ATMs
 
 The ATM API allows LFIs to publish ATM location and service data to TPPs. It is a read-only, public-data API — no consent or user redirect is required.

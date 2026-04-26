@@ -4,7 +4,7 @@ prev: false
 aside: false
 ---
 
-🕒 **15 minute read**
+🕒 **6 minute read**
 
 # Consent Journey - API Guide
 

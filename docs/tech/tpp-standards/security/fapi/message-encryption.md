@@ -4,6 +4,8 @@ next: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Message Encryption (JWE)
 
 A **JWE** (JSON Web Encryption — [RFC 7516](https://datatracker.ietf.org/doc/html/rfc7516)) is the cryptographic mechanism that encrypts a payload so that only the intended recipient can read it.

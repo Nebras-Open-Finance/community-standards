@@ -4,6 +4,8 @@ next: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Preparing the Request JWT
 
 To send a [/par](../../v2.1/consent/open-api/par) request, you must first construct a signed **Request JWT** (also called a Request Object or JAR — JWT Authorization Request). This JWT is a signed package of all authorization parameters, proving they came from your registered application and haven't been tampered with.

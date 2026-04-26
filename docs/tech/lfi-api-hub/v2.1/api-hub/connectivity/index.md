@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **5 minute read**
+
 # API Hub Connectivity & Certificates
 
 This page describes the network architecture of the API Hub and the certificates that secure communication between all parties in the ecosystem.

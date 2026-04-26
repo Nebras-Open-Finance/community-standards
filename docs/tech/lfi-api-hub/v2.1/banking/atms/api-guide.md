@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **3 minute read**
+
 # ATMs — API Guide
 
 The ATM API exposes a single endpoint that returns all ATM records published by the LFI. This is open data — no customer consent is required. The Hub calls your Ozone Connect [`GET /atm`](/tech/lfi-api-hub/v2.1/banking/atms/open-api/atm) endpoint whenever a TPP or public consumer requests ATM data for your institution.

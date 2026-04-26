@@ -4,7 +4,7 @@ prev: false
 aside: false
 ---
 
-🕒 **25 minute read**
+🕒 **18 minute read**
 
 # Delegated SCA - API Guide
 

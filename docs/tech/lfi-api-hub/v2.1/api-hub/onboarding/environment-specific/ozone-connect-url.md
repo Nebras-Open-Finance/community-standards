@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Ozone Connect Base URL
 
 The **Ozone Connect Base URL** is the root URL of your Ozone Connect API endpoints — the server that the API Hub calls when proxying TPP requests to your institution.

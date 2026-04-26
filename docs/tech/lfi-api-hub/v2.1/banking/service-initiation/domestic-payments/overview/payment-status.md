@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **7 minute read**
+
 <script setup>
 import APIFlowViewer from '/components/APIFlowViewer.vue'
 import AaniStatusMapping from '/components/APIFlows/AaniStatusMapping.vue'

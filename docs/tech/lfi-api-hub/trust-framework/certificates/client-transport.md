@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Client Transport Certificate
 
 The **Transport Certificate** is used for **mutual TLS (mTLS)** to authenticate your application when making API requests to LFIs.

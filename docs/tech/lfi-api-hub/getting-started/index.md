@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **6 minute read**
+
 # Getting Started as an LFI
 
 This page outlines the end-to-end journey for a Licensed Financial Institution (LFI) integrating with the UAE Open Finance ecosystem — from first onboarding in the sandbox environment through to live operation with Third-Party Providers (TPPs).

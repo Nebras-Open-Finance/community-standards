@@ -4,6 +4,8 @@ next: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Message Signing (JWS)
 
 A **JWS** (JSON Web Signature — [RFC 7515](https://datatracker.ietf.org/doc/html/rfc7515)) is the cryptographic mechanism that signs a JSON payload to prove two things:

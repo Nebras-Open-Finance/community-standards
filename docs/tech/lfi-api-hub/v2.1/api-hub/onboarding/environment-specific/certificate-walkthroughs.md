@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **4 minute read**
+
 # Certificate Walkthroughs
 
 This page provides step-by-step walkthroughs for creating certificates required during [environment-specific onboarding](./).

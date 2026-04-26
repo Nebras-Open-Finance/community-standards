@@ -2,6 +2,8 @@
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Security Validation
 
 Before a TPP is approved for production access, it must submit the results of a penetration test to Nebras. This requirement provides independent assurance that the TPP's application can withstand real-world attack scenarios and that user data and financial transactions are adequately protected.

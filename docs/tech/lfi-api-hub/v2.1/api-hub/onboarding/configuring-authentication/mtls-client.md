@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **3 minute read**
+
 # Configuring Outbound mTLS
 
 This page describes how the LFI MUST configure outbound mutual TLS (mTLS) when its authorisation server calls the API Hub's Consent Manager and Headless Heimdall Auth Server endpoints during consent and authorisation flows.

@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Payment Status Event - API Guide
 
 ## Prerequisites

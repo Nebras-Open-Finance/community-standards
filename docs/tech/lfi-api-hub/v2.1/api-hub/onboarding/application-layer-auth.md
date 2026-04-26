@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **4 minute read**
+
 # Application Layer Authentication
 
 All communication between the API Hub and an LFI is secured at the transport layer using **mutual TLS (mTLS)**. In addition to mTLS, the API Hub supports several **application layer authentication** methods that provide defense-in-depth.

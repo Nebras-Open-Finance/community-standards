@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **3 minute read**
+
 # How to Decrypt PII
 
 The `PersonalIdentifiableInformation` field is a compact JWE (JSON Web Encryption) string. It was encrypted by the TPP using your LFI's public encryption key ([Enc1](/tech/lfi-api-hub/v2.1/api-hub/onboarding/environment-specific/#enc1-encryption-key)). To decrypt it, you need the corresponding **Enc1 private key**.

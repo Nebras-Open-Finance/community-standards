@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 <!--@include: ../../tpp-standards/trust-framework/_shared/user-sign-up.md-->
 
 <script setup>

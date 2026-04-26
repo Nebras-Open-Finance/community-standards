@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **4 minute read**
+
 # Prerequisites
 
 Before your API Hub can be provisioned, you MUST complete the prerequisites questionnaire via a Service Desk ticket. This page describes the information you will need to provide and why it is required.

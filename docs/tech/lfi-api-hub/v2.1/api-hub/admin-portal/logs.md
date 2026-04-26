@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **3 minute read**
+
 # Logs
 
 The Admin Portal provides two types of logs: **Audit Logs** that track all portal activity, and **API Logs** that trace every request processed by the API Hub.

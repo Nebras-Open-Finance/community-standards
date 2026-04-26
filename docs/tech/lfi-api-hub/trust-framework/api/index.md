@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Trust Framework — API
 
 Several things that you can do in the Trust Framework portal can also be done via API — managing organisations, software statements, authorisation servers, certificates, and contacts.

@@ -4,6 +4,8 @@ next: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Client Assertion
 
 A **client assertion** is a short-lived, signed JWT that your application presents to the Authorization Server to prove its identity. It takes the place of a static client secret, providing a stronger and more auditable form of client authentication.

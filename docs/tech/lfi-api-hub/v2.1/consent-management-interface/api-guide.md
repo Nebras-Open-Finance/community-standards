@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **6 minute read**
+
 # Consent Management Interface — API Guide
 
 This guide explains how to use the API Hub's Consent Manager API to retrieve and manage the data needed to populate each page of the LFI Consent Management Interface (CMI). See the [Requirements](./requirements) page for what each page must display, and the [User Experience](./user-experience) page for interactive wireframes.

@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **5 minute read**
+
 # API Hub Overview
 
 The **API Hub** — powered by Ozone — is the central Open Finance gateway that connects Licensed Financial Institutions (LFIs) to the ecosystem. It acts as both the **OIDC Authorization Server** and the **Open Finance Gateway**, managing all incoming TPP traffic on your behalf.

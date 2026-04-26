@@ -4,6 +4,7 @@ prev: false
 aside: false
 ---
 
+🕒 **3 minute read**
 
 # Delegated SCA - User Experience
 

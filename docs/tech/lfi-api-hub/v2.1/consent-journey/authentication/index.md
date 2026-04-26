@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **3 minute read**
+
 # Authentication
 
 When a TPP initiates a consent journey, the API Hub redirects the PSU (Payment Services User) to the LFI's **Authorization Endpoint** so the PSU can prove their identity. This is the **authentication** step — the PSU demonstrates to the LFI that they are who they claim to be, using the same credentials and methods they use when accessing the LFI's own digital channels.

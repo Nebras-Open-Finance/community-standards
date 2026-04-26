@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Webhooks — Event Notifications
 
 Rather than requiring TPPs to poll for status changes, UAE Open Finance supports **push-based event notifications**. When a relevant event occurs — such as a consent being authorized or revoked, or a payment status changing — the API Hub can deliver a notification directly to your registered webhook endpoint.

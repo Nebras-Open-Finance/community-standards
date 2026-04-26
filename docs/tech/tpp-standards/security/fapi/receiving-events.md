@@ -4,6 +4,8 @@ next: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Receiving Event Notifications
 
 When the API Hub delivers a webhook event (such as a Payment Status or Consent Status change), it POSTs a **JWE compact serialisation** to your registered webhook URL. The JWE is encrypted with your public **Encryption Certificate**, and the decrypted payload is a signed JWT (JWS) containing the event.

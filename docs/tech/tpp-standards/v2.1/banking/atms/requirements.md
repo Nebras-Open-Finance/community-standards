@@ -5,6 +5,8 @@ aside: false
 pageClass: requirements-page
 ---
 
+🕒 **2 minute read**
+
 # ATMs - Requirements
 
 The tables below list the validation rules that apply to the ATM API. The **Validated by** column indicates where each rule is enforced.

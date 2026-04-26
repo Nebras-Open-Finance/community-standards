@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Client Signing Certificate
 
 The **Signing Certificate** is used to **digitally sign JWTs** that your application sends — including Client Assertions, PAR Request JWTs, and any other signed payloads.

@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Creditor
 
 At consent validation — `POST /consent/action/validate` — the LFI MUST validate `Initiation.Creditor` in the decrypted PII against three concerns:

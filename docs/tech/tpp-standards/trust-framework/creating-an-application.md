@@ -4,9 +4,7 @@ prev: false
 aside: false
 ---
 
-🕒 **5 minute read**
-
-
+🕒 **3 minute read**
 
 # Walkthrough – Creating an Application
 

@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **3 minute read**
+
 # Pagination
 
 List endpoints on the Bank Data Sharing API return pagination information in the response body. The TPP walks through a paginated result set by following the URLs in the `Links` object — there are no `page` or `page-size` query parameters to set on the request.

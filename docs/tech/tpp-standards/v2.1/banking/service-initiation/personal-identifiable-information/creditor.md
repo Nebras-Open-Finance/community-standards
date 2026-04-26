@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **4 minute read**
+
 # Creditor
 
 Creditor data is submitted as part of the PII payload at two points in the payment lifecycle. The structure is **different** at each stage.

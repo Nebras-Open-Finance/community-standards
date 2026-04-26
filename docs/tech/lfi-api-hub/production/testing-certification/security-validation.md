@@ -3,6 +3,8 @@ next: false
 prev: false
 ---
 
+🕒 **2 minute read**
+
 # Security Validation
 
 ::: info Coming soon

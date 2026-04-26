@@ -4,7 +4,7 @@ prev: false
 aside: false
 ---
 
-🕒 **4 minute read**
+🕒 **2 minute read**
 
 # Payment Refunds — API Guide
 

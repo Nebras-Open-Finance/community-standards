@@ -5,6 +5,8 @@ aside: false
 pageClass: requirements-page
 ---
 
+🕒 **2 minute read**
+
 # Payment Refunds — Requirements
 
 The tables below list the validation rules that apply to the Payment Refunds API. The **Validated by** column indicates where each rule is enforced.

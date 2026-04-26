@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **5 minute read**
+
 # Risk
 
 The `Risk` object is a required part of the PII payload submitted at both `POST /par` (consent staging) and `POST /payments` (payment initiation). It carries contextual signals about the debtor, the transaction, and the creditor that the LFI uses for fraud scoring and risk assessment.

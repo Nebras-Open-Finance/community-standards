@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **3 minute read**
+
 # Consent Events & Actions
 
 The **Consent Events & Actions API** is implemented by your LFI. Unlike the other APIs in the Ozone Connect specification where the API Hub calls your endpoints to retrieve data or execute payments, these endpoints allow the API Hub to notify you of consent lifecycle changes and request your input during consent creation.

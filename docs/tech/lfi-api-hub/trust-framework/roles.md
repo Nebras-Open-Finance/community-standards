@@ -4,7 +4,7 @@ prev: false
 aside: false
 ---
 
-🕒 **3 minute read**
+🕒 **2 minute read**
 
 # Trust Framework - Roles
 

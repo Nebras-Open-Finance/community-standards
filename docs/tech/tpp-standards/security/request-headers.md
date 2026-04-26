@@ -3,6 +3,8 @@ next: false
 prev: false
 ---
 
+🕒 **3 minute read**
+
 # Request Headers
 
 These headers apply to all authenticated API calls made in the UAE Open Finance ecosystem. They are defined by the [FAPI 2.0 Security Profile](https://openid.net/specs/fapi-2_0-security-profile.html) and the UAE Open Finance standard.

@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Payments (Service Initiation)
 
 The Payment Service Initiation capabilities allow customers to authorise payments at their LFI which a TPP then submits within the bounds of that authorisation. Payment types range from one-time instant payments through to long-running multi-payment consents with variable amounts, schedules, or delegated authentication.

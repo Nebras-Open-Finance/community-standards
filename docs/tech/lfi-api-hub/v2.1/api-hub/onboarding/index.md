@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # API Hub Onboarding
 
 This section covers the end-to-end process for onboarding your institution to the **API Hub**. Onboarding is managed through the **Nebras Service Desk** and involves providing configuration details, exchanging certificates, and provisioning your API Hub instance.

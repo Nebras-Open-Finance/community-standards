@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Authentication Requirements
 
 This page defines the required error handling behaviour when the PSU fails to authenticate during the consent journey. The LFI MUST invoke `POST /auth/{interactionId}/doFail` with the exact `error` and `error_description` values specified below.

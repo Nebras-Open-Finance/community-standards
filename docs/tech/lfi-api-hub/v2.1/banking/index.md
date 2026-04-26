@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Banking
 
 The Open Finance Banking capabilities enable secure and efficient financial data sharing, payment initiation, and verification — empowering third-party providers (TPPs) with the tools they need to enhance user experience and financial services. These services operate under strict consent management and granular data access permissions, all mediated and validated by the API Hub.

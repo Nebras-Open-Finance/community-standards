@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **4 minute read**
+
 # Strong Customer Authentication
 
 Strong Customer Authentication (SCA) is multi-factor authentication (MFA) that requires the PSU to authenticate using at least two independent factors. SCA is a regulatory requirement under the CBUAE directive *Prevention of Fraud Incidents Impacting Consumers* (Notice No. 3057/2025) and applies to all Open Finance consent journeys.

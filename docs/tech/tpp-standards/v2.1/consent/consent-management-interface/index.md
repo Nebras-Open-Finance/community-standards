@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **3 minute read**
+
 # Consent Management Interface
 
 Every TPP must provide a Consent Management Interface (CMI) — a section of their application where users can see all active and historical consents they have granted, and take action on them. The CMI is a requirement, not an optional feature.

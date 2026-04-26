@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Client Encryption Certificate
 
 The **Encryption Certificate** is used to **encrypt data** sent to your application — such as event notifications — ensuring only your application can read it.

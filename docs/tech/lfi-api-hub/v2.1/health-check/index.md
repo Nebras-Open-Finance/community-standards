@@ -1,3 +1,5 @@
+🕒 **2 minute read**
+
 # Health Check
 
 The **Health Check API** is a small family of Ozone Connect endpoints implemented by your LFI. The API Hub calls these endpoints to verify end-to-end connectivity, mutual TLS, and client-certificate propagation between the Hub and your Ozone Connect surface.

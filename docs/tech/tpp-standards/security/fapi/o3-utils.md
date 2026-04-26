@@ -4,6 +4,8 @@ next: false
 aside: false
 ---
 
+🕒 **4 minute read**
+
 # O3 Sandbox Utilities
 
 The Nebras Open Finance sandbox exposes a small set of **O3 Utility endpoints** to help you verify that your signing and encryption logic is correct before wiring everything together in your own application. You send a signing key (and, for encryption, a JWKS URL) in the request body, and the utility returns the signed or encrypted token directly — so you can validate output at any stage of the flow without having to build the full cryptographic pipeline first.

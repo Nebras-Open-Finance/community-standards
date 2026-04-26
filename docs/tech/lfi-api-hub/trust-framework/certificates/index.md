@@ -4,7 +4,7 @@ prev: false
 aside: false
 ---
 
-🕒 **5 minute read**
+🕒 **4 minute read**
 
 # Trust Framework - Keys and Certificates
 

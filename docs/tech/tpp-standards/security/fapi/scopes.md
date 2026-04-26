@@ -4,6 +4,8 @@ next: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # OAuth 2.0 Scopes
 
 Scopes define what your application is requesting permission to do on behalf of the user. They are declared in the `scope` field of your [Request JWT](./request-jwt) and echoed back in the access token issued by the Authorization Server.

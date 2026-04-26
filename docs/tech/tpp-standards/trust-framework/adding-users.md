@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 <!--@include: ./_shared/adding-users.md-->
 
 <script setup>

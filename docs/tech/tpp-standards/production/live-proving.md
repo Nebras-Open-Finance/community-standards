@@ -4,6 +4,8 @@ next: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Production Live Proving
 
 Once all certification requirements have been met, TPPs enter the **Production Proving Phase** — a controlled live period where the TPP's integration is validated against real production infrastructure before being opened to all customers and LFIs.

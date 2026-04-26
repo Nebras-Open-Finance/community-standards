@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **9 minute read**
+
 # Variable Defined Schedule — Requirements
 
 The [Authentication requirements](/tech/lfi-api-hub/v2.1/consent-journey/authentication/requirements), [Authorization requirements](/tech/lfi-api-hub/v2.1/consent-journey/authorization/requirements), and [User Journeys](./user-journeys) must be adhered to.

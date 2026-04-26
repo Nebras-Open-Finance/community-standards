@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **6 minute read**
+
 # Getting Started for TPPs (Sandbox)
 
 

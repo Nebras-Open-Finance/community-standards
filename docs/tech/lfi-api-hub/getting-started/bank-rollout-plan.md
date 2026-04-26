@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **6 minute read**
+
 # Recommended Bank Rollout Plan
 
 This page proposes a sensible delivery sequence for an LFI working through [Step 3 of the LFI Integration Journey](./). It is intended as a starting path that breaks the work into manageable increments — once you have completed Phase 1 you will be well-placed to decide the order of subsequent capabilities based on your own priorities and constraints.

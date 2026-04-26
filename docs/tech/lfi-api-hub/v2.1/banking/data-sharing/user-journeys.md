@@ -4,6 +4,7 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
 
 # Bank Data Sharing - User Experience
 

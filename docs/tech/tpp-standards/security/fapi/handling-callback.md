@@ -4,6 +4,8 @@ next: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Handling Authorization Callbacks
 
 After the user approves (or declines) consent at the LFI, the Authorization Server redirects them back to your registered `redirect_uri`. How you handle this callback is security-critical — mistakes here can allow CSRF attacks, token theft, and authorization code replay.

@@ -4,6 +4,8 @@ next: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Tokens
 
 In UAE Open Finance, your application uses two types of OAuth 2.0 bearer tokens to make API calls on behalf of a consenting customer.

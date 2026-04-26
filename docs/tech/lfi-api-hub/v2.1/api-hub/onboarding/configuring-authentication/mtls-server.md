@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **5 minute read**
+
 # Configuring Inbound mTLS
 
 This page describes how the LFI MUST configure inbound mutual TLS (mTLS) on its Ozone Connect server so that calls from the API Hub are authenticated and all other calls are rejected.

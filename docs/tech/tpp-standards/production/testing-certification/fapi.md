@@ -2,6 +2,8 @@
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # FAPI Conformance
 
 Every TPP must obtain a **Relying Party (RP) certification** for their application against the **CBUAE FAPI 2.0 Message Signing Profile** before being promoted to production. This certification is issued by the [OpenID Foundation (OIDF)](https://openid.net/) and is an exit criterion from the API Hub Sandbox.

@@ -5,6 +5,8 @@ aside: false
 pageClass: requirements-page
 ---
 
+🕒 **2 minute read**
+
 # Products and Leads - Requirements
 
 The [User Journeys](./user-journeys) must be adhered to.

@@ -4,6 +4,8 @@ next: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Consent Requirements
 
 These requirements apply to all TPPs operating within UAE Open Finance, regardless of the service type. They are assessed as part of the [Functional Evidence](../../production/testing-certification/functional) certification process.

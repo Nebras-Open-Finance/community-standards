@@ -3,6 +3,8 @@ next: false
 prev: false
 ---
 
+🕒 **2 minute read**
+
 # Functional Evidence — Bank Data Sharing
 
 ::: info Coming soon

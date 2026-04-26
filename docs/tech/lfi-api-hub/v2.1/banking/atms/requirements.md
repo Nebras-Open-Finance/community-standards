@@ -3,6 +3,8 @@ next: false
 prev: false
 ---
 
+🕒 **2 minute read**
+
 # ATMs — Requirements
 
 ::: info Coming soon

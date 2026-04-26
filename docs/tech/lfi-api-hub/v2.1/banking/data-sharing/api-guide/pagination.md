@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Pagination
 
 Pagination for Bank Data Sharing endpoints is **page-based** on the LFI (Ozone Connect) side. The API Hub converts the LFI's page/meta response into the `Links` envelope returned to the TPP.

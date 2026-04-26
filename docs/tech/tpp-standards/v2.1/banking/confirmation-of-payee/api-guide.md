@@ -4,7 +4,7 @@ prev: false
 aside: false
 ---
 
-🕒 **7 minute read**
+🕒 **4 minute read**
 
 # Confirmation of Payee - API Guide
 

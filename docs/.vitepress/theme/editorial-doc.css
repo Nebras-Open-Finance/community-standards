@@ -1665,3 +1665,158 @@ html.editorial-doc .vp-doc .ed-action__primary:hover .ed-action__arrow {
     min-width: 0;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Refinement Layer — Enhanced Readability & Visual Hierarchy
+   Added: 2026-04-25
+
+   Improvements:
+   - Larger heading weight and improved spacing
+   - Table hover states and better padding
+   - Gradient backgrounds on callout blocks
+   - Refined inline code styling
+   - More generous section spacing
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Enhanced Typography Scale ────────────────────────────────────────── */
+
+html.editorial-doc .vp-doc h1 {
+  font-weight: 700 !important;
+  margin-bottom: 1.5rem !important;
+}
+
+html.editorial-doc .vp-doc h2 {
+  margin-top: 4rem !important;
+  padding-top: 2rem !important;
+  border-top: 2px solid var(--at-grid-line) !important;
+}
+
+html.editorial-doc .vp-doc h2:first-of-type {
+  border-top: none !important;
+  padding-top: 0 !important;
+  margin-top: 3rem !important;
+}
+
+html.editorial-doc .vp-doc h3 {
+  margin-top: 2.5rem !important;
+  margin-bottom: 1rem !important;
+}
+
+html.editorial-doc .vp-doc p {
+  line-height: 1.75 !important;
+  margin: 1rem 0 !important;
+}
+
+html.editorial-doc .vp-doc ul,
+html.editorial-doc .vp-doc ol {
+  margin: 1.25rem 0 !important;
+}
+
+html.editorial-doc .vp-doc li {
+  margin: 0.625rem 0 !important;
+  line-height: 1.75 !important;
+}
+
+/* ── Enhanced Table Styling ───────────────────────────────────────────── */
+
+html.editorial-doc .vp-doc table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  margin: 1.75rem 0 !important;
+}
+
+html.editorial-doc .vp-doc th {
+  padding: 0.875rem 1rem !important;
+  border-bottom: 2px solid var(--at-grid-line) !important;
+}
+
+html.editorial-doc .vp-doc td {
+  padding: 0.875rem 1rem !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--at-grid-line) 50%, transparent) !important;
+  transition: background-color 0.15s ease;
+}
+
+html.editorial-doc .vp-doc tr:last-child td {
+  border-bottom: none !important;
+}
+
+html.editorial-doc .vp-doc tbody tr:hover {
+  background: color-mix(in srgb, var(--at-bg-cream) 60%, var(--at-bg-paper)) !important;
+}
+
+html.editorial-doc .vp-doc tbody tr:nth-child(even):hover {
+  background: color-mix(in srgb, var(--at-bg-cream) 80%, var(--at-teal) 8%) !important;
+}
+
+/* ── Gradient Callout Blocks ──────────────────────────────────────────── */
+
+html.editorial-doc .vp-doc .custom-block {
+  padding: 1.25rem 1.5rem !important;
+  margin: 1.75rem 0 !important;
+}
+
+html.editorial-doc .vp-doc .custom-block.tip {
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--at-teal) 8%, var(--at-bg-cream)) 0%,
+    var(--at-bg-cream) 100%) !important;
+  border-left: 4px solid var(--at-teal) !important;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--at-navy-deep) 6%, transparent) !important;
+}
+
+html.editorial-doc .vp-doc .custom-block.info,
+html.editorial-doc .vp-doc .custom-block.note {
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--at-blue-deep) 8%, var(--at-bg-cream)) 0%,
+    var(--at-bg-cream) 100%) !important;
+  border-left: 4px solid var(--at-blue-deep) !important;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--at-navy-deep) 6%, transparent) !important;
+}
+
+html.editorial-doc .vp-doc .custom-block.warning {
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--at-gold) 12%, var(--at-bg-cream)) 0%,
+    var(--at-bg-cream) 100%) !important;
+  border-left: 4px solid var(--at-gold) !important;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--at-navy-deep) 6%, transparent) !important;
+}
+
+html.editorial-doc .vp-doc .custom-block.danger,
+html.editorial-doc .vp-doc .custom-block.caution,
+html.editorial-doc .vp-doc .custom-block.important {
+  background: linear-gradient(135deg,
+    color-mix(in srgb, #B33A3A 8%, var(--at-bg-cream)) 0%,
+    var(--at-bg-cream) 100%) !important;
+  border-left: 4px solid #B33A3A !important;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--at-navy-deep) 6%, transparent) !important;
+}
+
+html.editorial-doc .vp-doc .custom-block .custom-block-title {
+  font-size: 0.75rem !important;
+  margin-bottom: 0.75rem !important;
+}
+
+html.editorial-doc .vp-doc .custom-block p {
+  line-height: 1.65 !important;
+}
+
+/* ── Refined Inline Code & Code Blocks ────────────────────────────────── */
+
+html.editorial-doc .vp-doc :not(pre) > code {
+  font-size: 0.88em !important;
+  padding: 0.15em 0.5em !important;
+  background: color-mix(in srgb, var(--at-grid-line) 40%, var(--at-bg-paper)) !important;
+  border: 1px solid color-mix(in srgb, var(--at-grid-line) 80%, transparent) !important;
+  font-weight: 500 !important;
+  color: var(--at-navy-deep) !important;
+}
+
+html.editorial-doc .vp-doc div[class*='language-'] {
+  margin: 1.75rem 0 !important;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--at-navy-deep) 8%, transparent) !important;
+}
+
+html.editorial-doc .vp-doc pre {
+  padding: 1.25rem 1.5rem !important;
+}
+
+/* End Refinement Layer */

@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # ATMs - API Guide
 
 The ATM API exposes a single endpoint — `GET /atms` — that returns the details of all ATMs managed by the LFI.

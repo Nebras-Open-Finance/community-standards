@@ -5,6 +5,8 @@ aside: false
 pageClass: requirements-page
 ---
 
+🕒 **2 minute read**
+
 # Confirmation of Payee — Requirements
 
 The [User Journeys](./user-journeys) for this service also apply and must be adhered to.

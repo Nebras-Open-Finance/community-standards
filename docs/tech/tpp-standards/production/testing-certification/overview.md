@@ -2,6 +2,8 @@
 aside: false
 ---
 
+🕒 **3 minute read**
+
 # Testing & Certification Overview
 
 Before a Third Party Provider (TPP) can connect to a live Licensed Financial Institution (LFI) in production, it must satisfy two independent sets of requirements: regulatory licensing and Nebras technical certification.

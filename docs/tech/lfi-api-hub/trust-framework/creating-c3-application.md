@@ -4,9 +4,7 @@ prev: false
 aside: false
 ---
 
-🕒 **5 minute read**
-
-
+🕒 **2 minute read**
 
 # Walkthrough – Creating the C3-hh-cm-client Application
 

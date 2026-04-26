@@ -2,6 +2,8 @@
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Functional Evidence — Bank Data Sharing
 
 <FunctionalEvidenceDownload />

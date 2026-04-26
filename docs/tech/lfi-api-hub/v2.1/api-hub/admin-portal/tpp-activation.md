@@ -4,7 +4,6 @@ prev: false
 aside: false
 ---
 
-
 🕒 **3 minute read**
 
 # TPP Management & Activation

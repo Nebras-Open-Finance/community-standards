@@ -1,5 +1,3 @@
-🕒 **4 minute read**
-
 # Trust Framework
 
 The Trust Framework facilitates secure data sharing between Licensed Financial Institutions (LFIs) and Third-Party Providers (TPPs) by delivering key services such as API discovery, client onboarding, and client authentication.

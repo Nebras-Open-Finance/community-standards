@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Consent Management Interface
 
 TPPs must provide a consent management interface where users can see their existing connections, review status, and manage active consent relationships.

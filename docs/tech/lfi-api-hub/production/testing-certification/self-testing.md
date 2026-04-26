@@ -3,6 +3,8 @@ next: false
 prev: false
 ---
 
+🕒 **2 minute read**
+
 # Attestation & Self Testing
 
 ::: info Coming soon

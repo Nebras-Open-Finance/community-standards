@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # JWT Auth — Server-side (LFI Receiving a Token)
 
 This page describes how your Ozone Connect server validates JWT Auth tokens sent by the API Hub. See [Application Layer Authentication](../application-layer-auth) for an overview of all available methods and when to select JWT Auth.

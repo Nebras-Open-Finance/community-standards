@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Adding Users
 
 Organisation Administrators can onboard Users.

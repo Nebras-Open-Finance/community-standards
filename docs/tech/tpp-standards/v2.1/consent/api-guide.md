@@ -4,7 +4,7 @@ prev: false
 aside: false
 ---
 
-🕒 **10 minute read**
+🕒 **3 minute read**
 
 # Consent - API Guide
 

@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 <script setup>
 const postmanPaths = [
   { name: 'banking.postman_collection.json',   desc: 'Banking collection — consent, account &amp; transaction data, payment initiation, Confirmation of Payee, products &amp; leads, ATMs, and webhooks.' },

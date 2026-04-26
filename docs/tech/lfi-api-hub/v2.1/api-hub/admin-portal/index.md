@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Admin Portal
 
 Each API Hub includes a dedicated **Admin Portal** — a web-based management interface where LFI teams can manage TPP access, investigate API traffic, and review operational reports.

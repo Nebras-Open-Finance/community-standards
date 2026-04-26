@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **5 minute read**
+
 # Products and Leads - User Experience
 
 The following wireframes and guidelines outline the essential information and functionality that must be provided to the User, while enabling TPPs to implement additional features and capabilities to address their commercial and service-specific needs.

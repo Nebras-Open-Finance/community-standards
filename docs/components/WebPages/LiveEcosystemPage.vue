@@ -726,7 +726,7 @@ const summaryCount = computed(() => {
 
 const summaryUnit = computed(() => {
   const n = mode.value === 'lfi' ? lfiServerCount.value : tppCount.value
-  if (mode.value === 'lfi') return n === 1 ? 'LFI live' : 'LFIs live'
+  if (mode.value === 'lfi') return n === 1 ? 'live LFI server' : 'live LFI servers'
   return n === 1 ? 'TPP active' : 'TPPs active'
 })
 

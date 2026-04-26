@@ -4,6 +4,8 @@ next: false
 aside: false
 ---
 
+🕒 **5 minute read**
+
 <script setup>
 import APIFlowViewer from '/components/APIFlowViewer.vue'
 import TPPPaymentStatus from '/components/APIFlows/TPPPaymentStatus.vue'

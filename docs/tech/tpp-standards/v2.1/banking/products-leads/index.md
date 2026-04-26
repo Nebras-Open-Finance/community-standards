@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Products & Leads
 
 The Products & Leads API lets a TPP retrieve publicly available banking products from participating LFIs and present them to a user. No user consent or redirect is required.

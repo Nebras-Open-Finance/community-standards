@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Payments (Service Initiation)
 
 The Open Finance Payment Service Initiation capabilities enable TPPs to initiate payments on behalf of customers under explicit, consent-driven authorisation. 

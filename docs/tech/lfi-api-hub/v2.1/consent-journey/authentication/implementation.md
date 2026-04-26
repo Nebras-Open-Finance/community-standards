@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **5 minute read**
+
 # Implementation Guide
 
 This page provides best-practice guidance for LFIs implementing authentication in the Open Finance consent journey. The recommendations here reflect the approach most likely to satisfy [SCA requirements](./sca), pass CX certification, and deliver an experience consistent with best-in-class mobile banking.

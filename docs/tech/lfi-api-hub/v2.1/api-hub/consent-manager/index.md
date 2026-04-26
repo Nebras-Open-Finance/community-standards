@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Consent Manager
 
 The **Consent Manager** is an API provided by the API Hub that gives the LFI read and write access to the consent records held centrally by the API Hub. The API Hub is the single source of truth for all consents — the Consent Manager is how your systems interact with that source of truth.

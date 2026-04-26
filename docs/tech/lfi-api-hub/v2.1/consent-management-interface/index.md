@@ -4,6 +4,8 @@ prev: false
 aside: false
 ---
 
+🕒 **2 minute read**
+
 # Consent Management Interface
 
 Every LFI must provide a Consent Management Interface (CMI) — a section of their digital banking application where customers can see all active and historical consents they have granted to third party providers, and take action on them. The CMI is a requirement, not an optional feature.
