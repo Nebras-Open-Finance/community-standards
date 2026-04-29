@@ -83,7 +83,7 @@ function showError(key: string): string {
   if (key === 'signing_key_id' && !formData.signing_key_id) return 'Field is required.'
   if (key === 'discovery_uri') {
     if (!formData.discovery_uri) return 'Field is required.'
-    if (!/^https:\/\/auth1\.[a-zA-Z0-9-]{1,15}\.(sandbox|preprod)\.apihub\.openfinance\.ae\/\.well-known\/openid-configuration$/.test(formData.discovery_uri))
+    if (!/^https:\/\/auth1\.[a-zA-Z0-9-]{1,15}\.(sandbox|preprod|uat)\.apihub\.openfinance\.ae\/\.well-known\/openid-configuration$/.test(formData.discovery_uri))
       return 'Must match: https://auth1.[LFI-CODE].(sandbox|preprod).apihub.openfinance.ae/.well-known/openid-configuration'
   }
   if (key === 'key_upload' && !formData.key_file_name) return 'Signing .key file is required.'

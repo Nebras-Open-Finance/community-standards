@@ -34,7 +34,7 @@ const canSeePrivate = ref<boolean>(false)
 
 interface FileEntry {
   file: string
-  name: string
+  link: string
   date?: string
 }
 
@@ -229,7 +229,7 @@ const activeCatalog = computed<CatalogEntry[]>(() =>
 const filteredFiles = computed<FileEntry[]>(() => {
   const q = search.value.toLowerCase().trim()
   if (!q) return activeFiles.value
-  return activeFiles.value.filter(f => f.name.toLowerCase().includes(q))
+  return activeFiles.value.filter(f => f.file.toLowerCase().includes(q))
 })
 
 const selectedLabel = computed<string>(() =>
@@ -238,7 +238,7 @@ const selectedLabel = computed<string>(() =>
 
 const willOverwrite = computed<boolean>(() => {
   if (!selectedSlug.value) return false
-  return activeFiles.value.some(f => f.name.startsWith(`${selectedSlug.value}.`))
+  return activeFiles.value.some(f => f.file.startsWith(`${selectedSlug.value}.`))
 })
 
 function fileType(name: string): string {
@@ -253,28 +253,22 @@ function formatDate(iso: string | undefined): string {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-function downloadHref(file: string): string {
-  const visibility = activeTab.value
-  return `${DOCS_API}/${orgId.value}/${visibility}/${file}`
-}
-
-async function handleDownload(file: string): Promise<void> {
-  const url = downloadHref(file)
+async function handleDownload(entry: FileEntry): Promise<void> {
   try {
-    const res = await fetch(url, { credentials: 'include' })
+    const res = await fetch(entry.link, { credentials: 'include' })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const blob = await res.blob()
     const objectUrl = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = objectUrl
-    a.download = file
+    a.download = entry.file
     document.body.appendChild(a)
     a.click()
     a.remove()
     URL.revokeObjectURL(objectUrl)
   } catch {
     if (typeof window !== 'undefined') {
-      window.open(url, '_blank', 'noopener,noreferrer')
+      window.open(entry.link, '_blank', 'noopener,noreferrer')
     }
   }
 }
@@ -590,17 +584,17 @@ const orgLogo = computed<string>(() => org.value?.logoUri ?? '')
                     </svg>
                   </div>
                   <div class="ed-doc-row__body">
-                    <h3 class="ed-doc-row__title">{{ file.name }}</h3>
+                    <h3 class="ed-doc-row__title">{{ file.file }}</h3>
                     <div class="ed-doc-row__meta">
-                      <span v-if="fileType(file.name)">{{ fileType(file.name) }}</span>
-                      <span v-if="fileType(file.name) && file.date" class="ed-doc-row__sep">·</span>
+                      <span v-if="fileType(file.file)">{{ fileType(file.file) }}</span>
+                      <span v-if="fileType(file.file) && file.date" class="ed-doc-row__sep">·</span>
                       <span v-if="file.date">{{ formatDate(file.date) }}</span>
                     </div>
                   </div>
                   <button
                     type="button"
                     class="ed-doc-button"
-                    @click="handleDownload(file.file)"
+                    @click="handleDownload(file)"
                   >
                     Download
                   </button>
@@ -1128,6 +1122,10 @@ const orgLogo = computed<string>(() => org.value?.logoUri ?? '')
 
 /* ─── Responsive ────────────────────────────────────────────────────────── */
 @media (max-width: 700px) {
+  .ed-doc { display: flex; flex-direction: column; }
+  .ed-doc-hero { order: 1; }
+  .ed-doc-back { order: 2; border-top: 1px solid var(--at-grid-line); }
+  .ed-doc-body { order: 3; }
   .ed-doc-hero__inner { padding: 2.5rem 1.25rem 2rem; }
   .ed-doc-back__inner { padding: 0.85rem 1.25rem; }
   .ed-doc-body__inner { padding: 0 1.25rem; }

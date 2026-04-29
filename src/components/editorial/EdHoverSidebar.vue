@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import EdSidebarItem from './EdSidebarItem.vue'
 import type { EdSidebarItemData } from './EdSidebarItem.vue'
 
@@ -12,10 +12,15 @@ withDefaults(defineProps<{
   rootHref: '',
 })
 
-// CSS handles :hover. We add a brief leave-delay so cursor wobble doesn't
-// flicker the drawer, and a click handler on the tab so it explicitly opens.
 const open = ref(false)
+const supportsHover = ref(false)
 let leaveTimer: ReturnType<typeof setTimeout> | null = null
+
+onMounted(() => {
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    supportsHover.value = window.matchMedia('(hover: hover)').matches
+  }
+})
 
 function onEnter(): void {
   if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null }
@@ -25,6 +30,16 @@ function onLeave(): void {
   if (leaveTimer) clearTimeout(leaveTimer)
   leaveTimer = setTimeout(() => { open.value = false; leaveTimer = null }, 220)
 }
+function onHoverEnter(): void {
+  if (supportsHover.value) onEnter()
+}
+function onHoverLeave(): void {
+  if (supportsHover.value) onLeave()
+}
+function onClose(): void {
+  if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null }
+  open.value = false
+}
 </script>
 
 <template>
@@ -32,8 +47,8 @@ function onLeave(): void {
     class="ed-hsb"
     :class="{ 'is-open': open }"
     :aria-label="title"
-    @mouseenter="onEnter"
-    @mouseleave="onLeave"
+    @mouseenter="onHoverEnter"
+    @mouseleave="onHoverLeave"
     @focusin="onEnter"
   >
     <!-- Wide invisible hit zone catches cursor proximity. Inside it lives the
@@ -56,10 +71,33 @@ function onLeave(): void {
       </button>
     </div>
 
+    <button
+      type="button"
+      class="ed-hsb__mobile-toggle"
+      :aria-expanded="open"
+      :aria-controls="`ed-hsb-nav-${title}`"
+      @click="onEnter"
+    >
+      <svg width="16" height="14" viewBox="0 0 16 14" aria-hidden="true">
+        <path d="M1 1.5h14M1 7h10M1 12.5h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+      </svg>
+      <span>Sidebar</span>
+    </button>
+
     <div class="ed-hsb__drawer" :id="`ed-hsb-nav-${title}`">
       <header class="ed-hsb__head">
         <a v-if="rootHref" :href="rootHref" class="ed-hsb__title">{{ title }}</a>
         <span v-else class="ed-hsb__title">{{ title }}</span>
+        <button
+          type="button"
+          class="ed-hsb__close"
+          aria-label="Close sidebar"
+          @click="onClose"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+            <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+          </svg>
+        </button>
       </header>
       <nav class="ed-hsb__nav">
         <ul class="ed-hsb__list">
@@ -90,12 +128,18 @@ function onLeave(): void {
   pointer-events: auto;
 }
 
-.ed-hsb:hover,
-.ed-hsb:focus-within,
 .ed-hsb.is-open {
   width: 520px;
   /* Entering hover = opening — fast */
   transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) {
+  .ed-hsb:hover,
+  .ed-hsb:focus-within {
+    width: 520px;
+    transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
 }
 
 /* ── Hit zone (transparent, just catches the cursor early) ───────────── */
@@ -107,14 +151,22 @@ function onLeave(): void {
   transition: flex-basis 0.55s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
 }
 
-.ed-hsb:hover .ed-hsb__hit,
-.ed-hsb:focus-within .ed-hsb__hit,
 .ed-hsb.is-open .ed-hsb__hit {
   flex-basis: 0;
   opacity: 0;
   pointer-events: none;
   /* Opening — fast */
   transition: flex-basis 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.16s ease;
+}
+
+@media (hover: hover) {
+  .ed-hsb:hover .ed-hsb__hit,
+  .ed-hsb:focus-within .ed-hsb__hit {
+    flex-basis: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: flex-basis 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.16s ease;
+  }
 }
 
 /* Visible thin rail at the very left edge of the hit zone */
@@ -181,14 +233,22 @@ function onLeave(): void {
   transition: opacity 0.4s ease, transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.ed-hsb:hover .ed-hsb__drawer,
-.ed-hsb:focus-within .ed-hsb__drawer,
 .ed-hsb.is-open .ed-hsb__drawer {
   opacity: 1;
   pointer-events: auto;
   transform: translateX(0);
   /* Opening — fast */
   transition: opacity 0.22s ease 0.04s, transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) {
+  .ed-hsb:hover .ed-hsb__drawer,
+  .ed-hsb:focus-within .ed-hsb__drawer {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+    transition: opacity 0.22s ease 0.04s, transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+  }
 }
 
 .ed-hsb__head {
@@ -223,10 +283,85 @@ a.ed-hsb__title:hover { color: var(--at-teal-deep); }
   padding: 0;
 }
 
-/* ── Mobile: hide entirely (PageHeader covers nav) ───────────────────── */
+/* ── Mobile-only toggle + close (hidden on desktop) ──────────────────── */
+.ed-hsb__mobile-toggle { display: none; }
+.ed-hsb__close { display: none; }
+
+/* ── Mobile: replace left rail with a button under the page header ───── */
 @media (max-width: 959px) {
-  .ed-hsb {
-    display: none;
+  .ed-hsb.is-open {
+    width: min(420px, 88vw);
+  }
+
+  .ed-hsb__hit { display: none; }
+
+  .ed-hsb__mobile-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.55rem 0.85rem;
+    background: var(--at-navy-deep);
+    color: var(--at-bg-cream);
+    border: 0;
+    cursor: pointer;
+    touch-action: none;
+    font-family: var(--at-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--at-navy-deep) 18%, transparent);
+    transition: background 0.18s, opacity 0.18s;
+  }
+
+  .ed-hsb__mobile-toggle:hover { background: var(--at-teal-deep); }
+
+  .ed-hsb__mobile-toggle:focus-visible {
+    outline: 2px solid var(--at-teal);
+    outline-offset: 2px;
+  }
+
+  .ed-hsb.is-open .ed-hsb__mobile-toggle {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .ed-hsb__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    background: transparent;
+    border: 1px solid var(--at-grid-line);
+    color: var(--at-navy-deep);
+    cursor: pointer;
+    touch-action: manipulation;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .ed-hsb__close:hover {
+    color: var(--at-teal-deep);
+    border-color: var(--at-teal-deep);
+  }
+
+  .ed-hsb__close:focus-visible {
+    outline: 2px solid var(--at-teal);
+    outline-offset: 2px;
+  }
+
+  .ed-hsb__head {
+    align-items: center;
+    padding: 1.25rem 1.5rem 1rem;
+  }
+
+  .ed-hsb__nav {
+    padding: 1rem 1.5rem 2rem;
   }
 }
 
