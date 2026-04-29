@@ -1,15 +1,3 @@
-// Phase 5b-v — Erratas registry, ported from
-// `docs/.vitepress/erratas-registry.ts`.
-//
-// Single source of truth for errata items.
-// - The ErrataUpdateBanner component (later phase) uses `affectedPaths` to
-//   decide whether to show a banner on a given doc page.
-// - The `pages/tech/release-notes-and-erratas/erratas/[version].vue` page
-//   renders every section for a version, grouped by errataId, with anchors
-//   produced by anchorFor(). Deep-links go to /erratas/{version}/#{anchor}.
-// - `errataVersions` is consumed by the SSG path enumeration in
-//   `vite.config.ts` to materialise one HTML per version.
-
 export interface ErrataEndpoint {
   label: string           // e.g. "GET /account-access-consents"
   path: string            // internal route path
@@ -428,7 +416,6 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
   },
 ]
 
-// Normalise a route path for comparison: strip trailing slash (except for root) and .html suffix.
 function normalise(path: string): string {
   let p = path.replace(/\.html$/, '')
   if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1)
@@ -454,9 +441,6 @@ export function errataForPath(path: string): ErrataSection[] {
   return ERRATA_SECTIONS.filter((s) => s.affectedPaths.some((p) => normalise(p) === target))
 }
 
-// Distinct standard versions that have at least one errata section —
-// consumed by the SSG path enumeration in `vite.config.ts` to materialise
-// one HTML per version under /erratas/{version}/.
 export const errataVersions: string[] = [
   ...new Set(ERRATA_SECTIONS.map((s) => s.version)),
 ].sort()

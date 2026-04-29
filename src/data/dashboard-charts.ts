@@ -1,13 +1,5 @@
-// Phase 5b-iii — dashboard chart configuration registry, ported from
-// `docs/components/WebPages/config/dashboardCharts.js`. Single source of truth
-// for the layout (`NAV_SECTIONS`), section header copy (`SECTION_META`), and
-// per-section chart definitions (`CHART_REGISTRY`) consumed by
-// `DashboardSidebar`, `DashboardCharts`, and `DashboardChart`.
-
-// ── Filter keys (mirrors `state.filters` in stores/dashboard.ts) ──────────
 export type FilterKey = 'lfi' | 'tpp' | 'month' | 'apiFamily'
 
-// ── Data sources (mirrors `dataForSource()` in stores/dashboard.ts) ───────
 export type DataSource =
   | 'api'
   | 'api-success'
@@ -17,7 +9,6 @@ export type DataSource =
   | 'rt'
   | 'auth'
 
-// ── Chart component renderer (handled by DashboardChart.vue) ──────────────
 export type ChartComponent =
   | 'volume'
   | 'rt'
@@ -28,12 +19,9 @@ export type ChartComponent =
   | 'pay-status'
   | 'auth-rate'
 
-// ── Forwarded chart-component props ───────────────────────────────────────
-//
 // Loose by design — different `component` values consume different subsets,
-// and forwarding via `v-bind="config.props"` means the chart component itself
-// owns the prop validation. Listing the union here keeps autocomplete useful
-// without forcing every chart to declare every prop.
+// and forwarding via `v-bind="config.props"` lets the chart component own
+// the validation. The union here just keeps autocomplete useful.
 export interface ChartProps {
   groupBy?: string
   stackBy?: string
@@ -51,16 +39,10 @@ export interface ChartConfig {
   props?: ChartProps
   /** Hide this chart when the named filter is set. */
   hideIfFiltered?: FilterKey
-  /**
-   * Show this chart only when *some* filter (true) or a specific named filter
-   * (string) is set. Mirrors the original two-shape field.
-   */
+  /** `true` shows only when any filter is set; a key shows only for that filter. */
   showOnlyIfFiltered?: boolean | FilterKey
-  /** Grid column span (default 1). */
   span?: number
-  /** Grid row span (default 1). */
   rowSpan?: number
-  /** Optional CSS max-height for the cell wrapper. */
   maxHeight?: string
 }
 
@@ -81,7 +63,6 @@ export interface SectionMeta {
   description: string
 }
 
-// ── Sidebar navigation structure ──────────────────────────────────────────
 export const NAV_SECTIONS: readonly NavSection[] = [
   {
     id: 'api',
@@ -113,7 +94,6 @@ export const NAV_SECTIONS: readonly NavSection[] = [
   },
 ] as const
 
-// ── Section metadata (used by section header) ─────────────────────────────
 export const SECTION_META: Readonly<Record<string, SectionMeta>> = {
   'api-volumes':        { title: 'API Volumes',        description: 'Call volume across LFIs, TPPs and API families' },
   'api-errors':         { title: 'API Errors',          description: 'Error counts, rates and code distributions' },
@@ -124,7 +104,6 @@ export const SECTION_META: Readonly<Record<string, SectionMeta>> = {
   'auth-conversion':    { title: 'Auth Conversion',     description: 'Authorization success and cancellation rates across LFIs and months' },
 }
 
-// ── Chart registry ────────────────────────────────────────────────────────
 export const CHART_REGISTRY: Readonly<Record<string, readonly ChartConfig[]>> = {
 
   'api-volumes': [

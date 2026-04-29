@@ -1,23 +1,3 @@
-// Phase 5b-iii — shared URL search-parameter composable.
-//
-// Extracted from the inline `readFromUrl` / `writeToUrl` pair previously
-// duplicated in `pages/program/whats-live.vue` (and intended for the dashboard
-// in `pages/metrics.vue`). Centralises three behaviours every consumer used:
-//
-//   1. Hydration-safe seed from `window.location.search` on mount.
-//   2. Two-way binding via a returned `Ref<T>`: writes to the ref propagate to
-//      the URL via `history.replaceState` (no full navigation).
-//   3. Optional whitelist (`allowed`) — values not in the whitelist are
-//      ignored on read and treated as the default on write (parameter is
-//      removed from the URL when the value equals the default).
-//
-// SSG-safe: every `window` access is guarded behind `typeof window`. During
-// the static crawl the ref simply holds `defaultValue` — the real seed runs
-// on hydration in `onMounted`.
-//
-// Auto-imported via `unplugin-auto-import` (see `vite.config.ts`
-// `dirs: ['src/composables']`); call sites do not import it directly.
-
 import { ref, watch, onMounted, type Ref } from 'vue'
 
 export interface UseUrlSearchParamOptions<T extends string> {
@@ -33,10 +13,7 @@ export interface UseUrlSearchParam<T extends string> {
 /**
  * Bind a single URL search-parameter to a `Ref<T>`. Writes to the ref are
  * mirrored into the URL via `history.replaceState`; the parameter is removed
- * when the value equals `defaultValue` (keeps the canonical URL clean).
- *
- * Generic constrained to `string` because URL search-param values are always
- * strings; callers narrow with the `allowed` whitelist.
+ * when the value equals `defaultValue`.
  */
 export function useUrlSearchParam<T extends string>(
   key: string,

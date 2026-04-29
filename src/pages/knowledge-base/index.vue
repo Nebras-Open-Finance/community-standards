@@ -5,14 +5,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5 — Knowledge Base index page. Ported from
-// `docs/components/WebPages/KnowledgeBasePage.vue`.
-//
-// Chrome (PageHeader / PageFooter) is owned by the default layout from phase 3,
-// so this template starts directly with the page wrapper. The data source is
-// `@/data/articles`, which derives the `Article[]` from the `<route>` meta of
-// the sibling article pages — replacing VitePress's createContentLoader.
-
 import { articles } from '@/data/articles'
 import type { Article } from '@/types/article'
 

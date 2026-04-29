@@ -1,17 +1,6 @@
-// Phase 5b-v — Trust Framework release-notes registry, ported from
-// `docs/.vitepress/trust-framework-releases-registry.ts`.
-//
-// Single source of truth for Trust Framework (Raidiam Directory) release note
-// entries. Renders via the
-// `pages/tech/release-notes-and-erratas/release-notes/trust-framework/[year].vue`
-// page (one HTML per year, enumerated at SSG time from `trustFrameworkYears`).
-//
-// To add a release:
-//   1. Append entries below with the same `release` value (e.g. '2.3.0'),
-//      incrementing `number` per entry within that release.
-//   2. If a new calendar year starts, no shim file is needed — the SSG path
-//      enumeration in `vite.config.ts` picks the year up automatically from
-//      `trustFrameworkYears` (derived below).
+// To add a release: append entries with the same `release` value, incrementing
+// `number` per entry within that release. New calendar years are picked up
+// automatically from `trustFrameworkYears` by the SSG path enumeration.
 
 export type TrustFrameworkCategory = 'New Features' | 'Enhancements' | 'Bug Fixes'
 

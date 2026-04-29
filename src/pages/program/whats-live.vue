@@ -5,18 +5,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5b-ii — Live Ecosystem page. Ported from
-// `docs/components/WebPages/LiveEcosystemPage.vue`.
-//
-// Chrome (PageHeader / PageFooter) is owned by the default layout. Vue
-// primitives (ref/computed/onMounted/watch) are auto-imported.
-//
-// Live data sources (all soft-fail):
-//   * https://data.directory.openfinance.ae/participants — Nebras directory
-//   * /api/api-log.json — TPP API access log (lands in 5b-iii Metrics)
-//   * /api/payments-log.json — TPP payment activity (lands in 5b-iii Metrics)
-
-// ── Config ─────────────────────────────────────────────────────────────────
 const DAYS_WINDOW = 30
 
 const FAMILY_KEYS = [

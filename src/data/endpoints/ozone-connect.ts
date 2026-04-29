@@ -1,11 +1,3 @@
-// Ozone Connect endpoint registry — surface = 'ozone-connect'.
-//
-// URL segment: 'ozone-connect'. Mirrors the "Ozone Connect" group in
-// `docs/.vitepress/config/sidebars/api-specs.ts`. Every entry pairs the
-// sidebar row with the `<RedocWrapper>` props from the matching include
-// under `docs/tech/lfi-api-hub/v*/banking/...` (or `health-check`,
-// `consent-events`).
-
 import type { Endpoint, EndpointRedoc, OverrideServer } from './types'
 
 const VERSION = 'v2.1'

@@ -1,14 +1,3 @@
-// API Specs sidebar — derived from the endpoint registry.
-//
-// Mirrors the three-surface structure of the existing VitePress sidebar
-// (`docs/.vitepress/config/sidebars/api-specs.ts`): top-level groups for
-// "TPP - Standards", "API Hub", and "Ozone Connect"; each section has a
-// label-then-(optional)-subsection-then-leaf hierarchy. Leaf items render
-// the `apiRef` HTML badge so styling matches the rest of the docs.
-//
-// Filtered to `useSelectedVersion()` reactively via the exported
-// `useApiSpecsSidebar()` composable.
-
 import { computed, type ComputedRef } from 'vue'
 import { apiRef, type SidebarItem } from './shared'
 import {
@@ -29,8 +18,8 @@ const SURFACE_LABEL: Record<Surface, string> = {
 }
 
 // Trust Framework is the Raidiam-operated directory and is not versioned with
-// the rest of UAE Open Finance. Its sidebar entries are hand-rolled because no
-// registry surface backs them.
+// the rest of UAE Open Finance — no registry surface backs it, so its sidebar
+// entries are hand-rolled.
 const TRUST_FRAMEWORK_GROUP: SidebarItem = {
   text: 'Trust Framework',
   items: [
@@ -87,8 +76,6 @@ export function buildApiSpecsSidebar(version: Version): SidebarItem[] {
       const items: SidebarItem[] = hasSubsections
         ? subsections.map(([subLabel, subEndpoints]) => {
           if (subLabel === '') {
-            // Endpoints at section level (no subsection) come first as
-            // direct children — flatten them.
             return subEndpoints.map(toLeaf)
           }
           return [{

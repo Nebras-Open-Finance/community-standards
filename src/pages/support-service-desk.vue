@@ -5,12 +5,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5b-ii — Support Service Desk page. Ported from
-// `docs/components/WebPages/SupportServiceDeskPage.vue`.
-//
-// Chrome (PageHeader / PageFooter) is owned by the default layout. Vue
-// primitives (ref/computed) are auto-imported.
-
 interface RequestType {
   category: string
   color: string

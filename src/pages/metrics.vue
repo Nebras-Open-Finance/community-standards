@@ -4,26 +4,9 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5b-iii — Metrics dashboard. Inlines the wrapper logic from
-// `docs/components/WebPages/OpenFinanceDashboard.vue` (113 lines, small
-// enough to absorb directly into the page) and renders the four dashboard
-// child components, all auto-registered by unplugin-vue-components from
-// `src/components/dashboard/`.
-//
-// Page chrome (PageHeader / PageFooter) is owned by the default layout — we
-// don't render `<PageHeader>` here.
-//
-// Chart.js needs DOM access (canvas), so the chart-rendering subtree is
-// wrapped in `<ClientOnly>` (auto-registered globally by vite-ssg). The
-// sidebar + KPI cards render server-side too — they're DOM-only and benefit
-// from the SSG paint. CLS is mitigated by `min-height` on the chart row in
-// `src/components/dashboard/DashboardCharts.vue`. See R11 in
-// supporting/internal_helpers/migration-plan.md.
-//
-// URL state: the active section is persisted via `useUrlSearchParam`
-// (auto-imported from `src/composables/`). `?section=payment-volumes` round-
-// trips through `state.activeSection`, with the default value (`api-volumes`)
-// removed from the URL by the composable's invariant.
+// Chart.js needs canvas DOM access, so the chart subtree is wrapped in
+// `<ClientOnly>`. CLS is mitigated by `min-height` on the chart row in
+// `src/components/dashboard/DashboardCharts.vue`.
 
 import {
   state,
@@ -34,23 +17,17 @@ import { NAV_SECTIONS } from '@/data/dashboard-charts'
 
 const MOBILE_BREAKPOINT = 959
 
-// All section IDs across `NAV_SECTIONS`. Used as the whitelist for the URL
-// search-param so a manually-typed `?section=garbage` is ignored on read.
+// Whitelist for the URL search-param so `?section=garbage` is ignored on read.
 const ALL_SECTION_IDS: readonly string[] = NAV_SECTIONS.flatMap(g => g.items.map(i => i.id))
 
-// Bind `state.activeSection` to `?section=…` via the shared composable.
-// Using a separate `Ref` synced via watchers keeps the store dialect intact
-// (mutate `state` directly, never the URL ref). Two-way binding:
-//   * URL → store on mount (composable runs `readFromUrl` in `onMounted`)
-//   * store → URL on every section change (watcher below)
+// Bind `state.activeSection` to `?section=…`. The store stays the source of
+// truth — mutate `state` directly, never the URL ref.
 const sectionParam = useUrlSearchParam<string>('section', 'api-volumes', { allowed: ALL_SECTION_IDS })
 
-// Watcher (URL ref → store): fires when the composable seeds from the URL.
 watch(sectionParam.value, (next) => {
   if (next !== state.activeSection) state.activeSection = next
 }, { immediate: true })
 
-// Watcher (store → URL ref): fires when the user clicks a sidebar item.
 watch(() => state.activeSection, (next) => {
   if (next !== sectionParam.value.value) sectionParam.value.value = next
 })
@@ -72,8 +49,6 @@ function onSelect(id: string): void {
   }
 }
 
-// Reset filters when the user navigates away — preserves the original
-// OpenFinanceDashboard.vue behaviour (`onUnmounted(() => resetFilters())`).
 onUnmounted(() => resetFilters())
 </script>
 

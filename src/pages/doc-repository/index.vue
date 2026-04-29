@@ -5,19 +5,9 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5b-iv — Document Repository index page. Ported from
-// `docs/components/WebPages/DocumentRepoPage.vue`.
-//
-// Chrome (PageHeader / PageFooter) is owned by the default layout. Vue
-// primitives (ref/computed/onMounted) are auto-imported.
-//
-// Live data source (soft-fail):
-//   * https://docs.nebras-open-finance.com/ — the docs-API origin returns
-//     the same Trust Framework org list that the static `trust-framework.json`
-//     mirrors. Fetching at runtime keeps the index page in sync with new
-//     production participants without a rebuild — the dynamic `[id].vue`
-//     pages are still SSG-baked from the build-time JSON.
-
+// Fetched live so the index stays in sync with new production participants
+// without a rebuild — the dynamic `[id].vue` pages are SSG-baked from the
+// build-time `trust-framework.json` snapshot. Soft-fails.
 const DOCS_API = 'https://docs.nebras-open-finance.com'
 
 type CategoryId = 'LFI' | 'TPP' | 'Authority'

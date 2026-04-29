@@ -12,9 +12,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5 — Consent Identifiers article. Ported from
-// `docs/components/WebPages/KbConsentIdentifiersArticle.vue`.
-
 interface Section { id: string; label: string }
 interface MetaItem { label: string; value: string }
 

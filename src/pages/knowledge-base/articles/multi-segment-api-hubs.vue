@@ -12,14 +12,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5 — Multi-Segment API Hubs article. Ported from
-// `docs/components/WebPages/KbMultiSegmentApiHubsArticle.vue`.
-//
-// This page uses <APIFlowViewer> + <APIFlowsMultiSegmentApiHubs>; both are
-// stubbed in `src/components/common/` for phase 5 — the real components
-// (Mermaid sequence diagram + 365-line zoom/pan modal) come back in phase 5b
-// when the full APIFlows tree is ported.
-
 interface Section { id: string; label: string }
 interface MetaItem { label: string; value: string }
 

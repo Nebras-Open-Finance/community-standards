@@ -5,11 +5,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5b-vi — Per-LFI data-sharing overage rates page. Ported from
-// `docs/components/WebPages/LFIRatesPage.vue`. Chrome (PageHeader / PageFooter)
-// is owned by the default layout; Vue primitives (ref/onMounted) are
-// auto-imported.
-
 interface LfiOverageFee {
   name: string
   logo: string

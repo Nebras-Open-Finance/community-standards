@@ -4,22 +4,8 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5b-iv — Document Repository per-org page. Ported from
-// `docs/components/DocumentRepoDisplay.vue`.
-//
-// Filename `[id].vue` is vite-plugin-pages' dynamic-route convention; it
-// mirrors the VitePress `[id]/index.md + index.paths.ts` pattern. The route
-// resolves to `/doc-repository/{id}/` and is enumerated at build time by
-// `vite.config.ts` `ssgOptions.includedRoutes` (one HTML per production org
-// from `@/data/doc-repo-orgs`).
-//
-// The original component took `name`, `legalName`, `logo`, `type` as props
-// (sidecar params injected by VitePress's `index.paths.ts`). vue-router has
-// no props-from-paths surface — instead we look the org up from the static
-// registry (`docRepoOrgs.find`) using `route.params.id`.
-//
-// Chrome (PageHeader / PageFooter) is owned by the default layout. Vue
-// primitives (ref/computed/onMounted/watch) are auto-imported.
+// One HTML per production org is enumerated at build time by
+// `vite.config.ts` `ssgOptions.includedRoutes` from `@/data/doc-repo-orgs`.
 
 import { docRepoOrgs } from '@/data/doc-repo-orgs'
 
@@ -30,8 +16,6 @@ const LOGIN_COOLDOWN_MS = 30_000
 
 const route = useRoute()
 
-// `route.params.id` is `string | string[]` per vue-router types; for a single
-// `[id]` segment it's always a string at runtime.
 const orgId = computed<string>(() => {
   const raw = route.params['id']
   return typeof raw === 'string' ? raw : Array.isArray(raw) ? (raw[0] ?? '') : ''
@@ -39,7 +23,6 @@ const orgId = computed<string>(() => {
 
 const org = computed(() => docRepoOrgs.find(o => o.id === orgId.value))
 
-// ── Session + content state ───────────────────────────────────────────────
 const sessionLoading = ref<boolean>(true)
 const redirecting = ref<boolean>(false)
 const loopDetected = ref<boolean>(false)

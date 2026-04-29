@@ -1,12 +1,6 @@
-// Phase 5b-vi — endpoint pricing chargeability map, ported from
-// `docs/components/WebPages/data/endpointPricing.mjs`.
-//
-// Authoritative chargeability map for every TPP-callable endpoint with a
-// ReDoc page in the TPP standards docs.
-//
-// `chargeable` reflects the Nebras API Hub fee (Fee 01 in the pricing
-// model). `discountable: true` means the call is billed at 0.5 fils when
-// paired with a payment within 2 hours.
+// `chargeable` reflects the Nebras API Hub fee (Fee 01 in the pricing model).
+// `discountable: true` means the call is billed at 0.5 fils when paired with a
+// payment within 2 hours.
 
 export type EndpointFamily =
   | 'Consent & authorization'

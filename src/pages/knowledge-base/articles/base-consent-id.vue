@@ -12,9 +12,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5 — Base Consent ID article. Ported from
-// `docs/components/WebPages/KbBaseConsentIdArticle.vue`. Chrome (PageHeader /
-// PageFooter) is owned by the default layout from phase 3.
 
 interface Section { id: string; label: string }
 interface MetaItem { label: string; value: string }

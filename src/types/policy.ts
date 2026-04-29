@@ -1,10 +1,3 @@
-// Phase 4 — shared types for the Policy section.
-//
-// `PolicyMeta` is the shape declared inside each policy page's
-// <route lang="yaml"> block. The data loader (`@/data/policies`) reads it
-// off the route record, derives the slug + URL + category, and returns
-// `Policy[]` for the index page card grid.
-
 export interface PolicyMeta {
   title: string
   appliesTo: string[]

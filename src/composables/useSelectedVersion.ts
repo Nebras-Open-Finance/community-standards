@@ -1,19 +1,5 @@
-// Phase 5b-i — selected-version composable, ported from
-// `docs/components/Composables/useSelectedVersion.ts`.
-//
-// Deviations from the original:
-//   * `import { useRoute } from 'vitepress'` → `'vue-router'`. vue-router's
-//     `useRoute()` returns a reactive proxy whose `.path` is reactive, which
-//     is fine for the seeding read here (we only call it once).
-//   * Strict TypeScript — explicit types on `selectedVersion`, return shape,
-//     and the seeded singleton flag. No `any`.
-//   * Auto-imported via `unplugin-auto-import` (see `vite.config.ts`
-//     `dirs: ['src/composables']`) — call sites do not import it directly.
-//
-// Module-level singletons (`selectedVersion`, `seeded`) match the original
-// behaviour: every component on the page shares the same ref, and the route
-// is read once on first call. A future router.afterEach reset (phase 9) will
-// re-seed across cross-section navigations.
+// Module-level singletons: every component on the page shares the same ref,
+// and the route is read once on first call.
 
 import { ref, type Ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -40,7 +26,7 @@ function seedFromRoute(): void {
       selectedVersion.value = candidate
     }
   } catch {
-    // useRoute() is only valid inside a setup context; fall through to default.
+    // useRoute() is only valid inside a setup context.
   }
 }
 

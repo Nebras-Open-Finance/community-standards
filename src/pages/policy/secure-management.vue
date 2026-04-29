@@ -13,9 +13,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 4 — Secure Management of Keys and Credentials Policy.
-// Ported from `docs/components/WebPages/SecureManagementPolicyPage.vue`.
-
 interface Section { id: string; label: string }
 interface MetaItem { label: string; value: string }
 interface KeyNum { value: string; unit?: string; label: string }

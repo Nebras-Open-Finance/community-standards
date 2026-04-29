@@ -1,25 +1,7 @@
-// Phase 5 — runtime KB articles registry, replaces
-// `docs/knowledge-base/articles.data.ts`.
-//
-// The original VitePress loader scanned `docs/knowledge-base/articles/*.md`
-// via `createContentLoader`. Here, every article page lives at
-// `src/pages/knowledge-base/articles/<slug>.vue` and declares its meta
-// in a `<route lang="yaml">` block; vite-plugin-pages lifts that into the
-// generated route record's `meta` field. We filter the route table for
-// article detail routes and build `Article[]` from each one.
-//
-// `articles` is evaluated once at module load. SSG embeds the result in the
-// rendered HTML for `/knowledge-base/`, and client hydration uses the same
-// constant — no fs reads, no async, no build hooks. Mirrors the pattern in
-// `@/data/policies`.
-
 import generatedRoutes from '~pages'
 import type { RouteRecordRaw } from 'vue-router'
 import type { Article, ArticleMeta } from '@/types/article'
 
-// Narrow the loose `RouteMeta` from vue-router into the typed shape we need
-// for an article detail page. Index routes (and anything malformed) return
-// null so they can be filtered out cleanly.
 function readArticleMeta(meta: unknown): ArticleMeta | null {
   if (!meta || typeof meta !== 'object') return null
   const m = meta as Record<string, unknown>
@@ -40,8 +22,6 @@ function readArticleMeta(meta: unknown): ArticleMeta | null {
 }
 
 function slugFromPath(path: string): string {
-  // Routes look like `/knowledge-base/articles/jwt-claims` (cleanUrls) or
-  // with a trailing slash. Strip the slash and take the last segment.
   const trimmed = path.replace(/\/+$/, '')
   const idx = trimmed.lastIndexOf('/')
   return idx >= 0 ? trimmed.slice(idx + 1) : trimmed
@@ -61,9 +41,6 @@ function buildArticle(route: RouteRecordRaw, meta: ArticleMeta): Article {
   }
 }
 
-// Walk the generated route tree (vite-plugin-pages emits a nested shape for
-// directories like `/knowledge-base`). Flatten before filtering — children
-// with their own `<route>` blocks otherwise stay buried under the index.
 function flatten(routes: readonly RouteRecordRaw[]): RouteRecordRaw[] {
   const out: RouteRecordRaw[] = []
   for (const r of routes) {

@@ -1,10 +1,3 @@
-// API Hub endpoint registry — surface = 'api-hub'.
-//
-// URL segment: 'api-hub'. Mirrors the "API Hub" group in
-// `docs/.vitepress/config/sidebars/api-specs.ts`. Every entry pairs the
-// sidebar row with the `<RedocWrapper>` props from the matching include
-// under `docs/tech/lfi-api-hub/v*/api-hub/...`.
-
 import type { Endpoint, EndpointRedoc, OverrideServer } from './types'
 
 const VERSION = 'v2.1'
@@ -40,11 +33,6 @@ function entry(input: EntryInput): Endpoint {
     ...input,
   }
 }
-
-// The existing sidebar puts these under a single sectionSlug per top-level
-// service, with a nested subsection. URL shape mirrors the source links —
-// e.g. `${BASE}/api-hub/headless-heimdall/open-api/auth` →
-// sectionSlug='headless-heimdall/open-api', slug='auth'.
 
 export const apiHubEndpoints: readonly Endpoint[] = [
   // Headless Heimdall — Health Check

@@ -5,12 +5,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5b-v — Release Notes & Erratas index page. Ported from
-// `docs/components/WebPages/ReleaseNotesPage.vue`.
-//
-// Chrome (PageHeader / PageFooter) is owned by the default layout. Vue
-// primitives (computed) are auto-imported.
-
 import { CURRENT_VERSION } from '@/data/versions'
 import { ERRATA_SECTIONS } from '@/data/erratas-registry'
 import {

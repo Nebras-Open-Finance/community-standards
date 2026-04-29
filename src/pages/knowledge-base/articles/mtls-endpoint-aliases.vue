@@ -12,9 +12,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5 — mtls_endpoint_aliases article. Ported from
-// `docs/components/WebPages/KbMtlsEndpointAliasesArticle.vue`.
-
 interface Section { id: string; label: string }
 interface MetaItem { label: string; value: string }
 

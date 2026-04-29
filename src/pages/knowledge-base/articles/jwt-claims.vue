@@ -12,10 +12,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5 — JWT Claim Rules article. Ported from
-// `docs/components/WebPages/KbJwtClaimsArticle.vue`. Heaviest code-block
-// load of the KB; smoke-tested for SSG hydration mismatches.
-
 interface Section { id: string; label: string }
 interface MetaItem { label: string; value: string }
 

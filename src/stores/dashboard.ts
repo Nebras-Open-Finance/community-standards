@@ -1,24 +1,12 @@
-// Phase 5b-iii — dashboard reactive store, ported from
-// `docs/components/WebPages/stores/dashboardStore.js`.
-//
-// Module-level singleton: every component on `/metrics` shares the same
-// `state` and computed datasets, just like the original. Uses Vue's
-// reactive/ref/computed primitives directly — no Pinia introduction (matches
-// the "no new state library" hard constraint in the brief).
-//
-// SSG-safe: the three `fetch(...)` data loads are guarded behind
-// `typeof window !== 'undefined'` so the static crawl doesn't try to call
-// `fetch` and the module evaluates cleanly server-side.
-//
-// Strict TypeScript: every shape (raw rows, transformed rows, filters, KPIs)
-// is explicit. Loose `string | undefined` on raw inputs because the JSON files
-// are external and may have missing keys; the transform functions normalise
-// to safe defaults before anything reactive sees them.
+// Module-level singleton — every component on `/metrics` shares the same
+// `state` and computed datasets. SSG-safe: `fetch` is guarded by
+// `typeof window !== 'undefined'`.
 
 import { reactive, computed, ref, type ComputedRef, type Ref } from 'vue'
 import type { DataSource, FilterKey } from '@/data/dashboard-charts'
 
-// ── Raw row shapes (loose — JSON inputs are external) ────────────────────
+// Loose raw shapes — external JSON may have missing keys. The transform
+// functions normalise to safe defaults before anything reactive sees them.
 interface RawApiRow {
   date?: string
   lfinamekey?: string
@@ -46,7 +34,6 @@ interface RawAuthRow {
   totalapicalls?: number
 }
 
-// ── Transformed row shapes (consumed by chart components) ─────────────────
 export interface ApiRow {
   month:    string
   day:      string
@@ -91,7 +78,6 @@ export interface AuthRow {
   count: number
 }
 
-// ── KPI summary shape ────────────────────────────────────────────────────
 export interface DashboardKpis {
   totalApiCalls:  number
   totalApiErrors: number
@@ -103,7 +89,6 @@ export interface DashboardKpis {
   avgPaymentSize: string
 }
 
-// ── Filter options shape ─────────────────────────────────────────────────
 export interface FilterOptions {
   lfis:           string[]
   tpps:           string[]
@@ -129,7 +114,6 @@ export interface DashboardState {
   sidebarCollapsed: boolean
 }
 
-// ── Constants ────────────────────────────────────────────────────────────
 const SUCCESS_STATUSES = new Set<string>([
   'AcceptedSettlementCompleted',
   'AcceptedCreditSettlementCompleted',
@@ -144,7 +128,6 @@ const RT_EXCLUDED_ENDPOINTS: readonly string[] = [
   '/auth',
 ]
 
-// ── Transforms ───────────────────────────────────────────────────────────
 function transformApiRow(row: RawApiRow): ApiRow {
   const date = row.date ?? ''
   const month = date.substring(0, 7)
@@ -222,13 +205,11 @@ function transformAuthRow(row: RawAuthRow): AuthRow {
   return { month, day, lfi, url, type, count }
 }
 
-// ── Reactive raw datasets (populated after fetch) ────────────────────────
 const rawApiData:     Ref<ApiRow[]>     = ref<ApiRow[]>([])
 const rawRtData:      Ref<ApiRow[]>     = ref<ApiRow[]>([])
 const rawPaymentData: Ref<PaymentRow[]> = ref<PaymentRow[]>([])
 const rawAuthData:    Ref<AuthRow[]>    = ref<AuthRow[]>([])
 
-// ── Filter options (reactive — populated after fetch) ────────────────────
 export const filterOptions: FilterOptions = reactive({
   lfis:          [] as string[],
   tpps:          [] as string[],
@@ -290,14 +271,12 @@ function loadDataIfClient(): void {
 
 loadDataIfClient()
 
-// ── Singleton reactive state ─────────────────────────────────────────────
 export const state: DashboardState = reactive({
   filters: { lfi: null, tpp: null, month: null, apiFamily: null },
   activeSection: 'api-volumes',
   sidebarCollapsed: false,
 })
 
-// ── Filtered computeds (created once, shared across all callers) ─────────
 export const filteredApiData: ComputedRef<ApiRow[]> = computed(() =>
   rawApiData.value.filter(r =>
     (!state.filters.lfi       || r.lfi    === state.filters.lfi)       &&
@@ -346,7 +325,6 @@ export const filteredRtData: ComputedRef<ApiRow[]> = computed(() =>
 )
 
 export const kpis: ComputedRef<DashboardKpis> = computed(() => {
-  // ── API metrics ─────────────────────────────────────────────────────
   const successRows = filteredApiData.value.filter(r => r.status === 'success')
   const errorRows   = filteredApiData.value.filter(r => r.status === 'error')
   const totalVol    = successRows.reduce((s, r) => s + r.volume, 0)
@@ -357,7 +335,7 @@ export const kpis: ComputedRef<DashboardKpis> = computed(() => {
     ? Math.round(rtRows.reduce((s, r) => s + r.avgMs, 0) / rtRows.length)
     : 0
 
-  // ── Payment metrics (successful, excluding unknown LFI) ─────────────
+  // Payment metrics: successful only, excluding unknown LFI.
   const successData    = filteredSuccessPaymentData.value
   const allPaymentData = filteredPaymentData.value.filter(r => r.lfi !== 'Unknown')
   const totalPayments  = successData.reduce((s, r) => s + r.count, 0)
@@ -384,7 +362,6 @@ export const kpis: ComputedRef<DashboardKpis> = computed(() => {
   }
 })
 
-// ── Mutation helpers ─────────────────────────────────────────────────────
 export function setFilter(key: FilterKey, value: string | null): void {
   state.filters[key] = value || null
 }
@@ -404,10 +381,8 @@ export function toggleSidebar(): void {
   state.sidebarCollapsed = !state.sidebarCollapsed
 }
 
-// ── Data accessor (returns current .value for a given source key) ────────
-//
-// Returns a wide union (`ApiRow[] | PaymentRow[] | AuthRow[]`); chart
-// components narrow at the call site via the `dataSource` discriminator.
+// Wide union — chart components narrow at the call site via the `dataSource`
+// discriminator.
 export type AnyRow = ApiRow | PaymentRow | AuthRow
 
 export function dataForSource(source: DataSource): AnyRow[] {

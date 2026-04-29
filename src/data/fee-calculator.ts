@@ -1,12 +1,6 @@
-// Phase 5b-vi — fee calculator data, ported from
-// `docs/components/WebPages/data/feeCalculator.mjs`.
-//
-// Each flow declares its segment, kind, the input fields it needs from the
-// UI, and a `perTxnFils` function that returns the LFI portion of the fee.
-// The Nebras API Hub fee is added at calculation time in the page component
-// (2.5 fils per chargeable call, 0.5 fils when a Balance/CoP call is paired
-// with a payment).
-//
+// `perTxnFils` returns only the LFI portion of the fee. The Nebras API Hub
+// fee (2.5 fils per chargeable call, 0.5 fils when a Balance/CoP call pairs
+// with a payment) is added at calculation time in the page component.
 // All rates and caps mirror the AlTareq Commercial and Pricing Model.
 
 export type FlowSegment = 'retail-sme' | 'any'

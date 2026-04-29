@@ -1,11 +1,3 @@
-// Endpoint registry — combined export and helper lookups.
-//
-// Drives:
-//   - the catalog landing page (`pages/tech/api-specs/index.vue`),
-//   - the per-endpoint dynamic page (`pages/tech/api-specs/[...slug].vue`),
-//   - the in-page sidebar (`data/sidebars/api-specs.ts`),
-//   - SSG path enumeration (`data/ssg-paths.ts`).
-
 import type { Endpoint, Surface } from './types'
 import type { Version } from '../versions'
 import { standardsEndpoints } from './standards'
@@ -21,12 +13,8 @@ export const allEndpoints: readonly Endpoint[] = [
   ...ozoneConnectEndpoints,
 ]
 
-// ── URL segment mapping -----------------------------------------------------
-//
-// The standards surface lives under `/tech/api-specs/<version>/tpp/...` to
-// keep URLs compatible with the existing VitePress sidebar (`${BASE}/tpp/...`).
-// API Hub and Ozone Connect use their surface name directly.
-
+// The `standards` surface uses URL segment `tpp` for backwards-compat with
+// existing public links; the others use their surface name directly.
 const SURFACE_TO_URL: Record<Surface, string> = {
   standards: 'tpp',
   'api-hub': 'api-hub',
@@ -58,8 +46,6 @@ export function endpointUrl(endpoint: Endpoint): string {
   return `/tech/api-specs/${endpoint.version}/${seg}/${endpoint.sectionSlug}/${endpoint.slug}`
 }
 
-// ── Lookups -----------------------------------------------------------------
-
 /**
  * Resolve an endpoint by its URL tail (everything after `/tech/api-specs/`).
  * Returns undefined if the tail doesn't match any registered endpoint.
@@ -78,8 +64,6 @@ export function getEndpointsForSurface(surface: Surface, version?: Version): End
     (e) => e.surface === surface && (version === undefined || e.version === version),
   )
 }
-
-// ── Section / surface index lookups ----------------------------------------
 
 export type SectionScope =
   | {

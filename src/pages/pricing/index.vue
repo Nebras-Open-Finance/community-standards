@@ -5,11 +5,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5b-vi — Pricing page. Ported from
-// `docs/components/WebPages/PricingPage.vue`. Chrome (PageHeader / PageFooter)
-// is owned by the default layout; Vue primitives (ref/reactive/computed) are
-// auto-imported.
-
 import { FLOWS, FLOW_LIST, PRESETS, type Flow, type Preset } from '@/data/fee-calculator'
 
 const FILS_PER_AED = 100

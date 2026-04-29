@@ -5,11 +5,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5b-vi — Chargeable endpoints page. Ported from
-// `docs/components/WebPages/EndpointPricingPage.vue`. Chrome (PageHeader /
-// PageFooter) is owned by the default layout; Vue primitives (ref/computed)
-// are auto-imported.
-
 import { ENDPOINT_PRICING, type EndpointFamily, type EndpointPricing } from '@/data/endpoint-pricing'
 
 type FilterValue = 'all' | 'chargeable' | 'free'

@@ -12,9 +12,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5 — O3 Sandbox Utilities article. Ported from
-// `docs/components/WebPages/KbO3UtilsArticle.vue`.
-
 interface Section { id: string; label: string }
 interface MetaItem { label: string; value: string }
 

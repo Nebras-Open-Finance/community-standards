@@ -1,15 +1,3 @@
-// Phase 4 — runtime policy registry, replaces `docs/policy/policy.data.ts`.
-//
-// The original VitePress loader scanned `docs/policy/*.md` with `node:fs` at
-// build time. Here, every policy page lives at `src/pages/policy/<slug>.vue`
-// and declares its meta in a `<route lang="yaml">` block; vite-plugin-pages
-// lifts that into the generated route record's `meta` field. We filter the
-// route table for policy detail routes and build `Policy[]` from each one.
-//
-// `policies` is evaluated once at module load. SSG embeds the result in the
-// rendered HTML for `/policy/`, and client hydration uses the same constant
-// — no fs reads, no async, no build hooks.
-
 import generatedRoutes from '~pages'
 import type { RouteRecordRaw } from 'vue-router'
 import type { Policy, PolicyCategory, PolicyMeta } from '@/types/policy'
@@ -23,7 +11,7 @@ const SHORT_NAMES: Record<string, string> = {
   'Raidiam (Trust Framework)': 'Raidiam',
 }
 
-// Display order for the index page card grid. Slugs not listed go to the end.
+// Slugs not listed go to the end.
 const ORDER: readonly string[] = [
   'version-management',
   'lfi-deprecation',
@@ -43,9 +31,6 @@ function shortName(actor: string): string {
   return actor
 }
 
-// Narrow the loose `RouteMeta` from vue-router into the typed shape we need
-// for a policy detail page. Index routes (and anything malformed) return null
-// so they can be filtered out cleanly.
 function readPolicyMeta(meta: unknown): PolicyMeta | null {
   if (!meta || typeof meta !== 'object') return null
   const m = meta as Record<string, unknown>
@@ -65,7 +50,6 @@ function readPolicyMeta(meta: unknown): PolicyMeta | null {
 }
 
 function slugFromPath(path: string): string {
-  // Routes look like `/policy/version-management` or `/policy/version-management/`.
   const trimmed = path.replace(/\/+$/, '')
   const idx = trimmed.lastIndexOf('/')
   return idx >= 0 ? trimmed.slice(idx + 1) : trimmed
@@ -93,9 +77,6 @@ function buildPolicy(route: RouteRecordRaw, meta: PolicyMeta): Policy {
   }
 }
 
-// Walk the generated route tree (vite-plugin-pages emits a nested shape for
-// directories like `/policy`). Flatten before filtering — children with their
-// own `<route>` blocks otherwise stay buried under the policy index route.
 function flatten(routes: readonly RouteRecordRaw[]): RouteRecordRaw[] {
   const out: RouteRecordRaw[] = []
   for (const r of routes) {

@@ -1,26 +1,14 @@
-// Phase 5b-v — API Hub release-notes registry, ported from
-// `docs/.vitepress/api-hub-releases-registry.ts`.
-//
-// Single source of truth for API Hub release note entries. Renders via the
-// `pages/tech/release-notes-and-erratas/release-notes/api-hub/[year].vue`
-// page (one HTML per year, enumerated at SSG time from `apiHubYears`).
-//
-// To add a release:
-//   1. Append entries below with the same `release` value (e.g. '2026.14.0'),
-//      incrementing `number` per entry within that release.
-//   2. If a new calendar year starts, no shim file is needed — the SSG path
-//      enumeration in `vite.config.ts` picks the year up automatically from
-//      `apiHubYears` (derived below).
+// To add a release: append entries with the same `release` value, incrementing
+// `number` per entry within that release. New calendar years are picked up
+// automatically from `apiHubYears` by the SSG path enumeration.
 
 export type ReleaseAudience = 'TPP' | 'LFI' | 'Both'
 
-// `path` is relative to the standards root, with no leading slash. `target`
-// picks which standards root to resolve against, and `versioned` controls
-// whether the selected version segment is inserted:
-//   - versioned !== false → /tech/{target}/{version}/{path}   (default)
-//   - versioned === false → /tech/{target}/{path}
-// Use versioned: false for areas that live outside the per-version tree
-// (security/, trust-framework/, registration/, sandbox/, production/).
+// `path` is relative to the standards root, no leading slash. URL resolves to:
+//   versioned !== false → /tech/{target}/{version}/{path}   (default)
+//   versioned === false → /tech/{target}/{path}
+// Use versioned: false for areas outside the per-version tree (security/,
+// trust-framework/, registration/, sandbox/, production/).
 export interface ReleaseSectionRef {
   label: string
   path: string
@@ -49,8 +37,8 @@ export interface ReleaseEntry {
   endpoints?: ReleaseEndpoint[]
 }
 
-// Canonical functional-area labels. Keeping them in one place prevents drift
-// between entries (e.g. 'Data Sharing' vs 'Bank Data Sharing').
+// Canonical functional-area labels — single source prevents drift like
+// 'Data Sharing' vs 'Bank Data Sharing' across entries.
 export const AREAS = {
   dataSharing: 'Data Sharing',
   serviceInitiation: 'Service Initiation',
@@ -220,7 +208,6 @@ export const API_HUB_RELEASES: ReleaseEntry[] = [
   },
 ]
 
-// Helpers ────────────────────────────────────────────────────────────────────
 export function yearOf(release: string): string {
   return release.split('.')[0] ?? ''
 }
@@ -240,8 +227,6 @@ export function anchorFor(entry: ReleaseEntry): string {
   return `release-${safeRelease}-${entry.number}`
 }
 
-// Distinct calendar years that have at least one entry — consumed by the SSG
-// path enumeration in `vite.config.ts` to materialise one HTML per year.
 export const apiHubYears: string[] = [
   ...new Set(API_HUB_RELEASES.map((e) => yearOf(e.release))),
 ].sort()

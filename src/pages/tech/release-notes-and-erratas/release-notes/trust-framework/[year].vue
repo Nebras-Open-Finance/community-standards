@@ -4,17 +4,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5b-v — Trust Framework Release Notes per-year page. Ported from
-// `docs/components/WebPages/TrustFrameworkReleaseNotesPage.vue`.
-//
-// VitePress passed the year via `defineProps({ year })` from a per-year MD
-// shell; vue-router exposes it as `route.params.year` instead. The registry
-// imports point at the new ported registries under `@/data/`.
-//
-// Chrome (PageHeader / PageFooter) is owned by the default layout. Vue
-// primitives (computed/onMounted/reactive/ref/watch) and useRoute are
-// auto-imported.
-
 import {
   TRUST_FRAMEWORK_RELEASES,
   TRUST_FRAMEWORK_CATEGORIES,

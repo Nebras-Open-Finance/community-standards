@@ -12,9 +12,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5 — Payment PII Encryption article. Ported from
-// `docs/components/WebPages/KbPiiEncryptionArticle.vue`.
-
 interface Section { id: string; label: string }
 interface MetaItem { label: string; value: string }
 

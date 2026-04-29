@@ -1,28 +1,18 @@
-// Phase 5b-v — central SSG path-enumeration helper.
-//
-// `vite.config.ts` `ssgOptions.includedRoutes(paths)` rewrites generated
-// dynamic-route placeholders (`/foo/:id`) into one concrete path per data
-// row, so vite-ssg can materialise the static HTML. The list of dynamic
-// routes is small but growing — keeping the expansion table here lets the
-// build config stay declarative.
-//
 // Each entry pairs a dynamic-route placeholder (the path vite-plugin-pages
 // emits from `[id].vue` / `[year].vue` / `[version].vue` filenames) with a
-// pure function that maps it to one or more concrete paths.
-
+// pure function that maps it to one or more concrete paths for vite-ssg.
+//
 // Relative imports — `@/...` aliases aren't resolved when this module is
-// loaded by Node from `vite.config.ts` (Vite's resolver only kicks in for
-// source code, not the config file itself).
+// loaded by Node from `vite.config.ts`.
 import { docRepoIds } from './doc-repo-orgs'
 import { apiHubYears } from './api-hub-releases-registry'
 import { trustFrameworkYears } from './trust-framework-releases-registry'
 import { errataVersions } from './erratas-registry'
 import { allEndpoints, endpointUrl, sectionUrl, surfaceUrl } from './endpoints'
 
-// Trailing-slash policy mirrors what VitePress's `cleanUrls` produces today
-// (`/doc-repository/{id}/`, `/erratas/{version}/`). Year pages historically
-// have no trailing slash — keep both patterns identical to the docs build
-// so external links don't break at cut-over.
+// Trailing-slash policy: doc-repository and erratas use a trailing slash
+// (`/doc-repository/{id}/`); year pages don't. Don't change either —
+// existing external links depend on these shapes.
 type Expander = (placeholder: string) => string[] | null
 
 const expanders: Expander[] = [
@@ -38,10 +28,8 @@ const expanders: Expander[] = [
   (p) => (p === '/tech/release-notes-and-erratas/erratas/:version'
     ? errataVersions.map((v) => `/tech/release-notes-and-erratas/erratas/${v}/`)
     : null),
-  // Phase 6 — the `[...notFound].vue` catch-all materialises as a vue-router
-  // path-matcher placeholder (`/:notFound(.*)*`). vite-ssg has no route to
-  // pre-render here (the route is purely a runtime fallback), so drop it
-  // from the static path list. Returning `[]` filters the placeholder out.
+  // The `[...notFound].vue` catch-all is a runtime-only fallback;
+  // returning `[]` drops it from the static path list.
   (p) => (p === '/:notFound(.*)*' ? [] : null),
   (p) => (p === '/tech/api-specs/:slug(.+)'
     ? [

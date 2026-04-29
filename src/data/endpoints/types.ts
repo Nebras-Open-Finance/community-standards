@@ -1,12 +1,3 @@
-// Endpoint registry — shared types.
-//
-// Drives the API Specs catalog landing page, the per-endpoint dynamic page
-// (`pages/tech/api-specs/[...slug].vue`), and the in-page sidebar
-// (`data/sidebars/api-specs.ts`). Every entry mirrors a single endpoint
-// invocation under `docs/tech/api-specs/v*/<surface>/<section>/<slug>.md`,
-// capturing the `<RedocWrapper>` props the corresponding include passes plus
-// the sidebar grouping the existing VitePress config emits.
-
 import type { Version } from '../versions'
 
 export type Surface = 'standards' | 'api-hub' | 'ozone-connect'

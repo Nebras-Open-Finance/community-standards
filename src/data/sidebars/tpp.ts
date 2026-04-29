@@ -1,8 +1,3 @@
-// Phase 6 — TPP sidebar tree, ported verbatim from
-// `docs/.vitepress/config/sidebars/tpp.ts`. `DefaultTheme.SidebarItem` is
-// replaced with the local `SidebarItem` interface from `./shared`. Export
-// name (`tppSidebar`) and structure are unchanged.
-
 import { apiRef, type SidebarItem } from './shared'
 
 const BASE = '/tech/tpp-standards'

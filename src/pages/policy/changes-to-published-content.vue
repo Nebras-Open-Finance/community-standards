@@ -9,12 +9,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 4 — Changes to Published Documentation Policy.
-// Ported from `docs/components/WebPages/ChangesToPublishedContentPolicyPage.vue`.
-//
-// Uses <ErrataNotice> from `src/components/common/`, auto-registered by
-// unplugin-vue-components — no explicit import.
-
 interface Section { id: string; label: string }
 interface MetaItem { label: string; value: string }
 

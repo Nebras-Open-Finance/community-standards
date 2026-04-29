@@ -5,14 +5,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 4 — Policy index page. Ported from
-// `docs/components/WebPages/PolicyPage.vue`.
-//
-// Chrome (PageHeader / PageFooter) is owned by the default layout from phase 3,
-// so this template starts directly with the page wrapper. The data source is
-// `@/data/policies`, which derives the `Policy[]` from the `<route>` meta of
-// the sibling pages — replacing VitePress's filesystem-driven data loader.
-
 import { policies } from '@/data/policies'
 import type { Policy, PolicyCategory } from '@/types/policy'
 

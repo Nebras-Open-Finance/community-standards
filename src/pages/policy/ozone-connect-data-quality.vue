@@ -10,9 +10,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 4 — Ozone Connect Data Quality Policy.
-// Ported from `docs/components/WebPages/OzoneConnectDataQualityPolicyPage.vue`.
-
 interface Section { id: string; label: string }
 interface MetaItem { label: string; value: string }
 interface KeyNum { value: string; unit?: string; label: string }

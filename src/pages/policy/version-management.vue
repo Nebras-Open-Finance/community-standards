@@ -9,10 +9,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 4 — Version Management Policy.
-// Ported from `docs/components/WebPages/VersionManagementPolicyPage.vue`.
-// Chrome (PageHeader/PageFooter) is owned by the default layout.
-
 interface Section { id: string; label: string }
 interface MetaItem { label: string; value: string }
 interface KeyNum { value: string; unit?: string; label: string }

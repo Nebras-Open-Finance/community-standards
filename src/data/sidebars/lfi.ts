@@ -1,8 +1,3 @@
-// Phase 6 — LFI sidebar tree, ported verbatim from
-// `docs/.vitepress/config/sidebars/lfi.ts`. `DefaultTheme.SidebarItem` is
-// replaced with the local `SidebarItem` interface from `./shared`. Export
-// name (`lfiSidebar`) and structure are unchanged.
-
 import { apiRef, type SidebarItem } from './shared'
 
 const BASE = '/tech/lfi-api-hub'

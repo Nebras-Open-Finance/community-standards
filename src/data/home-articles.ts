@@ -1,20 +1,3 @@
-// Phase 5b-i — homepage / news shared article feed, ported from
-// `docs/components/WebPages/data/articles.js`.
-//
-// Drives NewsPage (full list + filters + pagination — phase 5b-ii) and
-// HomePage (top-N previews). Newest first. Verbatim port; only types added.
-//
-// Each entry has:
-//   id        Stable slug, derived from `link` if not given (computed below)
-//   link      External URL to the source article
-//   source    Display label for the publisher (rendered in meta row)
-//   kind      Category — see `ArticleKind`
-//   date      ISO yyyy-mm-dd (used for sort)
-//   dateLabel Human-readable date (what shows in the card)
-//   title     Headline
-//   text      Body copy
-//   imageSrc  Cover image — must exist under /images/articles/
-
 export type ArticleKind = 'press-release' | 'news' | 'regulation' | 'conference'
 
 export const ARTICLE_KIND_LABELS: Record<ArticleKind, string> = {
@@ -273,7 +256,6 @@ function deriveId(link: string): string {
   return link.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0, 90)
 }
 
-// Newest first; id derived from `link` to match the original module's output.
 export const articles: HomeArticle[] = rawArticles
   .slice()
   .sort((a, b) => b.date.localeCompare(a.date))

@@ -1,19 +1,6 @@
-// TPP / Standards endpoint registry — surface = 'standards'.
-//
-// The URL segment for this surface is 'tpp' (matching the existing VitePress
-// `${BASE}/tpp/...` sidebar links). Every entry below mirrors one row from
-// `docs/.vitepress/config/sidebars/api-specs.ts` under the "TPP - Standards"
-// group, with `<RedocWrapper>` props captured from the matching include
-// target under `docs/tech/tpp-standards/v*/...`.
-
 import type { Endpoint, EndpointRedoc, OverrideServer } from './types'
 
 const VERSION = 'v2.1'
-
-// ── Override-server templates --------------------------------------------------
-// The TPP standards shells reuse a small set of override-server lists. Pulling
-// them out here keeps the per-endpoint entries readable and lets a future
-// version simply substitute `${VERSION}` at the call site.
 
 const PAYMENT_SERVERS: OverrideServer[] = [
   { url: `https://rs1.[LFICODE].apihub.openfinance.ae/open-finance/payment/${VERSION}` },

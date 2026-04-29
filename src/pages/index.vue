@@ -5,23 +5,7 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5b-i — Home page. Ported from
-// `docs/components/WebPages/HomePage.vue`.
-//
-// Chrome (PageHeader / PageFooter) is owned by the default layout from phase
-// 3, so this template starts directly with the page wrapper. Component tags
-// (MiniChart, OrganizationScroller, ArticleLink) are auto-registered by
-// `unplugin-vue-components` from `src/components/**`.
-//
-// `useSelectedVersion` is auto-imported from `src/composables/`; no manual
-// import. Article data comes from `@/data/home-articles`.
-//
-// Live data sources:
-//   * /api/trust-framework.json — static, copied from docs build (orgs)
-//   * /api/api-log.json, /api/payments-log.json, /api/auth-log.json —
-//     existing static assets under `public/api/` (ported in phase 3)
-//   * /api/github-stats.json — static, copied from docs build
-// All four fetches soft-fail, so missing files render as em-dashes.
+// Live data fetches all soft-fail; missing files render as em-dashes.
 
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'

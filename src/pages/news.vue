@@ -5,13 +5,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 5b-ii — News page. Ported from
-// `docs/components/WebPages/NewsPage.vue`.
-//
-// Chrome (PageHeader / PageFooter) is owned by the default layout. ArticleLink
-// is auto-registered via unplugin-vue-components from `src/components/home/`.
-// Vue primitives (ref/computed/watch) are auto-imported.
-
 import {
   articles,
   ARTICLE_KIND_LABELS,
@@ -33,13 +26,12 @@ interface FilterEntry {
   count: number
 }
 
-// Discriminated union so the template can narrow `n.type === 'page'` before
-// accessing `n.page` — required to keep `<script setup lang="ts">` strict.
+// Discriminated union — template narrows `n.type === 'page'` before reading
+// `n.page` to keep `<script setup lang="ts">` strict.
 type PageNumberItem =
   | { type: 'page'; key: string; page: number; label: string }
   | { type: 'gap'; key: string; label: string }
 
-// ── Filter state ─────────────────────────────────────────────────────────
 const activeFilter = ref<FilterKey>('all')
 const sortOrder = ref<SortOrder>('newest')
 const currentPage = ref<number>(1)
@@ -68,7 +60,6 @@ watch(sortOrder, () => {
   currentPage.value = 1
 })
 
-// ── Derived article sets ─────────────────────────────────────────────────
 const filtered = computed<HomeArticle[]>(() => {
   const base =
     activeFilter.value === 'all'
@@ -109,7 +100,6 @@ function goPage(n: number): void {
     window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-// Compressed page numbers with ellipses for long lists.
 const pageNumbers = computed<PageNumberItem[]>(() => {
   const total = pageCount.value
   const cur = currentPage.value
@@ -133,7 +123,6 @@ const pageNumbers = computed<PageNumberItem[]>(() => {
   return out
 })
 
-// ── Masthead meta ────────────────────────────────────────────────────────
 const monthLabel = new Date()
   .toLocaleDateString('en-GB', {
     month: 'long',

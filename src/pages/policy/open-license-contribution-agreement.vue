@@ -11,9 +11,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Phase 4 — Open License and Contribution Agreement.
-// Ported from `docs/components/WebPages/OpenLicenseContributionAgreementPage.vue`.
-
 interface Section { id: string; label: string }
 interface MetaItem { label: string; value: string }
 
