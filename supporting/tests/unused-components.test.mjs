@@ -1,43 +1,48 @@
-// Fails when a .vue component under docs/ is unreachable from any usage path.
+// Fails when a .vue component under src/components/ is unreachable from any
+// usage path.
+//
+// Components are auto-registered globally by unplugin-vue-components scanning
+// `src/components/`. So a component is "used" if its tag name (PascalCase or
+// kebab-case) appears inside the template of any reachable file, OR if a
+// reachable file imports it explicitly.
 //
 // Reachability roots:
-//   1. docs/.vitepress/theme/Layout.vue — VitePress always mounts this
-//   2. Any .vue file imported by an .md file (via <script setup>)
-//   3. Any .vue file imported by a non-theme .ts file under docs/
-//   4. Any globally registered component (app.component('Name', X) in theme/index.ts)
-//      whose tag <Name /> or <name-kebab /> appears in some .md file
+//   1. src/layouts/*.vue   (always rendered)
+//   2. src/pages/**/*.vue  (every page is a route entry)
+//   3. src/pages/**/*.md   (markdown pages can embed component tags via
+//                            unplugin-vue-markdown)
 //
 // From those roots we BFS through:
-//   - ESM .vue imports in each reachable .vue file
-//   - Tag usages inside each reachable .vue file's template that match a global registration
-//
-// Anything not reached is an unused component.
-//
-// Why skip theme/index.ts imports as a reachability root: theme/index.ts imports every
-// globally registered component. Treating those imports as usage would make every
-// registered file trivially reachable — hiding registrations that are dead because their
-// tag is never rendered. Global registrations count only when the tag is actually used.
+//   - relative .vue imports in `<script setup>` of each reachable .vue file
+//   - PascalCase / kebab-case tags used inside the template of each reachable
+//     file (resolved against the component registry by name)
+
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
-import { resolve, dirname, join, relative } from 'node:path'
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
+import { resolve, dirname, join, relative, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..', '..')
-const DOCS = resolve(ROOT, 'docs')
-const THEME_DIR = resolve(DOCS, '.vitepress', 'theme')
-const THEME_INDEX = resolve(THEME_DIR, 'index.ts')
-const LAYOUT = resolve(THEME_DIR, 'Layout.vue')
+const COMPONENTS = resolve(ROOT, 'src', 'components')
+const PAGES = resolve(ROOT, 'src', 'pages')
+const LAYOUTS = resolve(ROOT, 'src', 'layouts')
 
-// Components knowingly kept despite appearing unused. Relative to docs/, forward slashes.
-// Add entries only with a reason — if a component is truly used, wire it up instead.
-const ALLOWED_UNUSED = new Set([])
+// Components knowingly kept despite appearing unused. Relative to src/components/,
+// forward slashes. Add entries only with a reason — if a component is truly
+// used, wire it up instead.
+const ALLOWED_UNUSED = new Set([
+  // Reusable Word-document download button. Built ahead of need — the data-
+  // quality / availability / response-time policy pages are expected to wire
+  // it in; until they do, the component lives unreferenced.
+  'common/WordDocDownload.vue',
+])
 
 function walk(dir, filterExt, acc = []) {
   if (!existsSync(dir)) return acc
   for (const entry of readdirSync(dir)) {
-    if (entry === 'node_modules' || entry === 'dist' || entry === 'cache' || entry === 'public') continue
+    if (entry === 'node_modules' || entry === 'dist' || entry === '.cache') continue
     const full = join(dir, entry)
     const st = statSync(full)
     if (st.isDirectory()) walk(full, filterExt, acc)
@@ -50,109 +55,113 @@ function pascalToKebab(name) {
   return name.replace(/([A-Z])/g, (c, _, i) => (i === 0 ? '' : '-') + c.toLowerCase())
 }
 
-// Parse theme/index.ts: map each `app.component('Name', Ident)` to the absolute .vue
-// path that `Ident` was imported from. Ignores registrations whose identifier wasn't
-// imported as a .vue module (defensive — shouldn't happen in this codebase).
-function parseGlobalRegistrations() {
-  const src = readFileSync(THEME_INDEX, 'utf-8')
-  const identToPath = new Map()
-  const importRe = /import\s+(\w+)\s+from\s+['"]([^'"]+\.vue)['"]/g
-  let m
-  while ((m = importRe.exec(src)) !== null) {
-    identToPath.set(m[1], resolve(THEME_DIR, m[2]))
-  }
-  const registrations = new Map() // registered tag name → absolute file path
-  const regRe = /app\.component\(\s*['"]([^'"]+)['"]\s*,\s*(\w+)\s*\)/g
-  while ((m = regRe.exec(src)) !== null) {
-    const path = identToPath.get(m[2])
-    if (path) registrations.set(m[1], path)
-  }
-  return registrations
+function kebabToPascal(name) {
+  return name.replace(/(^|-)([a-z])/g, (_, __, c) => c.toUpperCase())
 }
 
-// Extract component-shaped tags from any file body: <PascalCase ...> or <kebab-case ...>.
-// Plain lowercase HTML tags (no hyphen) are filtered out by the regex itself.
-function collectTags(src) {
-  const tags = new Set()
-  const re = /<([A-Z][A-Za-z0-9]*|[a-z]+(?:-[a-z0-9]+)+)(?=[\s/>])/g
-  let m
-  while ((m = re.exec(src)) !== null) tags.add(m[1])
-  return tags
+// Build a registry mapping every component name (PascalCase) to its abs path.
+// unplugin-vue-components uses the file basename as the component name.
+function buildComponentRegistry() {
+  const map = new Map()
+  for (const file of walk(COMPONENTS, /\.vue$/)) {
+    map.set(basename(file, '.vue'), file)
+  }
+  return map
 }
 
-// Extract absolute paths of .vue files imported (or re-exported) by `src`, resolved
-// relative to `fromFile`. VitePress root-based specs starting with "/" resolve under docs/.
-function collectVueImports(fromFile, src) {
-  const out = new Set()
-  const re = /from\s+['"]([^'"]+\.vue)['"]/g
+// Extract <PascalCaseName ...> tags from .vue / .md source. Also handles
+// kebab-case usages by converting them back to PascalCase before lookup.
+function extractComponentTags(src) {
+  const names = new Set()
+  // PascalCase: <Foo>, <FooBar>
+  const pascal = /<([A-Z][A-Za-z0-9]*)\b[^>]*>/g
+  let m
+  while ((m = pascal.exec(src)) !== null) names.add(m[1])
+  // kebab-case: <foo-bar> — only counts if it has a hyphen (avoids matching
+  // every <div>).
+  const kebab = /<([a-z][a-z0-9]*(?:-[a-z0-9]+)+)\b[^>]*>/g
+  while ((m = kebab.exec(src)) !== null) names.add(kebabToPascal(m[1]))
+  return names
+}
+
+// Resolve relative .vue imports in `<script setup>`. Aliased imports
+// (`@/components/...`) are also handled.
+function extractVueImports(file, src) {
+  const dir = dirname(file)
+  const out = []
+  const re = /\bfrom\s+["']([^"']+\.vue)["']/g
   let m
   while ((m = re.exec(src)) !== null) {
     const spec = m[1]
-    const abs = spec.startsWith('/')
-      ? join(DOCS, spec.slice(1))
-      : resolve(dirname(fromFile), spec)
-    if (existsSync(abs)) out.add(abs)
+    let abs
+    if (spec.startsWith('@/')) {
+      abs = resolve(ROOT, 'src', spec.slice(2))
+    } else if (spec.startsWith('@components/')) {
+      abs = resolve(COMPONENTS, spec.slice('@components/'.length))
+    } else if (spec.startsWith('.')) {
+      abs = resolve(dir, spec)
+    } else {
+      continue // bare package import, ignore
+    }
+    if (existsSync(abs)) out.push(abs)
   }
   return out
 }
 
-describe('Vue components are used', () => {
-  it('every .vue file under docs/ is imported or referenced via a registered tag', () => {
-    const vueFiles = walk(DOCS, /\.vue$/)
-    const mdFiles = walk(DOCS, /\.md$/)
-    const tsFiles = walk(resolve(DOCS, '.vitepress'), /\.ts$/)
-    const registrations = parseGlobalRegistrations()
+function computeReachable() {
+  const registry = buildComponentRegistry()
+  const reachable = new Set()
+  const queue = []
+  const seed = (f) => {
+    if (f && !reachable.has(f)) {
+      reachable.add(f)
+      queue.push(f)
+    }
+  }
 
-    // Pre-collect tag usages from every .md file. Global registrations become reachable
-    // when their tag appears in any markdown page.
-    const mdTags = new Set()
-    for (const md of mdFiles) {
-      for (const t of collectTags(readFileSync(md, 'utf-8'))) mdTags.add(t)
+  // Roots: every layout + every page.
+  for (const f of walk(LAYOUTS, /\.vue$/)) seed(f)
+  for (const f of walk(PAGES, /\.(vue|md)$/)) seed(f)
+
+  while (queue.length) {
+    const file = queue.shift()
+    const src = readFileSync(file, 'utf-8')
+
+    // Tag-driven reachability (auto-registered components).
+    for (const name of extractComponentTags(src)) {
+      const target = registry.get(name)
+      if (target) seed(target)
     }
 
-    const reachable = new Set()
-    const queue = []
-    const seed = (p) => { if (p && !reachable.has(p)) { reachable.add(p); queue.push(p) } }
-
-    seed(LAYOUT)
-
-    // .md imports of .vue files (via <script setup>)
-    for (const md of mdFiles) {
-      for (const p of collectVueImports(md, readFileSync(md, 'utf-8'))) seed(p)
+    // Import-driven reachability (covers explicit imports of .vue files).
+    for (const target of extractVueImports(file, src)) {
+      seed(target)
     }
+  }
 
-    // .ts imports of .vue files, excluding theme/index.ts — see header comment.
-    for (const ts of tsFiles) {
-      if (ts === THEME_INDEX) continue
-      for (const p of collectVueImports(ts, readFileSync(ts, 'utf-8'))) seed(p)
+  return { reachable, registry }
+}
+
+function toRelComponents(absFile) {
+  return relative(COMPONENTS, absFile).replace(/\\/g, '/')
+}
+
+describe('Components are reachable from layouts or pages', () => {
+  it('no .vue component is unused', () => {
+    const { reachable, registry } = computeReachable()
+    const unused = []
+    for (const [name, file] of registry) {
+      if (reachable.has(file)) continue
+      const rel = toRelComponents(file)
+      if (ALLOWED_UNUSED.has(rel)) continue
+      unused.push(rel)
     }
-
-    // Global registrations reachable via tag usage in any .md page
-    for (const [name, path] of registrations) {
-      if (mdTags.has(name) || mdTags.has(pascalToKebab(name))) seed(path)
-    }
-
-    // BFS: from each reachable .vue, follow imports and tag usages
-    while (queue.length) {
-      const file = queue.shift()
-      const src = readFileSync(file, 'utf-8')
-      for (const p of collectVueImports(file, src)) seed(p)
-      const tags = collectTags(src)
-      for (const [name, path] of registrations) {
-        if (tags.has(name) || tags.has(pascalToKebab(name))) seed(path)
-      }
-    }
-
-    const unused = vueFiles
-      .filter(f => !reachable.has(f))
-      .map(f => relative(DOCS, f).replace(/\\/g, '/'))
-      .filter(p => !ALLOWED_UNUSED.has(p))
 
     assert.deepStrictEqual(
       unused,
       [],
-      `Found ${unused.length} unused .vue component(s) — no import or registered-tag usage reaches them.\n` +
-      `Either delete each, wire it up (import or <Tag/> in an .md page), or add it to ALLOWED_UNUSED with a reason:\n` +
+      `Found ${unused.length} unused component(s) — no layout or page references their tag or imports the file.\n` +
+      `Either delete each, use it from a page, or add to ALLOWED_UNUSED with a reason:\n` +
       unused.map(p => '  - ' + p).join('\n'),
     )
   })

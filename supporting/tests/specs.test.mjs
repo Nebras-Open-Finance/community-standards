@@ -7,14 +7,14 @@ import { parse as parseYaml } from 'yaml'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..', '..')
-const SPECS_ROOT = resolve(ROOT, 'docs', 'public', 'openapi')
+const SPECS_ROOT = resolve(ROOT, 'public', 'openapi')
 const CATEGORIES = ['standards', 'api-hub', 'ozone-connect']
 
 function parseVersions() {
-  const versionFile = resolve(ROOT, 'docs', '.vitepress', 'version.ts')
+  const versionFile = resolve(ROOT, 'src', 'data', 'versions.ts')
   const src = readFileSync(versionFile, 'utf-8')
   const match = src.match(/VERSIONS\s*=\s*\[([^\]]+)\]/)
-  if (!match) throw new Error('Could not parse VERSIONS from version.ts')
+  if (!match) throw new Error('Could not parse VERSIONS from versions.ts')
   return match[1].split(',').map(v => v.trim().replace(/['"]/g, '')).filter(Boolean)
 }
 

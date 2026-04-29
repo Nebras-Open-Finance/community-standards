@@ -1,0 +1,52 @@
+/*
+  Base resets — applied to every page in app/.
+  Replaces the body.editorial-page scoping from docs/components/WebPages/editorial.css
+  (we no longer use a body class; every page here is editorial).
+
+  Also retains the .at-serif / .at-mono helpers because several Editorial
+  components reference them (EdHero, EdHoverSidebar, EdCompareCard, etc.).
+*/
+
+html,
+body {
+  background: var(--at-bg-cream);
+  color: var(--at-navy-deep);
+  font-family: var(--at-sans);
+  margin: 0;
+  padding: 0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.at-serif {
+  font-family: var(--at-serif);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.at-mono {
+  font-family: var(--at-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.68rem;
+  color: var(--at-mute);
+}
+
+/*
+  /tech/ hero lede / subtitle width.
+  Page heroes across /tech/ each define their own scoped class
+  (.ed-doc__lede, .ed-req-hero__sub, .ed-tpp-hero__sub, .ed-er-hero__sub, etc.)
+  with a ~50rem max-width. That wraps the intro paragraph onto many lines and
+  steals vertical space above the fold. Override globally so the intro fills
+  the page's inner container instead. !important is required because Vue
+  scoped selectors compile with [data-v-*] and outrank the unscoped rule.
+*/
+.app-shell.is-tech [class$="__lede"],
+.app-shell.is-tech [class*="__lede "],
+.app-shell.is-tech [class*="hero__sub"] {
+  max-width: none !important;
+}

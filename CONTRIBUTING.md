@@ -2,15 +2,15 @@
 
 Thank you for helping improve the UAE Open Finance community standards documentation.
 
-This repository hosts the VitePress-based documentation site for the UAE Open Finance ecosystem, including policy documents, LFI integration guides, TPP standards, and Vue components used across the site. OpenAPI specifications are **not** maintained here — they are fetched at build time from [Nebras-Open-Finance/api-specs](https://github.com/Nebras-Open-Finance/api-specs).
+This repository hosts the documentation site for the UAE Open Finance ecosystem — a Vite + Vue 3 + vue-router app, prerendered to static HTML by [vite-ssg](https://github.com/antfu/vite-ssg). It includes policy documents, LFI integration guides, TPP standards, and the Vue components used across the site. OpenAPI specifications are **not** maintained here — they are fetched at build time from [Nebras-Open-Finance/api-specs](https://github.com/Nebras-Open-Finance/api-specs).
 
 ## Ways to contribute
 
 - **Corrections** — Typos, broken links, inaccurate statements, or outdated references
 - **Clarifications** — Improvements to wording, examples, or structure that make a page easier to follow
-- **New documentation** — Additional guides, policies, or reference material that fits the existing site structure
-- **Components and tooling** — Improvements to the Vue components, sidebars, or build scripts under `docs/`
-- **Errata** — Corrections to published content (see the [Changes to Published Documentation Policy](docs/policy/changes-to-published-content.md))
+- **New documentation** — Additional pages or reference material that fits the existing site structure under [`src/pages/`](src/pages/)
+- **Components and tooling** — Improvements to the Vue components under [`src/components/`](src/components/), the data registries under [`src/data/`](src/data/), or the build scripts under [`scripts/`](scripts/)
+- **Errata** — Corrections to published content (see the Changes to Published Documentation Policy under [`src/pages/policy/`](src/pages/policy/))
 
 Changes to OpenAPI specifications should be raised against the [api-specs](https://github.com/Nebras-Open-Finance/api-specs) repository, not here.
 
@@ -25,18 +25,19 @@ Changes to OpenAPI specifications should be raised against the [api-specs](https
 1. Fork this repository
 2. Create a branch with a descriptive name: `git checkout -b docs/version-management-policy`
 3. Make your changes locally
-4. Run the site locally to verify your changes render correctly: `npm install && npm run dev:docs`
+4. Run the site locally to verify your changes render correctly: `npm install && npm run dev`
 5. Open a Pull Request with a clear description of what changed and why
 
 ## Local development
 
 - Prerequisites: Node.js 18+ and npm
 - Install dependencies: `npm install`
-- Run the docs site with hot reload: `npm run dev:docs`
-- Build the static site: `npm run docs:build`
-- Preview the built site: `npm run docs:serve`
+- Run the site with hot reload: `npm run dev`
+- Build the static site: `npm run build` (outputs to [`dist/`](dist/))
+- Preview the built site: `npm run preview`
+- Type-check: `npm run typecheck`
 
-OpenAPI specs are fetched on build via `scripts/fetch-openapi-specs.mjs`. They are gitignored and MUST NOT be committed.
+OpenAPI specs are fetched on build via [`scripts/fetch-openapi-specs.mjs`](scripts/fetch-openapi-specs.mjs) into [`public/openapi/`](public/openapi/). They are gitignored and MUST NOT be committed.
 
 ## Writing style
 

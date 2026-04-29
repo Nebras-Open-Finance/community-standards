@@ -5,15 +5,14 @@ supporting/*
 !supporting/lychee.toml
 !supporting/tests/
 .claude/
-docs/public/doc-repo/
 # Fetched OpenAPI specs (all versioned folders — see scripts/fetch-openapi-specs.mjs)
-docs/public/openapi/v*/
+public/openapi/v*/
 # Generated .xlsx exports (see scripts/generate-openapi-xlsx.mjs)
-docs/public/openapi/**/*.xlsx
+public/openapi/**/*.xlsx
 # Fetched trust-framework organisations (see scripts/fetch-organisations.mjs)
-docs/public/api/trust-framework.json
+public/api/trust-framework.json
 # Fetched GitHub org stats (see scripts/fetch-github-stats.mjs)
-docs/public/api/github-stats.json
+public/api/github-stats.json
 CLAUDE.md
 
 # Logs
@@ -115,12 +114,6 @@ dist
 
 # Sveltekit cache directory
 .svelte-kit/
-
-# vitepress build output
-**/.vitepress/dist
-
-# vitepress cache directory
-**/.vitepress/cache
 
 # Docusaurus cache and generated files
 .docusaurus

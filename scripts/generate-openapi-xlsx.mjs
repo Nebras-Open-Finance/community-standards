@@ -1,5 +1,5 @@
 /**
- * Generates .xlsx siblings for every OpenAPI .yaml under docs/public/openapi/.
+ * Generates .xlsx siblings for every OpenAPI .yaml under public/openapi/.
  *
  * Runs after scripts/fetch-openapi-specs.mjs. Each .xlsx is written next to
  * its source .yaml using the same basename (only the extension changes).
@@ -25,9 +25,9 @@ import { specToWorkbook } from './lib/spec-to-workbook.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..')
-const OPENAPI_ROOT = resolve(ROOT, 'docs', 'public', 'openapi')
+const OPENAPI_ROOT = resolve(ROOT, 'public', 'openapi')
 
-// Only versioned specs (docs/public/openapi/v*/...) are exported. Root-level
+// Only versioned specs (public/openapi/v*/...) are exported. Root-level
 // unversioned files like trust-framework.yaml are intentionally skipped.
 function walkYaml(dir, out = []) {
   if (!existsSync(dir)) return out
@@ -65,7 +65,7 @@ async function main() {
 
   const yamlFiles = walkYaml(OPENAPI_ROOT)
   if (yamlFiles.length === 0) {
-    console.warn('No .yaml files found under docs/public/openapi/ — skipping.')
+    console.warn('No .yaml files found under public/openapi/ — skipping.')
     return
   }
 

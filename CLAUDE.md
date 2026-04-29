@@ -121,14 +121,14 @@ TPP → API Hub → LFI → API Hub → TPP
 ---
 
 ### 9. OpenAPI is the Source of Truth
-- ✅ ALL API behavior MUST align with OpenAPI specs served at `docs/public/openapi/`
+- ✅ ALL API behavior MUST align with OpenAPI specs served at `public/openapi/`
 - ❌ Claude MUST NOT invent fields, endpoints, or schemas
 - ✅ When unsure, infer from spec structure — never from assumptions
 - ✅ OpenAPI specs are fetched at build time from the canonical source:
   **[Nebras-Open-Finance/api-specs](https://github.com/Nebras-Open-Finance/api-specs)** (`dist/` directory)
 - ✅ The fetch script (`scripts/fetch-openapi-specs.mjs`) resolves errata automatically:
   per-file, highest errata wins, falling back to the base version
-- ✅ Versions are defined in `docs/.vitepress/version.ts` — adding a new version there
+- ✅ Versions are defined in `src/data/versions.ts` — adding a new version there
   causes the script to fetch its specs automatically
 - ❌ OpenAPI YAML files MUST NOT be committed to this repo — they are fetched and gitignored
 
@@ -186,7 +186,7 @@ UAE Open Finance has two things that can loosely be called a “resource server�
 ### Rules
 
 - ❌ Do NOT call the LFI's backend a “resource server”. It is **Ozone Connect**.
-- ✅ When referring to an action the LFI performs on a specific endpoint, name the endpoint explicitly and link to its page under `docs/tech/lfi-api-hub/**/open-api/` (e.g. “your Ozone Connect [`POST /payments`](/tech/lfi-api-hub/v2.1/banking/service-initiation/open-api/payments) endpoint”), rather than a generic phrase like “your resource server”.
+- ✅ When referring to an action the LFI performs on a specific endpoint, name the endpoint explicitly and link to its page under `src/pages/tech/lfi-api-hub/**/open-api/` (e.g. “your Ozone Connect [`POST /payments`](/tech/lfi-api-hub/v2.1/banking/service-initiation/open-api/payments) endpoint”), rather than a generic phrase like “your resource server”.
 - ✅ Where a passage covers several endpoints at once (e.g. a requirements page spanning all Data Sharing endpoints), use “your Ozone Connect endpoints” (plural) rather than “your resource server”.
 - ✅ “Resource server” remains correct **only** when referring to the API Hub's TPP-facing surface (the `rs1.*` host, the OAuth2 role, or defined spec fields such as `ResourceServerUrl`). In those cases, prefer “API Hub resource server” for clarity.
 
@@ -211,7 +211,7 @@ UAE Open Finance has two things that can loosely be called a “resource server�
 
 ### Internal Links
 
-`cleanUrls: true` is enabled. Links to a directory's `index.md` MUST end with a trailing slash (e.g. `../data-sharing/api-guide/`), or the VitePress build fails. Links to regular `.md` files do not need a slash.
+The site uses `vue-router` with vite-ssg-prerendered HTML. Internal links between pages MUST be expressed as route paths (e.g. `to="/tech/tpp-standards/v2.1/banking/data-sharing/api-guide/"`), matching the file layout under `src/pages/`. A directory `index.vue` corresponds to a trailing-slash route; a sibling `foo.vue` corresponds to `/foo`. Links to assets in `public/` (e.g. an OpenAPI YAML, an image) use the asset path served from the site root (e.g. `/openapi/v2.1/standards/uae-account-information-openapi.yaml`).
 
 
 ## 📝 TODOs

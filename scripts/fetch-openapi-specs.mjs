@@ -1,13 +1,13 @@
 /**
  * Fetches OpenAPI specs from the Nebras-Open-Finance/api-specs GitHub repository.
  *
- * For each version defined in docs/.vitepress/version.ts and each category
+ * For each version defined in src/data/versions.ts and each category
  * (standards, api-hub, ozone-connect), this script:
  *
  *   1. Lists available version folders in the remote repo (including errata).
  *   2. Resolves per-file: uses the highest errata that contains the file,
  *      falling back to the base version.
- *   3. Downloads each YAML file to docs/public/openapi/{version}/{category}/.
+ *   3. Downloads each YAML file to public/openapi/{version}/{category}/.
  *
  * Usage:  node scripts/fetch-openapi-specs.mjs [--skip-existing] [--branch <name>]
  *   --skip-existing  Skip download if the target directory already has files.
@@ -57,10 +57,10 @@ const SKIP_EXISTING = process.argv.includes('--skip-existing')
 // Parse VERSIONS array from the TypeScript source so there is a single source of truth.
 
 function parseVersions() {
-  const versionFile = resolve(ROOT, 'docs', '.vitepress', 'version.ts')
+  const versionFile = resolve(ROOT, 'src', 'data', 'versions.ts')
   const src = readFileSync(versionFile, 'utf-8')
   const match = src.match(/VERSIONS\s*=\s*\[([^\]]+)\]/)
-  if (!match) throw new Error('Could not parse VERSIONS from version.ts')
+  if (!match) throw new Error('Could not parse VERSIONS from versions.ts')
   return match[1].split(',').map(v => v.trim().replace(/['"]/g, '')).filter(Boolean)
 }
 
@@ -140,7 +140,7 @@ async function ghDownloadFile(remotePath) {
 // ─── Main ──────────────────────────────────────────────────────────────────────
 
 async function fetchCategory(version, category) {
-  const outDir = resolve(ROOT, 'docs', 'public', 'openapi', version, category)
+  const outDir = resolve(ROOT, 'public', 'openapi', version, category)
 
   // Skip if already populated (only when --skip-existing is set)
   if (SKIP_EXISTING && existsSync(outDir) && readdirSync(outDir).some(f => f.endsWith('.yaml'))) {

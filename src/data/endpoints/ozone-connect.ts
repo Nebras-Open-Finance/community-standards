@@ -1,0 +1,375 @@
+// Ozone Connect endpoint registry — surface = 'ozone-connect'.
+//
+// URL segment: 'ozone-connect'. Mirrors the "Ozone Connect" group in
+// `docs/.vitepress/config/sidebars/api-specs.ts`. Every entry pairs the
+// sidebar row with the `<RedocWrapper>` props from the matching include
+// under `docs/tech/lfi-api-hub/v*/banking/...` (or `health-check`,
+// `consent-events`).
+
+import type { Endpoint, EndpointRedoc, OverrideServer } from './types'
+
+const VERSION = 'v2.1'
+
+const OZONE_SERVERS: OverrideServer[] = [
+  { url: 'https://[Ozone_Connect_API]' },
+]
+
+const SPEC_HEALTH = '/openapi/v2.1/ozone-connect/uae-ozone-connect-health-check-openapi.yaml'
+const SPEC_DATA_SHARING = '/openapi/v2.1/ozone-connect/uae-ozone-connect-bank-data-sharing-openapi.yaml'
+const SPEC_SERVICE_INITIATION = '/openapi/v2.1/ozone-connect/uae-ozone-connect-bank-service-initiation-openapi.yaml'
+const SPEC_CONSENT_EVENTS = '/openapi/v2.1/ozone-connect/uae-ozone-connect-consent-events-actions-openapi.yaml'
+const SPEC_PRODUCTS = '/openapi/v2.1/ozone-connect/uae-ozone-connect-bank-products-data-openapi.yaml'
+const SPEC_OPEN_DATA = '/openapi/v2.1/ozone-connect/uae-ozone-connect-bank-open-data-openapi.yaml'
+
+interface EntryInput {
+  section: string
+  sectionSlug: string
+  subsection?: string
+  slug: string
+  method: Endpoint['method']
+  path: string
+  title: string
+  redoc: EndpointRedoc
+}
+
+function entry(input: EntryInput): Endpoint {
+  return {
+    surface: 'ozone-connect',
+    version: VERSION,
+    ...input,
+  }
+}
+
+export const ozoneConnectEndpoints: readonly Endpoint[] = [
+  // Health Check
+  entry({
+    section: 'Health Check',
+    sectionSlug: 'health-check',
+    slug: 'hello',
+    method: 'GET',
+    path: '/hello',
+    title: 'Hello',
+    redoc: {
+      spec: SPEC_HEALTH,
+      filterPath: '/hello',
+      filterMethod: 'get',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  entry({
+    section: 'Health Check',
+    sectionSlug: 'health-check',
+    slug: 'hello-mtls',
+    method: 'GET',
+    path: '/hello-mtls',
+    title: 'Hello MTLS',
+    redoc: {
+      spec: SPEC_HEALTH,
+      filterPath: '/hello-mtls',
+      filterMethod: 'get',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  entry({
+    section: 'Health Check',
+    sectionSlug: 'health-check',
+    slug: 'echo-cert',
+    method: 'GET',
+    path: '/echo-cert',
+    title: 'Echo Cert',
+    redoc: {
+      spec: SPEC_HEALTH,
+      filterPath: '/echo-cert',
+      filterMethod: 'get',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+
+  // Consent Events
+  entry({
+    section: 'Consent Events',
+    sectionSlug: 'consent-events',
+    slug: 'validate',
+    method: 'POST',
+    path: '/consent/action/validate',
+    title: 'Validate consent before Creation',
+    redoc: {
+      spec: SPEC_CONSENT_EVENTS,
+      filterPath: '/consent/action/validate',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  entry({
+    section: 'Consent Events',
+    sectionSlug: 'consent-events',
+    slug: 'event-op',
+    method: 'POST',
+    path: '/consent/event/{operation}',
+    title: 'Event when a consent is updated or created',
+    redoc: {
+      spec: SPEC_CONSENT_EVENTS,
+      filterPath: '/consent/event/{operation}',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+
+  // Bank Data Sharing
+  entry({
+    section: 'Bank Data Sharing',
+    sectionSlug: 'data-sharing',
+    slug: 'accounts',
+    method: 'GET',
+    path: '/accounts',
+    title: 'Get Accounts',
+    redoc: {
+      spec: SPEC_DATA_SHARING,
+      filterPath: '/accounts',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  entry({
+    section: 'Bank Data Sharing',
+    sectionSlug: 'data-sharing',
+    slug: 'accounts-AccountId',
+    method: 'GET',
+    path: '/accounts/{AccountId}',
+    title: 'Get an Account',
+    redoc: {
+      spec: SPEC_DATA_SHARING,
+      filterPath: '/accounts/{accountId}',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  entry({
+    section: 'Bank Data Sharing',
+    sectionSlug: 'data-sharing',
+    slug: 'accounts-AccountId-balances',
+    method: 'GET',
+    path: '/accounts/{AccountId}/balances',
+    title: 'Get Balances for an Account',
+    redoc: {
+      spec: SPEC_DATA_SHARING,
+      filterPath: '/accounts/{accountId}/balances',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  entry({
+    section: 'Bank Data Sharing',
+    sectionSlug: 'data-sharing',
+    slug: 'accounts-AccountId-beneficiaries',
+    method: 'GET',
+    path: '/accounts/{AccountId}/beneficiaries',
+    title: 'Get Beneficiaries for an Account',
+    redoc: {
+      spec: SPEC_DATA_SHARING,
+      filterPath: '/accounts/{accountId}/beneficiaries',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  entry({
+    section: 'Bank Data Sharing',
+    sectionSlug: 'data-sharing',
+    slug: 'customer',
+    method: 'GET',
+    path: '/customer',
+    title: 'Get Customers',
+    redoc: {
+      spec: SPEC_DATA_SHARING,
+      filterPath: '/customer',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  entry({
+    section: 'Bank Data Sharing',
+    sectionSlug: 'data-sharing',
+    slug: 'accounts-AccountId-customer',
+    method: 'GET',
+    path: '/accounts/{AccountId}/customer',
+    title: 'Get Customer for an Account',
+    redoc: {
+      spec: SPEC_DATA_SHARING,
+      filterPath: '/accounts/{accountId}/customer',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  entry({
+    section: 'Bank Data Sharing',
+    sectionSlug: 'data-sharing',
+    slug: 'accounts-AccountId-direct-debits',
+    method: 'GET',
+    path: '/accounts/{AccountId}/direct-debits',
+    title: 'Get Direct Debits for an Account',
+    redoc: {
+      spec: SPEC_DATA_SHARING,
+      filterPath: '/accounts/{accountId}/direct-debits',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  entry({
+    section: 'Bank Data Sharing',
+    sectionSlug: 'data-sharing',
+    slug: 'accounts-AccountId-products',
+    method: 'GET',
+    path: '/accounts/{AccountId}/products',
+    title: 'Get Product Configuration for an Account',
+    redoc: {
+      spec: SPEC_DATA_SHARING,
+      filterPath: '/accounts/{accountId}/products',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  entry({
+    section: 'Bank Data Sharing',
+    sectionSlug: 'data-sharing',
+    slug: 'accounts-AccountId-scheduled-payments',
+    method: 'GET',
+    path: '/accounts/{AccountId}/scheduled-payments',
+    title: 'Get Scheduled Payments for an Account',
+    redoc: {
+      spec: SPEC_DATA_SHARING,
+      filterPath: '/accounts/{accountId}/scheduled-payments',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  entry({
+    section: 'Bank Data Sharing',
+    sectionSlug: 'data-sharing',
+    slug: 'accounts-AccountId-standing-orders',
+    method: 'GET',
+    path: '/accounts/{AccountId}/standing-orders',
+    title: 'Get Standing Orders for an Account',
+    redoc: {
+      spec: SPEC_DATA_SHARING,
+      filterPath: '/accounts/{accountId}/standing-orders',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  entry({
+    section: 'Bank Data Sharing',
+    sectionSlug: 'data-sharing',
+    slug: 'accounts-AccountId-statements',
+    method: 'GET',
+    path: '/accounts/{AccountId}/statements',
+    title: 'Get Statements for an Account',
+    redoc: {
+      spec: SPEC_DATA_SHARING,
+      filterPath: '/accounts/{accountId}/statements',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  entry({
+    section: 'Bank Data Sharing',
+    sectionSlug: 'data-sharing',
+    slug: 'accounts-AccountId-transactions',
+    method: 'GET',
+    path: '/accounts/{AccountId}/transactions',
+    title: 'Get Transactions for an Account',
+    redoc: {
+      spec: SPEC_DATA_SHARING,
+      filterPath: '/accounts/{accountId}/transactions',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+
+  // Bank Service Initiation
+  entry({
+    section: 'Bank Service Initiation',
+    sectionSlug: 'service-initiation',
+    slug: 'payments',
+    method: 'POST',
+    path: '/payments',
+    title: 'Create a Payment',
+    redoc: {
+      spec: SPEC_SERVICE_INITIATION,
+      filterSchema: 'AEPaymentRequest',
+      displayPath: '/payments',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  entry({
+    section: 'Bank Service Initiation',
+    sectionSlug: 'service-initiation',
+    slug: 'payments-PaymentId',
+    method: 'GET',
+    path: '/payments/{PaymentId}',
+    title: 'Get a Payment by PaymentId',
+    redoc: {
+      spec: SPEC_SERVICE_INITIATION,
+      filterPath: '/payments/{paymentId}',
+      filterMethod: 'GET',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  entry({
+    section: 'Bank Service Initiation',
+    sectionSlug: 'service-initiation',
+    slug: 'payment-consents-ConsentId-refund',
+    method: 'GET',
+    path: '/payment-consents/{ConsentId}/refund',
+    title: 'Retrieve Account Details for a Refund',
+    redoc: {
+      spec: SPEC_SERVICE_INITIATION,
+      filterPath: '/payment-consents/{consentId}/refund',
+      filterMethod: 'GET',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+
+  // Confirmation of Payee
+  entry({
+    section: 'Confirmation of Payee',
+    sectionSlug: 'confirmation-of-payee',
+    slug: 'cop-query',
+    method: 'POST',
+    path: '/customers/action/cop-query',
+    title: 'Confirm the IBAN matches the Name on the Account',
+    redoc: {
+      spec: SPEC_DATA_SHARING,
+      filterPath: '/customers/action/cop-query',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+
+  // Products & Leads
+  entry({
+    section: 'Products & Leads',
+    sectionSlug: 'products-and-leads',
+    slug: 'products',
+    method: 'GET',
+    path: '/products',
+    title: 'Get Products',
+    redoc: {
+      spec: SPEC_PRODUCTS,
+      filterPath: '/products',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  entry({
+    section: 'Products & Leads',
+    sectionSlug: 'products-and-leads',
+    slug: 'leads',
+    method: 'POST',
+    path: '/leads',
+    title: 'Submit Lead',
+    redoc: {
+      spec: SPEC_PRODUCTS,
+      filterPath: '/leads',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+
+  // ATMs
+  entry({
+    section: 'ATMs',
+    sectionSlug: 'atms',
+    slug: 'atm',
+    method: 'GET',
+    path: '/atm',
+    title: 'Retrieve ATMs',
+    redoc: {
+      spec: SPEC_OPEN_DATA,
+      filterPath: '/atm',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+] as const

@@ -1,166 +1,113 @@
-import { describe, it } from 'node:test'
+// Catches drift between the endpoint registry (src/data/endpoints/) and the
+// machinery that renders endpoints to static HTML.
+//
+// The /tech/api-specs/* tree is rendered by a single dynamic catch-all
+// (src/pages/tech/api-specs/[...slug].vue). vite-ssg only emits HTML for
+// dynamic routes that ssgOptions.includedRoutes expands them into — and that
+// expansion lives in src/data/ssg-paths.ts. So the failure modes worth
+// guarding against are:
+//
+//   1. The catch-all .vue file is missing (renders 404 for every endpoint).
+//   2. ssg-paths doesn't list the api-specs catch-all placeholder (every
+//      endpoint silently disappears from the static build).
+//   3. An endpoint's URL doesn't round-trip through getEndpointBySlug
+//      (bug in endpointUrl / SURFACE_TO_URL / URL_TO_SURFACE / lookups).
+
+import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync, existsSync } from 'node:fs'
-import { resolve, dirname, join } from 'node:path'
+import { existsSync } from 'node:fs'
+import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { parse as parseYaml } from 'yaml'
+import { bundleAndImport } from './_helpers/bundle-ts.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..', '..')
-const DOCS = resolve(ROOT, 'docs')
-const PUBLIC = resolve(DOCS, 'public')
-const SIDEBAR_FILE = resolve(DOCS, '.vitepress', 'config', 'sidebars', 'api-specs.ts')
+const PAGES = resolve(ROOT, 'src', 'pages')
+const ENDPOINTS_INDEX = resolve(ROOT, 'src', 'data', 'endpoints', 'index.ts')
+const SSG_PATHS = resolve(ROOT, 'src', 'data', 'ssg-paths.ts')
 
-function parseCurrentVersion() {
-  const src = readFileSync(resolve(DOCS, '.vitepress', 'version.ts'), 'utf-8')
-  const match = src.match(/VERSIONS\s*=\s*\[([^\]]+)\]/)
-  if (!match) throw new Error('Could not parse VERSIONS from version.ts')
-  const versions = match[1].split(',').map(v => v.trim().replace(/['"]/g, '')).filter(Boolean)
-  return versions[versions.length - 1]
-}
+let endpointsMod
+let ssgMod
+let dispose1
+let dispose2
 
-const CURRENT_VERSION = parseCurrentVersion()
-const BASE = `/tech/api-specs/${CURRENT_VERSION}`
+before(async () => {
+  const a = await bundleAndImport(`
+    export * from ${JSON.stringify(ENDPOINTS_INDEX)}
+  `)
+  endpointsMod = a.mod
+  dispose1 = a.dispose
 
-// Extracts every apiRef('METHOD', 'path', `link`) call from the sidebar source.
-function extractApiRefs(source) {
-  const re = /apiRef\(\s*'([A-Z]+)'\s*,\s*'([^']+)'\s*,\s*`([^`]+)`\s*\)/g
-  const refs = []
-  let m
-  while ((m = re.exec(source)) !== null) {
-    const [, method, path, linkTemplate] = m
-    const link = linkTemplate.replace(/\$\{BASE\}/g, BASE)
-    refs.push({ method, path, link })
-  }
-  return refs
-}
+  const b = await bundleAndImport(`
+    export { expandSsgPath } from ${JSON.stringify(SSG_PATHS)}
+  `)
+  ssgMod = b.mod
+  dispose2 = b.dispose
+})
 
-// Resolves an include directive relative to the including file's directory.
-function resolveInclude(fromFile, includePath) {
-  return resolve(dirname(fromFile), includePath)
-}
+after(() => {
+  dispose1?.()
+  dispose2?.()
+})
 
-// A doc page may forward to an included file via `<!--@include: ../path.md-->`.
-// Returns the final file path (after following one include) or the original if none.
-function resolveFinalDocFile(docFile) {
-  const src = readFileSync(docFile, 'utf-8')
-  const includeMatch = src.match(/<!--\s*@include:\s*([^\s]+?)\s*-->/)
-  if (!includeMatch) return { finalFile: docFile, source: src }
-  const included = resolveInclude(docFile, includeMatch[1])
-  if (!existsSync(included)) {
-    return { finalFile: docFile, source: src, missingInclude: included }
-  }
-  return { finalFile: included, source: readFileSync(included, 'utf-8') }
-}
-
-function extractRedocWrapper(source) {
-  // Match the opening tag (self-closing or not) up to the first `/>` or `>`.
-  const tagMatch = source.match(/<RedocWrapper\b([\s\S]*?)\/>/)
-  if (!tagMatch) return null
-  const attrs = tagMatch[1]
-  const attr = (name) => {
-    const m = attrs.match(new RegExp(`\\b${name}\\s*=\\s*"([^"]*)"`))
-    return m ? m[1] : null
-  }
-  return {
-    spec: attr('spec'),
-    filterPath: attr('filterPath'),
-    filterMethod: attr('filterMethod'),
-  }
-}
-
-function specPathToYamlFile(specAttr) {
-  // spec="/openapi/v2.1/standards/foo.yaml" → docs/public/openapi/v2.1/standards/foo.yaml
-  if (!specAttr.startsWith('/')) return null
-  return join(PUBLIC, specAttr.replace(/^\//, ''))
-}
-
-const sidebarSrc = readFileSync(SIDEBAR_FILE, 'utf-8')
-const refs = extractApiRefs(sidebarSrc)
-
-// Cache parsed YAML specs so we don't re-parse for every apiRef.
-// Stores `{ doc, error }` — error is non-null when the YAML failed to parse.
-const yamlCache = new Map()
-function loadYaml(file) {
-  if (!yamlCache.has(file)) {
-    try {
-      yamlCache.set(file, { doc: parseYaml(readFileSync(file, 'utf-8')), error: null })
-    } catch (err) {
-      yamlCache.set(file, { doc: null, error: err })
-    }
-  }
-  return yamlCache.get(file)
-}
-
-describe('api-specs sidebar links', () => {
-  it('sidebar contains at least one apiRef entry', () => {
-    assert.ok(refs.length > 0, `No apiRef calls found in ${SIDEBAR_FILE}`)
+describe('API-spec endpoint coverage', () => {
+  it('the catch-all renderer page exists', () => {
+    const file = resolve(PAGES, 'tech', 'api-specs', '[...slug].vue')
+    assert.ok(existsSync(file), `Missing dynamic renderer at ${file}`)
   })
 
-  for (const ref of refs) {
-    describe(`${ref.method} ${ref.path} → ${ref.link}`, () => {
-      const docFile = join(DOCS, ref.link.replace(/^\//, '')) + '.md'
+  it('endpoint registry is non-empty', () => {
+    assert.ok(
+      Array.isArray(endpointsMod.allEndpoints) && endpointsMod.allEndpoints.length > 0,
+      'src/data/endpoints/index.ts must export a non-empty allEndpoints',
+    )
+  })
 
-      it('sidebar link resolves to an existing .md page', () => {
-        assert.ok(
-          existsSync(docFile),
-          `Missing page: ${docFile}\n  Referenced from sidebar link: ${ref.link}`,
-        )
-      })
+  it('ssg-paths expands the api-specs catch-all to one path per endpoint', () => {
+    const expanded = ssgMod.expandSsgPath('/tech/api-specs/:slug(.+)')
+    assert.ok(
+      Array.isArray(expanded) && expanded.length > 0,
+      'expandSsgPath should return an array of concrete paths for the api-specs placeholder',
+    )
 
-      if (!existsSync(docFile)) return
+    const expandedSet = new Set(expanded)
+    const missing = []
+    for (const e of endpointsMod.allEndpoints) {
+      const url = endpointsMod.endpointUrl(e)
+      if (!expandedSet.has(url)) missing.push(url)
+    }
 
-      const resolved = resolveFinalDocFile(docFile)
+    assert.deepStrictEqual(
+      missing,
+      [],
+      `Endpoints not covered by ssg-paths expansion (would 404 in static build):\n` +
+      missing.map(u => `  - ${u}`).join('\n'),
+    )
+  })
 
-      it('any @include directive resolves to an existing file', () => {
-        assert.ok(
-          !resolved.missingInclude,
-          `@include target does not exist: ${resolved.missingInclude}\n  From: ${docFile}`,
-        )
-      })
+  it('every endpoint URL round-trips through getEndpointBySlug', () => {
+    const failures = []
+    for (const e of endpointsMod.allEndpoints) {
+      const url = endpointsMod.endpointUrl(e)
+      const tail = url.replace(/^\/tech\/api-specs\//, '')
+      const resolved = endpointsMod.getEndpointBySlug(tail)
+      if (!resolved) {
+        failures.push({ url, reason: 'no match' })
+      } else if (
+        resolved.surface !== e.surface ||
+        resolved.slug !== e.slug ||
+        resolved.sectionSlug !== e.sectionSlug ||
+        resolved.version !== e.version
+      ) {
+        failures.push({ url, reason: 'matched a different endpoint' })
+      }
+    }
 
-      const redoc = extractRedocWrapper(resolved.source)
-
-      it('final page contains a <RedocWrapper> with a spec attribute', () => {
-        assert.ok(redoc, `No <RedocWrapper .../> tag found in ${resolved.finalFile}`)
-        assert.ok(
-          redoc.spec,
-          `<RedocWrapper> in ${resolved.finalFile} is missing a spec="..." attribute`,
-        )
-      })
-
-      if (!redoc?.spec) return
-
-      const yamlFile = specPathToYamlFile(redoc.spec)
-
-      it('spec attribute points to an existing yaml file', () => {
-        assert.ok(yamlFile, `Unresolvable spec path: ${redoc.spec}`)
-        assert.ok(
-          existsSync(yamlFile),
-          `YAML file does not exist: ${yamlFile}\n  spec="${redoc.spec}" in ${resolved.finalFile}`,
-        )
-      })
-
-      if (!yamlFile || !existsSync(yamlFile)) return
-
-      it('yaml parses and declares the filterPath (if given)', () => {
-        const { doc, error } = loadYaml(yamlFile)
-        assert.ok(!error, `YAML parse error in ${yamlFile}: ${error?.message}`)
-        assert.ok(doc && typeof doc === 'object', `YAML did not parse to object: ${yamlFile}`)
-
-        if (!redoc.filterPath) return
-        assert.ok(
-          doc.paths && Object.prototype.hasOwnProperty.call(doc.paths, redoc.filterPath),
-          `filterPath "${redoc.filterPath}" not found in ${yamlFile}\n  Referenced from ${resolved.finalFile}`,
-        )
-
-        if (!redoc.filterMethod) return
-        const pathItem = doc.paths[redoc.filterPath]
-        assert.ok(
-          pathItem && Object.prototype.hasOwnProperty.call(pathItem, redoc.filterMethod.toLowerCase()),
-          `filterMethod "${redoc.filterMethod}" not found under "${redoc.filterPath}" in ${yamlFile}`,
-        )
-      })
-    })
-  }
+    assert.deepStrictEqual(
+      failures,
+      [],
+      `Endpoints whose URL doesn't round-trip:\n` +
+      failures.map(f => `  - ${f.url} (${f.reason})`).join('\n'),
+    )
+  })
 })

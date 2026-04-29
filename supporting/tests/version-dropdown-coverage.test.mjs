@@ -1,110 +1,102 @@
 // Fails when VersionDropdown would navigate to a dead page.
 //
-// VersionDropdown.selectVersion (docs/components/VersionDropdown.vue) does:
-//   route.path.replace(`/${oldVersion}/`, `/${newVersion}/`)
-//   router.go(newPath)
+// VersionDropdown swaps the active version segment in the current route path
+// (`/.../v2.1/...` → `/.../v2.2/...`) and pushes the result. That swapped path
+// MUST resolve to a real page or the dropdown produces a broken navigation.
 //
-// So if the user is on a page whose path contains `/v2.1/` and picks v2.2 from
-// the dropdown, they land at the v2.2-equivalent path. That path MUST exist or
-// the dropdown produces a broken navigation.
-//
-// This test enforces version parity: every version-bearing .md page must have
-// a counterpart at the equivalent path for every other entry in VERSIONS.
+// This test enforces version parity: every version-bearing .vue page under
+// src/pages/ must have a counterpart at the equivalent path for every
+// other entry in VERSIONS.
 //
 // Today (single version) the test is a no-op. It activates the moment a new
-// version is added to docs/.vitepress/version.ts and fails with the exact
+// version is added to src/data/versions.ts and fails with the exact
 // dead paths the dropdown would produce.
 
 import { describe, it, before } from 'node:test'
 import assert from 'node:assert/strict'
-import { existsSync, readdirSync, statSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs'
+import { existsSync, readdirSync, statSync, readFileSync } from 'node:fs'
 import { resolve, dirname, join } from 'node:path'
-import { tmpdir } from 'node:os'
-import { fileURLToPath, pathToFileURL } from 'node:url'
-import { build } from 'esbuild'
+import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..', '..')
-const DOCS = resolve(ROOT, 'docs')
-const VERSION_FILE = resolve(DOCS, '.vitepress', 'version.ts')
+const PAGES = resolve(ROOT, 'src', 'pages')
+const VERSIONS_FILE = resolve(ROOT, 'src', 'data', 'versions.ts')
 
-async function loadVersions() {
-  const tmp = mkdtempSync(join(tmpdir(), 'vd-cov-'))
-  const out = join(tmp, 'version.mjs')
-  await build({
-    entryPoints: [VERSION_FILE],
-    outfile: out,
-    bundle: true,
-    format: 'esm',
-    platform: 'node',
-    logLevel: 'silent',
-  })
-  try {
-    return await import(pathToFileURL(out).href)
-  } finally {
-    rmSync(tmp, { recursive: true, force: true })
-  }
+// Cheap parser: VERSIONS is a const tuple of string literals — no need to
+// boot a TS bundler just to read the array.
+function parseVersions() {
+  const src = readFileSync(VERSIONS_FILE, 'utf-8')
+  const match = src.match(/VERSIONS\s*=\s*\[([^\]]+)\]/)
+  if (!match) throw new Error('Could not parse VERSIONS from versions.ts')
+  return match[1].split(',').map(v => v.trim().replace(/['"]/g, '')).filter(Boolean)
 }
 
-function walkMd(dir, acc = []) {
+function walkVue(dir, acc = []) {
   if (!existsSync(dir)) return acc
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry)
     const st = statSync(full)
     if (st.isDirectory()) {
-      if (entry === '.vitepress' || entry === 'public' || entry === 'cache' || entry === 'dist') continue
-      walkMd(full, acc)
-    } else if (entry.endsWith('.md')) {
+      walkVue(full, acc)
+    } else if (entry.endsWith('.vue') || entry.endsWith('.md')) {
       acc.push(full)
     }
   }
   return acc
 }
 
-// docs/tech/foo/v2.1/bar/index.md  →  /tech/foo/v2.1/bar/
-// docs/tech/foo/v2.1/bar.md        →  /tech/foo/v2.1/bar
-function toRoutePath(absMd) {
-  let rel = absMd.slice(DOCS.length).replace(/\\/g, '/')
-  if (rel.endsWith('/index.md')) return rel.slice(0, -'index.md'.length)
-  return rel.slice(0, -'.md'.length)
+// Mirrors vite-plugin-pages defaults:
+//   src/pages/foo/bar/index.vue  →  /foo/bar/
+//   src/pages/foo/bar.vue        →  /foo/bar
+function toRoutePath(absFile) {
+  let rel = absFile.slice(PAGES.length).replace(/\\/g, '/')
+  rel = rel.replace(/\.(vue|md)$/, '')
+  if (rel.endsWith('/index')) return rel.slice(0, -'index'.length)
+  return rel
 }
 
-// cleanUrls mapping (mirrors VitePress + orphan-pages.test.mjs):
-//   "/foo/bar/" → docs/foo/bar/index.md
-//   "/foo/bar"  → docs/foo/bar.md, fallback docs/foo/bar/index.md
 function resolveSitePath(routePath) {
   const trailing = routePath.endsWith('/')
   const bare = routePath.replace(/^\//, '').replace(/\/$/, '')
   if (!bare) {
-    const home = join(DOCS, 'index.md')
-    return existsSync(home) ? home : null
+    for (const ext of ['.vue', '.md']) {
+      const home = join(PAGES, 'index' + ext)
+      if (existsSync(home)) return home
+    }
+    return null
   }
   const candidates = trailing
-    ? [join(DOCS, bare, 'index.md')]
-    : [join(DOCS, bare + '.md'), join(DOCS, bare, 'index.md')]
+    ? ['index.vue', 'index.md'].map(f => join(PAGES, bare, f))
+    : [
+        join(PAGES, bare + '.vue'),
+        join(PAGES, bare + '.md'),
+        join(PAGES, bare, 'index.vue'),
+        join(PAGES, bare, 'index.md'),
+      ]
   for (const c of candidates) if (existsSync(c)) return c
   return null
 }
 
 describe('VersionDropdown navigation never lands on a dead page', () => {
   let VERSIONS
-  let allMd
+  let allFiles
 
-  before(async () => {
-    ({ VERSIONS } = await loadVersions())
-    allMd = walkMd(DOCS)
+  before(() => {
+    VERSIONS = parseVersions()
+    allFiles = walkVue(PAGES)
   })
 
   it('VERSIONS loads and contains at least the current version', () => {
     assert.ok(Array.isArray(VERSIONS) && VERSIONS.length >= 1,
-      'docs/.vitepress/version.ts must export a non-empty VERSIONS array')
+      'src/data/versions.ts must export a non-empty VERSIONS array')
   })
 
   it('every version-bearing page has a counterpart at every other version in VERSIONS', () => {
     if (VERSIONS.length < 2) return // dormant when only one version exists
 
     const failures = []
-    for (const file of allMd) {
+    for (const file of allFiles) {
       const routePath = toRoutePath(file)
       const sourceVersion = VERSIONS.find(v => routePath.includes(`/${v}/`))
       if (!sourceVersion) continue

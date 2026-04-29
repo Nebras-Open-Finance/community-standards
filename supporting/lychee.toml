@@ -12,13 +12,13 @@ exclude = [
   '^tel:',
 ]
 
-# Skip anchors — VitePress generates slugs at build time and lychee's
+# Skip anchors — vite-ssg generates slugs at build time and lychee's
 # fragment resolution doesn't always match. Revisit if we want stricter checks.
 include_fragments = false
 
-# VitePress is configured with cleanUrls, so internal hrefs like `/foo/bar`
-# resolve to `/foo/bar.html` in the built output. Tell lychee to try that
-# extension before declaring the link broken.
+# vite-ssg emits clean URLs by default, so internal hrefs like `/foo/bar`
+# resolve to `/foo/bar.html` (or `/foo/bar/index.html`) in the built output.
+# Tell lychee to try those extensions before declaring the link broken.
 fallback_extensions = ['html']
 
 # Don't fail build on cache/transient issues.

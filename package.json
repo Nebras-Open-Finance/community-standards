@@ -2,17 +2,20 @@
   "name": "community-standards",
   "version": "1.0.0",
   "description": "Community-driven, experimental documentation and reference material for the UAE Open Finance standards. This repository is not official and is used to gather suggestions, trial modern documentation tooling and explore improvements to the Open Finance specifications.",
-  "main": "index.js",
+  "private": true,
   "type": "module",
   "scripts": {
     "fetch:specs": "node scripts/fetch-openapi-specs.mjs && node scripts/generate-openapi-xlsx.mjs",
     "fetch:orgs": "node scripts/fetch-organisations.mjs",
     "fetch:github": "node scripts/fetch-github-stats.mjs",
-    "dev:docs": "node scripts/fetch-organisations.mjs && node scripts/fetch-github-stats.mjs && node scripts/fetch-openapi-specs.mjs && node scripts/generate-openapi-xlsx.mjs && vitepress dev docs",
-    "docs:build": "node scripts/fetch-organisations.mjs && node scripts/fetch-github-stats.mjs && node scripts/fetch-openapi-specs.mjs --force && node scripts/generate-openapi-xlsx.mjs && vitepress build docs",
-    "docs:serve": "vitepress serve docs",
+    "fetch:all": "npm run fetch:orgs && npm run fetch:github && npm run fetch:specs",
+    "dev": "npm run fetch:all && vite",
+    "build": "npm run fetch:all && vite-ssg build",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit",
     "pretest": "npm run fetch:specs && npm run fetch:orgs",
-    "test": "node --test --test-concurrency=1 supporting/tests/**/*.test.mjs"
+    "test": "node --test --test-concurrency=1 supporting/tests/**/*.test.mjs",
+    "test:fast": "node --test --test-concurrency=1 supporting/tests/api-spec-pages.test.mjs supporting/tests/chargeable-endpoints.test.mjs supporting/tests/endpoint-spec-references.test.mjs supporting/tests/link-integrity.test.mjs supporting/tests/no-uppercase-image-extensions.test.mjs supporting/tests/orphan-pages.test.mjs supporting/tests/page-titles.test.mjs supporting/tests/spec-to-workbook.test.mjs supporting/tests/specs.test.mjs supporting/tests/ssg-dynamic-routes.test.mjs supporting/tests/unused-components.test.mjs supporting/tests/user-journey-initial-data.test.mjs supporting/tests/version-dropdown-coverage.test.mjs"
   },
   "repository": {
     "type": "git",
@@ -25,18 +28,30 @@
     "url": "https://github.com/Nebras-Open-Finance/community-standards/issues"
   },
   "homepage": "https://github.com/Nebras-Open-Finance/community-standards#readme",
-  "devDependencies": {
-    "@redocly/cli": "^2.20.0",
-    "concurrently": "^9.2.1",
-    "vitepress": "^1.6.4",
-    "vue": "^3.5.27"
-  },
   "dependencies": {
-    "axios": "^1.13.4",
+    "axios": "^1.15.2",
     "chart.js": "^4.5.1",
-    "mermaid": "^11.12.3",
-    "vue3-tel-input": "^1.0.4",
+    "mermaid": "^11.14.0",
+    "shiki": "^4.0.2",
+    "vue": "^3.5.27",
+    "vue-router": "^4.4.5",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
-    "yaml": "^2.8.2"
+    "yaml": "^2.8.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/server-renderer": "^3.5.27",
+    "@vue/tsconfig": "^0.7.0",
+    "esbuild": "^0.21.5",
+    "typescript": "^5.6.3",
+    "unplugin-auto-import": "^0.18.6",
+    "unplugin-vue-components": "^0.27.5",
+    "unplugin-vue-markdown": "^30.0.0",
+    "vite": "^5.4.21",
+    "vite-plugin-pages": "^0.32.4",
+    "vite-plugin-vue-layouts": "^0.11.0",
+    "vite-ssg": "^0.24.3",
+    "vue-tsc": "^2.1.10"
   }
 }

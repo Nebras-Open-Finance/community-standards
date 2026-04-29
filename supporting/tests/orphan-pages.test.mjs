@@ -1,230 +1,133 @@
-// Fails when a .md page under docs/ is unreachable from any navigation path.
+// Fails when a page under src/pages/ is unreachable from any navigation path.
 //
 // Reachability roots:
-//   1. docs/index.md (the site home)
-//   2. Every `link` in every sidebar (sidebars are evaluated, not regex-scraped,
-//      so helper functions and template literals resolve to their real values)
-//   3. Every `link` in the top nav (parsed from config.ts)
-//   4. Every href in GLOBAL_CHROME_COMPONENTS — components that render on every page
-//      (header, footer, layout). Page-conditional components are deliberately
-//      excluded: a link rendered only on /foo/* pointing back to /foo/ is a
-//      self-referential loop, not real navigation from outside the section.
+//   1. src/pages/index.vue (the site home)
+//   2. Every `link` in tppSidebar, lfiSidebar, and buildApiSpecsSidebar(v)
+//      for every version (sidebars are evaluated, not regex-scraped, so
+//      template literals and helper calls resolve to real strings)
+//   3. Every static href in chrome (PageHeader, PageFooter, default layout)
 //
-// From those roots we BFS through markdown links, @include directives, and
-// href attributes inside .md files. When a reachable .md uses a Vue component
-// (e.g. <PolicyPage />), we also follow hrefs rendered by that component —
-// including template literal prefixes like `/foo/${x}` → every .md under
-// docs/foo/ — and recurse into nested components and imported data files.
-// Anything unreached — and not a partial under _shared/ or a dynamic-route
-// file under [param]/ — is an orphan.
-import { describe, it, before } from 'node:test'
+// From those roots we BFS through static `<a href="...">`, `<RouterLink to="...">`,
+// markdown `[text](path)`, and `<!-- @include: -->` references inside reachable
+// .vue / .md files.
+//
+// Listing-prefix inference: a few pages render their child links from a data
+// registry (`policies.ts`, `articles.ts`) via `:href="x.url"`. Static-link
+// scraping can't see these, so we hardcode known listing→child-tree pairs.
+// Once the listing page is reachable, every page under the child tree is too.
+//
+// Skipped (never expected to be statically linked):
+//   - dynamic-route files: `[id].vue`, `[...slug].vue`, `[year].vue`, etc.
+//     These are reached via ssg-paths.ts expansion, not static links.
+//   - underscore-prefixed dirs (`_shared/`, `_dev/`, …): partials and dev-only
+//     scratch pages that aren't part of public navigation.
+
+import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync, readdirSync, statSync, existsSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { resolve, dirname, join, relative, basename } from 'node:path'
-import { tmpdir } from 'node:os'
-import { fileURLToPath, pathToFileURL } from 'node:url'
-import { build } from 'esbuild'
+import { fileURLToPath } from 'node:url'
+import { bundleAndImport } from './_helpers/bundle-ts.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..', '..')
-const DOCS = resolve(ROOT, 'docs')
-const SIDEBAR_DIR = resolve(DOCS, '.vitepress', 'config', 'sidebars')
-const CONFIG_FILE = resolve(DOCS, '.vitepress', 'config.ts')
-const VERSION_FILE = resolve(DOCS, '.vitepress', 'version.ts')
-
-// Components that render on EVERY page — their links count as navigation roots.
-// Page-conditional components (e.g. DocumentRepoDisplay, which only renders under /doc-repository/)
-// are deliberately excluded: a link rendered only on /foo/* pointing back to /foo/ is a
-// self-referential loop, not real navigation.
-const GLOBAL_CHROME_COMPONENTS = [
-  resolve(DOCS, 'components', 'WebPages', 'Components', 'PageHeader.vue'),
-  resolve(DOCS, 'components', 'WebPages', 'Components', 'PageFooter.vue'),
-  resolve(DOCS, '.vitepress', 'theme', 'Layout.vue'),
+const PAGES = resolve(ROOT, 'src', 'pages')
+const SIDEBARS = resolve(ROOT, 'src', 'data', 'sidebars')
+const VERSIONS_FILE = resolve(ROOT, 'src', 'data', 'versions.ts')
+const LAYOUT_DEFAULT = resolve(ROOT, 'src', 'layouts', 'default.vue')
+const CHROME_FILES = [
+  resolve(ROOT, 'src', 'components', 'chrome', 'PageHeader.vue'),
+  resolve(ROOT, 'src', 'components', 'chrome', 'PageFooter.vue'),
+  LAYOUT_DEFAULT,
 ]
 
-// Pages we knowingly leave unlinked. Relative to docs/, forward slashes.
-// Add entries only with a reason — if a page belongs on a sidebar, wire it up instead.
+// Pages we knowingly leave unlinked. Relative to src/pages/, forward slashes.
+// Add entries only with a reason — if a page belongs on a sidebar, wire it up.
 const ALLOWED_ORPHANS = new Set([
-  'processes/index.md', // Landing for the processes section; sidebar exists but no in-site link points at /processes/ itself.
+  // The "all errata, all versions" listing. The release-notes-and-erratas
+  // index links to the per-version dynamic route (erratas/v2.1/) rather than
+  // this aggregate. Kept around for direct-link access until/unless we add
+  // a tile for it on the parent index.
+  'tech/release-notes-and-erratas/erratas/index.vue',
 ])
+
+// Listing pages that render their children via data-driven `:href`. Once the
+// listing is reachable, every .vue under the child tree is treated reachable.
+// Pairs are { listing: '/route/of/index/page', tree: 'src/pages/relative/dir' }.
+const LISTING_INFERENCE = [
+  { listing: '/policy', tree: 'policy' },
+  { listing: '/policy/', tree: 'policy' },
+  { listing: '/knowledge-base', tree: 'knowledge-base/articles' },
+  { listing: '/knowledge-base/', tree: 'knowledge-base/articles' },
+]
+
+let sidebars
+let dispose
+
+before(async () => {
+  const a = await bundleAndImport(`
+    export { tppSidebar } from ${JSON.stringify(join(SIDEBARS, 'tpp.ts'))}
+    export { lfiSidebar } from ${JSON.stringify(join(SIDEBARS, 'lfi.ts'))}
+    export { buildApiSpecsSidebar } from ${JSON.stringify(join(SIDEBARS, 'api-specs.ts'))}
+    export { VERSIONS } from ${JSON.stringify(VERSIONS_FILE)}
+  `)
+  sidebars = a.mod
+  dispose = a.dispose
+})
+
+after(() => dispose?.())
+
+// ─── File walking ────────────────────────────────────────────────────────────
 
 function walk(dir, filterExt, acc = []) {
   if (!existsSync(dir)) return acc
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry)
     const st = statSync(full)
-    if (st.isDirectory()) {
-      if (entry === '.vitepress' || entry === 'dist' || entry === 'cache' || entry === 'public') continue
-      walk(full, filterExt, acc)
-    } else if (filterExt.test(entry)) {
-      acc.push(full)
-    }
+    if (st.isDirectory()) walk(full, filterExt, acc)
+    else if (filterExt.test(entry)) acc.push(full)
   }
   return acc
 }
 
-// kb.ts reads docs/knowledge-base at module load via `import.meta.url`. If esbuild
-// bundles that reference into a tmp output path, the relative fs lookup resolves
-// into AppData/knowledge-base and crashes. Replace each file's `import.meta.url`
-// with a literal of its ORIGINAL file:// URL so runtime path math survives bundling.
-function pinImportMetaUrlPlugin() {
-  return {
-    name: 'pin-import-meta-url',
-    setup(b) {
-      b.onLoad({ filter: /\.ts$/ }, (args) => {
-        const raw = readFileSync(args.path, 'utf-8')
-        const origUrl = pathToFileURL(args.path).href
-        return {
-          contents: raw.replace(/\bimport\.meta\.url\b/g, JSON.stringify(origUrl)),
-          loader: 'ts',
-        }
-      })
-    },
-  }
+function isExemptByPath(absFile) {
+  const rel = relative(PAGES, absFile).replace(/\\/g, '/')
+  return rel.split('/').some(seg => seg.startsWith('_') || seg.startsWith('['))
 }
 
-async function loadSidebarConfig() {
-  const tmp = mkdtempSync(join(tmpdir(), 'orphan-'))
-  const out = join(tmp, 'config.mjs')
-  const entry = join(tmp, 'entry.ts')
-
-  writeFileSync(entry, `
-    export { tppSidebar } from ${JSON.stringify(join(SIDEBAR_DIR, 'tpp.ts'))}
-    export { lfiSidebar } from ${JSON.stringify(join(SIDEBAR_DIR, 'lfi.ts'))}
-    export { processesSidebar } from ${JSON.stringify(join(SIDEBAR_DIR, 'policy.ts'))}
-    export { kbSidebar } from ${JSON.stringify(join(SIDEBAR_DIR, 'kb.ts'))}
-    export { apiSpecsSidebar } from ${JSON.stringify(join(SIDEBAR_DIR, 'api-specs.ts'))}
-    export { docRepositorySidebar } from ${JSON.stringify(join(SIDEBAR_DIR, 'doc-repository.ts'))}
-    export { CURRENT_VERSION } from ${JSON.stringify(VERSION_FILE)}
-  `)
-
-  await build({
-    entryPoints: [entry],
-    outfile: out,
-    bundle: true,
-    format: 'esm',
-    platform: 'node',
-    external: ['vitepress'],
-    plugins: [pinImportMetaUrlPlugin()],
-    logLevel: 'silent',
-  })
-
-  try {
-    return await import(pathToFileURL(out).href)
-  } finally {
-    rmSync(tmp, { recursive: true, force: true })
-  }
+function toRelPages(absFile) {
+  return relative(PAGES, absFile).replace(/\\/g, '/')
 }
 
-function collectLinksFromSidebarTree(node, acc = new Set()) {
+// ─── Sidebar tree → links ────────────────────────────────────────────────────
+
+function collectLinksFromTree(node, acc = new Set()) {
   if (!node) return acc
   if (Array.isArray(node)) {
-    for (const n of node) collectLinksFromSidebarTree(n, acc)
+    for (const n of node) collectLinksFromTree(n, acc)
     return acc
   }
   if (typeof node === 'object') {
     if (typeof node.link === 'string') acc.add(node.link)
-    if (node.items) collectLinksFromSidebarTree(node.items, acc)
+    if (node.items) collectLinksFromTree(node.items, acc)
   }
   return acc
 }
 
-// The inline `/tech/` fallback sidebar lives in config.ts (not exported as a module),
-// so we scan the file for `link:`. The top `nav: [...]` block is deliberately excluded:
-// Layout.vue / editorial-doc.css hide VitePress's default nav bar, so themeConfig.nav
-// entries never render to users — treating them as reachability roots would mask real
-// orphans (e.g. a page listed only in the dead nav).
-function collectConfigLinks() {
-  const src = readFileSync(CONFIG_FILE, 'utf-8')
-  const navRange = findNavArrayRange(src)
-  const links = new Set()
-  const re = /\blink\s*:\s*([`'"])([^`'"]+)\1/g
-  let m
-  while ((m = re.exec(src)) !== null) {
-    if (navRange && m.index >= navRange.start && m.index < navRange.end) continue
-    links.add(m[2])
-  }
-  return links
-}
+// ─── Chrome / markdown / template parsing ────────────────────────────────────
 
-// Locate the `nav: [ ... ]` array in config.ts by counting brackets.
-// Returns { start, end } byte offsets of the array body, or null if not found.
-function findNavArrayRange(src) {
-  const m = /\bnav\s*:\s*\[/.exec(src)
-  if (!m) return null
-  const start = m.index + m[0].length - 1 // position of opening '['
-  let depth = 0
-  for (let i = start; i < src.length; i++) {
-    const c = src[i]
-    if (c === '[') depth++
-    else if (c === ']') {
-      depth--
-      if (depth === 0) return { start, end: i + 1 }
-    }
-  }
-  return null
-}
-
-// Scan global-chrome Vue components for href attributes (static `href="..."` and
-// bound `:href="'...'"`). These render on every page so their links are real roots.
-function collectGlobalChromeLinks() {
-  const links = new Set()
-  const patterns = [
-    /\shref\s*=\s*"([^"#?]+)(?:[#?][^"]*)?"/g,
-    /\s:href\s*=\s*"'([^'"#?]+)(?:[#?][^'"]*)?'"/g,
-  ]
-  for (const file of GLOBAL_CHROME_COMPONENTS) {
-    if (!existsSync(file)) continue
-    const src = readFileSync(file, 'utf-8')
-    for (const re of patterns) {
-      let m
-      while ((m = re.exec(src)) !== null) links.add(m[1])
-    }
-  }
-  return links
-}
-
-// cleanUrls mapping:
-//   "/foo/bar/"  → docs/foo/bar/index.md
-//   "/foo/bar"   → docs/foo/bar.md, or fallback docs/foo/bar/index.md
-function resolveSiteLink(link) {
-  const cleaned = link.replace(/#.*$/, '').replace(/\?.*$/, '')
-  if (!cleaned.startsWith('/')) return null
-  const trailing = cleaned.endsWith('/')
-  const bare = cleaned.replace(/^\//, '').replace(/\/$/, '')
-  if (!bare) {
-    const home = join(DOCS, 'index.md')
-    return existsSync(home) ? home : null
-  }
-  const candidates = trailing
-    ? [join(DOCS, bare, 'index.md')]
-    : [join(DOCS, bare + '.md'), join(DOCS, bare, 'index.md')]
-  for (const c of candidates) if (existsSync(c)) return c
-  return null
-}
-
-function resolveRelativeLink(fromFile, link) {
-  const cleaned = link.replace(/#.*$/, '').replace(/\?.*$/, '')
-  if (!cleaned) return null
-  if (/^(https?:|mailto:)/.test(cleaned)) return null
-  const abs = resolve(dirname(fromFile), cleaned)
-  if (cleaned.endsWith('.md')) return existsSync(abs) ? abs : null
-  if (cleaned.endsWith('/')) {
-    const idx = join(abs, 'index.md')
-    return existsSync(idx) ? idx : null
-  }
-  if (existsSync(abs + '.md')) return abs + '.md'
-  const idx = join(abs, 'index.md')
-  if (existsSync(idx)) return idx
-  return null
-}
-
-function extractLinksFromMarkdown(src) {
+function extractStaticHrefs(src) {
   const refs = new Set()
   const patterns = [
-    /\]\(([^)\s]+?)(?:\s+"[^"]*")?\)/g,        // [text](href)
-    /<!--\s*@include:\s*([^\s]+?)\s*-->/g,      // <!--@include:-->
-    /href\s*=\s*"([^"#?]+)(?:[#?][^"]*)?"/g,    // <a href="...">
+    // <a href="..."> and bound :href="'...'" (single-quoted literal)
+    /\shref\s*=\s*"([^"#?]+)(?:[#?][^"]*)?"/g,
+    /\s:href\s*=\s*"'([^'"#?]+)(?:[#?][^'"]*)?'"/g,
+    // <RouterLink to="..."> and <RouterLink :to="'...'">
+    /\sto\s*=\s*"([^"#?]+)(?:[#?][^"]*)?"/g,
+    /\s:to\s*=\s*"'([^'"#?]+)(?:[#?][^'"]*)?'"/g,
+    // markdown [text](path) and HTML <!-- @include: x -->
+    /\]\(([^)\s]+?)(?:\s+"[^"]*")?\)/g,
+    /<!--\s*@include:\s*([^\s]+?)\s*-->/g,
   ]
   for (const re of patterns) {
     let m
@@ -233,178 +136,143 @@ function extractLinksFromMarkdown(src) {
   return refs
 }
 
-// Map PascalCase component name → .vue file path.
-function discoverComponents() {
-  const map = new Map()
-  for (const f of walk(resolve(DOCS, 'components'), /\.vue$/)) {
-    map.set(basename(f, '.vue'), f)
-  }
-  return map
-}
-
-// Find <PascalCaseName ...> tags (Vue components) in markdown or .vue source.
-function extractComponentTags(src) {
-  const names = new Set()
-  const re = /<([A-Z][A-Za-z0-9]*)\b[^>]*>/g
-  let m
-  while ((m = re.exec(src)) !== null) names.add(m[1])
-  return names
-}
-
-// Extract site-relative URLs from .vue / .ts source. Returns:
-//   links[]    — static paths: href="/foo/bar", `/foo/bar`
-//   prefixes[] — directory prefixes from interpolated template literals:
-//                `/foo/${slug}` → "/foo/"
-function extractComponentRefs(src) {
+function collectChromeLinks() {
   const links = new Set()
-  const prefixes = new Set()
-  const hrefPatterns = [
-    /\shref\s*=\s*"([^"#?]+)(?:[#?][^"]*)?"/g,
-    /\s:href\s*=\s*"'([^'"#?]+)(?:[#?][^'"]*)?'"/g,
-  ]
-  for (const re of hrefPatterns) {
-    let m
-    while ((m = re.exec(src)) !== null) if (m[1].startsWith('/')) links.add(m[1])
-  }
-  const tplRe = /`(\/[^`]*?)`/g
-  let m
-  while ((m = tplRe.exec(src)) !== null) {
-    const tpl = m[1]
-    const dollar = tpl.indexOf('${')
-    if (dollar === -1) {
-      links.add(tpl)
-    } else {
-      const prefix = tpl.slice(0, dollar)
-      if (prefix.length > 1) prefixes.add(prefix)
+  for (const file of CHROME_FILES) {
+    if (!existsSync(file)) continue
+    for (const ref of extractStaticHrefs(readFileSync(file, 'utf-8'))) {
+      links.add(ref)
     }
   }
-  return { links, prefixes }
+  return links
 }
 
-// Resolve relative `from '...'` imports in .vue / .ts source to abs .ts paths.
-function extractRelativeImports(file, src) {
-  const dir = dirname(file)
-  const out = []
-  const re = /\bfrom\s+["'](\.[^"']+)["']/g
-  let m
-  while ((m = re.exec(src)) !== null) {
-    const spec = m[1]
-    const candidates = [
-      resolve(dir, spec),
-      resolve(dir, spec + '.ts'),
-      resolve(dir, spec + '.data.ts'),
-      resolve(dir, spec, 'index.ts'),
-    ]
-    for (const c of candidates) {
-      if (existsSync(c) && statSync(c).isFile()) { out.push(c); break }
+// ─── Route resolution (mirrors vite-plugin-pages defaults) ───────────────────
+//
+//   "/foo/bar/"  → src/pages/foo/bar/index.vue (or .md)
+//   "/foo/bar"   → src/pages/foo/bar.vue (then .md, then bar/index.vue)
+//   "/"          → src/pages/index.vue
+
+function resolveSiteLink(link) {
+  const cleaned = link.replace(/#.*$/, '').replace(/\?.*$/, '')
+  if (!cleaned.startsWith('/')) return null
+  const trailing = cleaned.endsWith('/')
+  const bare = cleaned.replace(/^\//, '').replace(/\/$/, '')
+  if (!bare) {
+    for (const ext of ['.vue', '.md']) {
+      const home = join(PAGES, 'index' + ext)
+      if (existsSync(home)) return home
     }
+    return null
   }
-  return out
+  const candidates = trailing
+    ? ['index.vue', 'index.md'].map(f => join(PAGES, bare, f))
+    : [
+        join(PAGES, bare + '.vue'),
+        join(PAGES, bare + '.md'),
+        join(PAGES, bare, 'index.vue'),
+        join(PAGES, bare, 'index.md'),
+      ]
+  for (const c of candidates) if (existsSync(c)) return c
+  return null
 }
 
-// All .md files under docs/<prefix>/ — used to seed pages reachable via
-// interpolated URLs like `/foo/${slug}`.
-function mdFilesUnderPrefix(prefix) {
-  const bare = prefix.replace(/^\//, '').replace(/\/$/, '')
-  if (!bare) return []
-  const dir = join(DOCS, bare)
-  if (!existsSync(dir) || !statSync(dir).isDirectory()) return []
-  return walk(dir, /\.md$/)
-}
-
-function followComponent(file, visited, registry, seed) {
-  if (visited.has(file) || !existsSync(file)) return
-  visited.add(file)
-  const src = readFileSync(file, 'utf-8')
-  const { links, prefixes } = extractComponentRefs(src)
-  for (const link of links) {
-    const target = resolveSiteLink(link)
-    if (target) seed(target)
+function resolveRelativeLink(fromFile, link) {
+  const cleaned = link.replace(/#.*$/, '').replace(/\?.*$/, '')
+  if (!cleaned) return null
+  if (/^(https?:|mailto:|tel:)/.test(cleaned)) return null
+  const abs = resolve(dirname(fromFile), cleaned)
+  if (cleaned.endsWith('.vue') || cleaned.endsWith('.md')) {
+    return existsSync(abs) ? abs : null
   }
-  for (const prefix of prefixes) for (const md of mdFilesUnderPrefix(prefix)) seed(md)
-  for (const name of extractComponentTags(src)) {
-    const sub = registry.get(name)
-    if (sub) followComponent(sub, visited, registry, seed)
-  }
-  for (const imp of extractRelativeImports(file, src)) {
-    if (visited.has(imp) || !/\.(ts|mjs|js)$/.test(imp)) continue
-    visited.add(imp)
-    const impSrc = readFileSync(imp, 'utf-8')
-    const { links: l2, prefixes: p2 } = extractComponentRefs(impSrc)
-    for (const link of l2) {
-      const target = resolveSiteLink(link)
-      if (target) seed(target)
+  if (cleaned.endsWith('/')) {
+    for (const ext of ['index.vue', 'index.md']) {
+      const candidate = join(abs, ext)
+      if (existsSync(candidate)) return candidate
     }
-    for (const prefix of p2) for (const md of mdFilesUnderPrefix(prefix)) seed(md)
+    return null
   }
+  for (const ext of ['.vue', '.md']) {
+    if (existsSync(abs + ext)) return abs + ext
+  }
+  for (const ext of ['index.vue', 'index.md']) {
+    const candidate = join(abs, ext)
+    if (existsSync(candidate)) return candidate
+  }
+  return null
 }
+
+// ─── Reachability BFS ────────────────────────────────────────────────────────
 
 async function computeReachable() {
   const reachable = new Set()
   const queue = []
-  const seed = (f) => { if (f && !reachable.has(f)) { reachable.add(f); queue.push(f) } }
-
-  seed(join(DOCS, 'index.md'))
-
-  const sidebarMod = await loadSidebarConfig()
-  const sidebarLinks = new Set()
-  for (const key of Object.keys(sidebarMod)) {
-    if (key === 'CURRENT_VERSION') continue
-    collectLinksFromSidebarTree(sidebarMod[key], sidebarLinks)
+  const seed = (f) => {
+    if (f && !reachable.has(f)) {
+      reachable.add(f)
+      queue.push(f)
+    }
   }
-  const navLinks = collectConfigLinks()
-  const chromeLinks = collectGlobalChromeLinks()
 
-  for (const link of new Set([...sidebarLinks, ...navLinks, ...chromeLinks])) {
+  // 1. Home
+  seed(join(PAGES, 'index.vue'))
+
+  // 2. Sidebar links — every static + every dynamic version's api-specs.
+  const sidebarLinks = new Set()
+  collectLinksFromTree(sidebars.tppSidebar, sidebarLinks)
+  collectLinksFromTree(sidebars.lfiSidebar, sidebarLinks)
+  for (const v of sidebars.VERSIONS) {
+    const apiSpecs = sidebars.buildApiSpecsSidebar(v)
+    collectLinksFromTree(apiSpecs, sidebarLinks)
+  }
+
+  // 3. Chrome links.
+  const chromeLinks = collectChromeLinks()
+
+  // 4. Resolve all root links.
+  for (const link of new Set([...sidebarLinks, ...chromeLinks])) {
     const target = resolveSiteLink(link)
     if (target) seed(target)
   }
 
-  const componentRegistry = discoverComponents()
-  const visitedComponents = new Set()
-
+  // 5. BFS through links inside reachable files.
   while (queue.length) {
     const file = queue.shift()
     const src = readFileSync(file, 'utf-8')
-    for (const ref of extractLinksFromMarkdown(src)) {
-      if (/^(https?:|mailto:)/.test(ref)) continue
+    for (const ref of extractStaticHrefs(src)) {
+      if (/^(https?:|mailto:|tel:)/.test(ref)) continue
       if (/\.(png|jpe?g|gif|svg|webp|pdf|zip|mp4|webm|ico|css|js|yaml|yml|json)$/i.test(ref)) continue
       const target = ref.startsWith('/')
         ? resolveSiteLink(ref)
         : resolveRelativeLink(file, ref)
       if (target) seed(target)
     }
-    for (const name of extractComponentTags(src)) {
-      const comp = componentRegistry.get(name)
-      if (comp) followComponent(comp, visitedComponents, componentRegistry, seed)
-    }
+  }
+
+  // 6. Listing-prefix inference for data-driven children.
+  for (const { listing, tree } of LISTING_INFERENCE) {
+    const listingFile = resolveSiteLink(listing)
+    if (!listingFile || !reachable.has(listingFile)) continue
+    const treeDir = resolve(PAGES, tree)
+    for (const f of walk(treeDir, /\.(vue|md)$/)) seed(f)
   }
 
   return reachable
 }
 
-function isExemptByPath(absFile) {
-  const rel = relative(DOCS, absFile).replace(/\\/g, '/')
-  return rel.split('/').some(seg => seg === '_shared' || seg.startsWith('['))
-}
-
-function toRelDocs(absFile) {
-  return relative(DOCS, absFile).replace(/\\/g, '/')
-}
-
-describe('Docs pages are reachable from navigation', () => {
+describe('Pages are reachable from navigation', () => {
   let reachable
-  let allMd
+  let allPages
 
   before(async () => {
-    allMd = walk(DOCS, /\.md$/)
+    allPages = walk(PAGES, /\.(vue|md)$/)
     reachable = await computeReachable()
   })
 
-  it('no .md page is orphaned (unreachable from sidebar, nav, or any linked page)', () => {
-    const orphans = allMd
+  it('no .vue/.md page is orphaned (unreachable from sidebar, nav, or any reachable page)', () => {
+    const orphans = allPages
       .filter(f => !reachable.has(f) && !isExemptByPath(f))
-      .map(toRelDocs)
+      .map(toRelPages)
       .filter(p => !ALLOWED_ORPHANS.has(p))
 
     assert.deepStrictEqual(
@@ -416,24 +284,27 @@ describe('Docs pages are reachable from navigation', () => {
     )
   })
 
-  it('no .md page is shadowed by a sibling directory with index.md', () => {
-    // A link like "/foo/bar/" (trailing slash) resolves to foo/bar/index.md.
-    // If foo/bar.md also exists, nothing can link to it — the dir form always wins
-    // under cleanUrls. These are always orphans by construction.
+  it('no .vue page is shadowed by a sibling directory with index.vue', () => {
+    // A link like "/foo/bar/" (trailing slash) resolves to foo/bar/index.vue.
+    // If foo/bar.vue also exists, nothing can link to it — the dir form always
+    // wins under vue-router cleanup. These are always orphans by construction.
     const shadowed = []
-    for (const f of allMd) {
-      const rel = toRelDocs(f)
-      if (rel.endsWith('/index.md')) continue
-      const sibling = join(f.replace(/\.md$/, ''), 'index.md')
-      if (existsSync(sibling)) {
-        shadowed.push({ file: toRelDocs(f), sibling: toRelDocs(sibling) })
+    for (const f of allPages) {
+      const rel = toRelPages(f)
+      if (basename(rel) === 'index.vue' || basename(rel) === 'index.md') continue
+      const noExt = f.replace(/\.(vue|md)$/, '')
+      for (const sibling of [join(noExt, 'index.vue'), join(noExt, 'index.md')]) {
+        if (existsSync(sibling)) {
+          shadowed.push({ file: rel, sibling: toRelPages(sibling) })
+          break
+        }
       }
     }
 
     assert.deepStrictEqual(
       shadowed,
       [],
-      `Found ${shadowed.length} shadowed .md file(s) — a sibling directory with index.md will always win:\n` +
+      `Found ${shadowed.length} shadowed page(s) — a sibling directory with index.vue/.md will always win:\n` +
       shadowed.map(s => `  - ${s.file}\n    ← shadowed by ${s.sibling}`).join('\n'),
     )
   })

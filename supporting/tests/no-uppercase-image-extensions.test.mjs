@@ -7,10 +7,10 @@ import { fileURLToPath } from 'node:url'
 // Regression guard for: https://nebras-open-finance.com/ deployment (Cloudflare Pages, Linux, case-sensitive).
 // Pages authored on Windows/macOS reference `/images/foo/1.png` but git tracked the file as `1.PNG`.
 // On case-insensitive local filesystems this works; on the deployed Linux host it 404s.
-// Ban uppercase image extensions under docs/public so the two cases can't diverge.
+// Ban uppercase image extensions under public/ so the two cases can't diverge.
 
 const REPO_ROOT = fileURLToPath(new URL('../../', import.meta.url))
-const PUBLIC_DIR = join(REPO_ROOT, 'docs', 'public')
+const PUBLIC_DIR = join(REPO_ROOT, 'public')
 
 const IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico', '.bmp', '.avif', '.heic'])
 
@@ -23,7 +23,7 @@ async function* walk(dir) {
   }
 }
 
-test('no uppercase image extensions under docs/public', async () => {
+test('no uppercase image extensions under public/', async () => {
   const offenders = []
   for await (const file of walk(PUBLIC_DIR)) {
     const ext = extname(file)

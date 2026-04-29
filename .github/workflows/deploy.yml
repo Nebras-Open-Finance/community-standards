@@ -33,11 +33,11 @@ jobs:
           # Read-only PAT for cross-repo reads against Nebras-Open-Finance/api-specs.
           # Provisioned by terraform-controller (github/actions_secrets.tf).
           GITHUB_TOKEN: ${{ secrets.SPECS_READ_TOKEN }}
-        run: npm run docs:build
+        run: npm run build
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy docs/.vitepress/dist --project-name=nebras-website --branch=main
+          command: pages deploy dist --project-name=nebras-website --branch=main

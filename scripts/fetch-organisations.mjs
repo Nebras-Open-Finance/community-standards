@@ -1,7 +1,7 @@
 /**
  * Fetches the live trust-framework organisation list from the Nebras docs Worker
  * (https://docs.nebras-open-finance.com/) and writes it to
- * docs/public/api/trust-framework.json for build-time consumers (sidebars,
+ * public/api/trust-framework.json for build-time consumers (sidebars,
  * SSG pages, homepage ticker, org scroller).
  *
  * Validates the response shape before writing so a bad upstream can't silently
@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..')
-const OUT_PATH = resolve(ROOT, 'docs', 'public', 'api', 'trust-framework.json')
+const OUT_PATH = resolve(ROOT, 'public', 'api', 'trust-framework.json')
 
 const DEFAULT_SOURCE = 'https://docs.nebras-open-finance.com/'
 const VALID_TYPES = new Set(['LFI', 'TPP', 'Authority'])

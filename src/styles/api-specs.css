@@ -1,0 +1,22 @@
+/* HTTP method badges used by the API Specs sidebar leaves. The class hooks
+   match `data/sidebars/shared.ts` `apiRef()` output (`http-badge http-<method>`
+   and `http-path`). Imported globally in `main.ts` so they're available
+   wherever EdSidebarItem renders the badge HTML via v-html. */
+
+.http-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  font-family: var(--at-mono, ui-monospace, monospace);
+  margin-right: 0.25rem;
+}
+
+.http-path {
+  font-size: 0.65rem;
+  font-family: var(--at-mono, ui-monospace, monospace);
+}
+
+.http-get    { color: #16a34a; }
+.http-post   { color: #3b82f6; }
+.http-put    { color: #8b5cf6; }
+.http-patch  { color: #f59e0b; }
+.http-delete { color: #ef4444; }

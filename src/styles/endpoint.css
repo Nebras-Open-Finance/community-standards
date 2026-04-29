@@ -1,0 +1,44 @@
+/*
+  HTTP endpoint formatting — reusable across /tech docs.
+
+  Usage (linked):
+    <a href="..." class="endpoint"><span class="http-method http-method--get">GET</span><code>/auth</code></a>
+
+  Usage (bare):
+    <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/auth</code></span>
+
+  The verb is rendered in mono with a method-specific colour; the path keeps
+  mono styling but drops the default <code> background so it sits cleanly
+  alongside the verb.
+*/
+
+/*
+  !important is used to defeat scoped :deep() rules in container components
+  (e.g. EdRefTable's `td a` / `td code` styles) without coupling those
+  components to this utility class.
+*/
+.endpoint {
+  text-decoration: none !important;
+  font-size: 1.05em;
+}
+
+.endpoint code {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  white-space: nowrap;
+}
+
+.http-method {
+  font-family: var(--at-mono);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 0.35em;
+}
+
+.http-method--get     { color: var(--at-teal-deep); }
+.http-method--post    { color: var(--at-blue-deep); }
+.http-method--put     { color: var(--at-blue); }
+.http-method--patch   { color: var(--at-gold); }
+.http-method--delete  { color: #B91C1C; }

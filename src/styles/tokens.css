@@ -1,0 +1,47 @@
+/*
+  Editorial design tokens — AlTareq V1 baseline (navy / blue / teal).
+  Ported verbatim from docs/components/WebPages/editorial.css :root block.
+*/
+
+:root {
+  /* Core palette */
+  --at-navy:         #00277F;
+  --at-navy-deep:    #001738;
+  --at-navy-mid:     #002D70;
+  --at-blue:         #008BE4;
+  --at-blue-deep:    #0043A6;
+  --at-sky:          #00A2FB;
+  --at-teal:         #00C2A9;
+  --at-teal-deep:    #008B78;
+  --at-teal-ink:     #00332C;
+  --at-gold:         #B37819;
+  --at-gold-soft:    #F5E7CA;
+  --at-mint:         #40E0C7;
+  --at-ink-black:    #0B0F1A;
+
+  /* Surfaces */
+  --at-bg-cream:     #FAFAF7;
+  --at-bg-paper:     #F4F2EC;
+  --at-surface:      #FFFFFF;
+
+  /* Rules, overlays, muted ink */
+  --at-grid-line:    rgba(0, 39, 127, 0.08);
+  --at-grid-line-2:  rgba(0, 39, 127, 0.18);
+  --at-mute:         rgba(0, 23, 56, 0.55);
+  --at-mute-2:       rgba(0, 23, 56, 0.72);
+
+  /* Signature gradients */
+  --at-gradient:     linear-gradient(90deg, #00267E 0%, #00A2FB 45%, #00C2A9 85%);
+  --at-gradient-v:   linear-gradient(180deg, #00277F 0%, #008BE4 50%, #00C2A9 100%);
+
+  /* Typography */
+  --at-serif:        'Fraunces', Georgia, serif;
+  --at-sans:         'Poppins', system-ui, -apple-system, sans-serif;
+  --at-mono:         'IBM Plex Mono', 'Courier New', monospace;
+
+  /* Layout */
+  --at-page-max:        1280px;
+  --at-header-height:   4.25rem;
+  --at-rule-thin:       1px solid var(--at-grid-line);
+  --at-rule-thick:      2px solid var(--at-navy-deep);
+}

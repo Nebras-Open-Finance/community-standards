@@ -1,6 +1,6 @@
 /**
  * Fetches build-time stats for the Nebras-Open-Finance GitHub org and writes
- * them to docs/public/api/github-stats.json for the homepage Community section.
+ * them to public/api/github-stats.json for the homepage Community section.
  *
  * Stats collected:
  *   - openPRs / openIssues   (search API, single call each)
@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..')
-const OUT_PATH = resolve(ROOT, 'docs', 'public', 'api', 'github-stats.json')
+const OUT_PATH = resolve(ROOT, 'public', 'api', 'github-stats.json')
 
 const DEFAULT_ORG = 'Nebras-Open-Finance'
 const API = 'https://api.github.com'
