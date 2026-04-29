@@ -56,7 +56,9 @@ jobs:
       - name: Install lychee
         uses: taiki-e/install-action@v2
         with:
-          tool: lychee
+          # Pin lychee — `supporting/lychee.toml` syntax (e.g. `include_fragments`)
+          # tracks a specific major. Bump this in lockstep with config changes.
+          tool: lychee@0.24.1
 
       - name: Build site
         env:

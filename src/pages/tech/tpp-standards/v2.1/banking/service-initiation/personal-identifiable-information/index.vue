@@ -187,7 +187,7 @@ const paymentsPayloadSample = `{
           <span class="endpoint"><span class="http-method http-method--post">POST</span><code>/payments</code></span>
           is called, the debtor account has already been fixed through the consent authorisation flow. The
           creditor data also differs between stages &mdash; both in structure and cardinality. See
-          <a href="./creditor">Creditor</a> for the full breakdown.
+          <a href="/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/creditor">Creditor</a> for the full breakdown.
         </p>
       </div>
     </section>
@@ -374,9 +374,9 @@ const paymentsPayloadSample = `{
 
       <EdProse>See the sub-pages for full schema and rules:</EdProse>
       <EdBullets>
-        <li><a href="./debtor-account">Debtor Account</a> &mdash; optional at <span class="endpoint"><span class="http-method http-method--post">POST</span><code>/par</code></span> only; not part of the <span class="endpoint"><span class="http-method http-method--post">POST</span><code>/payments</code></span> PII</li>
-        <li><a href="./creditor">Creditor</a> &mdash; consent-time models (single/multiple/open), payment-time structure, and match requirements</li>
-        <li><a href="./risk">Risk</a> &mdash; debtor and creditor risk indicators</li>
+        <li><a href="/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/debtor-account">Debtor Account</a> &mdash; optional at <span class="endpoint"><span class="http-method http-method--post">POST</span><code>/par</code></span> only; not part of the <span class="endpoint"><span class="http-method http-method--post">POST</span><code>/payments</code></span> PII</li>
+        <li><a href="/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/creditor">Creditor</a> &mdash; consent-time models (single/multiple/open), payment-time structure, and match requirements</li>
+        <li><a href="/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/risk">Risk</a> &mdash; debtor and creditor risk indicators</li>
       </EdBullets>
     </EdSectionBand>
 
@@ -406,7 +406,7 @@ const paymentsPayloadSample = `{
           schema for the payment type being instructed.
         </p>
         <p>
-          See <a href="./creditor">Creditor</a> for the specific validation rules that LFIs apply to the
+          See <a href="/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/creditor">Creditor</a> for the specific validation rules that LFIs apply to the
           <code>Creditor</code> array for domestic payments.
         </p>
       </EdNote>

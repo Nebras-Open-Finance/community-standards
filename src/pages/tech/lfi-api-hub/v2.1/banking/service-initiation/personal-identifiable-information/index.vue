@@ -79,8 +79,8 @@ meta:
 
       <EdProse>
         The structure of the decrypted PII differs between the two stages &mdash; see
-        <a href="./api-schema/pii-par">PII (Consent &mdash; Consent Manager)</a> and
-        <a href="./api-schema/pii-payments">PII (Payments &mdash; Ozone Connect)</a> for the full
+        <a href="/tech/lfi-api-hub/v2.1/banking/service-initiation/personal-identifiable-information/api-schema/pii-par">PII (Consent &mdash; Consent Manager)</a> and
+        <a href="/tech/lfi-api-hub/v2.1/banking/service-initiation/personal-identifiable-information/api-schema/pii-payments">PII (Payments &mdash; Ozone Connect)</a> for the full
         schemas.
       </EdProse>
     </EdSectionBand>
@@ -125,9 +125,9 @@ meta:
             <tr><th>Responsibility</th><th>Description</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Decryption</strong></td><td>Decrypt the JWE using the Enc1 private key &mdash; see <a href="./api-guide/decrypt-pii">How to Decrypt PII</a></td></tr>
+            <tr><td><strong>Decryption</strong></td><td>Decrypt the JWE using the Enc1 private key &mdash; see <a href="/tech/lfi-api-hub/v2.1/banking/service-initiation/personal-identifiable-information/api-guide/decrypt-pii">How to Decrypt PII</a></td></tr>
             <tr><td><strong>Schema validation</strong></td><td>Validate the decrypted payload against the OpenAPI schema &mdash; no additional properties are permitted</td></tr>
-            <tr><td><strong>Field validation</strong></td><td>Verify mandatory fields, IBAN format, BIC consistency, and creditor matching rules &mdash; see <a href="./debtor-account">Debtor Account</a> and <a href="./creditor">Creditor</a></td></tr>
+            <tr><td><strong>Field validation</strong></td><td>Verify mandatory fields, IBAN format, BIC consistency, and creditor matching rules &mdash; see <a href="/tech/lfi-api-hub/v2.1/banking/service-initiation/personal-identifiable-information/debtor-account">Debtor Account</a> and <a href="/tech/lfi-api-hub/v2.1/banking/service-initiation/personal-identifiable-information/creditor">Creditor</a></td></tr>
             <tr><td><strong>Rejection</strong></td><td>Mark the consent invalid via <span class="endpoint"><span class="http-method http-method--post">POST</span><code>/consent/action/validate</code></span> if PII is malformed, missing required fields, or fails validation</td></tr>
           </tbody>
         </table>

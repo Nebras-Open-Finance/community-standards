@@ -151,7 +151,7 @@ const images5: CarouselImage[] = [
         Replace <code>LegalName</code> and <code>OrganizationId</code> with your organisation's details
         from the Trust Framework. Replace <code>UUID</code> with your application's <strong>Client ID</strong>
         &mdash; the UUID assigned when the application was created (see
-        <a href="/tech/lfi-api-hub/trust-framework/creating-an-application#your-client-id">Creating an Application</a>).
+        <a href="/tech/lfi-api-hub/trust-framework/creating-c3-application#your-client-id">Creating an Application</a>).
         Equivalent cryptographic tools may be used, provided all requirements above are met.
       </EdProse>
 

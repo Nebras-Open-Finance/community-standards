@@ -126,7 +126,7 @@ meta:
                 Must be a valid HTTPS URI that complies with FAPI standards for redirection after
                 authentication.<br><br>
                 More information on Mobile app
-                <a href="/tech/lfi-api-hub/trust-framework/redirect-uri">Redirect URIs</a>.
+                <a href="/tech/tpp-standards/trust-framework/redirect-uri">Redirect URIs</a>.
               </td>
               <td><code>https://app.example.com/callback</code></td>
             </tr>

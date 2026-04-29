@@ -88,7 +88,7 @@ const sectionEndpoints = allEndpoints.filter(
           <h2 class="ed-landing__contents-title">Match results</h2>
           <p class="ed-landing__contents-sub">
             A <code>Partial</code> or <code>No</code> result must be disclosed to the user &mdash; see
-            <a href="./user-journeys">User Journeys</a> for the required consent and authorisation page behaviour.
+            <a href="/tech/tpp-standards/v2.1/banking/confirmation-of-payee/user-journeys">User Journeys</a> for the required consent and authorisation page behaviour.
           </p>
         </div>
         <div class="ed-cov" role="table" style="grid-template-columns: minmax(15rem, 20rem) minmax(10rem, 14rem) 1fr;">

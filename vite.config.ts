@@ -27,6 +27,11 @@ export default defineConfig({
       dirs: 'src/pages',
       extensions: ['vue', 'md'],
       exclude: ['**/_shared/**'],
+      // Preserve filename case in route paths so `accounts-AccountId.vue`
+      // generates `accounts-AccountId.html` rather than the lowercase variant.
+      // Required for case-sensitive (Linux) hosts where outbound links
+      // reference the mixed-case form.
+      caseSensitive: true,
     }),
     Layouts({
       layoutsDirs: 'src/layouts',

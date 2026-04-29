@@ -757,7 +757,7 @@ const step10Tabs = [{ label: 'Node.js', lang: 'typescript', code: step10Node }, 
 
       <EdNote type="tip" title="User Experience">
         <p>
-          See <a href="../user-journeys">User Experience</a> for screen mockups of the
+          See <a href="/tech/tpp-standards/v2.1/banking/data-sharing/user-journeys">User Experience</a> for screen mockups of the
           <strong>Consent</strong> and <strong>Authorization</strong> pages the user sees at the bank,
           including an interactive example where you can edit the consent JSON and preview the resulting
           UI.

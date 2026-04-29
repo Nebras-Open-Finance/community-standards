@@ -389,7 +389,7 @@ const customerPsuJson = `{
         <p class="ed-doc__lede">
           The behavioural rules for each endpoint &mdash; including account status handling, required
           field population, and <code>AccountSubType</code> coverage &mdash; are in the
-          <a href="../requirements">Bank Data Sharing Requirements</a>. This guide covers the request
+          <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/requirements">Bank Data Sharing Requirements</a>. This guide covers the request
           and response shape of each endpoint.
         </p>
       </div>
@@ -469,7 +469,7 @@ const customerPsuJson = `{
       <EdProse>
         For Bank Data Sharing consents (<code>consentType: cbuae-account-access-consents</code>), your
         LFI MUST respond with <code>data.status: invalid</code> in the cases listed in
-        <a href="../requirements#consent-validation">Bank Data Sharing Requirements &mdash; Consent
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/requirements#consent-validation">Bank Data Sharing Requirements &mdash; Consent
         Validation</a>.
       </EdProse>
 
@@ -598,7 +598,7 @@ const customerPsuJson = `{
       </EdProse>
       <EdProse>
         This rule applies to every endpoint in this guide. The endpoint-specific rules in
-        <a href="../requirements">Bank Data Sharing Requirements</a> call out fields that are always
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/requirements">Bank Data Sharing Requirements</a> call out fields that are always
         required for each endpoint.
       </EdProse>
 
@@ -632,7 +632,7 @@ const customerPsuJson = `{
       <EdProse>
         Token and consent validation have already been performed by the Hub before the request reaches
         your Ozone Connect endpoint. Your LFI does not re-validate the token or consent &mdash; it is
-        trusted to be valid. See <a href="../requirements">Bank Data Sharing Requirements</a> for what
+        trusted to be valid. See <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/requirements">Bank Data Sharing Requirements</a> for what
         your Ozone Connect endpoints must validate.
       </EdProse>
 
@@ -650,7 +650,7 @@ const customerPsuJson = `{
       <h4 class="ed-doc__subhead-minor"><code>403</code> &mdash; Forbidden</h4>
       <EdProse>
         Return <code>403</code> using the
-        <a href="../requirements#account-status-handling">Account Status Handling</a> mapping:
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/requirements#account-status-handling">Account Status Handling</a> mapping:
       </EdProse>
       <EdRefTable>
         <table>
@@ -680,7 +680,7 @@ const customerPsuJson = `{
         <code>meta.totalRecords</code> in the response). The API Hub converts this into the
         <code>Links</code> envelope returned to the TPP.
       </EdProse>
-      <EdProse>See <a href="./pagination">Pagination</a> for the full behaviour.</EdProse>
+      <EdProse>See <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/api-guide/pagination">Pagination</a> for the full behaviour.</EdProse>
     </EdSectionBand>
 
     <EdSectionBand
@@ -727,7 +727,7 @@ const customerPsuJson = `{
       <EdProse>
         <code>Content-Type: application/json</code>. Return <code>200</code> with a <code>data</code>
         array containing one record per consented account. See
-        <a href="../requirements#get-accounts">GET /accounts rules</a> for field-level requirements.
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/requirements#get-accounts">GET /accounts rules</a> for field-level requirements.
       </EdProse>
       <EdCode :code="accountsListJson" lang="json" filename="GET /accounts response" />
       <EdProse>
@@ -737,7 +737,7 @@ const customerPsuJson = `{
       </EdProse>
       <EdProse>
         See the
-        <a href="../open-api/accounts">GET <code>/accounts</code> API Reference</a>
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/accounts">GET <code>/accounts</code> API Reference</a>
         for the full schema.
       </EdProse>
     </EdSectionBand>
@@ -790,7 +790,7 @@ const customerPsuJson = `{
       <EdProse>Errors: see <a href="#common-error-responses">Common error responses</a>.</EdProse>
       <EdProse>
         See the
-        <a href="../open-api/accounts-AccountId">GET <code>/accounts/{accountId}</code> API Reference</a>
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/accounts-AccountId">GET <code>/accounts/{accountId}</code> API Reference</a>
         for the full schema.
       </EdProse>
     </EdSectionBand>
@@ -862,7 +862,7 @@ const customerPsuJson = `{
       <EdProse>Errors: see <a href="#common-error-responses">Common error responses</a>.</EdProse>
       <EdProse>
         See the
-        <a href="../open-api/accounts-AccountId-balances">GET <code>/accounts/{accountId}/balances</code> API Reference</a>
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/accounts-AccountId-balances">GET <code>/accounts/{accountId}/balances</code> API Reference</a>
         for the full schema.
       </EdProse>
     </EdSectionBand>
@@ -887,7 +887,7 @@ const customerPsuJson = `{
       <EdProse>
         Returns the transactions for a single account, filtered by booking date-time where provided.
         Pagination is <strong>required</strong> for this endpoint &mdash; see
-        <a href="./pagination">Pagination</a>.
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/api-guide/pagination">Pagination</a>.
       </EdProse>
 
       <h3 class="ed-doc__subhead">Request headers</h3>
@@ -941,7 +941,7 @@ const customerPsuJson = `{
       <EdProse>Errors: see <a href="#common-error-responses">Common error responses</a>.</EdProse>
       <EdProse>
         See the
-        <a href="../open-api/accounts-AccountId-transactions">GET <code>/accounts/{accountId}/transactions</code> API Reference</a>
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/accounts-AccountId-transactions">GET <code>/accounts/{accountId}/transactions</code> API Reference</a>
         for the full schema.
       </EdProse>
     </EdSectionBand>
@@ -966,7 +966,7 @@ const customerPsuJson = `{
       <EdProse>
         Returns the statements for a single account, filtered by statement date where provided.
         Pagination is <strong>required</strong> for this endpoint &mdash; see
-        <a href="./pagination">Pagination</a>.
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/api-guide/pagination">Pagination</a>.
       </EdProse>
 
       <h3 class="ed-doc__subhead">Request headers</h3>
@@ -1009,7 +1009,7 @@ const customerPsuJson = `{
       <EdProse>Errors: see <a href="#common-error-responses">Common error responses</a>.</EdProse>
       <EdProse>
         See the
-        <a href="../open-api/accounts-AccountId-statements">GET <code>/accounts/{accountId}/statements</code> API Reference</a>
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/accounts-AccountId-statements">GET <code>/accounts/{accountId}/statements</code> API Reference</a>
         for the full schema.
       </EdProse>
     </EdSectionBand>
@@ -1075,7 +1075,7 @@ const customerPsuJson = `{
       <EdProse>Errors: see <a href="#common-error-responses">Common error responses</a>.</EdProse>
       <EdProse>
         See the
-        <a href="../open-api/accounts-AccountId-beneficiaries">GET <code>/accounts/{accountId}/beneficiaries</code> API Reference</a>
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/accounts-AccountId-beneficiaries">GET <code>/accounts/{accountId}/beneficiaries</code> API Reference</a>
         for the full schema.
       </EdProse>
     </EdSectionBand>
@@ -1140,7 +1140,7 @@ const customerPsuJson = `{
       <EdProse>Errors: see <a href="#common-error-responses">Common error responses</a>.</EdProse>
       <EdProse>
         See the
-        <a href="../open-api/accounts-AccountId-direct-debits">GET <code>/accounts/{accountId}/direct-debits</code> API Reference</a>
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/accounts-AccountId-direct-debits">GET <code>/accounts/{accountId}/direct-debits</code> API Reference</a>
         for the full schema.
       </EdProse>
     </EdSectionBand>
@@ -1201,7 +1201,7 @@ const customerPsuJson = `{
       <EdProse>Errors: see <a href="#common-error-responses">Common error responses</a>.</EdProse>
       <EdProse>
         See the
-        <a href="../open-api/accounts-AccountId-scheduled-payments">GET <code>/accounts/{accountId}/scheduled-payments</code> API Reference</a>
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/accounts-AccountId-scheduled-payments">GET <code>/accounts/{accountId}/scheduled-payments</code> API Reference</a>
         for the full schema.
       </EdProse>
     </EdSectionBand>
@@ -1262,7 +1262,7 @@ const customerPsuJson = `{
       <EdProse>Errors: see <a href="#common-error-responses">Common error responses</a>.</EdProse>
       <EdProse>
         See the
-        <a href="../open-api/accounts-AccountId-standing-orders">GET <code>/accounts/{accountId}/standing-orders</code> API Reference</a>
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/accounts-AccountId-standing-orders">GET <code>/accounts/{accountId}/standing-orders</code> API Reference</a>
         for the full schema.
       </EdProse>
     </EdSectionBand>
@@ -1288,7 +1288,7 @@ const customerPsuJson = `{
       <EdProse>
         Returns the product data associated with the account &mdash; fees, charges, rates, rewards,
         benefits, and eligibility criteria. <code>FinanceRates</code> may be returned as cleartext
-        JSON or as a JWE compact string &mdash; see <a href="./finance-rates">Encrypted FinanceRates</a>.
+        JSON or as a JWE compact string &mdash; see <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/api-guide/finance-rates">Encrypted FinanceRates</a>.
       </EdProse>
 
       <h3 class="ed-doc__subhead">Request headers</h3>
@@ -1329,7 +1329,7 @@ const customerPsuJson = `{
       <EdProse>Errors: see <a href="#common-error-responses">Common error responses</a>.</EdProse>
       <EdProse>
         See the
-        <a href="../open-api/accounts-AccountId-products">GET <code>/accounts/{accountId}/products</code> API Reference</a>
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/accounts-AccountId-products">GET <code>/accounts/{accountId}/products</code> API Reference</a>
         for the full schema.
       </EdProse>
     </EdSectionBand>
@@ -1390,7 +1390,7 @@ const customerPsuJson = `{
       <EdProse>Errors: see <a href="#common-error-responses">Common error responses</a>.</EdProse>
       <EdProse>
         See the
-        <a href="../open-api/accounts-AccountId-customer">GET <code>/accounts/{accountId}/customer</code> API Reference</a>
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/accounts-AccountId-customer">GET <code>/accounts/{accountId}/customer</code> API Reference</a>
         for the full schema.
       </EdProse>
     </EdSectionBand>
@@ -1450,7 +1450,7 @@ const customerPsuJson = `{
       <EdCode :code="customerPsuJson" lang="json" filename="GET /customer response" />
       <EdProse>
         See the
-        <a href="../open-api/customer">GET <code>/customer</code> API Reference</a>
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/customer">GET <code>/customer</code> API Reference</a>
         for the full schema.
       </EdProse>
     </EdSectionBand>
