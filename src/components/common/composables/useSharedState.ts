@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 
 // Shared across imports
-const sharedState = ref({})
+const sharedState = ref<Record<string, any>>({})
 
 // Reset on SPA navigation so state seeded by one page (e.g. Data Sharing writing
 // sharedState.consent) doesn't leak into another page that reads different keys
@@ -12,7 +12,7 @@ export function resetSharedState() {
 
 export function useSharedState() {
 
-  function updateField(field, newValue) {
+  function updateField(field: string, newValue: string) {
     sharedState.value = { ...sharedState.value, [field]: JSON.parse(newValue) }
   }
 
