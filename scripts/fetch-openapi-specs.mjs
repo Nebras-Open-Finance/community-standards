@@ -66,9 +66,9 @@ function parseVersions() {
 
 // ─── Categories & version-folder mapping ───────────────────────────────────────
 // The remote repo uses slightly different folder names per category.
-// standards:      v2.1, v2.1-errata1
-// api-hub:        v2.1.x, v2.1.x-errata1
-// ozone-connect:  v2.1.x, v2.1.x-errata1
+// standards:      v2.1, v2.1-errata2
+// api-hub:        v2.1.x, v2.1.x-errata2
+// ozone-connect:  v2.1.x, v2.1.x-errata2
 //
 // Both patterns (with and without .x) may appear, so we match on both.
 
@@ -76,7 +76,7 @@ const CATEGORIES = ['standards', 'api-hub', 'ozone-connect']
 
 /**
  * Build regex patterns that match base + errata folders for a given version.
- * e.g. for version "v2.1" → matches v2.1, v2.1.x, v2.1-errata1, v2.1.x-errata1, etc.
+ * e.g. for version "v2.1" → matches v2.1, v2.1.x, v2.1-errata2, v2.1.x-errata2, etc.
  */
 function buildVersionPattern(version) {
   // Escape dots for regex

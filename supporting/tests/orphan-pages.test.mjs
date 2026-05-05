@@ -43,13 +43,7 @@ const CHROME_FILES = [
 
 // Pages we knowingly leave unlinked. Relative to src/pages/, forward slashes.
 // Add entries only with a reason — if a page belongs on a sidebar, wire it up.
-const ALLOWED_ORPHANS = new Set([
-  // The "all errata, all versions" listing. The release-notes-and-erratas
-  // index links to the per-version dynamic route (erratas/v2.1/) rather than
-  // this aggregate. Kept around for direct-link access until/unless we add
-  // a tile for it on the parent index.
-  'tech/release-notes-and-erratas/erratas/index.vue',
-])
+const ALLOWED_ORPHANS = new Set([])
 
 // Listing pages that render their children via data-driven `:href`. Once the
 // listing is reachable, every .vue under the child tree is treated reachable.

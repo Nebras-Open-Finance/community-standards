@@ -5,8 +5,6 @@ meta:
 </route>
 
 <script setup lang="ts">
-import { allEndpoints, endpointUrl } from '@/data/endpoints'
-
 // Live-ecosystem mini-feed — TPPs that called payment endpoints in the last
 // 30 days. Aligned with `/program/whats-live?family=payment&type=tpp`.
 const { liveTpps, totalCount: totalTppCount, loadError } = useLiveTpps(['payment'], 4)
@@ -15,9 +13,120 @@ function initials(name: string): string {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('')
 }
 
-const sectionEndpoints = allEndpoints.filter(
-  (e) => e.surface === 'ozone-connect' && e.sectionSlug === 'service-initiation',
-)
+interface CapSub { title: string; hint: string; url: string }
+interface CapCard {
+  tone: 'gold' | 'teal' | 'navy' | 'violet'
+  category: string
+  title: string
+  desc: string
+  url: string | null
+  subs: CapSub[]
+}
+
+const SI_BASE = '/tech/lfi-api-hub/v2.1/banking/service-initiation'
+
+function paymentSubs(slug: string): CapSub[] {
+  const base = `${SI_BASE}/domestic-payments/${slug}`
+  return [
+    { title: 'Requirements', hint: 'What your Ozone Connect endpoints must validate', url: `${base}/requirements` },
+    { title: 'User Experience', hint: 'Step-by-step PSU journey at the LFI', url: `${base}/user-journeys` },
+    { title: 'API Guide', hint: 'End-to-end implementation walk-through', url: `${base}/api-guide` },
+  ]
+}
+
+const cards: CapCard[] = [
+  {
+    tone: 'gold',
+    category: 'Domestic payment',
+    title: 'Single Instant Payment',
+    desc: 'A one-time payment authorised and submitted in a single flow. Suited to checkout, bill settlement, and any one-known-amount payment to a known recipient.',
+    url: null,
+    subs: paymentSubs('single-instant-payment'),
+  },
+  {
+    tone: 'gold',
+    category: 'Multi-payment consent · On Demand',
+    title: 'Variable On Demand',
+    desc: 'Variable amounts within agreed limits, triggered on demand. Suited to subscription billing, wallet top-ups, and discretionary recurring charges.',
+    url: null,
+    subs: paymentSubs('multi-payments/variable-on-demand'),
+  },
+  {
+    tone: 'gold',
+    category: 'Multi-payment consent · On Demand',
+    title: 'Fixed On Demand',
+    desc: 'Fixed per-payment amount, triggered on demand within the consent period.',
+    url: null,
+    subs: paymentSubs('multi-payments/fixed-on-demand'),
+  },
+  {
+    tone: 'gold',
+    category: 'Multi-payment consent · Periodic',
+    title: 'Variable Periodic Schedule',
+    desc: 'Exactly one payment per calendar period, variable amount per payment. Suited to regular bills.',
+    url: null,
+    subs: paymentSubs('multi-payments/variable-periodic-schedule'),
+  },
+  {
+    tone: 'gold',
+    category: 'Multi-payment consent · Periodic',
+    title: 'Fixed Periodic Schedule',
+    desc: 'Exactly one payment per calendar period at a fixed amount. Suited to standing payment arrangements.',
+    url: null,
+    subs: paymentSubs('multi-payments/fixed-periodic-schedule'),
+  },
+  {
+    tone: 'gold',
+    category: 'Multi-payment consent · Defined',
+    title: 'Variable Defined Schedule',
+    desc: 'Payments locked to specific future dates set at consent time, variable amount per payment.',
+    url: null,
+    subs: paymentSubs('multi-payments/variable-defined-schedule'),
+  },
+  {
+    tone: 'gold',
+    category: 'Multi-payment consent · Defined',
+    title: 'Fixed Defined Schedule',
+    desc: 'Payments locked to specific future dates at fixed amounts. Suited to instalment plans and known future obligations.',
+    url: null,
+    subs: paymentSubs('multi-payments/fixed-defined-schedule'),
+  },
+  {
+    tone: 'gold',
+    category: 'Multi-payment consent · Delegated SCA',
+    title: 'Delegated SCA',
+    desc: 'Multi-payment flows where strong customer authentication is delegated to the TPP at consent time.',
+    url: null,
+    subs: paymentSubs('multi-payments/delegated-sca'),
+  },
+  {
+    tone: 'teal',
+    category: 'Repayment',
+    title: 'Refunds',
+    desc: 'Refund initiation flow against a previously-executed payment consent.',
+    url: null,
+    subs: [
+      { title: 'Requirements', hint: 'What your Ozone Connect endpoints must validate', url: `${SI_BASE}/refunds/requirements` },
+      { title: 'API Guide', hint: 'End-to-end implementation walk-through', url: `${SI_BASE}/refunds/api-guide` },
+    ],
+  },
+  {
+    tone: 'navy',
+    category: 'Sensitive data',
+    title: 'Personal Identifiable Information',
+    desc: 'How creditor and debtor PII is presented across payment consents — encryption, payload structure, and per-LFI validation.',
+    url: `${SI_BASE}/personal-identifiable-information/`,
+    subs: [],
+  },
+  {
+    tone: 'violet',
+    category: 'Approval flow',
+    title: 'Multi-Authorization',
+    desc: 'Subsequent-authoriser flows for payments that require approval from more than one PSU.',
+    url: `${SI_BASE}/multi-authorization`,
+    subs: [],
+  },
+]
 </script>
 
 <template>
@@ -123,47 +232,37 @@ const sectionEndpoints = allEndpoints.filter(
           <p class="ed-landing__contents-sub">The full set of pages for the Payments (Service Initiation) API.</p>
         </div>
 
-        <div class="ed-landing__contents-grid">
-          <a class="ed-link-card" href="/tech/lfi-api-hub/v2.1/banking/service-initiation/domestic-payments/" :style="{ '--card-color': 'var(--at-gold, #b08800)' }">
-            <span class="ed-link-card__top" />
-            <div class="ed-link-card__meta"><span class="ed-link-card__cat">Sub-section</span></div>
-            <h3 class="ed-link-card__title">Domestic Payments</h3>
-            <p class="ed-link-card__desc">Single Instant Payments, multi-payment consent variants, and Delegated SCA flows.</p>
-            <div class="ed-link-card__foot"><span class="ed-link-card__cta">Open</span><span class="ed-link-card__arrow">&rarr;</span></div>
-          </a>
-          <a class="ed-link-card" href="/tech/lfi-api-hub/v2.1/banking/service-initiation/refunds/" :style="{ '--card-color': 'var(--at-teal)' }">
-            <span class="ed-link-card__top" />
-            <div class="ed-link-card__meta"><span class="ed-link-card__cat">Sub-section</span></div>
-            <h3 class="ed-link-card__title">Refunds</h3>
-            <p class="ed-link-card__desc">Refund initiation flow against a previously-executed payment consent.</p>
-            <div class="ed-link-card__foot"><span class="ed-link-card__cta">Open</span><span class="ed-link-card__arrow">&rarr;</span></div>
-          </a>
-          <a class="ed-link-card" href="/tech/lfi-api-hub/v2.1/banking/service-initiation/personal-identifiable-information/" :style="{ '--card-color': 'var(--at-navy)' }">
-            <span class="ed-link-card__top" />
-            <div class="ed-link-card__meta"><span class="ed-link-card__cat">Sub-section</span></div>
-            <h3 class="ed-link-card__title">Personal Identifiable Information</h3>
-            <p class="ed-link-card__desc">How creditor and debtor PII is presented across payment consents.</p>
-            <div class="ed-link-card__foot"><span class="ed-link-card__cta">Open</span><span class="ed-link-card__arrow">&rarr;</span></div>
-          </a>
-          <a class="ed-link-card" href="/tech/lfi-api-hub/v2.1/banking/service-initiation/multi-authorization" :style="{ '--card-color': '#5b21b6' }">
-            <span class="ed-link-card__top" />
-            <div class="ed-link-card__meta"><span class="ed-link-card__cat">Page</span></div>
-            <h3 class="ed-link-card__title">Multi-Authorization</h3>
-            <p class="ed-link-card__desc">Subsequent-authoriser flows for payments that require approval from more than one PSU.</p>
-            <div class="ed-link-card__foot"><span class="ed-link-card__cta">Open</span><span class="ed-link-card__arrow">&rarr;</span></div>
-          </a>
-
-          <a v-for="ep in sectionEndpoints" :key="ep.slug" class="ed-link-card" :href="endpointUrl(ep)" :style="{ '--card-color': 'var(--at-blue-deep, #1d4ed8)' }">
-            <span class="ed-link-card__top" />
-            <div class="ed-link-card__meta">
-              <span class="ed-link-card__cat">Endpoint</span>
-              <span class="http-badge" :class="`http-${ep.method.toLowerCase()}`">{{ ep.method }}</span>
-              <code class="ed-link-card__path">{{ ep.path }}</code>
+        <div class="ed-cap-grid">
+          <component
+            :is="card.url ? 'a' : 'div'"
+            v-for="card in cards"
+            :key="card.title"
+            :href="card.url || undefined"
+            class="ed-cap-card"
+            :class="`ed-cap-card--${card.tone}`"
+          >
+            <span class="ed-cap-card__top" />
+            <div class="ed-cap-card__head">
+              <div class="ed-cap-card__meta">
+                <span class="ed-cap-card__meta-dot" />
+                {{ card.category }}
+              </div>
+              <h3 class="ed-cap-card__title">{{ card.title }}</h3>
+              <p class="ed-cap-card__desc">{{ card.desc }}</p>
             </div>
-            <h3 class="ed-link-card__title">{{ ep.title }}</h3>
-            <p class="ed-link-card__desc">OpenAPI reference for the <code>{{ ep.method }} {{ ep.path }}</code> endpoint.</p>
-            <div class="ed-link-card__foot"><span class="ed-link-card__cta">Open spec</span><span class="ed-link-card__arrow">&rarr;</span></div>
-          </a>
+            <ul v-if="card.subs.length" class="ed-cap-card__subs">
+              <li v-for="sub in card.subs" :key="sub.url">
+                <a :href="sub.url" class="ed-cap-card__sub">
+                  <span class="ed-cap-card__sub-marker" />
+                  <span class="ed-cap-card__sub-main">
+                    <span class="ed-cap-card__sub-title">{{ sub.title }}</span>
+                    <span class="ed-cap-card__sub-hint">{{ sub.hint }}</span>
+                  </span>
+                  <span class="ed-cap-card__sub-arrow" aria-hidden="true">&rarr;</span>
+                </a>
+              </li>
+            </ul>
+          </component>
         </div>
       </div>
     </section>
@@ -247,6 +346,42 @@ const sectionEndpoints = allEndpoints.filter(
 .ed-landing__contents-sub :deep(a), .ed-landing__contents-sub a { color: var(--at-teal-deep); text-decoration: none; border-bottom: 1px solid currentColor; }
 .ed-landing__contents-sub :deep(code), .ed-landing__contents-sub code { font-family: var(--at-mono); font-size: 0.86em; background: color-mix(in srgb, var(--at-grid-line) 55%, var(--at-bg-cream)); border: 1px solid var(--at-grid-line); padding: 0.08em 0.4em; }
 .ed-landing__contents-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(22.5rem, 1fr)); gap: 1.25rem; }
+
+/* ─── Capability cards ──────────────────────────────────────────────────── */
+.ed-cap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); gap: 1.25rem; }
+
+.ed-cap-card { position: relative; display: flex; flex-direction: column; background: var(--at-bg-cream); border: 1px solid var(--at-grid-line); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.ed-cap-card:hover { border-color: var(--cap-color, var(--at-navy)); }
+a.ed-cap-card { text-decoration: none; color: inherit; }
+a.ed-cap-card:hover .ed-cap-card__title { color: var(--cap-color); }
+a.ed-cap-card:focus-visible { outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--cap-color) 45%, transparent); }
+
+.ed-cap-card--gold { --cap-color: var(--at-gold); }
+.ed-cap-card--teal { --cap-color: var(--at-teal); }
+.ed-cap-card--navy { --cap-color: var(--at-navy); }
+.ed-cap-card--violet { --cap-color: #5b21b6; }
+
+.ed-cap-card__top { position: absolute; top: 0; left: 0; width: 56px; height: 3px; background: var(--cap-color); z-index: 1; }
+
+.ed-cap-card__head { padding: 1.85rem 1.6rem 1.25rem; flex: 1; }
+
+.ed-cap-card__meta { display: flex; align-items: center; gap: 0.6rem; font-family: var(--at-mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: var(--cap-color); margin-bottom: 0.85rem; }
+.ed-cap-card__meta-dot { width: 7px; height: 7px; background: var(--cap-color); border-radius: 50%; box-shadow: 0 0 0 3px color-mix(in srgb, var(--cap-color) 18%, transparent); flex-shrink: 0; }
+
+.ed-cap-card__title { font-family: var(--at-serif); font-size: 1.35rem; font-weight: 500; letter-spacing: -0.02em; line-height: 1.15; color: var(--at-navy-deep); margin: 0 0 0.65rem; transition: color 0.15s ease; }
+.ed-cap-card__desc { font-family: var(--at-sans); font-size: 0.92rem; line-height: 1.55; color: var(--at-mute-2); margin: 0; }
+
+.ed-cap-card__subs { list-style: none; margin: 0; padding: 0 1.6rem 0.5rem; display: flex; flex-direction: column; }
+.ed-cap-card__sub { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 0.55rem; margin: 0 -0.55rem; border-top: 1px solid var(--at-grid-line); text-decoration: none; color: inherit; transition: background 0.15s ease; }
+.ed-cap-card__sub:hover { background: color-mix(in srgb, var(--cap-color) 7%, transparent); }
+.ed-cap-card__sub:focus-visible { outline: none; background: color-mix(in srgb, var(--cap-color) 10%, transparent); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--cap-color) 45%, transparent); }
+.ed-cap-card__sub-marker { width: 6px; height: 6px; background: var(--cap-color); border-radius: 50%; flex-shrink: 0; opacity: 0.5; transition: opacity 0.15s ease, transform 0.15s ease; }
+.ed-cap-card__sub:hover .ed-cap-card__sub-marker { opacity: 1; transform: scale(1.2); }
+.ed-cap-card__sub-main { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; min-width: 0; }
+.ed-cap-card__sub-title { font-family: var(--at-sans); font-size: 0.92rem; font-weight: 600; color: var(--at-navy-deep); }
+.ed-cap-card__sub-hint { font-family: var(--at-sans); font-size: 0.78rem; color: var(--at-mute); line-height: 1.4; }
+.ed-cap-card__sub-arrow { font-family: var(--at-mono); font-size: 0.95rem; color: var(--cap-color); flex-shrink: 0; opacity: 0; transform: translateX(-4px); transition: opacity 0.15s ease, transform 0.15s ease; }
+.ed-cap-card__sub:hover .ed-cap-card__sub-arrow { opacity: 1; transform: translateX(0); }
 
 .ed-link-card { position: relative; display: flex; flex-direction: column; background: var(--at-bg-cream); border: 1px solid var(--at-grid-line); padding: 2rem 1.75rem 1.5rem; text-decoration: none; color: inherit; transition: border-color 0.2s ease, transform 0.2s ease; }
 .ed-link-card:hover { border-color: var(--card-color, var(--at-navy)); transform: translateY(-2px); }

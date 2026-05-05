@@ -5,7 +5,7 @@ export const data: RequirementsPageData = {
   version: 'v2.1',
   readTime: '12 min',
   lede: 'The <a href="/tech/lfi-api-hub/v2.1/consent-journey/authentication/requirements">Authentication requirements</a>, <a href="/tech/lfi-api-hub/v2.1/consent-journey/authorization/requirements">Authorization requirements</a>, and <a href="./user-journeys">User Journeys</a> must be adhered to.',
-  preconditions: 'The tables below list the rules that apply to Bank Data Sharing. All request validation of the TPP\'s credentials, access token, and consent is performed by the Hub before your Ozone Connect endpoints are called. The rules below cover what your Ozone Connect endpoints must validate and what they must return.',
+  preconditions: 'The tables below list the rules that apply to Bank Data Sharing. All request validation of the TPP\'s credentials, access token, and consent is performed by the Hub before your Ozone Connect endpoints are called. The rules below cover what your Ozone Connect endpoints must validate and what they must return. Two cross-cutting checks apply to every endpoint under <code>/accounts/{accountId}</code> and <code>/accounts/{accountId}/&hellip;</code>: <a href="#account-access-validation">Account Access Validation</a> (the account is held by the resolved PSU) and <a href="#account-status-handling">Account Status Handling</a> (the account is in a readable state).',
   sections: [
     {
       id: 'consent-validation',
@@ -298,8 +298,18 @@ export const data: RequirementsPageData = {
       ],
     },
     {
-      id: 'account-status-handling',
+      id: 'account-access-validation',
       num: '15',
+      title: 'Account Access Validation',
+      blocks: [
+        { kind: 'prose', html: 'Every endpoint under <code>/accounts/{accountId}</code> and <code>/accounts/{accountId}/&hellip;</code> MUST validate that the account in the path parameter is held by the PSU resolved from the <code>o3-psu-identifier</code> header before applying the per-endpoint rules above. Account ownership is authoritative on the LFI side — the Hub stores the <code>accountIds</code> patched onto the consent at authorization, but the LFI is the source of truth for which accounts the PSU actually holds. If the patched set ever drifted from the PSU\'s actual holdings, only the LFI can detect it.' },
+        { kind: 'prose', html: 'If the account in the path is not held by the resolved PSU, return <code>403</code> with <code>errorCode</code>: <code>Consent.PermanentAccountAccessFailure</code> and <code>errorMessage</code>: <code>The account is permanently inaccessible.</code> Apply this check before the <a href="#account-status-handling">Account Status Handling</a> mapping — a non-held account MUST NOT leak status information.' },
+        { kind: 'prose', html: '<code>GET /accounts</code> is exempt — its <code>accountIds</code> query parameter is populated by the Hub from the consent. <code>GET /customer</code> is also exempt — it is resolved from <code>o3-psu-identifier</code> and not scoped to a specific account.' },
+      ],
+    },
+    {
+      id: 'account-status-handling',
+      num: '16',
       title: 'Account Status Handling',
       blocks: [
         { kind: 'prose', html: 'The rules above assume the account is in a readable state. The table below summarises how each value of <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/accounts#aeaccountstatuscode"><code>AEAccountStatusCode</code></a> maps to a response for endpoints under <code>/accounts/{accountId}</code>.' },

@@ -13,6 +13,8 @@ public/openapi/**/*.xlsx
 public/api/trust-framework.json
 # Fetched GitHub org stats (see scripts/fetch-github-stats.mjs)
 public/api/github-stats.json
+# Fetched Postman collections (see scripts/fetch-postman-collections.mjs)
+public/postman/
 CLAUDE.md
 
 # Logs

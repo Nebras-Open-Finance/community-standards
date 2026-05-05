@@ -23,7 +23,6 @@ interface Register {
   category: string
   title: string
   url: string | null
-  footCta: string
   desc: string
   scope: string
   subsLabel?: string
@@ -52,7 +51,6 @@ const registers: Register[] = [
     category: 'Operational systems',
     title: 'Release Notes',
     url: null,
-    footCta: 'Open Release Notes register',
     desc: 'Changes deployed to the <strong>operational systems</strong> participants integrate with &mdash; the API Hub platform, the Trust Framework, and any supporting infrastructure. Each entry describes what was deployed, when it became effective, and the impact on TPPs and LFIs.',
     scope: 'Deployments, platform behaviour changes, Trust Framework directory releases.',
     subsLabel: 'Organised by component &mdash; then by calendar year',
@@ -74,7 +72,6 @@ const registers: Register[] = [
     category: 'Published documentation',
     title: 'Erratas',
     url: `/tech/release-notes-and-erratas/erratas/${CURRENT_VERSION}/`,
-    footCta: 'Open Erratas register',
     desc: 'Corrections to <strong>published documentation</strong> &mdash; the TPP Standards, LFI Integration Guide, and OpenAPI specifications. Each entry records what was corrected, why the change was required, and the effective date.',
     scope: 'Documentation corrections against a published standard version.',
     subs: [],
@@ -185,10 +182,6 @@ const policies: Policy[] = [
               </li>
             </ul>
 
-            <div v-if="reg.url" class="ed-rn-reg__foot">
-              <span class="ed-rn-reg__foot-cta">{{ reg.footCta }}</span>
-              <span class="ed-rn-reg__foot-arrow" aria-hidden="true">&rarr;</span>
-            </div>
           </component>
         </div>
       </div>
@@ -379,12 +372,6 @@ const policies: Policy[] = [
 a.ed-rn-reg { text-decoration: none; color: inherit; }
 
 a.ed-rn-reg:hover .ed-rn-reg__title { color: var(--reg-color); }
-
-a.ed-rn-reg:hover .ed-rn-reg__foot {
-  background: color-mix(in srgb, var(--reg-color) 14%, transparent);
-}
-
-a.ed-rn-reg:hover .ed-rn-reg__foot-arrow { transform: translateX(4px); }
 
 a.ed-rn-reg:focus-visible {
   outline: none;
@@ -611,49 +598,6 @@ a.ed-rn-reg:focus-visible {
   transform: translateX(0);
 }
 
-/* Foot link */
-.ed-rn-reg__foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: auto;
-  padding: 1rem 2rem;
-  background: color-mix(in srgb, var(--reg-color) 5%, transparent);
-  border-top: 1px solid var(--at-grid-line);
-  text-decoration: none;
-  color: inherit;
-  transition: background 0.15s ease;
-}
-
-.ed-rn-reg__foot:hover {
-  background: color-mix(in srgb, var(--reg-color) 14%, transparent);
-}
-
-.ed-rn-reg__foot:focus-visible {
-  outline: none;
-  background: color-mix(in srgb, var(--reg-color) 14%, transparent);
-  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--reg-color) 45%, transparent);
-}
-
-.ed-rn-reg__foot-cta {
-  font-family: var(--at-mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--at-navy-deep);
-}
-
-.ed-rn-reg__foot-arrow {
-  font-family: var(--at-mono);
-  font-size: 1.15rem;
-  color: var(--reg-color);
-  transition: transform 0.18s ease;
-}
-
-.ed-rn-reg__foot:hover .ed-rn-reg__foot-arrow { transform: translateX(4px); }
-
 /* ─── Reference ─────────────────────────────────────────────────────────── */
 .ed-rn-ref {
   padding: 4rem 0 5rem;
@@ -838,7 +782,6 @@ a.ed-rn-reg:focus-visible {
   .ed-rn-registers__inner { padding: 0 1.25rem; }
   .ed-rn-reg__head { padding: 2rem 1.5rem 1.4rem; }
   .ed-rn-reg__subs { padding: 0.4rem 1.5rem; }
-  .ed-rn-reg__foot { padding: 0.95rem 1.5rem; }
   .ed-rn-ref { padding: 3rem 0 4rem; }
   .ed-rn-ref__inner { padding: 0 1.25rem; }
   .ed-rn-ref__tip { flex-direction: column; gap: 0.5rem; }

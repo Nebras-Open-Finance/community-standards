@@ -14,7 +14,7 @@ export interface ErrataRelatedStandard {
 }
 
 export interface ErrataSection {
-  errataId: string                        // which errata doc this section belongs to, e.g. "v2.1-errata1"
+  errataId: string                        // which errata doc this section belongs to, e.g. "v2.1-errata2"
   version: string                         // spec version the errata corrects, e.g. "v2.1"
   number: number                          // section number within the errata (1, 2, 3, …)
   title: string                           // heading text without the number, e.g. "Account Information — Permissions array flattening"
@@ -35,7 +35,7 @@ const OZONE = 'https://github.com/Nebras-Open-Finance/api-specs/blob/ozone'
 
 export const ERRATA_SECTIONS: ErrataSection[] = [
   {
-    errataId: 'v2.1-errata1',
+    errataId: 'v2.1-errata2',
     version: 'v2.1',
     number: 1,
     title: 'Account Information — Permissions array flattening',
@@ -44,7 +44,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
       'The Permissions field on consent responses was previously typed as an array of arrays of strings — an array containing a nested array of permission codes. It is now a flat array of strings, matching the normative text and how clients have always populated it on the request side.',
     rationale:
       'The nested-array form was a defect in the published OpenAPI. The v2.1 normative text and every consumer of the response treat Permissions as a flat array of permission codes, and the API Hub already enforces the flat structure. The schema is being corrected to match.',
-    effectiveDate: 'To be confirmed on merge to main.',
+    effectiveDate: '2026-04-28',
     spec: 'uae-account-information-openapi',
     endpoints: [
       { label: 'GET /account-access-consents', path: '/tech/api-specs/v2.1/tpp/consent/account-access-consents' },
@@ -53,12 +53,12 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     schemas: ['AEBankDataSharingConsentPermissionCodes'],
     githubSources: [
       {
-        label: 'supporting/breaking-changes/standards/v2.1-errata1/uae-account-information-openapi/breaking-changes.yaml',
-        url: `${OZONE}/supporting/breaking-changes/standards/v2.1-errata1/uae-account-information-openapi/breaking-changes.yaml`,
+        label: 'supporting/breaking-changes/standards/v2.1-errata2/uae-account-information-openapi/breaking-changes.yaml',
+        url: `${OZONE}/supporting/breaking-changes/standards/v2.1-errata2/uae-account-information-openapi/breaking-changes.yaml`,
       },
       {
-        label: 'dist/standards/v2.1-errata1/uae-account-information-openapi.yaml',
-        url: `${OZONE}/dist/standards/v2.1-errata1/uae-account-information-openapi.yaml`,
+        label: 'dist/standards/v2.1-errata2/uae-account-information-openapi.yaml',
+        url: `${OZONE}/dist/standards/v2.1-errata2/uae-account-information-openapi.yaml`,
       },
     ],
     relatedStandards: [
@@ -72,7 +72,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     ],
   },
   {
-    errataId: 'v2.1-errata1',
+    errataId: 'v2.1-errata2',
     version: 'v2.1',
     number: 2,
     title: 'Account Information — TrustFrameworkCode enum corrected to FI',
@@ -81,7 +81,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
       'The TrustFrameworkCode enum used by VerifiedClaimVerification.TrustFramework on GET /parties and GET /accounts/{AccountId}/parties previously declared a single value Undefined — a value no conforming LFI could return. The enum has been replaced with FI, matching what Ozone Connect emits on CbuaeVerifiedClaim.verification.trustFramework and what every real response reaching a TPP has always contained.',
     rationale:
       'The v2.1 enum was internally inconsistent with the Ozone Connect spec the Hub proxies from: every real response carried FI while the standards enum declared only Undefined. Formally this is an enum-value removal, but in practice no consumer could have relied on Undefined because no conforming implementation could have produced it. Richer values (UAE Pass digital identity, Emirates ID physical verification) are deferred to v3.0.',
-    effectiveDate: 'To be confirmed on merge to main.',
+    effectiveDate: '2026-04-28',
     spec: 'uae-account-information-openapi',
     endpoints: [
       { label: 'GET /parties', path: '/tech/api-specs/v2.1/tpp/data-sharing/parties' },
@@ -90,12 +90,12 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     schemas: ['TrustFrameworkCode'],
     githubSources: [
       {
-        label: 'supporting/breaking-changes/standards/v2.1-errata1/uae-account-information-openapi/breaking-changes.yaml',
-        url: `${OZONE}/supporting/breaking-changes/standards/v2.1-errata1/uae-account-information-openapi/breaking-changes.yaml`,
+        label: 'supporting/breaking-changes/standards/v2.1-errata2/uae-account-information-openapi/breaking-changes.yaml',
+        url: `${OZONE}/supporting/breaking-changes/standards/v2.1-errata2/uae-account-information-openapi/breaking-changes.yaml`,
       },
       {
-        label: 'dist/standards/v2.1-errata1/uae-account-information-openapi.yaml',
-        url: `${OZONE}/dist/standards/v2.1-errata1/uae-account-information-openapi.yaml`,
+        label: 'dist/standards/v2.1-errata2/uae-account-information-openapi.yaml',
+        url: `${OZONE}/dist/standards/v2.1-errata2/uae-account-information-openapi.yaml`,
       },
     ],
     relatedStandards: [
@@ -109,7 +109,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     ],
   },
   {
-    errataId: 'v2.1-errata1',
+    errataId: 'v2.1-errata2',
     version: 'v2.1',
     number: 3,
     title: 'Authorization Endpoints — POST /token restructured as oneOf; client_credentials grant added; client_id optional',
@@ -121,7 +121,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
       '3. The client_id request parameter is now optional. Under FAPI 2.0 with mTLS client authentication the client is identified by its certificate, so client_id no longer needs to be sent in the request.',
     rationale:
       'All three corrections align the spec with how the API Hub has behaved in production since v2.1 was published. The single-schema response form misrepresented the contract (each grant type returns a different shape); omitting client_credentials hid a supported grant; and requiring client_id contradicted the FAPI 2.0 mTLS profile the Hub has always operated under. This is a documentation-level correction — no behavioural change is being made.',
-    effectiveDate: 'To be confirmed on merge to main.',
+    effectiveDate: '2026-04-28',
     spec: 'uae-authorization-endpoints-openapi',
     endpoints: [
       { label: 'POST /token', path: '/tech/api-specs/v2.1/tpp/token/token' },
@@ -133,12 +133,12 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     ],
     githubSources: [
       {
-        label: 'supporting/breaking-changes/standards/v2.1-errata1/uae-authorization-endpoints-openapi/breaking-changes.yaml',
-        url: `${OZONE}/supporting/breaking-changes/standards/v2.1-errata1/uae-authorization-endpoints-openapi/breaking-changes.yaml`,
+        label: 'supporting/breaking-changes/standards/v2.1-errata2/uae-authorization-endpoints-openapi/breaking-changes.yaml',
+        url: `${OZONE}/supporting/breaking-changes/standards/v2.1-errata2/uae-authorization-endpoints-openapi/breaking-changes.yaml`,
       },
       {
-        label: 'dist/standards/v2.1-errata1/uae-authorization-endpoints-openapi.yaml',
-        url: `${OZONE}/dist/standards/v2.1-errata1/uae-authorization-endpoints-openapi.yaml`,
+        label: 'dist/standards/v2.1-errata2/uae-authorization-endpoints-openapi.yaml',
+        url: `${OZONE}/dist/standards/v2.1-errata2/uae-authorization-endpoints-openapi.yaml`,
       },
     ],
     relatedStandards: [
@@ -150,7 +150,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     ],
   },
   {
-    errataId: 'v2.1-errata1',
+    errataId: 'v2.1-errata2',
     version: 'v2.1',
     number: 4,
     title: 'Confirmation of Payee — 204 response description corrected',
@@ -159,15 +159,15 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
       'The description of the 204 No Content response on POST /confirmation has been corrected to "IBAN is not recognised". Previously it read "Account holder has opted-out of Confirmation of Payee and no data is returned", which confused the semantics of the status code — 204 is returned when the supplied IBAN is not recognised by the LFI, not when an account holder has opted out.',
     rationale:
       'The opt-out wording misled integrators about when to expect a 204. No opt-out mechanism is defined on this surface; the 204 is the unrecognised-IBAN response and the prose has been aligned with actual behaviour.',
-    effectiveDate: 'To be confirmed on merge to main.',
+    effectiveDate: '2026-04-28',
     spec: 'uae-confirmation-of-payee-openapi',
     endpoints: [
       { label: 'POST /confirmation', path: '/tech/api-specs/v2.1/tpp/confirmation-of-payee/confirmation' },
     ],
     githubSources: [
       {
-        label: 'dist/standards/v2.1-errata1/uae-confirmation-of-payee-openapi.yaml',
-        url: `${OZONE}/dist/standards/v2.1-errata1/uae-confirmation-of-payee-openapi.yaml`,
+        label: 'dist/standards/v2.1-errata2/uae-confirmation-of-payee-openapi.yaml',
+        url: `${OZONE}/dist/standards/v2.1-errata2/uae-confirmation-of-payee-openapi.yaml`,
       },
     ],
     relatedStandards: [
@@ -179,7 +179,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     ],
   },
   {
-    errataId: 'v2.1-errata1',
+    errataId: 'v2.1-errata2',
     version: 'v2.1',
     number: 5,
     title: 'Confirmation of Payee — aud claim tightened from array to single string',
@@ -188,7 +188,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
       'The aud (audience) claim on every *BodySigned schema used by POST /confirmation and POST /discovery — AEError400ResponseBodySigned, AEError403ResponseBodySigned, AEError500ResponseBodySigned, DiscoverConfirmationSourceRequestBodySigned, DiscoverConfirmationSourceResponseBodySigned, NameConfirmationRequestBodySigned, and NameConfirmationResponseBodySigned — was previously typed as an array of strings. It is now a single string, matching what every JWT observed on this API actually carries.',
     rationale:
       'Every signed message on this surface has exactly one recipient — a specific authorisation server on requests, and a specific TPP client identifier on responses — so the array-of-strings form was over-modelled. RFC 7519 §4.1.3 permits aud to be a single StringOrURI when the JWT has a single audience. The array-only modelling did not reflect real wire traffic; any consumer strict-validating against it could not have decoded Model Bank responses. The correction brings the spec into line with production behaviour.',
-    effectiveDate: 'To be confirmed on merge to main.',
+    effectiveDate: '2026-04-28',
     spec: 'uae-confirmation-of-payee-openapi',
     endpoints: [
       { label: 'POST /confirmation', path: '/tech/api-specs/v2.1/tpp/confirmation-of-payee/confirmation' },
@@ -205,12 +205,12 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     ],
     githubSources: [
       {
-        label: 'supporting/breaking-changes/standards/v2.1-errata1/uae-confirmation-of-payee-openapi/breaking-changes.yaml',
-        url: `${OZONE}/supporting/breaking-changes/standards/v2.1-errata1/uae-confirmation-of-payee-openapi/breaking-changes.yaml`,
+        label: 'supporting/breaking-changes/standards/v2.1-errata2/uae-confirmation-of-payee-openapi/breaking-changes.yaml',
+        url: `${OZONE}/supporting/breaking-changes/standards/v2.1-errata2/uae-confirmation-of-payee-openapi/breaking-changes.yaml`,
       },
       {
-        label: 'dist/standards/v2.1-errata1/uae-confirmation-of-payee-openapi.yaml',
-        url: `${OZONE}/dist/standards/v2.1-errata1/uae-confirmation-of-payee-openapi.yaml`,
+        label: 'dist/standards/v2.1-errata2/uae-confirmation-of-payee-openapi.yaml',
+        url: `${OZONE}/dist/standards/v2.1-errata2/uae-confirmation-of-payee-openapi.yaml`,
       },
     ],
     relatedStandards: [
@@ -224,7 +224,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     ],
   },
   {
-    errataId: 'v2.1-errata1',
+    errataId: 'v2.1-errata2',
     version: 'v2.1',
     number: 6,
     title: 'Over-escaped regex patterns — doubled-backslash defect corrected across affected schemas',
@@ -236,7 +236,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
       'CoP response (^.+\\..+\\..+$): fixed on OzoneConnectConsentEventActionAPIs.AEConfirmationOfPayeeResponse in uae-ozone-connect-user-operations-openapi.',
     rationale:
       'The published regexes were non-functional: strict validators either rejected legitimate inputs or accepted any string depending on how they handled the literal backslash sequences. Production systems rely on the canonical single-backslash form; the correction brings every affected pattern into line with that form. The monetary Amount corrections are tracked as OF-6288; the rarType and CoP response corrections roll up under the same v2.1.3 change bullet on User Operations.',
-    effectiveDate: 'To be confirmed on merge to main.',
+    effectiveDate: '2026-04-28',
     specs: [
       'uae-fx-service-initiation-openapi',
       'uae-api-hub-consent-manager-openapi',
@@ -246,8 +246,8 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     ],
     githubSources: [
       {
-        label: 'dist/standards/v2.1-errata1/uae-fx-service-initiation-openapi.yaml',
-        url: `${OZONE}/dist/standards/v2.1-errata1/uae-fx-service-initiation-openapi.yaml`,
+        label: 'dist/standards/v2.1-errata2/uae-fx-service-initiation-openapi.yaml',
+        url: `${OZONE}/dist/standards/v2.1-errata2/uae-fx-service-initiation-openapi.yaml`,
       },
       {
         label: 'dist/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi.yaml',
@@ -295,7 +295,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     ],
   },
   {
-    errataId: 'v2.1-errata1',
+    errataId: 'v2.1-errata2',
     version: 'v2.1',
     number: 7,
     title: 'Webhook Template — Permissions array flattening',
@@ -304,7 +304,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
       'The Permissions field on consent webhook payloads was previously typed as an array of arrays of strings and is now a flat array of strings. This matches the equivalent correction on the Account Information consent responses (see §1) so the webhook payload and the consent resource share the same Permissions shape.',
     rationale:
       'Webhook payloads must mirror the structure of the underlying consent resource. The nested-array form in the webhook spec was the same defect corrected in §1 and would have caused subscribers parsing strictly against the published schema to fail.',
-    effectiveDate: 'To be confirmed on merge to main.',
+    effectiveDate: '2026-04-28',
     spec: 'uae-webhook-template-openapi',
     endpoints: [
       { label: 'Consent Status Webhook', path: '/tech/api-specs/v2.1/tpp/webhooks/consent-status' },
@@ -312,12 +312,12 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     ],
     githubSources: [
       {
-        label: 'supporting/breaking-changes/standards/v2.1-errata1/uae-webhook-template-openapi/breaking-changes.yaml',
-        url: `${OZONE}/supporting/breaking-changes/standards/v2.1-errata1/uae-webhook-template-openapi/breaking-changes.yaml`,
+        label: 'supporting/breaking-changes/standards/v2.1-errata2/uae-webhook-template-openapi/breaking-changes.yaml',
+        url: `${OZONE}/supporting/breaking-changes/standards/v2.1-errata2/uae-webhook-template-openapi/breaking-changes.yaml`,
       },
       {
-        label: 'dist/standards/v2.1-errata1/uae-webhook-template-openapi.yaml',
-        url: `${OZONE}/dist/standards/v2.1-errata1/uae-webhook-template-openapi.yaml`,
+        label: 'dist/standards/v2.1-errata2/uae-webhook-template-openapi.yaml',
+        url: `${OZONE}/dist/standards/v2.1-errata2/uae-webhook-template-openapi.yaml`,
       },
     ],
     relatedStandards: [
@@ -331,7 +331,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     ],
   },
   {
-    errataId: 'v2.1-errata1',
+    errataId: 'v2.1-errata2',
     version: 'v2.1',
     number: 8,
     title: 'API Hub Consent Manager — unused AERiskExternalAccountIdentificationCode schema removed',
@@ -340,7 +340,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
       'The namespaced AEBankServiceInitiationRichAuthorizationRequests.AERiskExternalAccountIdentificationCode schema has been deleted. It duplicated the canonical AERiskExternalAccountIdentificationCode and was never referenced from any other schema.',
     rationale:
       'The duplicated schema was dead weight in the OpenAPI and invited accidental divergence from the canonical definition. Removing it leaves a single source of truth for the type without changing any wire contract.',
-    effectiveDate: 'To be confirmed on merge to main.',
+    effectiveDate: '2026-04-28',
     spec: 'uae-api-hub-consent-manager-openapi',
     schemas: ['AERiskExternalAccountIdentificationCode'],
     githubSources: [
@@ -362,7 +362,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     ],
   },
   {
-    errataId: 'v2.1-errata1',
+    errataId: 'v2.1-errata2',
     version: 'v2.1',
     number: 9,
     title: 'Ozone Connect Health Check — echo-cert clientCertificate described as mTLS client cert, not server cert',
@@ -371,7 +371,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
       'The clientCertificate.subject and clientCertificate.issuer descriptions and examples on the HealthCheckCertResponse schema (GET /echo-cert) have been corrected. The subject previously read "The subject of the certificate, which should equate to a DNS name." with an example of CN = auth.open-finance-apihub.ae — prose that described a server certificate rather than the client certificate the endpoint actually echoes. The description now states that the field carries the Distinguished Name of the client certificate presented by the caller during the mTLS handshake, and that for Open Finance UAE callers the OU contains the caller’s organisation ID from the Trust Framework directory. The example has been updated to a representative Open Finance UAE client-cert DN (C=UK, O=OZONE FINANCIAL TECHNOLOGY LIMITED, OU=<organisation-id>), and the issuer example has been refreshed to the Sandbox Trust Framework issuing CA for symmetry. The schema shape is unchanged.',
     rationale:
       'The endpoint echoes the client certificate the server received during the mTLS handshake, but the published prose and example described a DNS-in-CN server certificate. In the Open Finance UAE trust framework the caller’s identity is carried in the OU as the Trust Framework organisation ID, not in the CN as a DNS name — so the example would have misled integrators inspecting /echo-cert output during onboarding. The correction is documentation-only; no wire contract has changed.',
-    effectiveDate: 'To be confirmed on merge to main.',
+    effectiveDate: '2026-04-28',
     spec: 'uae-ozone-connect-health-check-openapi',
     endpoints: [
       { label: 'GET /echo-cert', path: '/tech/api-specs/v2.1/ozone-connect/health-check/echo-cert' },
@@ -389,7 +389,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     ],
   },
   {
-    errataId: 'v2.1-errata1',
+    errataId: 'v2.1-errata2',
     version: 'v2.1',
     number: 10,
     title: 'Ozone Connect Bank Data Sharing — meta block added to GET /accounts/{AccountId}/statements',
@@ -398,7 +398,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
       'The GET /accounts/{AccountId}/statements response on Ozone Connect Bank Data Sharing has been extended with an optional meta block. The block composes the shared Meta schema via allOf and adds two date-time properties — firstAvailableDateTime and lastAvailableDateTime — carrying the first and last date-times for which the LFI can return statement data on the account.',
     rationale:
       'Statement history depth varies across LFIs and across accounts within an LFI. Without a response-level signal, consumers have to discover the available range by probing. Surfacing the range on the response lets the Hub (and, downstream, TPPs) bound requests to data that is known to exist. The addition is backward-compatible: meta is optional and existing consumers that ignore it see no change.',
-    effectiveDate: 'To be confirmed on merge to main.',
+    effectiveDate: '2026-04-28',
     spec: 'uae-ozone-connect-bank-data-sharing-openapi',
     endpoints: [
       { label: 'GET /accounts/{AccountId}/statements', path: '/tech/api-specs/v2.1/ozone-connect/data-sharing/accounts-AccountId-statements' },

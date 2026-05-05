@@ -13,6 +13,7 @@ import {
   type TrustFrameworkCategory,
 } from '@/data/trust-framework-releases-registry'
 import { latestApiHubYear } from '@/data/release-notes-years'
+import { CURRENT_VERSION } from '@/data/versions'
 
 const route = useRoute()
 
@@ -462,7 +463,7 @@ watch([query, () => [...categoryFilter]], writeToUrl)
           <a :href="`/tech/release-notes-and-erratas/release-notes/api-hub/${latestApiHubYear}`">
             API Hub Release Notes</a>.
           For corrections to <strong>published documentation</strong>, see
-          <a href="/tech/release-notes-and-erratas/erratas/">Erratas</a>.
+          <a :href="`/tech/release-notes-and-erratas/erratas/${CURRENT_VERSION}/`">Erratas</a>.
         </p>
       </div>
     </section>

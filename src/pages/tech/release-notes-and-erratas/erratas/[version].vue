@@ -17,7 +17,7 @@ meta:
           corrections. Try one of: {{ availableVersionsLabel }}.
         </p>
         <p class="ed-er-hero__sub">
-          <router-link to="/tech/release-notes-and-erratas/erratas/" class="ed-er-back">
+          <router-link :to="`/tech/release-notes-and-erratas/erratas/${CURRENT_VERSION}/`" class="ed-er-back">
             &larr; Back to current Erratas
           </router-link>
         </p>
@@ -330,7 +330,7 @@ meta:
             <li>
               Each entry has a unique identifier in the form
               <code>&lt;version&gt;-errata&lt;n&gt;</code> &mdash; for example,
-              <code>v2.1-errata1</code>.
+              <code>v2.1-errata2</code>.
             </li>
             <li>
               Each entry states the affected document(s) and section(s), what changed,
@@ -371,6 +371,7 @@ import {
   latestApiHubYear,
   latestTrustFrameworkYear,
 } from '@/data/release-notes-years'
+import { CURRENT_VERSION } from '@/data/versions'
 
 // ── Route → version param ────────────────────────────────────────────────
 const route = useRoute()

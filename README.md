@@ -56,7 +56,7 @@ The canonical OpenAPI specifications for the ecosystem, grouped by audience unde
 
 Specs are **not** stored in this repo. They are fetched at build time by [`scripts/fetch-openapi-specs.mjs`](scripts/fetch-openapi-specs.mjs) from the canonical source — [Nebras-Open-Finance/api-specs](https://github.com/Nebras-Open-Finance/api-specs) — into [`public/openapi/`](public/openapi/) and gitignored. Versions available to the site are declared in [`src/data/versions.ts`](src/data/versions.ts); adding a new version there causes the fetch script to pick it up automatically, including the highest matching errata release.
 
-Errata releases (e.g. `v2.1-errata1`) contain targeted corrections to a published version. Where an errata folder exists, the files inside it supersede the corresponding base version file-by-file.
+Errata releases (e.g. `v2.1-errata2`) contain targeted corrections to a published version. Where an errata folder exists, the files inside it supersede the corresponding base version file-by-file.
 
 ### 4. Release Notes & Errata — [`src/pages/tech/release-notes-and-erratas/`](src/pages/tech/release-notes-and-erratas/)
 

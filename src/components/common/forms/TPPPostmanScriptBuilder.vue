@@ -134,7 +134,7 @@ async function submit() {
     const hasBanking = formData.roles.some(r => r.includes('BDSP') || r.includes('BSIP'))
     if (!hasBanking) return
 
-    const url = 'https://raw.githubusercontent.com/Nebras-Open-Finance/postman/main/banking.postman_collection.json'
+    const url = '/postman/banking.postman_collection.json'
     const response = await fetch(url)
     if (!response.ok) throw new Error(`Failed to fetch collection: ${response.status}`)
     const json = await response.json()
@@ -182,6 +182,27 @@ async function submit() {
       .filter(item => ![...foldersToRemove].some(name => item.name.includes(name)))
       .map(item => item.item ? { ...item, item: removeLFI(item.item) } : item)
     json.item = removeLFI(json.item)
+
+    type CollectionVariable = { key: string; value: string; type?: string }
+    const collectionVars: Array<[string, string]> = [
+      ['_clientId',     formData.client_id],
+      ['auth-endpoint', authEndpoint],
+      ['issuer',        issuer],
+      ['rs',            rs],
+      ['kid-local',     formData.signing_key_id],
+      ['pem-local',     formData.key_content.replace(/[\r\n]/g, '')],
+      ['redirectUrl',   formData.redirect_uri],
+      ['par-endpoint',  parEndpoint],
+      ['tokenEndpoint', tokenEndpoint],
+      ['jwksUrl',       jwksUrl],
+    ]
+    const vars: CollectionVariable[] = Array.isArray(json.variable) ? json.variable : []
+    for (const [key, value] of collectionVars) {
+      const existing = vars.find((v: CollectionVariable) => v.key === key)
+      if (existing) existing.value = value
+      else vars.push({ key, value, type: 'string' })
+    }
+    json.variable = vars
 
     let collectionStr = JSON.stringify(json, null, 2)
     const swap = (haystack: string, needle: string, value: string) =>

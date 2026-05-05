@@ -14,6 +14,7 @@ import {
 } from '@/data/api-hub-releases-registry'
 import { latestTrustFrameworkYear } from '@/data/release-notes-years'
 import { useSelectedVersion } from '@/composables/useSelectedVersion'
+import { CURRENT_VERSION } from '@/data/versions'
 
 const route = useRoute()
 
@@ -580,7 +581,7 @@ watch([query, audienceFilter, () => [...areaFilter], () => [...sectionFilter]], 
         <p class="ed-ahr-cross__body">
           For corrections to <strong>published documentation</strong> rather than
           platform deployments, see
-          <a href="/tech/release-notes-and-erratas/erratas/">Erratas</a>.
+          <a :href="`/tech/release-notes-and-erratas/erratas/${CURRENT_VERSION}/`">Erratas</a>.
           For Trust Framework directory releases, see
           <a :href="`/tech/release-notes-and-erratas/release-notes/trust-framework/${latestTrustFrameworkYear}`">
             Trust Framework Release Notes</a>.

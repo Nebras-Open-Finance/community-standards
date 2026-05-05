@@ -8,14 +8,15 @@
     "fetch:specs": "node scripts/fetch-openapi-specs.mjs && node scripts/generate-openapi-xlsx.mjs",
     "fetch:orgs": "node scripts/fetch-organisations.mjs",
     "fetch:github": "node scripts/fetch-github-stats.mjs",
-    "fetch:all": "npm run fetch:orgs && npm run fetch:github && npm run fetch:specs",
+    "fetch:postman": "node scripts/fetch-postman-collections.mjs",
+    "fetch:all": "npm run fetch:orgs && npm run fetch:github && npm run fetch:specs && npm run fetch:postman",
     "dev": "npm run fetch:all && vite",
     "build": "npm run fetch:all && vite-ssg build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
-    "pretest": "npm run fetch:specs && npm run fetch:orgs",
+    "pretest": "npm run fetch:specs && npm run fetch:orgs && npm run fetch:postman",
     "test": "node --test --test-concurrency=1 supporting/tests/**/*.test.mjs",
-    "test:fast": "node --test --test-concurrency=1 supporting/tests/api-spec-pages.test.mjs supporting/tests/chargeable-endpoints.test.mjs supporting/tests/endpoint-spec-references.test.mjs supporting/tests/link-integrity.test.mjs supporting/tests/no-uppercase-image-extensions.test.mjs supporting/tests/orphan-pages.test.mjs supporting/tests/page-titles.test.mjs supporting/tests/spec-to-workbook.test.mjs supporting/tests/specs.test.mjs supporting/tests/ssg-dynamic-routes.test.mjs supporting/tests/unused-components.test.mjs supporting/tests/user-journey-initial-data.test.mjs supporting/tests/version-dropdown-coverage.test.mjs"
+    "test:fast": "node --test --test-concurrency=1 supporting/tests/api-spec-pages.test.mjs supporting/tests/chargeable-endpoints.test.mjs supporting/tests/endpoint-spec-references.test.mjs supporting/tests/link-integrity.test.mjs supporting/tests/no-uppercase-image-extensions.test.mjs supporting/tests/orphan-pages.test.mjs supporting/tests/page-titles.test.mjs supporting/tests/postman-collection.test.mjs supporting/tests/spec-to-workbook.test.mjs supporting/tests/specs.test.mjs supporting/tests/ssg-dynamic-routes.test.mjs supporting/tests/unused-components.test.mjs supporting/tests/user-journey-initial-data.test.mjs supporting/tests/version-dropdown-coverage.test.mjs"
   },
   "repository": {
     "type": "git",

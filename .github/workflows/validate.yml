@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   fast:
@@ -65,5 +66,45 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.SPECS_READ_TOKEN }}
         run: npm run build
 
+      - name: Strict internal-link check
+        # Catches dead in-page links lychee misses — namely directory paths
+        # whose folder exists in dist but contains no index.html.
+        run: node --test supporting/tests/built-html-links.test.mjs
+
       - name: Internal-link check
         run: lychee --config supporting/lychee.toml --root-dir "$(pwd)/dist" dist
+
+      - name: Upload built site
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 1
+
+  deploy:
+    name: deploy
+    needs: [fast, build-gate]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      deployments: write
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
+
+    steps:
+      - name: Download built site
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=nebras-website --branch=main
