@@ -70,7 +70,6 @@ import ExampleJourneys from './_shared/ExampleJourneys.vue'
 
 <style scoped>
 .ed-doc {
-  --at-page-max: 1600px;
   background: var(--at-bg-cream);
   color: var(--at-navy-deep);
   font-family: var(--at-sans);

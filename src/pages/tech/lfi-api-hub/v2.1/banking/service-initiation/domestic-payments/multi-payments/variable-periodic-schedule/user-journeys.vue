@@ -274,7 +274,6 @@ const initialFormDataPII = ref({
 
 <style scoped>
 .ed-doc {
-  --at-page-max: 1600px;
   background: var(--at-bg-cream);
   color: var(--at-navy-deep);
   font-family: var(--at-sans);

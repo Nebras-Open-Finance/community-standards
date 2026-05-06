@@ -32,10 +32,11 @@ const chromeSidebar = computed<ChromeSidebar | null>(() => {
 })
 
 const isTech = computed<boolean>(() => isPrefix(route.path, '/tech'))
+const isHome = computed<boolean>(() => route.path === '/')
 </script>
 
 <template>
-  <div class="app-shell" :class="{ 'is-tech': isTech }">
+  <div class="app-shell" :class="{ 'is-tech': isTech, 'is-home': isHome }">
     <PageHeader />
     <main class="app-shell__main">
       <EdHoverSidebar

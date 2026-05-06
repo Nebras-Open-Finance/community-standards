@@ -7,6 +7,10 @@
   components reference them (EdHero, EdHoverSidebar, EdCompareCard, etc.).
 */
 
+html {
+  zoom: 0.9;
+}
+
 html,
 body {
   background: var(--at-bg-cream);
@@ -49,4 +53,14 @@ body {
 .app-shell.is-tech [class*="__lede "],
 .app-shell.is-tech [class*="hero__sub"] {
   max-width: none !important;
+}
+
+/*
+  Breathing room before the footer on every page except the homepage.
+  Padding is applied to the last child of the page root so it inherits
+  whatever section background sits at the bottom of the page — cream
+  sections stay cream, surface (white) sections stay white, etc.
+*/
+.app-shell:not(.is-home) .app-shell__main > *:last-child > *:last-child {
+  padding-bottom: 8rem;
 }

@@ -165,5 +165,6 @@ export const CHART_REGISTRY: Readonly<Record<string, readonly ChartConfig[]>> = 
     { id: 'auth_count_month',       title: 'Auth Count by Month',       component: 'volume',    props: { groupBy: 'month', stackBy: 'type', valueKey: 'count', grouped: true }, dataSource: 'auth', hideIfFiltered: 'month' },
     { id: 'auth_conversion_month',  title: 'Conversion Rate by Month',  component: 'auth-rate', props: { groupBy: 'month', numeratorType: 'doConfirm' },                       dataSource: 'auth', hideIfFiltered: 'month' },
     { id: 'auth_cancel_lfi',        title: 'Cancellation Rate by LFI',  component: 'auth-rate', props: { groupBy: 'lfi',   numeratorType: 'doFail' },                          dataSource: 'auth', hideIfFiltered: 'lfi'   },
+    { id: 'auth_cancel_month',      title: 'Cancellation Rate by Month', component: 'auth-rate', props: { groupBy: 'month', numeratorType: 'doFail' },                         dataSource: 'auth', hideIfFiltered: 'month' },
   ],
 }

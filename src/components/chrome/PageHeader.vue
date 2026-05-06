@@ -50,7 +50,7 @@ function isActive(prefix: string): boolean {
       <!-- Masthead / wordmark -->
       <a href="/" class="ed-masthead" aria-label="AlTareq home">
         <img src="/AlTareq.png" alt="AlTareq" class="ed-masthead__logo" />
-        <span class="ed-masthead__tag">Community Site</span>
+        <span class="ed-masthead__tag">by Thomas Catchpole</span>
       </a>
 
       <!-- Desktop nav -->
@@ -240,7 +240,7 @@ function isActive(prefix: string): boolean {
   font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: var(--at-mute);
+  color: var(--at-mute-2);
   white-space: nowrap;
   border-left: 1px solid var(--at-grid-line);
   padding-left: 0.75rem;

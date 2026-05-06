@@ -301,7 +301,7 @@ const secondaryRequestTypes: RequestType[] = [
     <!-- ═══════════════════════════════════════════════════════════════════
          WHAT TO INCLUDE IN A TICKET
     ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ed-sd-include">
+    <section id="what-to-include" class="ed-sd-include">
       <div class="ed-sd-include__inner">
         <div class="ed-sd-include__head">
           <div class="ed-sd-include__eyebrow">

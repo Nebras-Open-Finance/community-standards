@@ -87,6 +87,10 @@ export interface DashboardKpis {
   totalAmountAed: number
   successRate:    string
   avgPaymentSize: string
+  consentsAuthorized: number
+  conversionRate:     string
+  momGrowth:          string
+  cancellationRate:   string
 }
 
 export interface FilterOptions {
@@ -348,6 +352,40 @@ export const kpis: ComputedRef<DashboardKpis> = computed(() => {
     ? (totalAmountAed / totalPayments).toFixed(2)
     : '0.00'
 
+  // Auth metrics: derived from filteredAuthData by endpoint type.
+  const authData       = filteredAuthData.value
+  const authCount      = authData.filter(r => r.type === 'auth').reduce((s, r) => s + r.count, 0)
+  const doConfirmCount = authData.filter(r => r.type === 'doConfirm').reduce((s, r) => s + r.count, 0)
+  const doFailCount    = authData.filter(r => r.type === 'doFail').reduce((s, r) => s + r.count, 0)
+
+  const conversionRate = authCount > 0
+    ? ((doConfirmCount / authCount) * 100).toFixed(1)
+    : '0.0'
+  const cancellationRate = authCount > 0
+    ? ((doFailCount / authCount) * 100).toFixed(1)
+    : '0.0'
+
+  // MoM growth in consents authorized: latest two months containing doConfirm
+  // activity within the current filter scope.
+  const doConfirmMonths = uniqueSorted(
+    authData.filter(r => r.type === 'doConfirm' && r.month !== 'unknown').map(r => r.month),
+  )
+  let momGrowth = '0.0'
+  if (doConfirmMonths.length >= 2) {
+    const latest = doConfirmMonths[doConfirmMonths.length - 1]
+    const prior  = doConfirmMonths[doConfirmMonths.length - 2]
+    const latestCount = authData
+      .filter(r => r.type === 'doConfirm' && r.month === latest)
+      .reduce((s, r) => s + r.count, 0)
+    const priorCount = authData
+      .filter(r => r.type === 'doConfirm' && r.month === prior)
+      .reduce((s, r) => s + r.count, 0)
+    if (priorCount > 0) {
+      const pct = ((latestCount - priorCount) / priorCount) * 100
+      momGrowth = `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}`
+    }
+  }
+
   return {
     totalApiCalls:  totalVol + totalErr,
     totalApiErrors: totalErr,
@@ -359,6 +397,10 @@ export const kpis: ComputedRef<DashboardKpis> = computed(() => {
     totalAmountAed,
     successRate,
     avgPaymentSize,
+    consentsAuthorized: doConfirmCount,
+    conversionRate,
+    momGrowth,
+    cancellationRate,
   }
 })
 

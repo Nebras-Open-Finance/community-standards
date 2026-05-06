@@ -32,7 +32,8 @@ const year: number = new Date().getFullYear()
 
       <div class="ed-footer__col ed-footer__col--links">
         <div class="ed-footer__heading">Sections</div>
-        <a class="ed-footer__link" href="/tech/">Developer docs</a>
+        <a class="ed-footer__link" href="/tech/tpp-standards/">TPP standards</a>
+        <a class="ed-footer__link" href="/tech/lfi-api-hub/">LFI Hub integration guide</a>
         <a class="ed-footer__link" href="/support-service-desk/">Service Desk</a>
         <a class="ed-footer__link" href="/metrics">Metrics</a>
       </div>

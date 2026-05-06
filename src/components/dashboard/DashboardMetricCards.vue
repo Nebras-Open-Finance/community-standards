@@ -8,6 +8,7 @@ import { kpis, state } from '@/stores/dashboard'
 type CardId =
   | 'api-calls' | 'api-errors' | 'error-rate' | 'avg-response'
   | 'payments' | 'payment-amount' | 'success-rate' | 'avg-payment-size'
+  | 'consents-authorized' | 'conversion-rate' | 'mom-growth' | 'cancellation-rate'
 
 interface KpiCard {
   id:    CardId
@@ -17,6 +18,7 @@ interface KpiCard {
 }
 
 const isPaymentSection = computed<boolean>(() => state.activeSection.startsWith('payment'))
+const isAuthSection    = computed<boolean>(() => state.activeSection.startsWith('auth'))
 
 // Editorial accent palette — see styles/tokens.css for the canonical hex.
 const ACCENT = {
@@ -30,6 +32,34 @@ const ACCENT = {
 } as const
 
 const cards = computed<KpiCard[]>(() => {
+  if (isAuthSection.value) {
+    return [
+      {
+        id:    'consents-authorized',
+        label: 'Consents authorized',
+        value: kpis.value.consentsAuthorized.toLocaleString(),
+        color: ACCENT.tealDeep,
+      },
+      {
+        id:    'conversion-rate',
+        label: 'Conversion rate',
+        value: `${kpis.value.conversionRate}%`,
+        color: ACCENT.navy,
+      },
+      {
+        id:    'mom-growth',
+        label: 'MoM growth in consents',
+        value: `${kpis.value.momGrowth}%`,
+        color: ACCENT.blue,
+      },
+      {
+        id:    'cancellation-rate',
+        label: 'Cancellation rate',
+        value: `${kpis.value.cancellationRate}%`,
+        color: ACCENT.gold,
+      },
+    ]
+  }
   if (isPaymentSection.value) {
     return [
       {
@@ -127,6 +157,21 @@ const cards = computed<KpiCard[]>(() => {
           <path d="M3 3h18M3 9h18M3 15h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           <circle cx="18" cy="18" r="3" stroke="currentColor" stroke-width="2"/>
           <path d="M18 16.5v1.5l1 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <svg v-else-if="card.id === 'consents-authorized'" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <svg v-else-if="card.id === 'conversion-rate'" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M4 17l5-5 4 4 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M14 9h6v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <svg v-else-if="card.id === 'mom-growth'" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M3 20V10M9 20V4M15 20v-8M21 20V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <svg v-else-if="card.id === 'cancellation-rate'" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          <path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
       </div>
 

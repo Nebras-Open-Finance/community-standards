@@ -855,7 +855,6 @@ const statusRows: StatusRow[] = [
 
 <style scoped>
 .ed-doc {
-  --at-page-max: 1400px;
   background: var(--at-bg-cream);
   color: var(--at-navy-deep);
   font-family: var(--at-sans);
