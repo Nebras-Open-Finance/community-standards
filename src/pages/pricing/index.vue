@@ -285,7 +285,7 @@ const feeStreams: FeeStream[] = [
           <p class="ed-pr-overview__lede">
             Fees only apply to <strong>technically successful</strong> API
             calls. The three streams stack: a single consumer payment through
-            Open Banking will typically attract a Nebras API&nbsp;fee
+            Open Finance will typically attract a Nebras API&nbsp;fee
             <em>and</em> a payment fee to the LFI executing it.
           </p>
         </div>

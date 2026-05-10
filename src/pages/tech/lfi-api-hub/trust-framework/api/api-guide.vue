@@ -347,7 +347,7 @@ for org in tpps:
             <tr><td><code>SoftwareStatementId</code></td><td>string</td><td>Unique identifier for the Software Statement</td></tr>
             <tr><td><code>SoftwareClientName</code></td><td>string</td><td>Human-readable name of the client application</td></tr>
             <tr><td><code>Status</code></td><td>string</td><td>Status of the Software Statement, e.g. <code>Active</code></td></tr>
-            <tr><td><code>SoftwareRoles</code></td><td>string[]</td><td>Roles assigned to this application (e.g. <code>AISP</code>, <code>PISP</code>)</td></tr>
+            <tr><td><code>SoftwareRoles</code></td><td>string[]</td><td>Roles assigned to this application (e.g. <code>BDSP</code>, <code>BSIP</code>)</td></tr>
             <tr><td><code>OrganisationId</code></td><td>string</td><td>The owning organisation (not always returned inline &mdash; join from Step 2)</td></tr>
           </tbody>
         </table>

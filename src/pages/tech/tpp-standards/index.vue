@@ -262,7 +262,7 @@ function withAlpha(cssVar: string, alpha: number): string {
               </ul>
 
               <a :href="section.url" class="ed-tpp-card__foot ed-tpp-card__foot--link">
-                <span class="ed-tpp-card__cta">Open Banking overview</span>
+                <span class="ed-tpp-card__cta">Open Finance overview</span>
                 <span class="ed-tpp-card__arrow" :style="{ color: section.color }">&rarr;</span>
               </a>
             </div>

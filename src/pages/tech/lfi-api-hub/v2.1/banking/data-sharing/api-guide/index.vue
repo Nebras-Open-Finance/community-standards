@@ -562,17 +562,8 @@ const customerPsuJson = `{
           path parameter is one of the accounts the LFI patched onto the consent at authorization.
           For <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/accounts</code></span>, the same set is supplied to your Ozone Connect endpoint as the <code>accountIds</code> query parameter
         </li>
-        <li>Validates that the TPP holds the role required to call the endpoint (e.g. <code>AISP</code> for Bank Data Sharing)</li>
+        <li>Validates that the TPP holds the role required to call the endpoint (e.g. <code>BDSP</code> for Bank Data Sharing)</li>
       </EdBullets>
-      <EdProse>
-        The Hub's <code>{accountId}</code> check is enforced against the consent record. The LFI
-        additionally enforces account ownership against its own customer records &mdash; see
-        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/requirements#account-access-validation">Account Access Validation</a>
-        in the Bank Data Sharing Requirements. The two checks are layered: the Hub guards against
-        an <code>{accountId}</code> outside the consent's authorized set; the LFI guards against
-        the consent's authorized set drifting from the PSU's actual holdings.
-      </EdProse>
-
       <EdProse>
         If all checks pass, the Hub proxies the request to your Ozone Connect base URL, enriching it
         with the headers listed in
@@ -673,6 +664,7 @@ const customerPsuJson = `{
           <tbody>
             <tr><td><code>Consent.AccountTemporarilyBlocked</code></td><td><code>The account is temporarily blocked.</code></td><td>Account status is <code>Suspended</code></td></tr>
             <tr><td><code>Consent.PermanentAccountAccessFailure</code></td><td><code>The account is permanently inaccessible.</code></td><td>Account status is <code>Closed</code>, <code>Deceased</code>, or <code>Unclaimed</code></td></tr>
+            <tr><td><code>GenericError</code></td><td><code>The account is inaccessible.</code></td><td><code>{accountId}</code> does not belong to the PSU identified by <code>o3-psu-identifier</code></td></tr>
           </tbody>
         </table>
       </EdRefTable>

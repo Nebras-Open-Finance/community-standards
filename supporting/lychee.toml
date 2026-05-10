@@ -14,7 +14,7 @@ exclude = [
 
 # Skip anchors — vite-ssg generates slugs at build time and lychee's
 # fragment resolution doesn't always match. Revisit if we want stricter checks.
-include_fragments = "none"
+include_fragments = false
 
 # vite-ssg emits clean URLs by default, so internal hrefs like `/foo/bar`
 # resolve to `/foo/bar.html` (or `/foo/bar/index.html`) in the built output.
