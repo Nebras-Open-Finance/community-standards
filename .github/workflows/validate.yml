@@ -32,6 +32,7 @@ jobs:
           npm run fetch:orgs
           npm run fetch:specs
           npm run fetch:postman
+          npm run build:search
 
       - name: Type-check
         run: npm run typecheck
