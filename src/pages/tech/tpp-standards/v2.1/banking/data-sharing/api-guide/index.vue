@@ -117,6 +117,47 @@ const requestJWT = await buildRequestJWT({
 })
 `
 
+const step2Python = `import uuid
+from datetime import datetime, timedelta, timezone
+from pkce import generate_code_verifier, derive_code_challenge    # from FAPI page
+from request_jwt import build_request_jwt                          # from FAPI page
+
+# 1. Generate PKCE pair — store code_verifier in your session before redirecting
+code_verifier  = generate_code_verifier()
+code_challenge = derive_code_challenge(code_verifier)
+
+# 2. Define the authorization_details for this consent
+authorization_details = [
+    {
+        "type": "urn:openfinanceuae:account-access-consent:v2.1",
+        "consent": {
+            "ConsentId": str(uuid.uuid4()),
+            "ExpirationDateTime": (
+                datetime.now(timezone.utc) + timedelta(days=364)
+            ).isoformat(),
+            "Permissions": [
+                "ReadAccountsBasic",
+                "ReadAccountsDetail",
+                "ReadBalances",
+                "ReadTransactionsBasic",
+                "ReadTransactionsDetail",
+            ],
+            "OpenFinanceBilling": {
+                "UserType": "Retail",
+                "Purpose": "AccountAggregation",
+            },
+        },
+    },
+]
+
+# 3. Build and sign the Request JWT
+request_jwt = build_request_jwt(
+    scope="accounts openid",
+    code_challenge=code_challenge,
+    authorization_details=authorization_details,
+)
+`
+
 const step3Node = `import crypto from 'node:crypto'
 import { signJWT } from './sign-jwt'    // from FAPI Message Signing page
 
@@ -131,6 +172,21 @@ async function buildClientAssertion(): Promise<string> {
     jti: crypto.randomUUID(),
   })
 }
+`
+
+const step3Python = `import os, uuid
+from sign_jwt import sign_jwt    # from FAPI Message Signing page
+
+CLIENT_ID = os.environ["CLIENT_ID"]
+ISSUER    = os.environ["AUTHORIZATION_SERVER_ISSUER"]   # from .well-known
+
+def build_client_assertion() -> str:
+    return sign_jwt({
+        "iss": CLIENT_ID,
+        "sub": CLIENT_ID,
+        "aud": ISSUER,
+        "jti": str(uuid.uuid4()),
+    })
 `
 
 const step4Node = `import crypto from 'node:crypto'
@@ -410,8 +466,8 @@ def refresh_access_token(refresh_token: str) -> dict:
     }
 `
 
-const step2Tabs  = [{ label: 'Node.js', lang: 'typescript', code: step2Node }] as const
-const step3Tabs  = [{ label: 'Node.js', lang: 'typescript', code: step3Node }] as const
+const step2Tabs  = [{ label: 'Node.js', lang: 'typescript', code: step2Node },  { label: 'Python', lang: 'python', code: step2Python }] as const
+const step3Tabs  = [{ label: 'Node.js', lang: 'typescript', code: step3Node },  { label: 'Python', lang: 'python', code: step3Python }] as const
 const step4Tabs  = [{ label: 'Node.js', lang: 'typescript', code: step4Node },  { label: 'Python', lang: 'python', code: step4Python }] as const
 const step5Tabs  = [{ label: 'Node.js', lang: 'typescript', code: step5Node },  { label: 'Python', lang: 'python', code: step5Python }] as const
 const step6Tabs  = [{ label: 'Node.js', lang: 'typescript', code: step6Node },  { label: 'Python', lang: 'python', code: step6Python }] as const

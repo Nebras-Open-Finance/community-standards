@@ -329,11 +329,20 @@ result        = json.loads(base64.urlsafe_b64decode(payload_b64 + "=="))
 const jwsCompact = `<header>.<payload>.<signature>
 `
 
-const decodeJws = `function decodeJwsPayload(jws: string) {
+const decodeJwsNode = `function decodeJwsPayload(jws: string) {
   const [, payloadB64] = jws.split('.')
   const json = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'))
   return JSON.parse(json)
 }
+`
+
+const decodeJwsPython = `import base64, json
+
+def decode_jws_payload(jws: str) -> dict:
+    payload_b64 = jws.split(".")[1]
+    # Pad to a multiple of 4 chars so urlsafe_b64decode accepts it
+    padded = payload_b64 + "=" * (-len(payload_b64) % 4)
+    return json.loads(base64.urlsafe_b64decode(padded))
 `
 
 const decodedPayload = `{
@@ -380,7 +389,8 @@ const step6Tabs  = [{ label: 'Node.js', lang: 'typescript', code: step6Node },  
 const step7Tabs  = [{ label: 'Node.js', lang: 'typescript', code: step7Node },  { label: 'Python', lang: 'python', code: step7Python }] as const
 const step8Tabs  = [{ label: 'Node.js', lang: 'typescript', code: step8Node },  { label: 'Python', lang: 'python', code: step8Python }] as const
 const step9Tabs  = [{ label: 'Node.js', lang: 'typescript', code: step9Node },  { label: 'Python', lang: 'python', code: step9Python }] as const
-const step10Tabs = [{ label: 'Node.js', lang: 'typescript', code: step10Node }, { label: 'Python', lang: 'python', code: step10Python }] as const
+const step10Tabs    = [{ label: 'Node.js', lang: 'typescript', code: step10Node }, { label: 'Python', lang: 'python', code: step10Python }] as const
+const decodeJwsTabs = [{ label: 'Node.js', lang: 'typescript', code: decodeJwsNode }, { label: 'Python', lang: 'python', code: decodeJwsPython }] as const
 </script>
 
 <template>
@@ -795,7 +805,7 @@ const step10Tabs = [{ label: 'Node.js', lang: 'typescript', code: step10Node }, 
         Verify the signature using the LFI's public key, then base64url-decode the payload:
       </EdProse>
 
-      <EdCode :code="decodeJws" lang="typescript" filename="decode helper" />
+      <EdCodeGroup :tabs="decodeJwsTabs" />
 
       <EdProse>
         The decoded payload contains a <code>message</code> object with the CoP result under

@@ -48,7 +48,9 @@ const activeEntries = computed<ActiveEntry[]>(() =>
     .map(([key, value]) => ({ key, value })),
 )
 
-const hasActiveFilters = computed<boolean>(() => activeEntries.value.length > 0)
+const hasActiveFilters = computed<boolean>(() =>
+  activeEntries.value.length > 0 || !state.excludePartialMonths,
+)
 
 function onChange(key: FilterKey, ev: Event): void {
   const target = ev.target as HTMLSelectElement
@@ -84,13 +86,26 @@ function onChange(key: FilterKey, ev: Event): void {
         @click="resetFilters"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M1 4v6h6M23 20v-6h-6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Clear
+        Reset
       </button>
     </div>
 
-    <div v-if="hasActiveFilters" class="db-filters__chips">
+    <div class="db-filters__chips">
+      <label
+        class="db-filters__chip db-filters__chip--toggle"
+        :class="{ 'is-off': !state.excludePartialMonths }"
+        title="Hide the current calendar month while it is still in progress."
+      >
+        <input
+          type="checkbox"
+          class="db-filters__chip-input"
+          :checked="state.excludePartialMonths"
+          @change="state.excludePartialMonths = ($event.target as HTMLInputElement).checked"
+        >
+        Full months only
+      </label>
       <span
         v-for="entry in activeEntries"
         :key="entry.key"
@@ -224,4 +239,21 @@ function onChange(key: FilterKey, ev: Event): void {
 }
 
 .db-filters__chip:hover { opacity: 0.75; }
+
+.db-filters__chip--toggle {
+  gap: 0.4rem;
+}
+
+.db-filters__chip--toggle.is-off {
+  border-color: var(--at-grid-line-2);
+  background: transparent;
+  color: var(--at-mute);
+}
+
+.db-filters__chip-input {
+  appearance: auto;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--at-teal);
+}
 </style>

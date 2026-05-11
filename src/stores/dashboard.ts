@@ -113,10 +113,15 @@ export interface DashboardFilters {
 }
 
 export interface DashboardState {
-  filters:          DashboardFilters
-  activeSection:    string
-  sidebarCollapsed: boolean
+  filters:              DashboardFilters
+  activeSection:        string
+  sidebarCollapsed:     boolean
+  excludePartialMonths: boolean
 }
+
+// YYYY-MM of the current calendar month. Months matching this are still in
+// progress, so the default view excludes them to avoid skewed comparisons.
+const CURRENT_MONTH = new Date().toISOString().substring(0, 7)
 
 const SUCCESS_STATUSES = new Set<string>([
   'AcceptedSettlementCompleted',
@@ -279,13 +284,21 @@ export const state: DashboardState = reactive({
   filters: { lfi: null, tpp: null, month: null, apiFamily: null },
   activeSection: 'api-volumes',
   sidebarCollapsed: false,
+  excludePartialMonths: true,
 })
+
+// Skip when the user has explicitly picked a month — their selection wins.
+function monthIsAllowed(month: string): boolean {
+  if (state.filters.month) return month === state.filters.month
+  if (state.excludePartialMonths && month >= CURRENT_MONTH) return false
+  return true
+}
 
 export const filteredApiData: ComputedRef<ApiRow[]> = computed(() =>
   rawApiData.value.filter(r =>
     (!state.filters.lfi       || r.lfi    === state.filters.lfi)       &&
     (!state.filters.tpp       || r.tpp    === state.filters.tpp)       &&
-    (!state.filters.month     || r.month  === state.filters.month)     &&
+    monthIsAllowed(r.month)                                             &&
     (!state.filters.apiFamily || r.family === state.filters.apiFamily),
   ),
 )
@@ -296,9 +309,9 @@ export const filteredSuccessApiData: ComputedRef<ApiRow[]> = computed(() =>
 
 export const filteredPaymentData: ComputedRef<PaymentRow[]> = computed(() =>
   rawPaymentData.value.filter(r =>
-    (!state.filters.lfi   || r.lfi   === state.filters.lfi)   &&
-    (!state.filters.tpp   || r.tpp   === state.filters.tpp)   &&
-    (!state.filters.month || r.month === state.filters.month),
+    (!state.filters.lfi || r.lfi === state.filters.lfi) &&
+    (!state.filters.tpp || r.tpp === state.filters.tpp) &&
+    monthIsAllowed(r.month),
   ),
 )
 
@@ -314,8 +327,8 @@ export const filteredAllPaymentData: ComputedRef<PaymentRow[]> = computed(() =>
 
 export const filteredAuthData: ComputedRef<AuthRow[]> = computed(() =>
   rawAuthData.value.filter(r =>
-    (!state.filters.lfi   || r.lfi   === state.filters.lfi)   &&
-    (!state.filters.month || r.month === state.filters.month),
+    (!state.filters.lfi || r.lfi === state.filters.lfi) &&
+    monthIsAllowed(r.month),
   ),
 )
 
@@ -323,7 +336,7 @@ export const filteredRtData: ComputedRef<ApiRow[]> = computed(() =>
   rawRtData.value.filter(r =>
     (!state.filters.lfi       || r.lfi    === state.filters.lfi)       &&
     (!state.filters.tpp       || r.tpp    === state.filters.tpp)       &&
-    (!state.filters.month     || r.month  === state.filters.month)     &&
+    monthIsAllowed(r.month)                                             &&
     (!state.filters.apiFamily || r.family === state.filters.apiFamily),
   ),
 )
@@ -409,10 +422,11 @@ export function setFilter(key: FilterKey, value: string | null): void {
 }
 
 export function resetFilters(): void {
-  state.filters.lfi       = null
-  state.filters.tpp       = null
-  state.filters.month     = null
-  state.filters.apiFamily = null
+  state.filters.lfi          = null
+  state.filters.tpp          = null
+  state.filters.month        = null
+  state.filters.apiFamily    = null
+  state.excludePartialMonths = true
 }
 
 export function setSection(id: string): void {

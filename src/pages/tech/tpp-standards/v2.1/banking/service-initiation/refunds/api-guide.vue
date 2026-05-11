@@ -144,16 +144,26 @@ const exampleResponse = `{
 const jwsCompact = `<header>.<payload>.<signature>
 `
 
-const decodeJws = `function decodeJwsPayload(jws: string) {
+const decodeJwsNode = `function decodeJwsPayload(jws: string) {
   const [, payloadB64] = jws.split('.')
   const json = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'))
   return JSON.parse(json)
 }
 `
 
-const step1Tabs = [{ label: 'Node.js', lang: 'typescript', code: step1Node }, { label: 'Python', lang: 'python', code: step1Python }] as const
-const step2Tabs = [{ label: 'Node.js', lang: 'typescript', code: step2Node }, { label: 'Python', lang: 'python', code: step2Python }] as const
-const step3Tabs = [{ label: 'Node.js', lang: 'typescript', code: step3Node }, { label: 'Python', lang: 'python', code: step3Python }] as const
+const decodeJwsPython = `import base64, json
+
+def decode_jws_payload(jws: str) -> dict:
+    payload_b64 = jws.split(".")[1]
+    # Pad to a multiple of 4 chars so urlsafe_b64decode accepts it
+    padded = payload_b64 + "=" * (-len(payload_b64) % 4)
+    return json.loads(base64.urlsafe_b64decode(padded))
+`
+
+const step1Tabs       = [{ label: 'Node.js', lang: 'typescript', code: step1Node },     { label: 'Python', lang: 'python', code: step1Python }] as const
+const step2Tabs       = [{ label: 'Node.js', lang: 'typescript', code: step2Node },     { label: 'Python', lang: 'python', code: step2Python }] as const
+const step3Tabs       = [{ label: 'Node.js', lang: 'typescript', code: step3Node },     { label: 'Python', lang: 'python', code: step3Python }] as const
+const decodeJwsTabs   = [{ label: 'Node.js', lang: 'typescript', code: decodeJwsNode }, { label: 'Python', lang: 'python', code: decodeJwsPython }] as const
 </script>
 
 <template>
@@ -334,7 +344,7 @@ const step3Tabs = [{ label: 'Node.js', lang: 'typescript', code: step3Node }, { 
         Verify the signature using the LFI's public key (from their JWKS endpoint), then base64url-decode
         the payload:
       </EdProse>
-      <EdCode :code="decodeJws" lang="typescript" filename="decode helper" />
+      <EdCodeGroup :tabs="decodeJwsTabs" />
 
       <EdProse>
         See the

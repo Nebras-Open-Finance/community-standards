@@ -53,33 +53,68 @@ const requestExample = `"authorization_details": [
   }
 ]`
 
-const scopeUpdate = `const requestJWT = await buildRequestJWT({
+const scopeUpdateNode = `const requestJWT = await buildRequestJWT({
   scope: 'accounts payments openid',  // changed from 'payments openid'
   codeChallenge,
   authorizationDetails,
 })`
 
-const accountsCall = `const { Data: { Account: accounts } } = await fetch(
+const scopeUpdatePython = `request_jwt = build_request_jwt(
+    scope="accounts payments openid",  # changed from "payments openid"
+    code_challenge=code_challenge,
+    authorization_details=authorization_details,
+)`
+
+const accountsCallNode = `const { Data: { Account: accounts } } = await fetch(
   \`\${LFI_API_BASE}/open-finance/v2.1/accounts\`,
   { headers: { Authorization: \`Bearer \${access_token}\` } }
 ).then(r => r.json())
 
 const accountId = accounts[0].AccountId`
 
-const accountDetailCall = `const { Data: { Account: [account] } } = await fetch(
+const accountsCallPython = `import httpx
+
+accounts = httpx.get(
+    f"{LFI_API_BASE}/open-finance/v2.1/accounts",
+    headers={"Authorization": f"Bearer {access_token}"},
+).json()["Data"]["Account"]
+
+account_id = accounts[0]["AccountId"]`
+
+const accountDetailCallNode = `const { Data: { Account: [account] } } = await fetch(
   \`\${LFI_API_BASE}/open-finance/v2.1/accounts/\${accountId}\`,
   { headers: { Authorization: \`Bearer \${access_token}\` } }
 ).then(r => r.json())
 
 // account.Account[0].Identification — the IBAN`
 
-const balancesCall = `const { Data: { Balance } } = await fetch(
+const accountDetailCallPython = `account = httpx.get(
+    f"{LFI_API_BASE}/open-finance/v2.1/accounts/{account_id}",
+    headers={"Authorization": f"Bearer {access_token}"},
+).json()["Data"]["Account"][0]
+
+# account["Account"][0]["Identification"] — the IBAN`
+
+const balancesCallNode = `const { Data: { Balance } } = await fetch(
   \`\${LFI_API_BASE}/open-finance/v2.1/accounts/\${accountId}/balances\`,
   { headers: { Authorization: \`Bearer \${access_token}\` } }
 ).then(r => r.json())
 
 // Balance[0].Amount.Amount — available balance
 // Balance[0].CreditDebitIndicator — 'Credit' or 'Debit'`
+
+const balancesCallPython = `balance = httpx.get(
+    f"{LFI_API_BASE}/open-finance/v2.1/accounts/{account_id}/balances",
+    headers={"Authorization": f"Bearer {access_token}"},
+).json()["Data"]["Balance"]
+
+# balance[0]["Amount"]["Amount"] — available balance
+# balance[0]["CreditDebitIndicator"] — 'Credit' or 'Debit'`
+
+const scopeUpdateTabs        = [{ label: 'Node.js', lang: 'typescript', code: scopeUpdateNode },        { label: 'Python', lang: 'python', code: scopeUpdatePython }] as const
+const accountsCallTabs       = [{ label: 'Node.js', lang: 'typescript', code: accountsCallNode },       { label: 'Python', lang: 'python', code: accountsCallPython }] as const
+const accountDetailCallTabs  = [{ label: 'Node.js', lang: 'typescript', code: accountDetailCallNode },  { label: 'Python', lang: 'python', code: accountDetailCallPython }] as const
+const balancesCallTabs       = [{ label: 'Node.js', lang: 'typescript', code: balancesCallNode },       { label: 'Python', lang: 'python', code: balancesCallPython }] as const
 </script>
 
 <template>
@@ -176,7 +211,7 @@ const balancesCall = `const { Data: { Balance } } = await fetch(
       <EdProse>Add the <code>Permissions</code> array to <code>authorization_details.consent</code> in your <code>/par</code> request alongside the payment fields:</EdProse>
       <EdCode :code="requestExample" lang="json" />
       <EdProse>And update the scope in your Request JWT:</EdProse>
-      <EdCode :code="scopeUpdate" lang="typescript" />
+      <EdCodeGroup :tabs="scopeUpdateTabs" />
     </EdSectionBand>
 
     <EdSectionBand
@@ -188,13 +223,13 @@ const balancesCall = `const { Data: { Balance } } = await fetch(
       tone="cream"
     >
       <h3>GET /accounts &mdash; requires <code>ReadAccountsBasic</code></h3>
-      <EdCode :code="accountsCall" lang="typescript" />
+      <EdCodeGroup :tabs="accountsCallTabs" />
 
       <h3>GET /accounts/{AccountId} &mdash; requires <code>ReadAccountsDetail</code></h3>
-      <EdCode :code="accountDetailCall" lang="typescript" />
+      <EdCodeGroup :tabs="accountDetailCallTabs" />
 
       <h3>GET /accounts/{AccountId}/balances &mdash; requires <code>ReadBalances</code></h3>
-      <EdCode :code="balancesCall" lang="typescript" />
+      <EdCodeGroup :tabs="balancesCallTabs" />
     </EdSectionBand>
 
     <EdSectionBand
