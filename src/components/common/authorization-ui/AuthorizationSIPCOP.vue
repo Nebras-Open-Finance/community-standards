@@ -31,17 +31,24 @@ const COP_VALUE = {
   }
 }
 
+const COP_ACCOUNTS = [
+  { id: 1, type: 'CurrentAccount', iban: 'AE07 0331 2345 6789 0123 456', balance: 5000, secondary: 1500, currency: 'AED' },
+  { id: 2, type: 'Savings',        iban: 'AE07 0331 2345 6789 0123 457', balance: 25000, secondary: null, currency: 'AED' },
+]
+
 let savedPii
 let savedValue
+let savedAccounts
 
 onMounted(() => {
-  savedPii   = sharedState.value.pii
-  savedValue = sharedState.value.value
-  sharedState.value = { ...sharedState.value, pii: COP_PII, value: COP_VALUE }
+  savedPii      = sharedState.value.pii
+  savedValue    = sharedState.value.value
+  savedAccounts = sharedState.value.accounts
+  sharedState.value = { ...sharedState.value, pii: COP_PII, value: COP_VALUE, accounts: COP_ACCOUNTS }
 })
 
 onUnmounted(() => {
-  sharedState.value = { ...sharedState.value, pii: savedPii, value: savedValue }
+  sharedState.value = { ...sharedState.value, pii: savedPii, value: savedValue, accounts: savedAccounts }
 })
 
 const indicator  = computed(() => sharedState.value?.copData?.NameMatchIndicator)

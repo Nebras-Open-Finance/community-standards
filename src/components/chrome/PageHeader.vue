@@ -3,23 +3,34 @@
 //
 // Deviations from the original:
 //   * <script setup lang="ts"> with strict typing (no `any`).
-//   * VersionDropdown REMOVED — phase 9 will rewire it. The exact slot where it
-//     used to sit is preserved as a commented placeholder below.
-//   * Search input — original had no search box; the brief suggests phase 8
-//     (Pagefind) will introduce one. Not invented here without authorisation.
+//   * Search modal — opens via the magnifying-glass button or Cmd/Ctrl+K.
+//     The modal (and its ~750 KB generated index) is dynamically imported
+//     so it doesn't ship in the main bundle.
 //   * Click-outside handler types `MouseEvent` and narrows the target to
 //     `Element` before calling `.closest()` (was untyped in the original).
 //
 // The component renders fixed at the top of the viewport (`position: fixed`),
 // so the layout reserves space via `padding-top: var(--at-header-height)`.
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
 import { useRoute } from 'vue-router'
+import { useSearchModal } from '@/composables/useSearchModal'
+
+const SearchModal = defineAsyncComponent(() => import('./SearchModal.vue'))
 
 const route = useRoute()
+// `everOpened` latches true on first open so the modal stays mounted and its
+// enter/leave transitions can play. Gating mount on this flag keeps the
+// ~750 KB SearchModal chunk out of the initial page load.
+const { isOpen: searchOpen, everOpened: searchEverOpened, open, close, toggle } = useSearchModal()
 
 const menuOpen = ref(false)
 const docsOpen = ref(false)
 const programOpen = ref(false)
+
+function openSearch(): void {
+  menuOpen.value = false
+  open()
+}
 
 function handleClickOutside(e: MouseEvent): void {
   const target = e.target
@@ -30,8 +41,22 @@ function handleClickOutside(e: MouseEvent): void {
   }
 }
 
-onMounted(() => document.addEventListener('click', handleClickOutside))
-onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
+function handleKey(e: KeyboardEvent): void {
+  if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault()
+    if (!searchOpen.value) menuOpen.value = false
+    toggle()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+  document.addEventListener('keydown', handleKey)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('keydown', handleKey)
+})
 
 // Active-link helper. Mirrors the prefix-match style the rest of the docs use
 // (e.g. /policy and /policy/foo both highlight the Program → Policies link).
@@ -133,6 +158,18 @@ function isActive(prefix: string): boolean {
         <a href="/metrics" class="ed-nav__link" :class="{ 'is-active': isActive('/metrics') }">Metrics</a>
         <a href="/news" class="ed-nav__link" :class="{ 'is-active': isActive('/news') }">News</a>
 
+        <button
+          type="button"
+          class="ed-search-trigger"
+          aria-label="Search documentation (Ctrl+K)"
+          @click="openSearch"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="10" cy="10" r="7" />
+            <path d="M21 21l-6-6" />
+          </svg>
+        </button>
+
         <a
           href="https://github.com/Nebras-Open-Finance/community-standards"
           class="ed-github"
@@ -147,6 +184,19 @@ function isActive(prefix: string): boolean {
 
         <VersionDropdown />
       </nav>
+
+      <!-- Mobile search trigger (hamburger sits next to it) -->
+      <button
+        type="button"
+        class="ed-search-trigger ed-search-trigger--mobile"
+        aria-label="Search documentation"
+        @click="openSearch"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="10" cy="10" r="7" />
+          <path d="M21 21l-6-6" />
+        </svg>
+      </button>
 
       <!-- Hamburger (mobile) -->
       <button
@@ -165,6 +215,8 @@ function isActive(prefix: string): boolean {
       <div class="ed-drawer__inner">
         <div class="ed-drawer__label">Navigation</div>
 
+        <a href="/metrics" class="ed-drawer__link">Metrics</a>
+
         <div class="ed-drawer__section">Program</div>
         <a href="/support-service-desk/" class="ed-drawer__sublink">Service Desk</a>
         <a href="/pricing/" class="ed-drawer__sublink">Pricing</a>
@@ -180,7 +232,6 @@ function isActive(prefix: string): boolean {
         <a href="/tech/release-notes-and-erratas/" class="ed-drawer__sublink">Release Notes &amp; Erratas</a>
 
         <hr class="ed-drawer__rule" />
-        <a href="/metrics" class="ed-drawer__link">Metrics</a>
         <a href="/news" class="ed-drawer__link">News</a>
         <a
           href="https://github.com/Nebras-Open-Finance/community-standards"
@@ -190,6 +241,8 @@ function isActive(prefix: string): boolean {
         >GitHub</a>
       </div>
     </div>
+
+    <SearchModal v-if="searchEverOpened" :open="searchOpen" @close="close" />
   </header>
 </template>
 
@@ -347,6 +400,38 @@ function isActive(prefix: string): boolean {
   color: var(--at-navy-deep);
 }
 
+/* -- Search trigger ---------------------------------------------------- */
+.ed-search-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-left: 0.35rem;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--at-mute);
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.ed-search-trigger:hover {
+  color: var(--at-navy-deep);
+  background: rgba(0, 39, 127, 0.05);
+}
+
+.ed-search-trigger--mobile {
+  display: none;
+}
+
+@media (max-width: 959px) {
+  .ed-search-trigger--mobile {
+    display: flex;
+    margin-left: auto;
+  }
+}
+
 /* -- GitHub icon ------------------------------------------------------- */
 .ed-github {
   display: flex;
@@ -366,6 +451,10 @@ function isActive(prefix: string): boolean {
 }
 
 /* -- Mobile hamburger -------------------------------------------------- */
+/* `margin-left: auto` pushes the hamburger right on viewports where the
+   mobile search trigger is hidden; when the search trigger is showing
+   (≤ 959px) it already grabs the auto-margin and the hamburger sits
+   immediately next to it. */
 .ed-hamburger {
   display: flex;
   flex-direction: column;
@@ -378,6 +467,10 @@ function isActive(prefix: string): boolean {
   background: none;
   border: 1px solid var(--at-grid-line-2);
   cursor: pointer;
+}
+
+@media (max-width: 959px) {
+  .ed-hamburger { margin-left: 0.4rem; }
 }
 
 .ed-hamburger span {

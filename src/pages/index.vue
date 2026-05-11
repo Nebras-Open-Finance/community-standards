@@ -12,8 +12,10 @@ import axios from 'axios'
 
 import { articles, ARTICLE_KIND_LABELS } from '@/data/home-articles'
 import type { ArticleKind, HomeArticle } from '@/data/home-articles'
+import { useSearchModal } from '@/composables/useSearchModal'
 
 const { selectedVersion } = useSelectedVersion()
+const { open: openSearch } = useSearchModal()
 
 const kindLabels: Record<ArticleKind, string> = ARTICLE_KIND_LABELS
 
@@ -565,7 +567,13 @@ const communityWays: readonly CommunityItem[] = [
             <div class="ed-hero__cta-row">
               <a class="ed-btn ed-btn--ink" href="/tech/tpp-standards/">Open Finance Standards</a>
               <a class="ed-btn ed-btn--ink" href="/tech/lfi-api-hub/">LFI Integration Guide</a>
-              <a class="ed-btn ed-btn--ghost" href="/metrics">Metrics</a>
+              <button type="button" class="ed-btn ed-btn--ghost ed-btn--search" @click="openSearch">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="10" cy="10" r="7" />
+                  <path d="M21 21l-6-6" />
+                </svg>
+                Search Docs
+              </button>
             </div>
           </div>
 
@@ -989,6 +997,16 @@ const communityWays: readonly CommunityItem[] = [
   border: 1px solid var(--at-grid-line-2);
 }
 .ed-btn--ghost:hover { background: var(--at-navy-deep); color: var(--at-bg-cream); border-color: var(--at-navy-deep); }
+
+.ed-btn--search {
+  gap: 0.5rem;
+  font: inherit;
+  font-family: var(--at-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
 
 /* ─── Live ticker ──────────────────────────────────────────────────────── */
 .ed-ticker {

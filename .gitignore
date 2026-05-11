@@ -15,6 +15,8 @@ public/api/trust-framework.json
 public/api/github-stats.json
 # Fetched Postman collections (see scripts/fetch-postman-collections.mjs)
 public/postman/
+# Generated search index (see scripts/build-search-index.mjs)
+src/components/chrome/search-data.ts
 CLAUDE.md
 
 # Logs

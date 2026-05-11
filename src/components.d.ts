@@ -122,6 +122,7 @@ declare module 'vue' {
     RedocWrapper: typeof import('./components/common/RedocWrapper.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SearchModal: typeof import('./components/chrome/SearchModal.vue')['default']
     ServiceInitiationPermissionText: typeof import('./components/common/permissions/ServiceInitiationPermissionText.vue')['default']
     TPPPaymentStatus: typeof import('./components/common/api-flows/TPPPaymentStatus.vue')['default']
     TPPPostmanScriptBuilder: typeof import('./components/common/forms/TPPPostmanScriptBuilder.vue')['default']
