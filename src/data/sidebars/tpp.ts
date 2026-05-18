@@ -200,6 +200,7 @@ export const tppSidebar: SidebarItem[] = [
             items: [
               { text: 'Overview', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide` },
               { text: 'Pagination', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide/pagination` },
+              { text: 'Encrypted FinanceRates', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide/finance-rates` },
             ],
           },
           {
@@ -408,6 +409,14 @@ export const tppSidebar: SidebarItem[] = [
           { text: 'User Experience Evidence', link: `${BASE}/production/testing-certification/user-experience` },
           { text: 'FAPI Conformance', link: `${BASE}/production/testing-certification/fapi` },
           { text: 'Security Validation', link: `${BASE}/production/testing-certification/security-validation` },
+        ],
+      },
+      {
+        text: 'Optional Certifications',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/production/testing-certification/optional/overview` },
+          { text: 'Access Encrypted Resource Data', link: `${BASE}/production/testing-certification/optional/access-encrypted-resource-data` },
         ],
       },
       { text: 'Production Live Proving', link: `${BASE}/production/live-proving` },
