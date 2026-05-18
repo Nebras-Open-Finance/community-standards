@@ -21,7 +21,6 @@ const SWAP_PLACEHOLDERS = [
   '{{redirectUrl}}',
   '{{par-endpoint}}',
   '{{tokenEndpoint}}',
-  '{{jwksUrl}}',
 ]
 
 function findItem(items, predicate) {
@@ -112,6 +111,17 @@ describe('TPPPostmanScriptBuilder.vue', () => {
       form,
       /raw\.githubusercontent\.com\/Nebras-Open-Finance\/postman/,
       'Form must not fetch the collection directly from GitHub — corporate proxies block it.',
+    )
+  })
+
+  it('does not strip the OIDC well-known request from the downloaded collection', () => {
+    // The well-known request's post-response script sets `jwksUrl` (and the
+    // other endpoints) at Postman runtime from the LFI's discovery doc.
+    // Stripping it leaves `{{jwksUrl}}` unresolved in every encryption request.
+    assert.doesNotMatch(
+      form,
+      /['"]TPP-API Hub: Get OIDC well-known end-point['"]/,
+      'Form must not list the OIDC well-known request in foldersToRemove — it is needed to populate jwksUrl at runtime.',
     )
   })
 })

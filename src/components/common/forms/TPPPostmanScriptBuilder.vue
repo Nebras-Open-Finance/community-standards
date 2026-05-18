@@ -105,31 +105,17 @@ async function submit() {
 
   isDownloading.value = true
   try {
-    // Pattern-derived fallbacks if the discovery doc fetch fails.
+    // Endpoints are derived from the discovery URI pattern. jwksUrl is left
+    // unresolved; the "Get OIDC well-known end-point" request inside the
+    // collection populates it (and the other endpoints) at Postman runtime
+    // from the LFI's actual discovery doc.
     const discoveryUrl = new URL(formData.discovery_uri)
-    const issuerPattern = discoveryUrl.origin
-    const rs = issuerPattern.replace(/^(https:\/\/)auth1\./, '$1rs1.')
-    const as1Base = issuerPattern.replace(/^(https:\/\/)auth1\./, '$1as1.')
-
-    let issuer = issuerPattern
-    let authEndpoint = issuerPattern + '/auth'
-    let tokenEndpoint = as1Base + '/token'
-    let parEndpoint = as1Base + '/par'
-    let jwksUrl = ''
-
-    try {
-      const encodedUrl = encodeURIComponent(formData.discovery_uri)
-      let r = await fetch(`/api/well-known-proxy?url=${encodedUrl}`)
-      if (!r.ok) r = await fetch(`https://api.allorigins.win/raw?url=${encodedUrl}`)
-      if (r.ok) {
-        const doc = await r.json()
-        issuer        = doc.issuer                                ?? issuer
-        authEndpoint  = doc.authorization_endpoint                ?? authEndpoint
-        tokenEndpoint = doc.token_endpoint                        ?? tokenEndpoint
-        parEndpoint   = doc.pushed_authorization_request_endpoint ?? parEndpoint
-        jwksUrl       = doc.jwks_uri                              ?? jwksUrl
-      }
-    } catch { /* fall through to pattern-derived defaults */ }
+    const issuer = discoveryUrl.origin
+    const rs = issuer.replace(/^(https:\/\/)auth1\./, '$1rs1.')
+    const as1Base = issuer.replace(/^(https:\/\/)auth1\./, '$1as1.')
+    const authEndpoint = issuer + '/auth'
+    const tokenEndpoint = as1Base + '/token'
+    const parEndpoint = as1Base + '/par'
 
     const hasBanking = formData.roles.some(r => r.includes('BDSP') || r.includes('BSIP'))
     if (!hasBanking) return
@@ -170,7 +156,6 @@ async function submit() {
 
     const foldersToRemove = new Set([
       'LFI-API Hub:',
-      'TPP-API Hub: Get OIDC well-known end-point',
       'Confirm with Heimdall',
       'AuthFlow - with login_hint',
       'AuthFlow - with jwt-auth mandatory',
@@ -183,6 +168,235 @@ async function submit() {
       .map(item => item.item ? { ...item, item: removeLFI(item.item) } : item)
     json.item = removeLFI(json.item)
 
+    // ---------------------------------------------------------------
+    // MODEL BANK DEFECT WORKAROUND START
+    // The Model Bank sandbox (altareq1) has a defect with its support
+    // of dynamic debtor/creditor resolution, so we hard-code known-good
+    // test values into every "O3 Util: Prepare Encrypted PII" request
+    // that lives under a "Domestic*" folder. Remove this block once
+    // the Model Bank defect is resolved.
+    // ---------------------------------------------------------------
+    if (formData.discovery_uri === MODEL_BANK_DISCOVERY) {
+      const debtorReplacement = [
+        '            "DebtorAccount": {',
+        '                "SchemeName": "IBAN",',
+        '                "Identification": "10000109010105",',
+        '                "Name": {',
+        '                    "en": "Spectrum"',
+        '                }',
+        '            },',
+      ].join('\n')
+
+      const commentedDebtorReplacement = [
+        '            // "DebtorAccount": {',
+        '            //     "SchemeName": "IBAN",',
+        '            //     "Identification": "10000109010105",',
+        '            //     "Name": {',
+        '            //         "en": "Spectrum"',
+        '            //     }',
+        '            // },',
+      ].join('\n')
+
+      const creditorEntryReplacement = [
+        '                {',
+        '                    "CreditorAgent": {',
+        '                        "SchemeName": "BICFI",',
+        '                        "Identification": "10000109010101"',
+        '                    },',
+        '                    "Creditor": {',
+        '                        "Name": "Mario International"',
+        '                    },',
+        '                    "CreditorAccount": {',
+        '                        "SchemeName": "AccountNumber",',
+        '                        "Identification": "10000109010101",',
+        '                        "Name": {',
+        '                            "en": "Mario International"',
+        '                        }',
+        '                    }',
+        '                }',
+      ].join('\n')
+
+      const secondCreditorEntryReplacement = [
+        '                {',
+        '                    "CreditorAgent": {',
+        '                        "SchemeName": "BICFI",',
+        '                        "Identification": "10000109010103"',
+        '                    },',
+        '                    "Creditor": {',
+        '                        "Name": "Mario International"',
+        '                    },',
+        '                    "CreditorAccount": {',
+        '                        "SchemeName": "AccountNumber",',
+        '                        "Identification": "10000109010103",',
+        '                        "Name": {',
+        '                            "en": "Mario International"',
+        '                        }',
+        '                    }',
+        '                }',
+      ].join('\n')
+
+      const commentedDebtorRe = /([ \t]*\/\/\s*"DebtorAccount"[^\n]*\n(?:[ \t]*\/\/[^\n]*\n)*)/g
+      const uncommentedDebtorRe = /([ \t]*)"DebtorAccount"\s*:\s*\{[^}]*"en"\s*:\s*"[^"]*"\s*\}[^}]*\},?/g
+
+      const findMatchingBrace = (raw: string, pos: number): number => {
+        let depth = 0
+        for (let i = pos; i < raw.length; i++) {
+          if (raw[i] === '{') depth++
+          else if (raw[i] === '}') { depth--; if (depth === 0) return i }
+        }
+        return -1
+      }
+
+      type CreditorFields = Record<string, unknown>
+      const indentBlock = (json: string, indent: string) =>
+        json.split('\n').map((line, i) => i === 0 ? line : indent + line).join('\n')
+
+      // Replaces CreditorAgent, Creditor and CreditorAccount fields inside a
+      // single Creditor-array entry object, preserving any other fields
+      // (e.g. ConfirmationOfPayeeResponse).
+      const patchCreditorEntry = (entryBlock: string, replacementEntry: CreditorFields): string => {
+        const fieldsToReplace = ['CreditorAgent', 'Creditor', 'CreditorAccount']
+        const indent = '                    ' // 20 spaces — field level inside array entry
+        for (const field of fieldsToReplace) {
+          const fieldMarker = '"' + field + '"'
+          const fieldRe = new RegExp('"' + field + '"\\s*:')
+          const match = fieldRe.exec(entryBlock)
+          if (match && replacementEntry[field]) {
+            const fieldPos = match.index
+            const colon = entryBlock.indexOf(':', fieldPos + fieldMarker.length)
+            const afterColon = entryBlock.substring(colon + 1).trimStart()
+            if (afterColon.startsWith('{')) {
+              const valBrace = entryBlock.indexOf('{', colon)
+              const valEnd = findMatchingBrace(entryBlock, valBrace)
+              if (valEnd === -1) continue
+              const replacementJson = indentBlock(JSON.stringify(replacementEntry[field], null, 4), indent)
+              entryBlock = entryBlock.substring(0, valBrace) + replacementJson + entryBlock.substring(valEnd + 1)
+            }
+          } else if (!match && replacementEntry[field]) {
+            const insertJson = indentBlock(JSON.stringify(replacementEntry[field], null, 4), indent)
+            const insertPoint = entryBlock.indexOf('{') + 1
+            entryBlock = entryBlock.substring(0, insertPoint) +
+              '\n' + indent + '"' + field + '": ' + insertJson + ',' +
+              entryBlock.substring(insertPoint)
+          }
+        }
+        return entryBlock
+      }
+
+      // Patches the first and (if present) second Creditor array entries.
+      const replaceCreditorEntries = (raw: string): string => {
+        const marker = '"Creditor": ['
+        const arrStart = raw.indexOf(marker)
+        if (arrStart === -1) return raw
+
+        const entry1 = JSON.parse(creditorEntryReplacement.trim()) as CreditorFields
+        const entry2 = JSON.parse(secondCreditorEntryReplacement.trim()) as CreditorFields
+
+        const searchFrom = arrStart + marker.length
+        const first = raw.indexOf('{', searchFrom)
+        if (first === -1) return raw
+        const firstEnd = findMatchingBrace(raw, first)
+        if (firstEnd === -1) return raw
+
+        const patchedFirst = patchCreditorEntry(raw.substring(first, firstEnd + 1), entry1)
+        raw = raw.substring(0, first) + patchedFirst + raw.substring(firstEnd + 1)
+
+        const afterFirst = first + patchedFirst.length
+        const nextBrace = raw.indexOf('{', afterFirst)
+        const closingBracket = raw.indexOf(']', afterFirst)
+        const lineStart = raw.lastIndexOf('\n', nextBrace)
+        const linePrefix = raw.substring(lineStart + 1, nextBrace).trim()
+        const isCommented = linePrefix.startsWith('//')
+        if (nextBrace !== -1 && closingBracket !== -1 && nextBrace < closingBracket && !isCommented) {
+          const secondEnd = findMatchingBrace(raw, nextBrace)
+          if (secondEnd !== -1) {
+            const patchedSecond = patchCreditorEntry(raw.substring(nextBrace, secondEnd + 1), entry2)
+            raw = raw.substring(0, nextBrace) + patchedSecond + raw.substring(secondEnd + 1)
+          }
+        }
+
+        return raw
+      }
+
+      // Replaces CreditorAgent, Creditor and CreditorAccount inside the
+      // "Initiation" block of a Post-payment PII request body.
+      const replaceInitiationCreditor = (raw: string, useSecond: boolean): string => {
+        const replacement = useSecond ? secondCreditorEntryReplacement : creditorEntryReplacement
+        const entry = JSON.parse(replacement.trim()) as CreditorFields
+
+        const initMarker = '"Initiation"'
+        const initStart = raw.indexOf(initMarker)
+        if (initStart === -1) return raw
+        const initBrace = raw.indexOf('{', initStart + initMarker.length)
+        if (initBrace === -1) return raw
+        const initEnd = findMatchingBrace(raw, initBrace)
+        if (initEnd === -1) return raw
+
+        let initBlock = raw.substring(initBrace, initEnd + 1)
+        const fieldsToReplace = ['CreditorAgent', 'Creditor', 'CreditorAccount']
+        const indent = '            ' // 12 spaces — Initiation field level
+
+        for (const field of fieldsToReplace) {
+          const fieldMarker = '"' + field + '"'
+          const fieldPos = initBlock.indexOf(fieldMarker)
+
+          if (fieldPos !== -1 && entry[field]) {
+            const valBrace = initBlock.indexOf('{', fieldPos + fieldMarker.length)
+            if (valBrace === -1) continue
+            const valEnd = findMatchingBrace(initBlock, valBrace)
+            if (valEnd === -1) continue
+
+            const replacementJson = indentBlock(JSON.stringify(entry[field], null, 4), indent)
+            initBlock = initBlock.substring(0, valBrace) + replacementJson + initBlock.substring(valEnd + 1)
+          } else if (fieldPos === -1 && entry[field]) {
+            const insertJson = indentBlock(JSON.stringify(entry[field], null, 4), indent)
+            const insertPoint = initBlock.indexOf('{') + 1
+            initBlock = initBlock.substring(0, insertPoint) +
+              '\n' + indent + '"' + field + '": ' + insertJson + ',' +
+              initBlock.substring(insertPoint)
+          }
+        }
+
+        return raw.substring(0, initBrace) + initBlock + raw.substring(initEnd + 1)
+      }
+
+      type PatchContext = { inConsentFlow?: boolean; inResourceEndpoints?: boolean; isCreditor2?: boolean }
+      const patchPIIRequests = (items: ItemNode[] | undefined, context: PatchContext = {}) => {
+        if (!Array.isArray(items)) return
+        for (const item of items) {
+          const newContext: PatchContext = { ...context }
+          if (item.item && item.name === 'Consent Flow') newContext.inConsentFlow = true
+          if (item.item && item.name === 'Resource Endpoints') newContext.inResourceEndpoints = true
+          if (item.item && /Creditor 2|Luigi/i.test(item.name)) newContext.isCreditor2 = true
+
+          if (item.item) {
+            patchPIIRequests(item.item, newContext)
+          } else if (context.inConsentFlow && item.name === 'O3 Util: Prepare Encrypted PII' && item.request?.body?.raw) {
+            let raw = item.request.body.raw
+
+            if (commentedDebtorRe.test(raw)) {
+              commentedDebtorRe.lastIndex = 0
+              raw = raw.replace(commentedDebtorRe, commentedDebtorReplacement + '\n')
+            }
+            if (uncommentedDebtorRe.test(raw)) {
+              uncommentedDebtorRe.lastIndex = 0
+              raw = raw.replace(uncommentedDebtorRe, debtorReplacement)
+            }
+
+            raw = replaceCreditorEntries(raw)
+
+            item.request.body.raw = raw
+          } else if (context.inResourceEndpoints && /O3 Util: Prepare Encrypted PII\s*-\s*Post payment/i.test(item.name) && item.request?.body?.raw) {
+            item.request.body.raw = replaceInitiationCreditor(item.request.body.raw, !!context.isCreditor2)
+          }
+        }
+      }
+      patchPIIRequests(json.item)
+    }
+    // ---------------------------------------------------------------
+    // MODEL BANK DEFECT WORKAROUND END
+    // ---------------------------------------------------------------
+
     type CollectionVariable = { key: string; value: string; type?: string }
     const collectionVars: Array<[string, string]> = [
       ['_clientId',     formData.client_id],
@@ -194,7 +408,6 @@ async function submit() {
       ['redirectUrl',   formData.redirect_uri],
       ['par-endpoint',  parEndpoint],
       ['tokenEndpoint', tokenEndpoint],
-      ['jwksUrl',       jwksUrl],
     ]
     const vars: CollectionVariable[] = Array.isArray(json.variable) ? json.variable : []
     for (const [key, value] of collectionVars) {
@@ -216,7 +429,6 @@ async function submit() {
     collectionStr = swap(collectionStr, '{{par-endpoint}}',   parEndpoint)
     collectionStr = swap(collectionStr, '{{tokenEndpoint}}',  tokenEndpoint)
     collectionStr = swap(collectionStr, '{{auth-endpoint}}',  authEndpoint)
-    collectionStr = swap(collectionStr, '{{jwksUrl}}',        jwksUrl)
 
     const blob = new Blob([collectionStr], { type: 'application/json' })
     const a = document.createElement('a')
