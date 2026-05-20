@@ -57,8 +57,14 @@ const TOOLTIP = {
   borderRadius: 0,
   padding: 10,
   titleFont: { family: 'IBM Plex Mono, monospace', size: 10, weight: 500 },
-  bodyFont: { family: 'Poppins, sans-serif', size: 11 },
+  // Monospace body keeps tooltip values aligned and consistent with the
+  // other dashboard charts.
+  bodyFont: { family: 'IBM Plex Mono, monospace', size: 10 },
 } as const
+
+// Show the tooltip whenever the cursor is anywhere within a column/x-position,
+// not only when it's exactly over a bar or point.
+const INTERACTION = { mode: 'index', intersect: false } as const
 
 const AXIS_TICK = { color: 'rgba(0,23,56,0.55)', font: { family: 'Poppins, sans-serif', size: 10 } } as const
 const AXIS_TITLE = { font: { family: 'IBM Plex Mono, monospace', size: 10, weight: 500 }, color: 'rgba(0,23,56,0.55)' } as const
@@ -121,6 +127,7 @@ function buildAvgLine(): Chart {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: INTERACTION,
       plugins: {
         legend: { display: false },
         tooltip: { ...TOOLTIP, callbacks: { label: (ctx) => `${ctx.parsed.y}ms` } },
@@ -171,6 +178,7 @@ function buildAvgBar(): Chart {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: INTERACTION,
       plugins: {
         legend: { display: false },
         tooltip: { ...TOOLTIP, callbacks: { label: (ctx) => `${ctx.parsed.y}ms` } },
@@ -229,6 +237,7 @@ function buildPercentiles(): Chart {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: INTERACTION,
       plugins: {
         legend: {
           display: true,
@@ -279,6 +288,7 @@ function buildHistogram(): Chart {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: INTERACTION,
       plugins: {
         legend: { display: false },
         tooltip: { ...TOOLTIP, callbacks: { label: (ctx) => `${Number(ctx.parsed.y).toLocaleString()} requests` } },

@@ -59,7 +59,8 @@ const TOOLTIP = {
   borderRadius: 0,
   padding: 10,
   titleFont: { family: 'IBM Plex Mono, monospace', size: 10, weight: 500 },
-  bodyFont: { family: 'Poppins, sans-serif', size: 11 },
+  // Monospace body so padded labels line the values up into a column.
+  bodyFont: { family: 'IBM Plex Mono, monospace', size: 10 },
 } as const
 
 interface Aggregate {
@@ -130,6 +131,9 @@ function render(): void {
   const options: ChartOptions<'bar'> = {
     responsive: true,
     maintainAspectRatio: false,
+    // Show the tooltip whenever the cursor is anywhere within a column,
+    // not only when it's exactly over a bar.
+    interaction: { mode: 'index', intersect: false },
     plugins: {
       legend: {
         display: !!props.stackBy,
@@ -144,7 +148,13 @@ function render(): void {
       tooltip: {
         ...TOOLTIP,
         callbacks: {
-          label: (ctx) => `${ctx.dataset.label}: ${Number(ctx.parsed.y).toLocaleString()}`,
+          label: (ctx) => {
+            const width = Math.max(
+              ...ctx.chart.data.datasets.map(d => String(d.label ?? '').length),
+            )
+            const name = String(ctx.dataset.label ?? '').padEnd(width)
+            return `${name}   ${Number(ctx.parsed.y).toLocaleString()}`
+          },
         },
       },
     },

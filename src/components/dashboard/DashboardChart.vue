@@ -23,6 +23,7 @@ import {
   CategoryScale, LinearScale,
   Tooltip, Legend,
   type ChartConfiguration,
+  type TooltipItem,
 } from 'chart.js'
 import type { ChartConfig } from '@/data/dashboard-charts'
 import type { AnyRow, ApiRow, PaymentRow, AuthRow } from '@/stores/dashboard'
@@ -67,8 +68,27 @@ const TOOLTIP = {
   borderRadius: 0,
   padding: 10,
   titleFont: { family: 'IBM Plex Mono, monospace', size: 10, weight: 500 },
-  bodyFont: { family: 'Poppins, sans-serif', size: 11 },
+  // Monospace body so padded labels line the values up into a column.
+  bodyFont: { family: 'IBM Plex Mono, monospace', size: 10 },
 } as const
+
+// Tooltip row for the bar+line combo charts: pads the dataset label to a
+// fixed width so the bar's count and the line's % align in a column.
+function comboTooltipLabel(ctx: TooltipItem<'bar' | 'line'>): string {
+  const width = Math.max(
+    ...ctx.chart.data.datasets.map(d => String(d.label ?? '').length),
+  )
+  const name = String(ctx.dataset.label ?? '').padEnd(width)
+  const isRate = ctx.dataset.yAxisID === 'yRate'
+  const value = isRate
+    ? `${ctx.parsed.y}%`
+    : Number(ctx.parsed.y).toLocaleString()
+  return `${name}   ${value}`
+}
+
+// Show the tooltip whenever the cursor is anywhere within a column, not only
+// when it's exactly over a bar or point. Used by the bar+line combo charts.
+const INTERACTION = { mode: 'index', intersect: false } as const
 
 const AXIS_TICK  = { color: 'rgba(0,23,56,0.55)', font: { family: 'Poppins, sans-serif', size: 10 } } as const
 const AXIS_LABEL = { color: 'rgba(0,23,56,0.72)', font: { family: 'Poppins, sans-serif', size: 10 } } as const
@@ -168,7 +188,11 @@ function buildErrorRate(): void {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: true, position: 'bottom', labels: LEGEND }, tooltip: TOOLTIP },
+      interaction: INTERACTION,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: LEGEND },
+        tooltip: { ...TOOLTIP, callbacks: { label: comboTooltipLabel } },
+      },
       scales: {
         yVol:  { beginAtZero: true, grid: GRID, ticks: AXIS_TICK, title: { display: true, text: 'API Calls', ...AXIS_TITLE } },
         yRate: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { ...AXIS_TICK, callback: (v) => `${v}%` }, title: { display: true, text: '%', ...AXIS_TITLE } },
@@ -227,7 +251,11 @@ function buildSuccessRate(): void {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: true, position: 'bottom', labels: LEGEND }, tooltip: TOOLTIP },
+      interaction: INTERACTION,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: LEGEND },
+        tooltip: { ...TOOLTIP, callbacks: { label: comboTooltipLabel } },
+      },
       scales: {
         yCount: { beginAtZero: true, grid: GRID, ticks: AXIS_TICK, title: { display: true, text: 'Count', ...AXIS_TITLE } },
         yRate:  { beginAtZero: false, min: 80, max: 100, position: 'right', grid: { drawOnChartArea: false }, ticks: { ...AXIS_TICK, callback: (v) => `${v}%` }, title: { display: true, text: '%', ...AXIS_TITLE } },
@@ -305,7 +333,11 @@ function buildAuthRate(): void {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: true, position: 'bottom', labels: LEGEND }, tooltip: TOOLTIP },
+      interaction: INTERACTION,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: LEGEND },
+        tooltip: { ...TOOLTIP, callbacks: { label: comboTooltipLabel } },
+      },
       scales: {
         yCount: { beginAtZero: true, grid: GRID, ticks: AXIS_TICK, title: { display: true, text: 'Auth Requests', ...AXIS_TITLE } },
         yRate:  { beginAtZero: true, max: 100, position: 'right', grid: { drawOnChartArea: false }, ticks: { ...AXIS_TICK, callback: (v) => `${v}%` }, title: { display: true, text: '%', ...AXIS_TITLE } },

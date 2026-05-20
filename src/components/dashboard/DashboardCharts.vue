@@ -10,6 +10,7 @@ import {
   filteredApiData,
   filteredSuccessApiData,
   filteredPaymentData,
+  filteredAuthData,
   filteredRtData,
   dataForSource,
   type AnyRow,
@@ -123,6 +124,14 @@ const csvExport = computed<CsvExportConfig | null>(() => {
       filename: datedFilename('payments-log'),
       rows: filteredPaymentData.value,
       columns: ['day', 'month', 'lfi', 'tpp', 'consentType', 'status', 'rawStatus', 'count', 'amount', 'successCount', 'failCount'],
+    }
+  }
+  if (s.startsWith('auth')) {
+    return {
+      label: 'Download auth log',
+      filename: datedFilename('auth-log'),
+      rows: filteredAuthData.value,
+      columns: ['day', 'month', 'lfi', 'url', 'type', 'count'],
     }
   }
   if (s.startsWith('api') || s === 'response-time' || s.startsWith('rt')) {
