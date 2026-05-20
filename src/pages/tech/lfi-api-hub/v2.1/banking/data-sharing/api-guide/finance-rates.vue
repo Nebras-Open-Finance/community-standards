@@ -143,10 +143,10 @@ def generate_otp() -> str:
     return f"{secrets.randbelow(1_000_000):06d}"
 `
 
-const smsTemplate = `{LFI_BRAND}: {OTP} is your one-time code. Enter this in {TPP_TRADING_NAME} to see your {PRODUCT_NAME} finance rate. Expires in 30 minutes. {LFI_BRAND} will never ask for you to provide us with this code.
+const smsTemplate = `{LFI_BRAND}: You requested your {PRODUCT_NAME} finance rate via {TPP_TRADING_NAME}. Your code is {OTP}. Valid 30 min. If you didn't request this, ignore this message and never share this rate.
 `
 
-const smsExample = `ALTAREQ BANK: 482915 is your one-time code. Enter this in BudgetBuddy to see your Platinum Credit Card finance rate. Expires in 30 minutes. ALTAREQ BANK will never ask for you to provide us with this code.
+const smsExample = `ALTAREQ BANK: You requested your Platinum Credit Card finance rate via BudgetBuddy. Your code is 482915. Valid 30 min. If you didn't request this, ignore this message and never share this rate.
 `
 
 const jweNode = `import { CompactEncrypt } from 'jose'
@@ -543,8 +543,8 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
         <li>The LFI's brand name as a recognisable sender or in the first line of the body, so the customer can identify who sent the message.</li>
         <li>The TPP's <code>TradingName</code> (from the consent), so the customer knows which app to enter the code into. This is the part of the message the customer uses to bridge the LFI-sent SMS with the TPP-presented form.</li>
         <li>The product name or a short product description, so the customer understands which rate they are about to view.</li>
-        <li>An expiry indication &mdash; "Expires in 30 minutes" is the canonical wording.</li>
-        <li>An explicit statement that the LFI will never ask the customer to provide the code &mdash; "<em>{LFI_BRAND} will never ask for you to provide us with this code.</em>" The wording matters: it reassures the customer that any inbound contact asking them to read the code aloud is fraudulent, while leaving them free to type it into the TPP form themselves.</li>
+        <li>An expiry indication &mdash; "Valid 30 min" is the canonical wording.</li>
+        <li>An explicit anti-fraud line for the customer who did not start this journey &mdash; "<em>If you didn't request this, ignore this message and never share this rate.</em>" The wording matters: it tells an unsuspecting customer to disregard the message, and warns every customer never to read the code aloud to anyone &mdash; while leaving them free to type it into the TPP form themselves.</li>
       </EdBullets>
 
       <EdNote type="info" title="What the LFI MUST NOT include">
@@ -691,7 +691,7 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
             </tr>
             <tr>
               <td>Rolling 24-hour cap</td>
-              <td><strong>10 fresh OTPs</strong> per (consent, account) pair</td>
+              <td><strong>12 fresh OTPs</strong> per (consent, account) pair</td>
               <td>Reject the whole request with <code>429 Too Many Requests</code> until the rolling window admits a new call. Customer is told to try again later.</td>
             </tr>
             <tr>
@@ -707,6 +707,16 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
         These limits are LFI-enforced and apply only to the <code>FinanceRates</code>-encryption
         path. Cleartext calls to <code>GET /accounts/{AccountId}/product</code> (for product types
         where the LFI does not encrypt) follow the standard rate limits documented elsewhere.
+      </EdProse>
+
+      <EdProse>
+        The 60-second minimum interval is the limit that matters most in practice: an SMS OTP can
+        take a little while to reach the customer, so the interval simply stops a fresh code being
+        minted before the previous one has had a chance to arrive. The rolling 24-hour cap leaves
+        headroom for a TPP with a genuine reason to read a customer's finance rates several times
+        through the day, and is kept under review as real-world usage patterns emerge. LFIs SHOULD
+        treat it as a backstop against runaway SMS volume rather than a constraint legitimate
+        traffic is expected to approach.
       </EdProse>
 
       <EdNote type="tip" title="Counter key">

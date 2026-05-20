@@ -31,6 +31,16 @@ export interface HomeArticle extends RawHomeArticle {
 
 const rawArticles: RawHomeArticle[] = [
   {
+    link: 'https://fintechnews.media/2026/05/06/lean-technologies-scales-pay-by-bank-in-the-uae-as-open-finance-payments-go-live/',
+    source: 'Fintech News',
+    kind: 'press-release',
+    date: '2026-05-06',
+    dateLabel: '6 May 2026',
+    imageSrc: '/images/articles/lean-scales.png',
+    title: 'Lean Technologies Scales Pay by Bank in the UAE as Open Finance Payments Go Live',
+    text: "Lean Technologies, the MENA region's leading financial infrastructure provider, today announced the expansion of its Pay by Bank capabilities, built on the UAE's newly operational Open Finance framework.",
+  },
+  {
     link: 'https://wio.io/altareq',
     source: 'Wio Bank',
     kind: 'press-release',

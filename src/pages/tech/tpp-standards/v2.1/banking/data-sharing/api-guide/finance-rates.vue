@@ -120,6 +120,9 @@ return {
 }
 `
 
+const smsExample = `ALTAREQ BANK: You requested your Platinum Credit Card finance rate via BudgetBuddy. Your code is 482915. Valid 30 min. If you didn't request this, ignore this message and never share this rate.
+`
+
 const step4Browser = `<!-- Run inside the user's browser. The OTP and the decrypted rate
      MUST NOT be transmitted back to your servers. -->
 <script type="module">
@@ -366,6 +369,15 @@ const step5DisplayTabs = [{ label: 'Node.js', lang: 'typescript', code: step5Dis
         alt="Read FinanceRates user journey — consent, redirection to LFI, authentication, and the final TPP screen prompting for a one-time code"
       />
 
+      <h3 class="ed-doc__subhead">What the customer receives</h3>
+      <EdProse>
+        The LFI sends the code to the customer directly &mdash; the TPP never sees it. The message
+        names the product, names your <code>TradingName</code> so the customer can tie it back to
+        your application, and carries a 30-minute validity. Knowing the shape of the message helps
+        you word your own prompt consistently with what the customer is reading on their phone:
+      </EdProse>
+      <EdCode :code="smsExample" lang="text" filename="example SMS — as the customer receives it" />
+
       <EdBullets>
         <li>
           <strong>Customer-present only</strong> &mdash; this flow only works when the customer is
@@ -483,8 +495,8 @@ const step5DisplayTabs = [{ label: 'Node.js', lang: 'typescript', code: step5Dis
             </tr>
             <tr>
               <td>Daily cap</td>
-              <td><strong>10 fresh OTPs</strong> per consent per account per rolling 24 hours</td>
-              <td>Covers retries and re-display across the day while protecting the customer from runaway SMS volume.</td>
+              <td><strong>12 fresh OTPs</strong> per consent per account per rolling 24 hours</td>
+              <td>Covers retries and repeated re-display across the day, and acts as a backstop against runaway SMS volume rather than a limit normal traffic should approach.</td>
             </tr>
             <tr>
               <td>Decryption attempts</td>

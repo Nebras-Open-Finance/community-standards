@@ -6,7 +6,8 @@ export type TrustFrameworkCategory = 'New Features' | 'Enhancements' | 'Bug Fixe
 
 export interface TrustFrameworkEntry {
   release: string                         // '2.2.0'
-  effectiveDate: string                   // ISO, e.g. '2026-06-02'
+  effectiveDate: string                   // ISO date ('2026-06-02'), or a 4-digit
+                                          // year ('2026') for an undated planned release
   planned?: boolean                       // true = future / not yet deployed
   number: number                          // sequence within the release (1, 2, …)
   category: TrustFrameworkCategory
@@ -21,6 +22,180 @@ export const TRUST_FRAMEWORK_CATEGORIES: TrustFrameworkCategory[] = [
 ]
 
 export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
+  // ─────────────────────────────────────────────────────────────────────────
+  // 2.3.0 — release date to be confirmed (planned)
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    release: '2.3.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 1,
+    category: 'New Features',
+    title: 'Application change history and audit comparison',
+    description:
+      'Applications now include an audit history view that supports comparing versions side by side. When non-sequential versions are compared, the interface warns that intermediate changes may not be reflected in the diff. Tabs for certificates, flags, and roles are present and marked as coming soon.',
+  },
+  {
+    release: '2.3.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 2,
+    category: 'New Features',
+    title: 'Filter Authorisation Servers by active status',
+    description:
+      'The Authorisation Servers list page now includes a Show active servers only toggle, mirroring the equivalent filter already available on the Applications list.',
+  },
+  {
+    release: '2.3.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 3,
+    category: 'New Features',
+    title: 'Audit view resource navigation',
+    description:
+      'The audit view now includes a primary switcher that lets users move between resources and their associated audit items.',
+  },
+  {
+    release: '2.3.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 4,
+    category: 'Enhancements',
+    title: 'Responsive filter layouts',
+    description:
+      'Filter controls now collapse into a filter count icon on smaller screens, keeping filtering accessible on mobile without crowding the layout.',
+  },
+  {
+    release: '2.3.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 5,
+    category: 'Enhancements',
+    title: 'Email format validation during registration',
+    description:
+      'User registration now validates email format, with invalid formats rejected at the API level.',
+  },
+  {
+    release: '2.3.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 6,
+    category: 'Enhancements',
+    title: 'Flexible query parameter syntax in search',
+    description:
+      'Search endpoints now accept both repeated query parameters and comma-separated values for the same parameter.',
+  },
+  {
+    release: '2.3.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 7,
+    category: 'Enhancements',
+    title: 'Service Desk contact visibility',
+    description:
+      'The Service Desk scope now retrieves contacts across all visibility levels.',
+  },
+  {
+    release: '2.3.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 8,
+    category: 'Enhancements',
+    title: 'Expanded global search criteria',
+    description:
+      'Global search now supports organisation registration numbers and parent organisation IDs as search criteria.',
+  },
+  {
+    release: '2.3.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 9,
+    category: 'Bug Fixes',
+    title: 'Premature success modals in Application wizards',
+    description:
+      'Fixed an issue where success modals could appear before an Application wizard step had completed.',
+  },
+  {
+    release: '2.3.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 10,
+    category: 'Bug Fixes',
+    title: 'Domain user role validation feedback',
+    description:
+      'Fixed enable/disable role validation for Domain Users, with clearer error messaging.',
+  },
+  {
+    release: '2.3.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 11,
+    category: 'Bug Fixes',
+    title: 'Simulator consent flow message contrast',
+    description:
+      'Corrected low-contrast informational messages in the simulator consent flows.',
+  },
+  {
+    release: '2.3.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 12,
+    category: 'Bug Fixes',
+    title: '"Family complete" flag for Open Data APIs',
+    description:
+      'Fixed evaluation of the Family complete flag for Open Data API families.',
+  },
+  {
+    release: '2.3.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 13,
+    category: 'Bug Fixes',
+    title: 'Authority list sorting',
+    description:
+      'Repaired sorting on the authority list.',
+  },
+  {
+    release: '2.3.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 14,
+    category: 'Bug Fixes',
+    title: 'Duplicate network requests',
+    description:
+      'Eliminated duplicate network requests issued on certain pages.',
+  },
+  {
+    release: '2.3.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 15,
+    category: 'Bug Fixes',
+    title: 'Certificate table layout',
+    description:
+      'Corrected certificate table alignment and column responsiveness.',
+  },
+  {
+    release: '2.3.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 16,
+    category: 'Bug Fixes',
+    title: 'Domain Mapping disable error visibility',
+    description:
+      'Fixed visibility of the error shown when disabling a Domain Mapping that is still in use.',
+  },
+  {
+    release: '2.3.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 17,
+    category: 'Bug Fixes',
+    title: 'IDP Configuration field toggles',
+    description:
+      'Resolved an issue with field toggle behaviour on the IDP Configuration screen.',
+  },
+
   // ─────────────────────────────────────────────────────────────────────────
   // 2.2.0 — 2 June 2026 (planned)
   // ─────────────────────────────────────────────────────────────────────────

@@ -669,6 +669,24 @@ const customerPsuJson = `{
         </table>
       </EdRefTable>
 
+      <h4 class="ed-doc__subhead-minor"><code>400</code> &mdash; Bad Request</h4>
+      <EdProse>
+        Return <code>400</code> only for a request that is genuinely malformed &mdash; not for a
+        well-formed request that simply matches no data. The API Hub enforces the OpenAPI schema
+        before proxying, so most format errors are rejected upstream and rarely reach your Ozone
+        Connect endpoints.
+      </EdProse>
+      <EdRefTable>
+        <table>
+          <thead>
+            <tr><th><code>errorCode</code></th><th><code>errorMessage</code></th><th>When to use</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>Resource.InvalidFormat</code></td><td><code>A query parameter has an invalid format.</code></td><td>A date-time query parameter (e.g. <code>fromBookingDateTime</code>, <code>toBookingDateTime</code>) cannot be parsed, or a contradictory range is supplied (<code>fromBookingDateTime</code> after <code>toBookingDateTime</code>)</td></tr>
+          </tbody>
+        </table>
+      </EdRefTable>
+
       <h3 id="pagination" class="ed-doc__subhead">Pagination</h3>
       <EdProse>
         <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/accounts/{accountId}/transactions</code></span>
@@ -942,6 +960,16 @@ const customerPsuJson = `{
         within the requested range, return <code>200</code> with an empty <code>data</code> array
         &mdash; do not return <code>404</code>.
       </EdProse>
+      <EdProse>
+        The two-year rule is a <strong>minimum availability guarantee, not a query limit</strong>. An
+        LFI MUST NOT reject a request solely because <code>fromBookingDateTime</code> or
+        <code>toBookingDateTime</code> extends beyond two years, lies in the future, or matches no
+        transactions &mdash; return <code>200</code> with the matching subset, empty where there is
+        none. An LFI MAY return transactions older than two years where it holds them. An LFI MUST
+        reject only a contradictory range (<code>fromBookingDateTime</code> after
+        <code>toBookingDateTime</code>) or an unparseable date-time, with <code>400</code> &mdash; see
+        <a href="#common-error-responses">Common error responses</a>.
+      </EdProse>
       <EdCode :code="transactionsJson" lang="json" filename="GET /accounts/{accountId}/transactions response" />
       <EdProse>Errors: see <a href="#common-error-responses">Common error responses</a>.</EdProse>
       <EdProse>
@@ -1009,6 +1037,16 @@ const customerPsuJson = `{
       <EdProse>
         At least two years of statements MUST be available for retrieval. If no statements exist in
         the requested range, return <code>200</code> with an empty <code>data</code> array.
+      </EdProse>
+      <EdProse>
+        As with transactions, the two-year rule is a <strong>minimum availability guarantee, not a
+        query limit</strong>. An LFI MUST NOT reject a request solely because
+        <code>fromStatementDate</code> or <code>toStatementDate</code> extends beyond two years, lies
+        in the future, or matches no statements &mdash; return <code>200</code> with the matching
+        subset, empty where there is none. An LFI MAY return statements older than two years where it
+        holds them. An LFI MUST reject only a contradictory range (<code>fromStatementDate</code>
+        after <code>toStatementDate</code>) or an unparseable date, with <code>400</code> &mdash; see
+        <a href="#common-error-responses">Common error responses</a>.
       </EdProse>
       <EdCode :code="statementsJson" lang="json" filename="GET /accounts/{accountId}/statements response" />
       <EdProse>Errors: see <a href="#common-error-responses">Common error responses</a>.</EdProse>

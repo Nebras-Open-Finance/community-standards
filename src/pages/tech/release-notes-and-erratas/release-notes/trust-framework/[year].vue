@@ -161,6 +161,8 @@ function paragraphsOf(text: string | undefined): string[] {
 
 function formatDate(iso: string): string {
   if (!iso) return ''
+  // A 4-digit year alone marks an undated planned release — show no date.
+  if (/^\d{4}$/.test(iso)) return ''
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
