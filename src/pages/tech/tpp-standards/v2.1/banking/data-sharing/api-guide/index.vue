@@ -960,6 +960,31 @@ const step10Tabs = [{ label: 'Node.js', lang: 'typescript', code: step10Node }, 
           </tbody>
         </table>
       </EdRefTable>
+
+      <EdNote type="warning" title="An empty result does not mean no activity">
+        <p>
+          For <code>/transactions</code> and <code>/statements</code>, an LFI MUST make at least
+          <strong>two years</strong> of history available. A <code>200</code> response with an empty
+          <code>data</code> array therefore only means <em>no records exist</em> when your query range
+          falls <strong>within that guaranteed two-year window</strong>.
+        </p>
+        <p>
+          If you query a period older than two years, an empty or partial result does
+          <strong>not</strong> imply the customer had no activity then &mdash; the LFI may simply not
+          retain data that far back (it MAY return older records, but is not required to). Do not infer
+          absence of spend, income, or other activity for any period beyond the two-year guarantee.
+        </p>
+        <p>
+          The API Hub rejects a date-range query with <code>400</code>
+          <code>Resource.InvalidFormat</code> before it reaches the LFI when
+          <code>fromBookingDateTime</code> is after <code>toBookingDateTime</code>, or when
+          <code>toBookingDateTime</code> / <code>toStatementDate</code> is in the future. A
+          <code>fromBookingDateTime</code> in the future is not rejected but serves no purpose &mdash;
+          the range can never match a record. See
+          <a href="/knowledge-base/articles/transaction-date-filters">Date Filters</a> for the full
+          behaviour.
+        </p>
+      </EdNote>
     </EdSectionBand>
 
     <EdSectionBand

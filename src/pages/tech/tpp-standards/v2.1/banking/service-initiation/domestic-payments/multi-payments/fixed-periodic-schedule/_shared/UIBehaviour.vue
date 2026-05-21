@@ -111,7 +111,5 @@ Total Number of Payments allowed          0
 
   <h3>Permissions and Data Access</h3>
 
-  <EdProse>The table below describes the text shown to users on the Consent Page.</EdProse>
-
   <ServiceInitiationPermissionText />
 </template>

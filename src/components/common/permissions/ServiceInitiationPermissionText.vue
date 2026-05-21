@@ -1,22 +1,39 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import {
   paymentPermissionCombinations,
   getPaymentPermissionText,
+  getAuthPaymentPermissionText,
 } from '../composables/serviceInitiationPermissionDescriptions'
 
-const rows = paymentPermissionCombinations.map((permissions) => ({
-  permissions,
-  text: getPaymentPermissionText(permissions),
-}))
+// The LFI integration guide documents the Authorization Page (rendered by the
+// LFI), so it shows the authorization wording. The TPP standards document the
+// Consent Page, so they show the consent wording.
+const route = useRoute()
+const isLfi = computed(() => route.path.includes('/lfi-api-hub/'))
+
+const pageLabel = computed(() => (isLfi.value ? 'Authorization Page' : 'Consent Page'))
+
+const rows = computed(() =>
+  paymentPermissionCombinations.map((permissions) => ({
+    permissions,
+    text: isLfi.value
+      ? getAuthPaymentPermissionText(permissions)
+      : getPaymentPermissionText(permissions),
+  })),
+)
 </script>
 
 <template>
+  <EdProse>The table below describes the text shown to users on the {{ pageLabel }}.</EdProse>
+
   <div class="sip__wrap">
     <table class="sip">
       <thead>
         <tr>
           <th>Permissions</th>
-          <th>Text shown to user on Consent Page</th>
+          <th>Text shown to user on {{ pageLabel }}</th>
         </tr>
       </thead>
       <tbody>

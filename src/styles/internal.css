@@ -1,0 +1,119 @@
+/*
+  Prose styling for the /internal section.
+
+  Shared by two surfaces so that the live preview in the editor matches the
+  final rendered page exactly:
+    - the editor's live preview pane (.internal-prose wraps marked() output)
+    - committed Markdown pages (the internal layout wraps <router-view/> for
+      content routes in .internal-prose)
+*/
+
+.internal-prose {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 3rem 2rem 5rem;
+  font-family: var(--at-sans);
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--at-mute-2);
+}
+
+.internal-prose > :first-child { margin-top: 0; }
+.internal-prose > :last-child { margin-bottom: 0; }
+
+.internal-prose h1,
+.internal-prose h2,
+.internal-prose h3,
+.internal-prose h4 {
+  font-family: var(--at-serif);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--at-navy-deep);
+}
+
+.internal-prose h1 { font-size: 2.4rem; margin: 0 0 1.25rem; }
+.internal-prose h2 {
+  font-size: 1.6rem;
+  margin: 2.5rem 0 1rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--at-grid-line);
+}
+.internal-prose h3 { font-size: 1.2rem; margin: 2rem 0 0.75rem; }
+.internal-prose h4 { font-size: 1rem; margin: 1.5rem 0 0.5rem; }
+
+.internal-prose p { margin: 0 0 1.1rem; }
+
+.internal-prose a {
+  color: var(--at-teal-deep);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+.internal-prose a:hover { color: var(--at-navy-deep); }
+
+.internal-prose strong { color: var(--at-navy-deep); font-weight: 600; }
+
+.internal-prose ul,
+.internal-prose ol { margin: 0 0 1.1rem; padding-left: 1.5rem; }
+.internal-prose li { margin: 0.3rem 0; }
+
+.internal-prose blockquote {
+  margin: 1.25rem 0;
+  padding: 0.4rem 1.1rem;
+  border-left: 3px solid var(--at-teal);
+  background: var(--at-bg-paper);
+  color: var(--at-mute);
+}
+.internal-prose blockquote p:last-child { margin-bottom: 0; }
+
+.internal-prose code {
+  font-family: var(--at-mono);
+  font-size: 0.86em;
+  background: color-mix(in srgb, var(--at-grid-line) 55%, var(--at-bg-cream));
+  border: 1px solid var(--at-grid-line);
+  padding: 0.08em 0.4em;
+}
+
+.internal-prose pre {
+  margin: 1.25rem 0;
+  padding: 1rem 1.15rem;
+  background: var(--at-navy-deep);
+  color: var(--at-bg-cream);
+  overflow-x: auto;
+  font-family: var(--at-mono);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+.internal-prose pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+.internal-prose hr {
+  margin: 2.5rem 0;
+  border: 0;
+  border-top: 1px solid var(--at-grid-line-2);
+}
+
+.internal-prose img { max-width: 100%; height: auto; }
+
+.internal-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: 0.92rem;
+}
+.internal-prose th,
+.internal-prose td {
+  border: 1px solid var(--at-grid-line-2);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.internal-prose th {
+  background: var(--at-bg-paper);
+  color: var(--at-navy-deep);
+  font-weight: 600;
+}

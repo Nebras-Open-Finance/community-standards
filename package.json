@@ -33,6 +33,7 @@
   "dependencies": {
     "axios": "^1.15.2",
     "chart.js": "^4.5.1",
+    "marked": "^18.0.4",
     "mermaid": "^11.14.0",
     "shiki": "^4.0.2",
     "vue": "^3.5.27",

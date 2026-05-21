@@ -86,6 +86,11 @@ function walk(dir, filterExt, acc = []) {
 
 function isExemptByPath(absFile) {
   const rel = relative(PAGES, absFile).replace(/\\/g, '/')
+  // The /internal section is a password-gated authoring area, deliberately
+  // absent from the public sidebar and top nav — reached by URL only. Its
+  // index, editor, and user-authored Markdown pages are never expected to be
+  // statically linked from the rest of the site.
+  if (rel === 'internal' || rel.startsWith('internal/')) return true
   return rel.split('/').some(seg => seg.startsWith('_') || seg.startsWith('['))
 }
 

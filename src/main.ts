@@ -12,6 +12,7 @@ import './styles/tokens.css'
 import './styles/base.css'
 import './styles/api-specs.css'
 import './styles/endpoint.css'
+import './styles/internal.css'
 
 const routes = setupLayouts(generatedRoutes)
 

@@ -682,7 +682,7 @@ const customerPsuJson = `{
             <tr><th><code>errorCode</code></th><th><code>errorMessage</code></th><th>When to use</th></tr>
           </thead>
           <tbody>
-            <tr><td><code>Resource.InvalidFormat</code></td><td><code>A query parameter has an invalid format.</code></td><td>A date-time query parameter (e.g. <code>fromBookingDateTime</code>, <code>toBookingDateTime</code>) cannot be parsed, or a contradictory range is supplied (<code>fromBookingDateTime</code> after <code>toBookingDateTime</code>)</td></tr>
+            <tr><td><code>Resource.InvalidFormat</code></td><td><code>A query parameter has an invalid format.</code></td><td>A date-range query parameter cannot be parsed, a contradictory range is supplied (<code>fromBookingDateTime</code> after <code>toBookingDateTime</code>), or <code>toBookingDateTime</code> is in the future. The API Hub enforces these checks before proxying, so an LFI does not normally return this itself</td></tr>
           </tbody>
         </table>
       </EdRefTable>
@@ -963,11 +963,13 @@ const customerPsuJson = `{
       <EdProse>
         The two-year rule is a <strong>minimum availability guarantee, not a query limit</strong>. An
         LFI MUST NOT reject a request solely because <code>fromBookingDateTime</code> or
-        <code>toBookingDateTime</code> extends beyond two years, lies in the future, or matches no
-        transactions &mdash; return <code>200</code> with the matching subset, empty where there is
-        none. An LFI MAY return transactions older than two years where it holds them. An LFI MUST
-        reject only a contradictory range (<code>fromBookingDateTime</code> after
-        <code>toBookingDateTime</code>) or an unparseable date-time, with <code>400</code> &mdash; see
+        <code>toBookingDateTime</code> extends beyond two years into the past, or because the range
+        matches no transactions &mdash; return <code>200</code> with the matching subset, empty where
+        there is none. An LFI MAY return transactions older than two years where it holds them. The
+        API Hub rejects malformed date-range requests before proxying &mdash; an unparseable
+        date-time, a contradictory range (<code>fromBookingDateTime</code> after
+        <code>toBookingDateTime</code>), or a <code>toBookingDateTime</code> in the future &mdash; with
+        <code>400</code>, so the LFI receives only well-formed ranges. See
         <a href="#common-error-responses">Common error responses</a>.
       </EdProse>
       <EdCode :code="transactionsJson" lang="json" filename="GET /accounts/{accountId}/transactions response" />
@@ -1041,11 +1043,13 @@ const customerPsuJson = `{
       <EdProse>
         As with transactions, the two-year rule is a <strong>minimum availability guarantee, not a
         query limit</strong>. An LFI MUST NOT reject a request solely because
-        <code>fromStatementDate</code> or <code>toStatementDate</code> extends beyond two years, lies
-        in the future, or matches no statements &mdash; return <code>200</code> with the matching
-        subset, empty where there is none. An LFI MAY return statements older than two years where it
-        holds them. An LFI MUST reject only a contradictory range (<code>fromStatementDate</code>
-        after <code>toStatementDate</code>) or an unparseable date, with <code>400</code> &mdash; see
+        <code>fromStatementDate</code> or <code>toStatementDate</code> extends beyond two years into
+        the past, or because the range matches no statements &mdash; return <code>200</code> with the
+        matching subset, empty where there is none. An LFI MAY return statements older than two years
+        where it holds them. The API Hub rejects malformed date-range requests before proxying &mdash;
+        an unparseable date, a contradictory range (<code>fromStatementDate</code> after
+        <code>toStatementDate</code>), or a <code>toStatementDate</code> in the future &mdash; with
+        <code>400</code>, so the LFI receives only well-formed ranges. See
         <a href="#common-error-responses">Common error responses</a>.
       </EdProse>
       <EdCode :code="statementsJson" lang="json" filename="GET /accounts/{accountId}/statements response" />

@@ -111,6 +111,7 @@ declare module 'vue' {
     FtsStatusMapping: typeof import('./components/common/api-flows/FtsStatusMapping.vue')['default']
     ImageViewer: typeof import('./components/common/ImageViewer.vue')['default']
     InfoTooltip: typeof import('./components/common/forms/InfoTooltip.vue')['default']
+    InternalMarkdown: typeof import('./components/common/InternalMarkdown.vue')['default']
     MiniChart: typeof import('./components/home/MiniChart.vue')['default']
     OnboardingAdminForm: typeof import('./components/common/forms/OnboardingAdminForm.vue')['default']
     OnboardingOrganisationForm: typeof import('./components/common/forms/OnboardingOrganisationForm.vue')['default']
