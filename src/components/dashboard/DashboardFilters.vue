@@ -5,7 +5,8 @@
 import {
   state,
   filterOptions,
-  setFilter,
+  toggleFilter,
+  clearFilter,
   resetFilters,
 } from '@/stores/dashboard'
 import type { FilterKey } from '@/data/dashboard-charts'
@@ -42,20 +43,15 @@ const LABELS: Record<FilterKey, string> = {
 
 interface ActiveEntry { key: FilterKey; value: string }
 
+// One chip per selected value across every filter.
 const activeEntries = computed<ActiveEntry[]>(() =>
-  (Object.entries(state.filters) as Array<[FilterKey, string | null]>)
-    .filter((entry): entry is [FilterKey, string] => entry[1] != null)
-    .map(([key, value]) => ({ key, value })),
+  (Object.entries(state.filters) as Array<[FilterKey, string[]]>)
+    .flatMap(([key, values]) => values.map(value => ({ key, value }))),
 )
 
 const hasActiveFilters = computed<boolean>(() =>
   activeEntries.value.length > 0 || !state.excludePartialMonths,
 )
-
-function onChange(key: FilterKey, ev: Event): void {
-  const target = ev.target as HTMLSelectElement
-  setFilter(key, target.value || null)
-}
 </script>
 
 <template>
@@ -65,19 +61,14 @@ function onChange(key: FilterKey, ev: Event): void {
 
       <div v-for="f in filterDefs" :key="f.key" class="db-filters__group">
         <label class="db-filters__label">{{ f.label }}</label>
-        <div class="db-filters__select-wrap">
-          <select
-            class="db-filters__select"
-            :value="state.filters[f.key] ?? ''"
-            @change="onChange(f.key, $event)"
-          >
-            <option value="">{{ f.allLabel }}</option>
-            <option v-for="opt in filterOptions[f.optKey]" :key="opt" :value="opt">{{ opt }}</option>
-          </select>
-          <svg class="db-filters__chevron" width="10" height="6" viewBox="0 0 10 6" fill="none">
-            <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-        </div>
+        <DashboardMultiSelect
+          :label="f.label"
+          :all-label="f.allLabel"
+          :options="filterOptions[f.optKey]"
+          :selected="state.filters[f.key]"
+          @toggle="toggleFilter(f.key, $event)"
+          @clear="clearFilter(f.key)"
+        />
       </div>
 
       <button
@@ -108,9 +99,9 @@ function onChange(key: FilterKey, ev: Event): void {
       </label>
       <span
         v-for="entry in activeEntries"
-        :key="entry.key"
+        :key="`${entry.key}:${entry.value}`"
         class="db-filters__chip"
-        @click="setFilter(entry.key, null)"
+        @click="toggleFilter(entry.key, entry.value)"
       >
         {{ LABELS[entry.key] }}: {{ entry.value }}
         <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
@@ -148,39 +139,6 @@ function onChange(key: FilterKey, ev: Event): void {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: var(--at-mute);
-}
-
-.db-filters__select-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.db-filters__select {
-  appearance: none;
-  padding: 0.35rem 1.75rem 0.35rem 0.65rem;
-  font-family: var(--at-sans);
-  font-size: 0.78rem;
-  border: 1px solid var(--at-grid-line-2);
-  border-radius: 0;
-  background: var(--at-surface);
-  color: var(--at-navy-deep);
-  cursor: pointer;
-  outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  min-width: 130px;
-}
-
-.db-filters__select:focus {
-  border-color: var(--at-teal);
-  box-shadow: 0 0 0 3px rgba(0, 194, 169, 0.15);
-}
-
-.db-filters__chevron {
-  position: absolute;
-  right: 0.55rem;
-  pointer-events: none;
   color: var(--at-mute);
 }
 

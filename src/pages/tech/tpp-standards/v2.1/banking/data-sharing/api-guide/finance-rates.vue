@@ -147,16 +147,17 @@ const step4Browser = `<!-- Run inside the user's browser. The OTP and the decryp
       const rates = JSON.parse(new TextDecoder().decode(plaintext))
       renderRates(rates, out)
     } catch (err) {
-      // PBES2 decryption failure → wrong OTP or expired JWE
+      // PBES2 decryption failure → wrong OTP. An expired JWE still decrypts;
+      // the TPP enforces the 30-minute window via the exp claim (see Step 5).
       showError('That code did not work. Request a new one and try again.')
     }
   })
 <\/script>
 `
 
-const step5DisplayNode = `// The JWE is short-lived (30 minutes from issuance). Past that point any
-// decryption attempt fails and the customer needs a fresh request. Track the
-// expiry on the client so the UI can prompt for a new OTP proactively.
+const step5DisplayNode = `// The JWE carries a 30-minute exp claim. Decryption still works past that
+// point — the TPP MUST NOT display the rate once exp has passed. Track the
+// expiry on the client so the UI can prompt for a fresh request proactively.
 //
 // You can pass the issuance time alongside the JWE when you serve the page —
 // the JWE itself does not carry a parseable claim because it is opaque to the
@@ -171,9 +172,9 @@ if (Date.now() >= expiresAt) {
 }
 `
 
-const step5DisplayPython = `# The JWE is short-lived (30 minutes from issuance). Past that point any
-# decryption attempt fails and the customer needs a fresh request. Track the
-# expiry on the client so the UI can prompt for a new OTP proactively.
+const step5DisplayPython = `# The JWE carries a 30-minute exp claim. Decryption still works past that
+# point — the TPP MUST NOT display the rate once exp has passed. Track the
+# expiry on the client so the UI can prompt for a fresh request proactively.
 JWE_TTL_SECONDS = 30 * 60
 expires_at = issued_at + JWE_TTL_SECONDS
 
@@ -358,10 +359,11 @@ const step5DisplayTabs = [{ label: 'Node.js', lang: 'typescript', code: step5Dis
     >
       <EdProse>
         When the LFI returns an encrypted <code>FinanceRates</code>, it also sends a one-time code
-        to the customer via SMS or email. The TPP MUST display an input field where the customer
-        can type that code, and a short explanation that matches the wording shown to the customer
-        on the consent screen (&ldquo;Your bank has sent you a one-time code &mdash; enter it below
-        to see your finance rate&rdquo;).
+        to the customer directly, through a channel the LFI controls &mdash; an SMS, an email, or a
+        push notification in the LFI's banking app. The TPP MUST display an input field where the
+        customer can type that code, and a short explanation that matches the wording shown to the
+        customer on the consent screen (&ldquo;Your bank has sent you a one-time code &mdash; enter
+        it below to see your finance rate&rdquo;).
       </EdProse>
 
       <ImageViewer
@@ -391,7 +393,7 @@ const step5DisplayTabs = [{ label: 'Node.js', lang: 'typescript', code: step5Dis
           APR&rdquo;).
         </li>
         <li>
-          <strong>Offer to resend</strong> &mdash; if the customer does not receive the SMS, the TPP
+          <strong>Offer to resend</strong> &mdash; if the customer does not receive the code, the TPP
           may re-call <code>GET /accounts/{AccountId}/product</code> to ask the LFI to issue a fresh
           code. Respect the rate limits described in
           <a href="#rate-limits">Step 6 &mdash; Rate limits and retries</a>.
@@ -451,18 +453,37 @@ const step5DisplayTabs = [{ label: 'Node.js', lang: 'typescript', code: step5Dis
       tone="cream"
     >
       <EdProse>
-        The JWE has a fixed 30-minute lifetime from issuance. Within that window the TPP MAY
-        re-decrypt and re-render the rate as the customer navigates between screens, provided the
-        OTP is still held in browser memory. After the window closes, any decryption attempt fails
-        and the customer must request a fresh code via a new call to
-        <code>GET /accounts/{AccountId}/product</code>.
+        The JWE carries a fixed 30-minute lifetime as an <code>exp</code> claim inside its
+        plaintext, set by the LFI. Within that window the TPP MAY re-decrypt and re-render the rate
+        as the customer navigates between screens, provided the OTP is still held in browser
+        memory.
+      </EdProse>
+
+      <EdProse>
+        Decryption does not stop working when the window closes &mdash; a JWE and its OTP can
+        technically be decrypted at any later time, so the 30-minute limit is not enforced by the
+        cryptography. The TPP MUST enforce it: after decrypting, the TPP MUST read the
+        <code>exp</code> claim from the plaintext and MUST NOT display the rate, or re-decrypt it
+        for display, once <code>exp</code> has passed. This obligation is part of the TPP's
+        <a href="/tech/tpp-standards/production/testing-certification/optional/access-encrypted-resource-data">
+        Access Encrypted Resource Data</a> certification.
       </EdProse>
 
       <EdCodeGroup :tabs="step5DisplayTabs" />
 
+      <EdNote type="warning" title="Expiry is a TPP obligation, not a cryptographic guarantee">
+        <p>
+          The OTP keeps working after 30 minutes &mdash; nothing in the JWE itself prevents a late
+          decryption. The window is held closed only by the TPP checking <code>exp</code> and by
+          the certification commitments the TPP makes to Nebras. Treating <code>exp</code> as
+          advisory, or relying on decryption to &ldquo;just fail&rdquo;, is a certification breach.
+        </p>
+      </EdNote>
+
       <EdProse>
-        When the window closes mid-session, prompt the customer to request a fresh code rather than
-        silently failing. The customer's consent is unaffected &mdash; only the encryption envelope
+        When the window closes mid-session, prompt the customer to request a fresh code via a new
+        call to <code>GET /accounts/{AccountId}/product</code> rather than continuing to show a
+        stale rate. The customer's consent is unaffected &mdash; only the 30-minute display window
         has expired.
       </EdProse>
     </EdSectionBand>
@@ -479,7 +500,7 @@ const step5DisplayTabs = [{ label: 'Node.js', lang: 'typescript', code: step5Dis
         Each call to <code>GET /accounts/{AccountId}/product</code> that returns an encrypted
         <code>FinanceRates</code> triggers a fresh OTP to the customer. LFIs MUST rate-limit these
         requests per consent to prevent OTP spam, while leaving enough headroom for legitimate
-        retries (an SMS not received, a typo, an expired window).
+        retries (a code not received, a typo, an expired window).
       </EdProse>
 
       <EdRefTable>
@@ -491,12 +512,12 @@ const step5DisplayTabs = [{ label: 'Node.js', lang: 'typescript', code: step5Dis
             <tr>
               <td>Minimum interval between requests</td>
               <td><strong>60 seconds</strong> per consent per account</td>
-              <td>Lets the customer ask for a fresh OTP if the first SMS is delayed, without enabling rapid-fire spam.</td>
+              <td>Lets the customer ask for a fresh OTP if the first code is delayed, without enabling rapid-fire spam.</td>
             </tr>
             <tr>
               <td>Daily cap</td>
               <td><strong>12 fresh OTPs</strong> per consent per account per rolling 24 hours</td>
-              <td>Covers retries and repeated re-display across the day, and acts as a backstop against runaway SMS volume rather than a limit normal traffic should approach.</td>
+              <td>Covers retries and repeated re-display across the day, and acts as a backstop against runaway message volume rather than a limit normal traffic should approach.</td>
             </tr>
             <tr>
               <td>Decryption attempts</td>
@@ -528,7 +549,7 @@ const step5DisplayTabs = [{ label: 'Node.js', lang: 'typescript', code: step5Dis
         </li>
         <li>
           Do not auto-retry inside the wait window. The LFI will reject again and the customer
-          will receive another SMS request that cannot succeed.
+          will receive another code request that cannot succeed.
         </li>
         <li>
           A <code>429</code> never means the consent is invalid &mdash; it means too many fresh

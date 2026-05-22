@@ -53,7 +53,7 @@ async function buildFinanceRates(
 
   // Gate the entire FinanceRates field on this single permission.
   if (!permissions.includes('ReadProductFinanceRates')) {
-    // Omit the field entirely. Do not generate an OTP, do not send an SMS,
+    // Omit the field entirely. Do not generate an OTP, do not deliver a code,
     // do not build a JWE — and do not return an empty object placeholder.
     return undefined
   }
@@ -106,7 +106,7 @@ def build_finance_rates(request, product):
 
     # Gate the entire FinanceRates field on this single permission.
     if "ReadProductFinanceRates" not in permissions:
-        # Omit the field entirely. Do not generate an OTP, do not send an SMS,
+        # Omit the field entirely. Do not generate an OTP, do not deliver a code,
         # do not build a JWE — and do not return an empty object placeholder.
         return None
 
@@ -128,7 +128,7 @@ const otpNode = `import crypto from 'node:crypto'
 
 // 6-digit numeric OTP drawn from a cryptographically secure RNG.
 // Range is [0, 999999]; pad to a fixed 6-character string so leading
-// zeros are preserved when the customer reads the SMS.
+// zeros are preserved when the customer reads the code.
 function generateOtp(): string {
   return crypto.randomInt(0, 1_000_000).toString().padStart(6, '0')
 }
@@ -138,7 +138,7 @@ const otpPython = `import secrets
 
 # 6-digit numeric OTP drawn from a cryptographically secure RNG.
 # Range is [0, 999999]; format to a fixed 6-character string so leading
-# zeros are preserved when the customer reads the SMS.
+# zeros are preserved when the customer reads the code.
 def generate_otp() -> str:
     return f"{secrets.randbelow(1_000_000):06d}"
 `
@@ -361,8 +361,10 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
           numeric code, scoped to this single call.
         </li>
         <li>
-          <strong>Deliver the OTP to the customer</strong> &mdash; via SMS to the customer's
-          registered mobile number, with email fallback if SMS delivery is unavailable.
+          <strong>Deliver the OTP to the customer</strong> &mdash; the LFI actively pushes the
+          code to the customer on a channel it controls (SMS, email, or a push notification in
+          the LFI's mobile banking app). The customer is sent the code; they never have to go
+          and retrieve it.
         </li>
         <li>
           <strong>Encrypt the cleartext <code>FinanceRates</code> as a JWE with the OTP as the
@@ -372,10 +374,10 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
       </EdBullets>
 
       <EdProse>
-        Because the OTP is the decryption key, the customer reading the SMS on their phone and
-        typing it into the TPP application is exactly what makes the rate visible. The TPP server
-        never sees the OTP, and the LFI never sees the TPP's decryption code. The customer is the
-        only party that holds both the JWE (via the TPP) and the key (via the SMS).
+        Because the OTP is the decryption key, the customer reading the code the LFI sent them
+        and typing it into the TPP application is exactly what makes the rate visible. The TPP
+        server never sees the OTP, and the LFI never sees the TPP's decryption code. The customer
+        is the only party that holds both the JWE (via the TPP) and the key (delivered by the LFI).
       </EdProse>
     </EdSectionBand>
 
@@ -389,7 +391,7 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
     >
       <EdProse>
         Before doing anything else &mdash; before deciding to encrypt, before generating an OTP,
-        before sending an SMS, before building a JWE &mdash; the LFI MUST check that the consent
+        before delivering the code, before building a JWE &mdash; the LFI MUST check that the consent
         underlying this request includes <code>ReadProductFinanceRates</code>. If the permission
         is absent, the LFI MUST omit the <code>FinanceRates</code> field from the response
         entirely. The rest of the product payload (<code>Charges</code>, <code>DepositRates</code>,
@@ -461,7 +463,7 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
         <li>
           The check applies equally to the cleartext and encrypted paths. If
           <code>ReadProductFinanceRates</code> is missing, the LFI MUST NOT return cleartext rates
-          and MUST NOT trigger the OTP/SMS/JWE flow.
+          and MUST NOT trigger the code-generation, delivery, or JWE flow.
         </li>
         <li>
           When the field is omitted, do not substitute <code>null</code>, an empty object, or a
@@ -477,9 +479,9 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
 
       <EdCodeGroup :tabs="permissionCheckTabs" />
 
-      <EdNote type="warning" title="SMS is expensive and customer-visible">
+      <EdNote type="warning" title="Delivering a code is costly and customer-visible">
         <p>
-          Sending an OTP SMS for a request that should not have received <code>FinanceRates</code>
+          Delivering an OTP for a request that should not have received <code>FinanceRates</code>
           in the first place is both wasteful and confusing for the customer (they receive a code
           for a value the TPP cannot legitimately show). Putting the permission check first
           eliminates this class of bug entirely.
@@ -512,7 +514,7 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
             <tr><td>Format</td><td>6 digits, numeric. Leading zeros MUST be preserved in transit.</td></tr>
             <tr><td>Source</td><td>Cryptographically secure RNG (e.g. <code>crypto.randomInt</code> in Node.js, <code>secrets.randbelow</code> in Python). MUST NOT use <code>Math.random</code>, the default <code>random</code> module, or any non-CSPRNG source.</td></tr>
             <tr><td>Reusability</td><td>The OTP is reusable for decryption attempts within the 30-minute JWE window. A new call to <code>GET /accounts/{AccountId}/product</code> MUST issue a fresh OTP, even if the previous JWE has not yet expired.</td></tr>
-            <tr><td>Storage</td><td>The OTP MUST NOT be persisted in cleartext at the LFI after the JWE has been built. Hold it only long enough to use it as the PBES2 password and send the SMS, then discard.</td></tr>
+            <tr><td>Storage</td><td>The OTP MUST NOT be persisted in cleartext at the LFI after the JWE has been built. Hold it only long enough to use it as the PBES2 password and deliver it to the customer, then discard.</td></tr>
             <tr><td>Logging</td><td>The OTP MUST NOT appear in application logs, audit trails, request traces, monitoring tools, or any other system the LFI operates.</td></tr>
           </tbody>
         </table>
@@ -526,22 +528,41 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
       num="05"
       color="var(--at-navy)"
       eyebrow="Step 3 — Deliver the OTP"
-      title="SMS preferred, email fallback"
+      title="The LFI delivers the code on a channel it controls"
       tone="cream"
     >
       <EdProse>
-        The LFI MUST attempt to deliver the OTP via SMS to the customer's registered mobile number.
-        If the customer has no registered mobile number, or the SMS gateway reports a delivery
-        failure within a reasonable window, the LFI MAY fall back to the customer's registered
-        email. The LFI MUST NOT deliver the OTP through the TPP &mdash; the entire point is that
-        the TPP never holds the decryption key.
+        The LFI MUST deliver the OTP to the customer directly, through a channel the LFI controls
+        and the customer can reach without involving the TPP. The LFI chooses the channel: an SMS
+        to the customer's registered mobile number, an email to their registered address, or a
+        push notification or message in the LFI's own mobile banking app are all acceptable. The
+        LFI MUST NOT deliver the OTP through the TPP &mdash; the entire point is that the TPP never
+        holds the decryption key.
       </EdProse>
+
+      <EdProse>
+        Whichever channel the LFI uses, it MUST <em>actively deliver</em> the code to the customer
+        &mdash; the customer must be sent the code, not asked to go and find it. A push
+        notification that surfaces the code, or that deep-links the customer straight to it, meets
+        this bar; a design that requires the customer to independently open the banking app and
+        hunt for the code does not. The LFI provides the code to the customer; the customer never
+        has to retrieve it.
+      </EdProse>
+
+      <EdNote type="warning" title="Provide the code — do not make the customer fetch it">
+        <p>
+          The customer is mid-journey in the TPP application, waiting for a code to arrive. The
+          delivery channel MUST push the code to them. A model where the customer must leave that
+          journey, authenticate somewhere else, and locate the code themselves is not acceptable
+          &mdash; it breaks the flow and the customer cannot reasonably complete it.
+        </p>
+      </EdNote>
 
       <h3 class="ed-doc__subhead">Message content requirements</h3>
       <EdBullets>
         <li>The OTP itself.</li>
         <li>The LFI's brand name as a recognisable sender or in the first line of the body, so the customer can identify who sent the message.</li>
-        <li>The TPP's <code>TradingName</code> (from the consent), so the customer knows which app to enter the code into. This is the part of the message the customer uses to bridge the LFI-sent SMS with the TPP-presented form.</li>
+        <li>The TPP's <code>TradingName</code> (from the consent), so the customer knows which app to enter the code into. This is the part of the message the customer uses to bridge the LFI-sent message with the TPP-presented form.</li>
         <li>The product name or a short product description, so the customer understands which rate they are about to view.</li>
         <li>An expiry indication &mdash; "Valid 30 min" is the canonical wording.</li>
         <li>An explicit anti-fraud line for the customer who did not start this journey &mdash; "<em>If you didn't request this, ignore this message and never share this rate.</em>" The wording matters: it tells an unsuspecting customer to disregard the message, and warns every customer never to read the code aloud to anyone &mdash; while leaving them free to type it into the TPP form themselves.</li>
@@ -549,19 +570,19 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
 
       <EdNote type="info" title="What the LFI MUST NOT include">
         <p>
-          The SMS MUST NOT include the cleartext finance rate, any link the customer is expected to
-          click (the customer's journey continues in the TPP application, not via an LFI link), or
-          any other product data beyond the brand, code, TPP name, product description, and
-          expiry.
+          The message MUST NOT include the cleartext finance rate, any link inviting the customer
+          to continue their journey somewhere other than the TPP application, or any other product
+          data beyond the brand, code, TPP name, product description, and expiry.
         </p>
       </EdNote>
 
-      <h3 class="ed-doc__subhead">SMS template</h3>
+      <h3 class="ed-doc__subhead">Message template</h3>
       <EdProse>
         A recommended template the LFI substitutes from the request context &mdash; the
         <code>TPP_TRADING_NAME</code> comes from the consent's TPP organisation registration, the
         <code>PRODUCT_NAME</code> from the product the call is for, and <code>OTP</code>
-        from <a href="#step-2-otp">Step 2</a>:
+        from <a href="#step-2-otp">Step 2</a>. The example is written for SMS; the same content
+        requirements apply whatever channel the LFI delivers on:
       </EdProse>
       <EdCode :code="smsTemplate" lang="text" filename="SMS template" />
 
@@ -570,14 +591,14 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
 
       <EdProse>
         The wording is intentionally explicit about <em>where</em> the code is to be entered &mdash;
-        the SMS arrives from the bank but the form sits inside the TPP application, and the
+        the message arrives from the bank but the form sits inside the TPP application, and the
         customer needs to bridge those two contexts. Naming the TPP makes that connection.
       </EdProse>
 
       <EdNote type="tip" title="Localisation">
         <p>
-          The example above is English. LFIs SHOULD localise the SMS to the customer's registered
-          language preference; in practice this usually means English alongside Arabic. The
+          The example above is English. LFIs SHOULD localise the message to the customer's
+          registered language preference; in practice this usually means English alongside Arabic. The
           content requirements above apply to every localised variant.
         </p>
       </EdNote>
@@ -618,11 +639,15 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
 
       <h3 class="ed-doc__subhead">JWT-style expiry inside the JWE payload</h3>
       <EdProse>
-        The JWE's PBES2 envelope does not itself express an expiry &mdash; we embed
-        <code>iat</code> and <code>exp</code> inside the JSON plaintext alongside the
-        <code>FinanceRates</code> object so the TPP can render a "this code has expired" message
-        cleanly after the 30-minute window closes. The LFI MUST set <code>exp = iat + 1800</code>
-        seconds exactly; longer windows are not permitted.
+        The JWE's PBES2 envelope does not itself express an expiry, and the OTP does not stop
+        working once 30 minutes have passed &mdash; a JWE and its OTP can technically be decrypted
+        at any later time. The 30-minute limit is therefore not enforced by the cryptography. It is
+        enforced by the <code>exp</code> claim the LFI embeds in the plaintext, which the TPP MUST
+        honour, backed by the TPP's <em>Access Encrypted Resource Data</em> certification
+        obligations. The LFI embeds <code>iat</code> and <code>exp</code> inside the JSON plaintext
+        alongside the <code>FinanceRates</code> object &mdash; so the TPP can stop displaying the
+        rate and show a "this code has expired" message once the window closes &mdash; and MUST set
+        <code>exp = iat + 1800</code> seconds exactly; longer windows are not permitted.
       </EdProse>
 
       <EdCodeGroup :tabs="jweTabs" />
@@ -672,9 +697,9 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
     >
       <EdProse>
         Every call to <code>GET /accounts/{AccountId}/product</code> that produces an encrypted
-        <code>FinanceRates</code> mints a fresh OTP and triggers a customer-facing SMS. The LFI
+        <code>FinanceRates</code> mints a fresh OTP and triggers a customer-facing message. The LFI
         MUST rate-limit these calls per consent per account so an abusive or buggy TPP cannot spam
-        the customer's mobile.
+        the customer.
       </EdProse>
 
       <h3 class="ed-doc__subhead">The limits</h3>
@@ -710,13 +735,13 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
       </EdProse>
 
       <EdProse>
-        The 60-second minimum interval is the limit that matters most in practice: an SMS OTP can
-        take a little while to reach the customer, so the interval simply stops a fresh code being
-        minted before the previous one has had a chance to arrive. The rolling 24-hour cap leaves
-        headroom for a TPP with a genuine reason to read a customer's finance rates several times
-        through the day, and is kept under review as real-world usage patterns emerge. LFIs SHOULD
-        treat it as a backstop against runaway SMS volume rather than a constraint legitimate
-        traffic is expected to approach.
+        The 60-second minimum interval is the limit that matters most in practice: a delivered OTP
+        can take a little while to reach the customer, so the interval simply stops a fresh code
+        being minted before the previous one has had a chance to arrive. The rolling 24-hour cap
+        leaves headroom for a TPP with a genuine reason to read a customer's finance rates several
+        times through the day, and is kept under review as real-world usage patterns emerge. LFIs
+        SHOULD treat it as a backstop against runaway message volume rather than a constraint
+        legitimate traffic is expected to approach.
       </EdProse>
 
       <EdNote type="tip" title="Counter key">
@@ -804,14 +829,14 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
         <li>
           <strong>Audit the metadata, not the secret</strong> &mdash; the LFI SHOULD log the fact
           that an encrypted-rate response was issued (timestamp, consent ID, account ID, product
-          ID, SMS delivery channel) so abuse and operational issues are observable. The OTP and
+          ID, delivery channel) so abuse and operational issues are observable. The OTP and
           rate themselves MUST NOT be part of those records.
         </li>
         <li>
-          <strong>SMS delivery monitoring</strong> &mdash; the LFI MUST monitor SMS delivery
-          success rates separately from other customer-facing SMS traffic. A sustained dip in
-          delivery to encrypted-rate customers degrades the entire product silently from the
-          customer's point of view.
+          <strong>Delivery monitoring</strong> &mdash; the LFI MUST monitor delivery success
+          rates for whichever channels it uses to send the code. A sustained dip in delivery to
+          encrypted-rate customers degrades the entire product silently from the customer's point
+          of view.
         </li>
         <li>
           <strong>Treat the OTP like a password</strong> &mdash; on incident response, OTP

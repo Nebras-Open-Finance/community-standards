@@ -75,14 +75,16 @@ const sectionEyebrow = computed<string>(() => {
 // ── Visible charts (filter + month→day re-titling) ───────────────────────
 const visibleCharts = computed<ChartConfig[]>(() => {
   const configs = CHART_REGISTRY[state.activeSection] ?? []
-  const hasAnyFilter = Object.values(state.filters).some(v => v != null)
-  const monthFiltered = !!state.filters.month
+  const hasAnyFilter = Object.values(state.filters).some(v => v.length > 0)
+  // A breakdown chart (e.g. "by LFI") only degenerates when exactly one value
+  // is picked; with several selected it still shows a useful comparison.
+  const monthFiltered = state.filters.month.length === 1
 
   return configs
     .filter(c => {
-      if (c.hideIfFiltered && c.hideIfFiltered !== 'month' && state.filters[c.hideIfFiltered]) return false
+      if (c.hideIfFiltered && c.hideIfFiltered !== 'month' && state.filters[c.hideIfFiltered].length === 1) return false
       if (c.showOnlyIfFiltered === true && !hasAnyFilter) return false
-      if (typeof c.showOnlyIfFiltered === 'string' && !state.filters[c.showOnlyIfFiltered]) return false
+      if (typeof c.showOnlyIfFiltered === 'string' && !state.filters[c.showOnlyIfFiltered].length) return false
       return true
     })
     .map(c => {

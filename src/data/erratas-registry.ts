@@ -414,6 +414,335 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
       '/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/accounts-AccountId-statements',
     ],
   },
+  {
+    errataId: 'v2.1-errata2',
+    version: 'v2.1',
+    number: 11,
+    title: 'Risk object — nested schemas tightened to match the Standards definition',
+    summary:
+      'The Risk object on the payment-initiation surfaces now rejects undeclared properties throughout its nested objects; the SupplementaryData blocks remain open extension points and AddressLine items are bounded.',
+    description:
+      'Three aligned corrections bring the Risk object on the payment-initiation surfaces into line with the Standards definition:\n\n' +
+      '1. AERisk and its nested indicator objects — AEDebtorIndicators, AETransactionIndicators, AECreditorIndicators and their inline sub-objects — now carry additionalProperties: false throughout. On the Payments side (uae-bank-initiation-openapi) and on Ozone Connect these objects were silently permissive: a TPP could send undeclared properties to POST /payments, POST /file-payments or POST /payment-consents and have them accepted, even though the equivalent objects on the PAR side (uae-authorization-endpoints-openapi) have always rejected them. The strictness is now uniform.\n\n' +
+      '2. The SupplementaryData blocks inside AEDebtorIndicators, AETransactionIndicators and AECreditorIndicators are explicitly open extension points — additionalProperties: false is not applied to them, so consumer-specific fields may be carried there. Where a stray additionalProperties: false had been applied to a SupplementaryData block it has been removed.\n\n' +
+      '3. AddressLine items inside the AEAddress schema, reached via the Creditor address on the Risk object, are now bounded with minLength: 1 and maxLength: 70 — matching the constraints already enforced on the Payments side.',
+    rationale:
+      'The Risk object is the input to risk and fraud scoring, so the same object must validate identically wherever it is sent. In v2.1 it did not: PAR rejected undeclared properties while POST /payments accepted them, so a TPP could not reuse one Risk payload across both surfaces with confidence. The corrections make the Risk schema uniform across PAR, the Payment API, the API Hub Consent Manager and Ozone Connect. Formally this is a request-body tightening — a TPP that has been sending extra, undeclared properties in Risk to the Payments surfaces will now receive validation errors; the remedy is to remove those properties or move them under the relevant SupplementaryData block, which remains open. The change is sign-posted in the breaking-changes records for the affected specs and enforced by a new Risk-parity test.',
+    effectiveDate: 'To be confirmed on merge to main',
+    specs: [
+      'uae-authorization-endpoints-openapi',
+      'uae-bank-initiation-openapi',
+      'uae-api-hub-consent-manager-openapi',
+      'uae-ozone-connect-bank-service-initiation-openapi',
+      'uae-ozone-connect-consent-events-actions-openapi',
+    ],
+    schemas: [
+      'AERisk',
+      'AEDebtorIndicators',
+      'AETransactionIndicators',
+      'AECreditorIndicators',
+      'AEAddress',
+    ],
+    githubSources: [
+      {
+        label: 'supporting/breaking-changes/standards/v2.1-errata2/uae-bank-initiation-openapi/breaking-changes.yaml',
+        url: `${OZONE}/supporting/breaking-changes/standards/v2.1-errata2/uae-bank-initiation-openapi/breaking-changes.yaml`,
+      },
+      {
+        label: 'supporting/breaking-changes/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi/breaking-changes.yaml',
+        url: `${OZONE}/supporting/breaking-changes/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi/breaking-changes.yaml`,
+      },
+      {
+        label: 'dist/standards/v2.1-errata2/uae-authorization-endpoints-openapi.yaml',
+        url: `${OZONE}/dist/standards/v2.1-errata2/uae-authorization-endpoints-openapi.yaml`,
+      },
+      {
+        label: 'dist/standards/v2.1-errata2/uae-bank-initiation-openapi.yaml',
+        url: `${OZONE}/dist/standards/v2.1-errata2/uae-bank-initiation-openapi.yaml`,
+      },
+      {
+        label: 'dist/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi.yaml',
+        url: `${OZONE}/dist/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi.yaml`,
+      },
+      {
+        label: 'dist/ozone-connect/v2.1.x/uae-ozone-connect-bank-service-initiation-openapi.yaml',
+        url: `${OZONE}/dist/ozone-connect/v2.1.x/uae-ozone-connect-bank-service-initiation-openapi.yaml`,
+      },
+      {
+        label: 'dist/ozone-connect/v2.1.x/uae-ozone-connect-consent-events-actions-openapi.yaml',
+        url: `${OZONE}/dist/ozone-connect/v2.1.x/uae-ozone-connect-consent-events-actions-openapi.yaml`,
+      },
+    ],
+    relatedStandards: [
+      { label: 'Banking — Service Initiation', path: '/tech/tpp-standards/v2.1/banking/service-initiation/' },
+    ],
+    affectedPaths: [
+      // Standards — PAR and payment consent creation/modification
+      '/tech/api-specs/v2.1/tpp/consent/par',
+      '/tech/api-specs/v2.1/tpp/consent/payment-consents',
+      '/tech/api-specs/v2.1/tpp/consent/payment-consents-ConsentId',
+      '/tech/api-specs/v2.1/tpp/consent/patch-payment-consents-ConsentId',
+      '/tech/api-specs/v2.1/tpp/service-initiation/payments',
+      '/tech/tpp-standards/v2.1/consent/open-api/par',
+      '/tech/tpp-standards/v2.1/consent/open-api/payment-consents',
+      '/tech/tpp-standards/v2.1/consent/open-api/payment-consents-ConsentId',
+      '/tech/tpp-standards/v2.1/consent/open-api/patch-payment-consents-ConsentId',
+      '/tech/tpp-standards/v2.1/banking/service-initiation/open-api/payments',
+      // API Hub Consent Manager — consent operations carrying the Risk object
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consents',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consents-consentId',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents-consentId',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents',
+      // Ozone Connect — Service Initiation and Consent Events
+      '/tech/api-specs/v2.1/ozone-connect/service-initiation/payments',
+      '/tech/api-specs/v2.1/ozone-connect/consent-events/validate',
+      '/tech/api-specs/v2.1/ozone-connect/consent-events/event-op',
+      '/tech/lfi-api-hub/v2.1/banking/service-initiation/open-api/payments',
+      '/tech/lfi-api-hub/v2.1/consent-events/open-api/validate',
+      '/tech/lfi-api-hub/v2.1/consent-events/open-api/event-op',
+    ],
+  },
+  {
+    errataId: 'v2.1-errata2',
+    version: 'v2.1',
+    number: 12,
+    title: 'Risk object — AccountType enum corrected to Retail / SME / Corporate',
+    summary:
+      'The AccountType enum on the Risk object’s Creditor indicators is now Retail / SME / Corporate, replacing a divergent product-category enum; the Ozone Connect AEAccountTypeCode gains SME.',
+    description:
+      'The AccountType field on the Risk object’s Creditor indicators has been aligned with the Standards definition.\n\n' +
+      'On uae-authorization-endpoints-openapi and uae-api-hub-consent-manager-openapi the inline AEBankServiceInitiationRichAuthorizationRequests.AECreditorIndicators.AccountType enum previously declared a product-category list — CurrentAccount, Savings, CreditCard, Mortgage and Finance — that did not match the Standards PAR and Payments definitions. It now declares Retail, SME and Corporate.\n\n' +
+      'On uae-ozone-connect-consent-events-actions-openapi and uae-bank-initiation-openapi the AEAccountTypeCode enum, which previously declared only Retail and Corporate, now also declares SME.',
+    rationale:
+      'The AccountType value on the Risk object classifies the creditor account and feeds risk scoring. The product-category enum (CurrentAccount, Savings and so on) was a defect — it diverged from the Retail / SME / Corporate classification used everywhere else the Risk object is defined, so a Risk payload valid on one surface was invalid on another. Adding SME to the Ozone Connect AEAccountTypeCode completes the same alignment. Replacing the product-category values is formally an enum-value removal, but no conforming consumer could have relied on them: the API Hub validates the Risk object against the Standards enum, so a request carrying CurrentAccount or Savings would already have been rejected. Adding SME is purely additive.',
+    effectiveDate: 'To be confirmed on merge to main',
+    specs: [
+      'uae-authorization-endpoints-openapi',
+      'uae-bank-initiation-openapi',
+      'uae-api-hub-consent-manager-openapi',
+      'uae-ozone-connect-consent-events-actions-openapi',
+    ],
+    schemas: ['AECreditorIndicators', 'AEAccountTypeCode'],
+    githubSources: [
+      {
+        label: 'dist/standards/v2.1-errata2/uae-authorization-endpoints-openapi.yaml',
+        url: `${OZONE}/dist/standards/v2.1-errata2/uae-authorization-endpoints-openapi.yaml`,
+      },
+      {
+        label: 'dist/standards/v2.1-errata2/uae-bank-initiation-openapi.yaml',
+        url: `${OZONE}/dist/standards/v2.1-errata2/uae-bank-initiation-openapi.yaml`,
+      },
+      {
+        label: 'dist/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi.yaml',
+        url: `${OZONE}/dist/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi.yaml`,
+      },
+      {
+        label: 'dist/ozone-connect/v2.1.x/uae-ozone-connect-consent-events-actions-openapi.yaml',
+        url: `${OZONE}/dist/ozone-connect/v2.1.x/uae-ozone-connect-consent-events-actions-openapi.yaml`,
+      },
+    ],
+    relatedStandards: [
+      { label: 'Banking — Service Initiation', path: '/tech/tpp-standards/v2.1/banking/service-initiation/' },
+    ],
+    affectedPaths: [
+      '/tech/api-specs/v2.1/tpp/consent/par',
+      '/tech/api-specs/v2.1/tpp/consent/payment-consents',
+      '/tech/api-specs/v2.1/tpp/consent/payment-consents-ConsentId',
+      '/tech/api-specs/v2.1/tpp/consent/patch-payment-consents-ConsentId',
+      '/tech/tpp-standards/v2.1/consent/open-api/par',
+      '/tech/tpp-standards/v2.1/consent/open-api/payment-consents',
+      '/tech/tpp-standards/v2.1/consent/open-api/payment-consents-ConsentId',
+      '/tech/tpp-standards/v2.1/consent/open-api/patch-payment-consents-ConsentId',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consents',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consents-consentId',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents-consentId',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents',
+      '/tech/api-specs/v2.1/ozone-connect/consent-events/validate',
+      '/tech/api-specs/v2.1/ozone-connect/consent-events/event-op',
+      '/tech/lfi-api-hub/v2.1/consent-events/open-api/validate',
+      '/tech/lfi-api-hub/v2.1/consent-events/open-api/event-op',
+    ],
+  },
+  {
+    errataId: 'v2.1-errata2',
+    version: 'v2.1',
+    number: 13,
+    title: 'Account Information — AESupplementaryData opened as an extension point',
+    summary:
+      'The AESupplementaryData schema on Bank Data Sharing responses is now an open object, so LFIs may carry implementation-specific fields that strict validation previously rejected.',
+    description:
+      'The AESupplementaryData schema in uae-account-information-openapi was previously defined as a closed empty object — properties: {} with additionalProperties: false — so any field an LFI placed in a SupplementaryData block would fail strict schema validation. The empty-object constraints have been removed, leaving an open object that accepts implementation-specific properties. AESupplementaryData is carried by the Transaction, Beneficiary and Standing Order resources on the Bank Data Sharing responses.',
+    rationale:
+      'SupplementaryData is by definition an extension point — "additional information that cannot be captured in the structured fields". Modelling it as a closed empty object contradicted that purpose: a strict validator would reject any LFI response that actually used it. Opening the schema aligns it with the SupplementaryData blocks on the payment-initiation surfaces (see §11) and with how the field has always been intended to work. The change is backward-compatible: consumers that ignored SupplementaryData see no difference.',
+    effectiveDate: 'To be confirmed on merge to main',
+    spec: 'uae-account-information-openapi',
+    endpoints: [
+      { label: 'GET /accounts/{AccountId}/transactions', path: '/tech/api-specs/v2.1/tpp/data-sharing/accounts-AccountId-transactions' },
+      { label: 'GET /accounts/{AccountId}/beneficiaries', path: '/tech/api-specs/v2.1/tpp/data-sharing/accounts-AccountId-beneficiaries' },
+      { label: 'GET /accounts/{AccountId}/standing-orders', path: '/tech/api-specs/v2.1/tpp/data-sharing/accounts-AccountId-standing-orders' },
+    ],
+    schemas: ['AESupplementaryData'],
+    githubSources: [
+      {
+        label: 'dist/standards/v2.1-errata2/uae-account-information-openapi.yaml',
+        url: `${OZONE}/dist/standards/v2.1-errata2/uae-account-information-openapi.yaml`,
+      },
+    ],
+    relatedStandards: [
+      { label: 'Banking — Data Sharing', path: '/tech/tpp-standards/v2.1/banking/data-sharing/' },
+    ],
+    affectedPaths: [
+      '/tech/api-specs/v2.1/tpp/data-sharing/accounts-AccountId-transactions',
+      '/tech/api-specs/v2.1/tpp/data-sharing/accounts-AccountId-beneficiaries',
+      '/tech/api-specs/v2.1/tpp/data-sharing/accounts-AccountId-standing-orders',
+      '/tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts-AccountId-transactions',
+      '/tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts-AccountId-beneficiaries',
+      '/tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts-AccountId-standing-orders',
+    ],
+  },
+  {
+    errataId: 'v2.1-errata2',
+    version: 'v2.1',
+    number: 14,
+    title: 'API Hub Consent Manager — ReadStatements and ReadProductFinanceRates added to the permission set',
+    summary:
+      'The AEAccountAccessConsentPermissionCodes enum in the Consent Manager now includes ReadStatements and ReadProductFinanceRates, matching the v2.1 Standards Bank Data Sharing permission set.',
+    description:
+      'Two permission codes — ReadStatements and ReadProductFinanceRates — have been added to the AEAccountAccessConsentPermissionCodes enum in uae-api-hub-consent-manager-openapi. Both are defined in the v2.1 Standards Bank Data Sharing permission set but were missing from the Consent Manager copy of the enum.',
+    rationale:
+      'The Consent Manager must accept every permission code from all supported Standards versions — it is the surface through which LFIs see the consent. With ReadStatements and ReadProductFinanceRates absent, a consent legitimately granting access to statement or product-finance-rate data could not be represented faithfully in the Consent Manager. Adding the codes is additive and corrects the omission.',
+    effectiveDate: 'To be confirmed on merge to main',
+    spec: 'uae-api-hub-consent-manager-openapi',
+    schemas: ['AEAccountAccessConsentPermissionCodes'],
+    endpoints: [
+      { label: 'POST /consents', path: '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consents' },
+      { label: 'PATCH /consents/{consentId}', path: '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId' },
+    ],
+    githubSources: [
+      {
+        label: 'dist/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi.yaml',
+        url: `${OZONE}/dist/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi.yaml`,
+      },
+    ],
+    relatedStandards: [
+      { label: 'Banking — Data Sharing', path: '/tech/tpp-standards/v2.1/banking/data-sharing/' },
+    ],
+    affectedPaths: [
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents-consentId',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consents',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consents-consentId',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents',
+    ],
+  },
+  {
+    errataId: 'v2.1-errata2',
+    version: 'v2.1',
+    number: 15,
+    title: 'API Hub Consent Manager — consent-update schemas closed to unknown properties',
+    summary:
+      'The three per-consent-type schemas behind the PATCH /consents/{consentId} request body now set additionalProperties: false, enforcing the field separation between consent types.',
+    description:
+      'The PATCH /consents/{consentId} request body is an anyOf of one schema per consent type — Bank Data Sharing, Bank Service Initiation and Insurance Data Sharing. The three ConsentManager.AE*ConsentUpdateProperties schemas behind that anyOf now each set additionalProperties: false. Previously they were open, so a field belonging to one consent type could be patched onto another without error.',
+    rationale:
+      'Without additionalProperties: false on each branch, the anyOf did not enforce the per-consent-type separation it described — a payment-only field such as ExchangeRate could be patched onto an insurance consent and be silently accepted. Closing each branch makes the schema reject cross-type field combinations, so validation matches the intent of the per-type modelling. The change is recorded in the Consent Manager breaking-changes file.',
+    effectiveDate: 'To be confirmed on merge to main',
+    spec: 'uae-api-hub-consent-manager-openapi',
+    endpoints: [
+      { label: 'PATCH /consents/{consentId}', path: '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId' },
+    ],
+    schemas: [
+      'ConsentManager.AEBankDataSharingConsentUpdateProperties',
+      'ConsentManager.AEBankServiceInitiationConsentUpdateProperties',
+      'ConsentManager.AEInsuranceDataSharingConsentUpdateProperties',
+    ],
+    githubSources: [
+      {
+        label: 'supporting/breaking-changes/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi/breaking-changes.yaml',
+        url: `${OZONE}/supporting/breaking-changes/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi/breaking-changes.yaml`,
+      },
+      {
+        label: 'dist/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi.yaml',
+        url: `${OZONE}/dist/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi.yaml`,
+      },
+    ],
+    affectedPaths: [
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId',
+    ],
+  },
+  {
+    errataId: 'v2.1-errata2',
+    version: 'v2.1',
+    number: 16,
+    title: 'API Hub Consent Manager — payment-log reject reason code casing reverted',
+    summary:
+      'The payment-log reject reason code reverts to lower-case — rejectReasonCode at the top level and code / message inside CbuaePaymentLogRejectReasonCode — matching the v2.0.x Consent Manager contract.',
+    description:
+      'The reject reason code on the payment log has been reverted to its v2.0.x casing. The top-level property is rejectReasonCode (not RejectReasonCode) on both the GET /payment-log response and the PATCH /payment-log/{id} request body, and the code and message fields inside each CbuaePaymentLogRejectReasonCode item are lower-case again (not Code and Message).',
+    rationale:
+      'The PascalCase variants — RejectReasonCode, Code and Message — were introduced in error and broke LFIs built against the v2.0.x payment-log contract, which has always used the lower-case names. Reverting restores compatibility with those implementations; no LFI had built against the short-lived PascalCase form.',
+    effectiveDate: 'To be confirmed on merge to main',
+    spec: 'uae-api-hub-consent-manager-openapi',
+    endpoints: [
+      { label: 'GET /payment-log', path: '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/payment-log' },
+      { label: 'PATCH /payment-log/{id}', path: '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/payment-log-id' },
+    ],
+    schemas: ['CbuaePaymentLogRejectReasonCode'],
+    githubSources: [
+      {
+        label: 'dist/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi.yaml',
+        url: `${OZONE}/dist/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi.yaml`,
+      },
+    ],
+    affectedPaths: [
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/payment-log',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/payment-log-id',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/payment-log',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/payment-log-id',
+    ],
+  },
+  {
+    errataId: 'v2.1-errata2',
+    version: 'v2.1',
+    number: 17,
+    title: 'Ozone Connect Bank Data Sharing — GET /accounts/{accountId}/products scoped to the account',
+    summary:
+      'The GET /accounts/{accountId}/products description now states the endpoint returns the products linked to the account in the path, not every product at the financial institution.',
+    description:
+      'The description of GET /accounts/{accountId}/products on Ozone Connect Bank Data Sharing has been corrected. It previously stated that the API "must return all the products that are provided by the financial institution", which implied an institution-wide product catalogue. It now states that the API must return the products linked to the account identified by the accountId path parameter, and that an account with no linked products returns a 200 with an empty data array.',
+    rationale:
+      'The endpoint is account-scoped — the accountId path parameter identifies a single account — but the description implied it returned the institution’s entire product range. The wording would have misled LFIs into implementing an institution-wide catalogue at an account-scoped path. The correction is documentation-only; no wire contract has changed.',
+    effectiveDate: 'To be confirmed on merge to main',
+    spec: 'uae-ozone-connect-bank-data-sharing-openapi',
+    endpoints: [
+      { label: 'GET /accounts/{AccountId}/products', path: '/tech/api-specs/v2.1/ozone-connect/data-sharing/accounts-AccountId-products' },
+    ],
+    githubSources: [
+      {
+        label: 'dist/ozone-connect/v2.1.x/uae-ozone-connect-bank-data-sharing-openapi.yaml',
+        url: `${OZONE}/dist/ozone-connect/v2.1.x/uae-ozone-connect-bank-data-sharing-openapi.yaml`,
+      },
+    ],
+    relatedStandards: [
+      { label: 'Banking — Data Sharing', path: '/tech/tpp-standards/v2.1/banking/data-sharing/' },
+    ],
+    affectedPaths: [
+      '/tech/api-specs/v2.1/ozone-connect/data-sharing/accounts-AccountId-products',
+      '/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/accounts-AccountId-products',
+    ],
+  },
 ]
 
 function normalise(path: string): string {

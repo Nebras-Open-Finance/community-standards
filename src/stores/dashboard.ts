@@ -105,11 +105,13 @@ export interface FilterOptions {
   authMonths:     string[]
 }
 
+// Each filter is a list of selected values. An empty list means "all" —
+// no constraint on that dimension.
 export interface DashboardFilters {
-  lfi:       string | null
-  tpp:       string | null
-  month:     string | null
-  apiFamily: string | null
+  lfi:       string[]
+  tpp:       string[]
+  month:     string[]
+  apiFamily: string[]
 }
 
 export interface DashboardState {
@@ -281,25 +283,26 @@ function loadDataIfClient(): void {
 loadDataIfClient()
 
 export const state: DashboardState = reactive({
-  filters: { lfi: null, tpp: null, month: null, apiFamily: null },
+  filters: { lfi: [], tpp: [], month: [], apiFamily: [] },
   activeSection: 'api-volumes',
   sidebarCollapsed: false,
   excludePartialMonths: true,
 })
 
-// Skip when the user has explicitly picked a month — their selection wins.
+// Skip when the user has explicitly picked one or more months — their
+// selection wins over the partial-month exclusion.
 function monthIsAllowed(month: string): boolean {
-  if (state.filters.month) return month === state.filters.month
+  if (state.filters.month.length) return state.filters.month.includes(month)
   if (state.excludePartialMonths && month >= CURRENT_MONTH) return false
   return true
 }
 
 export const filteredApiData: ComputedRef<ApiRow[]> = computed(() =>
   rawApiData.value.filter(r =>
-    (!state.filters.lfi       || r.lfi    === state.filters.lfi)       &&
-    (!state.filters.tpp       || r.tpp    === state.filters.tpp)       &&
-    monthIsAllowed(r.month)                                             &&
-    (!state.filters.apiFamily || r.family === state.filters.apiFamily),
+    (!state.filters.lfi.length       || state.filters.lfi.includes(r.lfi))       &&
+    (!state.filters.tpp.length       || state.filters.tpp.includes(r.tpp))       &&
+    monthIsAllowed(r.month)                                                       &&
+    (!state.filters.apiFamily.length || state.filters.apiFamily.includes(r.family)),
   ),
 )
 
@@ -309,8 +312,8 @@ export const filteredSuccessApiData: ComputedRef<ApiRow[]> = computed(() =>
 
 export const filteredPaymentData: ComputedRef<PaymentRow[]> = computed(() =>
   rawPaymentData.value.filter(r =>
-    (!state.filters.lfi || r.lfi === state.filters.lfi) &&
-    (!state.filters.tpp || r.tpp === state.filters.tpp) &&
+    (!state.filters.lfi.length || state.filters.lfi.includes(r.lfi)) &&
+    (!state.filters.tpp.length || state.filters.tpp.includes(r.tpp)) &&
     monthIsAllowed(r.month),
   ),
 )
@@ -327,17 +330,17 @@ export const filteredAllPaymentData: ComputedRef<PaymentRow[]> = computed(() =>
 
 export const filteredAuthData: ComputedRef<AuthRow[]> = computed(() =>
   rawAuthData.value.filter(r =>
-    (!state.filters.lfi || r.lfi === state.filters.lfi) &&
+    (!state.filters.lfi.length || state.filters.lfi.includes(r.lfi)) &&
     monthIsAllowed(r.month),
   ),
 )
 
 export const filteredRtData: ComputedRef<ApiRow[]> = computed(() =>
   rawRtData.value.filter(r =>
-    (!state.filters.lfi       || r.lfi    === state.filters.lfi)       &&
-    (!state.filters.tpp       || r.tpp    === state.filters.tpp)       &&
-    monthIsAllowed(r.month)                                             &&
-    (!state.filters.apiFamily || r.family === state.filters.apiFamily),
+    (!state.filters.lfi.length       || state.filters.lfi.includes(r.lfi))       &&
+    (!state.filters.tpp.length       || state.filters.tpp.includes(r.tpp))       &&
+    monthIsAllowed(r.month)                                                       &&
+    (!state.filters.apiFamily.length || state.filters.apiFamily.includes(r.family)),
   ),
 )
 
@@ -417,15 +420,25 @@ export const kpis: ComputedRef<DashboardKpis> = computed(() => {
   }
 })
 
-export function setFilter(key: FilterKey, value: string | null): void {
-  state.filters[key] = value || null
+// Add `value` to a filter if absent, remove it if present. Mutates in place
+// so the reactive array notifies dependent computeds.
+export function toggleFilter(key: FilterKey, value: string): void {
+  const values = state.filters[key]
+  const i = values.indexOf(value)
+  if (i === -1) values.push(value)
+  else          values.splice(i, 1)
+}
+
+// Clear every selected value for a single filter.
+export function clearFilter(key: FilterKey): void {
+  state.filters[key] = []
 }
 
 export function resetFilters(): void {
-  state.filters.lfi          = null
-  state.filters.tpp          = null
-  state.filters.month        = null
-  state.filters.apiFamily    = null
+  state.filters.lfi          = []
+  state.filters.tpp          = []
+  state.filters.month        = []
+  state.filters.apiFamily    = []
   state.excludePartialMonths = true
 }
 

@@ -73,6 +73,7 @@ declare module 'vue' {
     DashboardCharts: typeof import('./components/dashboard/DashboardCharts.vue')['default']
     DashboardFilters: typeof import('./components/dashboard/DashboardFilters.vue')['default']
     DashboardMetricCards: typeof import('./components/dashboard/DashboardMetricCards.vue')['default']
+    DashboardMultiSelect: typeof import('./components/dashboard/DashboardMultiSelect.vue')['default']
     DashboardNavbar: typeof import('./components/dashboard/DashboardNavbar.vue')['default']
     DashboardSidebar: typeof import('./components/dashboard/DashboardSidebar.vue')['default']
     DashResponseTimeChart: typeof import('./components/dashboard/DashResponseTimeChart.vue')['default']
