@@ -48,14 +48,36 @@ function hydrate(): void {
 }
 
 // ── Committed pages (build-time discovery) ───────────────────────────────────
-// Keys look like "/src/pages/internal/some-page.md". index.vue / editor.vue are
-// .vue files and are deliberately excluded by the .md-only glob.
+// Keys look like "/src/pages/internal/some-page.md". index.vue / draft/[slug].vue
+// are .vue files and are deliberately excluded by the .md-only glob.
 const committedModules = import.meta.glob('/src/pages/internal/**/*.md')
 
 /** Slugs of committed internal pages, e.g. "some-page" → route /internal/some-page. */
 export const committedSlugs: string[] = Object.keys(committedModules)
   .map((p) => p.replace('/src/pages/internal/', '').replace(/\.md$/, '').replace(/\/index$/, ''))
   .sort()
+
+// Raw Markdown source for each committed internal page — lets the duplicate
+// widget seed a draft with the exact text the example page is written in.
+const committedSources = import.meta.glob('/src/pages/internal/**/*.md', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+}) as Record<string, string>
+
+/** Raw Markdown source (frontmatter stripped) for a committed internal page. */
+export function getCommittedSource(slug: string): string | undefined {
+  const raw = committedSources[`/src/pages/internal/${slug}.md`]
+  if (raw === undefined) return undefined
+  return stripFrontmatter(raw).replace(/^\s*\n+/, '')
+}
+
+function stripFrontmatter(raw: string): string {
+  if (!raw.startsWith('---')) return raw
+  const end = raw.indexOf('\n---', 3)
+  if (end === -1) return raw
+  return raw.slice(end + 4).replace(/^\r?\n/, '')
+}
 
 // ── Slug helpers ─────────────────────────────────────────────────────────────
 
@@ -90,6 +112,8 @@ export interface UseInternalPages {
   getDraft: (slug: string) => InternalDraft | undefined
   /** Creates an empty draft. Returns false when the slug is taken. */
   createDraft: (slug: string, title: string) => boolean
+  /** Creates a draft pre-seeded with the given Markdown body. */
+  createDraftWithBody: (slug: string, title: string, body: string) => boolean
   saveDraft: (slug: string, patch: Partial<Pick<InternalDraft, 'title' | 'body'>>) => void
   deleteDraft: (slug: string) => void
 }
@@ -106,11 +130,19 @@ export function useInternalPages(): UseInternalPages {
   }
 
   function createDraft(slug: string, title: string): boolean {
+    return createDraftWithBody(
+      slug,
+      title,
+      `# ${title || prettifySlug(slug)}\n\nStart writing in Markdown…\n`,
+    )
+  }
+
+  function createDraftWithBody(slug: string, title: string, body: string): boolean {
     if (slugExists(slug)) return false
     drafts.value.push({
       slug,
       title: title || prettifySlug(slug),
-      body: `# ${title || prettifySlug(slug)}\n\nStart writing in Markdown…\n`,
+      body,
       updatedAt: Date.now(),
     })
     persist()
@@ -131,5 +163,14 @@ export function useInternalPages(): UseInternalPages {
     persist()
   }
 
-  return { drafts, committedSlugs, slugExists, getDraft, createDraft, saveDraft, deleteDraft }
+  return {
+    drafts,
+    committedSlugs,
+    slugExists,
+    getDraft,
+    createDraft,
+    createDraftWithBody,
+    saveDraft,
+    deleteDraft,
+  }
 }

@@ -641,8 +641,8 @@ function withAlpha(cssVar: string, alpha: number): string {
   position: relative;
   display: flex;
   flex-direction: column;
-  background: var(--at-navy-deep);
-  color: var(--at-bg-cream);
+  background: var(--at-inverse-bg);
+  color: var(--at-inverse-fg);
   padding: 2.5rem 2.25rem 2rem;
   text-decoration: none;
   overflow: hidden;
@@ -689,7 +689,7 @@ function withAlpha(cssVar: string, alpha: number): string {
   letter-spacing: -0.025em;
   line-height: 1.05;
   margin: 0 0 1rem;
-  color: var(--at-bg-cream);
+  color: var(--at-inverse-fg);
 }
 
 .ed-lfi-featured__desc {
@@ -701,7 +701,7 @@ function withAlpha(cssVar: string, alpha: number): string {
   max-width: 42rem;
 }
 
-.ed-lfi-featured__desc strong { color: var(--at-bg-cream); font-weight: 600; }
+.ed-lfi-featured__desc strong { color: var(--at-inverse-fg); font-weight: 600; }
 
 .ed-lfi-featured__phases {
   display: flex;
@@ -733,7 +733,7 @@ function withAlpha(cssVar: string, alpha: number): string {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 500;
-  color: var(--at-bg-cream);
+  color: var(--at-inverse-fg);
 }
 
 .ed-lfi-featured__phase-sep {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { CURRENT_VERSION } from '@/data/versions'
+import { onThemeChange } from '@/composables/useChartTheme'
 
 const SPECS_REPO = 'https://github.com/Nebras-Open-Finance/api-specs/tree/main/dist'
 
@@ -187,7 +188,7 @@ async function renderRedoc(): Promise<void> {
     {
       hideDownloadButton: true,
       hideLoading: true,
-      theme: { colors: { primary: { main: '#00695c' } } },
+      theme: buildRedocTheme(),
       requiredPropsFirst: true,
       pathInMiddlePanel: true,
       showNextButton: false,
@@ -200,9 +201,65 @@ async function renderRedoc(): Promise<void> {
   )
 }
 
+// Redoc bakes its theme into styled-components on init. To respond to the
+// dark-mode toggle we read the active theme at init time and re-init when
+// `html.dark` flips.
+function buildRedocTheme(): Record<string, unknown> {
+  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  if (!isDark) {
+    return { colors: { primary: { main: '#00695c' } } }
+  }
+  // Dark theme — primary brand kept, text + surfaces lifted to match the
+  // page palette, code blocks tinted to read on dark.
+  return {
+    colors: {
+      primary:   { main: '#4FE3CA' },
+      text:      { primary: '#E8EEF6', secondary: 'rgba(232,238,246,0.78)' },
+      border:    { dark: 'rgba(255,255,255,0.18)', light: 'rgba(255,255,255,0.08)' },
+      // Redoc uses these greys for schema row stripes, property table
+      // headers, and type-pill backgrounds. Default is near-white, which
+      // is what produced the white-on-white on the dark page.
+      gray: { 50: '#161F33', 100: '#1A2440' },
+      http: {
+        get:    '#5C9CFF',
+        post:   '#4FE3CA',
+        put:    '#E6A640',
+        patch:  '#A8C0E8',
+        delete: '#F87171',
+      },
+      responses: {
+        success: { color: '#4FE3CA', backgroundColor: 'rgba(79,227,202,0.10)' },
+        error:   { color: '#F87171', backgroundColor: 'rgba(248,113,113,0.10)' },
+        info:    { color: '#5C9CFF', backgroundColor: 'rgba(92,156,255,0.10)' },
+        redirect:{ color: '#E6A640', backgroundColor: 'rgba(230,166,64,0.10)' },
+      },
+    },
+    typography: {
+      links:     { color: '#5C9CFF', visited: '#5C9CFF', hover: '#A8C0E8' },
+      code:      { backgroundColor: 'rgba(255,255,255,0.06)', color: '#E8EEF6' },
+    },
+    schema: {
+      nestedBackground: '#0F1626',
+      linesColor: 'rgba(255,255,255,0.14)',
+      typeNameColor: '#A8C0E8',
+      typeTitleColor: '#E8EEF6',
+    },
+    codeBlock: {
+      backgroundColor: '#0B1226',
+    },
+    rightPanel: {
+      backgroundColor: '#0F1626',
+      textColor: '#E8EEF6',
+    },
+  }
+}
+
 onMounted(() => {
   void renderRedoc()
 })
+
+// Re-init Redoc when the theme toggles so it picks up the new palette.
+onThemeChange(() => { void renderRedoc() })
 
 // Downloads are only offered for versioned specs served out of /openapi/v*/...
 // Unversioned assets (e.g. /openapi/trust-framework.yaml) aren't exported as
@@ -291,6 +348,10 @@ const githubHref = computed<string>(() => {
   height: 26px;
 }
 
+html.dark .redoc-toolbar-icon {
+  filter: invert(1);
+}
+
 .redoc-toolbar-downloads {
   display: inline-flex;
   align-items: center;
@@ -357,5 +418,81 @@ const githubHref = computed<string>(() => {
 
 #redoc-container .api-info h1 {
   display: none;
+}
+
+/* Redoc's middle panel ships with a hard white background baked into its
+   styled-components — the theme API only reaches a subset of tokens (text,
+   right panel, schema nesting). In dark mode that leaves the description
+   blocks, markdown content and parameter tables as white surfaces under
+   our light text. Force the container and any inner card/table/markdown
+   surface to inherit the dark page background so text reads. */
+html.dark .redoc-wrapper-container {
+  background: var(--at-bg-paper);
+  color: var(--at-navy-deep);
+}
+
+html.dark .redoc-wrapper-container .api-content,
+html.dark .redoc-wrapper-container .api-info {
+  background: transparent !important;
+  color: var(--at-navy-deep);
+}
+
+html.dark .redoc-wrapper-container .redoc-markdown,
+html.dark .redoc-wrapper-container .redoc-markdown p,
+html.dark .redoc-wrapper-container .redoc-markdown li,
+html.dark .redoc-wrapper-container .redoc-markdown blockquote,
+html.dark .redoc-wrapper-container .redoc-markdown div {
+  background: transparent !important;
+  color: var(--at-navy-deep);
+}
+
+html.dark .redoc-wrapper-container .redoc-markdown table,
+html.dark .redoc-wrapper-container .redoc-markdown thead,
+html.dark .redoc-wrapper-container .redoc-markdown tbody,
+html.dark .redoc-wrapper-container .redoc-markdown tr,
+html.dark .redoc-wrapper-container .redoc-markdown th,
+html.dark .redoc-wrapper-container .redoc-markdown td {
+  background: transparent !important;
+  color: var(--at-navy-deep);
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+html.dark .redoc-wrapper-container .redoc-markdown th {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Redoc's standalone bundle minifies styled-component class names down to
+   hashes (`sc-ikkxIA`, `daqcVd`, etc.) that change every build, so we
+   can't target the displayNames. The reliable structural hook is the
+   nested-schema wrapper: it always sits directly inside a `<td colspan="2">`.
+
+   Redoc alternates nested-schema backgrounds by depth — depth 1 gets the
+   themed `schema.nestedBackground`, depth 2 hard-codes white, depth 3
+   themed again, and so on. The theme API can't reach the white. Forcing
+   every nested-schema wrapper (and any further-nested wrapper inside it)
+   onto the dark page surface gives a single consistent dark background
+   at all depths. */
+html.dark .redoc-wrapper-container td[colspan="2"] > div,
+html.dark .redoc-wrapper-container td[colspan="2"] > div > div {
+  background: var(--at-bg-paper) !important;
+}
+
+/* All property-row cells are <td kind="field" ...> — `kind` is a stable
+   attribute Redoc emits regardless of class minification. Plus blanket
+   table-cell transparency as a safety net for anything we missed. */
+html.dark .redoc-wrapper-container td[kind="field"],
+html.dark .redoc-wrapper-container table,
+html.dark .redoc-wrapper-container td,
+html.dark .redoc-wrapper-container th,
+html.dark .redoc-wrapper-container tr {
+  background-color: transparent !important;
+  color: var(--at-navy-deep);
+}
+
+/* Inline `<code>` inside markdown descriptions — pale grey chip on white
+   in the default theme; lift to a translucent white for contrast on dark. */
+html.dark .redoc-wrapper-container .redoc-markdown code {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--at-navy-deep) !important;
 }
 </style>

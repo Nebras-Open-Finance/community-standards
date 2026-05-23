@@ -31,6 +31,9 @@ const expanders: Expander[] = [
   // The `[...notFound].vue` catch-all is a runtime-only fallback;
   // returning `[]` drops it from the static path list.
   (p) => (p === '/:notFound(.*)*' ? [] : null),
+  // Internal draft pages live in browser localStorage only — there are no
+  // known slugs at build time, and the route only resolves client-side.
+  (p) => (p === '/internal/draft/:slug' ? [] : null),
   (p) => (p === '/tech/api-specs/:slug(.+)'
     ? [
       ...allEndpoints.map(endpointUrl),

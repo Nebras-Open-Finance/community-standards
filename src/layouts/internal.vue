@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useInternalAuth } from '@/composables/useInternalAuth'
-import { useInternalPages, committedSlugs, prettifySlug } from '@/composables/useInternalPages'
+import {
+  useInternalPages,
+  committedSlugs,
+  prettifySlug,
+  getCommittedSource,
+} from '@/composables/useInternalPages'
 import type { EdSidebarItemData } from '@/components/editorial/EdSidebarItem.vue'
+import InternalDuplicate from '@/components/common/InternalDuplicate.vue'
 
 // Layout for every page under /internal. Pages opt in with `layout: internal`
 // in their <route> block (.vue) or frontmatter (.md). It does three things:
@@ -33,10 +39,30 @@ function submit(): void {
   }
 }
 
-// /internal and /internal/editor are app UI; everything else under /internal
-// is a committed Markdown page and gets prose styling.
-const APP_ROUTES = new Set(['/internal', '/internal/', '/internal/editor', '/internal/editor/'])
-const isContentPage = computed(() => !APP_ROUTES.has(route.path))
+// /internal and /internal/draft/* are app UI; everything else under /internal
+// is a committed Markdown page and gets the prose shell (header + toggle).
+const isContentPage = computed(() => {
+  const p = route.path.replace(/\/$/, '')
+  if (p === '/internal') return false
+  if (p.startsWith('/internal/draft/')) return false
+  return true
+})
+
+// The slug for a committed content page, e.g. "/internal/example" → "example".
+const contentSlug = computed(() => {
+  if (!isContentPage.value) return ''
+  return route.path.replace(/\/$/, '').replace(/^\/internal\//, '')
+})
+
+const isExamplePage = computed(() => contentSlug.value === 'example')
+
+// Markdown source for the current committed page — feeds the "Markdown" view.
+const rawSource = computed(() => getCommittedSource(contentSlug.value) ?? '')
+
+// Default view across every internal markdown page is Markdown source; click
+// "Preview" to see roughly how the page will look when embedded in the site.
+const view = ref<'markdown' | 'preview'>('markdown')
+watch(contentSlug, () => { view.value = 'markdown' })
 
 const sidebarItems = computed<EdSidebarItemData[]>(() => {
   const published: EdSidebarItemData[] = committedSlugs.map((s) => ({
@@ -45,10 +71,9 @@ const sidebarItems = computed<EdSidebarItemData[]>(() => {
   }))
   const draftItems: EdSidebarItemData[] = drafts.value.map((d) => ({
     text: d.title || prettifySlug(d.slug),
-    link: '/internal/editor?slug=' + encodeURIComponent(d.slug),
+    link: '/internal/draft/' + d.slug,
   }))
   return [
-    { text: 'Internal home', link: '/internal/' },
     {
       text: 'Published pages',
       collapsed: false,
@@ -96,8 +121,42 @@ const sidebarItems = computed<EdSidebarItemData[]>(() => {
       <!-- Unlocked: sidebar + page content -->
       <template v-else>
         <EdHoverSidebar :items="sidebarItems" title="Internal" root-href="/internal/" />
-        <div v-if="isContentPage" class="internal-prose">
-          <router-view />
+        <div v-if="isContentPage" class="int-shell">
+          <header class="int-shell__head">
+            <InternalDuplicate v-if="isExamplePage" source-page="example" />
+            <div class="int-shell__bar">
+              <div class="int-shell__eyebrow">
+                <span class="int-shell__dash" />
+                Internal · <code>/internal/{{ contentSlug }}</code>
+              </div>
+              <div class="int-shell__toggle" role="tablist" aria-label="View mode">
+                <button
+                  type="button"
+                  role="tab"
+                  class="int-shell__toggle-btn"
+                  :class="{ 'is-active': view === 'markdown' }"
+                  :aria-selected="view === 'markdown'"
+                  @click="view = 'markdown'"
+                >
+                  Markdown
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  class="int-shell__toggle-btn"
+                  :class="{ 'is-active': view === 'preview' }"
+                  :aria-selected="view === 'preview'"
+                  @click="view = 'preview'"
+                >
+                  Preview
+                </button>
+              </div>
+            </div>
+          </header>
+          <div v-if="view === 'preview'" class="internal-prose">
+            <router-view />
+          </div>
+          <pre v-else class="int-shell__source"><code>{{ rawSource }}</code></pre>
         </div>
         <router-view v-else />
       </template>
@@ -117,6 +176,9 @@ const sidebarItems = computed<EdSidebarItemData[]>(() => {
   flex: 1 0 auto;
   padding-top: var(--at-header-height);
 }
+
+/* Content-shell styles (.int-shell*) live in src/styles/internal.css so they
+   apply regardless of this component's scoped data-v attribute. */
 
 /* ── Password gate ─────────────────────────────────────────────────────── */
 .int-gate {

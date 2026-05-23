@@ -13,6 +13,7 @@ import './styles/base.css'
 import './styles/api-specs.css'
 import './styles/endpoint.css'
 import './styles/internal.css'
+import './styles/dark-preview.css'
 
 const routes = setupLayouts(generatedRoutes)
 

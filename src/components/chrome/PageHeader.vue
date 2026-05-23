@@ -14,6 +14,9 @@
 import { ref, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSearchModal } from '@/composables/useSearchModal'
+import { useDarkPreview } from '@/composables/useDarkPreview'
+
+const { enabled: darkPreview, toggle: toggleDark } = useDarkPreview()
 
 const SearchModal = defineAsyncComponent(() => import('./SearchModal.vue'))
 
@@ -71,6 +74,27 @@ function isActive(prefix: string): boolean {
   <header class="ed-header">
 
     <div class="ed-header__inner">
+
+      <!-- Theme toggle (sun / moon) -->
+      <button
+        type="button"
+        class="ed-theme-toggle"
+        :class="{ 'is-dark': darkPreview }"
+        :aria-pressed="darkPreview ? 'true' : 'false'"
+        :aria-label="darkPreview ? 'Switch to light mode' : 'Switch to dark mode'"
+        :title="darkPreview ? 'Light mode' : 'Dark mode'"
+        @click="toggleDark"
+      >
+        <!-- Sun (shown in light mode → click for dark) -->
+        <svg v-if="!darkPreview" class="ed-theme-toggle__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.2" />
+          <path d="M12 2.5v2.2M12 19.3v2.2M4.5 12H2.3M21.7 12h-2.2M5.6 5.6L4 4M20 20l-1.6-1.6M5.6 18.4L4 20M20 4l-1.6 1.6" />
+        </svg>
+        <!-- Moon (shown in dark mode → click for light) -->
+        <svg v-else class="ed-theme-toggle__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20.5 14.2A8.4 8.4 0 0 1 9.8 3.5a.6.6 0 0 0-.8-.7 9.6 9.6 0 1 0 12.2 12.2.6.6 0 0 0-.7-.8z" />
+        </svg>
+      </button>
 
       <!-- Masthead / wordmark -->
       <a href="/" class="ed-masthead" aria-label="AlTareq home">
@@ -271,6 +295,45 @@ function isActive(prefix: string): boolean {
   align-items: center;
   gap: 2rem;
 }
+
+/* -- Dark-preview toggle ---------------------------------------------- */
+.ed-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-right: 0.15rem;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--at-grid-line-2);
+  border-radius: 999px;
+  color: var(--at-mute-2);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, transform 0.25s ease;
+}
+
+.ed-theme-toggle:hover {
+  color: var(--at-navy-deep);
+  background: rgba(0, 39, 127, 0.05);
+  border-color: var(--at-navy-deep);
+}
+
+.ed-theme-toggle.is-dark {
+  color: var(--at-gold);
+  border-color: rgba(230, 166, 64, 0.45);
+}
+
+.ed-theme-toggle.is-dark:hover {
+  color: var(--at-gold);
+  background: rgba(230, 166, 64, 0.10);
+  border-color: var(--at-gold);
+}
+
+.ed-theme-toggle__icon { display: block; }
+
+.ed-theme-toggle:active { transform: scale(0.92); }
 
 /* -- Masthead ---------------------------------------------------------- */
 .ed-masthead {

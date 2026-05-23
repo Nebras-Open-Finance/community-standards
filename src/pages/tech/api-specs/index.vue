@@ -348,8 +348,8 @@ function withAlpha(cssVar: string, alpha: number): string {
 
 .ed-spec-repo__card {
   position: relative;
-  background: var(--at-navy-deep);
-  color: var(--at-bg-cream);
+  background: var(--at-inverse-bg);
+  color: var(--at-inverse-fg);
   padding: 2.75rem 2.5rem 2.25rem;
   overflow: hidden;
 }
@@ -393,7 +393,7 @@ function withAlpha(cssVar: string, alpha: number): string {
 }
 
 .ed-spec-repo__logo {
-  color: var(--at-bg-cream);
+  color: var(--at-inverse-fg);
   flex-shrink: 0;
   margin-top: 0.35rem;
 }
@@ -405,7 +405,7 @@ function withAlpha(cssVar: string, alpha: number): string {
   letter-spacing: -0.02em;
   line-height: 1.1;
   margin: 0 0 0.65rem;
-  color: var(--at-bg-cream);
+  color: var(--at-inverse-fg);
 }
 
 .ed-spec-repo__sub {
@@ -425,7 +425,7 @@ function withAlpha(cssVar: string, alpha: number): string {
   font-size: 0.82em;
   background: rgba(250, 250, 247, 0.08);
   padding: 0.1em 0.4em;
-  color: var(--at-bg-cream);
+  color: var(--at-inverse-fg);
   border-radius: 0;
 }
 
@@ -462,7 +462,7 @@ function withAlpha(cssVar: string, alpha: number): string {
 }
 
 .ed-spec-repo__path-desc :deep(strong),
-.ed-spec-repo__path-desc strong { color: var(--at-bg-cream); font-weight: 600; }
+.ed-spec-repo__path-desc strong { color: var(--at-inverse-fg); font-weight: 600; }
 
 .ed-spec-repo__branches {
   display: grid;
@@ -495,7 +495,7 @@ function withAlpha(cssVar: string, alpha: number): string {
 
 .ed-spec-repo__branch-tag--draft {
   background: rgba(250, 250, 247, 0.14);
-  color: var(--at-bg-cream);
+  color: var(--at-inverse-fg);
 }
 
 .ed-spec-repo__branch-desc {
@@ -505,7 +505,7 @@ function withAlpha(cssVar: string, alpha: number): string {
   color: rgba(250, 250, 247, 0.8);
 }
 
-.ed-spec-repo__branch-desc strong { color: var(--at-bg-cream); font-weight: 600; }
+.ed-spec-repo__branch-desc strong { color: var(--at-inverse-fg); font-weight: 600; }
 
 .ed-spec-repo__cta {
   display: inline-flex;
@@ -524,7 +524,7 @@ function withAlpha(cssVar: string, alpha: number): string {
 }
 
 .ed-spec-repo__cta:hover {
-  background: var(--at-bg-cream);
+  background: var(--at-inverse-fg);
   transform: translateY(-1px);
 }
 

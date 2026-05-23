@@ -19,6 +19,7 @@ import {
   type ChartOptions,
 } from 'chart.js'
 import type { AnyRow } from '@/stores/dashboard'
+import { chartTokens, onThemeChange } from '@/composables/useChartTheme'
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
 
@@ -52,16 +53,18 @@ const PALETTE: readonly string[] = [
   '#5F6A8F',
 ]
 
-const TOOLTIP = {
-  backgroundColor: '#001738',
-  titleColor: '#FAFAF7',
-  bodyColor: '#D7DEE8',
-  borderRadius: 0,
-  padding: 10,
-  titleFont: { family: 'IBM Plex Mono, monospace', size: 10, weight: 500 },
-  // Monospace body so padded labels line the values up into a column.
-  bodyFont: { family: 'IBM Plex Mono, monospace', size: 10 },
-} as const
+function buildTooltip() {
+  const t = chartTokens()
+  return {
+    backgroundColor: t.tooltipBg,
+    titleColor: t.tooltipTitle,
+    bodyColor: t.tooltipBody,
+    borderRadius: 0,
+    padding: 10,
+    titleFont: { family: 'IBM Plex Mono, monospace', size: 10, weight: 500 },
+    bodyFont:  { family: 'IBM Plex Mono, monospace', size: 10 },
+  }
+}
 
 interface Aggregate {
   groupLabels: string[]
@@ -127,12 +130,11 @@ function render(): void {
     return
   }
 
+  const t = chartTokens()
   const stacked = !!props.stackBy && !props.grouped
   const options: ChartOptions<'bar'> = {
     responsive: true,
     maintainAspectRatio: false,
-    // Show the tooltip whenever the cursor is anywhere within a column,
-    // not only when it's exactly over a bar.
     interaction: { mode: 'index', intersect: false },
     plugins: {
       legend: {
@@ -142,11 +144,11 @@ function render(): void {
           boxWidth: 10,
           boxHeight: 10,
           font: { family: 'Poppins, sans-serif', size: 11 },
-          color: '#001738',
+          color: t.legend,
         },
       },
       tooltip: {
-        ...TOOLTIP,
+        ...buildTooltip(),
         callbacks: {
           label: (ctx) => {
             const width = Math.max(
@@ -162,19 +164,19 @@ function render(): void {
       y: {
         stacked,
         beginAtZero: true,
-        grid: { color: 'rgba(0,39,127,0.06)' },
-        ticks: { color: 'rgba(0,23,56,0.55)', font: { family: 'Poppins, sans-serif', size: 10 } },
+        grid: { color: t.grid },
+        ticks: { color: t.axisTick, font: { family: 'Poppins, sans-serif', size: 10 } },
         title: {
           display: true,
           text: props.valueKey === 'errors' ? 'Errors' : 'API Calls',
           font: { family: 'IBM Plex Mono, monospace', size: 10, weight: 500 },
-          color: 'rgba(0,23,56,0.55)',
+          color: t.axisTitle,
         },
       },
       x: {
         stacked,
         grid: { display: false },
-        ticks: { color: 'rgba(0,23,56,0.72)', font: { family: 'Poppins, sans-serif', size: 10 } },
+        ticks: { color: t.axisLabel, font: { family: 'Poppins, sans-serif', size: 10 } },
       },
     },
   }
@@ -186,8 +188,15 @@ function render(): void {
   })
 }
 
+function rebuild(): void {
+  chart?.destroy()
+  chart = null
+  render()
+}
+
 onMounted(render)
 watch(() => props.data, render, { deep: false })
+onThemeChange(rebuild)
 onBeforeUnmount(() => { chart?.destroy(); chart = null })
 </script>
 

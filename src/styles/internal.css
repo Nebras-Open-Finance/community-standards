@@ -1,13 +1,116 @@
 /*
-  Prose styling for the /internal section.
+  Styles for the /internal section.
 
-  Shared by two surfaces so that the live preview in the editor matches the
-  final rendered page exactly:
-    - the editor's live preview pane (.internal-prose wraps marked() output)
+  Two related surfaces share styling so the preview matches the final page:
+    - the draft view's live preview (.internal-prose wraps marked() output)
     - committed Markdown pages (the internal layout wraps <router-view/> for
       content routes in .internal-prose)
+
+  The .int-shell / .int-shell__* rules are the layout-level content wrapper
+  for committed pages — kept global (rather than scoped to internal.vue) so
+  the shell + toggle + duplicate widget render regardless of HMR scope state.
 */
 
+/* ── Content shell (committed internal markdown pages) ──────────────────── */
+.int-shell {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 5rem;
+  font-family: var(--at-sans);
+  color: var(--at-mute-2);
+}
+
+.int-shell__head { margin-bottom: 1.5rem; }
+
+.int-shell__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--at-grid-line);
+}
+
+.int-shell__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--at-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--at-teal-deep);
+}
+.int-shell__dash { width: 22px; height: 1px; background: currentColor; }
+.int-shell__eyebrow code {
+  font-size: 0.92em;
+  letter-spacing: 0;
+  text-transform: none;
+  background: color-mix(in srgb, var(--at-grid-line) 55%, var(--at-bg-cream));
+  border: 1px solid var(--at-grid-line);
+  padding: 0.06em 0.4em;
+}
+
+.int-shell__toggle {
+  display: inline-flex;
+  border: 1px solid var(--at-grid-line-2);
+  background: var(--at-surface);
+}
+.int-shell__toggle-btn {
+  padding: 0.45rem 0.95rem;
+  font-family: var(--at-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--at-mute-2);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s;
+}
+.int-shell__toggle-btn + .int-shell__toggle-btn {
+  border-left: 1px solid var(--at-grid-line-2);
+}
+.int-shell__toggle-btn:hover { color: var(--at-navy-deep); }
+.int-shell__toggle-btn.is-active {
+  background: var(--at-navy-deep);
+  color: var(--at-bg-cream);
+}
+
+.int-shell__source {
+  margin: 0;
+  padding: 1.4rem 1.6rem;
+  background: var(--at-surface);
+  border: 1px solid var(--at-grid-line);
+  color: var(--at-navy-deep);
+  font-family: var(--at-mono);
+  font-size: 0.88rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-x: auto;
+}
+.int-shell__source code {
+  font-family: inherit;
+  font-size: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  white-space: inherit;
+}
+
+/* Inside the shell, .internal-prose handles its own padding; trim the
+   outer page padding to avoid double-counting. */
+.int-shell .internal-prose {
+  padding: 1.5rem 0 0;
+  max-width: none;
+  margin: 0;
+}
+
+/* ── Prose styling ─────────────────────────────────────────────────────── */
 .internal-prose {
   max-width: 52rem;
   margin: 0 auto;

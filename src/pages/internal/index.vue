@@ -8,41 +8,22 @@ meta:
 </route>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHead } from '@unhead/vue'
-import {
-  useInternalPages,
-  slugify,
-  isValidSlug,
-  prettifySlug,
-} from '@/composables/useInternalPages'
+import { useInternalPages, prettifySlug } from '@/composables/useInternalPages'
 
 useHead({ title: 'Internal' })
 
 const router = useRouter()
-const { drafts, committedSlugs, slugExists, createDraft, deleteDraft } = useInternalPages()
+const { drafts, committedSlugs, deleteDraft } = useInternalPages()
 
-const newTitle = ref('')
-const slug = computed(() => slugify(newTitle.value))
-const routePath = computed(() => '/internal/' + slug.value)
-
-const problem = computed<string | null>(() => {
-  if (!newTitle.value.trim()) return null
-  if (!slug.value || !isValidSlug(slug.value)) return 'Enter a name using letters and numbers.'
-  if (slugExists(slug.value)) return 'A page or draft with this name already exists.'
-  return null
-})
-const canCreate = computed(() => !!slug.value && isValidSlug(slug.value) && !slugExists(slug.value))
-
-function createPage(): void {
-  if (!canCreate.value) return
-  if (!createDraft(slug.value, newTitle.value.trim())) return
-  router.push({ path: '/internal/editor', query: { slug: slug.value } })
-}
+// Pages users land on directly via the sidebar / nav — kept out of the
+// "Published pages" list because they're app UI, not content.
+const PUBLISHED_FILTER = new Set(['example'])
+const publishedContent = computed(() => committedSlugs.filter((s) => !PUBLISHED_FILTER.has(s)))
 
 function openDraft(s: string): void {
-  router.push({ path: '/internal/editor', query: { slug: s } })
+  router.push('/internal/draft/' + s)
 }
 
 function removeDraft(s: string): void {
@@ -68,36 +49,20 @@ function formatDate(ts: number): string {
       </div>
       <h1 class="int-home__title">Internal pages</h1>
       <p class="int-home__lede">
-        A private space for drafting documentation. Create a page, write it in Markdown with a live
-        preview, then follow the publish steps to push it into the repository. Drafts are stored only
-        in this browser until you commit them.
+        A private space for drafting documentation. Open the example page, duplicate it to create a
+        new draft, then edit the Markdown directly with a preview toggle. Drafts are stored only in
+        this browser until you publish them to the repository.
       </p>
     </section>
 
-    <!-- Create a page -->
-    <section class="int-card">
-      <h2 class="int-card__heading">Add a page</h2>
+    <!-- Start a new draft -->
+    <section class="int-card int-card--example">
+      <h2 class="int-card__heading">Start a new draft</h2>
       <p class="int-card__hint">
-        A page can be created as long as one with the same name does not already exist.
+        The example page demonstrates every block element you can use on an internal page. Open it
+        and use the duplicate widget at the top to seed a fresh draft.
       </p>
-      <form class="int-create" @submit.prevent="createPage">
-        <label class="int-create__label" for="int-new">Page name</label>
-        <div class="int-create__row">
-          <input
-            id="int-new"
-            v-model="newTitle"
-            type="text"
-            class="int-create__input"
-            :class="{ 'is-error': !!problem }"
-            placeholder="e.g. Onboarding checklist"
-          />
-          <button type="submit" class="int-btn" :disabled="!canCreate">Create</button>
-        </div>
-        <p v-if="problem" class="int-create__msg int-create__msg--error">{{ problem }}</p>
-        <p v-else-if="slug" class="int-create__msg">
-          Will be created at <code>{{ routePath }}</code>
-        </p>
-      </form>
+      <a class="int-cta" href="/internal/example">Open the example page →</a>
     </section>
 
     <!-- Drafts -->
@@ -115,7 +80,7 @@ function formatDate(ts: number): string {
           <button type="button" class="int-list__del" @click="removeDraft(d.slug)">Delete</button>
         </li>
       </ul>
-      <p v-else class="int-empty">No drafts yet — add a page above to get started.</p>
+      <p v-else class="int-empty">No drafts yet — duplicate the example page to get started.</p>
     </section>
 
     <!-- Published -->
@@ -124,8 +89,8 @@ function formatDate(ts: number): string {
       <p class="int-card__hint">
         Markdown pages that have been committed to the repository and deployed.
       </p>
-      <ul v-if="committedSlugs.length" class="int-list">
-        <li v-for="s in committedSlugs" :key="s" class="int-list__item">
+      <ul v-if="publishedContent.length" class="int-list">
+        <li v-for="s in publishedContent" :key="s" class="int-list__item">
           <a class="int-list__main" :href="'/internal/' + s">
             <span class="int-list__name">{{ prettifySlug(s) }}</span>
             <span class="int-list__meta"><code>/internal/{{ s }}</code></span>
@@ -181,6 +146,7 @@ function formatDate(ts: number): string {
   padding: 1.75rem 1.75rem 2rem;
   margin-bottom: 1.5rem;
 }
+.int-card--example { border-left: 3px solid var(--at-teal-deep); }
 
 .int-card__heading {
   font-family: var(--at-serif);
@@ -198,52 +164,9 @@ function formatDate(ts: number): string {
   margin: 0 0 1.25rem;
 }
 
-.int-create__label {
-  display: block;
-  font-family: var(--at-mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--at-navy-deep);
-  margin-bottom: 0.5rem;
-}
-
-.int-create__row {
-  display: flex;
-  gap: 0.6rem;
-}
-
-.int-create__input {
-  flex: 1;
-  min-width: 0;
-  padding: 0.6rem 0.8rem;
-  font-family: var(--at-sans);
-  font-size: 0.95rem;
-  color: var(--at-navy-deep);
-  background: var(--at-bg-cream);
-  border: 1px solid var(--at-grid-line-2);
-}
-.int-create__input:focus { outline: 2px solid var(--at-teal); outline-offset: 1px; }
-.int-create__input.is-error { border-color: #c0392b; }
-
-.int-create__msg {
-  font-size: 0.84rem;
-  margin: 0.6rem 0 0;
-  color: var(--at-mute);
-}
-.int-create__msg code {
-  font-family: var(--at-mono);
-  font-size: 0.92em;
-  background: color-mix(in srgb, var(--at-grid-line) 55%, var(--at-bg-cream));
-  border: 1px solid var(--at-grid-line);
-  padding: 0.06em 0.35em;
-}
-.int-create__msg--error { color: #c0392b; }
-
-.int-btn {
-  flex-shrink: 0;
-  padding: 0.6rem 1.2rem;
+.int-cta {
+  display: inline-block;
+  padding: 0.6rem 1.1rem;
   font-family: var(--at-mono);
   font-size: 0.7rem;
   letter-spacing: 0.12em;
@@ -251,13 +174,10 @@ function formatDate(ts: number): string {
   font-weight: 700;
   color: var(--at-bg-cream);
   background: var(--at-navy-deep);
-  border: 0;
-  cursor: pointer;
+  text-decoration: none;
   transition: background 0.16s;
 }
-.int-btn:hover:not(:disabled) { background: var(--at-teal-deep); }
-.int-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.int-btn:focus-visible { outline: 2px solid var(--at-teal); outline-offset: 2px; }
+.int-cta:hover { background: var(--at-teal-deep); }
 
 .int-list {
   list-style: none;

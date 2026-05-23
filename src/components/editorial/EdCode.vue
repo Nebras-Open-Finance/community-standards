@@ -23,9 +23,16 @@ const ESC = (s: string): string => s
 async function highlight(): Promise<void> {
   try {
     const { codeToHtml } = await import('shiki')
+    // Dual-theme output: Shiki emits both light and dark colors inline.
+    // The dark variant kicks in via the `.dark` class on <html> (see the
+    // `.dark .shiki` rules at the bottom of this component's styles).
     html.value = await codeToHtml(props.code, {
       lang: props.lang,
-      theme: 'github-light',
+      themes: {
+        light: 'github-light',
+        dark:  'github-dark',
+      },
+      defaultColor: 'light',
     })
   } catch {
     html.value = `<pre class="ed-code__plain"><code>${ESC(props.code)}</code></pre>`
@@ -159,7 +166,9 @@ watch(() => [props.code, props.lang], highlight)
 }
 
 /* Tame Shiki's inline span colors so they don't fight the editorial palette
-   too aggressively — keep their hues, but pull them toward the navy ink. */
+   too aggressively — keep their hues, but pull them toward the navy ink.
+   Dual-theme dark colour swap lives in styles/dark-preview.css (it needs
+   to target Shiki spans across scoped boundaries). */
 .ed-code__body :deep(.shiki) {
   background: transparent !important;
 }

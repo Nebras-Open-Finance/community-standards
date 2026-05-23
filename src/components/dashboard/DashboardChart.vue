@@ -27,6 +27,7 @@ import {
 } from 'chart.js'
 import type { ChartConfig } from '@/data/dashboard-charts'
 import type { AnyRow, ApiRow, PaymentRow, AuthRow } from '@/stores/dashboard'
+import { chartTokens, onThemeChange } from '@/composables/useChartTheme'
 
 Chart.register(
   BarController, BarElement,
@@ -61,16 +62,30 @@ const ACCENT = {
   mute:     'rgba(0,23,56,0.45)',
 } as const
 
-const TOOLTIP = {
-  backgroundColor: ACCENT.navyDeep,
-  titleColor: '#FAFAF7',
-  bodyColor: '#D7DEE8',
-  borderRadius: 0,
-  padding: 10,
-  titleFont: { family: 'IBM Plex Mono, monospace', size: 10, weight: 500 },
-  // Monospace body so padded labels line the values up into a column.
-  bodyFont: { family: 'IBM Plex Mono, monospace', size: 10 },
-} as const
+// Theme-aware chart styling — values are looked up at chart-build time
+// (and on every theme toggle) so axis ticks / grid / legend pick up the
+// dark palette.
+function buildStyle() {
+  const t = chartTokens()
+  return {
+    TOOLTIP: {
+      backgroundColor: t.tooltipBg,
+      titleColor: t.tooltipTitle,
+      bodyColor: t.tooltipBody,
+      borderRadius: 0,
+      padding: 10,
+      titleFont: { family: 'IBM Plex Mono, monospace', size: 10, weight: 500 },
+      bodyFont:  { family: 'IBM Plex Mono, monospace', size: 10 },
+    },
+    AXIS_TICK:  { color: t.axisTick,  font: { family: 'Poppins, sans-serif', size: 10 } },
+    AXIS_LABEL: { color: t.axisLabel, font: { family: 'Poppins, sans-serif', size: 10 } },
+    AXIS_TITLE: { font: { family: 'IBM Plex Mono, monospace', size: 10, weight: 500 }, color: t.axisTitle },
+    GRID:       { color: t.grid },
+    LEGEND:     { boxWidth: 10, boxHeight: 10, font: { family: 'Poppins, sans-serif', size: 11 }, color: t.legend },
+    POINT_BORDER: t.pointBorder,
+    DOUGHNUT_BORDER: t.pointBorder,
+  }
+}
 
 // Tooltip row for the bar+line combo charts: pads the dataset label to a
 // fixed width so the bar's count and the line's % align in a column.
@@ -89,12 +104,6 @@ function comboTooltipLabel(ctx: TooltipItem<'bar' | 'line'>): string {
 // Show the tooltip whenever the cursor is anywhere within a column, not only
 // when it's exactly over a bar or point. Used by the bar+line combo charts.
 const INTERACTION = { mode: 'index', intersect: false } as const
-
-const AXIS_TICK  = { color: 'rgba(0,23,56,0.55)', font: { family: 'Poppins, sans-serif', size: 10 } } as const
-const AXIS_LABEL = { color: 'rgba(0,23,56,0.72)', font: { family: 'Poppins, sans-serif', size: 10 } } as const
-const AXIS_TITLE = { font: { family: 'IBM Plex Mono, monospace', size: 10, weight: 500 }, color: 'rgba(0,23,56,0.55)' } as const
-const GRID       = { color: 'rgba(0,39,127,0.06)' } as const
-const LEGEND     = { boxWidth: 10, boxHeight: 10, font: { family: 'Poppins, sans-serif', size: 11 }, color: ACCENT.navyDeep } as const
 
 // ── Type-narrowing accessors (chart configs map data shape to component) ──
 function asApiRow(r: AnyRow): ApiRow { return r as ApiRow }
@@ -177,26 +186,27 @@ function buildErrorRate(): void {
     return Number(((slot.err / slot.vol) * 100).toFixed(2))
   })
 
+  const s = buildStyle()
   const config: ChartConfiguration = {
     type: 'bar',
     data: {
       labels,
       datasets: [
         { type: 'bar',  label: 'API Calls',      data: volumes, backgroundColor: ACCENT.navy, borderRadius: 0, maxBarThickness: 50, yAxisID: 'yVol' },
-        { type: 'line', label: 'Error Rate (%)', data: rates,   borderColor: ACCENT.gold, backgroundColor: 'rgba(179,120,25,0.08)', borderWidth: 2, pointRadius: 4, pointBackgroundColor: ACCENT.gold, pointBorderColor: '#fff', pointBorderWidth: 1, yAxisID: 'yRate', tension: 0.3, fill: false },
+        { type: 'line', label: 'Error Rate (%)', data: rates,   borderColor: ACCENT.gold, backgroundColor: 'rgba(179,120,25,0.08)', borderWidth: 2, pointRadius: 4, pointBackgroundColor: ACCENT.gold, pointBorderColor: s.POINT_BORDER, pointBorderWidth: 1, yAxisID: 'yRate', tension: 0.3, fill: false },
       ],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: INTERACTION,
       plugins: {
-        legend: { display: true, position: 'bottom', labels: LEGEND },
-        tooltip: { ...TOOLTIP, callbacks: { label: comboTooltipLabel } },
+        legend: { display: true, position: 'bottom', labels: s.LEGEND },
+        tooltip: { ...s.TOOLTIP, callbacks: { label: comboTooltipLabel } },
       },
       scales: {
-        yVol:  { beginAtZero: true, grid: GRID, ticks: AXIS_TICK, title: { display: true, text: 'API Calls', ...AXIS_TITLE } },
-        yRate: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { ...AXIS_TICK, callback: (v) => `${v}%` }, title: { display: true, text: '%', ...AXIS_TITLE } },
-        x: { grid: { display: false }, ticks: AXIS_LABEL },
+        yVol:  { beginAtZero: true, grid: s.GRID, ticks: s.AXIS_TICK, title: { display: true, text: 'API Calls', ...s.AXIS_TITLE } },
+        yRate: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { ...s.AXIS_TICK, callback: (v) => `${v}%` }, title: { display: true, text: '%', ...s.AXIS_TITLE } },
+        x: { grid: { display: false }, ticks: s.AXIS_LABEL },
       },
     },
   }
@@ -204,6 +214,7 @@ function buildErrorRate(): void {
 }
 
 function buildErrorCodes(): void {
+  const s = buildStyle()
   const config: ChartConfiguration<'doughnut'> = {
     type: 'doughnut',
     data: {
@@ -212,12 +223,12 @@ function buildErrorCodes(): void {
         data: [38, 22, 15, 11, 9, 5],
         backgroundColor: [ACCENT.navy, ACCENT.blue, ACCENT.teal, ACCENT.sky, ACCENT.gold, ACCENT.blueDeep],
         borderWidth: 2,
-        borderColor: '#FAFAF7',
+        borderColor: s.DOUGHNUT_BORDER,
       }],
     },
     options: {
       responsive: true, maintainAspectRatio: false, cutout: '65%',
-      plugins: { legend: { position: 'right', labels: { ...LEGEND, padding: 8 } }, tooltip: TOOLTIP },
+      plugins: { legend: { position: 'right', labels: { ...s.LEGEND, padding: 8 } }, tooltip: s.TOOLTIP },
     },
   }
   chartInstance = new Chart(canvasRef.value!, config)
@@ -240,26 +251,27 @@ function buildSuccessRate(): void {
     return Number(((slot.success / slot.count) * 100).toFixed(1))
   })
 
+  const s = buildStyle()
   const config: ChartConfiguration = {
     type: 'bar',
     data: {
       labels,
       datasets: [
         { type: 'bar',  label: 'Payment Count',    data: counts, backgroundColor: ACCENT.navy, borderRadius: 0, maxBarThickness: 50, yAxisID: 'yCount' },
-        { type: 'line', label: 'Success Rate (%)', data: rates,  borderColor: ACCENT.teal, borderWidth: 2, pointRadius: 4, pointBackgroundColor: ACCENT.teal, pointBorderColor: '#fff', pointBorderWidth: 1, yAxisID: 'yRate', tension: 0.3, fill: false },
+        { type: 'line', label: 'Success Rate (%)', data: rates,  borderColor: ACCENT.teal, borderWidth: 2, pointRadius: 4, pointBackgroundColor: ACCENT.teal, pointBorderColor: s.POINT_BORDER, pointBorderWidth: 1, yAxisID: 'yRate', tension: 0.3, fill: false },
       ],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: INTERACTION,
       plugins: {
-        legend: { display: true, position: 'bottom', labels: LEGEND },
-        tooltip: { ...TOOLTIP, callbacks: { label: comboTooltipLabel } },
+        legend: { display: true, position: 'bottom', labels: s.LEGEND },
+        tooltip: { ...s.TOOLTIP, callbacks: { label: comboTooltipLabel } },
       },
       scales: {
-        yCount: { beginAtZero: true, grid: GRID, ticks: AXIS_TICK, title: { display: true, text: 'Count', ...AXIS_TITLE } },
-        yRate:  { beginAtZero: false, min: 80, max: 100, position: 'right', grid: { drawOnChartArea: false }, ticks: { ...AXIS_TICK, callback: (v) => `${v}%` }, title: { display: true, text: '%', ...AXIS_TITLE } },
-        x: { grid: { display: false }, ticks: AXIS_LABEL },
+        yCount: { beginAtZero: true, grid: s.GRID, ticks: s.AXIS_TICK, title: { display: true, text: 'Count', ...s.AXIS_TITLE } },
+        yRate:  { beginAtZero: false, min: 80, max: 100, position: 'right', grid: { drawOnChartArea: false }, ticks: { ...s.AXIS_TICK, callback: (v) => `${v}%` }, title: { display: true, text: '%', ...s.AXIS_TITLE } },
+        x: { grid: { display: false }, ticks: s.AXIS_LABEL },
       },
     },
   }
@@ -270,8 +282,8 @@ function buildPayStatus(): void {
   const statusMap: Record<string, number> = {}
   for (const row of props.data) {
     const r = asPaymentRow(row)
-    const s = r.status || 'Unknown'
-    statusMap[s] = (statusMap[s] ?? 0) + r.count
+    const status = r.status || 'Unknown'
+    statusMap[status] = (statusMap[status] ?? 0) + r.count
   }
   const COLORS: Record<string, string> = {
     Successful: ACCENT.teal,
@@ -280,6 +292,7 @@ function buildPayStatus(): void {
   }
   const labels = Object.keys(statusMap)
 
+  const s = buildStyle()
   const config: ChartConfiguration<'doughnut'> = {
     type: 'doughnut',
     data: {
@@ -288,12 +301,12 @@ function buildPayStatus(): void {
         data: labels.map(k => statusMap[k] ?? 0),
         backgroundColor: labels.map(k => COLORS[k] ?? ACCENT.mute),
         borderWidth: 2,
-        borderColor: '#FAFAF7',
+        borderColor: s.DOUGHNUT_BORDER,
       }],
     },
     options: {
       responsive: true, maintainAspectRatio: false, cutout: '65%',
-      plugins: { legend: { position: 'right', labels: { ...LEGEND, padding: 10 } }, tooltip: TOOLTIP },
+      plugins: { legend: { position: 'right', labels: { ...s.LEGEND, padding: 10 } }, tooltip: s.TOOLTIP },
     },
   }
   chartInstance = new Chart(canvasRef.value!, config)
@@ -322,26 +335,27 @@ function buildAuthRate(): void {
     return Number(((slot.num / slot.auth) * 100).toFixed(1))
   })
 
+  const s = buildStyle()
   const config: ChartConfiguration = {
     type: 'bar',
     data: {
       labels,
       datasets: [
         { type: 'bar',  label: 'Auth Requests', data: authCounts, backgroundColor: ACCENT.blueDeep, borderRadius: 0, maxBarThickness: 50, yAxisID: 'yCount' },
-        { type: 'line', label: rateLabel, data: rates, borderColor: lineColor, borderWidth: 2, pointRadius: 4, pointBackgroundColor: lineColor, pointBorderColor: '#fff', pointBorderWidth: 1, yAxisID: 'yRate', tension: 0.3, fill: false },
+        { type: 'line', label: rateLabel, data: rates, borderColor: lineColor, borderWidth: 2, pointRadius: 4, pointBackgroundColor: lineColor, pointBorderColor: s.POINT_BORDER, pointBorderWidth: 1, yAxisID: 'yRate', tension: 0.3, fill: false },
       ],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: INTERACTION,
       plugins: {
-        legend: { display: true, position: 'bottom', labels: LEGEND },
-        tooltip: { ...TOOLTIP, callbacks: { label: comboTooltipLabel } },
+        legend: { display: true, position: 'bottom', labels: s.LEGEND },
+        tooltip: { ...s.TOOLTIP, callbacks: { label: comboTooltipLabel } },
       },
       scales: {
-        yCount: { beginAtZero: true, grid: GRID, ticks: AXIS_TICK, title: { display: true, text: 'Auth Requests', ...AXIS_TITLE } },
-        yRate:  { beginAtZero: true, max: 100, position: 'right', grid: { drawOnChartArea: false }, ticks: { ...AXIS_TICK, callback: (v) => `${v}%` }, title: { display: true, text: '%', ...AXIS_TITLE } },
-        x: { grid: { display: false }, ticks: AXIS_LABEL },
+        yCount: { beginAtZero: true, grid: s.GRID, ticks: s.AXIS_TICK, title: { display: true, text: 'Auth Requests', ...s.AXIS_TITLE } },
+        yRate:  { beginAtZero: true, max: 100, position: 'right', grid: { drawOnChartArea: false }, ticks: { ...s.AXIS_TICK, callback: (v) => `${v}%` }, title: { display: true, text: '%', ...s.AXIS_TITLE } },
+        x: { grid: { display: false }, ticks: s.AXIS_LABEL },
       },
     },
   }
@@ -371,6 +385,13 @@ onMounted(async () => {
 watch(() => props.data, async () => {
   if (INLINE_TYPES.includes(props.config.component)) {
     await Promise.resolve()
+    buildInlineChart()
+  }
+})
+
+// Rebuild on theme toggle so axis/grid/legend colours pick up the new palette.
+onThemeChange(() => {
+  if (INLINE_TYPES.includes(props.config.component)) {
     buildInlineChart()
   }
 })

@@ -25,8 +25,14 @@ const ESC = (s: string): string => s
 async function highlightAll(): Promise<void> {
   try {
     const { codeToHtml } = await import('shiki')
+    // Dual-theme — see EdCode for the matching CSS that switches to the
+    // `--shiki-dark` colour when `html.dark` is set.
     highlightedHtml.value = await Promise.all(
-      props.tabs.map((t) => codeToHtml(t.code, { lang: t.lang, theme: 'github-light' })),
+      props.tabs.map((t) => codeToHtml(t.code, {
+        lang: t.lang,
+        themes: { light: 'github-light', dark: 'github-dark' },
+        defaultColor: 'light',
+      })),
     )
   } catch {
     highlightedHtml.value = props.tabs.map(

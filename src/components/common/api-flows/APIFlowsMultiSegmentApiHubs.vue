@@ -1,9 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
-import mermaid from 'mermaid'
-
-const mermaidContainer = ref(null)
-const diagramId = `multi-segment-api-hubs-diagram-${Math.random().toString(36).slice(2, 10)}`
+import { useMermaidDiagram } from '@/composables/useMermaidDiagram'
 
 const mermaidDefinition = `
 flowchart LR
@@ -30,33 +26,11 @@ flowchart LR
     class RH,SH,OC,RC,SC whitebox
 `
 
-onMounted(async () => {
-  mermaid.initialize({
-    startOnLoad: false,
-    theme: 'light',
-    flowchart: {
-      curve: 'basis',
-      padding: 20,
-      nodeSpacing: 50,
-      rankSpacing: 80,
-      useMaxWidth: true
-    },
-    securityLevel: 'loose'
-  })
-
-  if (mermaidContainer.value) {
-    try {
-      const { svg } = await mermaid.render(diagramId, mermaidDefinition)
-      mermaidContainer.value.innerHTML = svg
-    } catch (err) {
-      console.error(err)
-      mermaidContainer.value.innerHTML = `
-        <div style="color:#f87171; padding:60px; text-align:center; font-family:monospace; font-size:15px;">
-          Failed to render Mermaid diagram — check console
-        </div>`
-    }
-  }
-})
+const { containerRef: mermaidContainer } = useMermaidDiagram(
+  mermaidDefinition,
+  'multi-segment-api-hubs-diagram',
+  { flowchart: { curve: 'basis', padding: 20, nodeSpacing: 50, rankSpacing: 80, useMaxWidth: true } },
+)
 </script>
 
 <template>

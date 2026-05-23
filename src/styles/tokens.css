@@ -24,6 +24,13 @@
   --at-bg-paper:     #F4F2EC;
   --at-surface:      #FFFFFF;
 
+  /* Inverse panels — deliberately-dark navy callout cards. These don't
+     flip in dark mode; see styles/dark-preview.css. Use these instead of
+     `background: var(--at-navy-deep); color: var(--at-bg-cream)` for
+     inverse-panel cards that should stay dark regardless of theme. */
+  --at-inverse-bg:   #001738;
+  --at-inverse-fg:   #FAFAF7;
+
   /* Rules, overlays, muted ink */
   --at-grid-line:    rgba(0, 39, 127, 0.08);
   --at-grid-line-2:  rgba(0, 39, 127, 0.18);

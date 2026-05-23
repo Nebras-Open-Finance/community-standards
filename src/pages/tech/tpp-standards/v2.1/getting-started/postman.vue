@@ -294,8 +294,8 @@ const insuranceRows: InsuranceRow[] = [
 
 .gh {
   position: relative;
-  background: var(--at-navy-deep);
-  color: var(--at-bg-cream);
+  background: var(--at-inverse-bg);
+  color: var(--at-inverse-fg);
   padding: 2.25rem 2rem 1.85rem;
   overflow: hidden;
 }
@@ -334,7 +334,7 @@ const insuranceRows: InsuranceRow[] = [
   margin-bottom: 1.6rem;
 }
 .gh__logo {
-  color: var(--at-bg-cream);
+  color: var(--at-inverse-fg);
   flex-shrink: 0;
   margin-top: 0.3rem;
 }
@@ -345,7 +345,7 @@ const insuranceRows: InsuranceRow[] = [
   letter-spacing: -0.02em;
   line-height: 1.1;
   margin: 0 0 0.55rem;
-  color: var(--at-bg-cream);
+  color: var(--at-inverse-fg);
 }
 .gh__sub {
   font-family: var(--at-sans);
@@ -360,7 +360,7 @@ const insuranceRows: InsuranceRow[] = [
   font-size: 0.82em;
   background: rgba(250, 250, 247, 0.08);
   padding: 0.1em 0.4em;
-  color: var(--at-bg-cream);
+  color: var(--at-inverse-fg);
 }
 
 /* Paths */
@@ -396,7 +396,7 @@ const insuranceRows: InsuranceRow[] = [
   color: rgba(250, 250, 247, 0.85);
   line-height: 1.5;
 }
-.gh__path-desc strong { color: var(--at-bg-cream); font-weight: 600; }
+.gh__path-desc strong { color: var(--at-inverse-fg); font-weight: 600; }
 
 /* Branches */
 .gh__branches {
@@ -427,7 +427,7 @@ const insuranceRows: InsuranceRow[] = [
 }
 .gh__branch-tag--draft {
   background: rgba(250, 250, 247, 0.14);
-  color: var(--at-bg-cream);
+  color: var(--at-inverse-fg);
 }
 .gh__branch-desc {
   font-family: var(--at-sans);
@@ -452,7 +452,7 @@ const insuranceRows: InsuranceRow[] = [
   font-weight: 700;
   transition: background 0.2s ease;
 }
-.gh__cta:hover { background: var(--at-bg-cream); }
+.gh__cta:hover { background: var(--at-inverse-fg); }
 
 .gh__cta-arrow { font-size: 0.95rem; }
 

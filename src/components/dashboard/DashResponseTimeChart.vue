@@ -17,6 +17,7 @@ import {
   type ChartConfiguration,
 } from 'chart.js'
 import type { AnyRow } from '@/stores/dashboard'
+import { chartTokens, onThemeChange } from '@/composables/useChartTheme'
 
 Chart.register(
   BarController, BarElement,
@@ -45,30 +46,34 @@ let chart: Chart | null = null
 
 const C_TEAL    = '#00C2A9'
 const C_GOLD    = '#B37819'
-const C_NAVY_DK = '#001738'
 const C_BLUE    = '#008BE4'
 const C_BLUE_DK = '#0043A6'
 const C_SKY     = '#00A2FB'
 
-const TOOLTIP = {
-  backgroundColor: C_NAVY_DK,
-  titleColor: '#FAFAF7',
-  bodyColor: '#D7DEE8',
-  borderRadius: 0,
-  padding: 10,
-  titleFont: { family: 'IBM Plex Mono, monospace', size: 10, weight: 500 },
-  // Monospace body keeps tooltip values aligned and consistent with the
-  // other dashboard charts.
-  bodyFont: { family: 'IBM Plex Mono, monospace', size: 10 },
-} as const
+// Theme-aware style block — evaluated at chart-build time so axis ticks,
+// grid, legend, and tooltip pick up the dark palette.
+function buildStyle() {
+  const t = chartTokens()
+  return {
+    TOOLTIP: {
+      backgroundColor: t.tooltipBg,
+      titleColor: t.tooltipTitle,
+      bodyColor: t.tooltipBody,
+      borderRadius: 0,
+      padding: 10,
+      titleFont: { family: 'IBM Plex Mono, monospace', size: 10, weight: 500 },
+      bodyFont:  { family: 'IBM Plex Mono, monospace', size: 10 },
+    },
+    AXIS_TICK:  { color: t.axisTick,  font: { family: 'Poppins, sans-serif', size: 10 } },
+    AXIS_LABEL: { color: t.axisLabel, font: { family: 'Poppins, sans-serif', size: 10 } },
+    AXIS_TITLE: { font: { family: 'IBM Plex Mono, monospace', size: 10, weight: 500 }, color: t.axisTitle },
+    GRID:       { color: t.grid },
+    LEGEND:     { boxWidth: 10, boxHeight: 10, font: { family: 'Poppins, sans-serif', size: 11 }, color: t.legend },
+    POINT_BORDER: t.pointBorder,
+  }
+}
 
-// Show the tooltip whenever the cursor is anywhere within a column/x-position,
-// not only when it's exactly over a bar or point.
 const INTERACTION = { mode: 'index', intersect: false } as const
-
-const AXIS_TICK = { color: 'rgba(0,23,56,0.55)', font: { family: 'Poppins, sans-serif', size: 10 } } as const
-const AXIS_TITLE = { font: { family: 'IBM Plex Mono, monospace', size: 10, weight: 500 }, color: 'rgba(0,23,56,0.55)' } as const
-const GRID = { color: 'rgba(0,39,127,0.06)' } as const
 
 function readField(row: AnyRow, key: string): unknown {
   return (row as unknown as Record<string, unknown>)[key]
@@ -106,6 +111,7 @@ function buildAvgLine(): Chart {
     return slot ? Math.round(slot.total / slot.n) : 0
   })
 
+  const s = buildStyle()
   const config: ChartConfiguration<'line'> = {
     type: 'line',
     data: {
@@ -118,7 +124,7 @@ function buildAvgLine(): Chart {
         borderWidth: 2,
         pointRadius: 3,
         pointBackgroundColor: C_TEAL,
-        pointBorderColor: '#fff',
+        pointBorderColor: s.POINT_BORDER,
         pointBorderWidth: 1,
         fill: true,
         tension: 0.35,
@@ -130,11 +136,11 @@ function buildAvgLine(): Chart {
       interaction: INTERACTION,
       plugins: {
         legend: { display: false },
-        tooltip: { ...TOOLTIP, callbacks: { label: (ctx) => `${ctx.parsed.y}ms` } },
+        tooltip: { ...s.TOOLTIP, callbacks: { label: (ctx) => `${ctx.parsed.y}ms` } },
       },
       scales: {
-        y: { beginAtZero: true, grid: GRID, ticks: { ...AXIS_TICK, callback: (v) => `${v}ms` }, title: { display: true, text: 'ms', ...AXIS_TITLE } },
-        x: { grid: { display: false }, ticks: { ...AXIS_TICK, color: 'rgba(0,23,56,0.72)' } },
+        y: { beginAtZero: true, grid: s.GRID, ticks: { ...s.AXIS_TICK, callback: (v) => `${v}ms` }, title: { display: true, text: 'ms', ...s.AXIS_TITLE } },
+        x: { grid: { display: false }, ticks: s.AXIS_LABEL },
       },
     },
   }
@@ -163,6 +169,7 @@ function buildAvgBar(): Chart {
     return C_BLUE_DK
   })
 
+  const s = buildStyle()
   const config: ChartConfiguration<'bar'> = {
     type: 'bar',
     data: {
@@ -181,11 +188,11 @@ function buildAvgBar(): Chart {
       interaction: INTERACTION,
       plugins: {
         legend: { display: false },
-        tooltip: { ...TOOLTIP, callbacks: { label: (ctx) => `${ctx.parsed.y}ms` } },
+        tooltip: { ...s.TOOLTIP, callbacks: { label: (ctx) => `${ctx.parsed.y}ms` } },
       },
       scales: {
-        y: { beginAtZero: true, grid: GRID, ticks: { ...AXIS_TICK, callback: (v) => `${v}ms` } },
-        x: { grid: { display: false }, ticks: { ...AXIS_TICK, color: 'rgba(0,23,56,0.72)' } },
+        y: { beginAtZero: true, grid: s.GRID, ticks: { ...s.AXIS_TICK, callback: (v) => `${v}ms` } },
+        x: { grid: { display: false }, ticks: s.AXIS_LABEL },
       },
     },
   }
@@ -205,6 +212,7 @@ function buildPercentiles(): Chart {
   }
   const labels = Object.keys(byGroup).sort()
 
+  const s = buildStyle()
   const mkDs = (k: 'p50' | 'p95' | 'p99', color: string, dash?: number[]) => ({
     type: 'line' as const,
     label: k.toUpperCase(),
@@ -218,7 +226,7 @@ function buildPercentiles(): Chart {
     borderDash: dash ?? [],
     pointRadius: 3,
     pointBackgroundColor: color,
-    pointBorderColor: '#fff',
+    pointBorderColor: s.POINT_BORDER,
     pointBorderWidth: 1,
     fill: false,
     tension: 0.3,
@@ -242,13 +250,13 @@ function buildPercentiles(): Chart {
         legend: {
           display: true,
           position: 'bottom',
-          labels: { boxWidth: 10, boxHeight: 10, font: { family: 'Poppins, sans-serif', size: 11 }, color: '#001738' },
+          labels: s.LEGEND,
         },
-        tooltip: { ...TOOLTIP, callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}ms` } },
+        tooltip: { ...s.TOOLTIP, callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}ms` } },
       },
       scales: {
-        y: { beginAtZero: true, grid: GRID, ticks: { ...AXIS_TICK, callback: (v) => `${v}ms` }, title: { display: true, text: 'ms', ...AXIS_TITLE } },
-        x: { grid: { display: false }, ticks: { ...AXIS_TICK, color: 'rgba(0,23,56,0.72)' } },
+        y: { beginAtZero: true, grid: s.GRID, ticks: { ...s.AXIS_TICK, callback: (v) => `${v}ms` }, title: { display: true, text: 'ms', ...s.AXIS_TITLE } },
+        x: { grid: { display: false }, ticks: s.AXIS_LABEL },
       },
     },
   }
@@ -273,6 +281,7 @@ function buildHistogram(): Chart {
     counts[idx] = (counts[idx] ?? 0) + 1
   }
 
+  const s = buildStyle()
   const config: ChartConfiguration<'bar'> = {
     type: 'bar',
     data: {
@@ -291,11 +300,11 @@ function buildHistogram(): Chart {
       interaction: INTERACTION,
       plugins: {
         legend: { display: false },
-        tooltip: { ...TOOLTIP, callbacks: { label: (ctx) => `${Number(ctx.parsed.y).toLocaleString()} requests` } },
+        tooltip: { ...s.TOOLTIP, callbacks: { label: (ctx) => `${Number(ctx.parsed.y).toLocaleString()} requests` } },
       },
       scales: {
-        y: { beginAtZero: true, grid: GRID, ticks: AXIS_TICK, title: { display: true, text: 'Requests', ...AXIS_TITLE } },
-        x: { grid: { display: false }, ticks: { ...AXIS_TICK, color: 'rgba(0,23,56,0.72)' } },
+        y: { beginAtZero: true, grid: s.GRID, ticks: s.AXIS_TICK, title: { display: true, text: 'Requests', ...s.AXIS_TITLE } },
+        x: { grid: { display: false }, ticks: s.AXIS_LABEL },
       },
     },
   }
@@ -316,6 +325,7 @@ function render(): void {
 
 onMounted(render)
 watch(() => props.data, render, { deep: false })
+onThemeChange(render)
 onBeforeUnmount(() => { chart?.destroy(); chart = null })
 </script>
 

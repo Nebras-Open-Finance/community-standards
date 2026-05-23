@@ -1433,4 +1433,78 @@ const secondaryRequestTypes: RequestType[] = [
   .ed-sd-ref__tip { flex-direction: column; gap: 0.5rem; }
   .ed-sd-lookup__button { padding: 0.9rem 1.1rem; font-size: 0.72rem; }
 }
+
+/* ─── Dark mode ─────────────────────────────────────────────────────────── */
+/* This page hardcodes Atlassian-blue (#0052CC) and pale-blue surfaces
+   (#E8F1FC / #B8D4F0) outside the token system, so they don't pick up
+   the global remap. Re-tint the brand colour to a brighter blue that
+   reads on dark, and switch CTA text to white (was `--at-bg-cream`,
+   which is dark ink in dark mode → invisible on the dark-blue button). */
+html.dark .ed-sd-repo__card {
+  background: #0F1A2E;
+  border-color: rgba(77, 155, 255, 0.22);
+}
+
+html.dark .ed-sd-repo__meta { color: #5C9CFF; }
+html.dark .ed-sd-repo__meta-dot {
+  background: #5C9CFF;
+  box-shadow: 0 0 0 4px rgba(92, 156, 255, 0.18);
+}
+
+html.dark .ed-sd-repo__access {
+  background: rgba(255, 255, 255, 0.025);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html.dark .ed-sd-repo__access-row { border-bottom-color: rgba(255, 255, 255, 0.06); }
+html.dark .ed-sd-repo__access-tag--muted { color: #5C9CFF; }
+html.dark .ed-sd-repo__access-link { color: #5C9CFF; }
+html.dark .ed-sd-repo__access-link:hover { color: var(--at-navy-deep); }
+
+html.dark .ed-sd-repo__cta {
+  background: #2B6CFF;
+  color: #FFFFFF;
+}
+html.dark .ed-sd-repo__cta:hover { background: #5C9CFF; }
+
+html.dark .ed-sd-lookup { border-left-color: #5C9CFF; }
+html.dark .ed-sd-lookup__eyebrow { color: #5C9CFF; }
+html.dark .ed-sd-lookup__desc code {
+  background: rgba(92, 156, 255, 0.14);
+  color: var(--at-navy-deep);
+}
+
+html.dark .ed-sd-lookup__button {
+  background: #2B6CFF;
+  color: #FFFFFF;
+}
+html.dark .ed-sd-lookup__button:hover { background: #5C9CFF; }
+
+html.dark .ed-sd-lookup__field:focus-within {
+  border-color: #5C9CFF;
+  box-shadow: 0 0 0 2px rgba(92, 156, 255, 0.20);
+}
+
+html.dark .ed-sd-lookup__prefix {
+  background: rgba(92, 156, 255, 0.14);
+  color: #5C9CFF;
+  border-right-color: var(--at-grid-line-2);
+}
+
+html.dark .ed-sd-lookup__jump-button { color: #5C9CFF; }
+html.dark .ed-sd-lookup__jump-button:hover:not(:disabled) {
+  background: #2B6CFF;
+  color: #FFFFFF;
+  border-color: #2B6CFF;
+}
+
+html.dark .ed-sd-include__type-note {
+  background: rgba(230, 166, 64, 0.10);
+}
+
+html.dark .ed-sd-include__item-desc code,
+html.dark .ed-sd-include__sub code {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--at-navy-deep);
+}
 </style>

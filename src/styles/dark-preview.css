@@ -1,0 +1,118 @@
+/*
+  Dark mode. Activated by toggling `dark` on <html> via the masthead
+  toggle. The pre-paint script in index.html sets the class before Vue
+  mounts (using localStorage or prefers-color-scheme), so first paint
+  matches the user's choice with no light-to-dark flash.
+
+  Strategy: redefine the existing `--at-*` tokens. Components already
+  consume them, so they re-paint with no template changes.
+*/
+
+html.dark {
+  /* Surfaces — deep blue-tinted ink, three layered tones */
+  --at-bg-cream:     #070B14;
+  --at-bg-paper:     #0F1626;
+  --at-surface:      #161F33;
+
+  /* Inverse panels (deliberately-dark navy callout cards in light mode).
+     These don't flip — they stay dark-on-light text in both themes. In
+     dark mode the bg lifts a notch above the page so the card still reads
+     as a distinct elevated element rather than melting into the bg. */
+  --at-inverse-bg:   #0F1A2E;
+  --at-inverse-fg:   #FAFAF7;
+
+  /* Text & ink — was navy on light, now soft off-white with a blue tint.
+     Tokens named `navy-*` keep their names; only the visual swaps. */
+  --at-navy-deep:    #E8EEF6;
+  --at-navy-mid:     #A8C0E8;
+  --at-navy:         #7AB6FF;
+  --at-ink-black:    #F4F7FC;
+
+  /* Mute alphas now riding on light text */
+  --at-mute:         rgba(232, 238, 246, 0.55);
+  --at-mute-2:       rgba(232, 238, 246, 0.78);
+
+  /* Rules — lift from navy-on-cream to white-on-ink */
+  --at-grid-line:    rgba(255, 255, 255, 0.08);
+  --at-grid-line-2:  rgba(255, 255, 255, 0.16);
+
+  /* Accents — keep teal/blue/gold identifiable, lift slightly so AA holds
+     against the new dark surfaces. */
+  --at-teal:         #2BD8BD;
+  --at-teal-deep:    #4FE3CA;
+  --at-blue:         #38A6F2;
+  --at-blue-deep:    #5C9CFF;
+  --at-sky:          #4FB5FF;
+  --at-gold:         #E6A640;
+  --at-gold-soft:    #5C4A22;
+
+  background: var(--at-bg-cream);
+  color: var(--at-navy-deep);
+  color-scheme: dark;
+}
+
+html.dark body {
+  background: var(--at-bg-cream);
+  color: var(--at-navy-deep);
+}
+
+/* Smooth the transition when the user clicks the toggle. Limited to
+   colour/background — avoids animating layout. */
+html.dark,
+html.dark body,
+html.dark * {
+  transition: background-color 0.28s ease, border-color 0.28s ease, color 0.18s ease;
+}
+
+/* The wordmark is a dark-on-transparent PNG; flip it white in dark mode. */
+html.dark .ed-masthead__logo,
+html.dark .ed-footer__logo {
+  filter: brightness(0) invert(1);
+}
+
+/* Header chrome uses a hard-coded cream rgba behind a blur — re-tint. */
+html.dark .ed-header {
+  background: rgba(7, 11, 20, 0.85);
+}
+
+/* Card tag pills use a hard-coded navy-alpha as their `<code>` chip bg in
+   the TPP landing page. Lift it to a white-alpha so chips read on dark. */
+html.dark .ed-tpp-card__desc :deep(code),
+html.dark .ed-tpp-card__desc code {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--at-navy-deep);
+}
+
+/* Split-card hover wash uses the same navy-alpha — re-tint. */
+html.dark .ed-tpp-card__head:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Search-trigger hover uses a hard-coded navy-alpha wash; re-tint. */
+html.dark .ed-search-trigger:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Nav-menu hover wash — teal-alpha works on light but is too cool on dark.
+   Nudge the alpha up for visibility. */
+html.dark .ed-nav__link:hover,
+html.dark .ed-nav__menu-item:hover {
+  background: rgba(43, 216, 189, 0.12);
+}
+
+/* Menu drop shadow — original is navy-tinted and disappears on dark. */
+html.dark .ed-nav__menu {
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* Shiki dual-theme: code blocks (EdCode + EdCodeGroup) emit each span
+   with `style="color:LIGHT;--shiki-dark:DARK"`. In dark mode, swap to
+   the dark colour from the CSS custom property. `!important` is needed
+   because Shiki's `color` is set inline. Placed in the global stylesheet
+   (rather than the components' scoped styles) so the selector reaches
+   the spans without scoped-CSS data-attribute mismatches. */
+html.dark .shiki,
+html.dark .shiki span {
+  color: var(--shiki-dark) !important;
+  background-color: transparent !important;
+}
