@@ -9,6 +9,7 @@ export const FAMILY_KEYS = [
   'confirmation',
   'product',
   'atm',
+  'insurance',
 ] as const
 
 export type FamilyKey = (typeof FAMILY_KEYS)[number]
@@ -22,6 +23,7 @@ export const FAMILY_URL_PREFIX: Record<FamilyKey, string> = {
   'confirmation': 'confirmation-of-payee',
   'product': 'product',
   'atm': 'atm',
+  'insurance': 'insurance',
 }
 
 // Mirrors `DAYS_WINDOW` in `/program/whats-live` so a TPP "live" on a

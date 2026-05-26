@@ -688,6 +688,22 @@ const step10Tabs = [{ label: 'Node.js', lang: 'typescript', code: step10Node }, 
         <code class="ed-doc__endpoint-path">/payments</code>
       </div>
 
+      <EdNote type="warning" title="Submit the payment without undue delay">
+        <p>
+          For a <code>SingleInstantPayment</code>, the TPP MUST submit <code>POST /payments</code>
+          without undue delay after completing the token exchange in
+          <a href="#step-8-post-token-authorization-code">Step 8</a>. Although the access token is
+          valid for 10 minutes, the User has just authorized the payment at the LFI and is waiting for
+          the TPP to confirm the outcome &mdash; avoidable delay creates uncertainty about whether the
+          payment has been initiated and degrades the User experience.
+        </p>
+        <p>
+          Where practicable, prepare work that can be done before the callback (PII encryption, JWT
+          signing key loading) in advance so the call to <code>POST /payments</code> can fire as soon
+          as the access token is returned.
+        </p>
+      </EdNote>
+
       <EdProse>
         Include <code>x-fapi-interaction-id</code> and <code>x-idempotency-key</code>. As the customer
         is present at this point in the flow, also send <code>x-fapi-customer-ip-address</code>,

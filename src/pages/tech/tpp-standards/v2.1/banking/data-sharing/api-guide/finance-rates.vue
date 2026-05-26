@@ -263,6 +263,15 @@ const step5DisplayTabs = [{ label: 'Node.js', lang: 'typescript', code: step5Dis
     >
       <EdBullets>
         <li>
+          <strong>The <em>Access Encrypted Resource Data</em> optional certification</strong>
+          &mdash; the TPP MUST hold this certification with Nebras <em>before</em> it requests
+          <code>ReadProductFinanceRates</code> on any consent. An uncertified TPP MUST NOT include
+          <code>ReadProductFinanceRates</code> in the <code>authorization_details</code> at consent
+          creation; the API Hub rejects the consent if it does. See
+          <a href="/tech/tpp-standards/production/testing-certification/optional/access-encrypted-resource-data">
+          Access Encrypted Resource Data</a>.
+        </li>
+        <li>
           <strong>A consent that includes <code>ReadProductFinanceRates</code></strong> &mdash; this
           permission MUST be requested in the <code>authorization_details</code> when the TPP creates
           the consent. See
@@ -270,16 +279,20 @@ const step5DisplayTabs = [{ label: 'Node.js', lang: 'typescript', code: step5Dis
           Step 1 &mdash; Constructing Authorization Details</a>.
         </li>
         <li>
-          <strong>The <em>Access Encrypted Resource Data</em> optional certification</strong>
-          &mdash; before requesting <code>ReadProductFinanceRates</code> on a live LFI, the TPP MUST
-          hold this certification with Nebras. See
-          <a href="/tech/tpp-standards/production/testing-certification/optional/access-encrypted-resource-data">
-          Access Encrypted Resource Data</a>.
+          <strong>An active customer-present session</strong> &mdash; when the consent carries
+          <code>ReadProductFinanceRates</code>, the TPP MUST only call
+          <code>GET /accounts/{AccountId}/product</code> while the customer is actively using the
+          TPP application. Background or scheduled calls are not permitted on a consent that carries
+          this permission, because the encrypted-rate flow requires the customer to receive and
+          enter the one-time code in real time.
         </li>
         <li>
-          <strong>A valid access token and the same FAPI headers used elsewhere</strong> &mdash;
-          <code>x-fapi-interaction-id</code>, <code>x-fapi-auth-date</code>, and
-          <code>x-fapi-customer-ip-address</code>. See
+          <strong>A valid access token and the FAPI headers for a customer-present call</strong>
+          &mdash; <code>x-fapi-interaction-id</code>, <code>x-fapi-auth-date</code>, and
+          <code>x-fapi-customer-ip-address</code>. Because the call is always customer-present (see
+          above), <code>x-fapi-customer-ip-address</code> MUST be set to the customer's device IP on
+          every request; omitting it is not permitted on this endpoint when the consent carries
+          <code>ReadProductFinanceRates</code>. See
           <a href="/tech/tpp-standards/security/request-headers">Request Headers</a>.
         </li>
       </EdBullets>

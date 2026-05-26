@@ -11,6 +11,27 @@ function multiPaymentItems(base: string): SidebarItem[] {
   ]
 }
 
+const INSURANCE_TYPES = [
+  ['Employment', 'employment'],
+  ['Health',     'health'],
+  ['Home',       'home'],
+  ['Life',       'life'],
+  ['Motor',      'motor'],
+  ['Renters',    'renters'],
+  ['Travel',     'travel'],
+] as const
+
+function insuranceApiRef(base: string): SidebarItem[] {
+  return INSURANCE_TYPES.map(([label, slug]) => ({
+    text: `${label} Insurance`,
+    collapsed: true,
+    items: [
+      apiRef('GET', `/${slug}-insurance-policies`, `${base}/${slug}-insurance-policies`),
+      apiRef('GET', `/${slug}-insurance-policies/{InsurancePolicyId}`, `${base}/${slug}-insurance-policies-InsurancePolicyId`),
+    ],
+  }))
+}
+
 export const lfiSidebar: SidebarItem[] = [
   {
     text: 'Getting Started',
@@ -18,6 +39,7 @@ export const lfiSidebar: SidebarItem[] = [
     items: [
       { text: 'LFI Integration Journey', link: `${BASE}/getting-started/` },
       { text: 'Recommended Bank Rollout Plan', link: `${BASE}/getting-started/bank-rollout-plan` },
+      { text: 'Recommended Insurance Rollout Plan', link: `${BASE}/getting-started/insurance-rollout-plan` },
     ],
   },
 
@@ -435,6 +457,36 @@ export const lfiSidebar: SidebarItem[] = [
 
 
   {
+    text: 'Ozone Connect | Insurance',
+    collapsed: true,
+    items: [
+      { text: 'Overview', link: `${BASE}/${VERSION}/insurance/` },
+      {
+        text: 'Data Sharing',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/insurance/data-sharing/` },
+          { text: 'Requirements', link: `${BASE}/${VERSION}/insurance/data-sharing/requirements` },
+          { text: 'User Experience', link: `${BASE}/${VERSION}/insurance/data-sharing/user-journeys` },
+          {
+            text: 'API Guide',
+            collapsed: true,
+            items: [
+              { text: 'Overview', link: `${BASE}/${VERSION}/insurance/data-sharing/api-guide/` },
+              { text: 'Encrypted Premiums', link: `${BASE}/${VERSION}/insurance/data-sharing/api-guide/premiums` },
+            ],
+          },
+          {
+            text: 'API Reference',
+            collapsed: true,
+            items: insuranceApiRef(`${BASE}/${VERSION}/insurance/data-sharing/open-api`),
+          },
+        ],
+      },
+    ],
+  },
+
+  {
     text: 'Consent Journey',
     collapsed: true,
     items: [
@@ -465,8 +517,30 @@ export const lfiSidebar: SidebarItem[] = [
     collapsed: true,
     items: [
       { text: 'Overview', link: `${BASE}/${VERSION}/consent-management-interface/` },
-      { text: 'Requirements', link: `${BASE}/${VERSION}/consent-management-interface/requirements` },
-      { text: 'User Experience', link: `${BASE}/${VERSION}/consent-management-interface/user-experience` },
+      {
+        text: 'Bank Data Sharing',
+        collapsed: true,
+        items: [
+          { text: 'Requirements', link: `${BASE}/${VERSION}/consent-management-interface/bank-data-sharing/requirements` },
+          { text: 'User Experience', link: `${BASE}/${VERSION}/consent-management-interface/bank-data-sharing/user-experience` },
+        ],
+      },
+      {
+        text: 'Bank Service Initiation',
+        collapsed: true,
+        items: [
+          { text: 'Requirements', link: `${BASE}/${VERSION}/consent-management-interface/bank-service-initiation/requirements` },
+          { text: 'User Experience', link: `${BASE}/${VERSION}/consent-management-interface/bank-service-initiation/user-experience` },
+        ],
+      },
+      {
+        text: 'Insurance Data Sharing',
+        collapsed: true,
+        items: [
+          { text: 'Requirements', link: `${BASE}/${VERSION}/consent-management-interface/insurance-data-sharing/requirements` },
+          { text: 'User Experience', link: `${BASE}/${VERSION}/consent-management-interface/insurance-data-sharing/user-experience` },
+        ],
+      },
       { text: 'API Guide', link: `${BASE}/${VERSION}/consent-management-interface/api-guide` },
     ],
 

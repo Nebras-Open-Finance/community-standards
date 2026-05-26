@@ -174,12 +174,34 @@ const emptyResponse = `{
     </EdSectionBand>
 
     <EdSectionBand
-      id="empty-results"
+      id="api-sequence-flow"
       num="04"
+      color="var(--at-teal)"
+      eyebrow="API Sequence Flow"
+      title="Walking pages end-to-end"
+      tone="surface"
+    >
+      <EdProse>
+        The diagram below traces a three-page transactions query between the TPP, Hub, and your
+        Ozone Connect endpoint. The TPP makes a single unparameterised request and follows
+        <code>Links.Next</code> on each response; the Hub translates each call into a
+        <code>page</code> / <code>page-size</code> request sent to your Ozone Connect
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/accounts-AccountId-transactions"><code>GET /accounts/{accountId}/transactions</code></a>
+        endpoint and converts your <code>meta</code> back into the TPP's <code>Links</code> envelope.
+      </EdProse>
+
+      <APIFlowViewer title="Pagination API Flow">
+        <APIFlowsPagination />
+      </APIFlowViewer>
+    </EdSectionBand>
+
+    <EdSectionBand
+      id="empty-results"
+      num="05"
       color="var(--at-navy)"
       eyebrow="Empty result sets"
       title="Empty matches return 200, not 404"
-      tone="surface"
+      tone="cream"
     >
       <EdProse>
         If filtering yields no records, return <code>200</code> with an empty <code>data</code> array

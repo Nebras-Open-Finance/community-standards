@@ -329,12 +329,33 @@ const loopTabs = [
     </EdSectionBand>
 
     <EdSectionBand
-      id="example-3-pages"
+      id="api-sequence-flow"
       num="06"
+      color="var(--at-gold)"
+      eyebrow="API Sequence Flow"
+      title="Walking pages end-to-end"
+      tone="surface"
+    >
+      <EdProse>
+        The diagram below traces a three-page transactions query through the API Hub. The TPP makes a
+        single unparameterised request and then follows <code>Links.Next</code> on each response; the
+        Hub translates each call into the corresponding <code>page</code> / <code>page-size</code>
+        request to the LFI and converts the LFI's <code>meta</code> back into the <code>Links</code>
+        envelope.
+      </EdProse>
+
+      <APIFlowViewer title="Pagination API Flow">
+        <APIFlowsPagination />
+      </APIFlowViewer>
+    </EdSectionBand>
+
+    <EdSectionBand
+      id="example-3-pages"
+      num="07"
       color="var(--at-teal)"
       eyebrow="Worked example — transactions, 3-page result"
       title="Walking three pages of transactions"
-      tone="surface"
+      tone="cream"
     >
       <EdProse>Initial request:</EdProse>
       <EdCode :code="initialReq" lang="http" filename="initial request" />
@@ -353,11 +374,11 @@ const loopTabs = [
 
     <EdSectionBand
       id="example-unpaginated"
-      num="07"
+      num="08"
       color="var(--at-gold)"
       eyebrow="Worked example — LFI returns everything in one response"
       title="Unpaginated response handled by the same loop"
-      tone="cream"
+      tone="surface"
     >
       <EdProse>
         When the LFI has not enabled pagination, the same request returns the full result set in one
@@ -373,11 +394,11 @@ const loopTabs = [
 
     <EdSectionBand
       id="empty-results"
-      num="08"
+      num="09"
       color="var(--at-blue-deep, #1d4ed8)"
       eyebrow="Empty result sets"
       title="No matches is a 200, not a 404"
-      tone="surface"
+      tone="cream"
     >
       <EdProse>
         A query that matches no records returns <code>200</code> with an empty <code>Data</code> array,

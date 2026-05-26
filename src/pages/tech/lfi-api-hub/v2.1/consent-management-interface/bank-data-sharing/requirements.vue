@@ -1,11 +1,11 @@
 <route lang="yaml">
 meta:
-  title: Consent Management Interface — Requirements
+  title: CMI — Bank Data Sharing Requirements
   isIndex: true
 </route>
 
 <script setup lang="ts">
-import { data } from '@/data/requirements/lfi-api-hub-v2-1-consent-management-interface'
+import { data } from '@/data/requirements/lfi-api-hub-v2-1-cmi-bank-data-sharing'
 
 function validatorClass(v: string): string {
   if (v === 'API Hub') return 'ed-req-validator--hub'

@@ -384,9 +384,11 @@ meta:
 
       <EdProse>
         See
-        <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/requirements">CMI Requirements</a>,
-        <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/user-experience">User Experience</a>,
-        and the
+        <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/bank-data-sharing/requirements">CMI &mdash; Bank Data Sharing Requirements</a>,
+        <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/bank-service-initiation/requirements">Bank Service Initiation Requirements</a>,
+        the corresponding
+        <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/bank-data-sharing/user-experience">User Experience</a>
+        pages, and the
         <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/api-guide">CMI API Guide</a>.
       </EdProse>
     </EdSectionBand>

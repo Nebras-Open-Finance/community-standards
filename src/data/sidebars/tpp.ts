@@ -11,6 +11,27 @@ function multiPaymentItems(base: string): SidebarItem[] {
   ]
 }
 
+const INSURANCE_TYPES = [
+  ['Employment', 'employment'],
+  ['Health',     'health'],
+  ['Home',       'home'],
+  ['Life',       'life'],
+  ['Motor',      'motor'],
+  ['Renters',    'renters'],
+  ['Travel',     'travel'],
+] as const
+
+function insuranceApiRef(base: string): SidebarItem[] {
+  return INSURANCE_TYPES.map(([label, slug]) => ({
+    text: `${label} Insurance`,
+    collapsed: true,
+    items: [
+      apiRef('GET', `/${slug}-insurance-policies`, `${base}/${slug}-insurance-policies`),
+      apiRef('GET', `/${slug}-insurance-policies/{InsurancePolicyId}`, `${base}/${slug}-insurance-policies-InsurancePolicyId`),
+    ],
+  }))
+}
+
 export const tppSidebar: SidebarItem[] = [
   {
     text: 'Getting Started',
@@ -147,8 +168,30 @@ export const tppSidebar: SidebarItem[] = [
         collapsed: true,
         items: [
           { text: 'Overview', link: `${BASE}/${VERSION}/consent/consent-management-interface` },
-          { text: 'Requirements', link: `${BASE}/${VERSION}/consent/consent-management-interface/requirements` },
-          { text: 'User Experience', link: `${BASE}/${VERSION}/consent/consent-management-interface/user-experience` },
+          {
+            text: 'Bank Data Sharing',
+            collapsed: true,
+            items: [
+              { text: 'Requirements', link: `${BASE}/${VERSION}/consent/consent-management-interface/bank-data-sharing/requirements` },
+              { text: 'User Experience', link: `${BASE}/${VERSION}/consent/consent-management-interface/bank-data-sharing/user-experience` },
+            ],
+          },
+          {
+            text: 'Bank Service Initiation',
+            collapsed: true,
+            items: [
+              { text: 'Requirements', link: `${BASE}/${VERSION}/consent/consent-management-interface/bank-service-initiation/requirements` },
+              { text: 'User Experience', link: `${BASE}/${VERSION}/consent/consent-management-interface/bank-service-initiation/user-experience` },
+            ],
+          },
+          {
+            text: 'Insurance Data Sharing',
+            collapsed: true,
+            items: [
+              { text: 'Requirements', link: `${BASE}/${VERSION}/consent/consent-management-interface/insurance-data-sharing/requirements` },
+              { text: 'User Experience', link: `${BASE}/${VERSION}/consent/consent-management-interface/insurance-data-sharing/user-experience` },
+            ],
+          },
         ],
       },
       {
@@ -175,6 +218,14 @@ export const tppSidebar: SidebarItem[] = [
               apiRef('GET', '/payment-consents', `${BASE}/${VERSION}/consent/open-api/payment-consents`),
               apiRef('GET', '/payment-consents/{ConsentId}', `${BASE}/${VERSION}/consent/open-api/payment-consents-ConsentId`),
               apiRef('PATCH', '/payment-consents/{ConsentId}', `${BASE}/${VERSION}/consent/open-api/patch-payment-consents-ConsentId`),
+            ],
+          },
+          {
+            text: 'Insurance Data Sharing',
+            items: [
+              apiRef('GET', '/insurance-consents', `${BASE}/${VERSION}/consent/open-api/insurance-consents`),
+              apiRef('GET', '/insurance-consents/{ConsentId}', `${BASE}/${VERSION}/consent/open-api/insurance-consents-ConsentId`),
+              apiRef('PATCH', '/insurance-consents/{ConsentId}', `${BASE}/${VERSION}/consent/open-api/patch-insurance-consents-ConsentId`),
             ],
           },
         ],
@@ -355,6 +406,36 @@ export const tppSidebar: SidebarItem[] = [
   },
 
   {
+    text: 'Insurance',
+    collapsed: true,
+    items: [
+      { text: 'Overview', link: `${BASE}/${VERSION}/insurance/` },
+      {
+        text: 'Data Sharing',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/insurance/data-sharing/` },
+          { text: 'Requirements', link: `${BASE}/${VERSION}/insurance/data-sharing/requirements` },
+          { text: 'User Experience', link: `${BASE}/${VERSION}/insurance/data-sharing/user-journeys` },
+          {
+            text: 'API Guide',
+            collapsed: true,
+            items: [
+              { text: 'Overview', link: `${BASE}/${VERSION}/insurance/data-sharing/api-guide/` },
+              { text: 'Encrypted Premiums', link: `${BASE}/${VERSION}/insurance/data-sharing/api-guide/premiums` },
+            ],
+          },
+          {
+            text: 'API Reference',
+            collapsed: true,
+            items: insuranceApiRef(`${BASE}/${VERSION}/insurance/data-sharing/open-api`),
+          },
+        ],
+      },
+    ],
+  },
+
+  {
     text: 'Event Notifications & Webhooks',
     collapsed: true,
     items: [
@@ -404,6 +485,9 @@ export const tppSidebar: SidebarItem[] = [
             collapsed: true,
             items: [
               { text: 'Bank Data Sharing', link: `${BASE}/production/testing-certification/functional` },
+              { text: 'Banking Service Initiation', link: `${BASE}/production/testing-certification/functional-banking-service-initiation` },
+              { text: 'Confirmation of Payee', link: `${BASE}/production/testing-certification/functional-confirmation-of-payee` },
+              { text: 'Insurance Data Sharing', link: `${BASE}/production/testing-certification/functional-insurance-data-sharing` },
             ],
           },
           { text: 'User Experience Evidence', link: `${BASE}/production/testing-certification/user-experience` },

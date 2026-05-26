@@ -34,6 +34,9 @@ sequenceDiagram
     else Bank Service Initiation
         TPP->>+Hub: GET /payment-consents/{ConsentId}
         Hub-->>-TPP: 200 {Status: Authorized}
+    else Insurance Data Sharing
+        TPP->>+Hub: GET /insurance-consents/{ConsentId}
+        Hub-->>-TPP: 200 {Status: Authorized}
     end
 `
 

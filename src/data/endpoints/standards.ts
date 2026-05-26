@@ -26,6 +26,12 @@ const PRODUCT_SERVERS: OverrideServer[] = [
   { url: `https://rs1.altareq1.sandbox.apihub.openfinance.ae/open-finance/product/${VERSION}` },
 ]
 
+const INSURANCE_SERVERS: OverrideServer[] = [
+  { url: `https://rs1.[LFICODE].apihub.openfinance.ae/open-finance/insurance/${VERSION}` },
+  { url: `https://rs1.[LFICODE].preprod.apihub.openfinance.ae/open-finance/insurance/${VERSION}` },
+  { url: `https://rs1.altareq1.sandbox.apihub.openfinance.ae/open-finance/insurance/${VERSION}` },
+]
+
 const PAR_TOKEN_SERVERS: OverrideServer[] = [
   { url: `https://as1.[LFICODE].apihub.openfinance.ae` },
   { url: `https://as1.[LFICODE].preprod.apihub.openfinance.ae` },
@@ -48,6 +54,7 @@ const SPEC_BANK_INITIATION = '/openapi/v2.1/standards/uae-bank-initiation-openap
 const SPEC_CONFIRMATION = '/openapi/v2.1/standards/uae-confirmation-of-payee-openapi.yaml'
 const SPEC_ATM = '/openapi/v2.1/standards/uae-atm-openapi.yaml'
 const SPEC_PRODUCT = '/openapi/v2.1/standards/uae-product-openapi.yaml'
+const SPEC_INSURANCE = '/openapi/v2.1/standards/uae-insurance-openapi.yaml'
 const SPEC_AUTH_ENDPOINTS = '/openapi/v2.1/standards/uae-authorization-endpoints-openapi.yaml'
 const SPEC_REGISTRATION = '/openapi/v2.1/api-hub/uae-api-hub-tpp-onboarding-openapi.yaml'
 const SPEC_WEBHOOK = '/openapi/v2.1/standards/uae-webhook-template-openapi.yaml'
@@ -205,6 +212,46 @@ export const standardsEndpoints: readonly Endpoint[] = [
       filterPath: '/payment-consents/{ConsentId}',
       filterMethod: 'patch',
       overrideServers: PAYMENT_SERVERS,
+    },
+  }),
+
+  // Consent — Insurance Data Sharing
+  entry({
+    section: 'Consent',
+    sectionSlug: 'consent',
+    subsection: 'Insurance Data Sharing',
+    slug: 'insurance-consents',
+    method: 'GET',
+    path: '/insurance-consents',
+    title: 'Retrieve Insurance Data Sharing Consents by BaseConsentId',
+    redoc: { spec: SPEC_INSURANCE, filterPath: '/insurance-consents' },
+  }),
+  entry({
+    section: 'Consent',
+    sectionSlug: 'consent',
+    subsection: 'Insurance Data Sharing',
+    slug: 'insurance-consents-ConsentId',
+    method: 'GET',
+    path: '/insurance-consents/{ConsentId}',
+    title: 'Retrieve Insurance Data Sharing Consent by ConsentId',
+    redoc: {
+      spec: SPEC_INSURANCE,
+      filterPath: '/insurance-consents/{ConsentId}',
+      filterMethod: 'get',
+    },
+  }),
+  entry({
+    section: 'Consent',
+    sectionSlug: 'consent',
+    subsection: 'Insurance Data Sharing',
+    slug: 'patch-insurance-consents-ConsentId',
+    method: 'PATCH',
+    path: '/insurance-consents/{ConsentId}',
+    title: 'Modify an Insurance Data Sharing Consent',
+    redoc: {
+      spec: SPEC_INSURANCE,
+      filterPath: '/insurance-consents/{ConsentId}',
+      filterMethod: 'patch',
     },
   }),
 
@@ -436,6 +483,43 @@ export const standardsEndpoints: readonly Endpoint[] = [
       overrideServers: ATM_SERVERS,
     },
   }),
+
+  // Insurance Data Sharing — 7 insurance types × 2 endpoints (list + by-id)
+  ...(['employment', 'health', 'home', 'life', 'motor', 'renters', 'travel'] as const).flatMap(
+    (type) => {
+      const Type = type.charAt(0).toUpperCase() + type.slice(1)
+      return [
+        entry({
+          section: 'Insurance Data Sharing',
+          sectionSlug: 'insurance-data-sharing',
+          subsection: `${Type} Insurance`,
+          slug: `${type}-insurance-policies`,
+          method: 'GET',
+          path: `/${type}-insurance-policies`,
+          title: `Get ${Type} Insurance Policies`,
+          redoc: {
+            spec: SPEC_INSURANCE,
+            filterPath: `/${type}-insurance-policies`,
+            overrideServers: INSURANCE_SERVERS,
+          },
+        }),
+        entry({
+          section: 'Insurance Data Sharing',
+          sectionSlug: 'insurance-data-sharing',
+          subsection: `${Type} Insurance`,
+          slug: `${type}-insurance-policies-InsurancePolicyId`,
+          method: 'GET',
+          path: `/${type}-insurance-policies/{InsurancePolicyId}`,
+          title: `Get a ${Type} Insurance Policy`,
+          redoc: {
+            spec: SPEC_INSURANCE,
+            filterPath: `/${type}-insurance-policies/{InsurancePolicyId}`,
+            overrideServers: INSURANCE_SERVERS,
+          },
+        }),
+      ]
+    },
+  ),
 
   // Events & Webhooks (schema-only, patched)
   entry({

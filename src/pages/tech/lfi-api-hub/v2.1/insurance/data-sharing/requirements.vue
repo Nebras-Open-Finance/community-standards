@@ -1,11 +1,11 @@
 <route lang="yaml">
 meta:
-  title: Consent Management Interface — Requirements
+  title: Insurance Data Sharing — Requirements
   isIndex: true
 </route>
 
 <script setup lang="ts">
-import { data } from '@/data/requirements/tpp-standards-v2-1-consent-consent-management-interface'
+import { data } from '@/data/requirements/lfi-api-hub-v2-1-insurance-data-sharing'
 
 function validatorClass(v: string): string {
   if (v === 'API Hub') return 'ed-req-validator--hub'
@@ -489,91 +489,5 @@ const eyebrow = computed<string>(() => data.eyebrow ?? 'Validate · Enforce · T
   .ed-req-table { grid-template-columns: 1fr; }
   .ed-req-table--generic { grid-template-columns: 1fr !important; }
   .ed-req-cell--field, .ed-req-cell--rule, .ed-req-cell--generic { border-right: 0; }
-}
-
-/* ── Page-specific: status-mapping and date-rows lists ───────────────── */
-.ed-req :deep(.cmi-statusmap-title),
-.ed-req :deep(.cmi-rows-title) {
-  font-family: var(--at-mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--at-mute);
-  margin: 1.25rem 0 0.6rem;
-}
-.ed-req :deep(.cmi-rows-hint) {
-  text-transform: none; letter-spacing: 0; font-weight: 400;
-  color: var(--at-mute-2); margin-left: 0.5rem; font-size: 0.7rem;
-}
-.ed-req :deep(.cmi-statusmap) {
-  display: flex; flex-direction: column;
-  border: 1px solid var(--at-grid-line); background: var(--at-surface);
-  margin: 0 0 1.25rem; max-width: 56rem;
-}
-.ed-req :deep(.cmi-statusmap__row) {
-  display: grid; grid-template-columns: minmax(11rem, 13rem) 1fr;
-  border-bottom: 1px solid var(--at-grid-line);
-}
-.ed-req :deep(.cmi-statusmap__row:last-child) { border-bottom: 0; }
-.ed-req :deep(.cmi-statusmap dt) {
-  margin: 0; padding: 0.85rem 0.95rem;
-  border-right: 1px solid var(--at-grid-line);
-  display: flex; align-items: center;
-}
-.ed-req :deep(.cmi-statusmap dd) {
-  margin: 0; padding: 0.85rem 0.95rem;
-  font-size: 0.92rem; line-height: 1.55; color: var(--at-navy-deep);
-}
-.ed-req :deep(.cmi-status) {
-  display: inline-block; font-family: var(--at-mono);
-  font-size: 0.7rem; letter-spacing: 0.06em; font-weight: 700;
-  text-transform: uppercase; color: var(--at-teal-deep);
-  border: 1px solid currentColor; padding: 0.25rem 0.55rem;
-}
-.ed-req :deep(.cmi-status--muted) {
-  color: var(--at-mute); text-transform: none;
-  letter-spacing: 0.04em; font-weight: 600;
-}
-.ed-req :deep(.cmi-rows) {
-  list-style: none; margin: 0 0 1.5rem; padding: 0;
-  border: 1px solid var(--at-grid-line); background: var(--at-surface);
-  max-width: 56rem;
-}
-.ed-req :deep(.cmi-rows li) {
-  display: grid; grid-template-columns: 2.5rem 1fr; gap: 0;
-  padding: 0.85rem 0.95rem;
-  border-bottom: 1px solid var(--at-grid-line);
-  align-items: start;
-}
-.ed-req :deep(.cmi-rows li:last-child) { border-bottom: 0; }
-.ed-req :deep(.cmi-rows__num) {
-  font-family: var(--at-mono); font-size: 0.78rem;
-  font-weight: 700; color: var(--at-teal-deep); padding-top: 0.05rem;
-}
-.ed-req :deep(.cmi-rows__body) {
-  display: flex; flex-direction: column; gap: 0.2rem;
-}
-.ed-req :deep(.cmi-rows__label) {
-  font-family: var(--at-sans); font-size: 0.95rem; font-weight: 600;
-  color: var(--at-navy-deep); line-height: 1.4;
-}
-.ed-req :deep(.cmi-rows__value) {
-  font-family: var(--at-sans); font-size: 0.9rem;
-  line-height: 1.55; color: var(--at-mute-2);
-}
-.ed-req :deep(.cmi-rows__value code) {
-  font-family: var(--at-mono); font-size: 0.85em;
-  background: color-mix(in srgb, var(--at-grid-line) 55%, var(--at-bg-cream));
-  border: 1px solid var(--at-grid-line); padding: 0.08em 0.4em;
-}
-.ed-req :deep(.cmi-rows__value a) {
-  color: var(--at-navy-deep); text-decoration: underline; text-underline-offset: 3px;
-}
-.ed-req :deep(.cmi-rows__value strong) { color: var(--at-navy-deep); font-weight: 600; }
-
-@media (max-width: 720px) {
-  .ed-req :deep(.cmi-statusmap__row) { grid-template-columns: 1fr; }
-  .ed-req :deep(.cmi-statusmap dt) { border-right: 0; border-bottom: 1px solid var(--at-grid-line); }
 }
 </style>

@@ -87,7 +87,7 @@ const dataSharingRows: MapRow[] = [
     operation: 'GET /psu/{userId}/consents',
     jsonPath: '$.data[*].status',
     guidelines:
-      'Map to user-friendly label per <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/requirements#status-labels">Status labels</a>.',
+      'Map to user-friendly label per <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/bank-service-initiation/requirements#status-labels">Status labels</a>.',
   },
   {
     num: 5,
@@ -406,11 +406,12 @@ const statusRows: StatusRow[] = [
         <p class="ed-doc__lede">
           This guide explains how to use the API Hub's Consent Manager API to retrieve and manage
           the data needed to populate each page of the LFI Consent Management Interface (CMI). See
-          the
-          <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/requirements">Requirements</a>
-          page for what each page must display, and the
-          <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/user-experience">User Experience</a>
-          page for interactive wireframes.
+          the per-product Requirements pages
+          (<a href="/tech/lfi-api-hub/v2.1/consent-management-interface/bank-data-sharing/requirements">Bank Data Sharing</a>,
+          <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/bank-service-initiation/requirements">Bank Service Initiation</a>,
+          <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/insurance-data-sharing/requirements">Insurance Data Sharing</a>)
+          for what each page must display, and the matching User Experience pages for interactive
+          wireframes.
         </p>
       </div>
     </section>
@@ -460,7 +461,10 @@ const statusRows: StatusRow[] = [
       <EdProse>
         The response returns a paginated array of consent objects. Each consent object contains the
         fields needed to populate the dashboard cards and detail pages described in the
-        <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/requirements">Requirements</a>.
+        per-product Requirements pages
+        (<a href="/tech/lfi-api-hub/v2.1/consent-management-interface/bank-data-sharing/requirements">Bank Data Sharing</a>,
+        <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/bank-service-initiation/requirements">Bank Service Initiation</a>,
+        <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/insurance-data-sharing/requirements">Insurance Data Sharing</a>).
       </EdProse>
 
       <h3 class="ed-doc__sub">Query parameters</h3>
@@ -514,8 +518,10 @@ const statusRows: StatusRow[] = [
       tone="cream"
     >
       <EdProse>
-        The sections below map each CMI field from the
-        <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/requirements#dashboard--card-content">Requirements</a>
+        The sections below map each CMI field from the per-product Requirements
+        (<a href="/tech/lfi-api-hub/v2.1/consent-management-interface/bank-data-sharing/requirements#dashboard-card-content">Bank Data Sharing</a>,
+        <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/bank-service-initiation/requirements#dashboard-card-content">Bank Service Initiation</a>,
+        <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/insurance-data-sharing/requirements#dashboard-card-content">Insurance Data Sharing</a>)
         to the API response property and any transformation the LFI must apply.
       </EdProse>
 
@@ -608,7 +614,7 @@ const statusRows: StatusRow[] = [
         To provide the
         <strong>List of Updates</strong>
         view described in the
-        <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/requirements#detail-page--list-of-updates">Requirements</a>,
+        <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/bank-data-sharing/requirements#detail-page">Bank Data Sharing Requirements</a>,
         use:
       </EdProse>
 
@@ -712,7 +718,7 @@ const statusRows: StatusRow[] = [
     >
       <EdProse>
         To provide the <strong>Payment History</strong> tab described in the
-        <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/requirements#multi-payment--additional-sections">Requirements</a>,
+        <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/bank-service-initiation/requirements#detail-page">Bank Service Initiation Requirements</a>,
         use:
       </EdProse>
 
@@ -823,7 +829,7 @@ const statusRows: StatusRow[] = [
       <EdProse>
         The Consent Manager API returns status codes that must be mapped to user-friendly labels.
         See
-        <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/requirements#status-labels">Status labels</a>
+        <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/bank-service-initiation/requirements#status-labels">Status labels (Bank Service Initiation)</a>
         for the full mapping table.
       </EdProse>
 

@@ -651,6 +651,7 @@ function displayStatusClass(connection) {
   padding: 0 0 30px;
   gap: 20px;
   width: 372px;
+  min-height: 720px;
   background: #f4f8fb;
   zoom: 0.85;
 }

@@ -110,6 +110,20 @@ const sections = computed<SectionConfig[]>(() => [
   {
     category: 'Ozone Connect',
     color: 'var(--at-navy-deep)',
+    title: 'Ozone Connect - Insurance',
+    url: `/tech/lfi-api-hub/${selectedVersion.value}/insurance/`,
+    desc: 'The Ozone Connect APIs your LFI implements for insurance &mdash; one endpoint pair per sector you underwrite, called by the Hub on behalf of authorised TPPs.',
+    subItems: [
+      {
+        label: 'Data Sharing',
+        hint: 'policies across employment, health, home, life, motor, renters &amp; travel, with encrypted premiums (ISP, consented)',
+        url: `/tech/lfi-api-hub/${selectedVersion.value}/insurance/data-sharing/`,
+      },
+    ],
+  },
+  {
+    category: 'Ozone Connect',
+    color: 'var(--at-navy-deep)',
     title: 'Ozone Connect - Consent Events',
     url: `/tech/lfi-api-hub/${selectedVersion.value}/consent-events/`,
     desc: 'The events-and-actions API your LFI implements so the Hub can validate consents at creation time and notify your systems when consents are created, modified, or revoked. This is the LFI\'s hook into the consent lifecycle owned by the Hub.',

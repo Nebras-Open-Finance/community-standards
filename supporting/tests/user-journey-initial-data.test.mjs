@@ -170,8 +170,32 @@ function fullResolveSchema(schema, spec) {
   let resolved = resolveSchema(schema, spec) ?? {}
   resolved = JSON.parse(JSON.stringify(resolved))
   if (resolved.allOf) {
-    const merged = { type: 'object', properties: {}, required: [] }
+    const hasLocalShape =
+      !!resolved.properties
+      || !!(resolved.required && resolved.required.length)
+      || resolved.additionalProperties !== undefined
+    // A single-element `allOf` with no other constraints is equivalent to its
+    // child schema. Important for primitive wrappers like
+    // `IdentifierType: allOf: [$ref: …enum]` — flattening into an object would
+    // mistype the field. Mirrors EditableJson.vue.
+    if (resolved.allOf.length === 1 && !hasLocalShape) {
+      return fullResolveSchema(resolved.allOf[0], spec)
+    }
+    // Otherwise treat `allOf` as composition: union the parent's local
+    // properties/required with each child's. Preserve the parent's
+    // `additionalProperties` so local restrictions still hold.
+    const merged = {
+      type: 'object',
+      properties: {},
+      required: [...(resolved.required || [])],
+    }
     if (resolved.description) merged.description = resolved.description
+    if (resolved.additionalProperties !== undefined) {
+      merged.additionalProperties = resolved.additionalProperties
+    }
+    for (const [k, sub] of Object.entries(resolved.properties || {})) {
+      merged.properties[k] = fullResolveSchema(sub, spec)
+    }
     for (const sub of resolved.allOf) {
       const subMerged = fullResolveSchema(sub, spec)
       Object.assign(merged.properties, subMerged.properties || {})

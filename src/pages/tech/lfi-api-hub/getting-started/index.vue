@@ -104,6 +104,8 @@ meta:
             through the same steps later. All in-scope capabilities MUST be live by the regulatory
             compliance deadline, but the path to get there can be staged. See the
             <a href="/tech/lfi-api-hub/getting-started/bank-rollout-plan">Recommended Bank Rollout Plan</a>
+            or the
+            <a href="/tech/lfi-api-hub/getting-started/insurance-rollout-plan">Recommended Insurance Rollout Plan</a>
             for suggested sequencing.
           </p>
         </EdNote>
@@ -301,8 +303,10 @@ meta:
         Because Step 3 is the largest body of work and has strong sequencing dependencies, we recommend
         following the
         <a href="/tech/lfi-api-hub/getting-started/bank-rollout-plan">Recommended Bank Rollout Plan</a>
-        which walks through the order in which to deliver these capabilities, and how to stage internal
-        delivery against certification milestones.
+        (for LFIs with a banking scope) or the
+        <a href="/tech/lfi-api-hub/getting-started/insurance-rollout-plan">Recommended Insurance Rollout Plan</a>
+        (for LFIs with an insurance scope), which walk through the order in which to deliver these
+        capabilities and how to stage internal delivery against certification milestones.
       </EdProse>
 
       <h4>Done when (per capability)</h4>

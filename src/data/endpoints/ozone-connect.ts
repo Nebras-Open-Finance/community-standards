@@ -12,6 +12,7 @@ const SPEC_SERVICE_INITIATION = '/openapi/v2.1/ozone-connect/uae-ozone-connect-b
 const SPEC_CONSENT_EVENTS = '/openapi/v2.1/ozone-connect/uae-ozone-connect-consent-events-actions-openapi.yaml'
 const SPEC_PRODUCTS = '/openapi/v2.1/ozone-connect/uae-ozone-connect-bank-products-data-openapi.yaml'
 const SPEC_OPEN_DATA = '/openapi/v2.1/ozone-connect/uae-ozone-connect-bank-open-data-openapi.yaml'
+const SPEC_INSURANCE = '/openapi/v2.1/ozone-connect/uae-ozone-connect-insurance-openapi.yaml'
 
 interface EntryInput {
   section: string
@@ -364,4 +365,41 @@ export const ozoneConnectEndpoints: readonly Endpoint[] = [
       overrideServers: OZONE_SERVERS,
     },
   }),
+
+  // Insurance Data Sharing — 7 insurance types × 2 endpoints (list + by-id)
+  ...(['employment', 'health', 'home', 'life', 'motor', 'renters', 'travel'] as const).flatMap(
+    (type) => {
+      const Type = type.charAt(0).toUpperCase() + type.slice(1)
+      return [
+        entry({
+          section: 'Insurance Data Sharing',
+          sectionSlug: 'insurance-data-sharing',
+          subsection: `${Type} Insurance`,
+          slug: `${type}-insurance-policies`,
+          method: 'GET',
+          path: `/${type}-insurance-policies`,
+          title: `Get ${Type} Insurance Policies`,
+          redoc: {
+            spec: SPEC_INSURANCE,
+            filterPath: `/${type}-insurance-policies`,
+            overrideServers: OZONE_SERVERS,
+          },
+        }),
+        entry({
+          section: 'Insurance Data Sharing',
+          sectionSlug: 'insurance-data-sharing',
+          subsection: `${Type} Insurance`,
+          slug: `${type}-insurance-policies-InsurancePolicyId`,
+          method: 'GET',
+          path: `/${type}-insurance-policies/{InsurancePolicyId}`,
+          title: `Get a ${Type} Insurance Policy`,
+          redoc: {
+            spec: SPEC_INSURANCE,
+            filterPath: `/${type}-insurance-policies/{InsurancePolicyId}`,
+            overrideServers: OZONE_SERVERS,
+          },
+        }),
+      ]
+    },
+  ),
 ] as const

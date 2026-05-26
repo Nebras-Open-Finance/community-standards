@@ -219,8 +219,9 @@ await fetch(\`\${CM_BASE}/consents/\${consentId}\`, {
     },
     accountIds: [
       // Account IDs the PSU selected for this consent
-      // For data sharing: one or more accounts
-      // For payments: exactly one debtor account
+      // For Bank Data Sharing: one or more accounts
+      // For Bank Service Initiation: exactly one debtor account
+      // For Insurance Data Sharing: omit accountIds — use insurancePolicyIds instead
       'account-id-1',
       'account-id-2',
     ],
@@ -247,8 +248,9 @@ httpx.patch(
         },
         "accountIds": [
             # Account IDs the PSU selected for this consent
-            # For data sharing: one or more accounts
-            # For payments: exactly one debtor account
+            # For Bank Data Sharing: one or more accounts
+            # For Bank Service Initiation: exactly one debtor account
+            # For Insurance Data Sharing: omit accountIds — use insurancePolicyIds instead
             "account-id-1",
             "account-id-2",
         ],
@@ -508,10 +510,7 @@ const psuRedirectUrl = 'https://your-auth-endpoint.example.com/authorize?client_
       title="End-to-end flow diagram"
       tone="surface"
     >
-      <APIFlowViewer
-        title="Bank Data Sharing API Flow"
-        downloadUrl="/images/consent-flows/uae-data-sharing-sequence-diagram.png"
-      >
+      <APIFlowViewer title="Consent Flow">
         <APIFlowsConsentFlow />
       </APIFlowViewer>
     </EdSectionBand>
@@ -758,6 +757,10 @@ const psuRedirectUrl = 'https://your-auth-endpoint.example.com/authorize?client_
               <td>Single Instant Payment</td>
               <td><a href="/tech/lfi-api-hub/v2.1/banking/service-initiation/domestic-payments/single-instant-payment/user-journeys">User Experience</a></td>
             </tr>
+            <tr>
+              <td>Insurance Data Sharing</td>
+              <td><a href="/tech/lfi-api-hub/v2.1/insurance/data-sharing/user-journeys">User Experience</a></td>
+            </tr>
           </tbody>
         </table>
       </EdRefTable>
@@ -796,8 +799,13 @@ const psuRedirectUrl = 'https://your-auth-endpoint.example.com/authorize?client_
             </tr>
             <tr>
               <td><code>accountIds</code></td>
-              <td style="text-align:center">Yes</td>
-              <td>Array of account IDs the PSU selected. For data sharing, one or more accounts. For payments, exactly one debtor account</td>
+              <td style="text-align:center">Yes (Bank consents)</td>
+              <td>Array of account IDs the PSU selected. For Bank Data Sharing, one or more accounts. For Bank Service Initiation, exactly one debtor account. Not patched for Insurance Data Sharing &mdash; use <code>insurancePolicyIds</code> instead</td>
+            </tr>
+            <tr>
+              <td><code>insurancePolicyIds</code></td>
+              <td style="text-align:center">Yes (Insurance Data Sharing)</td>
+              <td>Array of <code>InsurancePolicyId</code> values the PSU selected. The Consent Manager mirrors this into <code>accountIds</code> automatically so downstream identifier handling stays uniform across consent types</td>
             </tr>
             <tr>
               <td><code>authorizationChannel</code></td>
@@ -919,7 +927,7 @@ const psuRedirectUrl = 'https://your-auth-endpoint.example.com/authorize?client_
             <tr><td>Immutability</td><td>Once issued, the <code>AccountId</code> for an account MUST NOT change</td></tr>
             <tr><td>Uniqueness</td><td>MUST uniquely identify a single account within the LFI</td></tr>
             <tr><td>Sensitive values</td><td>MUST NOT be an IBAN, account number, card number, or any externally-meaningful account identifier</td></tr>
-            <tr><td>Cardinality</td><td>Bank Service Initiation: exactly one (the debtor account). Bank Data Sharing: one or more selected accounts</td></tr>
+            <tr><td>Cardinality</td><td>Bank Service Initiation: exactly one (the debtor account). Bank Data Sharing: one or more selected accounts. Insurance Data Sharing: not patched directly &mdash; the Consent Manager mirrors <code>insurancePolicyIds</code> into <code>accountIds</code> via trigger</td></tr>
           </tbody>
         </table>
       </EdRefTable>

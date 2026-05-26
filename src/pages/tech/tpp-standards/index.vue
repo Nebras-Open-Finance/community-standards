@@ -107,6 +107,20 @@ const sections = computed<SectionConfig[]>(() => [
     ],
   },
   {
+    category: 'Core APIs',
+    color: 'var(--at-teal-deep)',
+    title: 'Insurance',
+    url: `/tech/tpp-standards/${selectedVersion.value}/insurance/`,
+    desc: 'The insurance APIs the API Hub exposes to TPPs on behalf of authorised customers.',
+    subItems: [
+      {
+        label: 'Data Sharing',
+        hint: 'policies across employment, health, home, life, motor, renters &amp; travel, with encrypted premiums',
+        url: `/tech/tpp-standards/${selectedVersion.value}/insurance/data-sharing/`,
+      },
+    ],
+  },
+  {
     category: 'Events',
     color: 'var(--at-teal-deep)',
     title: 'Event Notifications &amp; Webhooks',

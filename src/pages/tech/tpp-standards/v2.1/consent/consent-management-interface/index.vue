@@ -105,9 +105,11 @@ const journeys: Journey[] = [
           </header>
           <p class="ed-doc__level-body">
             Lists all consents between the user and the TPP with enough detail to identify each
-            one. The information shown varies by consent type; see
-            <a href="/tech/tpp-standards/v2.1/consent/consent-management-interface/user-experience">User Experience</a>
-            for the required fields for Data Sharing and Service Initiation consents.
+            one. The information shown varies by consent type; see the per-product Requirements
+            pages for
+            <a href="/tech/tpp-standards/v2.1/consent/consent-management-interface/bank-data-sharing/requirements">Bank Data Sharing</a>,
+            <a href="/tech/tpp-standards/v2.1/consent/consent-management-interface/bank-service-initiation/requirements">Bank Service Initiation</a>, and
+            <a href="/tech/tpp-standards/v2.1/consent/consent-management-interface/insurance-data-sharing/requirements">Insurance Data Sharing</a>.
           </p>
           <p class="ed-doc__level-body">
             Any consent can be selected to open its detail page.

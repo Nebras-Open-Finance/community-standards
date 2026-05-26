@@ -1,0 +1,800 @@
+/*
+ * Shared consent-page wireframe styles.
+ * Imported from ConsentBankDataSharing.vue and ConsentInsuranceDataSharing.vue
+ * inside <style scoped>, so Vue scopes the rules per component while keeping
+ * the source of truth in one place. Don't edit either component's local
+ * styles to override these — add a sibling rule or extend this file.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@100..900&display=swap');
+
+
+.consent-page-frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0px;
+    gap: 24px;
+    zoom: 0.6;
+
+    width: 372px;
+    /* height: 1023px; */
+
+    background: #F4F8FB;
+
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+    position: relative;
+}
+
+.consent-page-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+
+    width: 372px;
+    height: 218px;
+
+
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+    position: relative;
+}
+
+.consent-page-text-mini-header-section-header {
+    width: 292px;
+    height: 23px;
+
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 500;
+    font-size: 19px;
+    line-height: 120%;
+    /* identical to box height, or 23px */
+    letter-spacing: -0.01em;
+
+    color: #0C1441;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 1;
+
+}
+
+
+.consent-page-screen-name {
+    width: 372px;
+    height: 56px;
+
+
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+    position: relative;
+}
+
+.consent-page-dropdown-subtext-section {
+    /* Auto layout */
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    gap: 10px;
+
+    width: 292px;
+    /* height: 146px; */
+
+    background: #F5F5FD;
+    border-radius: 8px;
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.consent-page-dropdown-container {
+    /* Auto layout */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    /* gap: 10px; */
+
+    width: 292px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 5;
+    align-self: stretch;
+    flex-grow: 0;
+
+}
+
+.consent-page-dropdown-subtext {
+    width: 272px;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 10px;
+    line-height: 140%;
+    /* or 14px */
+    letter-spacing: -0.01em;
+
+    color: #667085;
+    gap: 12px;
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 1;
+}
+
+
+.consent-page-tpp-text {
+    position: absolute;
+    width: 48px;
+    height: 32px;
+    left: calc(50% - 48px/2);
+    top: 12px;
+
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 26px;
+    line-height: 124%;
+    /* or 32px */
+    text-align: center;
+
+    color: #FBFBFF;
+    z-index: 1;
+}
+
+
+.consent-page-arrow-left {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    left: 28px;
+    top: calc(50% - 24px/2);
+    z-index: 1;
+}
+
+.consent-page-rectangle {
+    position: absolute;
+    height: 56px;
+    left: 0px;
+    right: 0px;
+    top: 0px;
+    background: #36BFD4;
+}
+
+.consent-page-contents {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 0px 0px;
+
+    width: 372px;
+    height: 162px;
+
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.consent-page-logo {
+    width: 114px;
+    height: 42px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.consent-page-progress {
+    width: 372px;
+    height: 80px;
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 0;
+    position: relative;
+}
+
+.consent-page-progress-3 {
+    position: absolute;
+    width: 61px;
+    height: 42px;
+    left: calc(50% - 61px/2 + 116.5px);
+    top: 27px;
+}
+
+.consent-page-progress-2 {
+    position: absolute;
+    width: 61px;
+    height: 42px;
+    left: calc(50% - 61px/2 + 4.5px);
+    top: 27px;
+}
+
+.consent-page-progress-1 {
+    position: absolute;
+    width: 61px;
+    height: 42px;
+    left: 39px;
+    top: 27px;
+}
+
+.consent-page-progress-line {
+    position: absolute;
+    width: 222px;
+    height: 3px;
+    left: 80px;
+    top: 37px;
+}
+
+.consent-page-progress-text {
+    position: absolute;
+    left: 6.56%;
+    right: 6.56%;
+    top: 66.67%;
+    bottom: 4.76%;
+
+    font-family: 'Archivo';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 100%;
+    /* identical to box height, or 12px */
+    text-align: center;
+
+    color: #515151;
+}
+
+.consent-page-progress-icon {
+    box-sizing: border-box;
+
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    left: calc(50% - 22px/2 - 0.5px);
+    top: 0px;
+    z-index: 1;
+    background: #FFFFFF;
+    border: 2px solid #B2B2B2;
+    border-radius: 30px;
+}
+
+.consent-page-progress-icon-text {
+    position: absolute;
+    width: 7px;
+    height: 12px;
+    left: calc(50% - 7px/2 + 0.5px);
+    top: calc(50% - 12px/2);
+
+    font-family: 'Archivo';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 100%;
+    /* identical to box height, or 12px */
+    text-align: center;
+
+    color: #515151;
+}
+
+.consent-page-progress-icon-active {
+    box-sizing: border-box;
+
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    left: calc(50% - 22px/2 - 0.5px);
+    top: 0px;
+    z-index: 1;
+    background: #00C8AF;
+    border: 2px solid #00C8AF;
+    border-radius: 30px;
+}
+
+.consent-page-progress-icon-text-active {
+    position: absolute;
+    width: 7px;
+    height: 12px;
+    left: calc(50% - 7px/2 + 0.5px);
+    top: calc(50% - 12px/2);
+
+    font-family: 'Archivo';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 100%;
+    /* identical to box height, or 12px */
+    text-align: center;
+
+    color: white;
+}
+
+
+
+.consent-page-text-frame {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px 12px;
+    gap: 26px;
+
+    width: 316px;
+    /* height: 182px; */
+
+    background: #FFFFFF;
+    border-radius: 12px;
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.consent-page-text-inner-frame {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 26px;
+
+    width: 292px;
+    /* height: 150px; */
+
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.consent-page-text-header {
+    width: 292px;
+    height: 23px;
+
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 500;
+    font-size: 19px;
+    line-height: 120%;
+    letter-spacing: -0.01em;
+
+    color: #0C1441;
+
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.consent-page-text-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 12px;
+
+    width: 292px;
+    /* height: 101px; */
+
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.consent-page-text {
+    width: 292px;
+    height: 57px;
+
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 300;
+    font-size: 12px;
+    line-height: 160%;
+    color: #0C1441;
+
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.consent-page-text-frame-2 {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px 12px;
+    gap: 12px;
+
+    width: 316px;
+    /* height: 405px; */
+
+    background: #FFFFFF;
+    border-radius: 12px;
+
+    /* Inside auto layout */
+    flex: none;
+    order: 2;
+    flex-grow: 0;
+}
+
+.consent-page-text-inner-frame-2 {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 28px;
+
+    width: 292px;
+    /* height: 307px; */
+
+
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.consent-page-text-mini-header-section {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 10px;
+
+    width: 292px;
+    height: 23px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.consent-page-text-mini-header {
+    width: 292px;
+    height: 23px;
+
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 500;
+    font-size: 19px;
+    line-height: 120%;
+    /* identical to box height, or 23px */
+    letter-spacing: -0.01em;
+
+    color: #0C1441;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 1;
+}
+
+.consent-page-dropdown {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0px;
+    gap: 14px;
+    cursor: pointer;
+    width: 292px;
+    height: 48px;
+
+
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.consent-page-dropdown-text-section {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px;
+    gap: 6px;
+
+    margin-right: auto;
+    margin-left: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    width: 240.5px;
+    height: 24px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+
+.consent-page-dropdown-text {
+    width: 200px;
+    height: 14px;
+
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 120%;
+    /* or 14px */
+    letter-spacing: -0.01em;
+
+    color: #0C1441;
+
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.consent-page-button-with-description {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px 28px 30px;
+    gap: 10px;
+
+    width: 372px;
+    height: 146px;
+
+    border-radius: 0px;
+
+    flex: none;
+    order: 3;
+    flex-grow: 0;
+}
+
+.consent-page-button {
+    /* Auto layout */
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 10px 10px 20px;
+    cursor: pointer;
+    width: 316px;
+    height: 48px;
+
+    /* Button Grad */
+    background: linear-gradient(84.64deg, #00C8AF 0%, #015AD7 41.05%, #000000 82.6%);
+    border-radius: 66px;
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.consent-page-date-range {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 12px;
+
+    width: 292px;
+    height: 54px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+
+.consent-page-date-text {
+    width: 264px;
+    height: 14px;
+
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 120%;
+    /* or 14px */
+    letter-spacing: -0.01em;
+
+    color: #8287A0;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 1;
+
+}
+
+.consent-page-button-description {
+    margin: 0px;
+    width: 316px;
+    height: 38px;
+
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 300;
+    font-size: 12px;
+    line-height: 160%;
+    /* or 19px */
+
+    color: #0C1441;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+
+
+.consent-page-dropdown-arrow {
+    margin-left: 0 auto;
+    width: 7.41px;
+    height: 14.7px;
+
+    /* background: rgba(0, 0, 0, 0.8); */
+    transform: matrix(1, 0, 0, -1, 0, 0);
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.consent-page-dropdown-arrow.is-open {
+    transform: rotate(90deg);
+}
+
+.consent-page-button-text-section {
+    /* Auto layout */
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px;
+    gap: 10px;
+
+    width: 186px;
+    height: 22px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.consent-page-divider {
+    width: 292px;
+    height: 2px;
+
+    background: rgba(217, 217, 217, 0.1);
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+
+}
+
+.consent-page-date {
+    /* Auto layout */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 10px;
+
+    width: 292px;
+    height: 40px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.consent-page-date-2 {
+    /* Auto layout */
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 0px 0px 0px 28px;
+    gap: 10px;
+
+    width: 292px;
+    height: 14px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.consent-page-button-text {
+    width: 154px;
+    height: 17px;
+
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 120%;
+    /* identical to box height, or 17px */
+    letter-spacing: -0.01em;
+
+    color: #FFFFFF;
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.consent-page-button-icon {
+    width: 22px;
+    height: 22px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.consent-page-why-text {
+    margin-right: auto;
+    margin-left: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    width: 218px;
+    height: 14px;
+
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 120%;
+    /* or 14px */
+    letter-spacing: -0.01em;
+
+    color: #0C1441;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}

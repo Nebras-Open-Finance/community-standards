@@ -213,6 +213,42 @@ if status != "Authorized":
   },
 ]
 
+const insurancePollTabs: Tab[] = [
+  {
+    label: 'Node.js',
+    lang: 'typescript',
+    code: `const consentResponse = await fetch(
+  \`\${LFI_API_BASE}/open-finance/v2.1/insurance-consents/\${consentId}\`,
+  {
+    headers: { Authorization: \`Bearer \${access_token}\` },
+    // agent: new https.Agent({ cert: transportCert, key: transportKey }),
+  }
+)
+
+const { Data: { Status, Permissions, ExpirationDateTime } } =
+  await consentResponse.json()
+
+if (Status !== 'Authorized') {
+  throw new Error(\`Consent not authorized: \${Status}\`)
+}`,
+  },
+  {
+    label: 'Python',
+    lang: 'python',
+    code: `consent_response = httpx.get(
+    f"{LFI_API_BASE}/open-finance/v2.1/insurance-consents/{consent_id}",
+    headers={"Authorization": f"Bearer {access_token}"},
+    # cert=("transport.crt", "transport.key"),
+)
+
+data   = consent_response.json()["Data"]
+status = data["Status"]
+
+if status != "Authorized":
+    raise ValueError(f"Consent not authorized: {status}")`,
+  },
+]
+
 const serviceInitPollTabs: Tab[] = [
   {
     label: 'Node.js',
@@ -282,7 +318,7 @@ if status != "Authorized":
       id="consent-types"
       num="01"
       color="var(--at-teal)"
-      eyebrow="Two flavours"
+      eyebrow="Three flavours"
       title="Consent types"
       tone="cream"
     >
@@ -305,6 +341,11 @@ if status != "Authorized":
               <td><strong>Service Initiation</strong></td>
               <td><code>urn:openfinanceuae:service-initiation-consent:v2.1</code></td>
               <td>Initiating domestic payments</td>
+            </tr>
+            <tr>
+              <td><strong>Insurance Data Sharing</strong></td>
+              <td><code>urn:openfinanceuae:insurance-consent:v2.1</code></td>
+              <td>Reading insurance policy details</td>
             </tr>
           </tbody>
         </table>
@@ -359,6 +400,9 @@ if status != "Authorized":
           <a href="/tech/tpp-standards/v2.1/banking/service-initiation/domestic-payments/single-instant-payment/api-guide">
             Single Instant Payment &mdash; API Guide
           </a>
+        </li>
+        <li>
+          <a href="/tech/tpp-standards/v2.1/insurance/data-sharing/api-guide/">Insurance Data Sharing &mdash; API Guide</a>
         </li>
       </EdBullets>
 
@@ -521,6 +565,19 @@ if status != "Authorized":
           You can also retrieve all payment consents under a long-lived base consent by passing
           <code>baseConsentId</code> as a query parameter to
           <a href="/tech/tpp-standards/v2.1/consent/open-api/payment-consents" class="endpoint"><span class="http-method http-method--get">GET</span><code>/payment-consents</code></a>.
+        </EdProse>
+
+        <h4 class="ed-doc__sub-heading">Insurance Data Sharing</h4>
+        <EdCodeGroup :tabs="insurancePollTabs" />
+        <EdProse>
+          See
+          <a href="/tech/tpp-standards/v2.1/consent/open-api/insurance-consents-ConsentId" class="endpoint"><span class="http-method http-method--get">GET</span><code>/insurance-consents/{ConsentId}</code></a>
+          for the full response schema.
+        </EdProse>
+        <EdProse>
+          You can also retrieve all insurance consents under a long-lived base consent by passing
+          <code>baseConsentId</code> as a query parameter to
+          <a href="/tech/tpp-standards/v2.1/consent/open-api/insurance-consents" class="endpoint"><span class="http-method http-method--get">GET</span><code>/insurance-consents</code></a>.
         </EdProse>
       </div>
 

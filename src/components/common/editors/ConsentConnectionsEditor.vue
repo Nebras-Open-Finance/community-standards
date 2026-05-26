@@ -13,6 +13,11 @@ interface Consent {
   baseConsentId?: string | number
 }
 
+const props = withDefaults(
+  defineProps<{ mode?: 'all' | 'data-sharing' | 'payments' }>(),
+  { mode: 'all' },
+)
+
 const route = useRoute()
 const isLfi = computed(() => (route.path ?? '').includes('/lfi-api-hub'))
 const entityLabel = computed(() => isLfi.value ? 'TPP' : 'LFI')
@@ -30,11 +35,13 @@ const ALL_CONSENT_STATUSES = [
   'Revoked',
 ]
 
-const CONSENT_STATUSES = computed(() =>
-  isLfi.value ? ALL_CONSENT_STATUSES.filter((s) => s !== 'Paused') : ALL_CONSENT_STATUSES
-)
+const CONSENT_STATUSES = computed(() => {
+  let statuses = isLfi.value ? ALL_CONSENT_STATUSES.filter((s) => s !== 'Paused') : ALL_CONSENT_STATUSES
+  if (props.mode === 'data-sharing') statuses = statuses.filter((s) => s !== 'Consumed')
+  return statuses
+})
 
-const CONSENT_TYPES = [
+const ALL_CONSENT_TYPES = [
   'Data Sharing',
   'Single Instant Payment',
   'Multi Payment (VariableOnDemand)',
@@ -45,6 +52,17 @@ const CONSENT_TYPES = [
   'Multi Payment (FixedDefinedSchedule)',
   'Multi Payment (DelegatedSCA)',
 ]
+
+const CONSENT_TYPES = computed(() => {
+  if (props.mode === 'data-sharing') return ALL_CONSENT_TYPES.filter((t) => t === 'Data Sharing')
+  if (props.mode === 'payments') return ALL_CONSENT_TYPES.filter((t) => t !== 'Data Sharing')
+  return ALL_CONSENT_TYPES
+})
+
+function defaultTypeForMode(): string {
+  if (props.mode === 'payments') return 'Single Instant Payment'
+  return 'Data Sharing'
+}
 
 const PAYMENT_STATUSES = [
   'Pending',
@@ -98,25 +116,43 @@ function onTypeChanged(consent: Consent) {
   ensureMaskedIban(consent)
 }
 
-let nextId = 9
-const consents = ref<Consent[]>([
-  { id: 1, status: 'Authorized',            lfiDigit: 9, type: 'Data Sharing',                              baseConsentId: 3 },
-  { id: 2, status: 'Revoked',               lfiDigit: randomLfiDigit(), type: 'Data Sharing',               baseConsentId: '' },
-  { id: 3, status: 'Expired',               lfiDigit: 9, type: 'Data Sharing',                              baseConsentId: '' },
-  { id: 4, status: 'AwaitingAuthorization', lfiDigit: randomLfiDigit(), type: 'Single Instant Payment',     maskedIban: generateMaskedIban(4), baseConsentId: '' },
-  { id: 5, status: 'Consumed',              lfiDigit: randomLfiDigit(), type: 'Single Instant Payment',     maskedIban: generateMaskedIban(5), paymentStatus: 'AcceptedWithoutPosting', baseConsentId: '' },
-  { id: 6, status: 'Authorized',            lfiDigit: 4, type: 'Multi Payment (VariableOnDemand)',          maskedIban: generateMaskedIban(6), baseConsentId: 8 },
-  { id: 7, status: 'Suspended',             lfiDigit: randomLfiDigit(), type: 'Multi Payment (FixedOnDemand)', maskedIban: generateMaskedIban(7), baseConsentId: '' },
-  { id: 8, status: 'Revoked',               lfiDigit: 4, type: 'Multi Payment (VariableOnDemand)',          maskedIban: generateMaskedIban(6), baseConsentId: '' },
-])
+const ALL_SEED_CONSENTS: Consent[] = [
+  { id: 1,  status: 'Authorized',            lfiDigit: 9, type: 'Data Sharing',                              baseConsentId: 3 },
+  { id: 2,  status: 'Revoked',               lfiDigit: randomLfiDigit(), type: 'Data Sharing',               baseConsentId: '' },
+  { id: 3,  status: 'Expired',               lfiDigit: 9, type: 'Data Sharing',                              baseConsentId: '' },
+  { id: 4,  status: 'Authorized',            lfiDigit: 5, type: 'Data Sharing',                              baseConsentId: '' },
+  { id: 5,  status: 'Suspended',             lfiDigit: 2, type: 'Data Sharing',                              baseConsentId: '' },
+  { id: 6,  status: 'Paused',                lfiDigit: 7, type: 'Data Sharing',                              baseConsentId: '' },
+  { id: 7,  status: 'Rejected',              lfiDigit: 1, type: 'Data Sharing',                              baseConsentId: '' },
+  { id: 8,  status: 'AwaitingAuthorization', lfiDigit: randomLfiDigit(), type: 'Single Instant Payment',     maskedIban: generateMaskedIban(8),  baseConsentId: '' },
+  { id: 9,  status: 'Consumed',              lfiDigit: randomLfiDigit(), type: 'Single Instant Payment',     maskedIban: generateMaskedIban(9),  paymentStatus: 'AcceptedWithoutPosting', baseConsentId: '' },
+  { id: 10, status: 'Consumed',              lfiDigit: randomLfiDigit(), type: 'Single Instant Payment',     maskedIban: generateMaskedIban(10), paymentStatus: 'Rejected',                baseConsentId: '' },
+  { id: 11, status: 'Rejected',              lfiDigit: randomLfiDigit(), type: 'Single Instant Payment',     maskedIban: generateMaskedIban(11), baseConsentId: '' },
+  { id: 12, status: 'Authorized',            lfiDigit: 4, type: 'Multi Payment (VariableOnDemand)',          maskedIban: generateMaskedIban(12), baseConsentId: 15 },
+  { id: 13, status: 'Suspended',             lfiDigit: randomLfiDigit(), type: 'Multi Payment (FixedOnDemand)', maskedIban: generateMaskedIban(13), baseConsentId: '' },
+  { id: 14, status: 'Authorized',            lfiDigit: 6, type: 'Multi Payment (VariablePeriodicSchedule)',  maskedIban: generateMaskedIban(14), baseConsentId: '' },
+  { id: 15, status: 'Revoked',               lfiDigit: 4, type: 'Multi Payment (VariableOnDemand)',          maskedIban: generateMaskedIban(12), baseConsentId: '' },
+  { id: 16, status: 'Expired',               lfiDigit: 3, type: 'Multi Payment (FixedDefinedSchedule)',      maskedIban: generateMaskedIban(16), baseConsentId: '' },
+  { id: 17, status: 'Authorized',            lfiDigit: 8, type: 'Multi Payment (DelegatedSCA)',              maskedIban: generateMaskedIban(17), baseConsentId: '' },
+]
+
+function seedConsents(): Consent[] {
+  if (props.mode === 'data-sharing') return ALL_SEED_CONSENTS.filter((c) => c.type === 'Data Sharing')
+  if (props.mode === 'payments') return ALL_SEED_CONSENTS.filter((c) => c.type !== 'Data Sharing')
+  return ALL_SEED_CONSENTS
+}
+
+let nextId = ALL_SEED_CONSENTS.reduce((m, c) => Math.max(m, c.id), 0) + 1
+const consents = ref<Consent[]>(seedConsents())
 
 function addConsent() {
   if (consents.value.length >= MAX_CONSENTS) return
+  const type = defaultTypeForMode()
   consents.value.push({
     id: nextId++,
-    status: getFallbackStatusForType('Data Sharing'),
+    status: getFallbackStatusForType(type),
     lfiDigit: randomLfiDigit(),
-    type: 'Data Sharing',
+    type,
     baseConsentId: '',
   })
 }
