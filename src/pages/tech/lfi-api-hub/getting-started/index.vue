@@ -258,7 +258,7 @@ meta:
       <EdProse>
         Because API Hub is the single source of truth for consent, your LFI does not maintain independent
         consent state &mdash; it queries the Hub for consent details and writes lifecycle events back to
-        the Hub as the PSU journey progresses.
+        the Hub as the end user journey progresses.
       </EdProse>
 
       <h4>Prerequisites</h4>
@@ -315,7 +315,7 @@ meta:
           For the capability in delivery, all endpoints respond in line with their OpenAPI specifications.
         </li>
         <li>
-          The Hub can drive a full PSU journey for that capability: PAR &rarr; authorization at the LFI
+          The Hub can drive a full end user journey for that capability: PAR &rarr; authorization at the LFI
           &rarr; token issuance &rarr; data or payment call &rarr; consent visible in the Consent
           Management Interface.
         </li>
@@ -438,7 +438,7 @@ meta:
       <h4>Prerequisites</h4>
       <EdBullets>
         <li>Step 6 complete.</li>
-        <li>Controlled test PSUs (bank-staff accounts) available in production.</li>
+        <li>Controlled test end users (bank-staff accounts) available in production.</li>
         <li>Error handling, monitoring, and audit logging enabled.</li>
       </EdBullets>
 
@@ -516,7 +516,7 @@ meta:
           <a href="/tech/lfi-api-hub/production/testing-certification/tpp-buddying">TPP Buddying</a>
           sessions with each partner.
         </li>
-        <li>Exercise the full end-to-end flow with real PSUs.</li>
+        <li>Exercise the full end-to-end flow with real end users.</li>
         <li>Triage and resolve any issues surfaced during proving.</li>
       </EdBullets>
 

@@ -37,11 +37,11 @@ Once a payment reaches a terminal status (`AcceptedWithoutPosting`, `AcceptedCre
 
 ## Rail selection
 
-Your LFI is responsible for choosing the execution mode for every domestic payment. The API Hub does not select a rail on your behalf, and the TPP and PSU are not involved in the decision. Apply the following logic on receipt of <span class="endpoint"><span class="http-method http-method--post">POST</span><code>/payments</code></span>:
+Your LFI is responsible for choosing the execution mode for every domestic payment. The API Hub does not select a rail on your behalf, and the TPP and customer are not involved in the decision. Apply the following logic on receipt of <span class="endpoint"><span class="http-method http-method--post">POST</span><code>/payments</code></span>:
 
 1. **Intra-bank** — if both the debtor and creditor accounts are held at your LFI, execute the payment internally. No rail is used, and your LFI has end-to-end visibility of both legs.
 2. **AANI** — otherwise, submit the payment to AANI as the primary rail whenever the receiving bank and receiving account are reachable on AANI.
-3. **UAEFTS** — if AANI is unavailable or the receiving bank cannot receive via AANI, fall back to UAEFTS. The fall-back is automatic and MUST NOT require TPP or PSU intervention.
+3. **UAEFTS** — if AANI is unavailable or the receiving bank cannot receive via AANI, fall back to UAEFTS. The fall-back is automatic and MUST NOT require TPP or customer intervention.
 
 Your LFI MUST only reject a payment pre-rail for reachability reasons once both rails have been ruled out — that is, when the receiving bank is reachable on neither AANI nor UAEFTS. Set `RejectReasonCode.Code = LFI.<reasonCode>` (for example, `LFI.CreditorBankNotReachable`).
 

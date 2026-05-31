@@ -290,7 +290,7 @@ const step3Tabs = [
 
       <EdProse>
         <code>x-fapi-customer-ip-address</code> is <strong>not</strong> required for ATMs &mdash; the data
-        is static and public, so no PSU is involved in the call.
+        is static and public, so no customer is involved in the call.
       </EdProse>
 
       <EdProse>

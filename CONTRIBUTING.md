@@ -41,7 +41,7 @@ OpenAPI specs are fetched on build via [`scripts/fetch-openapi-specs.mjs`](scrip
 
 ## Writing style
 
-- Use the precise terminology defined in [CLAUDE.md](CLAUDE.md): **API Hub**, **LFI**, **TPP**, **PSU**
+- Use the precise terminology defined in [CLAUDE.md](CLAUDE.md): **API Hub**, **LFI**, **TPP**, **end user**
 - Keep TPP and LFI responsibilities clearly separated
 - Use normative language (MUST, SHOULD, MAY) in policy and standards content where appropriate
 - Align API descriptions with the published OpenAPI specifications — do not invent fields, endpoints, or schemas

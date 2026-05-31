@@ -39,7 +39,7 @@ Unordered:
 
 - The TPP initiates the consent via PAR
 - The API Hub stores the consent and brokers authorization
-- The PSU authenticates at the LFI
+- The end user authenticates at the LFI
 - The TPP exchanges the auth code for an access token
 
 Ordered:

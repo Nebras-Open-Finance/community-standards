@@ -424,7 +424,7 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
                   <a href="/tech/lfi-api-hub/v2.1/consent-events/api-guide"><code>/consent/event/{operation}</code></a>
                   during the consent-events flow at authorization. At request time the LFI looks up the consent by ID
                   in its own store.</td>
-              <td>You already maintain a consent table for revocation handling, account-list patching, or PSU
+              <td>You already maintain a consent table for revocation handling, account-list patching, or customer
                   attribution. Lowest per-request latency.</td>
             </tr>
             <tr>

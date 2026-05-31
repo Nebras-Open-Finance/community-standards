@@ -29,7 +29,7 @@ function paymentSubs(slug: string): CapSub[] {
   const base = `${SI_BASE}/domestic-payments/${slug}`
   return [
     { title: 'Requirements', hint: 'Validation rules and field-level constraints', url: `${base}/requirements` },
-    { title: 'User Experience', hint: 'Step-by-step PSU journey', url: `${base}/user-journeys` },
+    { title: 'User Experience', hint: 'Step-by-step customer journey', url: `${base}/user-journeys` },
     { title: 'API Guide', hint: 'End-to-end implementation walk-through', url: `${base}/api-guide` },
   ]
 }
@@ -122,7 +122,7 @@ const cards: CapCard[] = [
     tone: 'violet',
     category: 'Approval flow',
     title: 'Multi-Authorization',
-    desc: 'Subsequent-authoriser flows for payments requiring approval from more than one PSU.',
+    desc: 'Subsequent-authoriser flows for payments requiring approval from more than one customer.',
     url: `${SI_BASE}/multi-authorization`,
     subs: [],
   },

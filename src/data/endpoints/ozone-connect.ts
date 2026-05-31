@@ -13,6 +13,7 @@ const SPEC_CONSENT_EVENTS = '/openapi/v2.1/ozone-connect/uae-ozone-connect-conse
 const SPEC_PRODUCTS = '/openapi/v2.1/ozone-connect/uae-ozone-connect-bank-products-data-openapi.yaml'
 const SPEC_OPEN_DATA = '/openapi/v2.1/ozone-connect/uae-ozone-connect-bank-open-data-openapi.yaml'
 const SPEC_INSURANCE = '/openapi/v2.1/ozone-connect/uae-ozone-connect-insurance-openapi.yaml'
+const SPEC_CAAP = '/openapi/v2.1/ozone-connect/uae-ozone-connect-caap-operations-openapi.yaml'
 
 interface EntryInput {
   section: string
@@ -366,6 +367,131 @@ export const ozoneConnectEndpoints: readonly Endpoint[] = [
     },
   }),
 
+  // CAAP — User Verification
+  entry({
+    section: 'CAAP',
+    sectionSlug: 'caap',
+    subsection: 'User Verification',
+    slug: 'users-challenge-initialize',
+    method: 'POST',
+    path: '/users/actions/challenge/initialize',
+    title: 'Initialize a User Challenge',
+    redoc: { spec: SPEC_CAAP, filterPath: '/users/actions/challenge/initialize', overrideServers: OZONE_SERVERS },
+  }),
+  entry({
+    section: 'CAAP',
+    sectionSlug: 'caap',
+    subsection: 'User Verification',
+    slug: 'users-challenge-query',
+    method: 'POST',
+    path: '/users/actions/challenge/query',
+    title: 'Query a User Challenge',
+    redoc: { spec: SPEC_CAAP, filterPath: '/users/actions/challenge/query', overrideServers: OZONE_SERVERS },
+  }),
+  entry({
+    section: 'CAAP',
+    sectionSlug: 'caap',
+    subsection: 'User Verification',
+    slug: 'users-challenge-complete',
+    method: 'POST',
+    path: '/users/actions/challenge/complete',
+    title: 'Complete a User Challenge',
+    redoc: { spec: SPEC_CAAP, filterPath: '/users/actions/challenge/complete', overrideServers: OZONE_SERVERS },
+  }),
+
+  // CAAP — User Registration
+  entry({
+    section: 'CAAP',
+    sectionSlug: 'caap',
+    subsection: 'User Registration',
+    slug: 'users-register-initialize',
+    method: 'POST',
+    path: '/users/actions/register/initialize',
+    title: 'Initialize User Registration',
+    redoc: { spec: SPEC_CAAP, filterPath: '/users/actions/register/initialize', overrideServers: OZONE_SERVERS },
+  }),
+  entry({
+    section: 'CAAP',
+    sectionSlug: 'caap',
+    subsection: 'User Registration',
+    slug: 'users-register-complete',
+    method: 'POST',
+    path: '/users/actions/register/complete',
+    title: 'Complete User Registration',
+    redoc: { spec: SPEC_CAAP, filterPath: '/users/actions/register/complete', overrideServers: OZONE_SERVERS },
+  }),
+  entry({
+    section: 'CAAP',
+    sectionSlug: 'caap',
+    subsection: 'User Registration',
+    slug: 'users-deregister',
+    method: 'POST',
+    path: '/users/actions/deregister',
+    title: 'Deregister a User',
+    redoc: { spec: SPEC_CAAP, filterPath: '/users/actions/deregister', overrideServers: OZONE_SERVERS },
+  }),
+
+  // CAAP — PII Decryption
+  entry({
+    section: 'CAAP',
+    sectionSlug: 'caap',
+    subsection: 'PII Decryption',
+    slug: 'users-pii-decrypt',
+    method: 'POST',
+    path: '/users/actions/pii/decrypt',
+    title: 'Decrypt PII for a User',
+    redoc: { spec: SPEC_CAAP, filterPath: '/users/actions/pii/decrypt', overrideServers: OZONE_SERVERS },
+  }),
+
+  // CAAP — Consent Validation
+  entry({
+    section: 'CAAP',
+    sectionSlug: 'caap',
+    subsection: 'Consent',
+    slug: 'consent-actions-validate',
+    method: 'POST',
+    path: '/consent/actions/validate',
+    title: 'Validate a Consent',
+    redoc: { spec: SPEC_CAAP, filterPath: '/consent/actions/validate', overrideServers: OZONE_SERVERS },
+  }),
+
+  // CAAP — Accounts (CAAP-specific variant)
+  entry({
+    section: 'CAAP',
+    sectionSlug: 'caap',
+    subsection: 'Accounts',
+    slug: 'accounts',
+    method: 'GET',
+    path: '/accounts',
+    title: 'Retrieve Accounts (CAAP)',
+    redoc: { spec: SPEC_CAAP, filterPath: '/accounts', filterMethod: 'get', overrideServers: OZONE_SERVERS },
+  }),
+  entry({
+    section: 'CAAP',
+    sectionSlug: 'caap',
+    subsection: 'Accounts',
+    slug: 'accounts-accountId',
+    method: 'GET',
+    path: '/accounts/{accountId}',
+    title: 'Retrieve an Account (CAAP)',
+    redoc: { spec: SPEC_CAAP, filterPath: '/accounts/{accountId}', filterMethod: 'get', overrideServers: OZONE_SERVERS },
+  }),
+
+  // CAAP — Insurance Policies (list only; CAAP-only response properties)
+  ...(['employment', 'health', 'home', 'life', 'motor', 'renters', 'travel'] as const).map((type) => {
+    const Type = type.charAt(0).toUpperCase() + type.slice(1)
+    return entry({
+      section: 'CAAP',
+      sectionSlug: 'caap',
+      subsection: 'Insurance Policies',
+      slug: `${type}-insurance-policies`,
+      method: 'GET',
+      path: `/${type}-insurance-policies`,
+      title: `Retrieve ${Type} Insurance Policies (CAAP)`,
+      redoc: { spec: SPEC_CAAP, filterPath: `/${type}-insurance-policies`, overrideServers: OZONE_SERVERS },
+    })
+  }),
+
   // Insurance Data Sharing — 7 insurance types × 2 endpoints (list + by-id)
   ...(['employment', 'health', 'home', 'life', 'motor', 'renters', 'travel'] as const).flatMap(
     (type) => {
@@ -382,6 +508,7 @@ export const ozoneConnectEndpoints: readonly Endpoint[] = [
           redoc: {
             spec: SPEC_INSURANCE,
             filterPath: `/${type}-insurance-policies`,
+            filterMethod: 'get',
             overrideServers: OZONE_SERVERS,
           },
         }),
@@ -396,6 +523,76 @@ export const ozoneConnectEndpoints: readonly Endpoint[] = [
           redoc: {
             spec: SPEC_INSURANCE,
             filterPath: `/${type}-insurance-policies/{InsurancePolicyId}`,
+            overrideServers: OZONE_SERVERS,
+          },
+        }),
+      ]
+    },
+  ),
+
+  // Insurance Quotation — 7 insurance types × 4 endpoints
+  // (POST quotes, GET/PATCH quotes/{QuoteId}, POST policies)
+  ...(['employment', 'health', 'home', 'life', 'motor', 'renters', 'travel'] as const).flatMap(
+    (type) => {
+      const Type = type.charAt(0).toUpperCase() + type.slice(1)
+      return [
+        entry({
+          section: 'Insurance Quotation',
+          sectionSlug: 'insurance-quotation',
+          subsection: `${Type} Insurance`,
+          slug: `${type}-insurance-quotes`,
+          method: 'POST',
+          path: `/${type}-insurance-quotes`,
+          title: `Create a ${Type} Insurance Quote`,
+          redoc: {
+            spec: SPEC_INSURANCE,
+            filterPath: `/${type}-insurance-quotes`,
+            filterMethod: 'post',
+            overrideServers: OZONE_SERVERS,
+          },
+        }),
+        entry({
+          section: 'Insurance Quotation',
+          sectionSlug: 'insurance-quotation',
+          subsection: `${Type} Insurance`,
+          slug: `get-${type}-insurance-quotes-QuoteId`,
+          method: 'GET',
+          path: `/${type}-insurance-quotes/{QuoteId}`,
+          title: `Retrieve a ${Type} Insurance Quote`,
+          redoc: {
+            spec: SPEC_INSURANCE,
+            filterPath: `/${type}-insurance-quotes/{QuoteId}`,
+            filterMethod: 'get',
+            overrideServers: OZONE_SERVERS,
+          },
+        }),
+        entry({
+          section: 'Insurance Quotation',
+          sectionSlug: 'insurance-quotation',
+          subsection: `${Type} Insurance`,
+          slug: `patch-${type}-insurance-quotes-QuoteId`,
+          method: 'PATCH',
+          path: `/${type}-insurance-quotes/{QuoteId}`,
+          title: `Accept a ${Type} Insurance Quote`,
+          redoc: {
+            spec: SPEC_INSURANCE,
+            filterPath: `/${type}-insurance-quotes/{QuoteId}`,
+            filterMethod: 'patch',
+            overrideServers: OZONE_SERVERS,
+          },
+        }),
+        entry({
+          section: 'Insurance Quotation',
+          sectionSlug: 'insurance-quotation',
+          subsection: `${Type} Insurance`,
+          slug: `post-${type}-insurance-policies`,
+          method: 'POST',
+          path: `/${type}-insurance-policies`,
+          title: `Create a ${Type} Insurance Policy`,
+          redoc: {
+            spec: SPEC_INSURANCE,
+            filterPath: `/${type}-insurance-policies`,
+            filterMethod: 'post',
             overrideServers: OZONE_SERVERS,
           },
         }),

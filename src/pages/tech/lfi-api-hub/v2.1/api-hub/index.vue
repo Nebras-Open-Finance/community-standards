@@ -138,7 +138,7 @@ meta:
               <td>Expose your banking APIs (accounts, payments, CoP, etc.) via Ozone Connect. The API Hub routes verified requests to these endpoints</td>
             </tr>
             <tr>
-              <td><strong>PSU authentication</strong></td>
+              <td><strong>End user authentication</strong></td>
               <td>Authenticate the customer when they are redirected to your authorization endpoint during consent flows. The API Hub handles the OIDC authorization protocol; your system authenticates the person</td>
             </tr>
             <tr>
@@ -151,7 +151,7 @@ meta:
             </tr>
             <tr>
               <td><strong>Consent authorization UX</strong></td>
-              <td>Present the consent details to the PSU and capture their authorization decision via your application</td>
+              <td>Present the consent details to the end user and capture their authorization decision via your application</td>
             </tr>
           </tbody>
         </table>
@@ -217,8 +217,8 @@ meta:
       <EdBullets>
         <li>TPP initiates a consent request via <strong>Pushed Authorization Request (PAR)</strong> to the API Hub</li>
         <li>API Hub creates and stores the consent record</li>
-        <li>PSU is redirected to your <strong>authorization endpoint</strong></li>
-        <li>Your system <strong>authenticates the PSU</strong> and presents the consent details for approval</li>
+        <li>End user is redirected to your <strong>authorization endpoint</strong></li>
+        <li>Your system <strong>authenticates the end user</strong> and presents the consent details for approval</li>
         <li>
           Your system calls the API Hub
           (<a href="/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/open-api/auth-interactionId-doConfirm"><code>/doConfirm</code></a>
@@ -268,7 +268,7 @@ meta:
         <li>
           <a href="/tech/lfi-api-hub/v2.1/api-hub/onboarding/environment-specific/auth-endpoint"><strong>Authorization Endpoint</strong></a>
           &mdash; customers are redirected here to <strong>authenticate</strong> and authorize consent
-          requests; this is where your institution verifies the PSU's identity
+          requests; this is where your institution verifies the end user's identity
         </li>
       </EdBullets>
     </EdSectionBand>

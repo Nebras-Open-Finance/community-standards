@@ -23,6 +23,14 @@ const capabilities: Capability[] = [
     body: 'Expose a customer&rsquo;s insurance policies to consented TPPs across seven sectors &mdash; Employment, Health, Home, Life, Motor, Renters, and Travel. Permissions such as <code>ReadInsurancePolicies</code>, <code>ReadCustomerBasic</code>, and <code>ReadInsurancePremium</code> control which fields are returned. When the customer grants <code>ReadInsurancePremium</code>, your Ozone Connect endpoints return the <code>Premium</code> field as an encrypted JWE.',
     highlights: ['Policy information across 7 sectors', 'Customer &amp; payment-method data', 'Encrypted premium values', 'Coverage, riders &amp; claims history'],
   },
+  {
+    href: '/tech/lfi-api-hub/v2.1/insurance/quotation/',
+    cat: 'Insurance Quotation',
+    color: 'var(--at-gold, #b08800)',
+    title: 'Insurance Quotation',
+    body: 'Receive quote requests, accept, and issue policies through your Ozone Connect endpoints across the same seven sectors. Choose between <strong>LFI-Led</strong> (your LFI hosts the customer end-to-end) and <strong>TPP-Led</strong> (the TPP collects KYC and surfaces an LFI-hosted payment URL). Status events flow back to subscribed TPPs through <code>PATCH /insurance-quote-log/{logId}</code>.',
+    highlights: ['Quotes across 7 sectors', 'New, Renewal &amp; Switch quote types', 'LFI-Led &amp; TPP-Led modes', 'Webhook-driven status events'],
+  },
 ]
 </script>
 

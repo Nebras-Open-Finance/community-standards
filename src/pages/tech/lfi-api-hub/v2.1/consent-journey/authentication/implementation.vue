@@ -4,7 +4,7 @@ meta:
 </route>
 
 <script setup lang="ts">
-const deviceArchDiagram = `PSU's device
+const deviceArchDiagram = `end user's device
 ┌─────────────────────────────────────────────┐
 │                                             │
 │  LFI Mobile App (bound to this device)      │
@@ -38,9 +38,9 @@ const paymentStepUpDiagram = `┌───────────────�
 │  2. Native biometric prompt (inherence)              │
 │  3. SCA complete ✓                                   │
 │                                                      │
-│  ─── PSU reviews payment details ───                 │
+│  ─── end user reviews payment details ───                 │
 │                                                      │
-│  4. PSU taps "Confirm Payment"                       │
+│  4. End user taps "Confirm Payment"                       │
 │  5. Native biometric prompt (step-up confirmation)   │
 │  6. Authorization complete → doConfirm               │
 │                                                      │
@@ -54,11 +54,11 @@ const pushHandoffDiagram = `Mobile browser                         LFI app (boun
 │     consentId       │                │                      │
 │     obtained)       │                │                      │
 │                     │                │                      │
-│ 2. PSU enters       │                │                      │
+│ 2. End user enters       │                │                      │
 │    username/password │                │                      │
 │    (knowledge ✓)    │                │                      │
 │                     │   push notif   │                      │
-│ 3. LFI sends push ──┼───────────────►│ 4. PSU opens notif   │
+│ 3. LFI sends push ──┼───────────────►│ 4. End user opens notif   │
 │                     │                │                      │
 │                     │                │ 5. App authenticates  │
 │ 6. Browser polls    │                │    (biometric ✓)     │
@@ -133,11 +133,11 @@ const pushHandoffDiagram = `Mobile browser                         LFI app (boun
             <tr>
               <td>3</td>
               <td>The app prompts for a native biometric (Face ID, Touch ID, fingerprint)</td>
-              <td><strong>Inherence</strong> &mdash; the PSU's biometric</td>
+              <td><strong>Inherence</strong> &mdash; the end user's biometric</td>
             </tr>
             <tr>
               <td>4</td>
-              <td>SCA is satisfied (two factors). The PSU proceeds to review and authorize the consent</td>
+              <td>SCA is satisfied (two factors). The end user proceeds to review and authorize the consent</td>
               <td>&mdash;</td>
             </tr>
           </tbody>
@@ -154,7 +154,7 @@ const pushHandoffDiagram = `Mobile browser                         LFI app (boun
 
       <h3>Device binding</h3>
       <EdProse>
-        The LFI app MUST be bound to the PSU's device during the app's initial registration or
+        The LFI app MUST be bound to the end user's device during the app's initial registration or
         enrolment. Binding MUST be established through:
       </EdProse>
       <EdBullets>
@@ -164,7 +164,7 @@ const pushHandoffDiagram = `Mobile browser                         LFI app (boun
       </EdBullets>
       <EdProse>
         On each authentication, the app verifies device binding by performing a cryptographic operation
-        with the private key. This is silent to the PSU &mdash; no user interaction is required for the
+        with the private key. This is silent to the end user &mdash; no user interaction is required for the
         possession factor.
       </EdProse>
 
@@ -228,7 +228,7 @@ const pushHandoffDiagram = `Mobile browser                         LFI app (boun
       <EdCode lang="text" :code="paymentStepUpDiagram" />
 
       <EdProse>
-        The step-up biometric at step 5 confirms the PSU's intent to authorize the specific payment.
+        The step-up biometric at step 5 confirms the end user's intent to authorize the specific payment.
         This maps directly to how banking apps handle payment confirmation and satisfies the CBUAE
         directive's step-up requirement for sensitive actions.
       </EdProse>
@@ -245,7 +245,7 @@ const pushHandoffDiagram = `Mobile browser                         LFI app (boun
       <EdProse>
         The
         <a href="/tech/lfi-api-hub/v2.1/consent-journey/authentication/#app-invocation">Overview</a>
-        defines the scenarios where the PSU does not have the LFI app installed. This section provides
+        defines the scenarios where the end user does not have the LFI app installed. This section provides
         implementation detail for those flows.
       </EdProse>
 
@@ -299,8 +299,8 @@ const pushHandoffDiagram = `Mobile browser                         LFI app (boun
       <EdProse>
         <strong>QR code:</strong> The page displays a QR code that resolves to a deep link containing
         the <code>interactionId</code> and <code>consentId</code> (obtained from <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/auth</code></span>
-        in the desktop browser session). The PSU scans the code with their mobile device, which opens
-        the LFI app. The PSU authenticates and completes consent authorization in the app. The desktop
+        in the desktop browser session). The end user scans the code with their mobile device, which opens
+        the LFI app. The end user authenticates and completes consent authorization in the app. The desktop
         page polls for completion and redirects back to the TPP.
       </EdProse>
 
@@ -312,7 +312,7 @@ const pushHandoffDiagram = `Mobile browser                         LFI app (boun
       </EdProse>
 
       <EdProse>
-        If the LFI supports browser-based authentication in its existing channels, the PSU MUST also be
+        If the LFI supports browser-based authentication in its existing channels, the end user MUST also be
         able to complete the entire journey in the desktop browser without the mobile app.
       </EdProse>
     </EdSectionBand>

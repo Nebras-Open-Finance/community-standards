@@ -487,15 +487,15 @@ const customerPsuJson = `{
       num="04"
       color="var(--at-navy)"
       eyebrow="Consent flow"
-      title="Authorize the PSU at your LFI"
+      title="Authorize the customer at your LFI"
       tone="surface"
     >
       <EdProse>
-        Once the consent has been created, the TPP redirects the PSU to your LFI's
+        Once the consent has been created, the TPP redirects the customer to your LFI's
         <a href="/tech/lfi-api-hub/v2.1/api-hub/onboarding/environment-specific/auth-endpoint">authorization endpoint</a>
         &mdash; the URL you registered during API Hub onboarding. From there, your LFI runs the standard
-        consent journey: authenticate the PSU, retrieve the consent, let the PSU approve or reject it,
-        patch the authorized accounts and PSU identifier onto the consent, and redirect back to the
+        consent journey: authenticate the customer, retrieve the consent, let the customer approve or reject it,
+        patch the authorized accounts and customer identifier onto the consent, and redirect back to the
         Hub.
       </EdProse>
 
@@ -520,7 +520,7 @@ const customerPsuJson = `{
             <tr>
               <td><a href="/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId" class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/consents/{consentId}</code></a></td>
               <td>LFI &rarr; API Hub</td>
-              <td>Update consent status, PSU identifiers, and account IDs</td>
+              <td>Update consent status, customer identifiers, and account IDs</td>
             </tr>
             <tr>
               <td><a href="/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/open-api/auth-interactionId-doConfirm" class="endpoint"><span class="http-method http-method--post">POST</span><code>/auth/{interactionId}/doConfirm</code></a></td>
@@ -572,7 +572,7 @@ const customerPsuJson = `{
       </EdProse>
       <EdBullets>
         <li><code>o3-consent-id</code> &mdash; the authorized consent backing this call</li>
-        <li><code>o3-psu-identifier</code> &mdash; the opaque reference your LFI patched onto the consent during the <a href="#consent-flow">Consent flow</a>, identifying the PSU inside your systems</li>
+        <li><code>o3-psu-identifier</code> &mdash; the opaque reference your LFI patched onto the consent during the <a href="#consent-flow">Consent flow</a>, identifying the customer inside your systems</li>
         <li><code>o3-api-uri</code> &mdash; the parameterised URL the TPP called</li>
         <li><code>o3-ozone-interaction-id</code> &mdash; a per-request correlation ID for debugging</li>
       </EdBullets>
@@ -626,7 +626,7 @@ const customerPsuJson = `{
             <tr><td><code>o3-api-uri</code></td><td>Yes</td><td>The parameterised URL of the API being called by the TPP</td></tr>
             <tr><td><code>o3-api-operation</code></td><td>Yes</td><td>The HTTP method of the operation carried out by the TPP (e.g. <code>GET</code>)</td></tr>
             <tr><td><code>o3-consent-id</code></td><td>Yes</td><td>The consent ID authorising this call</td></tr>
-            <tr><td><code>o3-psu-identifier</code></td><td>Yes</td><td>Base64-encoded representation of the PSU identifier JSON object &mdash; the opaque LFI-issued reference patched onto the consent at authorization, linking the consent to the authenticated PSU</td></tr>
+            <tr><td><code>o3-psu-identifier</code></td><td>Yes</td><td>Base64-encoded representation of the customer identifier JSON object &mdash; the opaque LFI-issued reference patched onto the consent at authorization, linking the consent to the authenticated customer</td></tr>
             <tr><td><code>o3-ozone-interaction-id</code></td><td>Yes</td><td>Hub-generated interaction ID. Equals <code>o3-caller-interaction-id</code> if the TPP provided one</td></tr>
             <tr><td><code>o3-caller-interaction-id</code></td><td>No</td><td>Interaction ID passed in by the TPP, if present</td></tr>
           </tbody>
@@ -664,7 +664,7 @@ const customerPsuJson = `{
           <tbody>
             <tr><td><code>Consent.AccountTemporarilyBlocked</code></td><td><code>The account is temporarily blocked.</code></td><td>Account status is <code>Suspended</code></td></tr>
             <tr><td><code>Consent.PermanentAccountAccessFailure</code></td><td><code>The account is permanently inaccessible.</code></td><td>Account status is <code>Closed</code>, <code>Deceased</code>, or <code>Unclaimed</code></td></tr>
-            <tr><td><code>GenericError</code></td><td><code>The account is inaccessible.</code></td><td><code>{accountId}</code> does not belong to the PSU identified by <code>o3-psu-identifier</code></td></tr>
+            <tr><td><code>GenericError</code></td><td><code>The account is inaccessible.</code></td><td><code>{accountId}</code> does not belong to the customer identified by <code>o3-psu-identifier</code></td></tr>
           </tbody>
         </table>
       </EdRefTable>
@@ -726,7 +726,7 @@ const customerPsuJson = `{
       <EdProse>
         Returns the accounts matching the <code>accountIds</code> query parameter. Non-CAAP LFIs MUST
         treat <code>accountIds</code> as mandatory &mdash; it is always supplied by the Hub and contains
-        the set of accounts the PSU consented to share.
+        the set of accounts the customer consented to share.
       </EdProse>
 
       <h3 class="ed-doc__subhead">Request headers</h3>
@@ -1461,21 +1461,21 @@ const customerPsuJson = `{
         &mdash; "parties" on the TPP side, "customer" on Ozone Connect.
       </EdProse>
       <EdProse>
-        Returns the customer record for the authenticated PSU. Unlike
+        Returns the customer record for the authenticated customer. Unlike
         <code>/accounts/{accountId}/customer</code>, this endpoint is not scoped to a specific account.
       </EdProse>
 
       <EdNote type="warning" title="Resolve from o3-psu-identifier, not the consent">
         <p>
           The response MUST be derived from the <code>o3-psu-identifier</code> header &mdash; not from
-          any account on the consent. At authorization, the LFI patched an opaque PSU identifier onto
+          any account on the consent. At authorization, the LFI patched an opaque customer identifier onto
           the consent, linking the consent to the authenticated user inside the LFI's own systems. The
-          Hub forwards that identifier here. Your LFI resolves it back to the PSU and returns that
-          PSU's claims.
+          Hub forwards that identifier here. Your LFI resolves it back to the customer and returns that
+          customer's claims.
         </p>
         <p>
           <code>o3-consent-id</code> is still supplied so the LFI can attribute the call for logging,
-          but it MUST NOT be used to select which customer to return &mdash; the PSU who authenticated
+          but it MUST NOT be used to select which customer to return &mdash; the customer who authenticated
           the consent is the only subject of this response.
         </p>
       </EdNote>

@@ -15,13 +15,13 @@ const principles: Principle[] = [
   {
     num: 1,
     name: 'LFIs authenticate',
-    detail: `The PSU MUST go through Multi-Factor Authentication (MFA) at their LFI. The API Hub
-             does not perform PSU authentication.`,
+    detail: `The end user MUST go through Multi-Factor Authentication (MFA) at their LFI. The API Hub
+             does not perform end user authentication.`,
   },
   {
     num: 2,
     name: 'Parity of experience',
-    detail: `The PSU MUST be able to use the same authentication methods they use when accessing
+    detail: `The end user MUST be able to use the same authentication methods they use when accessing
              the LFI's own digital channels. Open Finance authentication MUST NOT be more
              obstructive, slower, or require more steps than the LFI's existing channels.`,
   },
@@ -29,7 +29,7 @@ const principles: Principle[] = [
     num: 3,
     name: 'Single MFA ceremony',
     detail: `Unlike an LFI's online channels which may require authentication for login and again
-             for sensitive actions, the Open Finance consent journey requires the PSU to complete
+             for sensitive actions, the Open Finance consent journey requires the end user to complete
              MFA <strong>once</strong> before authorization. The exception is
              <a href="/tech/lfi-api-hub/v2.1/consent-journey/authentication/sca#step-up-authentication-for-payment-consents">step-up authentication for payment consents</a>.`,
   },
@@ -44,7 +44,7 @@ const principles: Principle[] = [
     num: 5,
     name: 'Immediate challenge',
     detail: `The authentication challenge MUST be presented immediately on app open or page load,
-             with no preceding splash, welcome screen, or tap-to-continue. The PSU arrives from
+             with no preceding splash, welcome screen, or tap-to-continue. The end user arrives from
              the TPP having already expressed intent to authenticate; no further action MUST be
              required to initiate the challenge. This takes precedence over parity with the LFI's
              own channels.`,
@@ -71,7 +71,7 @@ const scenarios: Scenario[] = [
   },
   {
     scenario: 'LFI app is not installed',
-    behaviour: `The Authorization Endpoint MUST open a mobile-optimised web page where the PSU can
+    behaviour: `The Authorization Endpoint MUST open a mobile-optimised web page where the end user can
                 complete authentication.`,
   },
 ]
@@ -85,7 +85,7 @@ const immediate: ImmediateRow[] = [
   {
     channel: 'Native app — biometrics available',
     meaning: `The native biometric prompt (Face ID, Touch ID, fingerprint) MUST fire automatically
-              as the app opens. A &ldquo;Log in with Face ID&rdquo; button that the PSU must tap to
+              as the app opens. A &ldquo;Log in with Face ID&rdquo; button that the end user must tap to
               invoke the prompt is <strong>NOT</strong> permitted.`,
   },
   {
@@ -104,10 +104,10 @@ const immediate: ImmediateRow[] = [
 interface FlowStep { num: number; text: string }
 const flowSteps: FlowStep[] = [
   { num: 1, text: 'The TPP creates a consent and receives a redirect URI from the API Hub' },
-  { num: 2, text: `The PSU's device opens the LFI's <strong>Authorization Endpoint</strong>` },
+  { num: 2, text: `The end user's device opens the LFI's <strong>Authorization Endpoint</strong>` },
   {
     num: 3,
-    text: `<strong>The LFI authenticates the PSU</strong> using Strong Customer Authentication (SCA)`,
+    text: `<strong>The LFI authenticates the end user</strong> using Strong Customer Authentication (SCA)`,
   },
   { num: 4, text: 'The LFI presents the consent for authorization' },
   { num: 5, text: 'The LFI completes the interaction and redirects back to the TPP' },
@@ -127,16 +127,16 @@ const flowSteps: FlowStep[] = [
           <span class="ed-doc__read">3 min read</span>
         </h1>
         <p class="ed-doc__lede">
-          When a TPP initiates a consent journey, the API Hub redirects the PSU (Payment Services
-          User) to the LFI's <strong>Authorization Endpoint</strong> so the PSU can prove their
-          identity. This is the <strong>authentication</strong> step &mdash; the PSU demonstrates
+          When a TPP initiates a consent journey, the API Hub redirects the end user (Payment Services
+          User) to the LFI's <strong>Authorization Endpoint</strong> so the end user can prove their
+          identity. This is the <strong>authentication</strong> step &mdash; the end user demonstrates
           to the LFI that they are who they claim to be, using the same credentials and methods
           they use when accessing the LFI's own digital channels.
         </p>
         <p class="ed-doc__lede ed-doc__lede--tight">
           Authentication is distinct from
           <a href="/tech/lfi-api-hub/v2.1/consent-journey/authorization/">authorization</a>, which
-          is the subsequent step where the authenticated PSU reviews and approves the consent (e.g.
+          is the subsequent step where the authenticated end user reviews and approves the consent (e.g.
           selecting accounts, confirming a payment).
         </p>
       </div>
@@ -196,7 +196,7 @@ const flowSteps: FlowStep[] = [
     >
       <EdProse>
         The LFI's <strong>Authorization Endpoint</strong> MUST support two scenarios based on the
-        PSU's device:
+        end user's device:
       </EdProse>
 
       <EdRefTable>
@@ -218,12 +218,12 @@ const flowSteps: FlowStep[] = [
 
       <EdProse>
         Both scenarios MUST be supported. The Authorization Endpoint is expected to directly open
-        the native app when this is how PSUs typically interact with the LFI digitally.
+        the native app when this is how end users typically interact with the LFI digitally.
       </EdProse>
 
       <h3 class="ed-doc__sub">Immediate authentication challenge</h3>
       <EdProse>
-        Whichever scenario applies, the authentication challenge MUST be the first thing the PSU
+        Whichever scenario applies, the authentication challenge MUST be the first thing the end user
         sees. No tap, button press, or intermediate screen may precede the challenge. Concretely:
       </EdProse>
 
@@ -248,7 +248,7 @@ const flowSteps: FlowStep[] = [
         This requirement takes precedence over parity with the LFI's own digital channels. If the
         LFI's own mobile app or website requires the user to tap a login button before the
         authentication challenge is shown, that tap MUST NOT be present in the Open Finance journey
-        &mdash; the PSU has arrived from the TPP with explicit intent to authenticate and
+        &mdash; the end user has arrived from the TPP with explicit intent to authenticate and
         authorize, and any further action to initiate the challenge is redundant friction.
       </EdProse>
     </EdSectionBand>

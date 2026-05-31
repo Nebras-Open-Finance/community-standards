@@ -81,7 +81,7 @@ const exampleResponse = `{
             <tr><td><code>o3-api-operation</code></td><td>Yes</td><td>The HTTP method of the operation carried out by the TPP (e.g. <code>GET</code>)</td></tr>
             <tr><td><code>o3-ozone-interaction-id</code></td><td>Yes</td><td>Hub-generated interaction ID. Equals <code>o3-caller-interaction-id</code> if the TPP provided one</td></tr>
             <tr><td><code>o3-caller-interaction-id</code></td><td>No</td><td>Interaction ID passed in by the TPP, if present</td></tr>
-            <tr><td><code>o3-psu-identifier</code></td><td>Yes</td><td>Base64-encoded representation of the PSU identifier JSON object</td></tr>
+            <tr><td><code>o3-psu-identifier</code></td><td>Yes</td><td>Base64-encoded representation of the customer identifier JSON object</td></tr>
           </tbody>
         </table>
       </EdRefTable>

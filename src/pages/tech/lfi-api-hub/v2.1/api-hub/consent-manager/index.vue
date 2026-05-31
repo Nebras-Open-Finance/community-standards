@@ -105,7 +105,7 @@ meta:
       <h3>1. Authentication and authorisation journey</h3>
       <EdProse>
         During the consent authorisation flow, the LFI's authorisation server calls the Consent Manager to
-        read the consent details and update the consent state after the PSU has authenticated and made
+        read the consent details and update the consent state after the end user has authenticated and made
         their authorisation decision.
       </EdProse>
       <EdProse>

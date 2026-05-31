@@ -34,6 +34,14 @@ const capabilities: Capability[] = [
     body: 'Consented access to a customer&rsquo;s insurance policies across seven sectors &mdash; Employment, Health, Home, Life, Motor, Renters, and Travel. Permissions such as <code>ReadInsurancePolicies</code>, <code>ReadCustomerBasic</code>, and <code>ReadInsurancePremium</code> control which fields are returned. Premium data is encrypted in transit (JWE) when the customer has consented to <code>ReadInsurancePremium</code>.',
     highlights: ['Policy information across 7 sectors', 'Customer &amp; payment-method data', 'Encrypted premium values', 'Coverage, riders &amp; claims history'],
   },
+  {
+    href: '/tech/tpp-standards/v2.1/insurance/quotation/',
+    cat: 'Insurance Quotation',
+    color: 'var(--at-gold, #b08800)',
+    title: 'Insurance Quotation',
+    body: 'Request quotes from one or more LFIs for a single customer, accept on the customer’s behalf, and drive the application through to policy issuance &mdash; across the same seven sectors. Runs on the Client Credentials Grant with no per-customer consent. Subscribe to webhook events on PATCH Accept to receive real-time status updates without polling. Choose <strong>LFI-Led</strong> (the LFI hosts the customer) or <strong>TPP-Led</strong> (you collect KYC and redirect to an LFI-hosted payment URL).',
+    highlights: ['Quote across 7 sectors', 'New, Renewal &amp; Switch quote types', 'LFI-Led &amp; TPP-Led modes', 'Webhook-driven event delivery'],
+  },
 ]
 </script>
 

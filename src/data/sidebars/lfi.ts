@@ -32,6 +32,19 @@ function insuranceApiRef(base: string): SidebarItem[] {
   }))
 }
 
+function insuranceQuotationApiRef(base: string): SidebarItem[] {
+  return INSURANCE_TYPES.map(([label, slug]) => ({
+    text: `${label} Insurance`,
+    collapsed: true,
+    items: [
+      apiRef('POST', `/${slug}-insurance-quotes`, `${base}/${slug}-insurance-quotes`),
+      apiRef('GET', `/${slug}-insurance-quotes/{QuoteId}`, `${base}/get-${slug}-insurance-quotes-QuoteId`),
+      apiRef('PATCH', `/${slug}-insurance-quotes/{QuoteId}`, `${base}/patch-${slug}-insurance-quotes-QuoteId`),
+      apiRef('POST', `/${slug}-insurance-policies`, `${base}/post-${slug}-insurance-policies`),
+    ],
+  }))
+}
+
 export const lfiSidebar: SidebarItem[] = [
   {
     text: 'Getting Started',
@@ -228,6 +241,12 @@ export const lfiSidebar: SidebarItem[] = [
                 items: [
                   apiRef('GET', '/payment-log', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/payment-log`),
                   apiRef('PATCH', '/payment-log/{id}', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/payment-log-id`),
+                ],
+              },
+              {
+                text: 'Insurance Quote Log',
+                items: [
+                  apiRef('PATCH', '/insurance-quote-log/{logId}', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/insurance-quote-log-logId`),
                 ],
               },
             ],
@@ -483,6 +502,30 @@ export const lfiSidebar: SidebarItem[] = [
           },
         ],
       },
+      {
+        text: 'Quotation',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/insurance/quotation/` },
+          { text: 'Requirements', link: `${BASE}/${VERSION}/insurance/quotation/requirements` },
+          { text: 'Quote Types (New / Renewal / Switch)', link: `${BASE}/${VERSION}/insurance/quotation/quote-types` },
+          { text: 'User Journeys', link: `${BASE}/${VERSION}/insurance/quotation/user-journeys` },
+          {
+            text: 'API Guide',
+            collapsed: true,
+            items: [
+              { text: 'Overview & Status Events', link: `${BASE}/${VERSION}/insurance/quotation/api-guide/` },
+              { text: 'LFI-Led Flow', link: `${BASE}/${VERSION}/insurance/quotation/api-guide/lfi-led` },
+              { text: 'TPP-Led Flow', link: `${BASE}/${VERSION}/insurance/quotation/api-guide/tpp-led` },
+            ],
+          },
+          {
+            text: 'API Reference',
+            collapsed: true,
+            items: insuranceQuotationApiRef(`${BASE}/${VERSION}/insurance/quotation/open-api`),
+          },
+        ],
+      },
     ],
   },
 
@@ -573,6 +616,76 @@ export const lfiSidebar: SidebarItem[] = [
         items: [
           { text: 'Attestation & Self Testing', link: `${BASE}/production/testing-certification/self-testing` },
           { text: 'TPP Buddying', link: `${BASE}/production/testing-certification/tpp-buddying` },
+        ],
+      },
+    ],
+  },
+
+  {
+    text: 'CAAP',
+    collapsed: true,
+    items: [
+      { text: 'Overview', link: `${BASE}/${VERSION}/caap/` },
+      { text: 'User Experience', link: `${BASE}/${VERSION}/caap/user-experience` },
+      { text: 'API Guide', link: `${BASE}/${VERSION}/caap/api-guide` },
+      { text: 'Pricing', link: `${BASE}/${VERSION}/caap/pricing` },
+      {
+        text: 'API Reference',
+        collapsed: true,
+        items: [
+          {
+            text: 'User Verification',
+            collapsed: true,
+            items: [
+              apiRef('POST', '/users/actions/challenge/initialize', `${BASE}/${VERSION}/caap/open-api/users-challenge-initialize`),
+              apiRef('POST', '/users/actions/challenge/query', `${BASE}/${VERSION}/caap/open-api/users-challenge-query`),
+              apiRef('POST', '/users/actions/challenge/complete', `${BASE}/${VERSION}/caap/open-api/users-challenge-complete`),
+            ],
+          },
+          {
+            text: 'User Registration',
+            collapsed: true,
+            items: [
+              apiRef('POST', '/users/actions/register/initialize', `${BASE}/${VERSION}/caap/open-api/users-register-initialize`),
+              apiRef('POST', '/users/actions/register/complete', `${BASE}/${VERSION}/caap/open-api/users-register-complete`),
+              apiRef('POST', '/users/actions/deregister', `${BASE}/${VERSION}/caap/open-api/users-deregister`),
+            ],
+          },
+          {
+            text: 'PII Decryption',
+            collapsed: true,
+            items: [
+              apiRef('POST', '/users/actions/pii/decrypt', `${BASE}/${VERSION}/caap/open-api/users-pii-decrypt`),
+            ],
+          },
+          {
+            text: 'Consent',
+            collapsed: true,
+            items: [
+              apiRef('POST', '/consent/actions/validate', `${BASE}/${VERSION}/caap/open-api/consent-actions-validate`),
+            ],
+          },
+          {
+            text: 'Accounts',
+            collapsed: true,
+            items: [
+              apiRef('GET', '/accounts', `${BASE}/${VERSION}/caap/open-api/accounts`),
+              apiRef('GET', '/accounts/{accountId}', `${BASE}/${VERSION}/caap/open-api/accounts-accountId`),
+            ],
+          },
+          {
+            text: 'Insurance Policies',
+            collapsed: true,
+            items: [
+              apiRef('GET', '/employment-insurance-policies', `${BASE}/${VERSION}/caap/open-api/employment-insurance-policies`),
+              apiRef('GET', '/health-insurance-policies', `${BASE}/${VERSION}/caap/open-api/health-insurance-policies`),
+              apiRef('GET', '/home-insurance-policies', `${BASE}/${VERSION}/caap/open-api/home-insurance-policies`),
+              apiRef('GET', '/life-insurance-policies', `${BASE}/${VERSION}/caap/open-api/life-insurance-policies`),
+              apiRef('GET', '/motor-insurance-policies', `${BASE}/${VERSION}/caap/open-api/motor-insurance-policies`),
+              apiRef('GET', '/renters-insurance-policies', `${BASE}/${VERSION}/caap/open-api/renters-insurance-policies`),
+              apiRef('GET', '/travel-insurance-policies', `${BASE}/${VERSION}/caap/open-api/travel-insurance-policies`),
+            ],
+          },
         ],
       },
     ],

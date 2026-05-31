@@ -107,7 +107,7 @@ interaction_id = str(uuid.uuid4())
       <EdProse>The IP address of the customer's device; send it whenever the customer is actively present in a session, so the LFI's fraud controls can see that the request originated from a real user rather than a background process.</EdProse>
 
       <h3><code>x-fapi-auth-date</code></h3>
-      <EdProse>The date and time the customer last authenticated with your system (RFC 7231 HTTP-date format); send it on PSU-facing calls so the LFI knows how fresh the authentication is and can apply appropriate session risk controls.</EdProse>
+      <EdProse>The date and time the customer last authenticated with your system (RFC 7231 HTTP-date format); send it on end user-facing calls so the LFI knows how fresh the authentication is and can apply appropriate session risk controls.</EdProse>
 
       <h3><code>x-customer-user-agent</code></h3>
       <EdProse>The user-agent string of the customer's browser or app; send it when the customer is accessing your service through a browser or native application, as it supports API Hub device fingerprinting and fraud detection.</EdProse>

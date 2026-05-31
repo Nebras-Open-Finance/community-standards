@@ -16,12 +16,12 @@ meta:
           <span class="ed-doc__read">8 min read</span>
         </h1>
         <p class="ed-doc__lede">
-          The <strong>Authorization Endpoint</strong> is the HTTPS URL to which the PSU (customer) is
+          The <strong>Authorization Endpoint</strong> is the HTTPS URL to which the end user (customer) is
           redirected during consent authorisation flows. It is the entry point to the LFI's
           authentication and consent authorisation experience.
         </p>
         <p class="ed-doc__lede ed-doc__lede--tight">
-          The TPP constructs the redirect URL and sends the PSU there directly &mdash; the API Hub does
+          The TPP constructs the redirect URL and sends the end user there directly &mdash; the API Hub does
           not perform this redirect. The URL MUST therefore be a stable, publicly accessible HTTPS
           endpoint that works reliably across all devices and browsers.
         </p>
@@ -75,7 +75,7 @@ meta:
       <EdBullets>
         <li>A TPP initiates a consent request via Pushed Authorization Request (PAR) to the API Hub.</li>
         <li>The API Hub creates the consent and returns a <code>request_uri</code> to the TPP.</li>
-        <li>The TPP constructs the authorization URL and redirects the PSU to <strong>your Authorization Endpoint</strong>.</li>
+        <li>The TPP constructs the authorization URL and redirects the end user to <strong>your Authorization Endpoint</strong>.</li>
         <li>
           Your system calls
           <a href="/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/" class="endpoint"><span class="http-method http-method--get">GET</span><code>/auth</code></a>
@@ -83,9 +83,9 @@ meta:
           redirect.
         </li>
         <li>Headless Heimdall validates the FAPI/OIDC request and returns the interaction context and decoded consent details.</li>
-        <li>Your system authenticates the PSU and presents the consent for approval.</li>
+        <li>Your system authenticates the end user and presents the consent for approval.</li>
         <li>Your system calls <code>doConfirm</code> or <code>doFail</code> on the Headless Heimdall Auth Server with the result.</li>
-        <li>The PSU is redirected back to the TPP.</li>
+        <li>The end user is redirected back to the TPP.</li>
       </EdBullets>
 
       <EdNote type="info" title="FAPI 2.0 protocol handling">
@@ -94,7 +94,7 @@ meta:
           Auth Server. Your Authorization Endpoint does not need to implement FAPI validation, token
           binding, or OIDC protocol logic directly &mdash; these are handled when you call
           <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/auth</code></span>. Your endpoint's role is to receive the redirect, invoke
-          <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/auth</code></span>, authenticate the PSU, and complete the consent journey.
+          <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/auth</code></span>, authenticate the end user, and complete the consent journey.
         </p>
         <p>
           For full details on the authorization flow, see the
@@ -115,15 +115,15 @@ meta:
 
       <EdBullets>
         <li>Use <strong>HTTPS</strong> &mdash; HTTP is not permitted</li>
-        <li>Be a clean base URL with <strong>no query parameters</strong> &mdash; the TPP appends OIDC query parameters (<code>client_id</code>, <code>response_type</code>, <code>scope</code>, <code>request_uri</code>) during the redirect</li>
-        <li>Be accessible to PSU browsers over the <strong>public internet</strong></li>
+        <li>Be a clean base URL with <strong>no query parameters</strong> &mdash; the TPP appends OIDC query parameters (<code>client_id</code>, <code>response_type</code>, <code>request_uri</code>) during the redirect</li>
+        <li>Be accessible to end user browsers over the <strong>public internet</strong></li>
         <li>Resolve to infrastructure <strong>owned and operated by the LFI</strong></li>
         <li>Be stable &mdash; the URL MUST NOT change without coordinated reconfiguration of the API Hub instance</li>
       </EdBullets>
 
       <EdProse>The TPP constructs the full redirect URL in the following format:</EdProse>
 
-      <EdCode lang="text" code="https://your-auth-endpoint.example.com/authorize?client_id={clientId}&response_type=code&scope=openid&request_uri={request_uri}" />
+      <EdCode lang="text" code="https://your-auth-endpoint.example.com/authorize?client_id={clientId}&response_type=code&request_uri={request_uri}" />
 
       <EdProse>
         Where <code>request_uri</code> is the value returned from the API Hub's <code>/par</code> response.
@@ -140,8 +140,8 @@ meta:
     >
       <EdProse>
         The Authorization Endpoint URL MUST be configured as a <strong>deep link</strong> that opens the
-        LFI's native mobile app when it is installed on the PSU's device. This is the primary
-        authentication channel &mdash; most PSUs will authenticate via the LFI's mobile banking app.
+        LFI's native mobile app when it is installed on the end user's device. This is the primary
+        authentication channel &mdash; most end users will authenticate via the LFI's mobile banking app.
       </EdProse>
 
       <h3>Required approach: Universal Links and App Links</h3>
@@ -176,7 +176,7 @@ meta:
 
       <EdProse>
         These mechanisms allow the operating system to verify that the LFI owns both the domain and the
-        app, and to open the app directly when the PSU navigates to the URL &mdash; without showing an
+        app, and to open the app directly when the end user navigates to the URL &mdash; without showing an
         intermediate browser page or disambiguation dialog.
       </EdProse>
 
@@ -196,7 +196,7 @@ meta:
         <li><strong>The LFI hosts a verification file</strong> on the Authorization Endpoint domain, proving ownership of both the domain and the app.</li>
         <li><strong>The LFI's mobile app declares</strong> that it handles URLs for the Authorization Endpoint domain.</li>
         <li><strong>The operating system verifies</strong> the association at app install time by fetching the verification file from the domain.</li>
-        <li><strong>When the PSU navigates to the URL</strong>, the OS opens the LFI app directly &mdash; no browser page is loaded, no disambiguation dialog is shown.</li>
+        <li><strong>When the end user navigates to the URL</strong>, the OS opens the LFI app directly &mdash; no browser page is loaded, no disambiguation dialog is shown.</li>
       </EdBullets>
 
       <h4>iOS &mdash; Apple App Site Association</h4>
@@ -234,9 +234,9 @@ meta:
 
       <h3>Fallback when the app is not installed</h3>
       <EdProse>
-        If the LFI app is not installed on the PSU's device, the URL opens in the device's browser. In
+        If the LFI app is not installed on the end user's device, the URL opens in the device's browser. In
         this case, the Authorization Endpoint MUST serve a <strong>mobile-optimised web page</strong>
-        that allows the PSU to complete authentication. See the
+        that allows the end user to complete authentication. See the
         <a href="/tech/lfi-api-hub/v2.1/consent-journey/authentication/implementation#fallback-scenarios-when-the-app-is-not-available">Authentication Implementation Guide</a>
         for the detailed fallback flows, including browser-based authentication, app handoff via push
         notification, and QR code handoff from desktop.
@@ -244,7 +244,7 @@ meta:
 
       <EdProse>
         The same URL MUST work in both cases &mdash; app invocation and browser fallback &mdash; without
-        requiring the TPP or PSU to do anything differently.
+        requiring the TPP or end user to do anything differently.
       </EdProse>
     </EdSectionBand>
 
@@ -257,19 +257,19 @@ meta:
       tone="cream"
     >
       <EdProse>
-        When the PSU is on a desktop device, the Authorization Endpoint URL opens in the desktop
+        When the end user is on a desktop device, the Authorization Endpoint URL opens in the desktop
         browser. There is no native app to deep link to. In this case, the endpoint MUST render a web
-        page that enables the PSU to complete the consent journey. Common approaches include:
+        page that enables the end user to complete the consent journey. Common approaches include:
       </EdProse>
 
       <EdBullets>
-        <li><strong>QR code handoff</strong> &mdash; the page displays a QR code that the PSU scans with their mobile device, opening the LFI app to complete authentication</li>
-        <li><strong>Push notification handoff</strong> &mdash; the page collects identifying information and triggers a push notification to the PSU's bound device</li>
-        <li><strong>Browser-based authentication</strong> &mdash; if the LFI supports web-based authentication in its existing digital channels, the PSU MUST be able to complete the entire journey in the desktop browser</li>
+        <li><strong>QR code handoff</strong> &mdash; the page displays a QR code that the end user scans with their mobile device, opening the LFI app to complete authentication</li>
+        <li><strong>Push notification handoff</strong> &mdash; the page collects identifying information and triggers a push notification to the end user's bound device</li>
+        <li><strong>Browser-based authentication</strong> &mdash; if the LFI supports web-based authentication in its existing digital channels, the end user MUST be able to complete the entire journey in the desktop browser</li>
       </EdBullets>
 
       <EdProse>
-        The desktop page MUST poll for completion and redirect the PSU back to the TPP once the consent
+        The desktop page MUST poll for completion and redirect the end user back to the TPP once the consent
         journey concludes.
       </EdProse>
 
@@ -307,7 +307,7 @@ meta:
       <h3>What the LFI MUST test</h3>
       <EdProse>
         LFIs are responsible for comprehensive testing of the Authorization Endpoint across the full
-        range of devices, operating systems, and browsers their PSUs may use. This includes verifying
+        range of devices, operating systems, and browsers their end users may use. This includes verifying
         that:
       </EdProse>
 
@@ -316,13 +316,13 @@ meta:
         <li>The browser fallback renders and functions correctly on both iOS and Android when the app is not installed, across all major browsers</li>
         <li>The desktop experience works across all major desktop browsers</li>
         <li>The flow completes successfully regardless of whether the TPP opens the redirect in the current tab, a new tab, or a system browser view</li>
-        <li>Navigation behaviour is sensible &mdash; for example, pressing the device back button during the flow does not leave the PSU stranded on a blank page</li>
+        <li>Navigation behaviour is sensible &mdash; for example, pressing the device back button during the flow does not leave the end user stranded on a blank page</li>
         <li>The flow works on devices with different screen sizes, orientations, and accessibility settings</li>
       </EdBullets>
 
       <EdNote type="warning" title="Compatibility failures block production certification">
         <p>
-          Any failure of the Authorization Endpoint to function on a device or browser that PSUs
+          Any failure of the Authorization Endpoint to function on a device or browser that end users
           commonly use will be treated as a <strong>certification failure</strong>. The LFI is
           responsible for ensuring broad compatibility. The CX certification process, managed by Nebras,
           will verify this as part of production readiness.
@@ -332,8 +332,8 @@ meta:
       <h3>App disambiguation</h3>
       <EdProse>
         On Android, if multiple apps are registered to handle the same domain (for example, a production
-        app and a development build), the OS may display a disambiguation dialog asking the PSU to
-        choose which app to open. This MUST NOT occur in production &mdash; it confuses the PSU and
+        app and a development build), the OS may display a disambiguation dialog asking the end user to
+        choose which app to open. This MUST NOT occur in production &mdash; it confuses the end user and
         undermines trust.
       </EdProse>
 

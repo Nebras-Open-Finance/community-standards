@@ -96,6 +96,11 @@ meta:
               <td>Payment status update on a consent with <code>subscription.Webhook.IsActive: true</code></td>
               <td><a href="/tech/tpp-standards/v2.1/webhooks/payment-status/api-guide">Payment Status Event</a></td>
             </tr>
+            <tr>
+              <td>Insurance Quote Status</td>
+              <td>Quote lifecycle event on a quote with <code>Subscription.Webhook.IsActive: true</code> (<code>ApplicationPending</code>, <code>ApplicationApproved</code>, <code>PolicyIssued</code>, <code>Completed</code>, terminal states)</td>
+              <td><a href="/tech/tpp-standards/v2.1/webhooks/insurance-status/api-guide">Insurance Quote Status Event</a></td>
+            </tr>
           </tbody>
         </table>
       </EdRefTable>
@@ -125,6 +130,13 @@ meta:
             <div class="ed-link-card__meta"><span class="ed-link-card__cat">Sub-section</span></div>
             <h3 class="ed-link-card__title">Payment Status</h3>
             <p class="ed-link-card__desc">Per-payment status updates on consents that opted into webhook delivery.</p>
+            <div class="ed-link-card__foot"><span class="ed-link-card__cta">Open</span><span class="ed-link-card__arrow">&rarr;</span></div>
+          </a>
+          <a class="ed-link-card" href="/tech/tpp-standards/v2.1/webhooks/insurance-status/api-guide" :style="{ '--card-color': 'var(--at-violet, #6d28d9)' }">
+            <span class="ed-link-card__top" />
+            <div class="ed-link-card__meta"><span class="ed-link-card__cat">Sub-section</span></div>
+            <h3 class="ed-link-card__title">Insurance Quote Status</h3>
+            <p class="ed-link-card__desc">Quote lifecycle updates delivered when a TPP attaches a <code>Subscription.Webhook</code> to an accepted insurance quote.</p>
             <div class="ed-link-card__foot"><span class="ed-link-card__cta">Open</span><span class="ed-link-card__arrow">&rarr;</span></div>
           </a>
           <a class="ed-link-card" href="/tech/tpp-standards/security/fapi/receiving-events" :style="{ '--card-color': 'var(--at-blue-deep, #1d4ed8)' }">

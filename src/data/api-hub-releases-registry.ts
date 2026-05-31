@@ -313,7 +313,7 @@ export const API_HUB_RELEASES: ReleaseEntry[] = [
       'A valid pre-populated DebtorAccount is now accepted by the Sandbox Model Bank during the authorisation journey.',
     description:
       'Corrected Sandbox Model Bank behaviour when the TPP supplies a valid Initiation.DebtorAccount in the PAR request for a Single Instant Payment or Multi Payment consent.\n\n' +
-      'Previously, the Sandbox Model Bank incorrectly rejected the consent during the authorisation journey even when the supplied DebtorAccount was a valid IBAN held by the test PSU. This deviated from the Debtor Account validation rules — a valid pre-populated account should be accepted and used as the source account for the payment.\n\n' +
+      'Previously, the Sandbox Model Bank incorrectly rejected the consent during the authorisation journey even when the supplied DebtorAccount was a valid IBAN held by the test end user. This deviated from the Debtor Account validation rules — a valid pre-populated account should be accepted and used as the source account for the payment.\n\n' +
       'The Sandbox Model Bank now accepts a valid pre-populated DebtorAccount and proceeds with the consent journey as specified.',
     impact:
       'TPPs testing pre-populated DebtorAccount flows in the Sandbox can now exercise both Single Instant Payment and Multi Payment journeys end-to-end. Production behaviour is unchanged.',

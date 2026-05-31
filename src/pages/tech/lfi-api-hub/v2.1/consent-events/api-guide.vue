@@ -222,7 +222,7 @@ meta:
           </li>
           <li>
             <strong>Your system was offline and never received the event</strong> &mdash; reconcile
-            lazily at PSU login by calling
+            lazily at end user login by calling
             <a href="/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/psu-userId-consents" class="endpoint"><span class="http-method http-method--get">GET</span><code>/psu/{userId}/consents</code></a>
             before rendering the CMI.
           </li>

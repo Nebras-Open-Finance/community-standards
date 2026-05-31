@@ -231,7 +231,7 @@ const paymentExample = `{
         category="Consents"
         category-color="var(--at-teal)"
         title="Consent Identifiers"
-        desc="Why PSU and account IDs patched onto a consent must be opaque."
+        desc="Why end user and account IDs patched onto a consent must be opaque."
       />
       <EdRelatedCard
         href="/knowledge-base/articles/pii-encryption"

@@ -32,6 +32,19 @@ function insuranceApiRef(base: string): SidebarItem[] {
   }))
 }
 
+function insuranceQuotationApiRef(base: string): SidebarItem[] {
+  return INSURANCE_TYPES.map(([label, slug]) => ({
+    text: `${label} Insurance`,
+    collapsed: true,
+    items: [
+      apiRef('POST', `/${slug}-insurance-quotes`, `${base}/${slug}-insurance-quotes`),
+      apiRef('GET', `/${slug}-insurance-quotes/{QuoteId}`, `${base}/get-${slug}-insurance-quotes-QuoteId`),
+      apiRef('PATCH', `/${slug}-insurance-quotes/{QuoteId}`, `${base}/patch-${slug}-insurance-quotes-QuoteId`),
+      apiRef('POST', `/${slug}-insurance-policies`, `${base}/post-${slug}-insurance-policies`),
+    ],
+  }))
+}
+
 export const tppSidebar: SidebarItem[] = [
   {
     text: 'Getting Started',
@@ -432,6 +445,30 @@ export const tppSidebar: SidebarItem[] = [
           },
         ],
       },
+      {
+        text: 'Quotation',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/${VERSION}/insurance/quotation/` },
+          { text: 'Requirements', link: `${BASE}/${VERSION}/insurance/quotation/requirements` },
+          { text: 'Quote Types (New / Renewal / Switch)', link: `/tech/lfi-api-hub/${VERSION}/insurance/quotation/quote-types` },
+          { text: 'User Journeys', link: `${BASE}/${VERSION}/insurance/quotation/user-journeys` },
+          {
+            text: 'API Guide',
+            collapsed: true,
+            items: [
+              { text: 'Overview & Event Schema', link: `${BASE}/${VERSION}/insurance/quotation/api-guide/` },
+              { text: 'LFI-Led Flow', link: `${BASE}/${VERSION}/insurance/quotation/api-guide/lfi-led` },
+              { text: 'TPP-Led Flow', link: `${BASE}/${VERSION}/insurance/quotation/api-guide/tpp-led` },
+            ],
+          },
+          {
+            text: 'API Reference',
+            collapsed: true,
+            items: insuranceQuotationApiRef(`${BASE}/${VERSION}/insurance/quotation/open-api`),
+          },
+        ],
+      },
     ],
   },
 
@@ -464,6 +501,20 @@ export const tppSidebar: SidebarItem[] = [
             collapsed: true,
             items: [
               apiRef('POST', '[payment status]', `${BASE}/${VERSION}/webhooks/payment-status/open-api`),
+            ],
+          },
+        ],
+      },
+      {
+        text: 'Insurance Quote Status',
+        collapsed: true,
+        items: [
+          { text: 'API Guide', link: `${BASE}/${VERSION}/webhooks/insurance-status/api-guide` },
+          {
+            text: 'API Referrence',
+            collapsed: true,
+            items: [
+              apiRef('POST', '[insurance quote status]', `${BASE}/${VERSION}/webhooks/insurance-status/open-api`),
             ],
           },
         ],

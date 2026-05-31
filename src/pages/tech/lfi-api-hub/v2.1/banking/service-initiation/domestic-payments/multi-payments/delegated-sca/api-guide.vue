@@ -725,9 +725,9 @@ const dupCheckTabs             = [{ label: 'Node.js', lang: 'typescript', code: 
         <p class="ed-doc__lede">
           Delegated SCA lets a TPP initiate <strong>multiple</strong> domestic payments from a customer's
           account at your LFI via the API Hub, where the Strong Customer Authentication step is performed
-          <strong>at the TPP</strong> rather than at the LFI. The PSU authorises the consent once and
+          <strong>at the TPP</strong> rather than at the LFI. The customer authorises the consent once and
           selects the debtor account; on each subsequent payment the TPP attaches a fresh SCA assertion in
-          <code>Risk.DebtorIndicators.Authentication</code> to evidence that the PSU authenticated at the
+          <code>Risk.DebtorIndicators.Authentication</code> to evidence that the customer authenticated at the
           TPP for that specific payment, and no redirect back to the LFI is needed. The consent may fix a
           list of up to ten allowed creditors or leave the creditor list open (the "open beneficiaries"
           model), in which case the TPP supplies the creditor fresh on each payment. Payments run on AANI
@@ -910,8 +910,8 @@ const dupCheckTabs             = [{ label: 'Node.js', lang: 'typescript', code: 
         also validate it before approving the consent: <code>SchemeName</code> is <code>IBAN</code>,
         the IBAN corresponds to an account held at this LFI and reachable through this API Hub
         integration, and the account is in a state that permits payment initiation (not blocked,
-        dormant, or closed). PSU ownership of the account is <strong>not</strong> checked here &mdash;
-        it is checked later during the authorisation journey, once the PSU has authenticated.
+        dormant, or closed). Customer ownership of the account is <strong>not</strong> checked here &mdash;
+        it is checked later during the authorisation journey, once the customer has authenticated.
       </EdProse>
       <EdProse>
         The full check list and the <code>invalid</code> response shape (with
@@ -937,17 +937,17 @@ const dupCheckTabs             = [{ label: 'Node.js', lang: 'typescript', code: 
       num="04"
       color="var(--at-navy)"
       eyebrow="Consent Flow"
-      title="Authorize the PSU once at your LFI"
+      title="Authorize the customer once at your LFI"
       tone="surface"
     >
       <EdProse>
-        After consent creation passes validation, the TPP redirects the PSU to your LFI's
+        After consent creation passes validation, the TPP redirects the customer to your LFI's
         <a href="/tech/lfi-api-hub/v2.1/api-hub/onboarding/environment-specific/auth-endpoint">authorization endpoint</a>
-        and your LFI runs the standard consent journey: authenticate the PSU, retrieve the consent,
+        and your LFI runs the standard consent journey: authenticate the customer, retrieve the consent,
         present the debtor account selection screen subject to the rules in
         <a href="./requirements#authorization-account-selection">Authorization &mdash; Account Selection</a>,
-        patch the selected debtor account and PSU identifier onto the consent, and redirect back to
-        the Hub. The consent authorisation journey is the <strong>only</strong> point at which the PSU
+        patch the selected debtor account and customer identifier onto the consent, and redirect back to
+        the Hub. The consent authorisation journey is the <strong>only</strong> point at which the customer
         interacts with your LFI for this consent &mdash; subsequent payments carry a TPP-issued SCA
         assertion rather than returning to the LFI for MFA.
       </EdProse>
@@ -961,7 +961,7 @@ const dupCheckTabs             = [{ label: 'Node.js', lang: 'typescript', code: 
           <tbody>
             <tr><td><a href="/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/open-api/auth" class="endpoint"><span class="http-method http-method--get">GET</span><code>/auth</code></a></td><td>LFI &rarr; API Hub</td><td>Initiate the authorization interaction</td></tr>
             <tr><td><a href="/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents-consentId" class="endpoint"><span class="http-method http-method--get">GET</span><code>/consents/{consentId}</code></a></td><td>LFI &rarr; API Hub</td><td>Retrieve the full consent details</td></tr>
-            <tr><td><a href="/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId" class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/consents/{consentId}</code></a></td><td>LFI &rarr; API Hub</td><td>Update consent status, PSU identifiers, and the selected debtor account</td></tr>
+            <tr><td><a href="/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId" class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/consents/{consentId}</code></a></td><td>LFI &rarr; API Hub</td><td>Update consent status, customer identifiers, and the selected debtor account</td></tr>
             <tr><td><a href="/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/open-api/auth-interactionId-doConfirm" class="endpoint"><span class="http-method http-method--post">POST</span><code>/auth/{interactionId}/doConfirm</code></a></td><td>LFI &rarr; API Hub</td><td>Complete the interaction and redirect back to the TPP successfully</td></tr>
             <tr><td><a href="/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/open-api/auth-interactionId-doFail" class="endpoint"><span class="http-method http-method--post">POST</span><code>/auth/{interactionId}/doFail</code></a></td><td>LFI &rarr; API Hub</td><td>Complete the interaction and redirect back to the TPP with a failure</td></tr>
           </tbody>
@@ -1037,7 +1037,7 @@ const dupCheckTabs             = [{ label: 'Node.js', lang: 'typescript', code: 
             <tr><td><code>o3-api-operation</code></td><td>Yes</td><td>The HTTP method of the operation carried out by the TPP (<code>POST</code>)</td></tr>
             <tr><td><code>o3-ozone-interaction-id</code></td><td>Yes</td><td>Hub-generated interaction ID. Equals <code>o3-caller-interaction-id</code> if the TPP provided one</td></tr>
             <tr><td><code>o3-consent-id</code></td><td>Yes</td><td>The <code>consentId</code> for which this call is being made &mdash; the lookup key for the stored consent context (see <a href="#match-pii">Matching the PII against the consent</a>)</td></tr>
-            <tr><td><code>o3-psu-identifier</code></td><td>Yes</td><td>Base64-encoded PSU identifier JSON object &mdash; the opaque LFI-issued reference patched onto the consent at authorization</td></tr>
+            <tr><td><code>o3-psu-identifier</code></td><td>Yes</td><td>Base64-encoded customer identifier JSON object &mdash; the opaque LFI-issued reference patched onto the consent at authorization</td></tr>
             <tr><td><code>o3-caller-interaction-id</code></td><td>No</td><td>Interaction ID passed in by the TPP, if present</td></tr>
           </tbody>
         </table>
@@ -1050,9 +1050,9 @@ const dupCheckTabs             = [{ label: 'Node.js', lang: 'typescript', code: 
           <code>x-fapi-customer-ip-address</code>, <code>x-customer-user-agent</code>, and
           <code>x-idempotency-key</code> &mdash; are forwarded to your LFI <strong>inside the request
           body</strong> as <code>requestHeaders</code>, not on the HTTP headers of the API Hub &rarr;
-          LFI call. Delegated SCA REQUIRES both <code>x-fapi-auth-date</code> (the time of the PSU's
-          SCA at the TPP) and <code>x-fapi-customer-ip-address</code> (the PSU's IP address at the
-          time of authentication) &mdash; the PSU is present at the TPP for every payment. If either
+          LFI call. Delegated SCA REQUIRES both <code>x-fapi-auth-date</code> (the time of the customer's
+          SCA at the TPP) and <code>x-fapi-customer-ip-address</code> (the customer's IP address at the
+          time of authentication) &mdash; the customer is present at the TPP for every payment. If either
           header is missing, reject with <code>400 Body.InvalidFormat</code>.
         </p>
       </EdNote>
@@ -1114,7 +1114,7 @@ const dupCheckTabs             = [{ label: 'Node.js', lang: 'typescript', code: 
       <EdBullets>
         <li><strong><code>Initiation.Creditor</code> is a single object</strong>, not an array &mdash; each payment pays exactly one creditor, whether or not a list was fixed at consent time</li>
         <li><strong><code>DebtorAccount</code> is absent</strong> &mdash; the debtor was selected and pinned during consent authorisation</li>
-        <li><strong><code>Risk.DebtorIndicators.Authentication</code> is present</strong> &mdash; the delegated-SCA assertion evidencing that the PSU authenticated at the TPP for this specific payment. This field is unique to Delegated SCA</li>
+        <li><strong><code>Risk.DebtorIndicators.Authentication</code> is present</strong> &mdash; the delegated-SCA assertion evidencing that the customer authenticated at the TPP for this specific payment. This field is unique to Delegated SCA</li>
         <li>The schema to validate against is <code>AEBankServiceInitiation.AEDomesticPaymentPIIProperties</code> in <code>uae-ozone-connect-bank-service-initiation-openapi.yaml</code> &mdash; <strong>not</strong> the consent-time schema</li>
       </EdBullets>
 
@@ -1137,7 +1137,7 @@ const dupCheckTabs             = [{ label: 'Node.js', lang: 'typescript', code: 
 
       <h3 class="ed-doc__subhead">Validating the delegated-SCA authentication assertion</h3>
       <EdProse>
-        <code>Risk.DebtorIndicators.Authentication</code> carries the proof that the PSU authenticated
+        <code>Risk.DebtorIndicators.Authentication</code> carries the proof that the customer authenticated
         at the TPP with Strong Customer Authentication for this specific payment. Your LFI MUST verify
         this block before creating the payment record &mdash; without a valid SCA assertion, the
         payment has no authorisation to debit the selected account.
@@ -1160,10 +1160,10 @@ const dupCheckTabs             = [{ label: 'Node.js', lang: 'typescript', code: 
 
       <EdProse>
         Your LFI MAY apply additional risk-based checks &mdash; e.g. correlating
-        <code>x-fapi-customer-ip-address</code> with the PSU's known device profile, or rejecting
+        <code>x-fapi-customer-ip-address</code> with the customer's known device profile, or rejecting
         assertions from IPs outside permitted geographies. Failures of such checks MUST also be
         returned as <code>400 Consent.FailsControlParameters</code> (the consent's control parameters
-        include "the PSU has performed SCA"), not as <code>403</code>.
+        include "the customer has performed SCA"), not as <code>403</code>.
       </EdProse>
 
       <h3 id="match-pii" class="ed-doc__subhead">Matching the PII against the consent</h3>
@@ -1360,7 +1360,7 @@ const dupCheckTabs             = [{ label: 'Node.js', lang: 'typescript', code: 
           </thead>
           <tbody>
             <tr><td>Screening</td><td>Run the LFI's standard fraud / sanctions / AML controls on the payment record. SHOULD complete within 3 seconds. On a screening failure, immediately PATCH the payment to <code>Rejected</code> with an <code>LFI.</code>-namespaced reject reason</td><td><a href="./requirements#screening-checks">Screening Checks</a></td></tr>
-            <tr><td>Rail submission</td><td>Submit to AANI as primary. Fall back to UAEFTS automatically if AANI is unavailable or the receiving bank cannot receive via AANI &mdash; no TPP/PSU intervention</td><td><a href="./requirements#rail-submission">Rail Submission</a></td></tr>
+            <tr><td>Rail submission</td><td>Submit to AANI as primary. Fall back to UAEFTS automatically if AANI is unavailable or the receiving bank cannot receive via AANI &mdash; no TPP/customer intervention</td><td><a href="./requirements#rail-submission">Rail Submission</a></td></tr>
             <tr><td>Status propagation</td><td>On every rail status change that maps to an Open Finance status, call <a href="/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/payment-log" class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/payment-log/{id}</code></a> on the API Hub Consent Manager. Once AANI/UAEFTS assigns the end-to-end identifier, include it as <code>paymentTransactionId</code> on the next PATCH</td><td><a href="/tech/lfi-api-hub/v2.1/banking/service-initiation/domestic-payments/overview/payment-status">Payment Status</a></td></tr>
             <tr><td>Rail rejection</td><td>If the rail rejects the payment, PATCH <code>paymentResponse.status: Rejected</code> with <code>RejectReasonCode.Code</code> namespaced as <code>AANI.</code> or <code>FTS.</code> and a sanitised <code>Message</code> for relay to the TPP</td><td><a href="./requirements#rail-submission">Rail Submission</a></td></tr>
             <tr><td>Status retrieval</td><td>Continue serving <a href="/tech/lfi-api-hub/v2.1/banking/service-initiation/open-api/payments-PaymentId" class="endpoint"><span class="http-method http-method--get">GET</span><code>/payments/{paymentId}</code></a> for at least 1 year, with <code>Status</code> and <code>paymentTransactionId</code> consistent with the most recent PATCH</td><td><a href="#get-payments-paymentid">GET <code>/payments/{paymentId}</code> rules below</a></td></tr>

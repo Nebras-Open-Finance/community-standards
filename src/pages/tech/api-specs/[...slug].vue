@@ -42,7 +42,7 @@ const SURFACE_LEDE: Record<Surface, string> = {
   standards:
     'The APIs the API Hub exposes to TPPs — Trust Framework discovery, registration, token exchange, consent, bank data sharing, service initiation, Confirmation of Payee, ATMs, and event notifications.',
   'api-hub':
-    'The APIs the API Hub exposes to LFIs during the authorization journey — Headless Heimdall (for delegating PSU authentication) and the Consent Manager (for looking up and updating consents).',
+    'The APIs the API Hub exposes to LFIs during the authorization journey — Headless Heimdall (for delegating end user authentication) and the Consent Manager (for looking up and updating consents).',
   'ozone-connect':
     'The APIs LFIs must implement for the API Hub to call — health check, consent events, bank data sharing, service initiation, Confirmation of Payee, products & leads, and ATMs.',
 }

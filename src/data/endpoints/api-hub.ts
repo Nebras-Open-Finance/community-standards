@@ -199,7 +199,7 @@ export const apiHubEndpoints: readonly Endpoint[] = [
     slug: 'psu-userId-consents',
     method: 'GET',
     path: '/psu/{userId}/consents',
-    title: 'Get Consents by PSU',
+    title: 'Get Consents by End User',
     redoc: {
       spec: SPEC_CONSENT_MANAGER,
       filterPath: '/psu/{userId}/consents',
@@ -280,6 +280,23 @@ export const apiHubEndpoints: readonly Endpoint[] = [
     redoc: {
       spec: SPEC_CONSENT_MANAGER,
       filterPath: '/payment-log/{id}',
+      filterMethod: 'patch',
+      overrideServers: CONSENT_MANAGER_SERVERS,
+    },
+  }),
+
+  // Consent Manager — Insurance Quote Log
+  entry({
+    section: 'Consent Manager',
+    sectionSlug: 'consent-manager/open-api',
+    subsection: 'Insurance Quote Log',
+    slug: 'insurance-quote-log-logId',
+    method: 'PATCH',
+    path: '/insurance-quote-log/{logId}',
+    title: 'Patch Insurance Quote Log',
+    redoc: {
+      spec: SPEC_CONSENT_MANAGER,
+      filterPath: '/insurance-quote-log/{logId}',
       filterMethod: 'patch',
       overrideServers: CONSENT_MANAGER_SERVERS,
     },

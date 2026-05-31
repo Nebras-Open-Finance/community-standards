@@ -17,10 +17,10 @@ meta:
           <span class="ed-doc__read">3 min read</span>
         </h1>
         <p class="ed-doc__lede">
-          Once the PSU has been
+          Once the end user has been
           <a href="/tech/lfi-api-hub/v2.1/consent-journey/authentication/">authenticated</a>,
-          the LFI presents the consent details so the PSU can review and approve (or decline) the
-          request. This is the <strong>authorization</strong> step &mdash; the PSU makes an informed
+          the LFI presents the consent details so the end user can review and approve (or decline) the
+          request. This is the <strong>authorization</strong> step &mdash; the end user makes an informed
           decision about granting the TPP access to their accounts or authorizing a payment.
         </p>
         <p class="ed-doc__lede ed-doc__lede--tight">
@@ -45,8 +45,8 @@ meta:
 
       <EdBullets>
         <li>The TPP creates a consent and receives a redirect URI from the API Hub</li>
-        <li>The PSU's device opens the LFI's <strong>Authorization Endpoint</strong></li>
-        <li>The LFI authenticates the PSU using Strong Customer Authentication (SCA)</li>
+        <li>The end user's device opens the LFI's <strong>Authorization Endpoint</strong></li>
+        <li>The LFI authenticates the end user using Strong Customer Authentication (SCA)</li>
         <li><strong>The LFI presents the consent for authorization</strong></li>
         <li>The LFI completes the interaction and redirects back to the TPP.</li>
       </EdBullets>
@@ -77,17 +77,17 @@ meta:
             <tr>
               <td>1</td>
               <td><strong>AlTareq branding</strong></td>
-              <td>The AlTareq logo and ecosystem branding MUST be displayed on every authorization page. The PSU MUST be able to clearly identify that the authorization is part of the AlTareq Open Finance ecosystem. Action buttons and naming conventions related to AlTareq MUST be preserved.</td>
+              <td>The AlTareq logo and ecosystem branding MUST be displayed on every authorization page. The end user MUST be able to clearly identify that the authorization is part of the AlTareq Open Finance ecosystem. Action buttons and naming conventions related to AlTareq MUST be preserved.</td>
             </tr>
             <tr>
               <td>2</td>
               <td><strong>Informed consent</strong></td>
-              <td>The authorization page MUST clearly explain what the PSU is authorizing. All material details &mdash; such as the TPP name, data permissions, payment amounts, payee details, and consent duration &mdash; MUST be presented before the PSU confirms.</td>
+              <td>The authorization page MUST clearly explain what the end user is authorizing. All material details &mdash; such as the TPP name, data permissions, payment amounts, payee details, and consent duration &mdash; MUST be presented before the end user confirms.</td>
             </tr>
             <tr>
               <td>3</td>
               <td><strong>Progress indication</strong></td>
-              <td>The authorization page MUST include a progress indicator showing the PSU where they are in the consent journey (e.g. Consent &gt; <strong>Authorize</strong> &gt; Complete).</td>
+              <td>The authorization page MUST include a progress indicator showing the end user where they are in the consent journey (e.g. Consent &gt; <strong>Authorize</strong> &gt; Complete).</td>
             </tr>
             <tr>
               <td>4</td>
@@ -97,7 +97,7 @@ meta:
             <tr>
               <td>5</td>
               <td><strong>No obstacles</strong></td>
-              <td>LFIs MUST NOT use language, design, or interaction patterns that discourage the PSU from granting consent. The authorization page MUST NOT steer the PSU toward declining, introduce unnecessary friction, or present the consent in a misleading way.</td>
+              <td>LFIs MUST NOT use language, design, or interaction patterns that discourage the end user from granting consent. The authorization page MUST NOT steer the end user toward declining, introduce unnecessary friction, or present the consent in a misleading way.</td>
             </tr>
             <tr>
               <td>6</td>
@@ -107,7 +107,7 @@ meta:
             <tr>
               <td>7</td>
               <td><strong>Clear actions</strong></td>
-              <td>The PSU MUST be presented with unambiguous options to approve or decline the consent. The action to approve MUST be clearly labelled and easy to locate.</td>
+              <td>The end user MUST be presented with unambiguous options to approve or decline the consent. The action to approve MUST be clearly labelled and easy to locate.</td>
             </tr>
             <tr>
               <td>8</td>

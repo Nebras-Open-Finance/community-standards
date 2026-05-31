@@ -244,7 +244,7 @@ const AUTHORIZATION_ENDPOINT = discoveryDoc.authorization_endpoint
 
 const response_type = 'code'
 
-const authCodeUrl = \`\${AUTHORIZATION_ENDPOINT}?client_id=\${CLIENT_ID}&response_type=\${response_type}&scope=openid&request_uri=\${encodeURIComponent(request_uri)}\`
+const authCodeUrl = \`\${AUTHORIZATION_ENDPOINT}?client_id=\${CLIENT_ID}&response_type=\${response_type}&request_uri=\${encodeURIComponent(request_uri)}\`
 
 // Redirect the user
 window.location.href = authCodeUrl
@@ -263,7 +263,6 @@ auth_code_url = (
     f"{AUTHORIZATION_ENDPOINT}"
     f"?client_id={CLIENT_ID}"
     f"&response_type=code"
-    f"&scope=openid"
     f"&request_uri={urllib.parse.quote(request_uri)}"
 )
 # redirect the user to auth_code_url
@@ -492,7 +491,7 @@ const step10Tabs = [{ label: 'Node.js', lang: 'typescript', code: step10Node }, 
         <p class="ed-doc__lede">
           Create a Bank Data Sharing consent, redirect the user to authenticate at their LFI, exchange the
           authorization code for tokens, and call the account APIs &mdash; an end-to-end walkthrough of the
-          PSU-present data-sharing flow.
+          customer-present data-sharing flow.
         </p>
       </div>
     </section>
@@ -805,8 +804,8 @@ const step10Tabs = [{ label: 'Node.js', lang: 'typescript', code: step10Node }, 
         <code>authorization_endpoint</code> is found in the LFI's
         <code>.well-known/openid-configuration</code> &mdash; not constructed from the issuer URL
         directly. All authorization parameters are already inside the signed Request JWT, so the only
-        query parameters needed are <code>client_id</code>, <code>response_type</code>,
-        <code>scope</code>, and <code>request_uri</code>.
+        query parameters needed are <code>client_id</code>, <code>response_type</code>, and
+        <code>request_uri</code>.
       </EdProse>
 
       <EdCodeGroup :tabs="step5Tabs" />

@@ -1,13 +1,13 @@
 <route lang="yaml">
 meta:
-  title: "Consent Identifiers — Why PSU and Account IDs Must Be Opaque"
+  title: "Consent Identifiers — Why End User and Account IDs Must Be Opaque"
   description: "Why any identifier patched onto a consent (psuIdentifiers, accountIds) must be an opaque, non-sensitive, stable LFI-defined value."
   category: Consents
   readTime: "6 min"
   updated: "2026-04-21"
   tags:
     - Consents
-    - PSU Identifiers
+    - end user Identifiers
     - Data Protection
 </route>
 
@@ -27,7 +27,7 @@ const meta: MetaItem[] = [
   { label: 'Updated',  value: '21 Apr 2026' },
 ]
 
-const tags: readonly string[] = ['Consents', 'PSU Identifiers', 'Data Protection']
+const tags: readonly string[] = ['Consents', 'end user Identifiers', 'Data Protection']
 </script>
 
 <template>
@@ -36,9 +36,9 @@ const tags: readonly string[] = ['Consents', 'PSU Identifiers', 'Data Protection
 
     <EdHero
       eyebrow="Learn · Understand · Build"
-      title="Consent Identifiers — Why PSU and Account IDs Must Be Opaque"
+      title="Consent Identifiers — Why End User and Account IDs Must Be Opaque"
       :meta="meta"
-      lede="When an LFI authorises a consent, it patches identifiers onto it &mdash; the PSU who authenticated (<code>psuIdentifiers</code>) and the accounts the PSU selected (<code>accountIds</code>). These values are stored centrally in the API Hub and used to enrich every TPP request proxied to the LFI."
+      lede="When an LFI authorises a consent, it patches identifiers onto it &mdash; the end user who authenticated (<code>psuIdentifiers</code>) and the accounts the end user selected (<code>accountIds</code>). These values are stored centrally in the API Hub and used to enrich every TPP request proxied to the LFI."
     >
       <template #lede>
         <div class="ed-tags">
@@ -131,7 +131,7 @@ const tags: readonly string[] = ['Consents', 'PSU Identifiers', 'Data Protection
           <tbody>
             <tr>
               <td><code>psuIdentifiers.userId</code></td>
-              <td>Opaque string. Stable per PSU (same value across all their consents). Unique within the LFI. UUID v4 recommended.</td>
+              <td>Opaque string. Stable per end user (same value across all their consents). Unique within the LFI. UUID v4 recommended.</td>
             </tr>
             <tr>
               <td><code>accountIds[]</code></td>
@@ -144,7 +144,7 @@ const tags: readonly string[] = ['Consents', 'PSU Identifiers', 'Data Protection
       <EdProse>
         For Bank Service Initiation consents, <code>accountIds</code> <strong>MUST</strong> contain
         exactly one element &mdash; the debtor account. For Bank Data Sharing, it
-        <strong>MUST</strong> contain every account the PSU selected.
+        <strong>MUST</strong> contain every account the end user selected.
       </EdProse>
 
       <EdNote type="important" title="Guiding principle">

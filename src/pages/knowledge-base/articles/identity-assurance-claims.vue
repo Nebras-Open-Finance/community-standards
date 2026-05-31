@@ -178,7 +178,7 @@ const copOrgExample = `{
     >
       <EdProse>UAE Open Finance treats customer identity as <strong>verified claims</strong> &mdash; assertions about a person or organisation that the LFI has checked under a known framework. OIDC IDA is the standards-track JSON format for exactly this: claims grouped inside a <code>verifiedClaims</code> object, each group labelled with the <code>verification.trustFramework</code> under which it was verified.</EdProse>
 
-      <EdProse>Reusing IDA across every customer-returning endpoint gives TPPs a single parser and a single mental model &mdash; whether the data comes from a consented account, a Confirmation of Payee lookup, or a direct call for the authenticated PSU's identity, the shape is the same.</EdProse>
+      <EdProse>Reusing IDA across every customer-returning endpoint gives TPPs a single parser and a single mental model &mdash; whether the data comes from a consented account, a Confirmation of Payee lookup, or a direct call for the authenticated end user's identity, the shape is the same.</EdProse>
 
       <EdNote type="info" title="From the schema">
         <p><em>Party Identity Assurance (Response) Schema &mdash; Based on the <a href="https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html">OpenID Connect for Identity Assurance 1.0 Specification</a></em></p>
@@ -234,7 +234,7 @@ const copOrgExample = `{
       tone="cream"
     >
       <h3><code>GET /customer</code></h3>
-      <EdProse>The record for the PSU who authenticated the consent. The LFI identifies the PSU from the <code>o3-psu-identifier</code> header and returns <strong>one</strong> customer record:</EdProse>
+      <EdProse>The record for the end user who authenticated the consent. The LFI identifies the end user from the <code>o3-psu-identifier</code> header and returns <strong>one</strong> customer record:</EdProse>
       <EdCode :code="customerExample" lang="json" />
       <EdProse>Single object under <code>data</code>, not an array.</EdProse>
 
@@ -261,7 +261,7 @@ const copOrgExample = `{
       tone="surface"
       narrow
     >
-      <EdProse>CoP and <code>GET /customer</code> have very different use cases &mdash; a name-match check before a payment vs. the full identity of a consented PSU &mdash; but the shape of the answer is the same because the <strong>question</strong> is the same at its core: "under which trust framework has this institution verified this party's identity, and what are the claims?"</EdProse>
+      <EdProse>CoP and <code>GET /customer</code> have very different use cases &mdash; a name-match check before a payment vs. the full identity of a consented end user &mdash; but the shape of the answer is the same because the <strong>question</strong> is the same at its core: "under which trust framework has this institution verified this party's identity, and what are the claims?"</EdProse>
       <EdProse>Having one envelope means LFIs implement one internal mapping from their core banking identity records to OIDC IDA, and that mapping serves every customer-returning endpoint. TPPs parse one format. Auditors review one schema.</EdProse>
     </EdSectionBand>
 
@@ -293,7 +293,7 @@ const copOrgExample = `{
         category="Consents"
         category-color="var(--at-teal)"
         title="Consent Identifiers"
-        desc="Why PSU and account IDs patched onto a consent must be opaque."
+        desc="Why end user and account IDs patched onto a consent must be opaque."
       />
       <EdRelatedCard
         href="/knowledge-base/articles/tpp-context-block"

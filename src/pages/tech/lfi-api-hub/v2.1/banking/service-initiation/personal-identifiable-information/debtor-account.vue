@@ -42,14 +42,14 @@ const invalidDebtorAccountJson = `{
           When a TPP supplies <code>Initiation.DebtorAccount</code> in the consent PII, the LFI MUST
           validate it during consent validation &mdash;
           <span class="endpoint"><span class="http-method http-method--post">POST</span><code>/consent/action/validate</code></span>.
-          At this stage the PSU has <strong>not yet authenticated</strong>, so the LFI cannot check
+          At this stage the customer has <strong>not yet authenticated</strong>, so the LFI cannot check
           ownership. The checks are limited to whether the account exists at this LFI, is reachable
           through this API Hub, and is eligible for payment initiation.
         </p>
 
-        <EdNote type="tip" title="PSU-specific checks happen later">
+        <EdNote type="tip" title="Customer-specific checks happen later">
           <p>
-            Checks that depend on the authenticated PSU &mdash; e.g. whether the
+            Checks that depend on the authenticated customer &mdash; e.g. whether the
             <code>DebtorAccount</code> supplied by the TPP actually belongs to the user who logs in
             at the LFI &mdash; are covered separately under the authorisation journey. This page
             covers only what the LFI MUST validate before the consent is stored.

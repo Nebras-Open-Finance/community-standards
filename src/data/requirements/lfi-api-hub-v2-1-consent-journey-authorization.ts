@@ -4,8 +4,8 @@ export const data: RequirementsPageData = {
   title: 'Authorization Requirements',
   version: 'v2.1',
   readTime: '3 min',
-  lede: 'This page defines the required error handling behaviour when the consent authorization fails after the PSU has been <a href="/tech/lfi-api-hub/v2.1/consent-journey/authentication/">authenticated</a>. The LFI MUST invoke <code>POST /auth/{interactionId}/doFail</code> with the exact <code>error</code> and <code>error_description</code> values specified below.',
-  preconditions: 'For all authorization failure scenarios, the LFI MUST PATCH the consent to <code>Rejected</code> before calling <code>doFail</code> — the PSU has been identified during the authentication step. For the full <code>doFail</code> API specification, see the <a href="/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/open-api/auth-interactionId-doFail"><code>POST /auth/{interactionId}/doFail</code> API Reference</a>.',
+  lede: 'This page defines the required error handling behaviour when the consent authorization fails after the end user has been <a href="/tech/lfi-api-hub/v2.1/consent-journey/authentication/">authenticated</a>. The LFI MUST invoke <code>POST /auth/{interactionId}/doFail</code> with the exact <code>error</code> and <code>error_description</code> values specified below.',
+  preconditions: 'For all authorization failure scenarios, the LFI MUST PATCH the consent to <code>Rejected</code> before calling <code>doFail</code> — the end user has been identified during the authentication step. For the full <code>doFail</code> API specification, see the <a href="/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/open-api/auth-interactionId-doFail"><code>POST /auth/{interactionId}/doFail</code> API Reference</a>.',
   sections: [
     {
       id: 'error-scenarios',
@@ -13,9 +13,9 @@ export const data: RequirementsPageData = {
       title: 'Error scenarios',
       subsections: [
         {
-          heading: '1. PSU explicitly cancels or declines the consent',
+          heading: '1. End user explicitly cancels or declines the consent',
           blocks: [
-            { kind: 'prose', html: 'The PSU reviews the consent details and chooses to decline or cancel the authorization.' },
+            { kind: 'prose', html: 'The end user reviews the consent details and chooses to decline or cancel the authorization.' },
             { kind: 'table', table: {
               headers: ['Field', 'Value'],
               rows: [
@@ -26,9 +26,9 @@ export const data: RequirementsPageData = {
           ],
         },
         {
-          heading: '2. PSU lacks eligible accounts or access',
+          heading: '2. End user lacks eligible accounts or access',
           blocks: [
-            { kind: 'prose', html: 'The PSU does not have any accounts or sufficient access rights to authorize the consent. For example: <ul><li>The PSU has no eligible accounts for the requested consent type</li><li>The PSU\'s accounts do not support the requested payment rail or currency</li><li>The consent has <code>IsSingleAuthorization</code> set to <code>true</code> but the PSU does not have sufficient authority to authorize the payment independently — for example, where the payment would require an additional approver (subsequent authorizer)</li></ul>' },
+            { kind: 'prose', html: 'The end user does not have any accounts or sufficient access rights to authorize the consent. For example: <ul><li>The end user has no eligible accounts for the requested consent type</li><li>The end user\'s accounts do not support the requested payment rail or currency</li><li>The consent has <code>IsSingleAuthorization</code> set to <code>true</code> but the end user does not have sufficient authority to authorize the payment independently — for example, where the payment would require an additional approver (subsequent authorizer)</li></ul>' },
             { kind: 'table', table: {
               headers: ['Field', 'Value'],
               rows: [
@@ -51,13 +51,13 @@ export const data: RequirementsPageData = {
             } },
           ],
           callouts: [
-            { kind: 'tip', title: 'Use POST /consent/action/validate instead', html: 'This scenario SHOULD NOT occur in steady state. LFIs SHOULD implement the <a href="/tech/lfi-api-hub/v2.1/consent-events/open-api/validate"><code>POST /consent/action/validate</code></a> endpoint to reject unsupported consents at creation time — before the PSU is redirected to the LFI. If this error is reported persistently or frequently, Nebras may require the LFI to implement the <code>POST /consent/action/validate</code> endpoint.' },
+            { kind: 'tip', title: 'Use POST /consent/action/validate instead', html: 'This scenario SHOULD NOT occur in steady state. LFIs SHOULD implement the <a href="/tech/lfi-api-hub/v2.1/consent-events/open-api/validate"><code>POST /consent/action/validate</code></a> endpoint to reject unsupported consents at creation time — before the end user is redirected to the LFI. If this error is reported persistently or frequently, Nebras may require the LFI to implement the <code>POST /consent/action/validate</code> endpoint.' },
           ],
         },
         {
-          heading: '4. PSU session expires',
+          heading: '4. End user session expires',
           blocks: [
-            { kind: 'prose', html: 'The PSU\'s session with the LFI expires before they complete the authorization of the consent.' },
+            { kind: 'prose', html: 'The end user\'s session with the LFI expires before they complete the authorization of the consent.' },
             { kind: 'table', table: {
               headers: ['Field', 'Value'],
               rows: [
@@ -67,7 +67,7 @@ export const data: RequirementsPageData = {
             } },
           ],
           callouts: [
-            { kind: 'warning', title: 'Session timeout guidance', html: 'LFIs MUST ensure that session timeouts are not so short that they create an obstacle to a PSU completing authentication and authorization. The introduction of payment step-up authentication enables LFIs to implement session management in a way that balances security with usability.' },
+            { kind: 'warning', title: 'Session timeout guidance', html: 'LFIs MUST ensure that session timeouts are not so short that they create an obstacle to an end user completing authentication and authorization. The introduction of payment step-up authentication enables LFIs to implement session management in a way that balances security with usability.' },
           ],
         },
         {
@@ -94,7 +94,7 @@ export const data: RequirementsPageData = {
                 { cells: ['<code>error_description</code>', '<code>api_hub_communication_error</code>'] },
               ],
             } },
-            { kind: 'prose', html: 'The LFI MUST attempt to PATCH the consent to <code>Rejected</code> before calling <code>doFail</code>, but if the API Hub is unreachable, the LFI MUST still call <code>doFail</code> to redirect the PSU back to the TPP.' },
+            { kind: 'prose', html: 'The LFI MUST attempt to PATCH the consent to <code>Rejected</code> before calling <code>doFail</code>, but if the API Hub is unreachable, the LFI MUST still call <code>doFail</code> to redirect the end user back to the TPP.' },
           ],
         },
         {
@@ -108,7 +108,7 @@ export const data: RequirementsPageData = {
                 { cells: ['<code>error_description</code>', '<code>lfi_temporarily_unavailable</code>'] },
               ],
             } },
-            { kind: 'prose', html: 'The LFI MUST PATCH the consent to <code>Rejected</code> before calling <code>doFail</code> — the PSU has been identified during the authentication step.' },
+            { kind: 'prose', html: 'The LFI MUST PATCH the consent to <code>Rejected</code> before calling <code>doFail</code> — the end user has been identified during the authentication step.' },
           ],
         },
       ],
@@ -121,10 +121,10 @@ export const data: RequirementsPageData = {
         { kind: 'table', table: {
           headers: ['#', 'Scenario', '`error`', '`error_description`'],
           rows: [
-            { cells: ['1', 'PSU explicitly cancels or declines the consent', '<code>access_denied</code>', '<code>user_rejected_consent</code>'] },
-            { cells: ['2', 'PSU lacks eligible accounts or access', '<code>invalid_request</code>', '<code>user_lacks_eligible_accounts</code>'] },
+            { cells: ['1', 'End user explicitly cancels or declines the consent', '<code>access_denied</code>', '<code>user_rejected_consent</code>'] },
+            { cells: ['2', 'End user lacks eligible accounts or access', '<code>invalid_request</code>', '<code>user_lacks_eligible_accounts</code>'] },
             { cells: ['3', 'Consent type not supported by LFI', '<code>access_denied</code>', '<code>consent_not_supported</code>'] },
-            { cells: ['4', 'PSU session expires', '<code>access_denied</code>', '<code>session_expired</code>'] },
+            { cells: ['4', 'End user session expires', '<code>access_denied</code>', '<code>session_expired</code>'] },
             { cells: ['5', 'LFI internal technical error', '<code>server_error</code>', '<code>lfi_internal_error</code>'] },
             { cells: ['6', 'LFI fails to communicate with API Hub', '<code>server_error</code>', '<code>api_hub_communication_error</code>'] },
             { cells: ['7', 'LFI temporarily unavailable', '<code>temporarily_unavailable</code>', '<code>lfi_temporarily_unavailable</code>'] },

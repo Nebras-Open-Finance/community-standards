@@ -144,7 +144,7 @@ interaction_id = str(uuid.uuid4())
 
       <EdBullets>
         <li><strong>Format:</strong> IPv4 or IPv6 string, e.g. <code>192.168.1.1</code> or <code>2001:db8::1</code></li>
-        <li><strong>Level:</strong> Required when the customer is present in an active PSU-facing session. Required on all Product and Leads endpoints regardless of session context.</li>
+        <li><strong>Level:</strong> Required when the customer is present in an active end user-facing session. Required on all Product and Leads endpoints regardless of session context.</li>
       </EdBullets>
 
       <EdProse>
@@ -165,12 +165,12 @@ interaction_id = str(uuid.uuid4())
 
       <EdBullets>
         <li><strong>Format:</strong> RFC 7231 HTTP-date, e.g. <code>Sun, 10 Sep 2023 19:43:31 UTC</code></li>
-        <li><strong>Level:</strong> Required when the customer is present in an active PSU-facing session (i.e. the request is being made on behalf of a customer who is currently logged in). Optional for background/automated calls.</li>
+        <li><strong>Level:</strong> Required when the customer is present in an active end user-facing session (i.e. the request is being made on behalf of a customer who is currently logged in). Optional for background/automated calls.</li>
       </EdBullets>
 
       <EdNote type="tip">
         <p>
-          This header informs the LFI's fraud and risk controls. Omitting it during a PSU-facing session
+          This header informs the LFI's fraud and risk controls. Omitting it during an end user-facing session
           may cause the LFI to treat the call as a background operation, which can affect consent and
           session handling.
         </p>

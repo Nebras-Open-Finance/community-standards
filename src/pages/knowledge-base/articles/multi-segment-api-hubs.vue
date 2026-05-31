@@ -59,21 +59,21 @@ const tags: readonly string[] = ['API Hub', 'LFI', 'Topology']
       title="Authentication context dictates topology"
       tone="cream"
     >
-      <EdProse>The API Hub is more than a proxy &mdash; it acts as the <strong>OIDC Authorization Server</strong> for the LFI within the Open Finance ecosystem. When a TPP drives a PSU through an authorization flow, the API Hub is the entity that:</EdProse>
+      <EdProse>The API Hub is more than a proxy &mdash; it acts as the <strong>OIDC Authorization Server</strong> for the LFI within the Open Finance ecosystem. When a TPP drives an end user through an authorization flow, the API Hub is the entity that:</EdProse>
       <EdBullets>
-        <li>Exposes the single OIDC <code>/authorize</code> endpoint the TPP redirects the PSU to</li>
+        <li>Exposes the single OIDC <code>/authorize</code> endpoint the TPP redirects the end user to</li>
         <li>Issues the access tokens the TPP uses to call APIs</li>
         <li>Holds the authoritative record of consents</li>
       </EdBullets>
 
-      <EdProse>Because the API Hub must behave as a conformant OIDC Authorization Server, it has <strong>one authorization endpoint</strong> that redirects the PSU into the LFI's own authentication experience (see the <a href="/tech/lfi-api-hub/v2.1/consent-journey/api-guide">Consent Journey API Guide</a> and the <a href="/tech/lfi-api-hub/v2.1/api-hub/onboarding/environment-specific/auth-endpoint">Authorization Endpoint configuration</a>).</EdProse>
+      <EdProse>Because the API Hub must behave as a conformant OIDC Authorization Server, it has <strong>one authorization endpoint</strong> that redirects the end user into the LFI's own authentication experience (see the <a href="/tech/lfi-api-hub/v2.1/consent-journey/api-guide">Consent Journey API Guide</a> and the <a href="/tech/lfi-api-hub/v2.1/api-hub/onboarding/environment-specific/auth-endpoint">Authorization Endpoint configuration</a>).</EdProse>
 
-      <EdProse>If retail and SME customers authenticate in different places &mdash; for example, retail customers in the retail mobile app and SME customers in a separate business banking portal &mdash; a single authorization endpoint cannot send a PSU to both. Since the Hub mimics a standard Authorization Server, it can only be configured to redirect to one authentication flow.</EdProse>
+      <EdProse>If retail and SME customers authenticate in different places &mdash; for example, retail customers in the retail mobile app and SME customers in a separate business banking portal &mdash; a single authorization endpoint cannot send an end user to both. Since the Hub mimics a standard Authorization Server, it can only be configured to redirect to one authentication flow.</EdProse>
 
       <EdProse>In that situation the LFI needs <strong>one API Hub per distinct authentication context</strong>:</EdProse>
       <EdBullets>
-        <li>Retail PSUs &rarr; Retail API Hub &rarr; Retail authentication endpoint</li>
-        <li>SME PSUs &rarr; SME API Hub &rarr; SME authentication endpoint</li>
+        <li>Retail end users &rarr; Retail API Hub &rarr; Retail authentication endpoint</li>
+        <li>SME end users &rarr; SME API Hub &rarr; SME authentication endpoint</li>
       </EdBullets>
       <EdProse>The same logic applies to any additional segment (private banking, corporate) that has its own authentication experience.</EdProse>
 

@@ -41,7 +41,7 @@ const sections = computed<SectionCard[]>(() => [
     color: 'var(--at-teal)',
     title: 'API Hub',
     url: `/tech/api-specs/${selectedVersion.value}/api-hub/`,
-    desc: 'The APIs the API Hub exposes to LFIs. An LFI calls these endpoints during the authorization journey &mdash; notably Headless Heimdall (for delegating PSU authentication) and the Consent Manager (for looking up and updating consents).',
+    desc: 'The APIs the API Hub exposes to LFIs. An LFI calls these endpoints during the authorization journey &mdash; notably Headless Heimdall (for delegating end user authentication) and the Consent Manager (for looking up and updating consents).',
     flowFrom: 'LFI',
     flowTo: 'API Hub',
     distPath: 'dist/api-hub/',
@@ -68,6 +68,17 @@ const sections = computed<SectionCard[]>(() => [
     flowTo: 'Directory',
     distPath: 'openapi/trust-framework.yaml',
     audience: 'TPP and LFI engineering',
+  },
+  {
+    category: 'LFI-implemented (CAAP)',
+    color: 'var(--at-teal-deep)',
+    title: 'CAAP Operations',
+    url: `/tech/api-specs/${selectedVersion.value}/ozone-connect/caap`,
+    desc: 'The endpoints LFIs must implement on Ozone Connect when adopting CAAP, the Nebras-operated authentication and consent authorisation platform. Includes user verification and registration, PII decryption, consent validation and augmentation, and the CAAP-specific account and insurance policy GETs that drive the end user&apos;s consent journey.',
+    flowFrom: 'CAAP',
+    flowTo: 'LFI',
+    distPath: 'dist/ozone-connect/.../caap-operations',
+    audience: 'LFI engineering (CAAP adopters)',
   },
 ])
 

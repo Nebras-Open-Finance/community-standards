@@ -63,9 +63,11 @@ const TRUST_FRAMEWORK_GROUP: SidebarItem = {
  */
 export function buildApiSpecsSidebar(version: Version): SidebarItem[] {
   const endpoints = allEndpoints.filter((e) => e.version === version)
+  const caapEndpoints = endpoints.filter((e) => e.sectionSlug === 'caap')
+  const nonCaapEndpoints = endpoints.filter((e) => e.sectionSlug !== 'caap')
 
   const surfaceGroups = SURFACE_ORDER.map<SidebarItem>((surface) => {
-    const surfaceEndpoints = endpoints.filter((e) => e.surface === surface)
+    const surfaceEndpoints = nonCaapEndpoints.filter((e) => e.surface === surface)
 
     const sections = groupBy(surfaceEndpoints, (e) => e.section)
 
@@ -98,7 +100,18 @@ export function buildApiSpecsSidebar(version: Version): SidebarItem[] {
     }
   })
 
-  return [...surfaceGroups, TRUST_FRAMEWORK_GROUP]
+  const caapGroup: SidebarItem | null = caapEndpoints.length === 0 ? null : (() => {
+    const subsections = groupBy(caapEndpoints, (e) => e.subsection ?? '')
+    const items: SidebarItem[] = subsections
+      .map(([subLabel, subEndpoints]) => {
+        if (subLabel === '') return subEndpoints.map(toLeaf)
+        return [{ text: subLabel, collapsed: true, items: subEndpoints.map(toLeaf) }]
+      })
+      .flat()
+    return { text: 'CAAP', collapsed: true, items }
+  })()
+
+  return [...surfaceGroups, TRUST_FRAMEWORK_GROUP, ...(caapGroup ? [caapGroup] : [])]
 }
 
 function toLeaf(e: Endpoint): SidebarItem {

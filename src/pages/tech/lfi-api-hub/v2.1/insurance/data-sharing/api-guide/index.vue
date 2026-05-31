@@ -103,7 +103,7 @@ const policyByIdJson = `{
                   <code>/{type}-insurance-policies/{InsurancePolicyId}</code>
                 </span>
               </td>
-              <td>Return the single policy identified by the path parameter, after checking it belongs to the consented PSU.</td>
+              <td>Return the single policy identified by the path parameter, after checking it belongs to the consented customer.</td>
             </tr>
           </tbody>
         </table>
@@ -147,14 +147,14 @@ const policyByIdJson = `{
       num="03"
       color="var(--at-blue-deep, #1d4ed8)"
       eyebrow="Consent flow"
-      title="Authorize the PSU at your LFI"
+      title="Authorize the customer at your LFI"
       tone="cream"
     >
       <EdProse>
-        Once the consent has been created, the TPP redirects the PSU to your LFI&rsquo;s authorisation
+        Once the consent has been created, the TPP redirects the customer to your LFI&rsquo;s authorisation
         endpoint &mdash; the same URL you registered for Bank Data Sharing. From there, your LFI runs
-        the standard consent journey: authenticate the PSU, retrieve the consent, let the PSU approve
-        or reject it, patch the PSU identifier onto the consent, and redirect back to the Hub.
+        the standard consent journey: authenticate the customer, retrieve the consent, let the customer approve
+        or reject it, patch the customer identifier onto the consent, and redirect back to the Hub.
       </EdProse>
 
       <EdProse>
@@ -255,7 +255,7 @@ const policyByIdJson = `{
 
       <EdProse>
         Return the single policy identified by <code>InsurancePolicyId</code>. The
-        <code>InsurancePolicyId</code> MUST belong to a policy your LFI underwrites for the PSU
+        <code>InsurancePolicyId</code> MUST belong to a policy your LFI underwrites for the customer
         identified by the <code>o3-psu-identifier</code> header &mdash; if it does not, respond with
         <code>404</code>.
       </EdProse>

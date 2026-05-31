@@ -197,7 +197,7 @@ meta:
         </li>
         <li>
           <strong>UAEFTS</strong> &mdash; if AANI is unavailable or cannot reach the receiving bank, the
-          LFI falls back to UAEFTS. The fall-back is automatic; your TPP and the PSU are not involved.
+          LFI falls back to UAEFTS. The fall-back is automatic; your TPP and the customer are not involved.
         </li>
       </EdBullets>
 
@@ -314,7 +314,7 @@ meta:
       <EdProse>
         The API Hub relays <code>RejectReasonCode.Code</code> to your TPP verbatim &mdash; it does not
         remap rail codes into a different namespace. Your TPP SHOULD surface an actionable message to
-        the PSU where the underlying reason is recoverable (for example, insufficient funds), and SHOULD
+        the customer where the underlying reason is recoverable (for example, insufficient funds), and SHOULD
         log the full code and message for diagnostic purposes.
       </EdProse>
 

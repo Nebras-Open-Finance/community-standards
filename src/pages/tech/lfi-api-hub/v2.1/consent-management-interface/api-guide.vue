@@ -431,7 +431,7 @@ const statusRows: StatusRow[] = [
           <a href="/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/hello-mtls" class="endpoint"><span class="http-method http-method--get">GET</span><code>/hello-mtls</code></a>
         </li>
         <li>
-          Patch the PSU identifier onto each consent using
+          Patch the end user identifier onto each consent using
           <a href="/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId" class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/consents/{consentId}</code></a>
           so that consents can be retrieved by user
         </li>
@@ -643,12 +643,12 @@ const statusRows: StatusRow[] = [
         consents sharing the same history use the same <code>BaseConsentId</code> value.
       </EdProse>
 
-      <EdNote type="danger" title="PSU isolation risk">
+      <EdNote type="danger" title="End user isolation risk">
         <p>
-          When a consent is created it contains no customer information &mdash; the PSU identity is
-          only added later when the LFI patches in the PSU ID. This means two consents sharing the
+          When a consent is created it contains no customer information &mdash; the end user identity is
+          only added later when the LFI patches in the end user ID. This means two consents sharing the
           same <code>BaseConsentId</code> are <strong>not</strong> guaranteed to belong to the same
-          customer. LFIs must ensure that only consents belonging to the same PSU are returned when
+          customer. LFIs must ensure that only consents belonging to the same end user are returned when
           resolving related consents.
         </p>
       </EdNote>

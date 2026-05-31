@@ -85,7 +85,7 @@ meta:
       <h3>2. Consent Journey</h3>
       <EdProse>
         Implement the authorization interaction between your LFI and the API Hub. These are the five
-        endpoints your LFI calls against the Hub to drive a consent through PSU authentication,
+        endpoints your LFI calls against the Hub to drive a consent through customer authentication,
         authorization, and return to TPP:
       </EdProse>
 
@@ -118,7 +118,7 @@ meta:
                 <a href="/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId" class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/consents/{consentId}</code></a>
               </td>
               <td>LFI &rarr; API Hub</td>
-              <td>Update consent status, PSU identifiers, and account IDs</td>
+              <td>Update consent status, customer identifiers, and account IDs</td>
             </tr>
             <tr>
               <td>
@@ -141,7 +141,7 @@ meta:
       <EdProse>
         See the
         <a href="/tech/lfi-api-hub/v2.1/consent-journey/api-guide">Consent Journey API Guide</a>
-        for the end-to-end sequence, including PSU authentication requirements
+        for the end-to-end sequence, including customer authentication requirements
         (<a href="/tech/lfi-api-hub/v2.1/consent-journey/authentication/sca">SCA</a>) and identifier rules.
       </EdProse>
 
@@ -358,7 +358,7 @@ meta:
               <td>
                 <a href="/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/psu-userId-consents" class="endpoint"><span class="http-method http-method--get">GET</span><code>/psu/{userId}/consents</code></a>
               </td>
-              <td>List all consents for a given PSU</td>
+              <td>List all consents for a given customer</td>
             </tr>
             <tr>
               <td>

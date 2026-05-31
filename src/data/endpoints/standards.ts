@@ -500,6 +500,7 @@ export const standardsEndpoints: readonly Endpoint[] = [
           redoc: {
             spec: SPEC_INSURANCE,
             filterPath: `/${type}-insurance-policies`,
+            filterMethod: 'get',
             overrideServers: INSURANCE_SERVERS,
           },
         }),
@@ -514,6 +515,76 @@ export const standardsEndpoints: readonly Endpoint[] = [
           redoc: {
             spec: SPEC_INSURANCE,
             filterPath: `/${type}-insurance-policies/{InsurancePolicyId}`,
+            overrideServers: INSURANCE_SERVERS,
+          },
+        }),
+      ]
+    },
+  ),
+
+  // Insurance Quotation — 7 insurance types × 4 endpoints
+  // (POST quotes, GET/PATCH quotes/{QuoteId}, POST policies)
+  ...(['employment', 'health', 'home', 'life', 'motor', 'renters', 'travel'] as const).flatMap(
+    (type) => {
+      const Type = type.charAt(0).toUpperCase() + type.slice(1)
+      return [
+        entry({
+          section: 'Insurance Quotation',
+          sectionSlug: 'insurance-quotation',
+          subsection: `${Type} Insurance`,
+          slug: `${type}-insurance-quotes`,
+          method: 'POST',
+          path: `/${type}-insurance-quotes`,
+          title: `Create a ${Type} Insurance Quote`,
+          redoc: {
+            spec: SPEC_INSURANCE,
+            filterPath: `/${type}-insurance-quotes`,
+            filterMethod: 'post',
+            overrideServers: INSURANCE_SERVERS,
+          },
+        }),
+        entry({
+          section: 'Insurance Quotation',
+          sectionSlug: 'insurance-quotation',
+          subsection: `${Type} Insurance`,
+          slug: `get-${type}-insurance-quotes-QuoteId`,
+          method: 'GET',
+          path: `/${type}-insurance-quotes/{QuoteId}`,
+          title: `Retrieve a ${Type} Insurance Quote`,
+          redoc: {
+            spec: SPEC_INSURANCE,
+            filterPath: `/${type}-insurance-quotes/{QuoteId}`,
+            filterMethod: 'get',
+            overrideServers: INSURANCE_SERVERS,
+          },
+        }),
+        entry({
+          section: 'Insurance Quotation',
+          sectionSlug: 'insurance-quotation',
+          subsection: `${Type} Insurance`,
+          slug: `patch-${type}-insurance-quotes-QuoteId`,
+          method: 'PATCH',
+          path: `/${type}-insurance-quotes/{QuoteId}`,
+          title: `Accept a ${Type} Insurance Quote`,
+          redoc: {
+            spec: SPEC_INSURANCE,
+            filterPath: `/${type}-insurance-quotes/{QuoteId}`,
+            filterMethod: 'patch',
+            overrideServers: INSURANCE_SERVERS,
+          },
+        }),
+        entry({
+          section: 'Insurance Quotation',
+          sectionSlug: 'insurance-quotation',
+          subsection: `${Type} Insurance`,
+          slug: `post-${type}-insurance-policies`,
+          method: 'POST',
+          path: `/${type}-insurance-policies`,
+          title: `Create a ${Type} Insurance Policy`,
+          redoc: {
+            spec: SPEC_INSURANCE,
+            filterPath: `/${type}-insurance-policies`,
+            filterMethod: 'post',
             overrideServers: INSURANCE_SERVERS,
           },
         }),
@@ -548,6 +619,21 @@ export const standardsEndpoints: readonly Endpoint[] = [
       spec: SPEC_WEBHOOK,
       patchSchemas: {
         AEWebhookEventTypes: { $ref: '#/components/schemas/AEWebhookPaymentInitiationEventProperties' },
+      },
+      overrideServers: WEBHOOK_SERVERS,
+    },
+  }),
+  entry({
+    section: 'Events & Webhooks',
+    sectionSlug: 'webhooks',
+    slug: 'insurance-status',
+    method: 'POST',
+    path: '[insurance quote status]',
+    title: 'Insurance Quote Status Change Event',
+    redoc: {
+      spec: SPEC_WEBHOOK,
+      patchSchemas: {
+        AEWebhookEventTypes: { $ref: '#/components/schemas/AEWebhookInsuranceEventProperties' },
       },
       overrideServers: WEBHOOK_SERVERS,
     },

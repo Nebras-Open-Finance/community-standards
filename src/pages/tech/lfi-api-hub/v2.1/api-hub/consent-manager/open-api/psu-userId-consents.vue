@@ -1,6 +1,6 @@
 <route lang="yaml">
 meta:
-  title: Get Consents by PSU
+  title: Get Consents by End User
 </route>
 
 <script setup lang="ts">
@@ -9,7 +9,7 @@ meta:
 <template>
   <EndpointPage
     eyebrow="LFI · API Hub · Consent Manager"
-    title="Get Consents by PSU"
+    title="Get Consents by End User"
     version="v2.1"
     method="GET"
     path="/psu/{UserId}/consents"

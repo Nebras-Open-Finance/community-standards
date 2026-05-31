@@ -152,7 +152,7 @@ token_endpoint = mtls.get("token_endpoint") \\
       narrow
     >
       <EdBullets>
-        <li>The <code>authorization_endpoint</code> is browser-driven (the PSU is redirected there) &mdash; it is not an mTLS call and does not appear in <code>mtls_endpoint_aliases</code>. Always use the top-level value.</li>
+        <li>The <code>authorization_endpoint</code> is browser-driven (the end user is redirected there) &mdash; it is not an mTLS call and does not appear in <code>mtls_endpoint_aliases</code>. Always use the top-level value.</li>
         <li>You do not need to call discovery twice or maintain two endpoint sets in code. One discovery fetch with the alias-fallback pattern above is enough.</li>
       </EdBullets>
     </EdSectionBand>

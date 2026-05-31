@@ -43,7 +43,7 @@ Per-version sections (currently **v2.1**, under [`src/pages/tech/lfi-api-hub/v2.
 
 - **API Hub** — APIs the Hub exposes **to** the LFI (consent manager, Headless Heimdall)
 - **Ozone Connect** — APIs the LFI **must implement** for the Hub to call: banking (data sharing, confirmation of payee, service initiation, products & leads, ATMs), consent events, and health check
-- **Consent journey** — how the PSU is authenticated and authorises consent at the LFI
+- **Consent journey** — how the end user is authenticated and authorises consent at the LFI
 - **Consent management interface** — the UI LFIs must expose to customers to view and revoke consents
 
 ### 3. API Specifications — [`src/pages/tech/api-specs/`](src/pages/tech/api-specs/)

@@ -17,7 +17,7 @@ meta:
         </h1>
         <p class="ed-doc__lede">
           Strong Customer Authentication (SCA) is multi-factor authentication (MFA) that requires the
-          PSU to authenticate using at least two independent factors. SCA is a regulatory requirement
+          end user to authenticate using at least two independent factors. SCA is a regulatory requirement
           under the CBUAE directive <em>Prevention of Fraud Incidents Impacting Consumers</em>
           (Notice No. 3057/2025) and applies to all Open Finance consent journeys.
         </p>
@@ -141,7 +141,7 @@ meta:
         journey is sufficient. No step-up authentication is required.
       </EdProse>
       <EdProse>
-        The PSU authenticates, reviews the data sharing permissions, selects accounts, and authorizes
+        The end user authenticates, reviews the data sharing permissions, selects accounts, and authorizes
         the consent.
       </EdProse>
 
@@ -149,7 +149,7 @@ meta:
       <EdProse>
         For payment consents (single payments and multi-payment consents), the CBUAE directive requires
         <strong>step-up authentication</strong> for sensitive actions including the initiation of
-        payments. This means an additional authentication gesture is required at the point the PSU
+        payments. This means an additional authentication gesture is required at the point the end user
         confirms the payment authorization.
       </EdProse>
 
@@ -167,13 +167,13 @@ meta:
           <tbody>
             <tr>
               <td><strong>Initial authentication</strong></td>
-              <td>Establish the PSU's identity</td>
-              <td>The PSU opens the LFI app (or web page) and completes MFA &mdash; typically device possession + biometric or PIN. This is identical to how the PSU would normally open their banking app.</td>
+              <td>Establish the end user's identity</td>
+              <td>The end user opens the LFI app (or web page) and completes MFA &mdash; typically device possession + biometric or PIN. This is identical to how the end user would normally open their banking app.</td>
             </tr>
             <tr>
               <td><strong>Payment confirmation</strong></td>
               <td>Confirm intent for the specific payment</td>
-              <td>After reviewing the payment details, the PSU confirms authorization with a <strong>native biometric gesture</strong> (e.g. Face ID, fingerprint). This is identical to how the PSU would confirm a payment in their banking app.</td>
+              <td>After reviewing the payment details, the end user confirms authorization with a <strong>native biometric gesture</strong> (e.g. Face ID, fingerprint). This is identical to how the end user would confirm a payment in their banking app.</td>
             </tr>
           </tbody>
         </table>
@@ -181,7 +181,7 @@ meta:
 
       <EdProse>
         These two touchpoints serve distinct purposes &mdash; identity establishment and payment intent
-        confirmation &mdash; and align with how banking apps already handle payment flows. The PSU
+        confirmation &mdash; and align with how banking apps already handle payment flows. The end user
         experience is familiar: open the app with your face or fingerprint, review the payment, confirm
         with your face or fingerprint.
       </EdProse>
@@ -189,7 +189,7 @@ meta:
       <EdNote type="tip" title="Why this doesn't feel like &quot;authenticating twice&quot;">
         <p>
           The initial authentication is the natural act of opening and unlocking the banking app. The
-          payment confirmation is the natural act of approving a specific transaction. PSUs already do
+          payment confirmation is the natural act of approving a specific transaction. End users already do
           this in their banking apps today. The step-up requirement simply ensures this existing
           pattern is preserved in the Open Finance journey.
         </p>
@@ -237,7 +237,7 @@ meta:
             <tr>
               <td>4</td>
               <td>LFIs must implement step-up authentication for sensitive actions including payment initiation</td>
-              <td>For payment consents, an additional biometric confirmation MUST be performed at the point the PSU authorizes the consent. See <a href="#step-up-authentication-for-payment-consents">step-up authentication</a> above.</td>
+              <td>For payment consents, an additional biometric confirmation MUST be performed at the point the end user authorizes the consent. See <a href="#step-up-authentication-for-payment-consents">step-up authentication</a> above.</td>
             </tr>
           </tbody>
         </table>

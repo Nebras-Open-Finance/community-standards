@@ -46,12 +46,12 @@ const pillars: readonly Pillar[] = [
   },
   {
     title: 'Authenticate the customer',
-    desc: 'During the consent journey, the PSU is redirected from the Hub to the LFI to authenticate and authorise the consent. Your authorisation server hands the result back to the Hub via Headless Heimdall.',
+    desc: 'During the consent journey, the end user is redirected from the Hub to the LFI to authenticate and authorise the consent. Your authorisation server hands the result back to the Hub via Headless Heimdall.',
     color: 'var(--at-blue-deep)',
   },
   {
     title: 'Provide a CMI',
-    desc: 'The customer-facing Consent Management Interface where PSUs review and revoke active consents, backed by the Hub\'s Consent Manager API.',
+    desc: 'The customer-facing Consent Management Interface where end users review and revoke active consents, backed by the Hub\'s Consent Manager API.',
     color: 'var(--at-gold)',
   },
 ]
@@ -130,7 +130,7 @@ const sections = computed<SectionConfig[]>(() => [
     tags: ['Validate', 'Event dispatch'],
   },
   {
-    category: 'PSU Journey',
+    category: 'end user Journey',
     color: 'var(--at-blue-deep)',
     title: 'Consent Journey',
     url: `/tech/lfi-api-hub/${selectedVersion.value}/consent-journey/api-guide`,
@@ -138,11 +138,11 @@ const sections = computed<SectionConfig[]>(() => [
     tags: ['Authentication', 'SCA', 'Authorization'],
   },
   {
-    category: 'PSU Journey',
+    category: 'end user Journey',
     color: 'var(--at-blue-deep)',
     title: 'Consent Management Interface',
     url: `/tech/lfi-api-hub/${selectedVersion.value}/consent-management-interface/`,
-    desc: 'Requirements, user experience, and API guide for the consent management surface every LFI must expose to its customers &mdash; the place where PSUs view and revoke active Open Finance consents.',
+    desc: 'Requirements, user experience, and API guide for the consent management surface every LFI must expose to its customers &mdash; the place where end users view and revoke active Open Finance consents.',
     tags: ['Requirements', 'UX', 'API guide'],
   },
   {

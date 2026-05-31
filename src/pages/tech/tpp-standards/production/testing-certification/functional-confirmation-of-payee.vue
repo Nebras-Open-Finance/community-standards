@@ -16,7 +16,7 @@ meta:
         </h1>
         <p class="ed-doc__lede">
           Documented evidence that your Confirmation of Payee proposition handles match outcomes,
-          mismatch responses, and account-not-found cases correctly, and presents results to the PSU in
+          mismatch responses, and account-not-found cases correctly, and presents results to the customer in
           line with Nebras requirements.
         </p>
       </div>

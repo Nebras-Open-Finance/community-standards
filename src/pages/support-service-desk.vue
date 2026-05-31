@@ -392,7 +392,7 @@ const secondaryRequestTypes: RequestType[] = [
                   </li>
                   <li>Any <strong>consent IDs</strong> involved.</li>
                   <li>
-                    Any <strong>people involved</strong> &mdash; e.g. the PSU, a TPP
+                    Any <strong>people involved</strong> &mdash; e.g. the end user, a TPP
                     engineer, an LFI operator &mdash; and their role in the
                     interaction.
                   </li>

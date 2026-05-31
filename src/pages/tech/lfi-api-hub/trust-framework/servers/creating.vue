@@ -153,7 +153,7 @@ const images2: CarouselImage[] = [
           <EdProse>
             If your institution has multiple API Hubs (e.g. one for retail and one for business), each
             server MUST use the logo corresponding to its specific brand. This logo is displayed to TPPs
-            and PSUs during consent and authorisation journeys.
+            and end users during consent and authorisation journeys.
           </EdProse>
           <ImageViewer src="/images/raidiam/add-server/8.png" alt="Logo upload" />
         </li>

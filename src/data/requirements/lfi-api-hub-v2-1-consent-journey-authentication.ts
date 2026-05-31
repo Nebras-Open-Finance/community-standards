@@ -4,7 +4,7 @@ export const data: RequirementsPageData = {
   title: 'Authentication Requirements',
   version: 'v2.1',
   readTime: '2 min',
-  lede: 'This page defines the required error handling behaviour when the PSU fails to authenticate during the consent journey. The LFI MUST invoke <code>POST /auth/{interactionId}/doFail</code> with the exact <code>error</code> and <code>error_description</code> values specified below.',
+  lede: 'This page defines the required error handling behaviour when the end user fails to authenticate during the consent journey. The LFI MUST invoke <code>POST /auth/{interactionId}/doFail</code> with the exact <code>error</code> and <code>error_description</code> values specified below.',
   preconditions: 'For the full <code>doFail</code> API specification, see the <a href="/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/open-api/auth-interactionId-doFail"><code>POST /auth/{interactionId}/doFail</code> API Reference</a>.',
   sections: [
     {
@@ -13,9 +13,9 @@ export const data: RequirementsPageData = {
       title: 'Error scenarios',
       subsections: [
         {
-          heading: '1. PSU fails initial authentication',
+          heading: '1. End user fails initial authentication',
           blocks: [
-            { kind: 'prose', html: 'The PSU does not successfully complete initial authentication — for example, by exceeding the maximum number of allowed attempts (e.g. 3 failed attempts).' },
+            { kind: 'prose', html: 'The end user does not successfully complete initial authentication — for example, by exceeding the maximum number of allowed attempts (e.g. 3 failed attempts).' },
             { kind: 'table', table: {
               headers: ['Field', 'Value'],
               rows: [
@@ -23,13 +23,13 @@ export const data: RequirementsPageData = {
                 { cells: ['<code>error_description</code>', '<code>user_failed_to_authenticate</code>'] },
               ],
             } },
-            { kind: 'prose', html: 'The LFI MUST NOT PATCH the consent to <code>Rejected</code> in this scenario — the PSU\'s identity has not been confirmed, so no PSU identifiers are available.' },
+            { kind: 'prose', html: 'The LFI MUST NOT PATCH the consent to <code>Rejected</code> in this scenario — the end user\'s identity has not been confirmed, so no end user identifiers are available.' },
           ],
         },
         {
-          heading: '2. PSU fails step-up authentication',
+          heading: '2. End user fails step-up authentication',
           blocks: [
-            { kind: 'prose', html: 'The PSU authenticated successfully during initial login but fails the step-up authentication required for payment consent confirmation — for example, failing biometric verification or exceeding the maximum number of step-up attempts.' },
+            { kind: 'prose', html: 'The end user authenticated successfully during initial login but fails the step-up authentication required for payment consent confirmation — for example, failing biometric verification or exceeding the maximum number of step-up attempts.' },
             { kind: 'table', table: {
               headers: ['Field', 'Value'],
               rows: [
@@ -37,13 +37,13 @@ export const data: RequirementsPageData = {
                 { cells: ['<code>error_description</code>', '<code>user_failed_step_up_authentication</code>'] },
               ],
             } },
-            { kind: 'prose', html: 'The LFI MUST PATCH the consent to <code>Rejected</code> before calling <code>doFail</code> — the PSU was already identified during initial authentication.' },
+            { kind: 'prose', html: 'The LFI MUST PATCH the consent to <code>Rejected</code> before calling <code>doFail</code> — the end user was already identified during initial authentication.' },
           ],
         },
         {
-          heading: '3. PSU is blocked, suspended, or flagged',
+          heading: '3. End user is blocked, suspended, or flagged',
           blocks: [
-            { kind: 'prose', html: 'The PSU authenticates successfully but the LFI determines the customer account is blocked, suspended, or otherwise flagged — for example, due to a fraud hold, deceased marker, or sanctions screening.' },
+            { kind: 'prose', html: 'The end user authenticates successfully but the LFI determines the customer account is blocked, suspended, or otherwise flagged — for example, due to a fraud hold, deceased marker, or sanctions screening.' },
             { kind: 'table', table: {
               headers: ['Field', 'Value'],
               rows: [
@@ -65,7 +65,7 @@ export const data: RequirementsPageData = {
                 { cells: ['<code>error_description</code>', '<code>lfi_internal_error</code>'] },
               ],
             } },
-            { kind: 'prose', html: 'The LFI MUST NOT PATCH the consent to <code>Rejected</code> — the PSU\'s identity may not have been confirmed, and the failure is not attributable to the PSU.' },
+            { kind: 'prose', html: 'The LFI MUST NOT PATCH the consent to <code>Rejected</code> — the end user\'s identity may not have been confirmed, and the failure is not attributable to the end user.' },
           ],
         },
         {
@@ -82,7 +82,7 @@ export const data: RequirementsPageData = {
             { kind: 'prose', html: 'The LFI MUST NOT PATCH the consent to <code>Rejected</code> — the API Hub may be unreachable.' },
           ],
           callouts: [
-            { kind: 'warning', title: 'When GET /auth itself fails', html: 'If <code>GET /auth</code> fails, the LFI has no <code>interactionId</code> and therefore cannot call <code>doFail</code>. In this case the LFI MUST render an error page to the PSU explaining that the service is temporarily unavailable.' },
+            { kind: 'warning', title: 'When GET /auth itself fails', html: 'If <code>GET /auth</code> fails, the LFI has no <code>interactionId</code> and therefore cannot call <code>doFail</code>. In this case the LFI MUST render an error page to the end user explaining that the service is temporarily unavailable.' },
           ],
         },
         {
@@ -96,7 +96,7 @@ export const data: RequirementsPageData = {
                 { cells: ['<code>error_description</code>', '<code>lfi_temporarily_unavailable</code>'] },
               ],
             } },
-            { kind: 'prose', html: 'The LFI MUST NOT PATCH the consent to <code>Rejected</code> — the PSU\'s identity may not have been confirmed.' },
+            { kind: 'prose', html: 'The LFI MUST NOT PATCH the consent to <code>Rejected</code> — the end user\'s identity may not have been confirmed.' },
           ],
         },
       ],
@@ -109,9 +109,9 @@ export const data: RequirementsPageData = {
         { kind: 'table', table: {
           headers: ['#', 'Scenario', '`error`', '`error_description`', 'PATCH to Rejected?'],
           rows: [
-            { cells: ['1', 'PSU fails initial authentication', '<code>access_denied</code>', '<code>user_failed_to_authenticate</code>', 'No'] },
-            { cells: ['2', 'PSU fails step-up authentication', '<code>access_denied</code>', '<code>user_failed_step_up_authentication</code>', 'Yes'] },
-            { cells: ['3', 'PSU is blocked, suspended, or flagged', '<code>access_denied</code>', '<code>user_account_blocked</code>', 'No'] },
+            { cells: ['1', 'End user fails initial authentication', '<code>access_denied</code>', '<code>user_failed_to_authenticate</code>', 'No'] },
+            { cells: ['2', 'End user fails step-up authentication', '<code>access_denied</code>', '<code>user_failed_step_up_authentication</code>', 'Yes'] },
+            { cells: ['3', 'End user is blocked, suspended, or flagged', '<code>access_denied</code>', '<code>user_account_blocked</code>', 'No'] },
             { cells: ['4', 'LFI internal technical error', '<code>server_error</code>', '<code>lfi_internal_error</code>', 'No'] },
             { cells: ['5', 'LFI fails to communicate with API Hub', '<code>server_error</code>', '<code>api_hub_communication_error</code>', 'No'] },
             { cells: ['6', 'LFI temporarily unavailable', '<code>temporarily_unavailable</code>', '<code>lfi_temporarily_unavailable</code>', 'No'] },

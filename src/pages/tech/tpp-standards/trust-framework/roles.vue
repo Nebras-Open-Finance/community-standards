@@ -29,11 +29,11 @@ meta:
         <dl class="ed-doc-legend">
           <div class="ed-doc-legend__row">
             <dt>User-consented</dt>
-            <dd>APIs that act on a specific PSU's data or instructions. They require a stored consent in the API Hub, are authorised via <code>authorization_code</code> and re-used via <code>refresh_token</code>, and the access token carries an Authorization Details object that binds it to a single consent.</dd>
+            <dd>APIs that act on a specific end user's data or instructions. They require a stored consent in the API Hub, are authorised via <code>authorization_code</code> and re-used via <code>refresh_token</code>, and the access token carries an Authorization Details object that binds it to a single consent.</dd>
           </div>
           <div class="ed-doc-legend__row">
             <dt>Application-only</dt>
-            <dd>APIs that do not act on a specific PSU and require no consent or user interaction (e.g. ATM locations, public product catalogues, IBAN name-match checks). Access tokens are obtained via <code>client_credentials</code> only.</dd>
+            <dd>APIs that do not act on a specific end user and require no consent or user interaction (e.g. ATM locations, public product catalogues, IBAN name-match checks). Access tokens are obtained via <code>client_credentials</code> only.</dd>
           </div>
         </dl>
 

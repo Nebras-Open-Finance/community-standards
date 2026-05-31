@@ -102,7 +102,7 @@ meta:
     >
       <EdProse>
         When a TPP initiates a consent request, the API Hub creates the consent record and redirects the
-        PSU to your authorisation endpoint. From that point, your authorisation server interacts with the
+        end user to your authorisation endpoint. From that point, your authorisation server interacts with the
         Headless Heimdall Auth Server to coordinate the FAPI 2.0 authorisation code flow:
       </EdProse>
 
@@ -111,16 +111,16 @@ meta:
           <strong><span class="endpoint"><span class="http-method http-method--get">GET</span><code>/auth</code></span></strong> &mdash; Your authorisation server calls this at the start
           of every authorisation code grant. The API Hub validates the FAPI/OIDC request and returns the
           interaction context and the decoded consent details. Your system uses these details to present
-          the consent to the PSU for approval.
+          the consent to the end user for approval.
         </li>
         <li>
-          <strong><span class="endpoint"><span class="http-method http-method--post">POST</span><code>/auth/{interactionId}/doConfirm</code></span></strong> &mdash; After the PSU has
+          <strong><span class="endpoint"><span class="http-method http-method--post">POST</span><code>/auth/{interactionId}/doConfirm</code></span></strong> &mdash; After the end user has
           authenticated and authorised the consent, your system calls this to complete the interaction. The
           API Hub updates the consent state and issues tokens to the TPP.
         </li>
         <li>
           <strong><span class="endpoint"><span class="http-method http-method--post">POST</span><code>/auth/{interactionId}/doFail</code></span></strong> &mdash; If authentication fails
-          or the PSU rejects the consent, your system calls this to end the interaction. The API Hub
+          or the end user rejects the consent, your system calls this to end the interaction. The API Hub
           initiates an error redirect back to the TPP.
         </li>
       </EdBullets>

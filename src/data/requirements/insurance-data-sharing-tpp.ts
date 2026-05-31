@@ -39,9 +39,9 @@ export const data: RequirementsPageData = {
       num: '02',
       title: 'Authorization — Policy Selection',
       intro:
-        'The LFI presents the policies the PSU can share against the consent. Policies are selectable up to <strong>five years</strong> back regardless of current <code>PolicyStatus</code> — see <a href="/tech/lfi-api-hub/v2.1/insurance/data-sharing/requirements">LFI Insurance Data Sharing Requirements</a> for the producer-side rule. TPPs should expect historical policies (Lapsed, Expired, Cancelled, etc.) in the consented set and render them with their <code>PolicyStatus</code>.',
+        'The LFI presents the policies the customer can share against the consent. Policies are selectable up to <strong>five years</strong> back regardless of current <code>PolicyStatus</code> — see <a href="/tech/lfi-api-hub/v2.1/insurance/data-sharing/requirements">LFI Insurance Data Sharing Requirements</a> for the producer-side rule. TPPs should expect historical policies (Lapsed, Expired, Cancelled, etc.) in the consented set and render them with their <code>PolicyStatus</code>.',
       rules: [
-        { field: 'Eligible policies', rule: 'If the authenticated PSU does not hold any policies in any of the consented <code>InsuranceType</code> sectors, the consent will be set to <code>Rejected</code> with <code>error</code>: <code>invalid_request</code> and <code>error_description</code>: <code>user_lacks_eligible_policies</code>.', validatedBy: 'LFI' },
+        { field: 'Eligible policies', rule: 'If the authenticated customer does not hold any policies in any of the consented <code>InsuranceType</code> sectors, the consent will be set to <code>Rejected</code> with <code>error</code>: <code>invalid_request</code> and <code>error_description</code>: <code>user_lacks_eligible_policies</code>.', validatedBy: 'LFI' },
         { field: 'Selection breadth', rule: 'The selection screen must allow the customer to choose any subset of policies surfaced. A consent with no policies selected must not be authorised.', validatedBy: 'LFI' },
       ],
     },

@@ -88,7 +88,6 @@ const getAuthTabs = [
 const queryString = new URLSearchParams({
   client_id: req.query.client_id,
   response_type: req.query.response_type,
-  scope: req.query.scope,
   request_uri: req.query.request_uri,
 }).toString()
 
@@ -102,12 +101,12 @@ const authResponse = await fetch(\`\${HH_BASE}/auth?\${queryString}\`, {
 })
 
 if (authResponse.status === 303) {
-  // Redirectable failure — redirect the PSU to the URI in the Location header without modification
+  // Redirectable failure — redirect the end user to the URI in the Location header without modification
   return res.redirect(authResponse.headers.get('location'))
 }
 
 if (authResponse.status === 400) {
-  // Non-redirectable failure — render an error page to the PSU
+  // Non-redirectable failure — render an error page to the end user
   return res.status(400).render('auth-error')
 }
 
@@ -131,7 +130,6 @@ auth_response = httpx.get(
     params={
         "client_id": request.args["client_id"],
         "response_type": request.args["response_type"],
-        "scope": request.args["scope"],
         "request_uri": request.args["request_uri"],
     },
     # cert=("c3-transport.crt", "c3-transport.key"),  # mTLS with C3 certificate
@@ -139,7 +137,7 @@ auth_response = httpx.get(
 )
 
 if auth_response.status_code == 303:
-    # Redirectable failure — redirect the PSU without modification
+    # Redirectable failure — redirect the end user without modification
     return redirect(auth_response.headers["location"])
 
 if auth_response.status_code == 400:
@@ -213,12 +211,12 @@ await fetch(\`\${CM_BASE}/consents/\${consentId}\`, {
   body: JSON.stringify({
     status: 'Authorized',
     psuIdentifiers: {
-      // Your internal PSU identifier — the structure is flexible,
+      // Your internal end user identifier — the structure is flexible,
       // use whatever fields your institution uses to identify the customer
       userId: authenticatedUser.id,
     },
     accountIds: [
-      // Account IDs the PSU selected for this consent
+      // Account IDs the end user selected for this consent
       // For Bank Data Sharing: one or more accounts
       // For Bank Service Initiation: exactly one debtor account
       // For Insurance Data Sharing: omit accountIds — use insurancePolicyIds instead
@@ -242,12 +240,12 @@ httpx.patch(
     json={
         "status": "Authorized",
         "psuIdentifiers": {
-            # Your internal PSU identifier — the structure is flexible,
+            # Your internal end user identifier — the structure is flexible,
             # use whatever fields your institution uses to identify the customer
             "userId": authenticated_user.id,
         },
         "accountIds": [
-            # Account IDs the PSU selected for this consent
+            # Account IDs the end user selected for this consent
             # For Bank Data Sharing: one or more accounts
             # For Bank Service Initiation: exactly one debtor account
             # For Insurance Data Sharing: omit accountIds — use insurancePolicyIds instead
@@ -281,7 +279,7 @@ const confirmResponse = await fetch(
 // The API Hub responds with a 303 redirect back to the TPP
 const redirectUri = confirmResponse.headers.get('location')
 
-// Redirect the PSU to the TPP — journey complete
+// Redirect the end user to the TPP — journey complete
 res.redirect(redirectUri)`,
   },
   {
@@ -300,7 +298,7 @@ confirm_response = httpx.post(
 # The API Hub responds with a 303 redirect back to the TPP
 redirect_uri = confirm_response.headers["location"]
 
-# Redirect the PSU to the TPP — journey complete
+# Redirect the end user to the TPP — journey complete
 return redirect(redirect_uri)`,
   },
 ] as const
@@ -372,7 +370,7 @@ const failResponse = await fetch(
 // The API Hub responds with a 303 redirect back to the TPP with error parameters
 const redirectUri = failResponse.headers.get('location')
 
-// Redirect the PSU to the TPP — journey ended
+// Redirect the end user to the TPP — journey ended
 res.redirect(redirectUri)`,
   },
   {
@@ -395,12 +393,12 @@ fail_response = httpx.post(
 # The API Hub responds with a 303 redirect back to the TPP with error parameters
 redirect_uri = fail_response.headers["location"]
 
-# Redirect the PSU to the TPP — journey ended
+# Redirect the end user to the TPP — journey ended
 return redirect(redirect_uri)`,
   },
 ] as const
 
-const psuRedirectUrl = 'https://your-auth-endpoint.example.com/authorize?client_id={clientId}&response_type=code&scope=openid&request_uri={request_uri}'
+const psuRedirectUrl = 'https://your-auth-endpoint.example.com/authorize?client_id={clientId}&response_type=code&request_uri={request_uri}'
 </script>
 
 <template>
@@ -485,7 +483,7 @@ const psuRedirectUrl = 'https://your-auth-endpoint.example.com/authorize?client_
             <tr>
               <td><a href="/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId" class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/consents/{consentId}</code></a></td>
               <td>LFI &rarr; API Hub</td>
-              <td>Update consent status, PSU identifiers, and account IDs</td>
+              <td>Update consent status, end user identifiers, and account IDs</td>
             </tr>
             <tr>
               <td><a href="/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/open-api/auth-interactionId-doConfirm" class="endpoint"><span class="http-method http-method--post">POST</span><code>/auth/{interactionId}/doConfirm</code></a></td>
@@ -607,13 +605,13 @@ const psuRedirectUrl = 'https://your-auth-endpoint.example.com/authorize?client_
       id="psu-redirect"
       num="04"
       color="var(--at-navy)"
-      eyebrow="PSU redirect and authorization interaction"
+      eyebrow="End user redirect and authorization interaction"
       title="Steps 4–6 — receive redirect, GET /auth, GET /consents"
       tone="surface"
     >
-      <h3>Step 4 &mdash; PSU is redirected to your Authorization Endpoint</h3>
+      <h3>Step 4 &mdash; End user is redirected to your Authorization Endpoint</h3>
       <EdProse>
-        After the consent is created via <span class="endpoint"><span class="http-method http-method--post">POST</span><code>/par</code></span>, the TPP redirects the PSU to your
+        After the consent is created via <span class="endpoint"><span class="http-method http-method--post">POST</span><code>/par</code></span>, the TPP redirects the end user to your
         <strong>Authorization Endpoint</strong> with the following query parameters:
       </EdProse>
 
@@ -625,9 +623,24 @@ const psuRedirectUrl = 'https://your-auth-endpoint.example.com/authorize?client_
         <a href="/tech/lfi-api-hub/v2.1/api-hub/onboarding/environment-specific/auth-endpoint">environment-specific configuration</a>.
       </EdProse>
 
+      <EdNote type="tip" title="Don't validate the inbound URL — ignore unknown parameters">
+        <p>
+          Your Authorization Endpoint MUST NOT reject the redirect based on the query parameters it
+          receives. If a TPP appends additional parameters beyond <code>client_id</code>,
+          <code>response_type</code>, and <code>request_uri</code>, simply ignore them &mdash; do not
+          treat the redirect as malformed.
+        </p>
+        <p>
+          The authoritative authorization request is the signed Request JWT referenced by
+          <code>request_uri</code>; the API Hub validates it when you call
+          <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/auth</code></span> in Step 5. Forward whatever you receive and let Headless
+          Heimdall be the source of truth.
+        </p>
+      </EdNote>
+
       <h3>Step 5 &mdash; Call <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/auth</code></span></h3>
       <EdProse>
-        Upon receiving the PSU redirect, your authorization server MUST immediately call
+        Upon receiving the end user redirect, your authorization server MUST immediately call
         <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/auth</code></span> on the
         <a href="/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/">Headless Heimdall</a>
         base URL, passing through <strong>all</strong> the query parameters received from the redirect.
@@ -666,7 +679,7 @@ const psuRedirectUrl = 'https://your-auth-endpoint.example.com/authorize?client_
         <p><span class="endpoint"><span class="http-method http-method--get">GET</span><code>/auth</code></span> can return three outcomes:</p>
         <ul>
           <li><strong><code>200</code></strong> &mdash; Success. Continue with the authorization journey.</li>
-          <li><strong><code>303</code></strong> &mdash; Redirectable failure. The OIDC client was valid but the authorization request parameters failed validation. You MUST redirect the PSU to the URI in the <code>Location</code> header <strong>without modification</strong>.</li>
+          <li><strong><code>303</code></strong> &mdash; Redirectable failure. The OIDC client was valid but the authorization request parameters failed validation. You MUST redirect the end user to the URI in the <code>Location</code> header <strong>without modification</strong>.</li>
           <li><strong><code>400</code></strong> &mdash; Non-redirectable failure. The OIDC client could not be verified. You MUST render an error page and MUST NOT redirect back to the TPP.</li>
         </ul>
       </EdNote>
@@ -709,12 +722,12 @@ const psuRedirectUrl = 'https://your-auth-endpoint.example.com/authorize?client_
       id="psu-authentication"
       num="05"
       color="var(--at-teal-deep)"
-      eyebrow="PSU authentication"
-      title="Step 7 — authenticate the PSU"
+      eyebrow="End user authentication"
+      title="Step 7 — authenticate the end user"
       tone="cream"
     >
       <EdProse>
-        Your LFI MUST authenticate the PSU using your standard authentication mechanisms. The
+        Your LFI MUST authenticate the end user using your standard authentication mechanisms. The
         authentication MUST satisfy the requirements defined in the
         <a href="/tech/lfi-api-hub/v2.1/consent-journey/authentication/requirements">Authentication Requirements</a>.
       </EdProse>
@@ -730,7 +743,7 @@ const psuRedirectUrl = 'https://your-auth-endpoint.example.com/authorize?client_
     >
       <h3>Step 8 &mdash; Present the authorization page</h3>
       <EdProse>
-        After the PSU has authenticated, present the consent details for the user to review and
+        After the end user has authenticated, present the consent details for the user to review and
         authorize. The authorization page layout varies by consent type. For example, a bank data
         sharing consent displays the requested permissions and account selection, while a payment
         consent displays the payment details.
@@ -765,11 +778,11 @@ const psuRedirectUrl = 'https://your-auth-endpoint.example.com/authorize?client_
         </table>
       </EdRefTable>
 
-      <h3>Step 9a &mdash; PSU authorizes: PATCH consent and doConfirm</h3>
-      <EdProse>If the PSU approves the consent, your LFI MUST:</EdProse>
+      <h3>Step 9a &mdash; end user authorizes: PATCH consent and doConfirm</h3>
+      <EdProse>If the end user approves the consent, your LFI MUST:</EdProse>
       <EdBullets>
-        <li><strong>PATCH the consent</strong> to <code>Authorized</code> status, providing the PSU identifiers, account IDs, and authorization channel</li>
-        <li><strong>Call <code>doConfirm</code></strong> to complete the interaction and redirect the PSU back to the TPP</li>
+        <li><strong>PATCH the consent</strong> to <code>Authorized</code> status, providing the end user identifiers, account IDs, and authorization channel</li>
+        <li><strong>Call <code>doConfirm</code></strong> to complete the interaction and redirect the end user back to the TPP</li>
       </EdBullets>
 
       <h4>PATCH the consent</h4>
@@ -795,22 +808,22 @@ const psuRedirectUrl = 'https://your-auth-endpoint.example.com/authorize?client_
             <tr>
               <td><code>psuIdentifiers</code></td>
               <td style="text-align:center">Yes</td>
-              <td>Object containing your internal PSU identifier fields</td>
+              <td>Object containing your internal end user identifier fields</td>
             </tr>
             <tr>
               <td><code>accountIds</code></td>
               <td style="text-align:center">Yes (Bank consents)</td>
-              <td>Array of account IDs the PSU selected. For Bank Data Sharing, one or more accounts. For Bank Service Initiation, exactly one debtor account. Not patched for Insurance Data Sharing &mdash; use <code>insurancePolicyIds</code> instead</td>
+              <td>Array of account IDs the end user selected. For Bank Data Sharing, one or more accounts. For Bank Service Initiation, exactly one debtor account. Not patched for Insurance Data Sharing &mdash; use <code>insurancePolicyIds</code> instead</td>
             </tr>
             <tr>
               <td><code>insurancePolicyIds</code></td>
               <td style="text-align:center">Yes (Insurance Data Sharing)</td>
-              <td>Array of <code>InsurancePolicyId</code> values the PSU selected. The Consent Manager mirrors this into <code>accountIds</code> automatically so downstream identifier handling stays uniform across consent types</td>
+              <td>Array of <code>InsurancePolicyId</code> values the end user selected. The Consent Manager mirrors this into <code>accountIds</code> automatically so downstream identifier handling stays uniform across consent types</td>
             </tr>
             <tr>
               <td><code>authorizationChannel</code></td>
               <td style="text-align:center">Yes</td>
-              <td><code>App</code> or <code>Web</code> &mdash; the channel on which the PSU authorized the consent</td>
+              <td><code>App</code> or <code>Web</code> &mdash; the channel on which the end user authorized the consent</td>
             </tr>
           </tbody>
         </table>
@@ -827,7 +840,7 @@ const psuRedirectUrl = 'https://your-auth-endpoint.example.com/authorize?client_
 
       <EdProse>
         The API Hub responds with a <strong><code>303 See Other</code></strong> containing the redirect
-        URI back to the TPP. Your LFI MUST redirect the PSU to this URI to complete the journey.
+        URI back to the TPP. Your LFI MUST redirect the end user to this URI to complete the journey.
       </EdProse>
       <EdProse>
         See the
@@ -835,11 +848,11 @@ const psuRedirectUrl = 'https://your-auth-endpoint.example.com/authorize?client_
         for the full specification.
       </EdProse>
 
-      <h3>Step 9b &mdash; PSU rejects: PATCH consent and doFail</h3>
-      <EdProse>If the PSU declines the consent or authentication fails, your LFI MUST:</EdProse>
+      <h3>Step 9b &mdash; end user rejects: PATCH consent and doFail</h3>
+      <EdProse>If the end user declines the consent or authentication fails, your LFI MUST:</EdProse>
       <EdBullets>
-        <li><strong>PATCH the consent</strong> to <code>Rejected</code> status, providing the PSU identifiers (but <strong>not</strong> account IDs)</li>
-        <li><strong>Call <code>doFail</code></strong> to complete the interaction and redirect the PSU back to the TPP with an error</li>
+        <li><strong>PATCH the consent</strong> to <code>Rejected</code> status, providing the end user identifiers (but <strong>not</strong> account IDs)</li>
+        <li><strong>Call <code>doFail</code></strong> to complete the interaction and redirect the end user back to the TPP with an error</li>
       </EdBullets>
 
       <h4>PATCH the consent</h4>
@@ -850,7 +863,7 @@ const psuRedirectUrl = 'https://your-auth-endpoint.example.com/authorize?client_
 
       <EdProse>
         The API Hub responds with a <strong><code>303 See Other</code></strong> containing the redirect
-        URI back to the TPP with OAuth 2.0 error parameters. Your LFI MUST redirect the PSU to this
+        URI back to the TPP with OAuth 2.0 error parameters. Your LFI MUST redirect the end user to this
         URI. If you omit <code>error</code> and <code>error_description</code>, the API Hub will return
         default error values.
       </EdProse>
@@ -899,8 +912,8 @@ const psuRedirectUrl = 'https://your-auth-endpoint.example.com/authorize?client_
           <tbody>
             <tr><td>Type</td><td>String (required field on <code>psuIdentifiers</code>)</td></tr>
             <tr><td>Pattern</td><td>LFI-defined opaque string. UUID (v4) recommended</td></tr>
-            <tr><td>Uniqueness</td><td>MUST uniquely identify a single PSU within the LFI</td></tr>
-            <tr><td>Stability</td><td>MUST be the same value for the same PSU across every consent they authorise &mdash; used by <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/psu/{userId}/consents</code></span></td></tr>
+            <tr><td>Uniqueness</td><td>MUST uniquely identify a single end user within the LFI</td></tr>
+            <tr><td>Stability</td><td>MUST be the same value for the same end user across every consent they authorise &mdash; used by <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/psu/{userId}/consents</code></span></td></tr>
             <tr><td>Sensitive values</td><td>MUST NOT be an Emirates ID, email, phone, CIF, or any other PII</td></tr>
           </tbody>
         </table>

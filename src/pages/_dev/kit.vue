@@ -262,7 +262,7 @@ aud: https://auth.lfi-foo.apihub.openfinance.ae`
           <p>TPP creates a consent via PAR at the API Hub.</p>
         </EdStage>
         <EdStage num="2" title="Authenticate at the LFI" numColor="var(--at-teal)">
-          <p>The PSU is redirected to the LFI to authenticate and authorize the consent.</p>
+          <p>The end user is redirected to the LFI to authenticate and authorize the consent.</p>
         </EdStage>
         <EdStage num="3" title="Use the access token" numColor="var(--at-navy)">
           <p>The TPP exchanges the authorization code for an access token at the API Hub.</p>

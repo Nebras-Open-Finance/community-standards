@@ -143,7 +143,7 @@ meta:
         <p>
           We <strong>highly recommend</strong> all LFIs implement the validate endpoint. It gives your
           institution early control over which consents enter the authorization journey, preventing
-          unsupported consents from reaching your PSUs.
+          unsupported consents from reaching your end users.
         </p>
       </EdNote>
 
@@ -178,9 +178,9 @@ meta:
       <h3><span class="endpoint"><span class="http-method http-method--post">POST</span><code>/consent/event/patch</code></span> &mdash; Consent updated</h3>
       <EdProse>Called every time a consent's state changes. This includes transitions such as:</EdProse>
       <EdBullets>
-        <li><code>AwaitingAuthorisation</code> &rarr; <code>Authorized</code> (PSU approved the consent)</li>
-        <li><code>AwaitingAuthorisation</code> &rarr; <code>Rejected</code> (PSU declined the consent)</li>
-        <li><code>Authorized</code> &rarr; <code>Revoked</code> (consent revoked by TPP, LFI, or PSU)</li>
+        <li><code>AwaitingAuthorisation</code> &rarr; <code>Authorized</code> (end user approved the consent)</li>
+        <li><code>AwaitingAuthorisation</code> &rarr; <code>Rejected</code> (end user declined the consent)</li>
+        <li><code>Authorized</code> &rarr; <code>Revoked</code> (consent revoked by TPP, LFI, or end user)</li>
         <li><code>Authorized</code> &rarr; <code>Expired</code> (consent reached its expiration date)</li>
       </EdBullets>
       <EdProse>The request body contains the full, updated consent object.</EdProse>

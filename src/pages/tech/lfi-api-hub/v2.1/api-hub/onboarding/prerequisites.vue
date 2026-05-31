@@ -140,7 +140,7 @@ meta:
 
       <h3>Digital Channels</h3>
       <EdProse>
-        Indicate which digital channels you currently support for PSU authentication and consent journeys:
+        Indicate which digital channels you currently support for end user authentication and consent journeys:
       </EdProse>
       <EdBullets>
         <li>Web</li>
@@ -150,8 +150,36 @@ meta:
     </EdSectionBand>
 
     <EdSectionBand
-      id="brands"
+      id="caap"
       num="04"
+      color="var(--at-teal-deep)"
+      eyebrow="Authentication & Consent"
+      title="Will you adopt CAAP?"
+      tone="cream"
+    >
+      <EdProse>
+        Indicate whether you intend to adopt <strong>CAAP</strong> &mdash; the Nebras-operated Central
+        Authentication and Authorization Platform &mdash; for the end user&apos;s authentication and consent
+        authorisation experience.
+      </EdProse>
+
+      <EdBullets>
+        <li><strong>Yes &mdash; CAAP.</strong> When a TPP creates a consent, the end user is redirected to CAAP for authentication and consent approval, and CAAP delivers the Consent Management Interface. You do not provide an Authorization Endpoint URL, and you do not implement the LFI-side Consent Management Interface or build directly against Headless Heimdall. You MUST implement the CAAP Operations endpoints on Ozone Connect &mdash; see <a href="/tech/lfi-api-hub/v2.1/caap/">CAAP</a>.</li>
+        <li><strong>No &mdash; LFI-operated.</strong> The end user is redirected to your <a href="/tech/lfi-api-hub/v2.1/api-hub/onboarding/environment-specific/auth-endpoint">Authorization Endpoint</a>; you implement the <a href="/tech/lfi-api-hub/v2.1/consent-journey/authentication">authentication and consent authorisation</a> UX and the <a href="/tech/lfi-api-hub/v2.1/consent-management-interface/">Consent Management Interface</a> yourself.</li>
+      </EdBullets>
+
+      <EdNote type="info" title="Either way, Ozone Connect is still yours">
+        <p>
+          Adopting CAAP does not change the LFI&apos;s responsibility to deliver the Ozone Connect
+          endpoints for Bank Data Sharing, Bank Service Initiation, Insurance Data Sharing, and the
+          other Open Finance services exposed to TPPs.
+        </p>
+      </EdNote>
+    </EdSectionBand>
+
+    <EdSectionBand
+      id="brands"
+      num="05"
       color="var(--at-navy)"
       eyebrow="Brands"
       title="One Hub per business brand"
@@ -166,7 +194,7 @@ meta:
 
     <EdSectionBand
       id="supported-api-families"
-      num="05"
+      num="06"
       color="var(--at-teal-deep)"
       eyebrow="Supported API Families"
       title="Which API families you plan to support"
@@ -187,7 +215,7 @@ meta:
 
     <EdSectionBand
       id="health-check"
-      num="06"
+      num="07"
       color="var(--at-gold)"
       eyebrow="Health Check Endpoints"
       title="Three mandatory endpoints"
@@ -232,7 +260,7 @@ meta:
 
     <EdSectionBand
       id="optional-features"
-      num="07"
+      num="08"
       color="var(--at-blue-deep, #1d4ed8)"
       eyebrow="Optional Features"
       title="Pre-validation, event notifications, augmentation"
@@ -253,7 +281,7 @@ meta:
         <p>
           Consent Pre-Validation is <strong>strongly recommended</strong> for all LFI implementations.
           Implementing this feature allows you to catch invalid consent parameters early &mdash; before
-          the PSU begins the authorization journey &mdash; resulting in a significantly better customer
+          the end user begins the authorization journey &mdash; resulting in a significantly better customer
           experience. This feature may become a <strong>mandatory requirement</strong> in a future
           version of the specification if adoption is insufficient.
         </p>

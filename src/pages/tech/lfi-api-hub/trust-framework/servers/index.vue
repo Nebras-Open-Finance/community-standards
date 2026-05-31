@@ -158,7 +158,7 @@ const tree = `Organisation
       </EdProse>
 
       <EdProse>
-        This ensures that TPPs and PSUs see the correct branding during consent and authorisation
+        This ensures that TPPs and end users see the correct branding during consent and authorisation
         journeys.
       </EdProse>
     </EdSectionBand>

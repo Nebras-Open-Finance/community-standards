@@ -474,7 +474,7 @@ const duplicateInFlightTabs = [
         <p class="ed-doc__lede">
           Fixed On Demand lets a TPP initiate <strong>multiple</strong> domestic payments at a
           <strong>fixed amount</strong> from a customer's account at your LFI via the API Hub. The
-          PSU authorises the consent once &mdash; approving a specific per-payment amount and
+          customer authorises the consent once &mdash; approving a specific per-payment amount and
           periodic limits &mdash; and the TPP can then submit individual payments on-demand without
           re-authorisation. Payments run on AANI as the primary rail with UAEFTS as the fallback.
           This guide covers the Ozone Connect endpoints your LFI MUST implement so the Hub can serve
@@ -602,7 +602,7 @@ const duplicateInFlightTabs = [
         If the TPP supplied <code>Initiation.DebtorAccount</code> in the consent PII, your LFI MUST
         also validate it before approving the consent: <code>SchemeName</code> is <code>IBAN</code>,
         the IBAN corresponds to an account held at this LFI, and the account is in a state that
-        permits payment initiation. PSU ownership is checked later during the authorisation journey.
+        permits payment initiation. Customer ownership is checked later during the authorisation journey.
       </EdProse>
 
       <EdProse>
@@ -627,11 +627,11 @@ const duplicateInFlightTabs = [
       num="04"
       color="var(--at-navy)"
       eyebrow="Consent Flow"
-      title="Authenticate the PSU and pin the debtor account"
+      title="Authenticate the customer and pin the debtor account"
       tone="surface"
     >
       <EdProse>
-        After consent creation passes validation, the TPP redirects the PSU to your LFI's
+        After consent creation passes validation, the TPP redirects the customer to your LFI's
         <a href="/tech/lfi-api-hub/v2.1/api-hub/onboarding/environment-specific/auth-endpoint">authorization
         endpoint</a> and your LFI runs the standard consent journey. Full details are in the
         <a href="/tech/lfi-api-hub/v2.1/consent-journey/api-guide">Consent Journey API Guide</a>.
@@ -643,7 +643,7 @@ const duplicateInFlightTabs = [
           <tbody>
             <tr><td><a href="/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/open-api/auth" class="endpoint"><span class="http-method http-method--get">GET</span><code>/auth</code></a></td><td>LFI &rarr; API Hub</td><td>Initiate the authorization interaction</td></tr>
             <tr><td><a href="/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents-consentId" class="endpoint"><span class="http-method http-method--get">GET</span><code>/consents/{consentId}</code></a></td><td>LFI &rarr; API Hub</td><td>Retrieve the full consent details</td></tr>
-            <tr><td><a href="/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId" class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/consents/{consentId}</code></a></td><td>LFI &rarr; API Hub</td><td>Update consent status, PSU identifiers, and the selected debtor account</td></tr>
+            <tr><td><a href="/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId" class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/consents/{consentId}</code></a></td><td>LFI &rarr; API Hub</td><td>Update consent status, customer identifiers, and the selected debtor account</td></tr>
             <tr><td><a href="/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/open-api/auth-interactionId-doConfirm" class="endpoint"><span class="http-method http-method--post">POST</span><code>/auth/{interactionId}/doConfirm</code></a></td><td>LFI &rarr; API Hub</td><td>Complete the interaction successfully</td></tr>
             <tr><td><a href="/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/open-api/auth-interactionId-doFail" class="endpoint"><span class="http-method http-method--post">POST</span><code>/auth/{interactionId}/doFail</code></a></td><td>LFI &rarr; API Hub</td><td>Complete the interaction with a failure</td></tr>
           </tbody>
@@ -707,7 +707,7 @@ const duplicateInFlightTabs = [
             <tr><td><code>o3-api-operation</code></td><td>Yes</td><td>The HTTP method (<code>POST</code>)</td></tr>
             <tr><td><code>o3-ozone-interaction-id</code></td><td>Yes</td><td>Hub-generated interaction ID</td></tr>
             <tr><td><code>o3-consent-id</code></td><td>Yes</td><td>The <code>consentId</code> for which this call is being made</td></tr>
-            <tr><td><code>o3-psu-identifier</code></td><td>Yes</td><td>Base64-encoded PSU identifier JSON object</td></tr>
+            <tr><td><code>o3-psu-identifier</code></td><td>Yes</td><td>Base64-encoded customer identifier JSON object</td></tr>
             <tr><td><code>o3-caller-interaction-id</code></td><td>No</td><td>Interaction ID passed in by the TPP, if present</td></tr>
           </tbody>
         </table>
@@ -721,7 +721,7 @@ const duplicateInFlightTabs = [
           forwarded to your LFI <strong>inside the request body</strong> as
           <code>requestHeaders</code>, not on the HTTP headers of the API Hub &rarr; LFI call. Unlike
           Single Instant Payment, Fixed On Demand does <strong>not</strong> require
-          <code>x-fapi-customer-ip-address</code> &mdash; the PSU may not be present at the time the
+          <code>x-fapi-customer-ip-address</code> &mdash; the customer may not be present at the time the
           TPP submits an on-demand payment.
         </p>
       </EdNote>
