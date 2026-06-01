@@ -344,8 +344,8 @@ const terminalExample = `{
     >
       <EdProse>
         Events delivered to your webhook are signed by the Hub. You MUST verify the signature on every
-        event before applying it. See <a href="/tech/tpp-standards/security/fapi/webhook-verification">Webhook
-        Verification</a> for the signature scheme.
+        event before applying it. See <a href="/tech/tpp-standards/security/fapi/receiving-events">Receiving
+        Event Notifications</a> for the signature scheme.
       </EdProse>
 
       <EdProse>

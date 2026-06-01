@@ -25,6 +25,7 @@ const FAMILY_ORDER: readonly EndpointFamily[] = [
   'Consent & authorization',
   'Data sharing',
   'Service initiation',
+  'Quotes',
   'Confirmation of Payee',
   'ATMs, products, leads',
   'Onboarding & directory',

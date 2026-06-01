@@ -374,6 +374,27 @@ const feeStreams: FeeStream[] = [
           </span>
         </div>
 
+        <!-- Insurance Quotes tier -->
+        <div class="ed-pr-detail__note">
+          <span class="ed-pr-detail__note-tag">Insurance Quotes tier</span>
+          <span class="ed-pr-detail__note-body">
+            <strong>Insurance Quote</strong> calls
+            (<code>POST&nbsp;/{sector}-insurance-quotes</code>) are billed by
+            the number of LFIs that returned a quote, not at the flat
+            2.5&nbsp;fils rate:
+            <span class="ed-pr-quotes-tier">
+              <span><strong>5&nbsp;fils</strong> &mdash; up to 4 LFIs</span>
+              <span><strong>7.5&nbsp;fils</strong> &mdash; up to 10 LFIs</span>
+              <span><strong>10&nbsp;fils</strong> &mdash; up to 25 LFIs</span>
+              <span><strong>12.5&nbsp;fils</strong> &mdash; more than 25 LFIs</span>
+            </span>
+            <code>PATCH&nbsp;/{sector}-insurance-quotes/{QuoteId}</code> (accept,
+            submit KYC) and <code>POST&nbsp;/{sector}-insurance-policies</code>
+            are billed at the flat 2.5&nbsp;fils rate.
+            <code>GET&nbsp;/{sector}-insurance-quotes/{QuoteId}</code> is free.
+          </span>
+        </div>
+
         <p class="ed-pr-detail__footnote">
           <a href="/pricing/endpoints/">See the full list of chargeable endpoints &rarr;</a>
         </p>
@@ -1408,6 +1429,24 @@ const feeStreams: FeeStream[] = [
 }
 
 .ed-pr-detail__note-body strong { color: var(--at-navy-deep); font-weight: 600; }
+
+.ed-pr-quotes-tier {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.5rem 0;
+  font-family: var(--at-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+
+.ed-pr-quotes-tier span {
+  padding: 0.25rem 0.55rem;
+  background: rgba(0, 82, 204, 0.08);
+  color: var(--at-blue-deep);
+}
+
+.ed-pr-quotes-tier strong { color: var(--at-blue-deep); }
 
 .ed-pr-detail__footnote {
   font-family: var(--at-sans);

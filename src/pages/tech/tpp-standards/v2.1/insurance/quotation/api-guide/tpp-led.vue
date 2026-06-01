@@ -287,8 +287,9 @@ def verify_document(doc: dict) -> bool:
       <EdProse>
         On <code>Completed</code>, finalise the policy in your records, surface it as live to the
         customer, and reconcile any commission against the event&rsquo;s <code>Commission</code> block.
-        <code>PaymentMethod: ThroughAPIHub</code> means the Hub will route payment to you; review your
-        <a href="/tech/tpp-standards/billing">billing</a> setup for how settlements arrive.
+        <code>PaymentMethod: ThroughAPIHub</code> means the Hub will route payment to you; the
+        commission and timing are governed by the
+        <a href="/pricing/">AlTareq Commercial and Pricing Model</a>.
       </EdProse>
 
       <EdProse>
