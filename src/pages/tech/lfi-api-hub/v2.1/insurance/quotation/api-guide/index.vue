@@ -215,7 +215,7 @@ meta:
       </EdProse>
 
       <div class="ed-doc__cards">
-        <a class="ed-doc__card" href="./lfi-led">
+        <a class="ed-doc__card" href="/tech/lfi-api-hub/v2.1/insurance/quotation/api-guide/lfi-led">
           <span class="ed-doc__card-cat">LFI-Led</span>
           <h3 class="ed-doc__card-title">Your LFI hosts customer verification, payment, and documents</h3>
           <p class="ed-doc__card-desc">
@@ -224,7 +224,7 @@ meta:
           </p>
           <span class="ed-doc__card-arrow">Open &rarr;</span>
         </a>
-        <a class="ed-doc__card" href="./tpp-led">
+        <a class="ed-doc__card" href="/tech/lfi-api-hub/v2.1/insurance/quotation/api-guide/tpp-led">
           <span class="ed-doc__card-cat">TPP-Led</span>
           <h3 class="ed-doc__card-title">TPP collects KYC; LFI hosts only the payment page</h3>
           <p class="ed-doc__card-desc">
@@ -246,7 +246,7 @@ meta:
     >
       <EdProse>
         The validation differences between <code>New</code>, <code>Renewal</code>, and
-        <code>Switch</code> are documented in the shared <a href="../quote-types">Quote Types</a>
+        <code>Switch</code> are documented in the shared <a href="/tech/lfi-api-hub/v2.1/insurance/quotation/quote-types">Quote Types</a>
         explainer &mdash; the same page the TPP standards link to. Read it before implementing the
         Create Quote validation in your Ozone Connect endpoint.
       </EdProse>

@@ -110,7 +110,7 @@ const terminalExample = `{
       tone="cream"
     >
       <div class="ed-doc__cards">
-        <a class="ed-doc__card" href="./lfi-led">
+        <a class="ed-doc__card" href="/tech/tpp-standards/v2.1/insurance/quotation/api-guide/lfi-led">
           <span class="ed-doc__card-cat">LFI-Led</span>
           <h3 class="ed-doc__card-title">The LFI hosts the customer through completion</h3>
           <p class="ed-doc__card-desc">
@@ -119,7 +119,7 @@ const terminalExample = `{
           </p>
           <span class="ed-doc__card-arrow">Open &rarr;</span>
         </a>
-        <a class="ed-doc__card" href="./tpp-led">
+        <a class="ed-doc__card" href="/tech/tpp-standards/v2.1/insurance/quotation/api-guide/tpp-led">
           <span class="ed-doc__card-cat">TPP-Led</span>
           <h3 class="ed-doc__card-title">You collect KYC; the LFI hosts only payment</h3>
           <p class="ed-doc__card-desc">

@@ -16,7 +16,7 @@ const capabilities: { title: string; html: string }[] = [
   },
   {
     title: 'New, Renewal &amp; Switch',
-    html: 'Each quote request specifies a <code>QuoteType</code> of <code>New</code>, <code>Renewal</code> (the customer is renewing an existing policy with you), or <code>Switch</code> (the customer is moving from an incumbent insurer). See <a href="./quote-types">Quote Types</a> for the per-type validation differences.',
+    html: 'Each quote request specifies a <code>QuoteType</code> of <code>New</code>, <code>Renewal</code> (the customer is renewing an existing policy with you), or <code>Switch</code> (the customer is moving from an incumbent insurer). See <a href="/tech/lfi-api-hub/v2.1/insurance/quotation/quote-types">Quote Types</a> for the per-type validation differences.',
   },
   {
     title: 'LFI-Led or TPP-Led',
