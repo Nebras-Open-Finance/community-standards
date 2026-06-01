@@ -40,10 +40,20 @@ const ROOT = resolve(__dirname, '..')
 const REPO_OWNER = 'Nebras-Open-Finance'
 const REPO_NAME = 'api-specs'
 
+// Resolve which api-specs branch to fetch from.
+// Precedence: --branch CLI arg > SPECS_BRANCH env > tracked .specs-branch file > 'main'.
+// To retarget the build (locally + CI), edit the tracked .specs-branch file at repo root.
+function readTrackedBranch() {
+  const p = resolve(ROOT, '.specs-branch')
+  if (!existsSync(p)) return null
+  const v = readFileSync(p, 'utf-8').trim()
+  return v || null
+}
+
 function parseBranch() {
   const idx = process.argv.indexOf('--branch')
   if (idx !== -1 && process.argv[idx + 1]) return process.argv[idx + 1]
-  return process.env.SPECS_BRANCH || 'main'
+  return process.env.SPECS_BRANCH || readTrackedBranch() || 'main'
 }
 
 const BRANCH = parseBranch()
