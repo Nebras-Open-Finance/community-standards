@@ -233,11 +233,92 @@ const activeCatalog = computed<CatalogEntry[]>(() =>
   activeTab.value === 'private' ? catalog.value.private : catalog.value.public,
 )
 
-const filteredFiles = computed<FileEntry[]>(() => {
-  const q = search.value.toLowerCase().trim()
-  if (!q) return activeFiles.value
-  return activeFiles.value.filter(f => f.file.toLowerCase().includes(q))
+// Slugs flagged `monthly` in the active catalog. Their uploaded files are named
+// `<slug>-<YYYY-MM>.<ext>` and get pulled out of the flat list into their own
+// grouped section (one group per type, newest month first).
+const monthlySlugSet = computed<Set<string>>(
+  () => new Set(activeCatalog.value.filter(c => c.monthly).map(c => c.slug)),
+)
+
+function parseMonthly(fileName: string): { slug: string; month: string } | null {
+  const dot = fileName.lastIndexOf('.')
+  const base = dot > 0 ? fileName.slice(0, dot) : fileName
+  const m = base.match(/^(.+)-(\d{4}-\d{2})$/)
+  const slug = m?.[1]
+  const month = m?.[2]
+  if (!slug || !month) return null
+  return { slug, month }
+}
+
+function isMonthlyFile(f: FileEntry): boolean {
+  const parsed = parseMonthly(f.file)
+  return !!parsed && monthlySlugSet.value.has(parsed.slug)
+}
+
+interface MonthlyItem {
+  entry: FileEntry
+  month: string
+}
+
+interface MonthlyGroup {
+  slug: string
+  label: string
+  items: MonthlyItem[]
+}
+
+const monthlyGroups = computed<MonthlyGroup[]>(() => {
+  const groups = new Map<string, MonthlyGroup>()
+  for (const f of activeFiles.value) {
+    const parsed = parseMonthly(f.file)
+    if (!parsed || !monthlySlugSet.value.has(parsed.slug)) continue
+    let g = groups.get(parsed.slug)
+    if (!g) {
+      const label = activeCatalog.value.find(c => c.slug === parsed.slug)?.label || parsed.slug
+      g = { slug: parsed.slug, label, items: [] }
+      groups.set(parsed.slug, g)
+    }
+    g.items.push({ entry: f, month: parsed.month })
+  }
+  for (const g of groups.values()) g.items.sort((a, b) => b.month.localeCompare(a.month))
+  return [...groups.values()].sort((a, b) => a.label.localeCompare(b.label))
 })
+
+function formatMonth(month: string): string {
+  const m = month.match(/^(\d{4})-(\d{2})$/)
+  if (!m) return month
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, 1)
+  if (Number.isNaN(d.getTime())) return month
+  return d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+}
+
+// Flat list excludes monthly files (they live in their own grouped section).
+const filteredFiles = computed<FileEntry[]>(() => {
+  const base = activeFiles.value.filter(f => !isMonthlyFile(f))
+  const q = search.value.toLowerCase().trim()
+  if (!q) return base
+  return base.filter(f => f.file.toLowerCase().includes(q))
+})
+
+const filteredMonthlyGroups = computed<MonthlyGroup[]>(() => {
+  const q = search.value.toLowerCase().trim()
+  if (!q) return monthlyGroups.value
+  return monthlyGroups.value
+    .map(g => ({
+      ...g,
+      items: g.items.filter(
+        it =>
+          g.label.toLowerCase().includes(q) ||
+          it.month.includes(q) ||
+          formatMonth(it.month).toLowerCase().includes(q) ||
+          it.entry.file.toLowerCase().includes(q),
+      ),
+    }))
+    .filter(g => g.items.length > 0)
+})
+
+const hasAnyFiles = computed<boolean>(
+  () => filteredFiles.value.length > 0 || filteredMonthlyGroups.value.length > 0,
+)
 
 const selectedEntry = computed<CatalogEntry | undefined>(() =>
   activeCatalog.value.find(c => c.slug === selectedSlug.value),
@@ -599,20 +680,62 @@ const orgLogo = computed<string>(() => org.value?.logoUri ?? '')
             </div>
 
             <!-- Documents -->
-            <div class="ed-doc-list">
-              <template v-if="activeLoading">
-                <div v-for="n in 3" :key="n" class="ed-doc-row ed-doc-row--skeleton">
-                  <span class="ed-doc-skel ed-doc-skel--name" />
-                  <span class="ed-doc-skel ed-doc-skel--meta" />
-                  <span class="ed-doc-skel ed-doc-skel--btn" />
-                </div>
-              </template>
+            <div v-if="activeLoading" class="ed-doc-list">
+              <div v-for="n in 3" :key="n" class="ed-doc-row ed-doc-row--skeleton">
+                <span class="ed-doc-skel ed-doc-skel--name" />
+                <span class="ed-doc-skel ed-doc-skel--meta" />
+                <span class="ed-doc-skel ed-doc-skel--btn" />
+              </div>
+            </div>
 
-              <div v-else-if="activeError" class="ed-doc-empty">
+            <div v-else-if="activeError" class="ed-doc-list">
+              <div class="ed-doc-empty">
                 Could not load documents: <strong>{{ activeError }}</strong>
               </div>
+            </div>
 
-              <template v-else-if="filteredFiles.length">
+            <template v-else>
+              <!-- Monthly document groups (one section per monthly type) -->
+              <section
+                v-for="group in filteredMonthlyGroups"
+                :key="group.slug"
+                class="ed-doc-group"
+              >
+                <div class="ed-doc-group__head">
+                  <h2 class="ed-doc-group__title">{{ group.label }}</h2>
+                  <span class="ed-doc-group__count">{{ group.items.length }} {{ group.items.length === 1 ? 'month' : 'months' }}</span>
+                </div>
+                <div class="ed-doc-list">
+                  <div v-for="item in group.items" :key="item.entry.file" class="ed-doc-row">
+                    <div class="ed-doc-row__icon" :style="{ borderColor: typeColor, color: typeColor }">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                    </div>
+                    <div class="ed-doc-row__body">
+                      <h3 class="ed-doc-row__title">{{ formatMonth(item.month) }}</h3>
+                      <div class="ed-doc-row__meta">
+                        <span v-if="fileType(item.entry.file)">{{ fileType(item.entry.file) }}</span>
+                        <span v-if="fileType(item.entry.file) && item.entry.date" class="ed-doc-row__sep">·</span>
+                        <span v-if="item.entry.date">Uploaded {{ formatDate(item.entry.date) }}</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      class="ed-doc-button"
+                      @click="handleDownload(item.entry)"
+                    >
+                      Download
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <!-- All other documents -->
+              <div v-if="filteredFiles.length" class="ed-doc-list">
                 <div v-for="file in filteredFiles" :key="file.file" class="ed-doc-row">
                   <div class="ed-doc-row__icon" :style="{ borderColor: typeColor, color: typeColor }">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -636,17 +759,19 @@ const orgLogo = computed<string>(() => org.value?.logoUri ?? '')
                     Download
                   </button>
                 </div>
-              </template>
-
-              <div v-else class="ed-doc-empty">
-                <template v-if="search">
-                  No documents match <strong>"{{ search }}"</strong>.
-                </template>
-                <template v-else>
-                  No {{ activeTab }} documents available.
-                </template>
               </div>
-            </div>
+
+              <div v-if="!hasAnyFiles" class="ed-doc-list">
+                <div class="ed-doc-empty">
+                  <template v-if="search">
+                    No documents match <strong>"{{ search }}"</strong>.
+                  </template>
+                  <template v-else>
+                    No {{ activeTab }} documents available.
+                  </template>
+                </div>
+              </div>
+            </template>
 
           </div>
         </section>
@@ -1068,6 +1193,38 @@ const orgLogo = computed<string>(() => org.value?.logoUri ?? '')
 }
 
 .ed-doc-search__clear:hover { color: var(--at-navy-deep); }
+
+/* ─── Document groups (monthly types) ───────────────────────────────────── */
+.ed-doc-group {
+  margin-bottom: 1.75rem;
+}
+
+.ed-doc-group__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+  padding-left: 0.1rem;
+}
+
+.ed-doc-group__title {
+  font-family: var(--at-serif);
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--at-navy-deep);
+  margin: 0;
+}
+
+.ed-doc-group__count {
+  font-family: var(--at-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--at-mute);
+  white-space: nowrap;
+}
 
 /* ─── Document list ─────────────────────────────────────────────────────── */
 .ed-doc-list {
