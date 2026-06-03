@@ -41,6 +41,7 @@ interface FileEntry {
 interface CatalogEntry {
   slug: string
   label: string
+  monthly?: boolean
 }
 
 interface CatalogPayload {
@@ -71,6 +72,7 @@ const uploading = ref<boolean>(false)
 const uploadError = ref<string>('')
 const uploadSuccess = ref<string>('')
 const selectedSlug = ref<string>('')
+const selectedMonth = ref<string>('')
 const fileInput = ref<HTMLInputElement | null>(null)
 
 function fileExtension(name: string): string {
@@ -204,10 +206,15 @@ watch(orgId, () => {
 
 watch(activeTab, () => {
   selectedSlug.value = ''
+  selectedMonth.value = ''
   uploadFile.value = null
   uploadError.value = ''
   uploadSuccess.value = ''
   if (fileInput.value) fileInput.value.value = ''
+})
+
+watch(selectedSlug, () => {
+  selectedMonth.value = ''
 })
 
 const activeFiles = computed<FileEntry[]>(() =>
@@ -232,13 +239,27 @@ const filteredFiles = computed<FileEntry[]>(() => {
   return activeFiles.value.filter(f => f.file.toLowerCase().includes(q))
 })
 
-const selectedLabel = computed<string>(() =>
-  activeCatalog.value.find(c => c.slug === selectedSlug.value)?.label || '',
+const selectedEntry = computed<CatalogEntry | undefined>(() =>
+  activeCatalog.value.find(c => c.slug === selectedSlug.value),
 )
 
+const selectedLabel = computed<string>(() => selectedEntry.value?.label || '')
+
+const selectedMonthly = computed<boolean>(() => selectedEntry.value?.monthly === true)
+
+// Base file name (without extension): `<slug>` normally, `<slug>-<YYYY-MM>` for
+// monthly documents so each month is stored as a separate file.
+const uploadBaseName = computed<string>(() => {
+  if (!selectedSlug.value) return ''
+  if (selectedMonthly.value) {
+    return selectedMonth.value ? `${selectedSlug.value}-${selectedMonth.value}` : ''
+  }
+  return selectedSlug.value
+})
+
 const willOverwrite = computed<boolean>(() => {
-  if (!selectedSlug.value) return false
-  return activeFiles.value.some(f => f.file.startsWith(`${selectedSlug.value}.`))
+  if (!uploadBaseName.value) return false
+  return activeFiles.value.some(f => f.file.startsWith(`${uploadBaseName.value}.`))
 })
 
 function fileType(name: string): string {
@@ -282,6 +303,10 @@ function onFileSelected(e: Event): void {
 
 async function handleUpload(): Promise<void> {
   if (!selectedSlug.value || !uploadFile.value) return
+  if (selectedMonthly.value && !selectedMonth.value) {
+    uploadError.value = 'Select the month this document is for.'
+    return
+  }
   const ext = fileExtension(uploadFile.value.name)
   if (!ext) {
     uploadError.value = 'File must have an extension.'
@@ -304,7 +329,7 @@ async function handleUpload(): Promise<void> {
   uploadSuccess.value = ''
   try {
     const visibility = activeTab.value
-    const path = `${encodeURIComponent(selectedSlug.value)}.${encodeURIComponent(ext)}`
+    const path = `${encodeURIComponent(uploadBaseName.value)}.${encodeURIComponent(ext)}`
     const url = `${DOCS_API}/${orgId.value}/${visibility}/${path}`
     const res = await fetch(url, {
       method: 'PUT',
@@ -320,6 +345,7 @@ async function handleUpload(): Promise<void> {
     }
     uploadSuccess.value = 'Upload complete.'
     selectedSlug.value = ''
+    selectedMonth.value = ''
     uploadFile.value = null
     if (fileInput.value) fileInput.value.value = ''
     if (activeTab.value === 'private') await loadPrivate()
@@ -516,20 +542,31 @@ const orgLogo = computed<string>(() => org.value?.logoUri ?? '')
                     </option>
                   </select>
                   <input
+                    v-if="selectedMonthly"
+                    v-model="selectedMonth"
+                    type="month"
+                    class="ed-doc-upload__month"
+                    :disabled="uploading"
+                    aria-label="Document month"
+                  />
+                  <input
                     ref="fileInput"
                     type="file"
                     class="ed-doc-upload__input"
-                    :disabled="uploading || !selectedSlug"
+                    :disabled="uploading || !selectedSlug || (selectedMonthly && !selectedMonth)"
                     @change="onFileSelected"
                   />
                   <button
                     type="button"
                     class="ed-doc-button ed-doc-upload__button"
-                    :disabled="uploading || !selectedSlug || !uploadFile"
+                    :disabled="uploading || !selectedSlug || !uploadFile || (selectedMonthly && !selectedMonth)"
                     @click="handleUpload"
                   >
                     {{ uploading ? 'Uploading…' : 'Upload' }}
                   </button>
+                </div>
+                <div v-if="selectedMonthly && !selectedMonth" class="ed-doc-upload__hint ed-doc-upload__hint--month">
+                  This document is filed monthly — pick the month it applies to. Each month is kept as a separate file.
                 </div>
                 <div v-if="willOverwrite" class="ed-doc-upload__warning">
                   Uploading will replace the existing <strong>{{ selectedLabel }}</strong>.
@@ -916,6 +953,25 @@ const orgLogo = computed<string>(() => org.value?.logoUri ?? '')
 .ed-doc-upload__select:disabled {
   background: var(--at-bg-paper);
   cursor: not-allowed;
+}
+
+.ed-doc-upload__month {
+  padding: 0.6rem 0.75rem;
+  background: var(--at-bg-cream);
+  border: 1px solid var(--at-grid-line-2);
+  font-family: var(--at-sans);
+  font-size: 0.9rem;
+  color: var(--at-navy-deep);
+}
+
+.ed-doc-upload__month:disabled {
+  background: var(--at-bg-paper);
+  cursor: not-allowed;
+}
+
+.ed-doc-upload__hint--month {
+  display: block;
+  margin-top: 0.85rem;
 }
 
 .ed-doc-upload__input {
