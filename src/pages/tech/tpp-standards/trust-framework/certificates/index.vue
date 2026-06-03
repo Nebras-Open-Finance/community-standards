@@ -227,6 +227,17 @@ const images5: CarouselImage[] = [
           </ClientOnly>
         </li>
       </ol>
+
+      <EdNote type="info" title="Renewing a certificate before it expires">
+        <p>
+          Certificates are valid for 13 months and must be rotated before they expire to avoid breaking
+          services. As a TPP you hold the private key for all of your application certificates, so you
+          rotate each of them yourself. See
+          <a href="/knowledge-base/articles/certificate-rotation">Certificate Rotation</a> for the
+          best-practice guide covering reminders, the safe overlap pattern, and transport- and
+          signing-specific steps.
+        </p>
+      </EdNote>
     </EdSectionBand>
 
     <EdSectionBand

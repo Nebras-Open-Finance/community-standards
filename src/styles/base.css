@@ -64,3 +64,24 @@ body {
 .app-shell:not(.is-home) .app-shell__main > *:last-child > *:last-child {
   padding-bottom: 8rem;
 }
+
+/*
+  Standalone notes at the top of knowledge-base articles.
+  An <EdNote> placed directly under the page root (between the in-page nav and
+  the first <EdSectionBand>) has no width container, so it spans the full
+  viewport edge-to-edge. Constrain it to the same content width as section-band
+  content (page-max minus the 2rem band gutter), centred. Notes *inside* a
+  section band are descendants, not direct children, so they are unaffected.
+  The .app-shell prefix lifts specificity above EdNote's scoped `margin` rule.
+*/
+.app-shell .ed-page > .ed-note {
+  width: calc(100% - 4rem);
+  max-width: calc(var(--at-page-max) - 4rem);
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (max-width: 720px) {
+  .app-shell .ed-page > .ed-note {
+    width: calc(100% - 2.5rem);
+  }
+}
