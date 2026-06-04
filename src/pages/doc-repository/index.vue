@@ -211,6 +211,11 @@ function clearQuery(): void {
           participating in UAE Open Finance.
         </p>
 
+        <router-link to="/doc-repository/how-to-access" class="ed-kb-hero__guide">
+          How Accessing the Document Repository works
+          <span class="ed-kb-hero__guide-arrow">&rarr;</span>
+        </router-link>
+
         <div class="ed-kb-search">
           <svg class="ed-kb-search__icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -388,6 +393,26 @@ function clearQuery(): void {
   max-width: 42rem;
   color: var(--at-mute-2);
 }
+
+.ed-kb-hero__guide {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 1.5rem;
+  font-family: var(--at-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--at-teal);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.ed-kb-hero__guide:hover { color: var(--at-navy-deep); }
+
+.ed-kb-hero__guide-arrow { transition: transform 0.15s; }
+.ed-kb-hero__guide:hover .ed-kb-hero__guide-arrow { transform: translateX(3px); }
 
 /* ─── Search ────────────────────────────────────────────────────────────── */
 .ed-kb-search {

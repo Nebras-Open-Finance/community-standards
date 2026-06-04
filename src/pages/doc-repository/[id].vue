@@ -235,7 +235,8 @@ const activeCatalog = computed<CatalogEntry[]>(() =>
 
 // Slugs flagged `monthly` in the active catalog. Their uploaded files are named
 // `<slug>-<YYYY-MM>.<ext>` and get pulled out of the flat list into their own
-// grouped section (one group per type, newest month first).
+// grouped section (one group per type — or a combined group, see
+// COMBINED_MONTHLY_GROUPS — newest month first).
 const monthlySlugSet = computed<Set<string>>(
   () => new Set(activeCatalog.value.filter(c => c.monthly).map(c => c.slug)),
 )
@@ -258,6 +259,10 @@ function isMonthlyFile(f: FileEntry): boolean {
 interface MonthlyItem {
   entry: FileEntry
   month: string
+  // Set only for members of a combined group, to label the row by type
+  // (e.g. "Collection Memo" / "Supporting Data") and order types within a month.
+  typeLabel?: string | undefined
+  order: number
 }
 
 interface MonthlyGroup {
@@ -266,22 +271,68 @@ interface MonthlyGroup {
   items: MonthlyItem[]
 }
 
+// Catalog slugs that render as ONE combined monthly section instead of one
+// section per slug. Each member's rows are labelled with its short `typeLabel`
+// and ordered within a month by its position in `members`.
+interface CombinedMonthlyConfig {
+  key: string
+  heading: string
+  members: { slug: string; typeLabel: string }[]
+}
+
+const COMBINED_MONTHLY_GROUPS: CombinedMonthlyConfig[] = [
+  {
+    key: 'lfi-collection-memos',
+    heading: 'LFI Collection Memos',
+    members: [
+      { slug: 'lfi-collection-memo', typeLabel: 'Collection Memo' },
+      { slug: 'lfi-collection-memo-supporting-data', typeLabel: 'Supporting Data' },
+    ],
+  },
+]
+
+const combinedBySlug = new Map<
+  string,
+  { config: CombinedMonthlyConfig; order: number; typeLabel: string }
+>()
+for (const cfg of COMBINED_MONTHLY_GROUPS) {
+  cfg.members.forEach((m, i) =>
+    combinedBySlug.set(m.slug, { config: cfg, order: i, typeLabel: m.typeLabel }),
+  )
+}
+
 const monthlyGroups = computed<MonthlyGroup[]>(() => {
   const groups = new Map<string, MonthlyGroup>()
   for (const f of activeFiles.value) {
     const parsed = parseMonthly(f.file)
     if (!parsed || !monthlySlugSet.value.has(parsed.slug)) continue
-    let g = groups.get(parsed.slug)
+    const combined = combinedBySlug.get(parsed.slug)
+    const key = combined ? combined.config.key : parsed.slug
+    let g = groups.get(key)
     if (!g) {
-      const label = activeCatalog.value.find(c => c.slug === parsed.slug)?.label || parsed.slug
-      g = { slug: parsed.slug, label, items: [] }
-      groups.set(parsed.slug, g)
+      const label = combined
+        ? combined.config.heading
+        : activeCatalog.value.find(c => c.slug === parsed.slug)?.label || parsed.slug
+      g = { slug: key, label, items: [] }
+      groups.set(key, g)
     }
-    g.items.push({ entry: f, month: parsed.month })
+    g.items.push({
+      entry: f,
+      month: parsed.month,
+      typeLabel: combined?.typeLabel,
+      order: combined?.order ?? 0,
+    })
   }
-  for (const g of groups.values()) g.items.sort((a, b) => b.month.localeCompare(a.month))
+  for (const g of groups.values())
+    g.items.sort((a, b) => b.month.localeCompare(a.month) || a.order - b.order)
   return [...groups.values()].sort((a, b) => a.label.localeCompare(b.label))
 })
+
+// A combined group lists several files per month, so the badge counts distinct
+// months rather than rows.
+function monthCount(group: MonthlyGroup): number {
+  return new Set(group.items.map(i => i.month)).size
+}
 
 function formatMonth(month: string): string {
   const m = month.match(/^(\d{4})-(\d{2})$/)
@@ -310,6 +361,7 @@ const filteredMonthlyGroups = computed<MonthlyGroup[]>(() => {
           g.label.toLowerCase().includes(q) ||
           it.month.includes(q) ||
           formatMonth(it.month).toLowerCase().includes(q) ||
+          (it.typeLabel?.toLowerCase().includes(q) ?? false) ||
           it.entry.file.toLowerCase().includes(q),
       ),
     }))
@@ -695,7 +747,8 @@ const orgLogo = computed<string>(() => org.value?.logoUri ?? '')
             </div>
 
             <template v-else>
-              <!-- Monthly document groups (one section per monthly type) -->
+              <!-- Monthly document groups (one section per monthly type, or a
+                   combined section spanning several types) -->
               <section
                 v-for="group in filteredMonthlyGroups"
                 :key="group.slug"
@@ -703,7 +756,7 @@ const orgLogo = computed<string>(() => org.value?.logoUri ?? '')
               >
                 <div class="ed-doc-group__head">
                   <h2 class="ed-doc-group__title">{{ group.label }}</h2>
-                  <span class="ed-doc-group__count">{{ group.items.length }} {{ group.items.length === 1 ? 'month' : 'months' }}</span>
+                  <span class="ed-doc-group__count">{{ monthCount(group) }} {{ monthCount(group) === 1 ? 'month' : 'months' }}</span>
                 </div>
                 <div class="ed-doc-list">
                   <div v-for="item in group.items" :key="item.entry.file" class="ed-doc-row">
@@ -716,7 +769,7 @@ const orgLogo = computed<string>(() => org.value?.logoUri ?? '')
                       </svg>
                     </div>
                     <div class="ed-doc-row__body">
-                      <h3 class="ed-doc-row__title">{{ formatMonth(item.month) }}</h3>
+                      <h3 class="ed-doc-row__title">{{ formatMonth(item.month) }}<template v-if="item.typeLabel"> · {{ item.typeLabel }}</template></h3>
                       <div class="ed-doc-row__meta">
                         <span v-if="fileType(item.entry.file)">{{ fileType(item.entry.file) }}</span>
                         <span v-if="fileType(item.entry.file) && item.entry.date" class="ed-doc-row__sep">·</span>
