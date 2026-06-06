@@ -216,8 +216,7 @@ interface TickerCell {
 }
 
 const tickerCells = computed<TickerCell[]>(() => {
-  const successApi = apiData.value.filter(r => (r.tppresponsecodegroup ?? '2xx') === '2xx')
-  const apiSeries  = monthlySeries(successApi, r => r.totalapicalls, r => r.date)
+  const apiSeries  = monthlySeries(apiData.value, r => r.totalapicalls, r => r.date)
   const apiTotal   = apiSeries.reduce((s, v) => s + v, 0)
   const apiDelta   = pctChange(apiSeries)
 
@@ -428,11 +427,12 @@ const docsCols = computed<DocsCol[]>(() => [
     cta: '/tech/tpp-standards/',
     ctaLabel: 'TPP',
     items: [
-      { title: 'Trust Framework',    desc: 'Register, onboard, first API call.',     href: `/tech/tpp-standards/${selectedVersion.value}/getting-started/` },
-      { title: 'Consent Lifecycle',  desc: 'Create, retrieve, revoke consents.',     href: `/tech/tpp-standards/${selectedVersion.value}/consent/` },
-      { title: 'Security & FAPI',    desc: 'Compliance, tokens, webhooks.',          href: '/tech/tpp-standards/security/fapi/' },
-      { title: 'Payment Initiation', desc: 'Payments + confirmation of payee.',      href: `/tech/tpp-standards/${selectedVersion.value}/banking/service-initiation/` },
-      { title: 'Data Access APIs',   desc: 'Accounts, transactions, products, ATMs.', href: `/tech/tpp-standards/${selectedVersion.value}/banking/data-sharing/` },
+      { title: 'Getting Started',         desc: 'Sandbox, Postman, first API call.',        href: `/tech/tpp-standards/${selectedVersion.value}/getting-started/` },
+      { title: 'Consent',                 desc: 'Create, manage, and revoke consents.',      href: `/tech/tpp-standards/${selectedVersion.value}/consent/` },
+      { title: 'Security & FAPI',         desc: 'FAPI profile, tokens, signing, events.',    href: '/tech/tpp-standards/security/fapi/' },
+      { title: 'Banking APIs',            desc: 'Accounts, payments, CoP, products, ATMs.',  href: `/tech/tpp-standards/${selectedVersion.value}/banking/` },
+      { title: 'Insurance APIs',          desc: 'Policy data sharing and quotation.',        href: `/tech/tpp-standards/${selectedVersion.value}/insurance/` },
+      { title: 'Testing & Certification', desc: 'Conformance, then go live.',                href: '/tech/tpp-standards/production/testing-certification/overview' },
     ],
   },
   {
@@ -444,14 +444,72 @@ const docsCols = computed<DocsCol[]>(() => [
     cta: '/tech/lfi-api-hub/',
     ctaLabel: 'LFI',
     items: [
-      { title: 'Integration Journey',     desc: 'Step-by-step onboarding.',                  href: '/tech/lfi-api-hub/getting-started/' },
-      { title: 'Trust Framework',         desc: 'Clients, servers, certificates.',           href: '/tech/lfi-api-hub/trust-framework/' },
-      { title: 'API Hub',                 desc: 'LFI-facing APIs and flows.',                href: '/tech/lfi-api-hub/' },
-      { title: 'Ozone Connect',           desc: 'Configure your Open Finance gateway.',      href: `/tech/lfi-api-hub/${selectedVersion.value}/banking/` },
-      { title: 'Testing & Certification', desc: 'Conformance + readiness checklist.',        href: '/tech/lfi-api-hub/production/testing-certification/overview' },
+      { title: 'Integration Journey',     desc: 'Step-by-step onboarding.',                   href: '/tech/lfi-api-hub/getting-started/' },
+      { title: 'Trust Framework',         desc: 'Organisations, users, certificates, C3 client.', href: '/tech/lfi-api-hub/trust-framework/' },
+      { title: 'API Hub',                 desc: 'Connectivity, Heimdall, Consent Manager.',   href: `/tech/lfi-api-hub/${selectedVersion.value}/api-hub/` },
+      { title: 'Ozone Connect',           desc: 'Accounts, payments & data endpoints you build.', href: `/tech/lfi-api-hub/${selectedVersion.value}/banking/` },
+      { title: 'Consent Journey',         desc: 'Authenticate & authorise the customer (SCA).', href: `/tech/lfi-api-hub/${selectedVersion.value}/consent-journey/api-guide` },
+      { title: 'Testing & Certification', desc: 'Certification and live proving.',             href: '/tech/lfi-api-hub/production/testing-certification/overview' },
     ],
   },
 ])
+
+// ── Program ────────────────────────────────────────────────────────────────
+interface ProgramCard {
+  category: string
+  color: string
+  title: string
+  desc: string
+  url: string
+  tags?: readonly string[]
+}
+
+const programCards: readonly ProgramCard[] = [
+  {
+    category: 'Support',
+    color: 'var(--at-teal)',
+    title: 'Service Desk',
+    desc: 'Raise onboarding, certification, and support tickets, and track them through to resolution.',
+    url: '/support-service-desk',
+    tags: ['Onboarding', 'Certification', 'Support'],
+  },
+  {
+    category: 'Pricing',
+    color: 'var(--at-gold)',
+    title: 'Commercial Model',
+    desc: 'The charging structure for Open Finance &mdash; per-call fees, discounts, and an interactive cost calculator.',
+    url: '/pricing/',
+    tags: ['Fees', 'Calculator'],
+  },
+  {
+    category: 'Governance',
+    color: 'var(--at-blue)',
+    title: 'Policies',
+    desc: 'The operational policies you commit to as a participant &mdash; availability, response time, data quality, and version management.',
+    url: '/policy/',
+    tags: ['SLAs', 'Operational'],
+  },
+  {
+    category: 'Participants',
+    color: 'var(--at-blue-deep)',
+    title: 'Document Repository',
+    desc: 'Production documents and endpoint details published by each live LFI and TPP in the ecosystem.',
+    url: '/doc-repository/',
+    tags: ['LFI docs', 'TPP docs'],
+  },
+  {
+    category: 'Adoption',
+    color: 'var(--at-navy)',
+    title: 'Live Ecosystem',
+    desc: 'Who&rsquo;s live and what&rsquo;s running in production &mdash; participants, APIs, and recent activity.',
+    url: '/program/whats-live',
+    tags: ['Production', 'Activity'],
+  },
+]
+
+function programTagBg(cssVar: string): string {
+  return `color-mix(in srgb, ${cssVar} 10%, transparent)`
+}
 
 // ── Articles ─────────────────────────────────────────────────────────────
 const featuredArticle = computed<HomeArticle | null>(() => articles[0] ?? null)
@@ -713,17 +771,85 @@ const communityWays: readonly CommunityItem[] = [
             <a :href="col.cta" class="ed-docs__cta">View full {{ col.ctaLabel }} docs &rarr;</a>
           </div>
         </div>
+
+        <!-- API specifications — source of truth -->
+        <a href="/tech/api-specs/" class="ed-docs__specs">
+          <div class="ed-docs__specs-text">
+            <div class="ed-docs__specs-label">OpenAPI YAML specs</div>
+            <div class="ed-docs__specs-title">Browse the full API specifications</div>
+            <div class="ed-docs__specs-sub">
+              Every endpoint, schema, and example &mdash; the OpenAPI specs that define
+              UAE Open Finance.
+            </div>
+          </div>
+          <span class="ed-docs__specs-cta">View API specs <span>&rarr;</span></span>
+        </a>
       </div>
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         § 03 — Community & contributions.
+         § 03 — The programme.
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ed-section">
       <div class="ed-section__inner">
         <header class="ed-section__head">
           <div class="ed-section__head-left">
             <span class="ed-section__mark ed-section__mark--navy">&sect; 03</span>
+            <h2 class="ed-section__title">
+              The<br/>programme.
+            </h2>
+          </div>
+          <p class="ed-section__intro">
+            Everything beyond the specs &mdash; how to get help, what it costs, the
+            policies you operate under, and who&rsquo;s already live in the ecosystem.
+          </p>
+        </header>
+
+        <div class="ed-program">
+          <a
+            v-for="card in programCards"
+            :key="card.title"
+            :href="card.url"
+            class="ed-program-card"
+            :style="{ '--card-color': card.color }"
+          >
+            <span class="ed-program-card__top" :style="{ background: card.color }" />
+
+            <div class="ed-program-card__meta">
+              <span class="ed-program-card__cat" :style="{ color: card.color }">
+                {{ card.category }}
+              </span>
+            </div>
+
+            <h3 class="ed-program-card__title" v-html="card.title" />
+            <p class="ed-program-card__desc" v-html="card.desc" />
+
+            <div v-if="card.tags && card.tags.length" class="ed-program-card__tags">
+              <span
+                v-for="tag in card.tags"
+                :key="tag"
+                class="ed-program-card__tag"
+                :style="{ background: programTagBg(card.color), color: card.color }"
+              >{{ tag }}</span>
+            </div>
+
+            <div class="ed-program-card__foot">
+              <span class="ed-program-card__cta">Open section</span>
+              <span class="ed-program-card__arrow" :style="{ color: card.color }">&rarr;</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         § 04 — Community & contributions.
+    ═══════════════════════════════════════════════════════════════════ -->
+    <section class="ed-section ed-section--paper">
+      <div class="ed-section__inner">
+        <header class="ed-section__head">
+          <div class="ed-section__head-left">
+            <span class="ed-section__mark ed-section__mark--navy">&sect; 04</span>
             <h2 class="ed-section__title">
               Community<br/>
               <span class="ed-section__title-italic">&amp;</span> contributions.
@@ -826,13 +952,13 @@ const communityWays: readonly CommunityItem[] = [
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         § 04 — Articles & press.
+         § 05 — Articles & press.
     ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ed-section ed-section--paper">
+    <section class="ed-section">
       <div class="ed-section__inner">
         <header class="ed-section__head">
           <div class="ed-section__head-left">
-            <span class="ed-section__mark ed-section__mark--blue">&sect; 04</span>
+            <span class="ed-section__mark ed-section__mark--blue">&sect; 05</span>
             <h2 class="ed-section__title">
               Articles<br/>
               <span class="ed-section__title-italic">&amp;</span> press.
@@ -1401,6 +1527,178 @@ const communityWays: readonly CommunityItem[] = [
 .ed-docs__col--teal .ed-docs__cta { color: var(--at-teal-deep); }
 .ed-docs__col--gold .ed-docs__cta { color: var(--at-gold); }
 
+/* ─── API specs banner ─────────────────────────────────────────────────── */
+.ed-docs__specs {
+  margin-top: 1rem;
+  padding: 1.75rem 2rem;
+  background: var(--at-surface);
+  border: 1px solid var(--at-grid-line);
+  border-left: 3px solid var(--at-teal);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2.5rem;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s ease;
+}
+
+.ed-docs__specs:hover { background: var(--at-bg-paper); }
+
+.ed-docs__specs-label {
+  font-family: var(--at-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--at-teal-deep);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.ed-docs__specs-title {
+  font-family: var(--at-serif);
+  font-size: 1.45rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--at-navy-deep);
+  line-height: 1.25;
+  margin-bottom: 0.5rem;
+}
+
+.ed-docs__specs-sub {
+  font-family: var(--at-sans);
+  font-size: 0.92rem;
+  color: var(--at-mute-2);
+  line-height: 1.55;
+  max-width: 42rem;
+}
+
+.ed-docs__specs-cta {
+  font-family: var(--at-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  padding: 0.85rem 1.4rem;
+  background: var(--at-navy-deep);
+  color: var(--at-bg-cream);
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.ed-docs__specs:hover .ed-docs__specs-cta { background: var(--at-navy); }
+
+@media (max-width: 640px) {
+  .ed-docs__specs { grid-template-columns: 1fr; gap: 1.25rem; }
+  .ed-docs__specs-cta { justify-self: start; }
+}
+
+/* ─── Programme cards (shared .ed-tpp-card pattern) ────────────────────── */
+.ed-program {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(22.5rem, 1fr));
+  gap: 1.25rem;
+}
+
+.ed-program-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--at-surface);
+  border: 1px solid var(--at-grid-line);
+  padding: 2rem 1.75rem 1.5rem;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.ed-program-card:hover {
+  border-color: var(--card-color, var(--at-navy));
+  transform: translateY(-2px);
+}
+
+.ed-program-card__top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 48px;
+  height: 3px;
+}
+
+.ed-program-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+  font-family: var(--at-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ed-program-card__cat { font-weight: 700; }
+
+.ed-program-card__title {
+  font-family: var(--at-serif);
+  font-size: 1.4rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--at-navy-deep);
+  margin: 0 0 0.85rem;
+}
+
+.ed-program-card__desc {
+  font-family: var(--at-sans);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--at-mute-2);
+  margin: 0 0 1.1rem;
+  flex: 1;
+}
+
+.ed-program-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.ed-program-card__tag {
+  padding: 0.28rem 0.6rem;
+  font-family: var(--at-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.ed-program-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+  border-top: 1px solid var(--at-grid-line);
+}
+
+.ed-program-card__cta {
+  font-family: var(--at-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--at-mute);
+}
+
+.ed-program-card__arrow {
+  font-family: var(--at-mono);
+  font-size: 1rem;
+  transition: transform 0.2s;
+}
+
+.ed-program-card:hover .ed-program-card__arrow { transform: translateX(4px); }
+.ed-program-card:hover .ed-program-card__cta { color: var(--at-navy-deep); }
+
 /* ─── Articles ─────────────────────────────────────────────────────────── */
 .ed-articles {
   display: grid;
@@ -1663,6 +1961,7 @@ const communityWays: readonly CommunityItem[] = [
   .ed-chart-row { grid-template-columns: 1fr; }
   .ed-docs { grid-template-columns: 1fr; }
   .ed-docs__col:first-child { border-right: 0; border-bottom: 1px solid var(--at-grid-line); }
+  .ed-program { grid-template-columns: repeat(2, 1fr); }
   .ed-community__grid { grid-template-columns: 1fr; }
   .ed-community__card { border-right: 0; border-bottom: 1px solid var(--at-grid-line); }
   .ed-community__card:last-child { border-bottom: 0; }
@@ -1680,6 +1979,7 @@ const communityWays: readonly CommunityItem[] = [
   .ed-section__title { font-size: 2rem; }
   .ed-kpis { grid-template-columns: 1fr; }
   .ed-kpi__value { font-size: 2.2rem; }
+  .ed-program { grid-template-columns: 1fr; }
   .ed-articles-grid { grid-template-columns: 1fr; }
   .ed-community__card { padding: 1.75rem 1.25rem; }
   .ed-community__reachout { padding: 1.5rem 1.25rem; }

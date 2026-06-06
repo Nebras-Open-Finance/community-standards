@@ -99,7 +99,7 @@ function isActive(prefix: string): boolean {
       <!-- Masthead / wordmark -->
       <a href="/" class="ed-masthead" aria-label="AlTareq home">
         <img src="/AlTareq.png" alt="AlTareq" class="ed-masthead__logo" />
-        <span class="ed-masthead__tag">by Thomas Catchpole</span>
+        <span class="ed-masthead__tag">Built by the community</span>
       </a>
 
       <!-- Desktop nav -->
