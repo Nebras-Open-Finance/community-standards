@@ -775,7 +775,7 @@ const prettifyConsentType = (s: string): string =>
                   >
                     <span class="ed-le-card__service-name">{{ svc.label }}</span>
                     <span class="ed-le-card__service-versions">
-                      v{{ svc.versions.map(v => v.version).join(', v') }}
+                      {{ svc.versions.map(v => v.version).join(', ') }}
                     </span>
                     <span class="ed-le-chev ed-le-chev--small" :class="{ 'is-open': svc.expanded }">›</span>
                   </button>
@@ -787,7 +787,7 @@ const prettifyConsentType = (s: string): string =>
                       class="ed-le-card__version"
                     >
                       <div class="ed-le-card__version-head">
-                        <span class="ed-le-card__version-label">v{{ v.version }}</span>
+                        <span class="ed-le-card__version-label">{{ v.version }}</span>
                         <span
                           v-for="t in v.paymentTypes"
                           :key="`pt-${t}`"
@@ -890,7 +890,7 @@ const prettifyConsentType = (s: string): string =>
                       class="ed-le-card__version"
                     >
                       <div class="ed-le-card__version-head">
-                        <span class="ed-le-card__version-label">v{{ v.version }}</span>
+                        <span class="ed-le-card__version-label">{{ v.version }}</span>
                         <span class="ed-le-pill ed-le-pill--meta">
                           {{ formatNumber(v.requests) }} requests
                         </span>
