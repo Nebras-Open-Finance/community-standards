@@ -123,6 +123,17 @@ meta:
             <p class="ed-link-card__desc">OpenAPI reference for fetching software statements registered for an organisation.</p>
             <div class="ed-link-card__foot"><span class="ed-link-card__cta">Open spec</span><span class="ed-link-card__arrow">&rarr;</span></div>
           </a>
+          <a class="ed-link-card" href="/tech/lfi-api-hub/trust-framework/api/contacts" :style="{ '--card-color': 'var(--at-blue-deep, #1d4ed8)' }">
+            <span class="ed-link-card__top" />
+            <div class="ed-link-card__meta">
+              <span class="ed-link-card__cat">Endpoint</span>
+              <span class="http-badge http-get">GET</span>
+              <code class="ed-link-card__path">.../{OrganisationId}/contacts</code>
+            </div>
+            <h3 class="ed-link-card__title">Get contacts</h3>
+            <p class="ed-link-card__desc">OpenAPI reference for fetching the contacts registered for an organisation.</p>
+            <div class="ed-link-card__foot"><span class="ed-link-card__cta">Open spec</span><span class="ed-link-card__arrow">&rarr;</span></div>
+          </a>
           <a class="ed-link-card" href="/tech/lfi-api-hub/trust-framework/api/auth-servers" :style="{ '--card-color': 'var(--at-blue-deep, #1d4ed8)' }">
             <span class="ed-link-card__top" />
             <div class="ed-link-card__meta">

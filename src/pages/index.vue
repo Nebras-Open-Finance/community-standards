@@ -130,16 +130,6 @@ interface MonthlyWithLabels {
   series: number[]
 }
 
-function monthlyWithLabels<T>(
-  rows: readonly T[],
-  valueFn: (r: T) => number | undefined,
-  dateFn: (r: T) => string | undefined,
-): MonthlyWithLabels {
-  const byMonth = monthlyTotals(rows, valueFn, dateFn)
-  const keys = Object.keys(byMonth).sort()
-  return { labels: keys, series: keys.map(k => byMonth[k] ?? 0) }
-}
-
 const MONTH_SHORT: readonly string[] = [
   'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
   'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
@@ -161,12 +151,43 @@ function thinLabels(labels: readonly string[], max = 6): string[] {
   return Array.from({ length: max }, (_, i) => monthLabel(labels[Math.round(i * step)]))
 }
 
-function pctChange(series: readonly number[]): number | null {
+// Charts plot only the last few *complete* months. Headline stat values keep
+// the full amount — only the plotted line and the growth % are windowed.
+const CHART_MONTHS = 4
+
+// The in-progress calendar month (e.g. a few days into June) has partial
+// totals that would make a chart line dive at the end. Exclude it from charts
+// and growth maths.
+function partialMonth(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+// Monthly {labels, series} with the in-progress current month dropped.
+function completeMonthly<T>(
+  rows: readonly T[],
+  valueFn: (r: T) => number | undefined,
+  dateFn: (r: T) => string | undefined,
+): MonthlyWithLabels {
+  const byMonth = monthlyTotals(rows, valueFn, dateFn)
+  const partial = partialMonth()
+  const keys = Object.keys(byMonth).sort().filter(k => k !== partial)
+  return { labels: keys, series: keys.map(k => byMonth[k] ?? 0) }
+}
+
+// Trailing N entries — the window the chart line plots.
+function lastMonths<T>(arr: readonly T[], n = CHART_MONTHS): T[] {
+  return arr.length <= n ? arr.slice() : arr.slice(arr.length - n)
+}
+
+// Average monthly growth: total growth from the first month to the last full
+// month, spread across the months it covers (rather than raw month-over-month).
+function avgMonthlyPct(series: readonly number[]): number | null {
   if (series.length < 2) return null
   const first = series[0] ?? 0
   const last = series[series.length - 1] ?? 0
   if (first <= 0) return null
-  return Math.round((last / first - 1) * 100)
+  return Math.round(((last / first - 1) * 100) / series.length)
 }
 
 function compact(n: number | null | undefined): string {
@@ -216,16 +237,18 @@ interface TickerCell {
 }
 
 const tickerCells = computed<TickerCell[]>(() => {
-  const apiSeries  = monthlySeries(apiData.value, r => r.totalapicalls, r => r.date)
-  const apiTotal   = apiSeries.reduce((s, v) => s + v, 0)
-  const apiDelta   = pctChange(apiSeries)
+  // Totals keep the full amount (incl. the in-progress month); the sparkline
+  // and growth % use only complete months.
+  const apiTotal      = monthlySeries(apiData.value, r => r.totalapicalls, r => r.date).reduce((s, v) => s + v, 0)
+  const apiComplete   = completeMonthly(apiData.value, r => r.totalapicalls, r => r.date)
+  const apiDelta      = avgMonthlyPct(apiComplete.series)
 
   const paySuccess = paymentData.value.filter(r =>
     typeof r.status === 'string' && SUCCESS_PAYMENT_STATUSES.has(r.status) && !!r.lfinamekey,
   )
-  const paySeries  = monthlySeries(paySuccess, r => r.amount, r => r.date)
-  const payTotal   = paySeries.reduce((s, v) => s + v, 0)
-  const payDelta   = pctChange(paySeries)
+  const payTotal      = monthlySeries(paySuccess, r => r.amount, r => r.date).reduce((s, v) => s + v, 0)
+  const payComplete   = completeMonthly(paySuccess, r => r.amount, r => r.date)
+  const payDelta      = avgMonthlyPct(payComplete.series)
 
   const lfis       = countLfis(tfData.value)
   const tpps       = countTpps(tfData.value)
@@ -236,16 +259,16 @@ const tickerCells = computed<TickerCell[]>(() => {
     {
       label: 'API Calls',
       value: compact(apiTotal),
-      delta: apiDelta != null ? `${apiDelta >= 0 ? '↑' : '↓'} ${Math.abs(apiDelta)}%` : '—',
+      delta: apiDelta != null ? `${apiDelta >= 0 ? '↑' : '↓'} ${Math.abs(apiDelta)}% / mo` : '—',
       color: ACCENT.teal,
-      series: apiSeries,
+      series: lastMonths(apiComplete.series),
     },
     {
       label: 'Payments (AED)',
       value: compact(payTotal),
-      delta: payDelta != null ? `${payDelta >= 0 ? '↑' : '↓'} ${Math.abs(payDelta)}%` : '—',
+      delta: payDelta != null ? `${payDelta >= 0 ? '↑' : '↓'} ${Math.abs(payDelta)}% / mo` : '—',
       color: ACCENT.gold,
-      series: paySeries,
+      series: lastMonths(payComplete.series),
     },
     {
       label: 'Onboarded LFIs',
@@ -277,18 +300,23 @@ interface StoryChart {
 
 function fmtDelta(d: number | null): string {
   if (d == null) return '—'
-  return `${d >= 0 ? '↑' : '↓'} ${Math.abs(d)}% vs. first month`
+  return `${d >= 0 ? '↑' : '↓'} ${Math.abs(d)}% / mo avg`
 }
 
 const storyCharts = computed<StoryChart[]>(() => {
   const consentSuccess = authData.value.filter(isConsentAuthorised)
-  const consents = monthlyWithLabels(consentSuccess, r => r.totalapicalls, r => r.date)
-  const consentsTotal = consents.series.reduce((s, v) => s + v, 0)
-  const consentsDelta = pctChange(consents.series)
+  // Headline total keeps the full amount; the chart line and growth % use
+  // only complete months.
+  const consentsTotal    = monthlySeries(consentSuccess, r => r.totalapicalls, r => r.date).reduce((s, v) => s + v, 0)
+  const consentsComplete = completeMonthly(consentSuccess, r => r.totalapicalls, r => r.date)
+  const consentsDelta    = avgMonthlyPct(consentsComplete.series)
 
   const confByMonth  = monthlyTotals(authData.value.filter(isConsentAuthorised), r => r.totalapicalls, r => r.date)
   const startByMonth = monthlyTotals(authData.value.filter(isAuthStart),         r => r.totalapicalls, r => r.date)
-  const rateMonths   = Object.keys(startByMonth).sort()
+  const partial      = partialMonth()
+  // Complete months only for the rate line + growth; full months for the
+  // headline overall rate.
+  const rateMonths   = Object.keys(startByMonth).sort().filter(m => m !== partial)
   const rateSeries   = rateMonths.map(m => {
     const s = startByMonth[m] ?? 0
     return s > 0 ? ((confByMonth[m] ?? 0) / s) * 100 : 0
@@ -296,8 +324,9 @@ const storyCharts = computed<StoryChart[]>(() => {
   const totalStarts = Object.values(startByMonth).reduce((s, v) => s + v, 0)
   const totalConf   = Object.values(confByMonth).reduce((s, v) => s + v, 0)
   const overallRate = totalStarts > 0 ? (totalConf / totalStarts) * 100 : null
+  // Average percentage-point change per month across complete months.
   const ratePpDelta = rateSeries.length >= 2
-    ? (rateSeries[rateSeries.length - 1] ?? 0) - (rateSeries[0] ?? 0)
+    ? ((rateSeries[rateSeries.length - 1] ?? 0) - (rateSeries[0] ?? 0)) / rateSeries.length
     : null
 
   return [
@@ -307,19 +336,19 @@ const storyCharts = computed<StoryChart[]>(() => {
       delta: fmtDelta(consentsDelta),
       deltaColor: consentsDelta != null && consentsDelta < 0 ? '#B33A3A' : ACCENT.teal,
       color: ACCENT.teal,
-      series: consents.series,
-      labels: thinLabels(consents.labels),
+      series: lastMonths(consentsComplete.series),
+      labels: thinLabels(lastMonths(consentsComplete.labels)),
     },
     {
       label: 'Consent Success Rate · by Month',
       value: overallRate == null ? '—' : `${overallRate.toFixed(1)}%`,
       delta: ratePpDelta == null
         ? '—'
-        : `${ratePpDelta >= 0 ? '↑' : '↓'} ${Math.abs(ratePpDelta).toFixed(1)}pp vs. first month`,
+        : `${ratePpDelta >= 0 ? '↑' : '↓'} ${Math.abs(ratePpDelta).toFixed(1)}pp / mo avg`,
       deltaColor: ratePpDelta != null && ratePpDelta < 0 ? '#B33A3A' : ACCENT.sky,
       color: ACCENT.sky,
-      series: rateSeries,
-      labels: thinLabels(rateMonths),
+      series: lastMonths(rateSeries),
+      labels: thinLabels(lastMonths(rateMonths)),
     },
   ]
 })

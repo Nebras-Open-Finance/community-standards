@@ -42,9 +42,10 @@ const TRUST_FRAMEWORK_GROUP: SidebarItem = {
       collapsed: true,
       items: [
         apiRef('GET', '/organisations', '/tech/api-specs/trust-framework/organisations'),
+        apiRef('GET', '/organisations/{OrganisationId}/softwarestatements', '/tech/api-specs/trust-framework/software-statements'),
+        apiRef('GET', '/organisations/{OrganisationId}/contacts', '/tech/api-specs/trust-framework/contacts'),
         apiRef('GET', '/organisations/{OrganisationId}/authorisationservers', '/tech/api-specs/trust-framework/auth-servers'),
         apiRef('GET', '/organisations/{OrganisationId}/authorisationservers/{AuthorisationServerId}/apiresources', '/tech/api-specs/trust-framework/api-resources'),
-        apiRef('GET', '/organisations/{OrganisationId}/softwarestatements', '/tech/api-specs/trust-framework/software-statements'),
       ],
     },
     {

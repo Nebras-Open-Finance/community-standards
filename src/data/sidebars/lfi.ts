@@ -125,6 +125,7 @@ export const lfiSidebar: SidebarItem[] = [
               apiRef('POST', '/token', `${BASE}/trust-framework/api/token`),
               apiRef('GET', '/organisations', `${BASE}/trust-framework/api/organisations`),
               apiRef('GET', '.../{OrganisationId}/softwarestatements', `${BASE}/trust-framework/api/software-statements`),
+              apiRef('GET', '.../{OrganisationId}/contacts', `${BASE}/trust-framework/api/contacts`),
               apiRef('GET', '.../{OrganisationId}/authorisationservers', `${BASE}/trust-framework/api/auth-servers`),
               apiRef('GET', '.../{AuthorisationServerId}/apiresources', `${BASE}/trust-framework/api/api-resources`),
               apiRef('GET', '/references/apifamilies', `${BASE}/trust-framework/api/api-families`),
