@@ -288,7 +288,7 @@ function processLfis(data: unknown): LfiServer[] {
           .filter((p, i, arr) => arr.indexOf(p) === i)
 
         serviceMap.get(familyKey)!.push({
-          version: resource.ApiVersion || '',
+          version: (resource.ApiVersion || '').replace(/^v/i, ''),
           endpoints: sortEndpoints(familyKey, normalized),
           paymentTypes:
             familyKey === 'payment' ? getPaymentTypes(resource.ApiMetadata) : [],
@@ -442,7 +442,7 @@ function processApiLog(data: ApiLogRow[]): TppCard[] {
     if (parts[0] !== 'open-finance') continue
 
     const urlFamily = parts[1] || ''
-    const version = parts[2] || ''
+    const version = (parts[2] || '').replace(/^v/i, '')
     const endpointPath = '/' + parts.slice(3).join('/')
     if (!urlFamily || !allowedPrefixes.includes(urlFamily)) continue
 
@@ -878,7 +878,7 @@ const prettifyConsentType = (s: string): string =>
                   >
                     <span class="ed-le-card__service-name">{{ svc.label }}</span>
                     <span class="ed-le-card__service-versions">
-                      {{ svc.versions.map(v => v.version).join(', ') }}
+                      v{{ svc.versions.map(v => v.version).join(', v') }}
                     </span>
                     <span class="ed-le-chev ed-le-chev--small" :class="{ 'is-open': isTppServiceExpanded(tpp.name, svc.familyKey) }">›</span>
                   </button>
