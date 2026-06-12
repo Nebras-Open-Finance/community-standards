@@ -146,7 +146,7 @@ function isActive(prefix: string): boolean {
           <button
             type="button"
             class="ed-nav__link ed-nav__trigger"
-            :class="{ 'is-active': isActive('/tech') || isActive('/knowledge-base') }"
+            :class="{ 'is-active': isActive('/tech') || isActive('/knowledge-base') || isActive('/proposals') }"
             :aria-expanded="docsOpen ? 'true' : 'false'"
             @click="docsOpen = !docsOpen"
           >
@@ -171,6 +171,10 @@ function isActive(prefix: string): boolean {
             <a href="/knowledge-base" class="ed-nav__menu-item">
               <span class="ed-nav__menu-kicker">Library</span>
               <span class="ed-nav__menu-label">Knowledge Base</span>
+            </a>
+            <a href="/proposals/" class="ed-nav__menu-item">
+              <span class="ed-nav__menu-kicker">Community</span>
+              <span class="ed-nav__menu-label">Proposals &amp; Voting</span>
             </a>
             <a href="/tech/release-notes-and-erratas/" class="ed-nav__menu-item">
               <span class="ed-nav__menu-kicker">Changelog</span>
@@ -253,6 +257,7 @@ function isActive(prefix: string): boolean {
         <a href="/tech/lfi-api-hub" class="ed-drawer__sublink">LFI &mdash; Integration Guide</a>
         <a href="/tech/api-specs/" class="ed-drawer__sublink">API Specs</a>
         <a href="/knowledge-base" class="ed-drawer__sublink">Knowledge Base</a>
+        <a href="/proposals/" class="ed-drawer__sublink">Proposals &amp; Voting</a>
         <a href="/tech/release-notes-and-erratas/" class="ed-drawer__sublink">Release Notes &amp; Erratas</a>
 
         <hr class="ed-drawer__rule" />

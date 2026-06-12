@@ -19,6 +19,9 @@ const expanders: Expander[] = [
   (p) => (p === '/doc-repository/:id'
     ? docRepoIds.map((id) => `/doc-repository/${id}/`)
     : null),
+  // Proposals & Voting — each proposal is its own authored static page
+  // (`src/pages/proposals/<id>.vue`), so vite-plugin-pages enumerates them
+  // directly; no dynamic expander needed here.
   (p) => (p === '/tech/release-notes-and-erratas/release-notes/api-hub/:year'
     ? apiHubYears.map((y) => `/tech/release-notes-and-erratas/release-notes/api-hub/${y}`)
     : null),

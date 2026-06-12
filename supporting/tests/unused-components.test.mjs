@@ -37,6 +37,16 @@ const ALLOWED_UNUSED = new Set([
   // quality / availability / response-time policy pages are expected to wire
   // it in; until they do, the component lives unreferenced.
   'common/WordDocDownload.vue',
+  // Proposals & Voting standard-layout scaffolding. `PvProposalView` is the
+  // turnkey layout (hero + vote panel + body band) for proposal pages that want
+  // it; `PvProposalBody` renders block content, and the two tag chips are used
+  // only by that layout. Bespoke proposal pages (e.g. ofp-001.vue) author their
+  // own layout and drop in PvVotePanel directly, so these stay unreferenced
+  // until a page uses the standard layout.
+  'proposals/PvProposalView.vue',
+  'proposals/PvProposalBody.vue',
+  'proposals/PvCategoryTag.vue',
+  'proposals/PvPriorityTag.vue',
 ])
 
 function walk(dir, filterExt, acc = []) {
