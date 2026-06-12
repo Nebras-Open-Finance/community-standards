@@ -37,7 +37,7 @@ const closesLabel = computed(() => {
 </script>
 
 <template>
-  <RouterLink :to="`/proposals/${slug}/`" class="pv-row">
+  <RouterLink :to="`/proposals/${slug}`" class="pv-row">
     <div class="pv-row__id">{{ proposal.id }}</div>
 
     <div class="pv-row__main">

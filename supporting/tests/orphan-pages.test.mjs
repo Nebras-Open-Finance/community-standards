@@ -53,6 +53,8 @@ const LISTING_INFERENCE = [
   { listing: '/policy/', tree: 'policy' },
   { listing: '/knowledge-base', tree: 'knowledge-base/articles' },
   { listing: '/knowledge-base/', tree: 'knowledge-base/articles' },
+  { listing: '/proposals', tree: 'proposals' },
+  { listing: '/proposals/', tree: 'proposals' },
 ]
 
 let sidebars
