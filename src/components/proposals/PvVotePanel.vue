@@ -17,7 +17,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'vote', stance: Stance | null): void
-  (e: 'submit', detail: { org: string; person: string; comment: string }): void
+  (e: 'submit', detail: { comment: string }): void
 }>()
 
 const config = PROPOSALS_CONFIG
@@ -144,13 +144,12 @@ function onButton(stance: Stance): void {
       </div>
     </div>
 
-    <!-- Attribution form (full width, once a stance is chosen) -->
+    <!-- Attribution form (full width, once a stance is chosen). Identity comes
+         from the Trust Framework session; the form handles sign-in itself. -->
     <PvVoteAttribForm
       v-if="myVote && !decided"
       :stance="myVote.stance"
       :submitted="myVote.submitted"
-      :submitted-org="myVote.org"
-      :submitted-person="myVote.person"
       @submit="emit('submit', $event)"
     />
   </div>

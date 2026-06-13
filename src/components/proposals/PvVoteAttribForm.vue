@@ -1,34 +1,48 @@
 <script setup lang="ts">
-// Attribution form, revealed under the vote buttons once a stance is selected.
-// The voter names themselves and (optionally) adds a comment; submitting records
-// the attribution against their vote.
+// Attribution step, revealed under the vote buttons once a stance is selected.
+// Voting requires a Trust Framework SSO session: the voter's organisation and
+// name are PULLED from the signed-in identity (never typed in). Depending on the
+// session this renders one of:
+//   • a "Sign in with the Trust Framework" prompt (signed out)
+//   • a not-eligible notice (signed in but no single organisation)
+//   • the comment box + submit, headed by "Voting as <name> · <org>"
+//   • a confirmation card once the vote is recorded
 import { ref, computed, watch } from 'vue'
 import { STANCE, type Stance } from '@/data/proposals'
+import { useProposals } from '@/composables/useProposals'
 
 const props = defineProps<{
   stance: Stance
   submitted: boolean
-  submittedOrg?: string | undefined
-  submittedPerson?: string | undefined
 }>()
 
 const emit = defineEmits<{
-  (e: 'submit', detail: { org: string; person: string; comment: string }): void
+  (e: 'submit', detail: { comment: string }): void
 }>()
 
-const org = ref('')
-const name = ref('')
+const { auth, signInToVote } = useProposals()
+
 const comment = ref('')
 const editing = ref(false)
 
 const meta = computed(() => STANCE[props.stance])
 const stanceLabel = computed(() => meta.value.label)
 const showForm = computed(() => !props.submitted || editing.value)
-// Organisation is the vote's identity (one vote per org), so it's required.
-const canSubmit = computed(() => org.value.trim().length > 0)
 
-// Switching stance resets the in-progress comment and re-opens the form. The
-// organisation is kept — it's who you are, not what you're voting.
+// The single organisation the vote is attributed to (auth.canVote guarantees one).
+const org = computed(() => auth.value.orgs[0]?.name ?? '')
+const voterName = computed(() => auth.value.name ?? auth.value.email ?? '')
+
+// Why the signed-in user can't vote, if applicable.
+const ineligibleReason = computed(() => {
+  if (!auth.value.authenticated || auth.value.canVote) return ''
+  if (auth.value.orgs.length === 0) {
+    return 'Your Trust Framework account is not an active member of any organisation, so it cannot vote.'
+  }
+  return 'Your account belongs to more than one organisation, so voting is not supported from it.'
+})
+
+// Switching stance resets the in-progress comment and re-opens the form.
 watch(
   () => props.stance,
   () => {
@@ -38,15 +52,13 @@ watch(
 )
 
 function submit(): void {
-  if (!canSubmit.value) return
-  emit('submit', { org: org.value, person: name.value, comment: comment.value })
+  if (!auth.value.canVote) return
+  emit('submit', { comment: comment.value })
   editing.value = false
 }
 
 function edit(): void {
   editing.value = true
-  org.value = props.submittedOrg ?? ''
-  name.value = ''
   comment.value = ''
 }
 </script>
@@ -65,49 +77,68 @@ function edit(): void {
       ✓ Submitted · {{ stanceLabel }}
     </div>
     <div class="pv-attrib__done-text">
-      Recorded for <strong>{{ submittedOrg }}</strong>{{ submittedPerson ? ` · ${submittedPerson}` : '' }}.
+      Recorded for <strong>{{ org }}</strong>{{ voterName ? ` · ${voterName}` : '' }}.
     </div>
-    <button type="button" class="pv-attrib__edit" @click="edit">Edit details</button>
+    <button type="button" class="pv-attrib__edit" @click="edit">Add a comment</button>
   </div>
 
-  <!-- Entry form -->
+  <!-- Signed out — prompt Trust Framework SSO -->
   <div
-    v-else
+    v-else-if="auth.loaded && !auth.authenticated"
+    class="pv-attrib pv-attrib--auth"
+    :style="{ borderLeftColor: meta.ink }"
+  >
+    <div class="pv-attrib__title" :style="{ color: meta.ink }">
+      Sign in with the Sandbox Trust Framework to record your {{ stanceLabel }} vote
+    </div>
+    <button
+      type="button"
+      class="pv-attrib__submit pv-attrib__signin"
+      :style="{ background: meta.ink }"
+      @click="signInToVote"
+    >
+      Vote
+    </button>
+  </div>
+
+  <!-- Signed in but not eligible -->
+  <div
+    v-else-if="auth.loaded && auth.authenticated && !auth.canVote"
+    class="pv-attrib pv-attrib--auth"
+    :style="{ borderLeftColor: '#a6391f' }"
+  >
+    <div class="pv-attrib__title" :style="{ color: '#a6391f' }">Can't vote with this account</div>
+    <div class="pv-attrib__auth-text">{{ ineligibleReason }}</div>
+  </div>
+
+  <!-- Signed in and eligible — comment + submit -->
+  <div
+    v-else-if="auth.loaded"
     class="pv-attrib"
     :style="{ borderLeftColor: meta.ink }"
   >
     <div class="pv-attrib__title" :style="{ color: meta.ink }">
-      Add your details · {{ stanceLabel }}
+      Confirm your {{ stanceLabel }} vote
     </div>
-    <div class="pv-attrib__grid">
-      <div>
-        <label class="pv-attrib__label">Organisation</label>
-        <input
-          v-model="org"
-          class="pv-attrib__field"
-          placeholder="e.g. FAB"
-          autocomplete="off"
-        />
-      </div>
-      <div>
-        <label class="pv-attrib__label">Your name <span class="pv-attrib__opt">(optional)</span></label>
-        <input v-model="name" class="pv-attrib__field" placeholder="e.g. F. Karimi" />
-      </div>
-      <div>
-        <label class="pv-attrib__label">Comment <span class="pv-attrib__opt">(optional)</span></label>
-        <textarea
-          v-model="comment"
-          class="pv-attrib__field pv-attrib__textarea"
-          :placeholder="`Why are you voting ${stanceLabel.toLowerCase()}?`"
-        />
-      </div>
+    <div class="pv-attrib__identity">
+      <span class="pv-attrib__identity-label">Voting as</span>
+      <span class="pv-attrib__identity-val">
+        <strong>{{ org }}</strong>{{ voterName ? ` · ${voterName}` : '' }}
+      </span>
+    </div>
+    <div>
+      <label class="pv-attrib__label">Comment <span class="pv-attrib__opt">(optional)</span></label>
+      <textarea
+        v-model="comment"
+        class="pv-attrib__field pv-attrib__textarea"
+        :placeholder="`Set out in detail why you are voting ${stanceLabel.toLowerCase()} — context, concerns, conditions, anything the working group should weigh.`"
+      />
     </div>
     <div class="pv-attrib__actions">
       <button
         type="button"
         class="pv-attrib__submit"
-        :disabled="!canSubmit"
-        :style="{ background: canSubmit ? meta.ink : 'var(--at-grid-line)' }"
+        :style="{ background: meta.ink }"
         @click="submit"
       >
         Submit {{ stanceLabel }} vote
@@ -163,12 +194,41 @@ function edit(): void {
   text-decoration: underline;
 }
 
-.pv-attrib__grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 2fr;
-  gap: 14px;
-  align-items: start;
+/* Auth prompt / not-eligible notice */
+.pv-attrib__auth-text {
+  font-size: 13.5px;
+  color: var(--at-navy);
+  opacity: 0.85;
+  line-height: 1.55;
+  max-width: 46rem;
+  margin-bottom: 16px;
 }
+
+.pv-attrib__auth-text strong { color: var(--at-navy-deep); }
+
+/* "Voting as" identity row, pulled from the signed-in session */
+.pv-attrib__identity {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 11px 14px;
+  background: var(--at-surface);
+  border: 1px solid var(--at-grid-line);
+}
+
+.pv-attrib__identity-label {
+  font-family: var(--at-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--at-navy);
+  opacity: 0.6;
+}
+
+.pv-attrib__identity-val { font-size: 13.5px; color: var(--at-navy); }
+.pv-attrib__identity-val strong { color: var(--at-navy-deep); font-weight: 600; }
 
 .pv-attrib__label {
   display: block;
@@ -198,9 +258,10 @@ function edit(): void {
 .pv-attrib__field:focus { border-color: var(--at-navy-deep); }
 
 .pv-attrib__textarea {
-  min-height: 38px;
+  min-height: 160px;
   resize: vertical;
-  line-height: 1.5;
+  line-height: 1.6;
+  padding: 12px 14px;
 }
 
 .pv-attrib__actions {
@@ -220,9 +281,9 @@ function edit(): void {
 }
 
 .pv-attrib__submit:disabled { cursor: default; }
+.pv-attrib__signin { margin-top: 2px; }
 
 @media (max-width: 640px) {
-  .pv-attrib__grid { grid-template-columns: 1fr; gap: 12px; }
   .pv-attrib__actions { justify-content: stretch; }
   .pv-attrib__submit { width: 100%; }
 }

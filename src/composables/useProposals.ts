@@ -5,12 +5,14 @@
 // the terraform-controller repo. Each proposal's CONTENT is authored as its own
 // page under src/pages/proposals/<id>.vue.
 //
-// Votes are self-declared: the voter names their organisation (the API's vote
-// identity — one vote per org) plus an optional name and comment. A second vote
-// from the same org (or named person) is rejected, not overwritten. `myVotes`
-// keeps THIS browser's own selection/attribution in localStorage so the UI
-// remembers what you picked across reloads; the authoritative count is whatever
-// the server returns.
+// Voting requires a Trust Framework SSO session (sandbox directory). The voter's
+// organisation and name are PULLED from the signed-in identity — never typed in —
+// and the vote is keyed on that identity, so one vote per person (two colleagues
+// from the same org may each vote). A second vote from the same person is
+// rejected, not overwritten. `myVotes` keeps THIS browser's own selection in
+// localStorage so the UI remembers what you picked across reloads; the
+// authoritative count is whatever the server returns. `auth` mirrors the current
+// session (from GET /me) so the vote form can show who you are or prompt sign-in.
 
 import { ref, computed, watch, type Ref, type ComputedRef } from 'vue'
 import { VOTERS, type Stance, type Comment, type Priority } from '@/data/proposals'
@@ -30,7 +32,7 @@ export const PROPOSALS_CONFIG = {
   // 'always' shows the tally to everyone; 'after-vote' hides it until you vote.
   resultsVisibility: 'always' as ResultsVisibility,
   // Dashed quorum marker on the bar + the quorum line under the tally.
-  showQuorum: true,
+  showQuorum: false,
   // 'stance' = three For/Against/Abstain columns; 'chronological' = one thread.
   commentGrouping: 'stance' as CommentGrouping,
 }
@@ -41,8 +43,8 @@ export const PROPOSALS_CONFIG = {
 // attribution form is submitted; `submitted` gates the confirmation card.
 export interface MyVote {
   stance: Stance
-  org?: string
-  person?: string
+  org?: string | undefined
+  person?: string | undefined
   submitted: boolean
 }
 
@@ -93,6 +95,28 @@ interface LiveProposal {
 export interface SubmitResult {
   ok: boolean
   message?: string
+  // Set when the vote was rejected because there is no valid session — the UI
+  // should prompt the user to sign in via the Trust Framework.
+  needsAuth?: boolean
+}
+
+// One organisation the signed-in user is an active member of.
+export interface AuthOrg {
+  id: string
+  name: string
+}
+
+// Current Trust Framework session, mirrored from GET /me. `loaded` flips true
+// once the first /me call resolves (so the UI can avoid flashing "sign in" before
+// we know). `canVote` is true only for an authenticated single-organisation
+// member — the server applies the same rule when a vote is cast.
+export interface AuthState {
+  loaded: boolean
+  authenticated: boolean
+  name?: string | undefined
+  email?: string | undefined
+  orgs: AuthOrg[]
+  canVote: boolean
 }
 
 // ── State ────────────────────────────────────────────────────────────────────
@@ -100,6 +124,9 @@ export interface SubmitResult {
 const VOTES_KEY = 'altareq_proposal_votes'
 
 const myVotes: Ref<Record<string, MyVote>> = ref({})
+
+// The current Trust Framework session (from GET /me). Populated by loadMe().
+const auth: Ref<AuthState> = ref({ loaded: false, authenticated: false, orgs: [], canVote: false })
 
 // The proposal list for the index, from GET /proposals.
 const proposalList: Ref<ProposalMeta[]> = ref([])
@@ -178,6 +205,39 @@ async function loadOne(id: string): Promise<void> {
   } catch { /* ignore */ }
 }
 
+// Load the current Trust Framework session. Sends the session cookie (credentials
+// 'include'); on any failure we treat the user as signed out.
+async function loadMe(): Promise<void> {
+  if (typeof window === 'undefined') return
+  try {
+    const res = await fetch(`${API_BASE}/me`, { credentials: 'include' })
+    if (!res.ok) {
+      auth.value = { loaded: true, authenticated: false, orgs: [], canVote: false }
+      return
+    }
+    const d = (await res.json()) as Partial<AuthState> & { authenticated?: boolean }
+    auth.value = {
+      loaded: true,
+      authenticated: !!d.authenticated,
+      name: d.name,
+      email: d.email,
+      orgs: Array.isArray(d.orgs) ? d.orgs : [],
+      canVote: !!d.canVote,
+    }
+  } catch {
+    auth.value = { loaded: true, authenticated: false, orgs: [], canVote: false }
+  }
+}
+
+// Send the user through Trust Framework SSO, returning to the current page. This
+// is a top-level navigation (not a fetch) so the directory can set its cookies
+// and redirect back to /callback, which lands us back here signed in.
+function signInToVote(): void {
+  if (typeof window === 'undefined') return
+  const redirect = encodeURIComponent(window.location.href)
+  window.location.href = `${API_BASE}/login?redirect=${redirect}`
+}
+
 const emptyLists = (): Record<Stance, VoterEntry[]> => ({ for: [], against: [], abstain: [] })
 
 // Live tally for a proposal id: the server counts, plus the voter's own pick
@@ -217,22 +277,23 @@ function setVote(id: string, stance: Stance | null): void {
   myVotes.value = next
 }
 
-// Submit the attribution form: POST the vote to the API and adopt the server's
-// updated tally. The local record is set optimistically and rolled back to
-// "unsubmitted" if the request fails, so the form re-opens for a retry.
-// Returns { ok, message } so the UI can surface duplicate (409) / rate-limit
-// (429) responses.
+// Submit a vote: POST { stance, comment } to the API (with the session cookie)
+// and adopt the server's updated tally. Identity and organisation are taken from
+// the session server-side — they are NOT sent from here. The local record is set
+// optimistically (its org/person filled from the signed-in identity for the
+// confirmation card) and rolled back to "unsubmitted" if the request fails, so
+// the form re-opens for a retry. Returns { ok, message, needsAuth } so the UI can
+// surface auth (401) / not-eligible (403) / duplicate (409) / rate-limit (429).
 async function submitVote(
   id: string,
-  detail: { stance: Stance; org: string; person: string; comment: string },
+  detail: { stance: Stance; comment: string },
 ): Promise<SubmitResult> {
-  const org = detail.org.trim()
-  const person = detail.person.trim()
   const comment = detail.comment.trim()
+  const a = auth.value
 
   myVotes.value = {
     ...myVotes.value,
-    [id]: { stance: detail.stance, org, person, submitted: true },
+    [id]: { stance: detail.stance, org: a.orgs[0]?.name, person: a.name, submitted: true },
   }
 
   const rollback = () => {
@@ -244,7 +305,8 @@ async function submitVote(
     const res = await fetch(`${API_BASE}/proposals/${encodeURIComponent(id)}/vote`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ org, person, stance: detail.stance, comment }),
+      credentials: 'include',
+      body: JSON.stringify({ stance: detail.stance, comment }),
     })
 
     if (res.ok) {
@@ -255,8 +317,16 @@ async function submitVote(
 
     rollback()
     const serverMsg = await res.json().then((b) => (b as { error?: string }).error).catch(() => undefined)
+    if (res.status === 401) {
+      // Session missing/expired — refresh our view of it and ask the UI to prompt sign-in.
+      void loadMe()
+      return { ok: false, needsAuth: true, message: serverMsg || 'Please sign in with the Trust Framework to vote.' }
+    }
+    if (res.status === 403) {
+      return { ok: false, message: serverMsg || 'Your account is not eligible to vote on this proposal.' }
+    }
     if (res.status === 409) {
-      return { ok: false, message: serverMsg || 'That organisation has already voted on this proposal.' }
+      return { ok: false, message: serverMsg || 'You have already voted on this proposal.' }
     }
     if (res.status === 429) {
       return { ok: false, message: serverMsg || 'Too many submissions — please wait a minute and try again.' }
@@ -289,14 +359,17 @@ export interface UseProposals {
   voters: string[]
   voterTotal: number
   myVotes: Ref<Record<string, MyVote>>
+  auth: Ref<AuthState>
   votedCount: ComputedRef<number>
   config: typeof PROPOSALS_CONFIG
   hydrate: () => void
   loadAll: () => Promise<void>
   loadOne: (id: string) => Promise<void>
+  loadMe: () => Promise<void>
+  signInToVote: () => void
   tallyOf: (id: string, myVote?: MyVote) => Tally
   setVote: (id: string, stance: Stance | null) => void
-  submitVote: (id: string, detail: { stance: Stance; org: string; person: string; comment: string }) => Promise<SubmitResult>
+  submitVote: (id: string, detail: { stance: Stance; comment: string }) => Promise<SubmitResult>
   commentsFor: (id: string) => Comment[]
 }
 
@@ -309,11 +382,14 @@ export function useProposals(): UseProposals {
     voters: VOTERS,
     voterTotal: VOTERS.length,
     myVotes,
+    auth,
     votedCount,
     config: PROPOSALS_CONFIG,
     hydrate,
     loadAll,
     loadOne,
+    loadMe,
+    signInToVote,
     tallyOf,
     setVote,
     submitVote,

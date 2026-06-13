@@ -15,7 +15,7 @@ import PvVotePanel from './PvVotePanel.vue'
 
 const props = defineProps<{ proposal: Proposal }>()
 
-const { myVotes, setVote, submitVote, hydrate, loadOne } = useProposals()
+const { myVotes, setVote, submitVote, hydrate, loadOne, loadMe } = useProposals()
 
 const id = computed(() => props.proposal.id)
 const myVote = computed(() => myVotes.value[id.value])
@@ -37,6 +37,7 @@ useHead({ title: () => props.proposal.title })
 onMounted(() => {
   hydrate()
   void loadOne(id.value)
+  void loadMe()
   if (typeof window !== 'undefined') window.scrollTo(0, 0)
 })
 
@@ -45,10 +46,10 @@ function onVote(stance: Stance | null): void {
   setVote(id.value, stance)
 }
 
-async function onSubmit(detail: { org: string; person: string; comment: string }): Promise<void> {
+async function onSubmit(detail: { comment: string }): Promise<void> {
   if (!myVote.value) return
   submitError.value = ''
-  const result = await submitVote(id.value, { stance: myVote.value.stance, ...detail })
+  const result = await submitVote(id.value, { stance: myVote.value.stance, comment: detail.comment })
   if (!result.ok) submitError.value = result.message ?? 'Could not record your vote.'
 }
 </script>
@@ -94,7 +95,7 @@ async function onSubmit(detail: { org: string; person: string; comment: string }
             Cast a single vote &mdash; For, Against, or Abstain.
             {{ decided
               ? 'Voting has closed for this proposal.'
-              : 'One vote per organisation; a second vote from the same organisation is rejected.' }}
+              : 'Sign in with the Trust Framework to vote; your organisation and name come from your directory profile, and each person may vote once.' }}
           </p>
         </div>
         <PvVotePanel

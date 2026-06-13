@@ -98,7 +98,7 @@ Content-Type: application/jwt          # signed JWS, exactly like POST /payments
 // Live tally + vote submission are backed by the proposals API (D1) via
 // useProposals. PvVotePanel takes a Proposal-shaped object; only id/status/
 // quorum/closes are read by the panel, the rest come from `meta` above.
-const { myVotes, setVote, submitVote, hydrate, loadOne, metaById } = useProposals()
+const { myVotes, setVote, submitVote, hydrate, loadOne, loadMe, metaById } = useProposals()
 
 // The proposal's live metadata from the API (dates, priority). Drives the hero
 // status pill, priority tag, and the Opened/Closes strip — falling back to the
@@ -136,10 +136,10 @@ function onVote(stance: Stance | null): void {
   setVote(meta.id, stance)
 }
 
-async function onSubmit(detail: { org: string; person: string; comment: string }): Promise<void> {
+async function onSubmit(detail: { comment: string }): Promise<void> {
   if (!myVote.value) return
   submitError.value = ''
-  const result = await submitVote(meta.id, { stance: myVote.value.stance, ...detail })
+  const result = await submitVote(meta.id, { stance: myVote.value.stance, comment: detail.comment })
   if (!result.ok) submitError.value = result.message ?? 'Could not record your vote.'
 }
 
@@ -187,6 +187,7 @@ watch(apiMeta, syncFromApi)
 onMounted(() => {
   hydrate()
   void loadOne(meta.id)
+  void loadMe()
   syncFromApi()
   if (typeof window !== 'undefined') window.scrollTo(0, 0)
 })
@@ -246,8 +247,9 @@ onMounted(() => {
           <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> Decision</div>
           <h2 class="ofp-band__title">Cast your vote</h2>
           <p class="ofp-band__lede">
-            One vote per organisation &mdash; For, Against, or Abstain &mdash; recorded in the open with
-            your reasoning. A second vote from the same organisation is rejected.
+            Sign in with the Trust Framework to vote &mdash; For, Against, or Abstain &mdash; recorded in
+            the open with your reasoning. Your organisation and name come from your directory profile, and
+            each person may vote once.
           </p>
         </div>
         <PvVotePanel :proposal="proposal" :my-vote="myVote" @vote="onVote" @submit="onSubmit" />
