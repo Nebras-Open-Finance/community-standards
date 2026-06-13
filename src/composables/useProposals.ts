@@ -108,8 +108,9 @@ export interface AuthOrg {
 
 // Current Trust Framework session, mirrored from GET /me. `loaded` flips true
 // once the first /me call resolves (so the UI can avoid flashing "sign in" before
-// we know). `canVote` is true only for an authenticated single-organisation
-// member — the server applies the same rule when a vote is cast.
+// we know). `canVote` is true for any authenticated user who is an active member
+// of at least one organisation; a multi-org member votes on behalf of all their
+// orgs at once. The server applies the same rule when a vote is cast.
 export interface AuthState {
   loaded: boolean
   authenticated: boolean
@@ -291,9 +292,13 @@ async function submitVote(
   const comment = detail.comment.trim()
   const a = auth.value
 
+  // Attribute the optimistic record to all the voter's orgs (comma-joined),
+  // matching how the server stores the vote.
+  const orgLabel = a.orgs.map((o) => o.name).join(', ') || undefined
+
   myVotes.value = {
     ...myVotes.value,
-    [id]: { stance: detail.stance, org: a.orgs[0]?.name, person: a.name, submitted: true },
+    [id]: { stance: detail.stance, org: orgLabel, person: a.name, submitted: true },
   }
 
   const rollback = () => {

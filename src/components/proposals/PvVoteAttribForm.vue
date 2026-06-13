@@ -4,8 +4,8 @@
 // name are PULLED from the signed-in identity (never typed in). Depending on the
 // session this renders one of:
 //   • a "Sign in with the Trust Framework" prompt (signed out)
-//   • a not-eligible notice (signed in but no single organisation)
-//   • the comment box + submit, headed by "Voting as <name> · <org>"
+//   • a not-eligible notice (signed in but not an active member of any org)
+//   • the comment box + submit, headed by "Voting as <name> · <org(s)>"
 //   • a confirmation card once the vote is recorded
 import { ref, computed, watch } from 'vue'
 import { STANCE, type Stance } from '@/data/proposals'
@@ -28,17 +28,16 @@ const meta = computed(() => STANCE[props.stance])
 const stanceLabel = computed(() => meta.value.label)
 const showForm = computed(() => !props.submitted)
 
-// The single organisation the vote is attributed to (auth.canVote guarantees one).
-const org = computed(() => auth.value.orgs[0]?.name ?? '')
+// The organisation(s) the vote is attributed to. A multi-org member votes on
+// behalf of all of them, so their names are joined with a comma.
+const org = computed(() => auth.value.orgs.map((o) => o.name).join(', '))
 const voterName = computed(() => auth.value.name ?? auth.value.email ?? '')
 
-// Why the signed-in user can't vote, if applicable.
+// Why the signed-in user can't vote, if applicable. The only ineligible case is
+// an account that is not an active member of any organisation.
 const ineligibleReason = computed(() => {
   if (!auth.value.authenticated || auth.value.canVote) return ''
-  if (auth.value.orgs.length === 0) {
-    return 'Your Trust Framework account is not an active member of any organisation, so it cannot vote.'
-  }
-  return 'Your account belongs to more than one organisation, so voting is not supported from it.'
+  return 'Your Trust Framework account is not an active member of any organisation, so it cannot vote.'
 })
 
 // Switching stance resets the in-progress comment.
