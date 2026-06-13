@@ -23,11 +23,10 @@ const emit = defineEmits<{
 const { auth, signInToVote } = useProposals()
 
 const comment = ref('')
-const editing = ref(false)
 
 const meta = computed(() => STANCE[props.stance])
 const stanceLabel = computed(() => meta.value.label)
-const showForm = computed(() => !props.submitted || editing.value)
+const showForm = computed(() => !props.submitted)
 
 // The single organisation the vote is attributed to (auth.canVote guarantees one).
 const org = computed(() => auth.value.orgs[0]?.name ?? '')
@@ -42,24 +41,15 @@ const ineligibleReason = computed(() => {
   return 'Your account belongs to more than one organisation, so voting is not supported from it.'
 })
 
-// Switching stance resets the in-progress comment and re-opens the form.
+// Switching stance resets the in-progress comment.
 watch(
   () => props.stance,
-  () => {
-    comment.value = ''
-    editing.value = false
-  },
+  () => { comment.value = '' },
 )
 
 function submit(): void {
   if (!auth.value.canVote) return
   emit('submit', { comment: comment.value })
-  editing.value = false
-}
-
-function edit(): void {
-  editing.value = true
-  comment.value = ''
 }
 </script>
 
@@ -79,7 +69,6 @@ function edit(): void {
     <div class="pv-attrib__done-text">
       Recorded for <strong>{{ org }}</strong>{{ voterName ? ` · ${voterName}` : '' }}.
     </div>
-    <button type="button" class="pv-attrib__edit" @click="edit">Add a comment</button>
   </div>
 
   <!-- Signed out — prompt Trust Framework SSO -->
@@ -179,20 +168,6 @@ function edit(): void {
 }
 
 .pv-attrib__done-text strong { color: var(--at-navy-deep); }
-
-.pv-attrib__edit {
-  font-family: var(--at-mono);
-  font-size: 9px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--at-navy);
-  opacity: 0.6;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px 0 0;
-  text-decoration: underline;
-}
 
 /* Auth prompt / not-eligible notice */
 .pv-attrib__auth-text {

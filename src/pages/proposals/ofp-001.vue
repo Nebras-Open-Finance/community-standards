@@ -25,7 +25,7 @@ const meta = {
   // Fallbacks shown until the API responds (and during the static build). The
   // live status/priority/dates are sourced from the API — see syncFromApi().
   opened: '12 Jun 2026',
-  closes: '3 Jul 2026',
+  closes: '24 Jul 2026',
   priority: 'high' as Priority,
 }
 
