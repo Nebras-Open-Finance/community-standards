@@ -289,6 +289,14 @@ const COMBINED_MONTHLY_GROUPS: CombinedMonthlyConfig[] = [
       { slug: 'lfi-collection-memo-supporting-data', typeLabel: 'Supporting Data' },
     ],
   },
+  {
+    key: 'tpp-invoices',
+    heading: 'TPP Invoices',
+    members: [
+      { slug: 'tpp-invoice', typeLabel: 'Invoice' },
+      { slug: 'tpp-invoice-supporting-data', typeLabel: 'Supporting Data' },
+    ],
+  },
 ]
 
 const combinedBySlug = new Map<
