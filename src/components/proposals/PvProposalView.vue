@@ -15,18 +15,28 @@ import PvVotePanel from './PvVotePanel.vue'
 
 const props = defineProps<{ proposal: Proposal }>()
 
-const { myVotes, setVote, submitVote, hydrate, loadOne, loadMe } = useProposals()
+const { myVotes, setVote, submitVote, hydrate, loadOne, loadMe, metaById } = useProposals()
 
 const id = computed(() => props.proposal.id)
 const myVote = computed(() => myVotes.value[id.value])
+
+// Merge the API-sourced questions onto the authored proposal so the vote panel
+// can render a text box per question. Falls back to anything the page supplied.
+const panelProposal = computed<Proposal>(() => ({
+  ...props.proposal,
+  questions: metaById.value[id.value]?.questions ?? props.proposal.questions ?? [],
+  version: metaById.value[id.value]?.version ?? props.proposal.version ?? '',
+}))
 const decided = computed(() => isDecided(props.proposal.status))
 const submitError = ref('')
 
 const metaPairs = computed(() => {
   const p = props.proposal
+  const version = metaById.value[id.value]?.version ?? p.version ?? ''
   return [
     ['Proposed by', p.author.org],
     ['Author', p.author.person],
+    ['Target version', version || '—'],
     ['Opened', p.opened],
     ['Closes', p.closes],
   ] as const
@@ -46,10 +56,10 @@ function onVote(stance: Stance | null): void {
   setVote(id.value, stance)
 }
 
-async function onSubmit(detail: { comment: string }): Promise<void> {
+async function onSubmit(detail: { comment: string; answers: string[] }): Promise<void> {
   if (!myVote.value) return
   submitError.value = ''
-  const result = await submitVote(id.value, { stance: myVote.value.stance, comment: detail.comment })
+  const result = await submitVote(id.value, { stance: myVote.value.stance, comment: detail.comment, answers: detail.answers })
   if (!result.ok) submitError.value = result.message ?? 'Could not record your vote.'
 }
 </script>
@@ -99,7 +109,7 @@ async function onSubmit(detail: { comment: string }): Promise<void> {
           </p>
         </div>
         <PvVotePanel
-          :proposal="proposal"
+          :proposal="panelProposal"
           :my-vote="myVote"
           @vote="onVote"
           @submit="onSubmit"

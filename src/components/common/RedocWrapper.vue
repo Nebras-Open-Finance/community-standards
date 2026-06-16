@@ -12,7 +12,11 @@ interface OverrideServer {
 }
 
 interface RedocWrapperProps {
-  spec: string
+  // Either fetch a spec from a URL (`spec`) or render an in-memory document
+  // (`specText`, raw YAML/JSON text). `specText` takes precedence and skips the
+  // fetch — used for proposal draft schemas co-located in src/ and imported `?raw`.
+  spec?: string
+  specText?: string
   filterPath?: string
   filterMethod?: string
   displayPath?: string
@@ -94,8 +98,8 @@ async function renderRedoc(): Promise<void> {
 
   if (!w.Redoc || !w.jsyaml) return
 
-  const res = await fetch(props.spec)
-  const yamlText = await res.text()
+  const yamlText = props.specText ?? (props.spec ? await (await fetch(props.spec)).text() : '')
+  if (!yamlText) return
   const fullSpec = w.jsyaml.load(yamlText) as OpenApiDoc
 
   let finalSpec: OpenApiDoc = fullSpec
@@ -265,10 +269,10 @@ onThemeChange(() => { void renderRedoc() })
 // Unversioned assets (e.g. /openapi/trust-framework.yaml) aren't exported as
 // .xlsx by the generator and shouldn't surface a .yaml download either.
 const showDownloads = computed<boolean>(() => /^\/openapi\/v/.test(props.spec || ''))
-const xlsxHref = computed<string>(() => props.spec.replace(/\.ya?ml$/i, '.xlsx'))
+const xlsxHref = computed<string>(() => (props.spec || '').replace(/\.ya?ml$/i, '.xlsx'))
 
 const githubHref = computed<string>(() => {
-  const parts = props.spec.split('/').filter(Boolean)
+  const parts = (props.spec || '').split('/').filter(Boolean)
   const category = parts[2]
   if (parts[0] === 'openapi' && category) {
     return `${SPECS_REPO}/${category}`

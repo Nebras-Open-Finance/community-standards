@@ -65,6 +65,13 @@ export interface Tally {
   counts: Counts
 }
 
+// One answer to a proposal question, as returned by the API (stored only — not
+// displayed anywhere yet). `q` snapshots the question text at submit time.
+export interface ApiAnswer {
+  q: string
+  a: string
+}
+
 // One vote as returned by the API.
 export interface ApiVote {
   org: string
@@ -72,6 +79,7 @@ export interface ApiVote {
   stance: Stance
   comment?: string | null
   created_at?: string
+  answers?: ApiAnswer[]
 }
 
 // Lightweight proposal metadata for the index, as returned by GET /proposals.
@@ -84,6 +92,10 @@ export interface ProposalMeta {
   priority?: Priority
   for_summary?: string | null
   against_summary?: string | null
+  // Up to 3 optional questions for this proposal; [] when there are none.
+  questions?: string[]
+  // Target standards version (when the change will be made), e.g. 'V2.2'; '' if unset.
+  version?: string | null
   tally: Counts
 }
 
@@ -287,9 +299,13 @@ function setVote(id: string, stance: Stance | null): void {
 // surface auth (401) / not-eligible (403) / duplicate (409) / rate-limit (429).
 async function submitVote(
   id: string,
-  detail: { stance: Stance; comment: string },
+  detail: { stance: Stance; comment: string; answers?: string[] },
 ): Promise<SubmitResult> {
   const comment = detail.comment.trim()
+  // Answers are sent aligned by index to the proposal's questions; the server
+  // drops blanks/extras and snapshots the question text. Identity and org are
+  // never sent — they come from the session.
+  const answers = (detail.answers ?? []).map((s) => (typeof s === 'string' ? s : ''))
   const a = auth.value
 
   // Attribute the optimistic record to all the voter's orgs (comma-joined),
@@ -311,7 +327,7 @@ async function submitVote(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ stance: detail.stance, comment }),
+      body: JSON.stringify({ stance: detail.stance, comment, answers }),
     })
 
     if (res.ok) {
@@ -374,7 +390,7 @@ export interface UseProposals {
   signInToVote: () => void
   tallyOf: (id: string, myVote?: MyVote) => Tally
   setVote: (id: string, stance: Stance | null) => void
-  submitVote: (id: string, detail: { stance: Stance; comment: string }) => Promise<SubmitResult>
+  submitVote: (id: string, detail: { stance: Stance; comment: string; answers?: string[] }) => Promise<SubmitResult>
   commentsFor: (id: string) => Comment[]
 }
 

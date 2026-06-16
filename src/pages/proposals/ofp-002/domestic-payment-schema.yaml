@@ -1,0 +1,306 @@
+# OFP-002 — Draft DOMESTIC payment schema (targets standards V2.2)
+#
+# This is the DOMESTIC half of the proposed top-level split of the Bank Service
+# Initiation payment schema (PAR + POST /payments). It is today's domestic shape
+# with ONE change: the international-only `CurrencyRequest` (FX) object is REMOVED.
+# A domestic payment is always a same-currency (AED -> AED) transfer, so FX never
+# applies and the object only ever added noise to the common case.
+#
+# SELF-CONTAINED FOR RENDERING: the schemas the proposal changes are defined in
+# full. Schemas UNCHANGED from the published spec are included below only so this
+# document resolves and renders standalone — small leaf types carry their real
+# definition; heavy composites (AERisk, AEAddress, the consent building blocks)
+# are concise stubs marked "unchanged — see published spec". The published source
+# of truth is api-specs: dist/standards/v2.1-errata2/uae-bank-initiation-openapi.yaml
+# and uae-authorization-endpoints-openapi.yaml. Working draft, not a committed spec.
+
+openapi: 3.0.3
+info:
+  title: OFP-002 — Domestic Payment Schema (draft)
+  version: 0.2.0-ofp002
+  description: >-
+    Draft domestic payment definition for the proposed Domestic / International
+    split. See `AEDomesticPaymentRequest` for the `POST /payments` request body.
+
+paths:
+  /payments:
+    post:
+      summary: Create a domestic payment (draft)
+      description: Proposed domestic payment-creation request for OFP-002.
+      requestBody:
+        required: true
+        content:
+          application/jwt:
+            schema:
+              $ref: '#/components/schemas/AEDomesticPaymentRequest'
+      responses:
+        '201':
+          description: Domestic payment created.
+
+components:
+  schemas:
+    # ═══════════════════════════════════════════════════════════════════════
+    # PROPOSED — defined in full
+    # ═══════════════════════════════════════════════════════════════════════
+
+    # ─── POST /payments request — DOMESTIC ──────────────────────────────────────
+    # Identical to today's AEPaymentRequest EXCEPT `CurrencyRequest` is removed.
+    AEDomesticPaymentRequest:
+      description: Domestic Payment Request Schema.
+      type: object
+      additionalProperties: false
+      required:
+        - Data
+      properties:
+        Data:
+          type: object
+          additionalProperties: false
+          required:
+            - ConsentId
+            - Instruction
+            - PaymentPurposeCode
+            - OpenFinanceBilling
+          properties:
+            ConsentId:
+              $ref: '#/components/schemas/AEConsentId'
+            Instruction:
+              $ref: '#/components/schemas/AEPaymentInstruction'
+            # REMOVED for domestic: CurrencyRequest (FX is international-only).
+            PersonalIdentifiableInformation:
+              description: >-
+                Domestic Payment PII. In transit this MUST be the encrypted
+                AEJWEPaymentPII (JWE) form; the decrypted JWS has the structure of
+                AEDomesticPaymentPIIProperties below. Only the DOMESTIC PII shape is
+                valid here — the top-level split removes the old anyOf over the
+                international shape.
+              anyOf:
+                - $ref: '#/components/schemas/AEDomesticPaymentPIIProperties'
+                - $ref: '#/components/schemas/AEJWEPaymentPII'
+            PaymentPurposeCode:
+              $ref: '#/components/schemas/AEPaymentPurposeCode'
+            DebtorReference:
+              $ref: '#/components/schemas/AEDebtorReference'
+            CreditorReference:
+              $ref: '#/components/schemas/AECreditorReference'
+            OpenFinanceBilling:
+              $ref: '#/components/schemas/AEServiceInitiationOpenFinancePaymentBilling'
+
+    # ─── PAR consent — DOMESTIC payment types ───────────────────────────────────
+    # Domestic keeps the FULL payment-type taxonomy: single, all long-lived
+    # multi-payment variants, and file payments.
+    AEDomesticConsentSchedule:
+      type: object
+      additionalProperties: false
+      description: The payment types a DOMESTIC consent may request.
+      properties:
+        SinglePayment:
+          $ref: '#/components/schemas/AESingleInstantPayment'
+        MultiPayment:
+          $ref: '#/components/schemas/AELongLivedPaymentConsent'
+        FilePayment:
+          $ref: '#/components/schemas/AEFilePaymentConsent'
+
+    # ─── Domestic PII / creditor (unchanged from today) ─────────────────────────
+    AEDomesticPaymentPIIProperties:
+      title: Domestic Payment PII Schema Object
+      type: object
+      additionalProperties: false
+      description: Elements of Personal Identifiable Information data for a domestic payment.
+      properties:
+        Initiation:
+          $ref: '#/components/schemas/AEDomesticCreditor'
+        Risk:
+          $ref: '#/components/schemas/AERisk'
+
+    AEDomesticCreditor:
+      type: object
+      additionalProperties: false
+      required:
+        - CreditorAccount
+      description: Identification elements for a Creditor for a domestic payment instruction.
+      properties:
+        CreditorAgent:
+          $ref: '#/components/schemas/AECreditorAgent'
+        Creditor:
+          $ref: '#/components/schemas/AECreditor'
+        CreditorAccount:
+          $ref: '#/components/schemas/AEDomesticCreditorAccount'
+        ConfirmationOfPayeeResponse:
+          type: string
+          pattern: ^.+\..+\..+$
+          description: >-
+            Confirmation of Payee JWS for the Creditor Account. Domestic only — CoP
+            is not performed for international payments.
+
+    AEDomesticCreditorAccount:
+      type: object
+      additionalProperties: false
+      required:
+        - SchemeName
+        - Identification
+        - Name
+      description: Unambiguous identification of the domestic creditor account.
+      properties:
+        SchemeName:
+          type: string
+          enum:
+            - IBAN
+          description: Domestic payment scheme, restricted to `IBAN`.
+        Identification:
+          $ref: '#/components/schemas/AEIdentification'
+        Name:
+          $ref: '#/components/schemas/AEName'
+        TradingName:
+          $ref: '#/components/schemas/AETradingName'
+        Type:
+          $ref: '#/components/schemas/AECreditorAccountTypeCodes'
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # UNCHANGED shared schemas — included only so this draft renders standalone.
+    # Source of truth: the published bank-initiation / authorization-endpoints specs.
+    # ═══════════════════════════════════════════════════════════════════════
+
+    AEConsentId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      description: Unique identification assigned by the TPP to identify the consent resource.
+    AEPaymentInstruction:
+      type: object
+      additionalProperties: false
+      required: [Amount]
+      description: Requests movement of funds from the debtor account to a creditor for a single payment.
+      properties:
+        Amount:
+          $ref: '#/components/schemas/AEActiveCurrencyAmount'
+    AEActiveCurrencyAmount:
+      type: object
+      required: [Amount, Currency]
+      description: The Currency and Amount relating to the Payment.
+      properties:
+        Amount:
+          $ref: '#/components/schemas/AEActiveOrHistoricAmount'
+        Currency:
+          $ref: '#/components/schemas/AEActiveOrHistoricCurrencyCode'
+    AEActiveOrHistoricAmount:
+      type: string
+      pattern: ^\d{1,16}\.\d{2}$
+      example: '100.00'
+    AEActiveOrHistoricCurrencyCode:
+      type: string
+      pattern: ^[A-Z]{3,3}$
+      example: AED
+    AEPaymentPurposeCode:
+      type: string
+      minLength: 1
+      maxLength: 3
+      pattern: ^[A-Z]{3}$
+      description: Domestic payment purpose code, conforming to the published Aani payment purpose code list.
+    AEDebtorReference:
+      type: string
+      minLength: 1
+      maxLength: 35
+      description: A note for the reference of a given User in relation to a payment instruction.
+    AECreditorReference:
+      type: string
+      minLength: 1
+      maxLength: 35
+      description: A note that supports reconciliation of a payment instruction for the Creditor.
+    AEJWEPaymentPII:
+      type: string
+      description: JWE (encrypting a JWS) carrying the decrypted PII structure. Unchanged — see published spec.
+      example: eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00ifQ....
+    AEServiceInitiationOpenFinancePaymentBilling:
+      type: object
+      additionalProperties: false
+      required: [Type]
+      description: Billing parameters specified by the TPP for a payment initiation.
+      properties:
+        Type:
+          type: string
+          enum: [Collection, LargeValueCollection, PushP2P, PullP2P, Me2Me]
+        MerchantId:
+          type: string
+          minLength: 8
+          maxLength: 20
+    AEIdentification:
+      type: string
+      minLength: 1
+      description: Identification for the account assigned by the LFI based on the Account Scheme Name.
+    AEName:
+      type: object
+      additionalProperties: false
+      description: The Account Holder Name(s).
+      properties:
+        en: { type: string, maxLength: 70, description: English value }
+        ar: { type: string, maxLength: 70, description: Arabic value }
+    AETradingName:
+      type: object
+      additionalProperties: false
+      description: The Trading Brand Name (if applicable) for the Creditor.
+      properties:
+        en: { type: string, maxLength: 70, description: English value }
+        ar: { type: string, maxLength: 70, description: Arabic value }
+    AECreditorAccountTypeCodes:
+      type: string
+      enum: [Individual, Merchant, Business, Charity, GovernmentBody, Other]
+      description: The Creditor (Payee) Type.
+    AECreditorAgent:
+      type: object
+      additionalProperties: false
+      required: [SchemeName, Identification]
+      description: The Financial Institution that holds the Creditor Account.
+      properties:
+        SchemeName:
+          type: string
+          enum: [BICFI, Other]
+          description: 'BICFI: the BIC/SWIFT code. Other: a non-SWIFT / local scheme identifier.'
+        Identification:
+          type: string
+          description: BIC/SWIFT code or target payment scheme identifier.
+        Name:
+          type: string
+          minLength: 1
+          maxLength: 140
+        PostalAddress:
+          $ref: '#/components/schemas/AEAddress'
+    AECreditor:
+      type: object
+      additionalProperties: false
+      description: Party to which an amount of money is due.
+      properties:
+        Name:
+          type: string
+          minLength: 1
+          maxLength: 140
+        PostalAddress:
+          $ref: '#/components/schemas/AEAddress'
+    AEAddress:
+      type: array
+      minItems: 1
+      description: One or more ISO 20022 PostalAddress27 addresses. Unchanged — see published spec.
+      items:
+        type: object
+        description: ISO 20022 PostalAddress27 (AddressType, AddressLine, structured fields, Country). Unchanged — see published spec.
+    AERisk:
+      type: object
+      description: Risk / fraud-scoring details sent by the TPP (DebtorIndicators, TransactionIndicators, CreditorIndicators, DestinationDeliveryAddress). Unchanged — see published spec.
+    AESingleInstantPayment:
+      type: object
+      additionalProperties: false
+      description: A single immediate payment. Unchanged — see published spec.
+      properties:
+        Type:
+          type: string
+          enum: [SingleInstantPayment]
+        Amount:
+          type: object
+          description: Amount and currency for the single payment. Unchanged — see published spec.
+    AELongLivedPaymentConsent:
+      type: object
+      description: >-
+        Multi-payment (long-lived) consent — the full taxonomy of Fixed / Variable
+        x OnDemand / PeriodicSchedule / DefinedSchedule types. Unchanged — see published spec.
+    AEFilePaymentConsent:
+      type: object
+      description: File / bulk payment consent control parameters. Unchanged — see published spec.

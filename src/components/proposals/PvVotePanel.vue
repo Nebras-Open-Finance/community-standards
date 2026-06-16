@@ -17,7 +17,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'vote', stance: Stance | null): void
-  (e: 'submit', detail: { comment: string }): void
+  (e: 'submit', detail: { comment: string; answers: string[] }): void
 }>()
 
 const config = PROPOSALS_CONFIG
@@ -150,6 +150,7 @@ function onButton(stance: Stance): void {
       v-if="myVote && !decided"
       :stance="myVote.stance"
       :submitted="myVote.submitted"
+      :questions="proposal.questions ?? []"
       @submit="emit('submit', $event)"
     />
   </div>

@@ -1,0 +1,81 @@
+# OFP-001 — Draft PAR File Payment consent object (targets standards V2.2)
+#
+# The Bulk/Batch ("File Payment") control parameters within the PAR consent —
+# ControlParameters.ConsentSchedule.FilePayment. Because the payments are now
+# carried as a JSON array on the create request (see bulk-payment-schema.yaml)
+# rather than an uploaded file, the file-upload fields are removed:
+#
+#   REMOVED:  FileType, FileHash, FileReference   (there is no file to type/hash/reference)
+#   ADDED:    Description                          (reason shown to the customer at authorization)
+#   KEPT:     NumberOfTransactions, ControlSum, RequestedExecutionDate
+#
+# The LFI / API Hub validates the create request's array against these:
+#   Instructions.length == NumberOfTransactions   and   sum(Amount) == ControlSum
+#
+# SELF-CONTAINED FOR RENDERING — the proposed object is defined in full with no
+# external $refs. Source of truth for the current shape: api-specs
+# dist/standards/v2.1-errata2/uae-authorization-endpoints-openapi.yaml
+# (AEBankServiceInitiationFilePaymentConsent). Working draft, not a committed spec.
+
+openapi: 3.0.3
+info:
+  title: OFP-001 — PAR File Payment consent (draft)
+  version: 0.1.0-ofp001
+  description: >-
+    Draft Bulk/Batch ("File Payment") control-parameters object within the PAR
+    consent for OFP-001. See `AEFilePaymentConsent`.
+
+paths:
+  /par:
+    post:
+      summary: Bulk/Batch consent — File Payment control parameters (draft)
+      description: >-
+        The `ControlParameters.ConsentSchedule.FilePayment` object of the Pushed
+        Authorization Request, revised for the JSON-array model (file-upload fields
+        removed, `Description` added).
+      requestBody:
+        required: true
+        content:
+          application/jwt:
+            schema:
+              $ref: '#/components/schemas/AEFilePaymentConsent'
+      responses:
+        '201':
+          description: Consent staged.
+
+components:
+  schemas:
+    AEFilePaymentConsent:
+      type: object
+      additionalProperties: false
+      required:
+        - Description
+        - NumberOfTransactions
+        - ControlSum
+      description: >-
+        Bulk/Batch ("File Payment") control parameters. The file-upload fields
+        (FileType, FileHash, FileReference) are REMOVED; a customer-facing
+        Description is ADDED.
+      properties:
+        Description:
+          type: string
+          minLength: 1
+          maxLength: 140
+          description: >-
+            The reason the LFI shows the customer at authorization, in place of an
+            uploaded file — for example, "Payroll June 2026".
+        NumberOfTransactions:
+          type: integer
+          description: >-
+            Number of individual payments in the batch. The LFI validates this
+            equals the create request's Instructions array length.
+        ControlSum:
+          type: string
+          pattern: ^\d{1,16}\.\d{2}$
+          description: >-
+            Total of all individual amounts in the batch, irrespective of currency.
+            The LFI validates this equals the sum of the instruction Amounts.
+        RequestedExecutionDate:
+          type: string
+          format: date
+          description: The date the TPP expects the LFI to execute the batch.

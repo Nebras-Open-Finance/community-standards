@@ -121,7 +121,7 @@ const shown = computed(() => proposalList.value.filter((p) => statusOf(p) === fi
 
       <!-- Column header -->
       <div class="pv__colhead">
-        <div>ID</div><div>Proposal</div><div>Priority</div>
+        <div>ID</div><div>Proposal</div><div>Target version</div>
         <div>How it's going</div><div class="pv__colhead-right">Closes</div>
       </div>
 

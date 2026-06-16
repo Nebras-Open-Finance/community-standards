@@ -1,14 +1,15 @@
 <route lang="yaml">
 meta:
-  title: 'OFP-001 · Replace file-based Bulk/Batch Payments with a JSON array'
+  title: 'OFP-003 · Define an allowed character set for Debtor and Creditor References'
 </route>
 
 <script setup lang="ts">
-// Bespoke detail page for the first real proposal, OFP-001. Hand-authored
-// (not rendered from the proposals data array) so the content can be laid out
-// in named sections — Background, Recommendation, Examples, Pros, Cons, and the
-// specific asks of the ecosystem. Styling follows the site's editorial system
-// (cream/white bands, Fraunces/Poppins/IBM Plex Mono, sharp corners).
+// Bespoke detail page for OFP-003. Hand-authored (not rendered from the
+// proposals data array) so the content can be laid out in named sections —
+// Background, Recommendation, Technical changes, Pros, Cons, and the specific
+// asks of the ecosystem. Styling follows the site's editorial system
+// (cream/white bands, Fraunces/Poppins/IBM Plex Mono, sharp corners) and mirrors
+// OFP-001.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useHead } from '@unhead/vue'
 import { type Proposal, type Stance, type Status, type Priority, deriveStatus, PRIORITY } from '@/data/proposals'
@@ -16,83 +17,84 @@ import { useProposals } from '@/composables/useProposals'
 import PvVotePanel from '@/components/proposals/PvVotePanel.vue'
 import PvStatusPill from '@/components/proposals/PvStatusPill.vue'
 
-useHead({ title: 'OFP-001 · Replace file-based Bulk/Batch Payments with a JSON array' })
+useHead({ title: 'OFP-003 · Define an allowed character set for Debtor and Creditor References' })
 
 const meta = {
-  id: 'OFP-001',
+  id: 'OFP-003',
   proposedBy: 'Nebras',
   author: 'Thomas Catchpole',
   // Fallbacks shown until the API responds (and during the static build). The
   // live status/priority/dates are sourced from the API — see syncFromApi().
-  opened: '12 Jun 2026',
-  closes: '24 Jul 2026',
-  priority: 'high' as Priority,
+  opened: '16 Jun 2026',
+  closes: '23 Jun 2026',
+  priority: 'medium' as Priority,
+  version: 'V2.1-errata',
 }
 
 const pros = [
-  'No CSV parsing, character-encoding, or line-ending handling.',
-  'No partial or corrupted uploads — and no single malformed record that fails an entire file.',
-  'No malware scanning of uploaded bytes.',
-  'No additional encryption layer to protect the PII held at rest in a file.',
-  'No "wrong file format" error class to specify, return, and handle.',
-  'No ecosystem-wide negotiation of which file formats each LFI accepts.',
-  'The API Hub can validate the array’s count and total against NumberOfTransactions and ControlSum centrally — each LFI no longer has to build that check itself.',
-  'Reuses the established single-payment shape — nothing new for implementers to learn.',
-  'Adjacent areas (error-code mapping, the risk block) change incrementally, not structurally.',
+  'Every LFI knows exactly which characters it must accept and store — no per-institution guesswork about an unbounded UTF-8 string.',
+  'One uniform rule across PAR, Bank Service Initiation, Consent Manager, Consent Events, and Ozone Connect — a reference that validates at the API Hub will not be rejected downstream by an LFI.',
+  'Still free text: the customer’s reference comes first and is not squeezed behind a machine prefix, so the v1.2/v2.0 truncation problem does not return.',
+  'Supports Arabic as well as Latin, so a customer can use a reference in their own script rather than a transliteration.',
+  'A known character set removes a class of encoding, storage, and injection edge cases that an unrestricted string invites.',
+  'Validation is enforced centrally at the API Hub, so a malformed reference is rejected before it ever reaches an LFI.',
 ]
 
 const cons = [
-  'Existing back-office files (ISO 20022 pain.001, CSV) the file model accepted as-is must now be mapped to JSON at the TPP boundary.',
-  'A file upload can stream; a single JSON request is held in memory and bounded by request-size limits.',
+  'TPPs must sanitise or transliterate customer input to the agreed set before submitting.',
+  'Arabic characters are two bytes each in UTF-8, so an all-Arabic 35-character reference is roughly 70 bytes — LFI cores that size this field in bytes rather than characters must allow for it.',
+  'Reintroducing a pattern is a validation change every implementer must adopt, even though the field’s shape and length are unchanged.',
 ]
 
 const asks = [
-  'Vote to deprecate the file-upload model in favour of carrying the payments as a JSON array in the signed create request.',
-  'Decide whether to keep the existing file-payments naming or rename it (e.g. to bulk-payments) now that there is no file element. This touches the PAR consent object (the File Payment control parameters) and the endpoints POST /file-payments, GET /file-payments, GET /file-payments/{PaymentId}, and GET /file-payments/{PaymentId}/report, along with their request and response schemas.',
-  'Confirm whether this holds true: existing back-office files (ISO 20022 pain.001, CSV) that the file model accepted as-is would now need to be mapped to JSON at the TPP boundary — and whether that is acceptable.',
-  'Agree a maximum number of instructions per bulk request (a published cap), above which a run must be split.',
+  'Ratify the allowed character set — the Latin “x” set (A–Z, a–z, 0–9, space, and / - ? : ( ) . , ’ +) plus the Arabic block (U+0600–U+06FF), as shown in the pattern above. Confirm or amend.',
+  'Confirm the length and normalisation handling: the 35-character limit is counted in Unicode characters (an all-Arabic reference is ~70 bytes in UTF-8), and the API Hub normalises to Unicode NFC before validating.',
+  'Confirm the same character-set validation applies uniformly to the current reference definition across PAR, Bank Service Initiation, Consent Manager, Consent Events, and Ozone Connect Bank Initiation.',
+  'Confirm the rejection behaviour: a reference containing an out-of-set character fails validation at the API Hub and is not silently sanitised on the TPP’s behalf.',
+  'Confirm the Structured Reference requirement in the TPP standards remains the governing convention for structuring the reference, with this proposal adding only the character-set validation on top.',
 ]
 
-const exampleToday = `# 1 - Upload the payment file: any format the LFI happens to accept
-POST /payment-consents/{ConsentId}/file
-Content-Type: */*               # CSV, ISO 20022 XML, fixed-width...
+const exampleToday = `# v2.1 today — free text, no character validation
+AECreditorReference:
+  type: string
+  minLength: 1
+  maxLength: 35
+  # any UTF-8 character is accepted; each LFI is left to guess
+  # what its own systems can store and reconcile`
 
-# 2 - Reference the file by hash on the consent instruction
-"Instruction": {
-  "FileType": "UK.OBIE.pain.001.001.08",
-  "FileHash": "OErCwePj...",     # base64 SHA-256 of the bytes above
-  "FileReference": "payroll-2026-06",
-  "NumberOfTransactions": 250,
-  "ControlSum": "125000.00"
-}`
+const exampleProposed = `# Proposed — free text, one agreed character set (Latin + Arabic)
+AECreditorReference:
+  type: string
+  minLength: 1
+  maxLength: 35                                      # counted in Unicode characters
+  pattern: "^[A-Za-z0-9 /?:().,'+\\u0600-\\u06FF-]+$"   # SWIFT "x" set + Arabic block
+  description: >-
+    A Creditor Reference is a note for a given Creditor or Creditor LFI
+    that supports reconciliation of a payment instruction. Characters are
+    limited to the Open Finance reference set — the Latin "x" set plus the
+    Arabic block (U+0600–U+06FF) — so every LFI can accept and store it.`
 
-const exampleProposed = `POST /file-payments
-Content-Type: application/jwt          # signed JWS, exactly like POST /payments
-
-{
-  "Data": {
-    "ConsentId": "pcon_8821",
-    "PaymentPurposeCode": "SALA",
-    "OpenFinanceBilling": { ... },      # unchanged from POST /payments
-    "Instructions": [
-      {
-        "Amount": { "Amount": "1000.00", "Currency": "AED" },
-        "PersonalIdentifiableInformation": "eyJhbGciOiJSU0Et...",   # JWE: creditor account + PII
-        "DebtorReference": "payroll-jun26",
-        "CreditorReference": "emp-001"
-      },
-      {
-        "Amount": { "Amount": "750.00", "Currency": "AED" },
-        "PersonalIdentifiableInformation": "eyJhbGciOiJSU0Et...",
-        "DebtorReference": "payroll-jun26",
-        "CreditorReference": "emp-002"
-      }
-    ]
-  }
-}
-# API Hub validates the array against the consent:
-#   Instructions.length  ==  NumberOfTransactions
-#   sum(Amount)          ==  ControlSum`
+// Worked examples of the proposed pattern — rendered as a valid/invalid grid
+// in the Technical changes section.
+const validRefs = [
+  { ref: 'Invoice 12345', note: 'plain Latin free text' },
+  { ref: 'Rent-Jun/2026', note: 'dash and slash' },
+  { ref: 'Salary (June)', note: 'parentheses and space' },
+  { ref: 'Ref: 9981, paid', note: 'colon and comma' },
+  { ref: 'Ahmed-ENBD-Lean', note: 'structured: text – bank – TPP' },
+  { ref: 'فاتورة ٢٠٢٦', note: 'Arabic letters with Arabic-Indic digits' },
+  { ref: 'دفعة Lean', note: 'mixed Arabic and Latin' },
+]
+const invalidRefs = [
+  { ref: 'Pay @ Ahmed', note: '“@” is outside the set' },
+  { ref: 'Order #4471', note: '“#” is outside the set' },
+  { ref: '100% deposit', note: '“%” is outside the set' },
+  { ref: 'A/C <12345>', note: '“<” and “>” are outside the set' },
+  { ref: 'Note; DROP', note: '“;” is outside the set' },
+  { ref: 'Café Milano', note: 'accented “é” is not in the Latin set' },
+  { ref: 'Заказ 12', note: 'Cyrillic script is not included' },
+  { ref: 'Tip 😀', note: 'emoji are not included' },
+]
 
 // ─── Voting ─────────────────────────────────────────────────────────────────
 // Live tally + vote submission are backed by the proposals API (D1) via
@@ -110,12 +112,13 @@ const status = ref<Status>('open')
 const priority = ref<Priority>(meta.priority)
 const openedDisplay = ref(meta.opened)
 const closesDisplay = ref(meta.closes)
+const versionDisplay = ref(meta.version)
 
-const priorityLabel = computed(() => PRIORITY[priority.value]?.label ?? PRIORITY.high.label)
+const priorityLabel = computed(() => PRIORITY[priority.value]?.label ?? PRIORITY.medium.label)
 
 const proposal = computed<Proposal>(() => ({
   id: meta.id,
-  title: 'Replace file-based Bulk/Batch Payments with a JSON array',
+  title: 'Define an allowed character set for Debtor and Creditor References',
   summary: '',
   category: '',
   priority: priority.value,
@@ -126,6 +129,8 @@ const proposal = computed<Proposal>(() => ({
   closesIn: closesIn.value,
   quorum: 16,
   body: [],
+  questions: apiMeta.value?.questions ?? [],
+  version: versionDisplay.value,
 }))
 
 const myVote = computed(() => myVotes.value[meta.id])
@@ -136,10 +141,10 @@ function onVote(stance: Stance | null): void {
   setVote(meta.id, stance)
 }
 
-async function onSubmit(detail: { comment: string }): Promise<void> {
+async function onSubmit(detail: { comment: string; answers: string[] }): Promise<void> {
   if (!myVote.value) return
   submitError.value = ''
-  const result = await submitVote(meta.id, { stance: myVote.value.stance, comment: detail.comment })
+  const result = await submitVote(meta.id, { stance: myVote.value.stance, comment: detail.comment, answers: detail.answers })
   if (!result.ok) submitError.value = result.message ?? 'Could not record your vote.'
 }
 
@@ -159,7 +164,7 @@ function daysLeft(iso: string): string {
   return `${days} days left`
 }
 
-// Format an ISO date ('2026-06-12') as the strip's display form ('12 Jun 2026').
+// Format an ISO date ('2026-06-16') as the strip's display form ('16 Jun 2026').
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 function fmtDate(iso: string): string {
   const d = new Date(`${iso}T00:00:00Z`)
@@ -180,6 +185,7 @@ function syncFromApi(): void {
   priority.value = (m?.priority as Priority) || meta.priority
   openedDisplay.value = m?.opened ? fmtDate(m.opened) : meta.opened
   closesDisplay.value = m?.closes ? fmtDate(m.closes) : meta.closes
+  versionDisplay.value = m?.version || meta.version
 }
 
 watch(apiMeta, syncFromApi)
@@ -211,10 +217,11 @@ onMounted(() => {
           <span class="ofp__tag ofp__tag--priority">{{ priorityLabel }}</span>
         </div>
 
-        <h1 class="ofp__title">Replace file-based Bulk/Batch Payments with a JSON array</h1>
+        <h1 class="ofp__title">Define an allowed character set for Debtor and Creditor References</h1>
         <p class="ofp__summary">
-          Deprecate the unused file-upload model for Bulk/Batch Payments and carry the individual
-          payments as a JSON array in a single signed request.
+          Keep the payment references free-text, but constrain them to a single agreed character set —
+          uniform across the ecosystem — so every LFI knows exactly which characters it must accept and
+          store.
         </p>
 
         <div class="ofp__strip">
@@ -225,6 +232,10 @@ onMounted(() => {
           <div class="ofp__strip-item">
             <div class="ofp__strip-key">Author</div>
             <div class="ofp__strip-val">{{ meta.author }}</div>
+          </div>
+          <div class="ofp__strip-item">
+            <div class="ofp__strip-key">Target version</div>
+            <div class="ofp__strip-val">{{ versionDisplay }}</div>
           </div>
           <div class="ofp__strip-item">
             <div class="ofp__strip-key">Opened</div>
@@ -280,40 +291,47 @@ onMounted(() => {
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
           <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 01 · Background</div>
-          <h2 class="ofp-band__title">A file model nobody has built</h2>
+          <h2 class="ofp-band__title">The references that didn’t fit</h2>
         </div>
         <div class="ofp-prose">
           <p>
-            File-based Bulk/Batch Payments — referred to in the standard as <strong>File Payments</strong> —
-            have been part of the specification since v1.2. They are defined as a file
-            <strong>upload</strong> model: a TPP uploads a payment file in an LFI-specific format to
-            <code>POST /payment-consents/{ConsentId}/file</code>, declares its <code>FileType</code>,
-            <code>FileHash</code>, <code>NumberOfTransactions</code> and <code>ControlSum</code> on the
-            consent, then creates the batch with <code>POST /file-payments</code>. The execution report
-            is returned as a file as well.
+            Every payment instruction carries two free-form notes — a <strong>Debtor Reference</strong> and
+            a <strong>Creditor Reference</strong> — that travel with the payment to support reconciliation
+            and to give the customer something recognisable against the transaction. In v1.2 and v2.0 these
+            were not free text at all: they were defined by a tightly prescribed regular expression
+            (<code>AEStructuredDebtorReference</code> / <code>AEStructuredCreditorReference</code>) that
+            required a fixed machine prefix — the TPP’s Trust Framework ID, the account BIC, and, for
+            merchant payments, a merchant identifier — with the human-readable text appended
+            <strong>at the end</strong>, up to a combined 120 characters.
           </p>
           <p>
-            In practice, <strong>no LFI in the ecosystem has implemented these endpoints.</strong> There
-            is not a single live File Payment integration — which means there is nothing to migrate, and
-            the model can be revised at effectively zero cost <em>before</em> banks begin building
-            file-parsing and malware-scanning pipelines to support it.
+            That shape did not meet the needs of TPPs. The part a customer actually reads — the free-text
+            reference — sat behind roughly 50–60 characters of identifiers. LFI core banking systems carry a
+            narrower reference field than 120 characters and truncate from the right, so the machine prefix
+            survived intact while the meaningful free text was clipped or lost entirely. The rigid pattern
+            also rejected legitimate references outright, leaving TPPs no room to pass the information their
+            use case required.
           </p>
           <p>
-            Beyond being unbuilt, the file model is under-specified: an LFI could not implement it
-            today without a round of clarifications. A few examples — not an exhaustive list — are below:
+            In <strong>version 2.1 we relaxed the schema</strong>: the Debtor and Creditor References became
+            a plain free-text string (<code>minLength 1</code>, <code>maxLength 35</code>, no enforced
+            pattern), so the text the customer relies on comes first and is no longer squeezed behind a
+            fixed prefix. Alongside that, we moved the structuring guidance out of the schema and into a
+            business rule — <strong>CRG-5.3</strong> — that TPPs SHOULD follow where a payments use case does
+            not dictate otherwise, putting the free-text reference first and the bank / merchant / TPP names
+            after it, within the 35-character budget. Structure became a recommended convention, not a
+            validation gate.
           </p>
-          <ul class="ofp-gaps">
-            <li>
-              The file holds PII, but the specification defines no encryption element to protect it.
-            </li>
-            <li>
-              The specification does not cover how uploaded files are scanned.
-            </li>
-            <li>
-              It does not define the required file structures, which file types must be supported, or
-              how a TPP discovers which file types each LFI accepts.
-            </li>
-          </ul>
+          <p>
+            Since that change, LFIs have asked that the references not be left <strong>completely open to
+            any character</strong>. Relaxing the structural pattern was right — but with no validation at
+            all, an LFI cannot know in advance which characters it will be handed, and each institution is
+            left to guess what its own systems can accept and store. The ask is for a defined set of
+            permitted characters: not as prescriptive as the old structured pattern, but a single,
+            <strong>uniform character-set validation</strong> applied consistently across the entire Open
+            Finance ecosystem, so that every LFI knows exactly what it must accept and every TPP knows
+            exactly what it may send.
+          </p>
         </div>
       </div>
     </section>
@@ -325,32 +343,44 @@ onMounted(() => {
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
           <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 02 · Recommendation</div>
-          <h2 class="ofp-band__title">Carry the payments as a JSON array</h2>
+          <h2 class="ofp-band__title">Constrain the characters, not the structure</h2>
         </div>
         <div class="ofp-prose">
           <p>
-            <strong>Deprecate the file-upload mechanism and carry the payments inline instead.</strong>
-            The Bulk/Batch create request — <code>POST /file-payments</code> today — would carry the
-            individual payments as a <strong>JSON array in a single signed request</strong>, one array
-            element per transaction, in place of a reference to an uploaded file. (Whether the endpoint
-            and schemas keep the <code>file-payments</code> name is an open question for the ecosystem —
-            see the asks below.)
+            <strong>Keep the references free-text and 35 characters long, but reintroduce a single pattern
+            that validates the <em>characters</em>, not the <em>structure</em>.</strong> The pattern defines
+            an allowed character set — nothing about where the bank name or TPP name must sit. That ordering
+            stays a recommendation in the TPP standards (linked below), not a validation rule.
           </p>
           <p>
-            Each element of <code>Instructions[]</code> is assembled from the
-            <strong>single-payment fields the standard already defines</strong> (amount, creditor account,
-            references). The request is signed end-to-end exactly like <code>POST /payments</code>, so the
-            same validation, signing, and idempotency rules apply to a batch as to a single payment. The
-            <code>NumberOfTransactions</code> and <code>ControlSum</code> integrity checks are retained —
-            now computed over the array rather than a file.
+            We propose a set in <strong>two groups</strong>: a conservative <strong>Latin baseline</strong> —
+            the ISO 20022 / SWIFT “x” set (Latin letters, digits, space, and
+            <code>/ - ? : ( ) . , ’ +</code>) that LFI cores, the SWIFT-heritage UAEFTS rail, and ISO 20022
+            AANI all store reliably — plus the <strong>Arabic block</strong> (<code>U+0600–U+06FF</code>), so a
+            customer can write a genuinely Arabic reference, names included. As one regular expression, with
+            length still capped at 35:
           </p>
+          <p class="ofp-regex"><code>^[A-Za-z0-9 /?:().,'+\\u0600-\\u06FF-]+$</code></p>
           <p>
-            A TPP can still collect a file from the customer — for example, an Excel sheet of ten
-            payments. The difference is where it is converted: the <strong>TPP</strong> maps that file
-            into the JSON array per its own specification and passes the result to the LFI, who processes
-            the payments from the array. There is little customer impact — the same file is still the
-            customer’s starting point. What moves is the conversion: the TPP turns the file into
-            JSON-format payments rather than the LFI parsing the file itself.
+            The Arabic block covers Arabic letters, Arabic-Indic digits (٠–٩) and Arabic punctuation, but the
+            set deliberately stops there — no presentation-form ligatures, rare extended letters, or
+            bidirectional control characters, which add only ambiguity and spoofing risk. This is
+            <strong>not</strong> framed as “the AANI set”: AANI imposes no character class of its own (it
+            length-checks the field and passes the value through), so the constraint exists to give LFI core
+            systems one predictable set. The same pattern applies wherever the current v2.1 free-text
+            reference is defined, so validation is identical across PAR, Bank Service Initiation, Consent
+            Manager, Consent Events, and Ozone Connect. The 35-character limit is counted in Unicode
+            characters, and the API Hub normalises to Unicode NFC before validating.
+          </p>
+
+          <p>
+            The structuring convention is defined in the TPP standards as a requirement — it is not
+            restated here. See the <strong>Structured Reference</strong> requirement under
+            <RouterLink to="/tech/tpp-standards/v2.1/banking/service-initiation/domestic-payments/single-instant-payment/requirements#consent-creation">Single
+            Instant Payment → Consent Creation</RouterLink> (the same requirement applies to each
+            multi-payment type). In short: where a use case does not dictate the reference, the TPP puts the
+            User’s free-text reference first (to a maximum of 22 characters), then the Creditor LFI bank
+            name, an optional Merchant name, and the TPP name — to a maximum of 35 characters in total.
           </p>
         </div>
       </div>
@@ -365,57 +395,84 @@ onMounted(() => {
           <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 03 · Technical changes</div>
           <h2 class="ofp-band__title">What changes in the spec</h2>
           <p class="ofp-band__lede">
-            Three concrete changes — to the consent, the authorization experience, and the
-            payment-creation request.
+            A single, additive change — a character-set pattern on the current reference definition —
+            applied identically everywhere the references appear.
           </p>
         </div>
 
         <div class="ofp-changes">
           <div class="ofp-change">
-            <div class="ofp-change__label">01 · Consent (PAR) — File Payment object</div>
+            <div class="ofp-change__label">01 · Reference schemas (current v2.1 definition)</div>
             <p>
-              Remove <code>FileType</code>, <code>FileHash</code>, and <code>FileReference</code> — there
-              is no file to type, hash, or reference. Add <code>Description</code>: the reason the LFI
-              shows the customer at authorization (for example, <em>“Payroll June 2026”</em>).
-              <code>NumberOfTransactions</code>, <code>ControlSum</code>, and
-              <code>RequestedExecutionDate</code> stay — the LFI validates the JSON array’s count and
-              total against <code>NumberOfTransactions</code> and <code>ControlSum</code>.
+              Add a <code>pattern</code> that defines the allowed character set to the plain-string
+              Debtor and Creditor reference schemas —
+              <code>AEBankServiceInitiation.AEDebtorReference</code> /
+              <code>AECreditorReference</code> in the standards, and the current-version branch of
+              <code>AEServiceInitiationDebtorReference</code> /
+              <code>AEServiceInitiationCreditorReference</code> on the LFI side.
+              <code>minLength 1</code>, <code>maxLength 35</code>, and free-text-first all stay. The
+              deprecated structured variants retained for older versions are not touched.
             </p>
           </div>
 
           <div class="ofp-change">
-            <div class="ofp-change__label">02 · Authorization page</div>
+            <div class="ofp-change__label">02 · Structured Reference requirement</div>
             <p>
-              The authorization page no longer renders an uploaded file. It shows the standard
-              confirm-payment details, with <code>Description</code> as the stated reason. The change for
-              the customer is minimal — the consent confirmation looks like any other payment.
+              Unchanged. The Structured Reference requirement in the TPP standards remains the convention
+              for <em>structuring</em> the reference — free text first, then bank / merchant / TPP names.
+              This proposal adds the character-set validation underneath it; it does not reinstate a
+              structural pattern.
             </p>
           </div>
 
           <div class="ofp-change">
-            <div class="ofp-change__label">03 · <code>POST /file-payments</code> body</div>
+            <div class="ofp-change__label">03 · Validation &amp; error handling</div>
             <p>
-              The create request carries everything <code>POST /payments</code> carries, with two
-              structural changes: the payments become an <code>Instructions[]</code> array — one element
-              per transaction — and <code>PersonalIdentifiableInformation</code>,
-              <code>DebtorReference</code>, and <code>CreditorReference</code> move <strong>inside each
-              element</strong>, so every instruction is self-contained. <code>CurrencyRequest</code> is
-              dropped to remove complexity. <code>ConsentId</code>, <code>PaymentPurposeCode</code>, and
-              <code>OpenFinanceBilling</code> stay at the batch level. The request is a signed JWS
-              end-to-end, exactly like <code>POST /payments</code>.
+              A reference containing a character outside the agreed set fails schema validation at the
+              <strong>API Hub</strong> and is rejected before the request reaches the LFI — returned as a
+              standard request-validation error, not silently sanitised on the TPP’s behalf.
             </p>
           </div>
         </div>
 
         <div class="ofp-code">
-          <div class="ofp-code__label">Today — file upload + reference (2 steps)</div>
+          <div class="ofp-code__label">Today — free text, no character validation</div>
           <pre class="ofp-code__pre">{{ exampleToday }}</pre>
         </div>
 
         <div class="ofp-code">
-          <div class="ofp-code__label">Proposed — JSON array in one signed request</div>
+          <div class="ofp-code__label">Proposed — free text, one agreed character set</div>
           <pre class="ofp-code__pre">{{ exampleProposed }}</pre>
         </div>
+
+        <div class="ofp-ex">
+          <div class="ofp-ex__col ofp-ex__col--ok">
+            <div class="ofp-ex__head">
+              <span class="ofp-ex__glyph ofp-ex__glyph--ok">&check;</span> Valid
+            </div>
+            <ul class="ofp-ex__list">
+              <li v-for="(e, i) in validRefs" :key="`ok-${i}`" class="ofp-ex__item">
+                <code class="ofp-ex__ref" dir="auto">{{ e.ref }}</code>
+                <span class="ofp-ex__note">{{ e.note }}</span>
+              </li>
+            </ul>
+          </div>
+          <div class="ofp-ex__col ofp-ex__col--no">
+            <div class="ofp-ex__head">
+              <span class="ofp-ex__glyph ofp-ex__glyph--no">&times;</span> Invalid
+            </div>
+            <ul class="ofp-ex__list">
+              <li v-for="(e, i) in invalidRefs" :key="`no-${i}`" class="ofp-ex__item">
+                <code class="ofp-ex__ref" dir="auto">{{ e.ref }}</code>
+                <span class="ofp-ex__note">{{ e.note }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <p class="ofp-ex__foot">
+          Length is enforced separately — a reference over 35 characters fails on <code>maxLength</code>,
+          not on the pattern.
+        </p>
       </div>
     </section>
 
@@ -426,7 +483,7 @@ onMounted(() => {
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
           <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 04 · Pros</div>
-          <h2 class="ofp-band__title">What moving to JSON removes</h2>
+          <h2 class="ofp-band__title">What a uniform character set buys</h2>
         </div>
         <ul class="ofp-pros">
           <li v-for="(p, i) in pros" :key="i" class="ofp-pros__item">
@@ -444,7 +501,7 @@ onMounted(() => {
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
           <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 05 · Cons</div>
-          <h2 class="ofp-band__title">What moving to JSON costs</h2>
+          <h2 class="ofp-band__title">What it costs</h2>
         </div>
         <ul class="ofp-cons">
           <li v-for="(c, i) in cons" :key="i" class="ofp-cons__item">
@@ -475,7 +532,7 @@ onMounted(() => {
           <span class="ofp-ref__label">Relates to</span>
           <RouterLink to="/tech/tpp-standards/v2.1/banking/service-initiation/" class="ofp-ref__chip">
             <span class="ofp-ref__square" />
-            Bank Service Initiation · POST /file-payments (TPP)
+            Bank Service Initiation (TPP)
           </RouterLink>
           <RouterLink to="/tech/tpp-standards/v2.1/consent/open-api/par" class="ofp-ref__chip">
             <span class="ofp-ref__square" />
@@ -483,7 +540,15 @@ onMounted(() => {
           </RouterLink>
           <RouterLink to="/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents" class="ofp-ref__chip">
             <span class="ofp-ref__square" />
-            API Hub Consent Manager · Consents (LFI side)
+            API Hub Consent Manager (LFI)
+          </RouterLink>
+          <RouterLink to="/tech/lfi-api-hub/v2.1/consent-events/open-api/validate" class="ofp-ref__chip">
+            <span class="ofp-ref__square" />
+            Consent Events · validate (LFI)
+          </RouterLink>
+          <RouterLink to="/tech/lfi-api-hub/v2.1/banking/service-initiation/open-api/payments" class="ofp-ref__chip">
+            <span class="ofp-ref__square" />
+            Ozone Connect Bank Initiation · POST /payments (LFI)
           </RouterLink>
         </div>
 
@@ -514,6 +579,15 @@ onMounted(() => {
             class="ofp-ref__chip ofp-ref__chip--ext"
           >
             uae-api-hub-consent-manager-openapi.yaml
+            <span class="ofp-ref__ext-arrow" aria-hidden="true">&#8599;</span>
+          </a>
+          <a
+            href="https://github.com/Nebras-Open-Finance/api-specs/blob/main/dist/ozone-connect/v2.1.x/uae-ozone-connect-consent-events-actions-openapi.yaml"
+            target="_blank"
+            rel="noopener"
+            class="ofp-ref__chip ofp-ref__chip--ext"
+          >
+            uae-ozone-connect-consent-events-actions-openapi.yaml
             <span class="ofp-ref__ext-arrow" aria-hidden="true">&#8599;</span>
           </a>
           <a
@@ -723,6 +797,13 @@ onMounted(() => {
 .ofp-prose strong { color: var(--at-navy-deep); font-weight: 600; }
 .ofp-prose em { font-style: italic; }
 
+.ofp-prose a {
+  color: var(--at-teal-deep, #008b78);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.ofp-prose a:hover { color: var(--at-navy-deep); }
+
 .ofp-prose code {
   font-family: var(--at-mono);
   font-size: 0.86em;
@@ -840,6 +921,106 @@ onMounted(() => {
   white-space: pre;
 }
 
+/* ─── Proposed regex line ───────────────────────────────────────────────── */
+.ofp-prose .ofp-regex {
+  margin: 4px 0 20px;
+  padding: 12px 16px;
+  background: var(--at-inverse-bg);
+  overflow-x: auto;
+}
+
+.ofp-prose .ofp-regex code {
+  font-family: var(--at-mono);
+  font-size: 13px;
+  color: #d7e4f5;
+  background: none;
+  border: none;
+  padding: 0;
+  white-space: pre;
+}
+
+/* ─── Valid / invalid examples ──────────────────────────────────────────── */
+.ofp-ex {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  max-width: 52rem;
+  margin-top: 4px;
+}
+
+.ofp-ex__col { border: 1px solid var(--at-grid-line); background: var(--at-surface); }
+.ofp-ex__col--ok { border-top: 2px solid var(--at-teal); }
+.ofp-ex__col--no { border-top: 2px solid #a6391f; }
+
+.ofp-ex__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--at-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--at-grid-line);
+  color: var(--at-navy-deep);
+}
+
+.ofp-ex__glyph {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ofp-ex__glyph--ok { background: rgba(0, 194, 169, 0.14); color: var(--at-teal-deep, #008b78); }
+.ofp-ex__glyph--no { background: rgba(166, 57, 31, 0.12); color: #a6391f; }
+
+.ofp-ex__list { list-style: none; margin: 0; padding: 0; }
+
+.ofp-ex__item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--at-grid-line);
+}
+
+.ofp-ex__item:last-child { border-bottom: none; }
+
+.ofp-ex__ref {
+  font-family: var(--at-mono);
+  font-size: 13px;
+  color: var(--at-navy-deep);
+  background: var(--at-bg-paper);
+  border: 1px solid var(--at-grid-line);
+  padding: 2px 6px;
+  align-self: flex-start;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.ofp-ex__note { font-size: 12.5px; color: var(--at-mute-2); line-height: 1.45; }
+
+.ofp-ex__foot {
+  max-width: 52rem;
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--at-mute-2);
+  line-height: 1.6;
+}
+
+.ofp-ex__foot code {
+  font-family: var(--at-mono);
+  font-size: 0.86em;
+  background: var(--at-bg-paper);
+  border: 1px solid var(--at-grid-line);
+  padding: 1px 5px;
+}
+
 /* ─── Pros ──────────────────────────────────────────────────────────────── */
 .ofp-pros {
   list-style: none;
@@ -908,7 +1089,7 @@ onMounted(() => {
   margin-top: 1px;
 }
 
-/* ─── Specification gaps (bullets in Background) ─────────────────────────── */
+/* ─── Specification gaps (bullets in Background / Recommendation) ─────────── */
 .ofp-gaps {
   margin: 4px 0 0;
   padding-left: 1.2rem;
@@ -1094,5 +1275,6 @@ onMounted(() => {
   .ofp-band__inner { padding: 0 1.25rem; }
   .ofp-pros { grid-template-columns: 1fr; }
   .ofp-cons { grid-template-columns: 1fr; }
+  .ofp-ex { grid-template-columns: 1fr; }
 }
 </style>

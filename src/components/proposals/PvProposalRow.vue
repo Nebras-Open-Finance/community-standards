@@ -4,7 +4,6 @@
 import { computed } from 'vue'
 import { STANCE, isDecided, deriveStatus } from '@/data/proposals'
 import { tallyOf, PROPOSALS_CONFIG, type MyVote, type ProposalMeta } from '@/composables/useProposals'
-import PvPriorityTag from './PvPriorityTag.vue'
 import PvVoteBar from './PvVoteBar.vue'
 
 const props = defineProps<{ proposal: ProposalMeta; myVote?: MyVote | undefined }>()
@@ -44,7 +43,7 @@ const closesLabel = computed(() => {
       <div class="pv-row__title">{{ proposal.title }}</div>
     </div>
 
-    <div><PvPriorityTag :priority="proposal.priority ?? 'medium'" size="pill" /></div>
+    <div class="pv-row__version">{{ proposal.version || '—' }}</div>
 
     <div class="pv-row__going">
       <template v-if="reveal">
@@ -91,6 +90,14 @@ const closesLabel = computed(() => {
   color: var(--at-navy);
   font-weight: 600;
   letter-spacing: 0.06em;
+}
+
+.pv-row__version {
+  font-family: var(--at-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--at-navy-deep);
 }
 
 .pv-row__title {

@@ -11,18 +11,31 @@ import { ref, computed, watch } from 'vue'
 import { STANCE, type Stance } from '@/data/proposals'
 import { useProposals } from '@/composables/useProposals'
 
-const props = defineProps<{
-  stance: Stance
-  submitted: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    stance: Stance
+    submitted: boolean
+    // Optional proposal questions (max 3); each renders its own text box.
+    questions?: string[]
+  }>(),
+  { questions: () => [] },
+)
 
 const emit = defineEmits<{
-  (e: 'submit', detail: { comment: string }): void
+  (e: 'submit', detail: { comment: string; answers: string[] }): void
 }>()
 
 const { auth, signInToVote } = useProposals()
 
 const comment = ref('')
+// One answer slot per question, aligned by index. Kept in sync as questions load
+// (preserving anything already typed) and cleared when the stance changes.
+const answers = ref<string[]>([])
+
+function syncAnswers(): void {
+  answers.value = (props.questions ?? []).map((_, i) => answers.value[i] ?? '')
+}
+watch(() => props.questions, syncAnswers, { immediate: true, deep: true })
 
 const meta = computed(() => STANCE[props.stance])
 const stanceLabel = computed(() => meta.value.label)
@@ -40,15 +53,18 @@ const ineligibleReason = computed(() => {
   return 'Your Trust Framework account is not an active member of any organisation, so it cannot vote.'
 })
 
-// Switching stance resets the in-progress comment.
+// Switching stance resets the in-progress comment and answers.
 watch(
   () => props.stance,
-  () => { comment.value = '' },
+  () => {
+    comment.value = ''
+    answers.value = (props.questions ?? []).map(() => '')
+  },
 )
 
 function submit(): void {
   if (!auth.value.canVote) return
-  emit('submit', { comment: comment.value })
+  emit('submit', { comment: comment.value, answers: [...answers.value] })
 }
 </script>
 
@@ -113,6 +129,19 @@ function submit(): void {
       <span class="pv-attrib__identity-val">
         <strong>{{ org }}</strong>{{ voterName ? ` · ${voterName}` : '' }}
       </span>
+    </div>
+    <!-- Per-question text boxes (only when the proposal defines questions). -->
+    <div
+      v-for="(question, i) in questions"
+      :key="i"
+      class="pv-attrib__q"
+    >
+      <label class="pv-attrib__label">{{ question }} <span class="pv-attrib__opt">(optional)</span></label>
+      <textarea
+        v-model="answers[i]"
+        class="pv-attrib__field pv-attrib__textarea pv-attrib__qfield"
+        placeholder="Your answer…"
+      />
     </div>
     <div>
       <label class="pv-attrib__label">Comment <span class="pv-attrib__opt">(optional)</span></label>
@@ -237,6 +266,12 @@ function submit(): void {
   line-height: 1.6;
   padding: 12px 14px;
 }
+
+/* Per-question answer block — sits above the comment box. */
+.pv-attrib__q { margin-bottom: 16px; }
+
+/* Question answers are shorter than the catch-all comment. */
+.pv-attrib__qfield { min-height: 88px; }
 
 .pv-attrib__actions {
   display: flex;

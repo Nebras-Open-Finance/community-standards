@@ -1,0 +1,266 @@
+# OFP-001 — Draft BULK / BATCH payment schema (targets standards V2.2)
+#
+# Replaces the file-upload model for Bulk/Batch ("File") Payments with the
+# individual payments carried as a JSON array in a single signed request. One
+# array element per transaction, assembled from the single-payment fields the
+# standard already defines. The signed JWS, idempotency, and validation rules are
+# the same as POST /payments; `CurrencyRequest` is dropped.
+#
+# The API Hub / LFI validates the array against the consent control parameters:
+#   Instructions.length == NumberOfTransactions   and   sum(Amount) == ControlSum
+# (NumberOfTransactions / ControlSum live on the consent, not on this request.)
+#
+# The endpoint name (file-payments vs bulk-payments) is an open question in the
+# proposal — `/file-payments` is shown here to match the current endpoint.
+#
+# SELF-CONTAINED FOR RENDERING: the schemas the proposal changes are defined in
+# full; schemas UNCHANGED from the published spec are included as real leaf
+# definitions or concise "unchanged — see published spec" stubs so this document
+# resolves and renders standalone. Source of truth: api-specs
+# dist/standards/v2.1-errata2/uae-bank-initiation-openapi.yaml. Working draft.
+
+openapi: 3.0.3
+info:
+  title: OFP-001 — Bulk/Batch Payment Schema (draft)
+  version: 0.1.0-ofp001
+  description: >-
+    Draft bulk/batch payment definition for OFP-001 — the payments carried as a
+    JSON `Instructions[]` array in one signed request. See `AEBulkPaymentRequest`.
+
+paths:
+  /file-payments:
+    post:
+      summary: Create a bulk/batch payment (draft)
+      description: Proposed JSON-array bulk payment-creation request for OFP-001.
+      requestBody:
+        required: true
+        content:
+          application/jwt:
+            schema:
+              $ref: '#/components/schemas/AEBulkPaymentRequest'
+      responses:
+        '201':
+          description: Bulk payment created.
+
+components:
+  schemas:
+    # ═══════════════════════════════════════════════════════════════════════
+    # PROPOSED — defined in full
+    # ═══════════════════════════════════════════════════════════════════════
+    AEBulkPaymentRequest:
+      description: Bulk/Batch Payment Request Schema — payments carried as a JSON array.
+      type: object
+      additionalProperties: false
+      required:
+        - Data
+      properties:
+        Data:
+          type: object
+          additionalProperties: false
+          required:
+            - ConsentId
+            - Instructions
+            - PaymentPurposeCode
+            - OpenFinanceBilling
+          properties:
+            ConsentId:
+              $ref: '#/components/schemas/AEConsentId'
+            PaymentPurposeCode:
+              $ref: '#/components/schemas/AEPaymentPurposeCode'
+            OpenFinanceBilling:
+              $ref: '#/components/schemas/AEServiceInitiationOpenFinancePaymentBilling'
+            # The file reference is replaced by the inline array of payments.
+            Instructions:
+              type: array
+              minItems: 1
+              maxItems: 5000
+              description: >-
+                One element per transaction. The published maximum batch size
+                (maxItems) is an open question for the ecosystem — see the proposal.
+              items:
+                $ref: '#/components/schemas/AEBulkPaymentInstruction'
+
+    AEBulkPaymentInstruction:
+      type: object
+      additionalProperties: false
+      required:
+        - Amount
+        - PersonalIdentifiableInformation
+      description: >-
+        A single payment within the batch — self-contained. The per-instruction
+        PII, DebtorReference and CreditorReference move INSIDE each element (they
+        sat at the top level on POST /payments).
+      properties:
+        Amount:
+          $ref: '#/components/schemas/AEActiveCurrencyAmount'
+        PersonalIdentifiableInformation:
+          description: >-
+            Per-instruction PII. In transit this MUST be the encrypted AEJWEPaymentPII
+            (JWE) form; the decrypted JWS has the structure of AEBulkPaymentPIIProperties.
+          anyOf:
+            - $ref: '#/components/schemas/AEBulkPaymentPIIProperties'
+            - $ref: '#/components/schemas/AEJWEPaymentPII'
+        DebtorReference:
+          $ref: '#/components/schemas/AEDebtorReference'
+        CreditorReference:
+          $ref: '#/components/schemas/AECreditorReference'
+
+    AEBulkPaymentPIIProperties:
+      title: Bulk Payment PII Schema Object
+      type: object
+      additionalProperties: false
+      description: Per-instruction Personal Identifiable Information (creditor account + risk).
+      properties:
+        Initiation:
+          $ref: '#/components/schemas/AECreditorBlock'
+        Risk:
+          $ref: '#/components/schemas/AERisk'
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # UNCHANGED shared schemas — included only so this draft renders standalone.
+    # Source of truth: the published bank-initiation spec.
+    # ═══════════════════════════════════════════════════════════════════════
+    AECreditorBlock:
+      type: object
+      additionalProperties: false
+      required: [CreditorAccount]
+      description: Creditor identification for a (domestic) bulk payment instruction. Unchanged — see published spec.
+      properties:
+        CreditorAgent:
+          $ref: '#/components/schemas/AECreditorAgent'
+        Creditor:
+          $ref: '#/components/schemas/AECreditor'
+        CreditorAccount:
+          $ref: '#/components/schemas/AECreditorAccount'
+    AECreditorAccount:
+      type: object
+      additionalProperties: false
+      required: [SchemeName, Identification, Name]
+      description: Unambiguous identification of the creditor account.
+      properties:
+        SchemeName:
+          type: string
+          enum: [IBAN]
+        Identification:
+          $ref: '#/components/schemas/AEIdentification'
+        Name:
+          $ref: '#/components/schemas/AEName'
+        TradingName:
+          $ref: '#/components/schemas/AETradingName'
+        Type:
+          $ref: '#/components/schemas/AECreditorAccountTypeCodes'
+    AEConsentId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      description: Unique identification assigned by the TPP to identify the consent resource.
+    AEActiveCurrencyAmount:
+      type: object
+      required: [Amount, Currency]
+      description: The Currency and Amount relating to the Payment.
+      properties:
+        Amount:
+          $ref: '#/components/schemas/AEActiveOrHistoricAmount'
+        Currency:
+          $ref: '#/components/schemas/AEActiveOrHistoricCurrencyCode'
+    AEActiveOrHistoricAmount:
+      type: string
+      pattern: ^\d{1,16}\.\d{2}$
+      example: '1000.00'
+    AEActiveOrHistoricCurrencyCode:
+      type: string
+      pattern: ^[A-Z]{3,3}$
+      example: AED
+    AEPaymentPurposeCode:
+      type: string
+      minLength: 1
+      maxLength: 3
+      pattern: ^[A-Z]{3}$
+      description: Payment purpose code, conforming to the published Aani payment purpose code list.
+    AEDebtorReference:
+      type: string
+      minLength: 1
+      maxLength: 35
+      description: A note for the reference of a given User in relation to a payment instruction.
+    AECreditorReference:
+      type: string
+      minLength: 1
+      maxLength: 35
+      description: A note that supports reconciliation of a payment instruction for the Creditor.
+    AEJWEPaymentPII:
+      type: string
+      description: JWE (encrypting a JWS) carrying the decrypted PII structure. Unchanged — see published spec.
+      example: eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00ifQ....
+    AEServiceInitiationOpenFinancePaymentBilling:
+      type: object
+      additionalProperties: false
+      required: [Type]
+      description: Billing parameters specified by the TPP for a payment initiation.
+      properties:
+        Type:
+          type: string
+          enum: [Collection, LargeValueCollection, PushP2P, PullP2P, Me2Me]
+        MerchantId:
+          type: string
+          minLength: 8
+          maxLength: 20
+    AEIdentification:
+      type: string
+      minLength: 1
+      description: Identification for the account assigned by the LFI based on the Account Scheme Name.
+    AEName:
+      type: object
+      additionalProperties: false
+      description: The Account Holder Name(s).
+      properties:
+        en: { type: string, maxLength: 70, description: English value }
+        ar: { type: string, maxLength: 70, description: Arabic value }
+    AETradingName:
+      type: object
+      additionalProperties: false
+      description: The Trading Brand Name (if applicable) for the Creditor.
+      properties:
+        en: { type: string, maxLength: 70, description: English value }
+        ar: { type: string, maxLength: 70, description: Arabic value }
+    AECreditorAccountTypeCodes:
+      type: string
+      enum: [Individual, Merchant, Business, Charity, GovernmentBody, Other]
+      description: The Creditor (Payee) Type.
+    AECreditorAgent:
+      type: object
+      additionalProperties: false
+      required: [SchemeName, Identification]
+      description: The Financial Institution that holds the Creditor Account.
+      properties:
+        SchemeName:
+          type: string
+          enum: [BICFI, Other]
+        Identification:
+          type: string
+        Name:
+          type: string
+          minLength: 1
+          maxLength: 140
+        PostalAddress:
+          $ref: '#/components/schemas/AEAddress'
+    AECreditor:
+      type: object
+      additionalProperties: false
+      description: Party to which an amount of money is due.
+      properties:
+        Name:
+          type: string
+          minLength: 1
+          maxLength: 140
+        PostalAddress:
+          $ref: '#/components/schemas/AEAddress'
+    AEAddress:
+      type: array
+      minItems: 1
+      description: One or more ISO 20022 PostalAddress27 addresses. Unchanged — see published spec.
+      items:
+        type: object
+        description: ISO 20022 PostalAddress27 (AddressType, AddressLine, structured fields, Country). Unchanged — see published spec.
+    AERisk:
+      type: object
+      description: Risk / fraud-scoring details sent by the TPP. Unchanged — see published spec.

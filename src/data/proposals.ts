@@ -46,6 +46,11 @@ export interface Proposal {
   closesIn: string
   quorum: number
   body: Block[]
+  // Optional questions (max 3) sourced from the API; each gets its own text box
+  // in the vote form alongside the comment. Empty/absent → only the comment box.
+  questions?: string[]
+  // Target standards version (when the change will be made), e.g. 'V2.2'.
+  version?: string
 }
 
 // The ecosystem organisations who hold a vote — used as suggestions in the
