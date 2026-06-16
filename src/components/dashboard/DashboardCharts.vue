@@ -337,6 +337,14 @@ function dataFor(source: DataSource): AnyRow[] {
 @media (max-width: 900px) {
   .db-charts__grid { grid-template-columns: 1fr; }
   .db-charts__header { align-items: flex-start; }
+  /* Reset inline span/rowSpan/maxHeight (set per-chart in the registry) so
+     wide/tall charts collapse cleanly to a single column instead of forcing
+     implicit tracks and overlapping. */
+  .db-charts__cell {
+    grid-column: auto !important;
+    grid-row: auto !important;
+    max-height: none !important;
+  }
 }
 
 @media (max-width: 600px) {

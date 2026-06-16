@@ -152,7 +152,7 @@ export const CHART_REGISTRY: Readonly<Record<string, readonly ChartConfig[]>> = 
   ],
 
   'payment-status': [
-    { id: 'pay_status_count_lfi',       title: 'Payment Count by LFI',          component: 'volume', props: { groupBy: 'lfi',       stackBy: 'rawStatus', valueKey: 'count'  }, dataSource: 'payment-all', hideIfFiltered: 'lfi',   span: 2, rowSpan: 2, maxHeight: '520px' },
+    { id: 'pay_status_count_lfi',       title: 'Payment Count by LFI',          component: 'volume', props: { groupBy: 'lfi',       stackBy: 'rawStatus', valueKey: 'count'  }, dataSource: 'payment-all', hideIfFiltered: 'lfi',   span: 2 },
     { id: 'pay_status_count_month',     title: 'Payment Count by Month',        component: 'volume', props: { groupBy: 'month',     stackBy: 'rawStatus', valueKey: 'count'  }, dataSource: 'payment-all', hideIfFiltered: 'month' },
     { id: 'pay_status_amount_month',    title: 'Payment Amount by Month (AED)', component: 'volume', props: { groupBy: 'month',     stackBy: 'rawStatus', valueKey: 'amount' }, dataSource: 'payment-all', hideIfFiltered: 'month' },
     { id: 'pay_status_count_breakdown', title: 'Payment Count by Status',       component: 'volume', props: { groupBy: 'rawStatus',                       valueKey: 'count'  }, dataSource: 'payment-all' },
