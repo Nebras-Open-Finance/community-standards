@@ -47,13 +47,6 @@ const cons = [
   'A file upload can stream; a single JSON request is held in memory and bounded by request-size limits.',
 ]
 
-const asks = [
-  'Vote to deprecate the file-upload model in favour of carrying the payments as a JSON array in the signed create request.',
-  'Decide whether to keep the existing file-payments naming or rename it (e.g. to bulk-payments) now that there is no file element. This touches the PAR consent object (the File Payment control parameters) and the endpoints POST /file-payments, GET /file-payments, GET /file-payments/{PaymentId}, and GET /file-payments/{PaymentId}/report, along with their request and response schemas.',
-  'Confirm whether this holds true: existing back-office files (ISO 20022 pain.001, CSV) that the file model accepted as-is would now need to be mapped to JSON at the TPP boundary — and whether that is acceptable.',
-  'Agree a maximum number of instructions per bulk request (a published cap), above which a run must be split.',
-]
-
 const exampleToday = `# 1 - Upload the payment file: any format the LFI happens to accept
 POST /payment-consents/{ConsentId}/file
 Content-Type: */*               # CSV, ISO 20022 XML, fixed-width...
@@ -518,79 +511,6 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════════════════
-         SPECIFIC ASKS
-    ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ofp-band ofp-band--cream">
-      <div class="ofp-band__inner">
-        <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 07 · Specific asks</div>
-          <h2 class="ofp-band__title">What we are asking the ecosystem</h2>
-        </div>
-        <ol class="ofp-asks">
-          <li v-for="(a, i) in asks" :key="i" class="ofp-ask">
-            <span class="ofp-ask__num">{{ String(i + 1).padStart(2, '0') }}</span>
-            <span class="ofp-ask__text">{{ a }}</span>
-          </li>
-        </ol>
-
-        <div class="ofp-ref">
-          <span class="ofp-ref__label">Relates to</span>
-          <RouterLink to="/tech/tpp-standards/v2.1/banking/service-initiation/" class="ofp-ref__chip">
-            <span class="ofp-ref__square" />
-            Bank Service Initiation · POST /file-payments (TPP)
-          </RouterLink>
-          <RouterLink to="/tech/tpp-standards/v2.1/consent/open-api/par" class="ofp-ref__chip">
-            <span class="ofp-ref__square" />
-            Pushed Authorization Request · POST /par (TPP)
-          </RouterLink>
-          <RouterLink to="/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents" class="ofp-ref__chip">
-            <span class="ofp-ref__square" />
-            API Hub Consent Manager · Consents (LFI side)
-          </RouterLink>
-        </div>
-
-        <div class="ofp-ref ofp-ref--ext">
-          <span class="ofp-ref__label">Specs affected</span>
-          <a
-            href="https://github.com/Nebras-Open-Finance/api-specs/blob/main/dist/standards/v2.1-errata2/uae-bank-initiation-openapi.yaml"
-            target="_blank"
-            rel="noopener"
-            class="ofp-ref__chip ofp-ref__chip--ext"
-          >
-            uae-bank-initiation-openapi.yaml
-            <span class="ofp-ref__ext-arrow" aria-hidden="true">&#8599;</span>
-          </a>
-          <a
-            href="https://github.com/Nebras-Open-Finance/api-specs/blob/main/dist/standards/v2.1-errata2/uae-authorization-endpoints-openapi.yaml"
-            target="_blank"
-            rel="noopener"
-            class="ofp-ref__chip ofp-ref__chip--ext"
-          >
-            uae-authorization-endpoints-openapi.yaml
-            <span class="ofp-ref__ext-arrow" aria-hidden="true">&#8599;</span>
-          </a>
-          <a
-            href="https://github.com/Nebras-Open-Finance/api-specs/blob/main/dist/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi.yaml"
-            target="_blank"
-            rel="noopener"
-            class="ofp-ref__chip ofp-ref__chip--ext"
-          >
-            uae-api-hub-consent-manager-openapi.yaml
-            <span class="ofp-ref__ext-arrow" aria-hidden="true">&#8599;</span>
-          </a>
-          <a
-            href="https://github.com/Nebras-Open-Finance/api-specs/blob/main/dist/ozone-connect/v2.1.x/uae-ozone-connect-bank-service-initiation-openapi.yaml"
-            target="_blank"
-            rel="noopener"
-            class="ofp-ref__chip ofp-ref__chip--ext"
-          >
-            uae-ozone-connect-bank-service-initiation-openapi.yaml
-            <span class="ofp-ref__ext-arrow" aria-hidden="true">&#8599;</span>
-          </a>
-        </div>
-      </div>
-    </section>
   </div>
 </template>
 

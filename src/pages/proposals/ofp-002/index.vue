@@ -46,14 +46,6 @@ const cons = [
   'The detailed international field set still has to be designed — this proposal makes the split and moves CurrencyRequest across; the field-by-field cross-border modelling is a follow-up worked through with LFIs.',
 ]
 
-const asks = [
-  'Vote to split the payment schema into explicit Domestic and International definitions at the top of PAR and POST /payments, replacing today’s implicit split (an anyOf over the two PII shapes plus an optional CurrencyRequest whose presence signals international).',
-  'Confirm the Domestic definition is today’s schema with the CurrencyRequest object removed — a domestic payment is always a same-currency transfer, so FX never applies — and nothing else changed.',
-  'Confirm International is limited to Single Instant Payment and Fixed Periodic Schedule, and that the other multi-payment types (On Demand, Defined Schedule, and the Variable variants) and File Payments are Domestic-only.',
-  'Confirm the International request models amount as either InstructedAmount (the external / target amount the creditor receives, in the currency of transfer) or EquivalentAmount (the internal / source amount debited in the debtor’s currency), and splits purpose into an external code aligned to ISO 20022 ExternalPurpose1Code plus a simple internal proprietary code — dropping the domestic Aani 3-letter code for international — and adds EndToEndIdentification. FxQuoteId is removed, since FX quoting is the separate FX Service Initiation specification.',
-  'Agree the International creditor block is realigned to cross-border SWIFT / ISO 20022 (pacs.008) practice as the next step — adding intermediary agents, ultimate creditor / debtor, regulatory reporting and structured remittance information — so the required cross-border data lives in the standard schema instead of in bespoke per-LFI consent and authorization journeys.',
-]
-
 const exampleToday = `# ONE shared schema for domestic AND international.
 # Which one it is gets signalled only IMPLICITLY:
 POST /payments
@@ -546,70 +538,6 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════════════════
-         SPECIFIC ASKS
-    ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ofp-band ofp-band--cream">
-      <div class="ofp-band__inner">
-        <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 07 · Specific asks</div>
-          <h2 class="ofp-band__title">What we are asking the ecosystem</h2>
-        </div>
-        <ol class="ofp-asks">
-          <li v-for="(a, i) in asks" :key="i" class="ofp-ask">
-            <span class="ofp-ask__num">{{ String(i + 1).padStart(2, '0') }}</span>
-            <span class="ofp-ask__text">{{ a }}</span>
-          </li>
-        </ol>
-
-        <div class="ofp-ref">
-          <span class="ofp-ref__label">Relates to</span>
-          <RouterLink to="/tech/tpp-standards/v2.1/banking/service-initiation/" class="ofp-ref__chip">
-            <span class="ofp-ref__square" />
-            Bank Service Initiation · POST /payments (TPP)
-          </RouterLink>
-          <RouterLink to="/tech/tpp-standards/v2.1/consent/open-api/par" class="ofp-ref__chip">
-            <span class="ofp-ref__square" />
-            Pushed Authorization Request · POST /par (TPP)
-          </RouterLink>
-          <RouterLink to="/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents" class="ofp-ref__chip">
-            <span class="ofp-ref__square" />
-            API Hub Consent Manager · Consents (LFI side)
-          </RouterLink>
-        </div>
-
-        <div class="ofp-ref ofp-ref--ext">
-          <span class="ofp-ref__label">Specs affected</span>
-          <a
-            href="https://github.com/Nebras-Open-Finance/api-specs/blob/main/dist/standards/v2.1-errata2/uae-bank-initiation-openapi.yaml"
-            target="_blank"
-            rel="noopener"
-            class="ofp-ref__chip ofp-ref__chip--ext"
-          >
-            uae-bank-initiation-openapi.yaml
-            <span class="ofp-ref__ext-arrow" aria-hidden="true">&#8599;</span>
-          </a>
-          <a
-            href="https://github.com/Nebras-Open-Finance/api-specs/blob/main/dist/standards/v2.1-errata2/uae-authorization-endpoints-openapi.yaml"
-            target="_blank"
-            rel="noopener"
-            class="ofp-ref__chip ofp-ref__chip--ext"
-          >
-            uae-authorization-endpoints-openapi.yaml
-            <span class="ofp-ref__ext-arrow" aria-hidden="true">&#8599;</span>
-          </a>
-          <a
-            href="https://github.com/Nebras-Open-Finance/api-specs/blob/main/dist/ozone-connect/v2.1.x/uae-ozone-connect-bank-service-initiation-openapi.yaml"
-            target="_blank"
-            rel="noopener"
-            class="ofp-ref__chip ofp-ref__chip--ext"
-          >
-            uae-ozone-connect-bank-service-initiation-openapi.yaml
-            <span class="ofp-ref__ext-arrow" aria-hidden="true">&#8599;</span>
-          </a>
-        </div>
-      </div>
-    </section>
   </div>
 </template>
 

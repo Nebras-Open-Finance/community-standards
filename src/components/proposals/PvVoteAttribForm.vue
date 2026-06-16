@@ -179,7 +179,7 @@ function submit(): void {
 .pv-attrib__title,
 .pv-attrib__done-title {
   font-family: var(--at-mono);
-  font-size: 9.5px;
+  font-size: 14px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   font-weight: 700;
@@ -236,11 +236,11 @@ function submit(): void {
 .pv-attrib__label {
   display: block;
   font-family: var(--at-mono);
-  font-size: 8.5px;
+  font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--at-navy);
-  opacity: 0.6;
+  opacity: 0.8;
   margin-bottom: 5px;
 }
 

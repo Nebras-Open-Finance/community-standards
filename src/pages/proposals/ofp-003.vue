@@ -46,14 +46,6 @@ const cons = [
   'Reintroducing a pattern is a validation change every implementer must adopt, even though the field’s shape and length are unchanged.',
 ]
 
-const asks = [
-  'Ratify the allowed character set — the Latin “x” set (A–Z, a–z, 0–9, space, and / - ? : ( ) . , ’ +) plus the Arabic block (U+0600–U+06FF), as shown in the pattern above. Confirm or amend.',
-  'Confirm the length and normalisation handling: the 35-character limit is counted in Unicode characters (an all-Arabic reference is ~70 bytes in UTF-8), and the API Hub normalises to Unicode NFC before validating.',
-  'Confirm the same character-set validation applies uniformly to the current reference definition across PAR, Bank Service Initiation, Consent Manager, Consent Events, and Ozone Connect Bank Initiation.',
-  'Confirm the rejection behaviour: a reference containing an out-of-set character fails validation at the API Hub and is not silently sanitised on the TPP’s behalf.',
-  'Confirm the Structured Reference requirement in the TPP standards remains the governing convention for structuring the reference, with this proposal adding only the character-set validation on top.',
-]
-
 const exampleToday = `# v2.1 today — free text, no character validation
 AECreditorReference:
   type: string
@@ -512,96 +504,6 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════════════════
-         SPECIFIC ASKS
-    ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ofp-band ofp-band--white">
-      <div class="ofp-band__inner">
-        <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 06 · Specific asks</div>
-          <h2 class="ofp-band__title">What we are asking the ecosystem</h2>
-        </div>
-        <ol class="ofp-asks">
-          <li v-for="(a, i) in asks" :key="i" class="ofp-ask">
-            <span class="ofp-ask__num">{{ String(i + 1).padStart(2, '0') }}</span>
-            <span class="ofp-ask__text">{{ a }}</span>
-          </li>
-        </ol>
-
-        <div class="ofp-ref">
-          <span class="ofp-ref__label">Relates to</span>
-          <RouterLink to="/tech/tpp-standards/v2.1/banking/service-initiation/" class="ofp-ref__chip">
-            <span class="ofp-ref__square" />
-            Bank Service Initiation (TPP)
-          </RouterLink>
-          <RouterLink to="/tech/tpp-standards/v2.1/consent/open-api/par" class="ofp-ref__chip">
-            <span class="ofp-ref__square" />
-            Pushed Authorization Request · POST /par (TPP)
-          </RouterLink>
-          <RouterLink to="/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents" class="ofp-ref__chip">
-            <span class="ofp-ref__square" />
-            API Hub Consent Manager (LFI)
-          </RouterLink>
-          <RouterLink to="/tech/lfi-api-hub/v2.1/consent-events/open-api/validate" class="ofp-ref__chip">
-            <span class="ofp-ref__square" />
-            Consent Events · validate (LFI)
-          </RouterLink>
-          <RouterLink to="/tech/lfi-api-hub/v2.1/banking/service-initiation/open-api/payments" class="ofp-ref__chip">
-            <span class="ofp-ref__square" />
-            Ozone Connect Bank Initiation · POST /payments (LFI)
-          </RouterLink>
-        </div>
-
-        <div class="ofp-ref ofp-ref--ext">
-          <span class="ofp-ref__label">Specs affected</span>
-          <a
-            href="https://github.com/Nebras-Open-Finance/api-specs/blob/main/dist/standards/v2.1-errata2/uae-bank-initiation-openapi.yaml"
-            target="_blank"
-            rel="noopener"
-            class="ofp-ref__chip ofp-ref__chip--ext"
-          >
-            uae-bank-initiation-openapi.yaml
-            <span class="ofp-ref__ext-arrow" aria-hidden="true">&#8599;</span>
-          </a>
-          <a
-            href="https://github.com/Nebras-Open-Finance/api-specs/blob/main/dist/standards/v2.1-errata2/uae-authorization-endpoints-openapi.yaml"
-            target="_blank"
-            rel="noopener"
-            class="ofp-ref__chip ofp-ref__chip--ext"
-          >
-            uae-authorization-endpoints-openapi.yaml
-            <span class="ofp-ref__ext-arrow" aria-hidden="true">&#8599;</span>
-          </a>
-          <a
-            href="https://github.com/Nebras-Open-Finance/api-specs/blob/main/dist/api-hub/v2.1.x/uae-api-hub-consent-manager-openapi.yaml"
-            target="_blank"
-            rel="noopener"
-            class="ofp-ref__chip ofp-ref__chip--ext"
-          >
-            uae-api-hub-consent-manager-openapi.yaml
-            <span class="ofp-ref__ext-arrow" aria-hidden="true">&#8599;</span>
-          </a>
-          <a
-            href="https://github.com/Nebras-Open-Finance/api-specs/blob/main/dist/ozone-connect/v2.1.x/uae-ozone-connect-consent-events-actions-openapi.yaml"
-            target="_blank"
-            rel="noopener"
-            class="ofp-ref__chip ofp-ref__chip--ext"
-          >
-            uae-ozone-connect-consent-events-actions-openapi.yaml
-            <span class="ofp-ref__ext-arrow" aria-hidden="true">&#8599;</span>
-          </a>
-          <a
-            href="https://github.com/Nebras-Open-Finance/api-specs/blob/main/dist/ozone-connect/v2.1.x/uae-ozone-connect-bank-service-initiation-openapi.yaml"
-            target="_blank"
-            rel="noopener"
-            class="ofp-ref__chip ofp-ref__chip--ext"
-          >
-            uae-ozone-connect-bank-service-initiation-openapi.yaml
-            <span class="ofp-ref__ext-arrow" aria-hidden="true">&#8599;</span>
-          </a>
-        </div>
-      </div>
-    </section>
   </div>
 </template>
 
