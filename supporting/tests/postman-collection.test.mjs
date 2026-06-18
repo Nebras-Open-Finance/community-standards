@@ -13,7 +13,6 @@ const POSTMAN_V21_SCHEMA = 'https://schema.getpostman.com/json/collection/v2.1.0
 
 const SWAP_PLACEHOLDERS = [
   '{{_clientId}}',
-  '{{auth-endpoint}}',
   '{{issuer}}',
   '{{rs}}',
   '{{kid-local}}',
