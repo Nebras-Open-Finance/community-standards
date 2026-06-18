@@ -113,7 +113,6 @@ async function submit() {
     const issuer = discoveryUrl.origin
     const rs = issuer.replace(/^(https:\/\/)auth1\./, '$1rs1.')
     const as1Base = issuer.replace(/^(https:\/\/)auth1\./, '$1as1.')
-    const authEndpoint = issuer + '/auth'
     const tokenEndpoint = as1Base + '/token'
     const parEndpoint = as1Base + '/par'
 
@@ -400,7 +399,6 @@ async function submit() {
     type CollectionVariable = { key: string; value: string; type?: string }
     const collectionVars: Array<[string, string]> = [
       ['_clientId',     formData.client_id],
-      ['auth-endpoint', authEndpoint],
       ['issuer',        issuer],
       ['rs',            rs],
       ['kid-local',     formData.signing_key_id],
@@ -428,7 +426,6 @@ async function submit() {
     collectionStr = swap(collectionStr, '{{redirectUrl}}',    formData.redirect_uri)
     collectionStr = swap(collectionStr, '{{par-endpoint}}',   parEndpoint)
     collectionStr = swap(collectionStr, '{{tokenEndpoint}}',  tokenEndpoint)
-    collectionStr = swap(collectionStr, '{{auth-endpoint}}',  authEndpoint)
 
     const blob = new Blob([collectionStr], { type: 'application/json' })
     const a = document.createElement('a')
