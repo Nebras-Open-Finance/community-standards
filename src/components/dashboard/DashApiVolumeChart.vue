@@ -75,6 +75,17 @@ function readField(row: AnyRow, key: string): unknown {
   return (row as unknown as Record<string, unknown>)[key]
 }
 
+// The y-axis measures whatever `valueKey` selects — API call volume, payment
+// counts, or AED amounts — so the title MUST follow the key, not assume calls.
+function axisTitle(valueKey: string): string {
+  switch (valueKey) {
+    case 'amount': return 'Amount (AED)'
+    case 'count':  return 'Count'
+    case 'errors': return 'Errors'
+    default:       return 'API Calls'
+  }
+}
+
 function aggregate(
   data: readonly AnyRow[],
   groupBy: string,
@@ -168,7 +179,7 @@ function render(): void {
         ticks: { color: t.axisTick, font: { family: 'Poppins, sans-serif', size: 10 } },
         title: {
           display: true,
-          text: props.valueKey === 'errors' ? 'Errors' : 'API Calls',
+          text: axisTitle(props.valueKey),
           font: { family: 'IBM Plex Mono, monospace', size: 10, weight: 500 },
           color: t.axisTitle,
         },

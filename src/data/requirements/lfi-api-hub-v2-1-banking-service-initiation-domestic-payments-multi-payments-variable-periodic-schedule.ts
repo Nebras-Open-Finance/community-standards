@@ -117,5 +117,20 @@ export const data: RequirementsPageData = {
         } },
       ],
     },
+    {
+      id: 'parity-and-constraints',
+      num: '07',
+      title: 'Parity and Treatment Constraints',
+      blocks: [
+        { kind: 'prose', html: 'These requirements govern how the LFI may treat Open Finance initiated payments relative to its own banking channels. They apply alongside &mdash; and do not override &mdash; the LFI\'s standard fraud, sanctions, and AML controls, which remain the LFI\'s responsibility (see <a href="#screening-checks">Screening Checks</a>).' },
+        { kind: 'table', table: {
+          headers: ['#', 'Requirement', 'Detail'],
+          rows: [
+            { cells: ['1', 'No timing constraints', 'The LFI MUST NOT impose timing constraints on Open Finance initiated payments. Cooling-off periods for new beneficiaries with reduced transactional limits, or other constraints related to the number or value of payment transactions, MUST NOT be applied to Open Finance initiated payments. <br><br> This does not restrict the LFI\'s own channels: if the customer subsequently attempts a payment through the LFI\'s own channels to a beneficiary that was saved during an Open Finance journey, the LFI MAY block or delay that payment under its existing cooling-off policy for that account.'] },
+            { cells: ['2', 'Parity with other digital channels', 'Transaction limits and other constraints applied to Open Finance services MUST NOT be more restrictive than those applied across the LFI\'s other commonly used banking digital channels. This establishes parity, ensuring the customer experience is consistent regardless of the digital channel used.'] },
+          ],
+        } },
+      ],
+    },
   ],
 }

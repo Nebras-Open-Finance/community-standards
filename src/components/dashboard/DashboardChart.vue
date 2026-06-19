@@ -149,15 +149,23 @@ const topRankedAvgMs = computed<number>(() => slowestEndpoints.value[0]?.avgMs ?
 const authRateSummary = computed<string>(() => {
   if (props.config.component !== 'auth-rate') return ''
   const numeratorType = props.config.props?.numeratorType ?? 'doConfirm'
-  let num = 0
-  let den = 0
+  let auth = 0
+  let confirm = 0
+  let fail = 0
   for (const row of props.data) {
     const r = asAuthRow(row)
-    if (r.type === 'auth') den += r.count
-    if (r.type === numeratorType) num += r.count
+    if (r.type === 'auth')      auth    += r.count
+    if (r.type === 'doConfirm') confirm += r.count
+    if (r.type === 'doFail')    fail    += r.count
   }
-  const rate = den > 0 ? ((num / den) * 100).toFixed(1) : '0.0'
-  const label = numeratorType === 'doConfirm' ? 'conversion' : 'cancellation'
+  // Drop-off is the residual: auths that neither confirmed nor explicitly failed.
+  const num = numeratorType === 'doConfirm' ? confirm
+            : numeratorType === 'doFail'    ? fail
+            : Math.max(0, auth - confirm - fail)
+  const rate = auth > 0 ? ((num / auth) * 100).toFixed(1) : '0.0'
+  const label = numeratorType === 'doConfirm' ? 'conversion'
+              : numeratorType === 'doFail'    ? 'cancellation'
+              : 'drop-off'
   return `${rate}% avg ${label} rate`
 })
 
@@ -315,24 +323,34 @@ function buildPayStatus(): void {
 function buildAuthRate(): void {
   const groupBy = props.config.props?.groupBy ?? 'lfi'
   const numeratorType = props.config.props?.numeratorType ?? 'doConfirm'
-  const rateLabel = numeratorType === 'doConfirm' ? 'Conversion Rate (%)' : 'Cancellation Rate (%)'
-  const lineColor = numeratorType === 'doConfirm' ? ACCENT.teal : ACCENT.gold
+  const rateLabel = numeratorType === 'doConfirm' ? 'Conversion Rate (%)'
+                  : numeratorType === 'doFail'    ? 'Cancellation Rate (%)'
+                  : 'Drop-off Rate (%)'
+  const lineColor = numeratorType === 'doConfirm' ? ACCENT.teal
+                  : numeratorType === 'doFail'    ? ACCENT.gold
+                  : ACCENT.navy
 
-  const byGroup: Record<string, { auth: number; num: number }> = {}
+  const byGroup: Record<string, { auth: number; confirm: number; fail: number }> = {}
   for (const row of props.data) {
     const r = asAuthRow(row)
     const key = String(readField(r, groupBy) ?? 'Unknown')
     if (!key || key.toLowerCase() === 'unknown') continue
-    const slot = byGroup[key] ?? (byGroup[key] = { auth: 0, num: 0 })
-    if (r.type === 'auth') slot.auth += r.count
-    if (r.type === numeratorType) slot.num += r.count
+    const slot = byGroup[key] ?? (byGroup[key] = { auth: 0, confirm: 0, fail: 0 })
+    if (r.type === 'auth')      slot.auth    += r.count
+    if (r.type === 'doConfirm') slot.confirm += r.count
+    if (r.type === 'doFail')    slot.fail    += r.count
   }
+  // Drop-off is the residual: auths that neither confirmed nor explicitly failed.
+  const numerator = (slot: { auth: number; confirm: number; fail: number }): number =>
+    numeratorType === 'doConfirm' ? slot.confirm
+    : numeratorType === 'doFail'  ? slot.fail
+    : Math.max(0, slot.auth - slot.confirm - slot.fail)
   const labels = Object.keys(byGroup).sort()
   const authCounts = labels.map(k => byGroup[k]?.auth ?? 0)
   const rates = labels.map(k => {
     const slot = byGroup[k]
     if (!slot || !slot.auth) return 0
-    return Number(((slot.num / slot.auth) * 100).toFixed(1))
+    return Number(((numerator(slot) / slot.auth) * 100).toFixed(1))
   })
 
   const s = buildStyle()
