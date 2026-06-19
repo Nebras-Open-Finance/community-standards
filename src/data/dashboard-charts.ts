@@ -28,7 +28,7 @@ export interface ChartProps {
   valueKey?: string
   mode?: 'avg-line' | 'avg-bar' | 'p-percentiles' | 'histogram'
   grouped?: boolean
-  numeratorType?: 'doConfirm' | 'doFail'
+  numeratorType?: 'doConfirm' | 'doFail' | 'dropOff'
 }
 
 export interface ChartConfig {
@@ -162,8 +162,10 @@ export const CHART_REGISTRY: Readonly<Record<string, readonly ChartConfig[]>> = 
   'auth-conversion': [
     { id: 'auth_count_lfi',         title: 'Auth Count by LFI',         component: 'volume',    props: { groupBy: 'lfi',   stackBy: 'type', valueKey: 'count', grouped: true }, dataSource: 'auth', hideIfFiltered: 'lfi'   },
     { id: 'auth_conversion_lfi',    title: 'Conversion Rate by LFI',    component: 'auth-rate', props: { groupBy: 'lfi',   numeratorType: 'doConfirm' },                       dataSource: 'auth', hideIfFiltered: 'lfi'   },
+    { id: 'auth_dropoff_lfi',       title: 'Drop-off Rate by LFI',      component: 'auth-rate', props: { groupBy: 'lfi',   numeratorType: 'dropOff' },                         dataSource: 'auth', hideIfFiltered: 'lfi'   },
     { id: 'auth_count_month',       title: 'Auth Count by Month',       component: 'volume',    props: { groupBy: 'month', stackBy: 'type', valueKey: 'count', grouped: true }, dataSource: 'auth', hideIfFiltered: 'month' },
     { id: 'auth_conversion_month',  title: 'Conversion Rate by Month',  component: 'auth-rate', props: { groupBy: 'month', numeratorType: 'doConfirm' },                       dataSource: 'auth', hideIfFiltered: 'month' },
+    { id: 'auth_dropoff_month',     title: 'Drop-off Rate by Month',    component: 'auth-rate', props: { groupBy: 'month', numeratorType: 'dropOff' },                         dataSource: 'auth', hideIfFiltered: 'month' },
     { id: 'auth_cancel_lfi',        title: 'Cancellation Rate by LFI',  component: 'auth-rate', props: { groupBy: 'lfi',   numeratorType: 'doFail' },                          dataSource: 'auth', hideIfFiltered: 'lfi'   },
     { id: 'auth_cancel_month',      title: 'Cancellation Rate by Month', component: 'auth-rate', props: { groupBy: 'month', numeratorType: 'doFail' },                         dataSource: 'auth', hideIfFiltered: 'month' },
   ],
