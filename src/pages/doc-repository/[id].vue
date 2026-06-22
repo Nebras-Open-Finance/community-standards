@@ -31,6 +31,11 @@ const sessionError = ref<string>('')
 const isAuthenticated = ref<boolean>(false)
 const isNebras = ref<boolean>(false)
 const canSeePrivate = ref<boolean>(false)
+const canSeeProtected = ref<boolean>(false)
+
+// Orgs in which the signed-in user holds a privileged role (org_admin / PBC).
+// Drives the protected-share management UI for the current org.
+const myOrgs = ref<string[]>([])
 
 interface FileEntry {
   file: string
@@ -47,23 +52,28 @@ interface CatalogEntry {
 interface CatalogPayload {
   public: CatalogEntry[]
   private: CatalogEntry[]
+  protected: CatalogEntry[]
   maxUploadBytes?: number
 }
 
 const publicFiles = ref<FileEntry[]>([])
 const privateFiles = ref<FileEntry[]>([])
+const protectedFiles = ref<FileEntry[]>([])
 const publicLoading = ref<boolean>(false)
 const privateLoading = ref<boolean>(false)
+const protectedLoading = ref<boolean>(false)
 const publicError = ref<string>('')
 const privateError = ref<string>('')
+const protectedError = ref<string>('')
 
-const catalog = ref<{ public: CatalogEntry[]; private: CatalogEntry[] }>({
+const catalog = ref<{ public: CatalogEntry[]; private: CatalogEntry[]; protected: CatalogEntry[] }>({
   public: [],
   private: [],
+  protected: [],
 })
 const maxUploadBytes = ref<number>(5 * 1024 * 1024)
 
-type Tab = 'public' | 'private'
+type Tab = 'public' | 'private' | 'protected'
 const activeTab = ref<Tab>('public')
 const search = ref<string>('')
 
@@ -92,6 +102,7 @@ function formatBytes(bytes: number): string {
 interface MeResponse {
   authenticated?: boolean
   isNebras?: boolean
+  orgs?: string[]
 }
 
 async function bootstrap(): Promise<void> {
@@ -126,8 +137,10 @@ async function bootstrap(): Promise<void> {
     }
     isAuthenticated.value = true
     isNebras.value = meBody.isNebras === true
+    myOrgs.value = Array.isArray(meBody.orgs) ? meBody.orgs : []
 
-    await Promise.all([loadPublic(), loadPrivate(), loadCatalog()])
+    await Promise.all([loadPublic(), loadPrivate(), loadProtected(), loadCatalog()])
+    if (canManageGrants.value) await loadGrants()
   } catch (e: unknown) {
     sessionError.value = e instanceof Error ? e.message : String(e)
   } finally {
@@ -173,6 +186,28 @@ async function loadPrivate(): Promise<void> {
   }
 }
 
+async function loadProtected(): Promise<void> {
+  protectedLoading.value = true
+  protectedError.value = ''
+  try {
+    const res = await fetch(`${DOCS_API}/${orgId.value}/protected`, { credentials: 'include' })
+    if (res.status === 403 || res.status === 401) {
+      canSeeProtected.value = false
+      protectedFiles.value = []
+      return
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    canSeeProtected.value = true
+    const body: unknown = await res.json()
+    protectedFiles.value = Array.isArray(body) ? (body as FileEntry[]) : []
+  } catch (e: unknown) {
+    protectedError.value = e instanceof Error ? e.message : String(e)
+    protectedFiles.value = []
+  } finally {
+    protectedLoading.value = false
+  }
+}
+
 async function loadCatalog(): Promise<void> {
   try {
     const res = await fetch(`${DOCS_API}/catalog?orgId=${encodeURIComponent(orgId.value)}`)
@@ -181,12 +216,13 @@ async function loadCatalog(): Promise<void> {
     catalog.value = {
       public: Array.isArray(body.public) ? body.public : [],
       private: Array.isArray(body.private) ? body.private : [],
+      protected: Array.isArray(body.protected) ? body.protected : [],
     }
     if (typeof body.maxUploadBytes === 'number' && Number.isFinite(body.maxUploadBytes) && body.maxUploadBytes > 0) {
       maxUploadBytes.value = body.maxUploadBytes
     }
   } catch {
-    catalog.value = { public: [], private: [] }
+    catalog.value = { public: [], private: [], protected: [] }
   }
 }
 
@@ -218,19 +254,35 @@ watch(selectedSlug, () => {
 })
 
 const activeFiles = computed<FileEntry[]>(() =>
-  activeTab.value === 'private' ? privateFiles.value : publicFiles.value,
+  activeTab.value === 'private'
+    ? privateFiles.value
+    : activeTab.value === 'protected'
+      ? protectedFiles.value
+      : publicFiles.value,
 )
 
 const activeLoading = computed<boolean>(() =>
-  activeTab.value === 'private' ? privateLoading.value : publicLoading.value,
+  activeTab.value === 'private'
+    ? privateLoading.value
+    : activeTab.value === 'protected'
+      ? protectedLoading.value
+      : publicLoading.value,
 )
 
 const activeError = computed<string>(() =>
-  activeTab.value === 'private' ? privateError.value : publicError.value,
+  activeTab.value === 'private'
+    ? privateError.value
+    : activeTab.value === 'protected'
+      ? protectedError.value
+      : publicError.value,
 )
 
 const activeCatalog = computed<CatalogEntry[]>(() =>
-  activeTab.value === 'private' ? catalog.value.private : catalog.value.public,
+  activeTab.value === 'private'
+    ? catalog.value.private
+    : activeTab.value === 'protected'
+      ? catalog.value.protected
+      : catalog.value.public,
 )
 
 // Slugs flagged `monthly` in the active catalog. Their uploaded files are named
@@ -516,6 +568,93 @@ const typeColor = computed<string>(() => {
 const orgName = computed<string>(() => org.value?.name ?? '')
 const orgLegalName = computed<string>(() => org.value?.legalName ?? '')
 const orgLogo = computed<string>(() => org.value?.logoUri ?? '')
+
+// ─── Protected-share grant management ─────────────────────────────────────
+// A privileged member of this org (or Nebras) decides which other organisations
+// can read this org's protected documents. Grantees can read but cannot manage.
+const canManageGrants = computed<boolean>(
+  () => isNebras.value || myOrgs.value.includes(orgId.value),
+)
+
+const grantedOrgIds = ref<string[]>([])
+const grantsLoading = ref<boolean>(false)
+const grantsSaving = ref<boolean>(false)
+const grantsError = ref<string>('')
+const grantsSuccess = ref<string>('')
+const grantSelect = ref<string>('')
+
+function orgNameById(id: string): string {
+  return docRepoOrgs.find(o => o.id === id)?.name || id
+}
+
+const grantedOrgs = computed<{ id: string; name: string }[]>(() =>
+  grantedOrgIds.value
+    .map(id => ({ id, name: orgNameById(id) }))
+    .sort((a, b) => a.name.localeCompare(b.name)),
+)
+
+// Orgs not yet granted (and not this org), for the add picker.
+const ungrantedOrgs = computed<{ id: string; name: string }[]>(() =>
+  docRepoOrgs
+    .filter(o => o.id !== orgId.value && !grantedOrgIds.value.includes(o.id))
+    .map(o => ({ id: o.id, name: o.name }))
+    .sort((a, b) => a.name.localeCompare(b.name)),
+)
+
+function applyGrantsResponse(body: { orgs?: unknown }): void {
+  grantedOrgIds.value = Array.isArray(body.orgs)
+    ? body.orgs.filter((o): o is string => typeof o === 'string')
+    : []
+}
+
+async function loadGrants(): Promise<void> {
+  grantsLoading.value = true
+  grantsError.value = ''
+  try {
+    const res = await fetch(`${DOCS_API}/${orgId.value}/grants`, { credentials: 'include' })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    applyGrantsResponse((await res.json()) as { orgs?: unknown })
+  } catch (e: unknown) {
+    grantsError.value = e instanceof Error ? e.message : String(e)
+  } finally {
+    grantsLoading.value = false
+  }
+}
+
+async function saveGrants(next: string[]): Promise<void> {
+  grantsSaving.value = true
+  grantsError.value = ''
+  grantsSuccess.value = ''
+  try {
+    const res = await fetch(`${DOCS_API}/${orgId.value}/grants`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orgs: next }),
+    })
+    if (!res.ok) {
+      const body = (await res.json().catch(() => ({}))) as { error?: string }
+      throw new Error(body.error || `HTTP ${res.status}`)
+    }
+    applyGrantsResponse((await res.json()) as { orgs?: unknown })
+    grantsSuccess.value = 'Shares updated.'
+  } catch (e: unknown) {
+    grantsError.value = e instanceof Error ? e.message : String(e)
+  } finally {
+    grantsSaving.value = false
+  }
+}
+
+function addGrant(): void {
+  const id = grantSelect.value
+  if (!id || grantedOrgIds.value.includes(id)) return
+  grantSelect.value = ''
+  void saveGrants([...grantedOrgIds.value, id])
+}
+
+function removeGrant(id: string): void {
+  void saveGrants(grantedOrgIds.value.filter(g => g !== id))
+}
 </script>
 
 <template>
@@ -607,8 +746,10 @@ const orgLogo = computed<string>(() => org.value?.logoUri ?? '')
               </div>
               <p class="ed-doc-hero__sub">
                 Documents published by this organisation as part of UAE Open Finance.
-                Public documents are visible to all participants. Private documents are
-                visible only to authorised users within your organisation.
+                Public documents are visible to all participants. Protected documents are
+                visible to this organisation and any other organisation it chooses to share
+                with. Private documents are visible only to authorised users within this
+                organisation.
               </p>
             </div>
           </div>
@@ -637,6 +778,22 @@ const orgLogo = computed<string>(() => org.value?.logoUri ?? '')
                 </svg>
                 Public Documents
                 <span class="ed-doc-tab__count">({{ publicFiles.length }})</span>
+              </button>
+              <button
+                v-if="canSeeProtected"
+                type="button"
+                role="tab"
+                :aria-selected="activeTab === 'protected'"
+                class="ed-doc-tab"
+                :class="{ 'ed-doc-tab--active': activeTab === 'protected' }"
+                :style="activeTab === 'protected' ? { background: typeColor, borderColor: typeColor, color: 'var(--at-bg-cream)' } : {}"
+                @click="activeTab = 'protected'"
+              >
+                <svg class="ed-doc-tab__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                Protected Documents
+                <span class="ed-doc-tab__count">({{ protectedFiles.length }})</span>
               </button>
               <button
                 v-if="canSeePrivate"
@@ -715,6 +872,55 @@ const orgLogo = computed<string>(() => org.value?.logoUri ?? '')
               </template>
               <div v-if="uploadError" class="ed-doc-upload__error">{{ uploadError }}</div>
               <div v-if="uploadSuccess" class="ed-doc-upload__success">{{ uploadSuccess }}</div>
+            </div>
+
+            <!-- Protected share management (privileged members of this org / Nebras) -->
+            <div v-if="activeTab === 'protected' && canManageGrants" class="ed-doc-share">
+              <div class="ed-doc-share__head">
+                <span class="ed-doc-share__title">Shared with</span>
+                <span class="ed-doc-share__hint">
+                  Choose which organisations can read {{ orgName }}'s protected documents.
+                  Any member of a shared organisation gains access.
+                </span>
+              </div>
+
+              <div v-if="grantsLoading" class="ed-doc-share__empty">Loading shares…</div>
+
+              <template v-else>
+                <div v-if="grantedOrgs.length" class="ed-doc-share__chips">
+                  <span v-for="g in grantedOrgs" :key="g.id" class="ed-doc-share__chip">
+                    {{ g.name }}
+                    <button
+                      type="button"
+                      class="ed-doc-share__chip-remove"
+                      :disabled="grantsSaving"
+                      :aria-label="`Stop sharing with ${g.name}`"
+                      @click="removeGrant(g.id)"
+                    >&times;</button>
+                  </span>
+                </div>
+                <div v-else class="ed-doc-share__empty">
+                  Not shared with any organisation yet. Only {{ orgName }} and Nebras can see these documents.
+                </div>
+
+                <div class="ed-doc-share__row">
+                  <select v-model="grantSelect" class="ed-doc-upload__select" :disabled="grantsSaving">
+                    <option value="" disabled>Add an organisation…</option>
+                    <option v-for="o in ungrantedOrgs" :key="o.id" :value="o.id">{{ o.name }}</option>
+                  </select>
+                  <button
+                    type="button"
+                    class="ed-doc-button"
+                    :disabled="grantsSaving || !grantSelect"
+                    @click="addGrant"
+                  >
+                    {{ grantsSaving ? 'Saving…' : 'Add' }}
+                  </button>
+                </div>
+
+                <div v-if="grantsError" class="ed-doc-upload__error">{{ grantsError }}</div>
+                <div v-if="grantsSuccess" class="ed-doc-upload__success">{{ grantsSuccess }}</div>
+              </template>
             </div>
 
             <!-- Search -->
@@ -1208,6 +1414,86 @@ const orgLogo = computed<string>(() => org.value?.logoUri ?? '')
   font-family: var(--at-sans);
   font-size: 0.88rem;
   color: #166534;
+}
+
+/* ─── Protected share management ────────────────────────────────────────── */
+.ed-doc-share {
+  margin-bottom: 1.75rem;
+  padding: 1.5rem;
+  background: var(--at-surface);
+  border: 1px solid var(--at-grid-line);
+  border-left: 3px solid var(--accent, var(--at-navy));
+}
+
+.ed-doc-share__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.ed-doc-share__title {
+  font-family: var(--at-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--at-navy-deep);
+}
+
+.ed-doc-share__hint {
+  font-family: var(--at-sans);
+  font-size: 0.85rem;
+  color: var(--at-mute);
+}
+
+.ed-doc-share__empty {
+  font-family: var(--at-sans);
+  font-size: 0.9rem;
+  color: var(--at-mute);
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+.ed-doc-share__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.ed-doc-share__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem 0.35rem 0.7rem;
+  background: var(--at-bg-cream);
+  border: 1px solid var(--at-grid-line-2);
+  font-family: var(--at-sans);
+  font-size: 0.85rem;
+  color: var(--at-navy-deep);
+}
+
+.ed-doc-share__chip-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--at-mute);
+  padding: 0 0.15rem;
+  transition: color 0.15s;
+}
+
+.ed-doc-share__chip-remove:hover:not(:disabled) { color: #991b1b; }
+.ed-doc-share__chip-remove:disabled { cursor: not-allowed; opacity: 0.5; }
+
+.ed-doc-share__row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 /* ─── Search ────────────────────────────────────────────────────────────── */

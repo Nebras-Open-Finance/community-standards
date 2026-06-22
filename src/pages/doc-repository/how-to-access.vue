@@ -1,8 +1,8 @@
 <route lang="yaml">
 meta:
   title: Accessing the Document Repository
-  purpose: How to browse the Document Repository, sign in via the production Trust Framework directory, and who can see an organisation's private documents.
-  updated: "2026-06-04"
+  purpose: How to browse the Document Repository, sign in via the production Trust Framework directory, and who can see an organisation's protected and private documents.
+  updated: "2026-06-22"
 </route>
 
 <script setup lang="ts">
@@ -11,13 +11,14 @@ import type { EdInPageNavSection } from '@/components/editorial/EdInPageNav.vue'
 
 const meta: EdMetaItem[] = [
   { label: 'Applies to', value: 'LFIs · TPPs · Participants' },
-  { label: 'Read', value: '3 min' },
-  { label: 'Updated', value: '4 Jun 2026' },
+  { label: 'Read', value: '4 min' },
+  { label: 'Updated', value: '22 Jun 2026' },
 ]
 
 const sections: EdInPageNavSection[] = [
   { id: 'browsing', label: 'Browsing' },
   { id: 'signing-in', label: 'Signing in' },
+  { id: 'protected-access', label: 'Protected access' },
   { id: 'private-access', label: 'Private access' },
   { id: 'endpoints', label: 'Endpoints' },
 ]
@@ -31,7 +32,7 @@ const sections: EdInPageNavSection[] = [
       eyebrow="Document Repository · Access Guide"
       title="Accessing the Document Repository"
       :meta="meta"
-      lede="Explains how to <strong>browse the Document Repository</strong>, how to <strong>sign in</strong> against the production Trust Framework directory, and <strong>who may view</strong> an organisation's private documents."
+      lede="Explains how to <strong>browse the Document Repository</strong>, how to <strong>sign in</strong> against the production Trust Framework directory, and <strong>who may view</strong> an organisation's protected and private documents."
     />
 
     <EdInPageNav :sections="sections" />
@@ -49,13 +50,18 @@ const sections: EdInPageNavSection[] = [
         The <a href="/doc-repository/">directory</a> itself is open: you can
         search and filter participants without signing in. Selecting an
         organisation opens its documents page, at which point you are asked to
-        sign in. Once signed in, an organisation's documents appear in two
-        groups:
+        sign in. Once signed in, an organisation's documents appear in up to
+        three groups:
       </EdProse>
       <EdBullets>
         <li>
           <strong>Public documents</strong> &mdash; visible to any signed-in
           participant; for example trade licences and Central Bank licences.
+        </li>
+        <li>
+          <strong>Protected documents</strong> &mdash; visible to the owning
+          organisation and to any other organisation it has chosen to share with.
+          The protected tab is hidden if neither applies to you.
         </li>
         <li>
           <strong>Private documents</strong> &mdash; visible only to people
@@ -87,8 +93,43 @@ const sections: EdInPageNavSection[] = [
     </EdSectionBand>
 
     <EdSectionBand
-      id="private-access"
+      id="protected-access"
       num="03"
+      color="var(--at-blue-deep)"
+      eyebrow="Protected access"
+      title="Who may view protected documents"
+      lede="Protected documents sit between public and private: the owning organisation controls which other organisations may read them."
+      tone="surface"
+    >
+      <h3>Who can read them</h3>
+      <EdBullets>
+        <li>
+          The owning organisation's <strong>administrators and Active PBCs</strong>
+          &mdash; the same people who can see its private documents.
+        </li>
+        <li>
+          <strong>Any member</strong> of an organisation the owner has shared with.
+          Unlike private access, this is not limited to privileged roles &mdash; once
+          an organisation is granted, all of its members can read the documents.
+        </li>
+        <li>
+          <strong>Nebras operators</strong>, who may view every organisation's documents.
+        </li>
+      </EdBullets>
+      <h3>Managing shares</h3>
+      <EdProse>
+        A privileged member of the owning organisation (administrator or Active PBC),
+        or a Nebras operator, manages the share list from the Protected tab &mdash;
+        adding or removing organisations at any time. Sharing is granted per whole
+        organisation and covers all of the owner's protected documents. Organisations
+        that have only been granted access cannot themselves change who else can see
+        the documents, and only Nebras may upload them.
+      </EdProse>
+    </EdSectionBand>
+
+    <EdSectionBand
+      id="private-access"
+      num="04"
       color="var(--at-blue)"
       eyebrow="Private access"
       title="Who may view private documents"
@@ -115,7 +156,7 @@ const sections: EdInPageNavSection[] = [
 
     <EdSectionBand
       id="endpoints"
-      num="04"
+      num="05"
       color="var(--at-navy)"
       eyebrow="Endpoints"
       title="What the document endpoints provide"
@@ -136,6 +177,16 @@ const sections: EdInPageNavSection[] = [
         public documents for a single organisation, where <code>{id}</code> is
         that organisation's identifier from the root list. Appending a file name
         to the path returns the file itself. Public documents are open.
+      </EdProse>
+
+      <h3>Protected documents</h3>
+      <EdProse>
+        <code>https://docs.nebras-open-finance.com/{id}/protected</code> lists
+        &mdash; and serves &mdash; that organisation's protected documents. This
+        endpoint is gated: you must be signed in and either authorised for the
+        organisation (an administrator or PBC), a member of an organisation it has
+        shared with, or a Nebras operator. The owner's share list is managed at
+        <code>https://docs.nebras-open-finance.com/{id}/grants</code>.
       </EdProse>
 
       <h3>Private documents</h3>
