@@ -11,6 +11,9 @@ import { docRepoOrgs } from '@/data/doc-repo-orgs'
 
 const DOCS_API = 'https://docs.nebras-open-finance.com'
 
+// Nebras already sees every organisation's documents, so it is never a share target.
+const NEBRAS_ORG_ID = '80dbdeff-47fd-48cf-9451-7fc63b25ff43'
+
 const LOGIN_MARKER_KEY = 'nebras_docs_login_attempt'
 const LOGIN_COOLDOWN_MS = 30_000
 
@@ -596,7 +599,7 @@ const grantedOrgs = computed<{ id: string; name: string }[]>(() =>
 // Orgs not yet granted (and not this org), for the add picker.
 const ungrantedOrgs = computed<{ id: string; name: string }[]>(() =>
   docRepoOrgs
-    .filter(o => o.id !== orgId.value && !grantedOrgIds.value.includes(o.id))
+    .filter(o => o.id !== orgId.value && o.id !== NEBRAS_ORG_ID && !grantedOrgIds.value.includes(o.id))
     .map(o => ({ id: o.id, name: o.name }))
     .sort((a, b) => a.name.localeCompare(b.name)),
 )

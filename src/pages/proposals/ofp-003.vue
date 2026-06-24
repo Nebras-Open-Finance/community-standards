@@ -17,7 +17,21 @@ import { useProposals } from '@/composables/useProposals'
 import PvVotePanel from '@/components/proposals/PvVotePanel.vue'
 import PvStatusPill from '@/components/proposals/PvStatusPill.vue'
 
-useHead({ title: 'OFP-003 · Define an allowed character set for Debtor and Creditor References' })
+// Per-page link-preview override: a tailored title + description so a shared
+// link to this proposal reads as the proposal itself, not the site default.
+// (og:image is inherited from the branded site default in App.vue.) Later meta
+// of the same property/name wins under Unhead's dedupe.
+const OG_TITLE = 'OFP-003 · Define an allowed character set for Debtor and Creditor References'
+const OG_DESCRIPTION =
+  'Keep payment references free-text, but constrain them to a single agreed character set — uniform across the ecosystem — so every LFI knows exactly which characters it must accept and store.'
+useHead({
+  title: OG_TITLE,
+  meta: [
+    { property: 'og:title', content: `${OG_TITLE} | UAE Open Finance` },
+    { property: 'og:description', content: OG_DESCRIPTION },
+    { name: 'twitter:description', content: OG_DESCRIPTION },
+  ],
+})
 
 const meta = {
   id: 'OFP-003',
