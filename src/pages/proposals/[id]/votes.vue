@@ -31,13 +31,22 @@ const id = computed(() => String(route.params.id || '').toUpperCase())
 
 const { auth, loadMe, loadProposalVotes, signInToVote } = useProposals()
 
+// Mirrors the doc-repository sign-in: a 401 redirects straight to Trust Framework
+// SSO instead of asking for a click. A sessionStorage marker + cooldown breaks the
+// loop if the session never sticks (e.g. third-party cookies blocked).
+const LOGIN_MARKER_KEY = 'nebras_votes_login_attempt'
+const LOGIN_COOLDOWN_MS = 30_000
+
 const loading = ref(true)
+const redirecting = ref(false)
+const loopDetected = ref(false)
 const data = ref<ProposalVotes | null>(null)
 const errorStatus = ref(0)
 const errorMsg = ref('')
 
 async function load(): Promise<void> {
   loading.value = true
+  loopDetected.value = false
   errorStatus.value = 0
   errorMsg.value = ''
   await loadMe()
@@ -47,8 +56,32 @@ async function load(): Promise<void> {
   } else {
     errorStatus.value = res.status
     errorMsg.value = res.message || ''
+
+    // Not signed in → bounce to SSO automatically, unless we just came back from
+    // a failed attempt (cooldown still active), in which case surface the loop.
+    if (res.status === 401 && typeof window !== 'undefined') {
+      const marker = Number(window.sessionStorage.getItem(LOGIN_MARKER_KEY) || 0)
+      if (marker && Date.now() - marker < LOGIN_COOLDOWN_MS) {
+        window.sessionStorage.removeItem(LOGIN_MARKER_KEY)
+        loopDetected.value = true
+        loading.value = false
+        return
+      }
+      window.sessionStorage.setItem(LOGIN_MARKER_KEY, String(Date.now()))
+      redirecting.value = true
+      signInToVote()
+      return
+    }
+
+    // Signed in and reached the server → clear any stale marker.
+    if (typeof window !== 'undefined') window.sessionStorage.removeItem(LOGIN_MARKER_KEY)
   }
   loading.value = false
+}
+
+function retrySignIn(): void {
+  if (typeof window !== 'undefined') window.sessionStorage.removeItem(LOGIN_MARKER_KEY)
+  void load()
 }
 
 onMounted(() => {
@@ -111,18 +144,21 @@ function fmtWhen(raw?: string): string {
 
     <section class="pv-band">
       <div class="pv-band__inner">
-        <!-- ─── Loading ──────────────────────────────────────────────────── -->
-        <div v-if="loading" class="pv-note">Loading votes…</div>
+        <!-- ─── Loading / redirecting to sign-in ─────────────────────────── -->
+        <div v-if="loading || redirecting" class="pv-note">
+          {{ redirecting ? 'Redirecting to sign-in…' : 'Loading votes…' }}
+        </div>
 
-        <!-- ─── Not signed in (401) ──────────────────────────────────────── -->
-        <div v-else-if="errorStatus === 401" class="pv-gate">
+        <!-- ─── Sign-in loop (session didn't stick) ──────────────────────── -->
+        <div v-else-if="loopDetected" class="pv-gate">
           <div class="pv-gate__label">Sign in required</div>
-          <h2 class="pv-gate__title">This page is for Nebras staff and super admins</h2>
+          <h2 class="pv-gate__title">Sign-in didn't complete</h2>
           <p class="pv-gate__msg">
-            Sign in with your Trust Framework account to view how each organisation voted.
+            We tried to sign you in but the session didn't stick. Try again, and if this keeps
+            happening, check that third-party cookies are allowed for this site.
           </p>
-          <button type="button" class="pv-gate__btn" @click="signInToVote">
-            Sign in with the Trust Framework
+          <button type="button" class="pv-gate__btn" @click="retrySignIn">
+            Try again
           </button>
         </div>
 
