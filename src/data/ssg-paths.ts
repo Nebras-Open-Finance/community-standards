@@ -22,6 +22,11 @@ const expanders: Expander[] = [
   // Proposals & Voting — each proposal is its own authored static page
   // (`src/pages/proposals/<id>.vue`), so vite-plugin-pages enumerates them
   // directly; no dynamic expander needed here.
+  // The per-proposal votes breakdown (`proposals/[id]/votes.vue`) is an
+  // admin-only, unlinked page: returning [] keeps it OUT of the static build
+  // and sitemap (no direct link), so it resolves client-side only — like the
+  // internal draft route below. Auth + data are gated by the proposals Worker.
+  (p) => (p === '/proposals/:id/votes' ? [] : null),
   (p) => (p === '/tech/release-notes-and-erratas/release-notes/api-hub/:year'
     ? apiHubYears.map((y) => `/tech/release-notes-and-erratas/release-notes/api-hub/${y}`)
     : null),

@@ -130,6 +130,33 @@ export interface AuthState {
   email?: string | undefined
   orgs: AuthOrg[]
   canVote: boolean
+  // True for Nebras staff / super admins — gates the per-proposal votes
+  // breakdown page (/proposals/<id>/votes). The server is the real boundary.
+  isAdmin: boolean
+}
+
+// Full per-proposal votes breakdown, as returned by the admin-only
+// GET /proposals/:id/votes. Same shape as a single-proposal GET, but only Nebras
+// staff / super admins can fetch it.
+export interface ProposalVotes {
+  id: string
+  title: string
+  opened: string
+  closes: string
+  priority?: Priority
+  questions?: string[]
+  version?: string | null
+  tally: Counts
+  votes: ApiVote[]
+}
+
+// Outcome of loadProposalVotes — lets the page distinguish "sign in" (401),
+// "not allowed" (403), and "loaded" so it can render the right state.
+export interface VotesResult {
+  ok: boolean
+  status: number
+  data?: ProposalVotes | undefined
+  message?: string | undefined
 }
 
 // ── State ────────────────────────────────────────────────────────────────────
@@ -139,7 +166,7 @@ const VOTES_KEY = 'altareq_proposal_votes'
 const myVotes: Ref<Record<string, MyVote>> = ref({})
 
 // The current Trust Framework session (from GET /me). Populated by loadMe().
-const auth: Ref<AuthState> = ref({ loaded: false, authenticated: false, orgs: [], canVote: false })
+const auth: Ref<AuthState> = ref({ loaded: false, authenticated: false, orgs: [], canVote: false, isAdmin: false })
 
 // The proposal list for the index, from GET /proposals.
 const proposalList: Ref<ProposalMeta[]> = ref([])
@@ -225,7 +252,7 @@ async function loadMe(): Promise<void> {
   try {
     const res = await fetch(`${API_BASE}/me`, { credentials: 'include' })
     if (!res.ok) {
-      auth.value = { loaded: true, authenticated: false, orgs: [], canVote: false }
+      auth.value = { loaded: true, authenticated: false, orgs: [], canVote: false, isAdmin: false }
       return
     }
     const d = (await res.json()) as Partial<AuthState> & { authenticated?: boolean }
@@ -236,9 +263,33 @@ async function loadMe(): Promise<void> {
       email: d.email,
       orgs: Array.isArray(d.orgs) ? d.orgs : [],
       canVote: !!d.canVote,
+      isAdmin: !!d.isAdmin,
     }
   } catch {
-    auth.value = { loaded: true, authenticated: false, orgs: [], canVote: false }
+    auth.value = { loaded: true, authenticated: false, orgs: [], canVote: false, isAdmin: false }
+  }
+}
+
+// Load the admin-only per-proposal votes breakdown (GET /proposals/:id/votes).
+// Sends the session cookie; the server gates on Nebras-staff / super-admin
+// status. Returns a VotesResult so the page can render sign-in (401),
+// not-allowed (403), or the data — never throws.
+async function loadProposalVotes(id: string): Promise<VotesResult> {
+  if (typeof window === 'undefined' || !id) return { ok: false, status: 0 }
+  try {
+    const res = await fetch(`${API_BASE}/proposals/${encodeURIComponent(id)}/votes`, {
+      credentials: 'include',
+    })
+    if (res.ok) {
+      const data = (await res.json()) as ProposalVotes
+      return { ok: true, status: 200, data }
+    }
+    const message = await res.json()
+      .then((b) => (b as { error?: string }).error)
+      .catch(() => undefined)
+    return { ok: false, status: res.status, message }
+  } catch {
+    return { ok: false, status: 0, message: 'Network error — could not reach the voting service.' }
   }
 }
 
@@ -387,6 +438,7 @@ export interface UseProposals {
   loadAll: () => Promise<void>
   loadOne: (id: string) => Promise<void>
   loadMe: () => Promise<void>
+  loadProposalVotes: (id: string) => Promise<VotesResult>
   signInToVote: () => void
   tallyOf: (id: string, myVote?: MyVote) => Tally
   setVote: (id: string, stance: Stance | null) => void
@@ -410,6 +462,7 @@ export function useProposals(): UseProposals {
     loadAll,
     loadOne,
     loadMe,
+    loadProposalVotes,
     signInToVote,
     tallyOf,
     setVote,
