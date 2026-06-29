@@ -19,6 +19,10 @@ onMounted(() => {
   void loadAll()
 })
 
+// This is the PUBLIC list — internal proposals live on the unlinked
+// /proposals/internal page and are filtered out here.
+const externalList = computed(() => proposalList.value.filter((p) => !p.internal))
+
 // Status is derived from each proposal's open/close dates (not returned by the API).
 const statusOf = (p: { opened: string; closes: string }) => deriveStatus(p.opened, p.closes)
 
@@ -31,12 +35,12 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 const filter = ref<FilterKey>('open')
 
 const stats = computed(() => ({
-  open: proposalList.value.filter((p) => statusOf(p) === 'open').length,
-  draft: proposalList.value.filter((p) => statusOf(p) === 'draft').length,
-  closed: proposalList.value.filter((p) => statusOf(p) === 'closed').length,
+  open: externalList.value.filter((p) => statusOf(p) === 'open').length,
+  draft: externalList.value.filter((p) => statusOf(p) === 'draft').length,
+  closed: externalList.value.filter((p) => statusOf(p) === 'closed').length,
 }))
 
-const shown = computed(() => proposalList.value.filter((p) => statusOf(p) === filter.value))
+const shown = computed(() => externalList.value.filter((p) => statusOf(p) === filter.value))
 </script>
 
 <template>

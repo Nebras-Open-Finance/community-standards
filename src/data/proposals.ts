@@ -9,10 +9,12 @@
 // resolvable from Node (e.g. `src/data/ssg-paths.ts`).
 
 export type Stance = 'for' | 'against' | 'abstain'
-// Status is derived from the open/close dates (the API does not store or return
-// it) — see deriveStatus(). Three states: 'draft' before it opens, 'open' while
-// the voting window is live, 'closed' once it has passed.
-export type Status = 'draft' | 'open' | 'closed'
+// Status is derived (the API does not store or return it) — see deriveStatus().
+// For EXTERNAL proposals it comes from the open/close dates: 'draft' before it
+// opens, 'open' while the voting window is live, 'closed' once it has passed.
+// An INTERNAL proposal (the `internal` flag from the API) overrides all of this
+// with the 'internal' status, regardless of its dates.
+export type Status = 'draft' | 'open' | 'closed' | 'internal'
 export type Priority = 'critical' | 'high' | 'medium' | 'low'
 
 export interface ParagraphBlock { kind: 'p'; text: string }
@@ -77,6 +79,7 @@ export const STATUS: Record<Status, StatusMeta> = {
   draft: { label: 'Draft', fg: '#B37819', bg: 'rgba(179,120,25,0.12)' },
   open: { label: 'Open', fg: '#0043A6', bg: 'rgba(0,67,166,0.08)' },
   closed: { label: 'Closed', fg: '#6B7280', bg: 'rgba(107,114,128,0.12)' },
+  internal: { label: 'Internal', fg: '#6D28D9', bg: 'rgba(109,40,217,0.12)' },
 }
 
 // Today as ISO 'YYYY-MM-DD' (UTC). Isolated so status derivation is testable.
@@ -84,11 +87,13 @@ export function todayISO(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-// Derive a proposal's status from its open/close window — the backend neither
-// stores nor returns a status. Before the opening date → 'draft'; after the
-// closing date → 'closed'; on or between the two (inclusive) → 'open'. Dates
-// are ISO 'YYYY-MM-DD'.
-export function deriveStatus(opened?: string, closes?: string, today: string = todayISO()): Status {
+// Derive a proposal's status — the backend neither stores nor returns a status.
+// An `internal` proposal is always 'internal', whatever its dates. Otherwise it
+// comes from the open/close window: before the opening date → 'draft'; after the
+// closing date → 'closed'; on or between the two (inclusive) → 'open'. Dates are
+// ISO 'YYYY-MM-DD'.
+export function deriveStatus(opened?: string, closes?: string, today: string = todayISO(), internal = false): Status {
+  if (internal) return 'internal'
   if (opened && today < opened) return 'draft'
   if (closes && today > closes) return 'closed'
   return 'open'

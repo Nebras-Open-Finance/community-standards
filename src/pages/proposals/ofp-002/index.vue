@@ -188,7 +188,10 @@ function syncFromApi(): void {
   const m = apiMeta.value
   const openedISO = m?.opened || toISO(meta.opened)
   const closesISO = m?.closes || toISO(meta.closes)
-  status.value = deriveStatus(openedISO, closesISO)
+  // OFP-002 is internal — once the API confirms it, the status becomes 'internal'
+  // (overriding the date-derived open/closed), which the hero pill and the vote
+  // cover below key off.
+  status.value = deriveStatus(openedISO, closesISO, undefined, m?.internal ?? false)
   closesIn.value = daysLeft(closesISO)
   priority.value = (m?.priority as Priority) || meta.priority
   openedDisplay.value = m?.opened ? fmtDate(m.opened) : meta.opened
@@ -280,11 +283,13 @@ onMounted(() => {
       <div v-if="status !== 'open'" class="ofp-vote-cover" aria-hidden="false">
         <div class="ofp-vote-cover__card">
           <div class="ofp-vote-cover__label">
-            {{ status === 'draft' ? 'Voting not yet open' : 'Voting closed' }}
+            {{ status === 'draft' ? 'Voting not yet open'
+              : status === 'internal' ? 'Internal proposal'
+              : 'Voting closed' }}
           </div>
           <div class="ofp-vote-cover__msg">
-            {{ status === 'draft'
-              ? `Voting opens ${openedDisplay}`
+            {{ status === 'draft' ? `Voting opens ${openedDisplay}`
+              : status === 'internal' ? 'This proposal is under internal review.'
               : 'Voting is now closed' }}
           </div>
         </div>

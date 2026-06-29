@@ -96,6 +96,9 @@ export interface ProposalMeta {
   questions?: string[]
   // Target standards version (when the change will be made), e.g. 'V2.2'; '' if unset.
   version?: string | null
+  // Whether this proposal is internal (shown only on /proposals/internal) rather
+  // than external/public. Absent → external. Drives the 'internal' status.
+  internal?: boolean
   tally: Counts
 }
 
