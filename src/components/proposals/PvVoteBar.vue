@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Stacked For/Against/Abstain bar. `compact` is the 8px table variant; the
-// default is 14px with a legend and an optional dashed quorum marker.
+// default is 14px with a legend.
 import { computed } from 'vue'
 import { STANCE, STANCE_ORDER } from '@/data/proposals'
 import type { Tally } from '@/composables/useProposals'
@@ -12,10 +12,8 @@ const props = withDefaults(
     // `bare` is a 16px track with no legend (the legend is replaced by the
     // standalone stance tiles in the Cast-your-vote results panel).
     bare?: boolean
-    showQuorum?: boolean
-    quorum?: number
   }>(),
-  { compact: false, bare: false, showQuorum: false, quorum: 0 },
+  { compact: false, bare: false },
 )
 
 const total = computed(() => Math.max(props.counts.total, 1))
@@ -29,14 +27,6 @@ const segments = computed(() =>
     pct: (props.counts[stance] / total.value) * 100,
   })),
 )
-
-// Quorum marker position, clamped to the bar width.
-const quorumValue = computed(() => props.quorum ?? 0)
-const showMarker = computed(() => props.showQuorum && quorumValue.value > 0)
-const quorumLeft = computed(() => {
-  const denom = Math.max(total.value, quorumValue.value)
-  return Math.min((quorumValue.value / denom) * 100, 100)
-})
 </script>
 
 <template>
@@ -51,11 +41,6 @@ const quorumLeft = computed(() => {
         class="pv-votebar__seg"
         :style="{ width: seg.pct + '%', background: seg.bar }"
         :title="`${seg.label}: ${seg.value}`"
-      />
-      <div
-        v-if="showMarker"
-        class="pv-votebar__quorum"
-        :style="{ left: quorumLeft + '%' }"
       />
     </div>
 
@@ -87,14 +72,6 @@ const quorumLeft = computed(() => {
 
 .pv-votebar__seg {
   transition: width 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-
-.pv-votebar__quorum {
-  position: absolute;
-  top: -3px;
-  bottom: -3px;
-  width: 0;
-  border-left: 2px dashed var(--at-navy-deep);
 }
 
 .pv-votebar__legend {

@@ -137,6 +137,7 @@ declare module 'vue' {
     PvPriorityTag: typeof import('./components/proposals/PvPriorityTag.vue')['default']
     PvProposalBody: typeof import('./components/proposals/PvProposalBody.vue')['default']
     PvProposalRow: typeof import('./components/proposals/PvProposalRow.vue')['default']
+    PvProposalTabs: typeof import('./components/proposals/PvProposalTabs.vue')['default']
     PvProposalView: typeof import('./components/proposals/PvProposalView.vue')['default']
     PvStatusPill: typeof import('./components/proposals/PvStatusPill.vue')['default']
     PvVoteAttribForm: typeof import('./components/proposals/PvVoteAttribForm.vue')['default']

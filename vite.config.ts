@@ -26,7 +26,17 @@ export default defineConfig({
     Pages({
       dirs: 'src/pages',
       extensions: ['vue', 'md'],
-      exclude: ['**/_shared/**'],
+      // `_shared` holds route-less helpers; the proposal content partials (see
+      // PvProposalTabs) are imported directly by their proposal page, never
+      // routed. Both the folder convention (proposals/<id>/outcome.vue) and the
+      // flat convention (proposals/<id>.outcome.vue) are excluded.
+      exclude: [
+        '**/_shared/**',
+        '**/outcome.vue',
+        '**/feedback.vue',
+        '**/*.outcome.vue',
+        '**/*.feedback.vue',
+      ],
       // Preserve filename case in route paths so `accounts-AccountId.vue`
       // generates `accounts-AccountId.html` rather than the lowercase variant.
       // Required for case-sensitive (Linux) hosts where outbound links

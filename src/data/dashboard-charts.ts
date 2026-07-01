@@ -17,6 +17,7 @@ export type ChartComponent =
   | 'error-codes'
   | 'success-rate'
   | 'pay-status'
+  | 'pay-size-dist'
   | 'auth-rate'
 
 // Loose by design — different `component` values consume different subsets,
@@ -140,6 +141,7 @@ export const CHART_REGISTRY: Readonly<Record<string, readonly ChartConfig[]>> = 
     { id: 'pay_success_count_tpp',         title: 'Successful Payment Count by TPP',           component: 'volume', props: { groupBy: 'tpp',   stackBy: 'consentType', valueKey: 'count'  }, dataSource: 'payment-success', hideIfFiltered: 'tpp'   },
     { id: 'pay_success_amount_lfi_status', title: 'Successful Payment Amount by LFI (AED)',    component: 'volume', props: { groupBy: 'lfi',   stackBy: 'rawStatus',  valueKey: 'amount' }, dataSource: 'payment-success', showOnlyIfFiltered: true },
     { id: 'pay_success_count_lfi_status',  title: 'Successful Payment Count by LFI',           component: 'volume', props: { groupBy: 'lfi',   stackBy: 'rawStatus',  valueKey: 'count'  }, dataSource: 'payment-success', showOnlyIfFiltered: true },
+    { id: 'pay_success_size_dist',         title: 'Payment Size Distribution (AED)',           component: 'pay-size-dist',                                                            dataSource: 'payment-success', span: 2 },
   ],
 
   'payment-errors': [

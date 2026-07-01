@@ -46,7 +46,6 @@ export interface Proposal {
   opened: string
   closes: string
   closesIn: string
-  quorum: number
   body: Block[]
   // Optional questions (max 3) sourced from the API; each gets its own text box
   // in the vote form alongside the comment. Empty/absent → only the comment box.

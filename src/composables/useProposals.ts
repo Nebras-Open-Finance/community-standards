@@ -31,8 +31,6 @@ export type CommentGrouping = 'stance' | 'chronological'
 export const PROPOSALS_CONFIG = {
   // 'always' shows the tally to everyone; 'after-vote' hides it until you vote.
   resultsVisibility: 'always' as ResultsVisibility,
-  // Dashed quorum marker on the bar + the quorum line under the tally.
-  showQuorum: false,
   // 'stance' = three For/Against/Abstain columns; 'chronological' = one thread.
   commentGrouping: 'stance' as CommentGrouping,
 }

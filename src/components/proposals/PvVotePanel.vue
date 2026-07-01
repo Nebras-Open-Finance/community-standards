@@ -27,7 +27,6 @@ const decided = computed(() => isDecided(props.proposal.status))
 const reveal = computed(
   () => config.resultsVisibility === 'always' || !!props.myVote || decided.value,
 )
-const quorumMet = computed(() => tally.value.counts.total >= props.proposal.quorum)
 const leading = computed<Stance | null>(() => {
   const { for: f, against: a } = tally.value.counts
   if (f === a) return null
@@ -109,18 +108,7 @@ function onButton(stance: Stance): void {
             </div>
           </div>
 
-          <PvVoteBar :counts="tally.counts" bare :show-quorum="config.showQuorum" :quorum="proposal.quorum" />
-
-          <div
-            v-if="config.showQuorum"
-            class="pv-cast__quorum"
-            :style="{ color: quorumMet ? STANCE.for.ink : '#B37819' }"
-          >
-            <span class="pv-cast__quorum-dot" :style="{ background: quorumMet ? STANCE.for.ink : '#B37819' }" />
-            {{ quorumMet
-              ? `Quorum met · ${proposal.quorum} required`
-              : `${proposal.quorum - tally.counts.total} more to reach quorum (${proposal.quorum})` }}
-          </div>
+          <PvVoteBar :counts="tally.counts" bare />
 
           <div class="pv-cast__tiles">
             <div
@@ -304,20 +292,6 @@ function onButton(stance: Stance): void {
 
 .pv-cast__orgs-denom { font-size: 15px; opacity: 0.5; }
 .pv-cast__orgs-label { font-size: 8.5px; }
-
-.pv-cast__quorum {
-  margin-top: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--at-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-.pv-cast__quorum-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 
 .pv-cast__tiles {
   display: grid;

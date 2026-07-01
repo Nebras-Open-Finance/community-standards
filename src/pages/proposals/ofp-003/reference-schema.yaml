@@ -1,0 +1,105 @@
+# OFP-003 — Debtor & Creditor Reference schemas, character set applied (V2.1 errata)
+#
+# OUTCOME of OFP-003. The Debtor and Creditor References stay free text
+# (minLength 1, maxLength 35), but a character-set `pattern` is added so every
+# LFI knows exactly which characters it must accept and store.
+#
+# The approved set is the ISO 20022 / SWIFT "x" set ONLY:
+#     A-Z  a-z  0-9  space  and  / - ? : ( ) . , ' +
+#     pattern: ^[A-Za-z0-9 /?:().,'+-]+$
+#
+# The Arabic block (U+0600-U+06FF) proposed alongside it is NOT included. LFIs
+# and TPPs reported that Arabic cannot be carried end-to-end today — SWIFT MT/MX,
+# the UAEFTS rail (CB SSM rules), and several core banking systems neither accept
+# nor store it, and where a customer enters Arabic it is transliterated to Latin
+# before submission. Survivability beyond the SWIFT set is addressed through the
+# Structured Reference guidance (which characters to prefer / avoid), NOT by
+# narrowing the validated set further.
+#
+# The identical pattern applies everywhere the v2.1 free-text reference is
+# defined, so validation is uniform across PAR, Bank Service Initiation, Consent
+# Manager, Consent Events, and Ozone Connect:
+#   - Standards      · uae-bank-initiation-openapi.yaml
+#                        AECreditorReference / AEDebtorReference
+#                        AEBankServiceInitiation.AECreditorReference / .AEDebtorReference
+#   - Ozone Connect  · AEServiceInitiationCreditorReference / …DebtorReference
+#     / Consent Mgr      (the current-version branch of the anyOf only)
+#
+# The 35-character limit is counted in Unicode characters; the API Hub normalises
+# to Unicode NFC before validating. The deprecated structured (120-char) variants
+# retained for older versions are NOT touched.
+#
+# Source of truth is api-specs (dist/). This excerpt shows only the changed
+# schemas; unchanged surrounding definitions are omitted.
+
+components:
+  schemas:
+    # ── Standards (TPP-facing) ───────────────────────────────────────────────
+    AECreditorReference:
+      description: A Creditor Reference is a note for a given Creditor or Creditor LFI that supports reconciliation of
+        a given payment instruction.
+      type: string
+      minLength: 1
+      maxLength: 35
+      pattern: "^[A-Za-z0-9 /?:().,'+-]+$"   # ADDED — SWIFT "x" set
+
+    AEDebtorReference:
+      description: A Debtor Reference is a note is for the reference of a given User that may be available as
+        additional information in relation to a given payment instruction.
+      type: string
+      minLength: 1
+      maxLength: 35
+      pattern: "^[A-Za-z0-9 /?:().,'+-]+$"   # ADDED — SWIFT "x" set
+
+    AEBankServiceInitiation.AECreditorReference:
+      type: string
+      minLength: 1
+      maxLength: 35
+      pattern: "^[A-Za-z0-9 /?:().,'+-]+$"   # ADDED — SWIFT "x" set
+      description: >-
+        A Creditor Reference is a note for a given Creditor or Creditor LFI that supports reconciliation of a given
+        payment instruction.
+
+    AEBankServiceInitiation.AEDebtorReference:
+      type: string
+      minLength: 1
+      maxLength: 35
+      pattern: "^[A-Za-z0-9 /?:().,'+-]+$"   # ADDED — SWIFT "x" set
+      description: >-
+        A Debtor Reference is a note is for the reference of a given User that may be available as additional
+        information in relation to a given payment instruction.
+
+    # ── Ozone Connect / Consent Manager (LFI-facing) ─────────────────────────
+    # The pattern is added to the CURRENT (free-text, 35-char) branch of the
+    # anyOf only. The deprecated structured 120-char branch is unchanged.
+    AEServiceInitiationCreditorReference:
+      anyOf:
+        - description: "**DEPRECATED AT v2.1** — structured 120-char Creditor reference. UNCHANGED (see published spec)."
+          type: string
+          minLength: 1
+          maxLength: 120
+          pattern: ^TPP=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12},BIC=[A-Z0-9]{4}[A-Z0-9]{2}[A-Z0-9]{2}([A-Z0-9]{3}){0,1}($|,.+$)
+          deprecated: true
+        - description: |-
+            A Creditor Reference is a note for a given Creditor or Creditor LFI that supports reconciliation of
+            a given payment instruction.
+          type: string
+          minLength: 1
+          maxLength: 35
+          pattern: "^[A-Za-z0-9 /?:().,'+-]+$"   # ADDED — SWIFT "x" set
+
+    AEServiceInitiationDebtorReference:
+      anyOf:
+        - description: "**DEPRECATED AT v2.1** — structured 120-char Debtor reference. UNCHANGED (see published spec)."
+          type: string
+          minLength: 1
+          maxLength: 120
+          pattern: ^TPP=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12},(Merchant=[A-Z0-9]{3}-[A-Z]{4}-TL.+-[0-9]{4}|),BIC=[A-Z0-9]{4}[A-Z0-9]{2}[A-Z0-9]{2}([A-Z0-9]{3}){0,1}($|,.+$)
+          deprecated: true
+        - description: |-
+            A Debtor Reference is a note is for the reference of a given User that may be available as
+            additional information in relation to a given payment instruction.
+          type: string
+          minLength: 1
+          maxLength: 35
+          pattern: "^[A-Za-z0-9 /?:().,'+-]+$"   # ADDED — SWIFT "x" set

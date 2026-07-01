@@ -13,19 +13,50 @@ const FAMILY_KEYS = [
   'confirmation',
   'product',
   'atm',
+  'insurance',
 ] as const
 
 type FamilyKey = (typeof FAMILY_KEYS)[number]
-type FamilyFilter = 'all' | FamilyKey
-type Mode = 'lfi' | 'tpp'
 
-const FAMILY_LABELS: Record<FamilyFilter, string> = {
+// Banking families — everything except the insurance family. These populate the
+// LFI (Bank) tab and the TPP filter row.
+const BANKING_FAMILIES: readonly FamilyKey[] = [
+  'account-information',
+  'payment',
+  'confirmation',
+  'product',
+  'atm',
+]
+
+// Insurance "types" are NOT distinct ApiFamilyType values in the directory — the
+// directory exposes a single `insurance` family. Types are derived from the
+// endpoint path prefix (e.g. `/health-insurance-policies` → 'health'). They drive
+// the LFI (Insurer) filter chips and the per-type breakdown inside insurer cards.
+const INSURANCE_TYPES = ['health', 'motor', 'travel', 'home'] as const
+type InsuranceType = (typeof INSURANCE_TYPES)[number]
+
+const INSURANCE_TYPE_LABELS: Record<InsuranceType, string> = {
+  health: 'Health',
+  motor: 'Motor',
+  travel: 'Travel',
+  home: 'Home',
+}
+
+// Non-type-specific insurance endpoints (e.g. `/insurance-consents`) group here.
+const INSURANCE_GENERAL_KEY = 'general'
+const INSURANCE_GENERAL_LABEL = 'Consents'
+
+type FamilyFilter = 'all' | FamilyKey | InsuranceType
+type Mode = 'lfi-bank' | 'lfi-insurer' | 'tpp'
+
+const FAMILY_LABELS: Record<'all' | FamilyKey, string> = {
   'all': 'All services',
   'account-information': 'Account Information',
   'payment': 'Payment Initiation',
   'confirmation': 'Confirmation of Payee',
   'product': 'Products & Leads',
   'atm': 'ATMs',
+  'insurance': 'Insurance',
 }
 
 // Maps family keys → URL prefix segment in api-log.json
@@ -35,6 +66,7 @@ const FAMILY_URL_PREFIX: Record<FamilyKey, string> = {
   'confirmation': 'confirmation-of-payee',
   'product': 'product',
   'atm': 'atm',
+  'insurance': 'insurance',
 }
 
 // Canonical endpoint ordering per family — mirrors the TPP-facing sidebar in
@@ -70,6 +102,30 @@ const ENDPOINT_ORDER: Record<FamilyKey, string[]> = {
   ],
   'atm': [
     '/atms',
+  ],
+  'insurance': [
+    '/insurance-consents',
+    '/insurance-consents/{ConsentId}',
+    '/health-insurance-policies',
+    '/health-insurance-policies/{InsurancePolicyId}',
+    '/health-insurance-policies/{InsurancePolicyId}/payment-details',
+    '/health-insurance-quotes',
+    '/health-insurance-quotes/{QuoteId}',
+    '/motor-insurance-policies',
+    '/motor-insurance-policies/{InsurancePolicyId}',
+    '/motor-insurance-policies/{InsurancePolicyId}/payment-details',
+    '/motor-insurance-quotes',
+    '/motor-insurance-quotes/{QuoteId}',
+    '/travel-insurance-policies',
+    '/travel-insurance-policies/{InsurancePolicyId}',
+    '/travel-insurance-policies/{InsurancePolicyId}/payment-details',
+    '/travel-insurance-quotes',
+    '/travel-insurance-quotes/{QuoteId}',
+    '/home-insurance-policies',
+    '/home-insurance-policies/{InsurancePolicyId}',
+    '/home-insurance-policies/{InsurancePolicyId}/payment-details',
+    '/home-insurance-quotes',
+    '/home-insurance-quotes/{QuoteId}',
   ],
 }
 
@@ -139,11 +195,24 @@ interface PaymentsLogRow {
 }
 
 // ── Processed UI shapes ───────────────────────────────────────────────────
+// One collapsible group of insurance endpoints, keyed by insurance type (plus a
+// 'general' group for consents). Only populated for the `insurance` family.
+interface InsuranceGroup {
+  key: InsuranceType | typeof INSURANCE_GENERAL_KEY
+  label: string
+  endpoints: string[]
+  expanded: boolean
+}
+
 interface LfiVersion {
   version: string
   endpoints: string[]
   paymentTypes: string[]
   accountSubTypes: string[]
+  // Insurance-only: the types offered (for pills) and per-type endpoint groups
+  // (for collapsible sub-groups). Empty for banking families.
+  insuranceTypes: InsuranceType[]
+  insuranceGroups: InsuranceGroup[]
   expanded: boolean
 }
 
@@ -202,14 +271,51 @@ interface TppCard {
 // the inline `readFromUrl` / `writeToUrl` pair this file used previously).
 // The composable seeds from `window.location.search` on mount and writes via
 // `history.replaceState` on change; default values are removed from the URL.
-const MODE_OPTIONS: readonly Mode[] = ['lfi', 'tpp']
-const FAMILY_OPTIONS: readonly FamilyFilter[] = ['all', ...FAMILY_KEYS]
+const MODE_OPTIONS: readonly Mode[] = ['lfi-bank', 'lfi-insurer', 'tpp']
+const FAMILY_OPTIONS: readonly FamilyFilter[] = [
+  'all',
+  ...FAMILY_KEYS,
+  ...INSURANCE_TYPES,
+]
 
-const modeParam = useUrlSearchParam<Mode>('type', 'lfi', { allowed: MODE_OPTIONS })
+const modeParam = useUrlSearchParam<Mode>('type', 'lfi-bank', { allowed: MODE_OPTIONS })
 const familyParam = useUrlSearchParam<FamilyFilter>('family', 'all', { allowed: FAMILY_OPTIONS })
 
 const mode = modeParam.value
 const family = familyParam.value
+
+// Any LFI tab (bank or insurer) vs the TPP tab.
+const isLfi = computed<boolean>(() => mode.value !== 'tpp')
+
+// Which family filters are valid in a given mode. `family` is shared across
+// modes, so switching tabs may leave an out-of-scope value (e.g. 'payment'
+// selected, then switch to Insurer) — `setMode` resets to 'all' in that case.
+function validFamilies(m: Mode): readonly FamilyFilter[] {
+  if (m === 'lfi-insurer') return ['all', ...INSURANCE_TYPES]
+  if (m === 'lfi-bank') return ['all', ...BANKING_FAMILIES]
+  return ['all', ...FAMILY_KEYS]
+}
+
+// Filter chips shown for the active mode.
+const filterChips = computed<{ key: FamilyFilter; label: string }[]>(() => {
+  if (mode.value === 'lfi-insurer')
+    return INSURANCE_TYPES.map((t) => ({ key: t, label: INSURANCE_TYPE_LABELS[t] }))
+  const keys = mode.value === 'lfi-bank' ? BANKING_FAMILIES : FAMILY_KEYS
+  return keys.map((k) => ({ key: k, label: FAMILY_LABELS[k] }))
+})
+
+function filterLabel(f: FamilyFilter): string {
+  if (f === 'all') return FAMILY_LABELS.all
+  if ((INSURANCE_TYPES as readonly string[]).includes(f))
+    return INSURANCE_TYPE_LABELS[f as InsuranceType]
+  return FAMILY_LABELS[f as FamilyKey]
+}
+
+const activeInsuranceType = computed<InsuranceType | null>(() =>
+  (INSURANCE_TYPES as readonly string[]).includes(family.value)
+    ? (family.value as InsuranceType)
+    : null,
+)
 
 const loading = ref<boolean>(true)
 const error = ref<string | null>(null)
@@ -243,6 +349,7 @@ onMounted(async () => {
 })
 
 function setMode(m: Mode): void {
+  if (!validFamilies(m).includes(family.value)) familyParam.set('all')
   modeParam.set(m)
 }
 function setFamily(f: FamilyFilter): void {
@@ -287,15 +394,20 @@ function processLfis(data: unknown): LfiServer[] {
           .map((url) => normalizeEndpoint(url, resource.ApiVersion))
           .filter((p, i, arr) => arr.indexOf(p) === i)
 
+        const sortedEndpoints = sortEndpoints(familyKey, normalized)
         serviceMap.get(familyKey)!.push({
           version: resource.ApiVersion || '',
-          endpoints: sortEndpoints(familyKey, normalized),
+          endpoints: sortedEndpoints,
           paymentTypes:
             familyKey === 'payment' ? getPaymentTypes(resource.ApiMetadata) : [],
           accountSubTypes:
             familyKey === 'account-information'
               ? resource.ApiMetadata?.AccountSubType || []
               : [],
+          insuranceTypes:
+            familyKey === 'insurance' ? insuranceTypesOf(sortedEndpoints) : [],
+          insuranceGroups:
+            familyKey === 'insurance' ? buildInsuranceGroups(sortedEndpoints) : [],
           expanded: false,
         })
       }
@@ -355,6 +467,48 @@ function sortEndpoints(familyKey: FamilyKey, endpoints: string[]): string[] {
   })
 }
 
+// Map an insurance endpoint to its type via the path prefix, e.g.
+// `/motor-insurance-policies` → 'motor'. Returns null for non-type-specific
+// endpoints like `/insurance-consents`.
+function insuranceTypeOf(endpoint: string): InsuranceType | null {
+  const m = endpoint.match(/^\/(health|motor|travel|home)-insurance-/)
+  return m ? (m[1] as InsuranceType) : null
+}
+
+// Distinct insurance types present in a set of endpoints, in canonical order.
+function insuranceTypesOf(endpoints: string[]): InsuranceType[] {
+  const present = new Set<InsuranceType>()
+  for (const ep of endpoints) {
+    const t = insuranceTypeOf(ep)
+    if (t) present.add(t)
+  }
+  return INSURANCE_TYPES.filter((t) => present.has(t))
+}
+
+// Group insurance endpoints into per-type collapsible groups (canonical type
+// order, with the non-type-specific 'general' group last).
+function buildInsuranceGroups(endpoints: string[]): InsuranceGroup[] {
+  const byType = new Map<InsuranceType | typeof INSURANCE_GENERAL_KEY, string[]>()
+  for (const ep of endpoints) {
+    const key = insuranceTypeOf(ep) || INSURANCE_GENERAL_KEY
+    if (!byType.has(key)) byType.set(key, [])
+    byType.get(key)!.push(ep)
+  }
+  const groups: InsuranceGroup[] = []
+  for (const t of INSURANCE_TYPES) {
+    if (byType.has(t))
+      groups.push({ key: t, label: INSURANCE_TYPE_LABELS[t], endpoints: byType.get(t)!, expanded: false })
+  }
+  if (byType.has(INSURANCE_GENERAL_KEY))
+    groups.push({
+      key: INSURANCE_GENERAL_KEY,
+      label: INSURANCE_GENERAL_LABEL,
+      endpoints: byType.get(INSURANCE_GENERAL_KEY)!,
+      expanded: false,
+    })
+  return groups
+}
+
 function getPaymentTypes(meta: DirectoryApiMetadata | undefined): string[] {
   if (!meta) return []
   const types: string[] = []
@@ -380,21 +534,74 @@ function getPaymentTypes(meta: DirectoryApiMetadata | undefined): string[] {
   return types
 }
 
-const visibleServers = computed<LfiServer[]>(() =>
-  processedLfis.value.filter(
-    (s) =>
-      family.value === 'all' ||
-      s.services.some((svc) => svc.familyKey === family.value),
-  ),
+function isBankingFamily(k: FamilyKey): boolean {
+  return (BANKING_FAMILIES as readonly string[]).includes(k)
+}
+function serverHasBanking(s: LfiServer): boolean {
+  return s.services.some((svc) => isBankingFamily(svc.familyKey))
+}
+function serverInsuranceService(s: LfiServer): LfiService | undefined {
+  return s.services.find((svc) => svc.familyKey === 'insurance')
+}
+function serverInsuranceTypes(s: LfiServer): InsuranceType[] {
+  const svc = serverInsuranceService(s)
+  if (!svc) return []
+  const present = new Set<InsuranceType>()
+  for (const v of svc.versions) for (const t of v.insuranceTypes) present.add(t)
+  return INSURANCE_TYPES.filter((t) => present.has(t))
+}
+
+// Unfiltered sector totals — drive the tab counts so they stay stable as the
+// filter row changes.
+const bankServers = computed<LfiServer[]>(() =>
+  processedLfis.value.filter(serverHasBanking),
+)
+const insurerServers = computed<LfiServer[]>(() =>
+  processedLfis.value.filter((s) => !!serverInsuranceService(s)),
 )
 
+// Filtered servers for the active LFI tab.
+const visibleServers = computed<LfiServer[]>(() => {
+  if (mode.value === 'lfi-insurer') {
+    const t = activeInsuranceType.value
+    return insurerServers.value.filter(
+      (s) => !t || serverInsuranceTypes(s).includes(t),
+    )
+  }
+  if (mode.value === 'lfi-bank') {
+    return bankServers.value.filter(
+      (s) =>
+        family.value === 'all' ||
+        s.services.some((svc) => svc.familyKey === family.value),
+    )
+  }
+  return []
+})
+
 function visibleServices(server: LfiServer): LfiService[] {
+  if (mode.value === 'lfi-insurer') {
+    const svc = serverInsuranceService(server)
+    return svc ? [svc] : []
+  }
+  const banking = server.services.filter((svc) => isBankingFamily(svc.familyKey))
   return family.value === 'all'
-    ? server.services
-    : server.services.filter((svc) => svc.familyKey === family.value)
+    ? banking
+    : banking.filter((svc) => svc.familyKey === family.value)
+}
+
+// Insurance groups within a version, filtered to the active type when one is
+// selected (the 'general'/consents group always shows).
+function visibleInsuranceGroups(v: LfiVersion): InsuranceGroup[] {
+  const t = activeInsuranceType.value
+  if (!t) return v.insuranceGroups
+  return v.insuranceGroups.filter(
+    (g) => g.key === t || g.key === INSURANCE_GENERAL_KEY,
+  )
 }
 
 const lfiServerCount = computed<number>(() => visibleServers.value.length)
+const bankServerCount = computed<number>(() => bankServers.value.length)
+const insurerServerCount = computed<number>(() => insurerServers.value.length)
 
 // ── TPP processing ─────────────────────────────────────────────────────────
 // Payment family uses a richer payment-specific log; everything else uses the
@@ -592,7 +799,7 @@ function latestDateFrom(log: { date?: string }[]): Date | null {
 
 const updatedLabel = computed<string>(() => {
   if (loading.value) return 'LOADING…'
-  if (mode.value === 'lfi') return 'LIVE FROM DIRECTORY'
+  if (isLfi.value) return 'LIVE FROM DIRECTORY'
   const d = latestDateFrom(paymentOnly.value ? paymentsLog.value : apiLog.value)
   if (!d) return 'NO DATA'
   const formatted = d
@@ -607,21 +814,36 @@ const updatedLabel = computed<string>(() => {
 
 const summaryCount = computed<number | string>(() => {
   if (loading.value) return '—'
-  return mode.value === 'lfi' ? lfiServerCount.value : tppCount.value
+  return isLfi.value ? lfiServerCount.value : tppCount.value
 })
 
 const summaryUnit = computed<string>(() => {
-  const n = mode.value === 'lfi' ? lfiServerCount.value : tppCount.value
-  if (mode.value === 'lfi') return n === 1 ? 'live LFI server' : 'live LFI servers'
+  if (mode.value === 'lfi-bank') {
+    const n = lfiServerCount.value
+    return n === 1 ? 'live bank' : 'live banks'
+  }
+  if (mode.value === 'lfi-insurer') {
+    const n = lfiServerCount.value
+    return n === 1 ? 'live insurer' : 'live insurers'
+  }
+  const n = tppCount.value
   return n === 1 ? 'TPP active' : 'TPPs active'
 })
 
 const summarySub = computed<string>(() => {
-  const familyText =
-    family.value === 'all' ? 'Open Finance' : FAMILY_LABELS[family.value]
-  if (mode.value === 'lfi') {
-    return `Licensed financial institutions currently offering live ${familyText} services through the API Hub. Data pulled directly from the Nebras Open Finance directory.`
+  if (mode.value === 'lfi-bank') {
+    const familyText =
+      family.value === 'all' ? 'Open Finance' : filterLabel(family.value)
+    return `Banks currently offering live ${familyText} services through the API Hub. Data pulled directly from the Nebras Open Finance directory.`
   }
+  if (mode.value === 'lfi-insurer') {
+    const typeText = activeInsuranceType.value
+      ? `${INSURANCE_TYPE_LABELS[activeInsuranceType.value]} insurance`
+      : 'insurance'
+    return `Insurers currently offering live ${typeText} products through the API Hub. Data pulled directly from the Nebras Open Finance directory.`
+  }
+  const familyText =
+    family.value === 'all' ? 'Open Finance' : filterLabel(family.value)
   if (paymentOnly.value) {
     return `Third-party providers who have initiated payments through the API Hub in the last ${DAYS_WINDOW} days, broken down by consent type.`
   }
@@ -674,13 +896,24 @@ const prettifyConsentType = (s: string): string =>
           <button
             type="button"
             role="tab"
-            :aria-selected="mode === 'lfi' ? 'true' : 'false'"
+            :aria-selected="mode === 'lfi-bank' ? 'true' : 'false'"
             class="ed-le-mode__btn"
-            :class="{ 'is-active': mode === 'lfi' }"
-            @click="setMode('lfi')"
+            :class="{ 'is-active': mode === 'lfi-bank' }"
+            @click="setMode('lfi-bank')"
           >
-            LFIs
-            <span class="ed-le-mode__count">{{ lfiServerCount }}</span>
+            LFI (Bank)
+            <span class="ed-le-mode__count">{{ bankServerCount }}</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            :aria-selected="mode === 'lfi-insurer' ? 'true' : 'false'"
+            class="ed-le-mode__btn"
+            :class="{ 'is-active': mode === 'lfi-insurer' }"
+            @click="setMode('lfi-insurer')"
+          >
+            LFI (Insurer)
+            <span class="ed-le-mode__count">{{ insurerServerCount }}</span>
           </button>
           <button
             type="button"
@@ -695,21 +928,24 @@ const prettifyConsentType = (s: string): string =>
           </button>
         </div>
 
-        <nav class="ed-le-filter" aria-label="Filter by service">
+        <nav
+          class="ed-le-filter"
+          :aria-label="mode === 'lfi-insurer' ? 'Filter by insurance type' : 'Filter by service'"
+        >
           <button
             type="button"
             class="ed-le-filter__btn"
             :class="{ 'is-active': family === 'all' }"
             @click="setFamily('all')"
-          >All services</button>
+          >{{ mode === 'lfi-insurer' ? 'All types' : 'All services' }}</button>
           <button
-            v-for="f in FAMILY_KEYS"
-            :key="f"
+            v-for="chip in filterChips"
+            :key="chip.key"
             type="button"
             class="ed-le-filter__btn"
-            :class="{ 'is-active': family === f }"
-            @click="setFamily(f)"
-          >{{ FAMILY_LABELS[f] }}</button>
+            :class="{ 'is-active': family === chip.key }"
+            @click="setFamily(chip.key)"
+          >{{ chip.label }}</button>
         </nav>
       </div>
     </section>
@@ -732,11 +968,16 @@ const prettifyConsentType = (s: string): string =>
         </div>
 
         <!-- LFI cards ────────────────────────────────────────────────── -->
-        <template v-else-if="mode === 'lfi'">
+        <template v-else-if="isLfi">
           <div v-if="visibleServers.length === 0" class="ed-le-empty">
             <span class="ed-le-empty-kicker">No match</span>
-            <h3>No LFIs offering {{ FAMILY_LABELS[family] || 'this service' }} yet.</h3>
-            <button class="ed-le-clear" @click="setFamily('all')">Show all services &rarr;</button>
+            <h3 v-if="mode === 'lfi-insurer'">
+              No insurers offering {{ family === 'all' ? 'insurance' : filterLabel(family) }} yet.
+            </h3>
+            <h3 v-else>No banks offering {{ family === 'all' ? 'this service' : filterLabel(family) }} yet.</h3>
+            <button class="ed-le-clear" @click="setFamily('all')">
+              {{ mode === 'lfi-insurer' ? 'Show all types' : 'Show all services' }} &rarr;
+            </button>
           </div>
           <div v-else class="ed-le-grid">
             <article
@@ -786,34 +1027,69 @@ const prettifyConsentType = (s: string): string =>
                       :key="v.version"
                       class="ed-le-card__version"
                     >
-                      <div class="ed-le-card__version-head">
-                        <span class="ed-le-card__version-label">{{ v.version }}</span>
-                        <span
-                          v-for="t in v.paymentTypes"
-                          :key="`pt-${t}`"
-                          class="ed-le-pill ed-le-pill--meta"
-                        >{{ t }}</span>
-                        <span
-                          v-for="t in v.accountSubTypes"
-                          :key="`ast-${t}`"
-                          class="ed-le-pill ed-le-pill--subtype"
-                        >{{ t }}</span>
-                      </div>
-                      <button
-                        v-if="v.endpoints.length"
-                        type="button"
-                        class="ed-le-card__endpoints-toggle"
-                        :aria-expanded="v.expanded ? 'true' : 'false'"
-                        @click="v.expanded = !v.expanded"
-                      >
-                        <span class="ed-le-chev ed-le-chev--small" :class="{ 'is-open': v.expanded }">›</span>
-                        {{ v.expanded ? 'Hide' : 'Show' }} endpoints ({{ v.endpoints.length }})
-                      </button>
-                      <ul v-if="v.expanded" class="ed-le-card__endpoints">
-                        <li v-for="ep in v.endpoints" :key="ep">
-                          <code>{{ ep }}</code>
-                        </li>
-                      </ul>
+                      <!-- Banking families: payment/subtype pills + flat endpoint list -->
+                      <template v-if="svc.familyKey !== 'insurance'">
+                        <div class="ed-le-card__version-head">
+                          <span class="ed-le-card__version-label">{{ v.version }}</span>
+                          <span
+                            v-for="t in v.paymentTypes"
+                            :key="`pt-${t}`"
+                            class="ed-le-pill ed-le-pill--meta"
+                          >{{ t }}</span>
+                          <span
+                            v-for="t in v.accountSubTypes"
+                            :key="`ast-${t}`"
+                            class="ed-le-pill ed-le-pill--subtype"
+                          >{{ t }}</span>
+                        </div>
+                        <button
+                          v-if="v.endpoints.length"
+                          type="button"
+                          class="ed-le-card__endpoints-toggle"
+                          :aria-expanded="v.expanded ? 'true' : 'false'"
+                          @click="v.expanded = !v.expanded"
+                        >
+                          <span class="ed-le-chev ed-le-chev--small" :class="{ 'is-open': v.expanded }">›</span>
+                          {{ v.expanded ? 'Hide' : 'Show' }} endpoints ({{ v.endpoints.length }})
+                        </button>
+                        <ul v-if="v.expanded" class="ed-le-card__endpoints">
+                          <li v-for="ep in v.endpoints" :key="ep">
+                            <code>{{ ep }}</code>
+                          </li>
+                        </ul>
+                      </template>
+
+                      <!-- Insurance: type pills + per-type collapsible groups -->
+                      <template v-else>
+                        <div class="ed-le-card__version-head">
+                          <span class="ed-le-card__version-label">{{ v.version }}</span>
+                          <span
+                            v-for="t in v.insuranceTypes"
+                            :key="`it-${t}`"
+                            class="ed-le-pill ed-le-pill--subtype"
+                          >{{ INSURANCE_TYPE_LABELS[t] }}</span>
+                        </div>
+                        <div
+                          v-for="g in visibleInsuranceGroups(v)"
+                          :key="g.key"
+                          class="ed-le-card__ins-group"
+                        >
+                          <button
+                            type="button"
+                            class="ed-le-card__endpoints-toggle"
+                            :aria-expanded="g.expanded ? 'true' : 'false'"
+                            @click="g.expanded = !g.expanded"
+                          >
+                            <span class="ed-le-chev ed-le-chev--small" :class="{ 'is-open': g.expanded }">›</span>
+                            {{ g.label }} ({{ g.endpoints.length }})
+                          </button>
+                          <ul v-if="g.expanded" class="ed-le-card__endpoints">
+                            <li v-for="ep in g.endpoints" :key="ep">
+                              <code>{{ ep }}</code>
+                            </li>
+                          </ul>
+                        </div>
+                      </template>
                     </div>
                   </div>
                 </li>
@@ -826,7 +1102,7 @@ const prettifyConsentType = (s: string): string =>
         <template v-else>
           <div v-if="filteredTpps.length === 0" class="ed-le-empty">
             <span class="ed-le-empty-kicker">No match</span>
-            <h3>No TPPs consuming {{ FAMILY_LABELS[family] || 'this service' }} in the last {{ DAYS_WINDOW }} days.</h3>
+            <h3>No TPPs consuming {{ family === 'all' ? 'this service' : filterLabel(family) }} in the last {{ DAYS_WINDOW }} days.</h3>
             <button class="ed-le-clear" @click="setFamily('all')">Show all services &rarr;</button>
           </div>
 
@@ -1366,6 +1642,8 @@ const prettifyConsentType = (s: string): string =>
 }
 
 .ed-le-card__endpoints-toggle:hover { color: var(--at-navy-deep); }
+
+.ed-le-card__ins-group + .ed-le-card__ins-group { margin-top: 0.25rem; }
 
 .ed-le-card__endpoints {
   list-style: none;

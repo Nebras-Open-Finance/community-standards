@@ -6,15 +6,16 @@ meta:
 <script setup lang="ts">
 // Bespoke detail page for OFP-004. Hand-authored (not rendered from the
 // proposals data array) so the content can be laid out in named sections —
-// Background, Recommendation, Technical changes, Alternative approach, Pros,
-// and Cons. Styling follows the site's editorial system (cream/white bands,
+// Background, Recommendation, Technical changes, Pros, and Cons. Styling
+// follows the site's editorial system (cream/white bands,
 // Fraunces/Poppins/IBM Plex Mono, sharp corners) and mirrors OFP-003.
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, type Component } from 'vue'
 import { useHead } from '@unhead/vue'
 import { type Proposal, type Stance, type Status, type Priority, deriveStatus, PRIORITY } from '@/data/proposals'
 import { useProposals } from '@/composables/useProposals'
 import PvVotePanel from '@/components/proposals/PvVotePanel.vue'
 import PvStatusPill from '@/components/proposals/PvStatusPill.vue'
+import PvProposalTabs from '@/components/proposals/PvProposalTabs.vue'
 
 // Per-page link-preview override: a tailored title + description so a shared
 // link to this proposal reads as the proposal itself, not the site default.
@@ -46,23 +47,22 @@ const meta = {
 
 const pros = [
   'Eliminates dead-on-arrival consents — a consent can no longer be created that expires before the customer has time to authenticate at the LFI and the TPP to make its first call.',
-  'Ties the minimum to the real constraint — the authorisation journey — so it stays correct even if the API Hub’s internal authorisation-timeout window is later retuned.',
+  'Ties the minimum to the real constraint — the authorisation journey — a stable, real-world value rather than an internal platform setting that might change.',
   'Preserves data minimisation: a TPP can still create a short-lived, single-use consent (e.g. a one-off balance or verification check) rather than holding a long-lived grant it does not need.',
   'Small and additive — one extra bound on ExpirationDateTime at the API Hub, alongside the existing “must be in the future” rule and the documented one-year maximum.',
-  'Closes a spec/implementation gap: the AwaitingAuthorization → Expired transition already happens in practice, and this aligns the documented consent status model with observed behaviour.',
+  'Purely a validation change — no new fields, endpoints, or schemas, and no change to the consent status model, which the API Hub handles independently.',
   'Cheap for TPPs to adopt — any sensible ExpirationDateTime already clears a 15-minute floor, so only absurd values are rejected.',
 ]
 
 const cons = [
-  '“Expired” now carries two histories — a consent that lapsed before it was ever authorised, and one that lapsed after active use — so a Consent Management Interface needs the audit trail (or a status reason) to tell them apart.',
-  'Requires legitimising and documenting the AwaitingAuthorization → Expired transition — a change to the consent status model, not validation alone.',
   'The exact floor (15 minutes) is a judgement call; an unusually slow authentication journey could in theory still outrun a minimum-length consent, so the margin must be chosen with comfort to spare.',
-  'Two terminal statuses for an unauthorised consent depending on timing — Expired if it reaches its ExpirationDateTime first, Rejected if the authorisation-timeout cleanup fires first — which implementers must apply correctly.',
+  'Rejects the most extreme short-lived consents outright: a TPP that deliberately wanted a sub-15-minute grant can no longer create one, however niche that case is.',
+  'Introduces a new request-validation rejection at consent creation, so any TPP tooling that today sends very short ExpirationDateTime values (test harnesses, automation) must be updated to clear the floor.',
 ]
 
-// Empirical evidence — observed sandbox behaviour, rendered as dark code blocks
-// in the Background section. These are not schema; they are the measured facts
-// the proposal rests on.
+// Empirical evidence — observed sandbox behaviour, rendered as a dark code block
+// in the Background section. This is not schema; it is the measured fact the
+// proposal rests on: PAR accepts an ExpirationDateTime seconds in the future.
 const evidenceAccepted = `# PAR validation TODAY — the only rule enforced is "must be in the future"
 ExpirationDateTime     PAR result
 past (-1 hour)         400   "The ExpirationDateTime value must be in the future."
@@ -72,17 +72,10 @@ now + 2 hours          201   accepted
 now + 364 days         201   accepted
 now + > 1 year               rejected (documented maximum)`
 
-const evidenceLifecycle = `# 10 consents created, then left UNAUTHORISED (Model Bank sandbox)
-label      ExpirationDateTime   terminal status   reached at   reason
-SH-2m      now + 2 min          Expired           ~ +3m        ExpirationDateTime reached while AwaitingAuthorization
-SH-30m     now + 30 min         Expired           ~ +35m       ExpirationDateTime reached while AwaitingAuthorization
-SH-2h      now + 2 h            Expired           ~ +2h03m     ExpirationDateTime reached
-LL-1..7    now + 364 days       Rejected          ~ +2h03m     authorisation not completed within ~2h (API Hub cleanup)`
-
 // ─── Voting ─────────────────────────────────────────────────────────────────
 // Live tally + vote submission are backed by the proposals API (D1) via
 // useProposals. PvVotePanel takes a Proposal-shaped object; only id/status/
-// quorum/closes are read by the panel, the rest come from `meta` above.
+// closes are read by the panel, the rest come from `meta` above.
 const { myVotes, setVote, submitVote, hydrate, loadOne, loadMe, metaById } = useProposals()
 
 // The proposal's live metadata from the API (dates, priority). Drives the hero
@@ -99,6 +92,23 @@ const versionDisplay = ref(meta.version)
 
 const priorityLabel = computed(() => PRIORITY[priority.value]?.label ?? PRIORITY.medium.label)
 
+// Voting has finished: swap the "Cast your vote" CTA for a closed treatment and
+// let the tally show through (the draft state keeps its frosted cover below).
+const isClosed = computed(() => status.value === 'closed')
+
+// Optional companion partials, authored per proposal and co-located with this
+// page (ofp-004.outcome.vue / ofp-004.feedback.vue) — excluded from routing in
+// vite.config. Their presence drives the layout: an Outcome switches a closed
+// proposal to the tabbed view; Feedback is appended under the vote panel. When
+// neither exists the page renders exactly as before.
+const outcomeMods = import.meta.glob('./ofp-004.outcome.vue', { eager: true }) as Record<string, { default: Component }>
+const feedbackMods = import.meta.glob('./ofp-004.feedback.vue', { eager: true }) as Record<string, { default: Component }>
+const OutcomePartial = Object.values(outcomeMods)[0]?.default ?? null
+const FeedbackPartial = Object.values(feedbackMods)[0]?.default ?? null
+
+// Tabs appear only once voting has closed AND an Outcome has been written.
+const showTabs = computed(() => isClosed.value && !!OutcomePartial)
+
 const proposal = computed<Proposal>(() => ({
   id: meta.id,
   title: 'Enforce a minimum ExpirationDateTime for consents',
@@ -110,7 +120,6 @@ const proposal = computed<Proposal>(() => ({
   opened: openedDisplay.value,
   closes: closesDisplay.value,
   closesIn: closesIn.value,
-  quorum: 16,
   body: [],
   questions: apiMeta.value?.questions ?? [],
   version: versionDisplay.value,
@@ -234,14 +243,26 @@ onMounted(() => {
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         CAST YOUR VOTE
+         DECISION · once closed with an Outcome, this whole region becomes tabs:
+         Outcome of Proposal · Votes Received & Feedback · Original Proposal.
+         Otherwise it renders straight through (the current single-scroll view).
     ═══════════════════════════════════════════════════════════════════ -->
+    <PvProposalTabs :tabbed="showTabs">
+      <template #outcome>
+        <component :is="OutcomePartial" />
+      </template>
+
+      <template #votes>
+    <!-- ─── CAST YOUR VOTE ─── -->
     <section class="ofp-band ofp-band--white ofp-vote-wrap">
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
           <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> Decision</div>
-          <h2 class="ofp-band__title">Cast your vote</h2>
-          <p class="ofp-band__lede">
+          <h2 class="ofp-band__title">{{ isClosed ? 'Voting is now closed' : 'Cast your vote' }}</h2>
+          <p v-if="isClosed" class="ofp-band__lede">
+            The voting period has ended. The votes cast are shown below.
+          </p>
+          <p v-else class="ofp-band__lede">
             Sign in with the Trust Framework to vote &mdash; For, Against, or Abstain &mdash; recorded in
             the open with your reasoning. Your organisation and name come from your directory profile, and
             each person may vote once.
@@ -251,21 +272,23 @@ onMounted(() => {
         <p v-if="submitError && status === 'open'" class="ofp-vote-error" role="alert">{{ submitError }}</p>
       </div>
 
-      <!-- When voting is not open, frost over the whole white block. -->
-      <div v-if="status !== 'open'" class="ofp-vote-cover" aria-hidden="false">
+      <!-- Before voting opens, frost over the whole white block. Once voting has
+           closed the cover is dropped so the tally shows through — the band head
+           and panel carry the "Voting is now closed" treatment instead. -->
+      <div v-if="status === 'draft'" class="ofp-vote-cover" aria-hidden="false">
         <div class="ofp-vote-cover__card">
-          <div class="ofp-vote-cover__label">
-            {{ status === 'draft' ? 'Voting not yet open' : 'Voting closed' }}
-          </div>
-          <div class="ofp-vote-cover__msg">
-            {{ status === 'draft'
-              ? `Voting opens ${openedDisplay}`
-              : 'Voting is now closed' }}
-          </div>
+          <div class="ofp-vote-cover__label">Voting not yet open</div>
+          <div class="ofp-vote-cover__msg">Voting opens {{ openedDisplay }}</div>
         </div>
       </div>
     </section>
 
+        <!-- Feedback: appended under the vote panel once voting has closed, when a
+             feedback partial has been authored (else just the vote panel shows). -->
+        <component :is="FeedbackPartial" v-if="FeedbackPartial && isClosed" />
+      </template>
+
+      <template #proposal>
     <!-- ═══════════════════════════════════════════════════════════════════
          01 · BACKGROUND
     ═══════════════════════════════════════════════════════════════════ -->
@@ -306,40 +329,9 @@ onMounted(() => {
             one-second expiry is not a hypothetical: the platform accepts it.
           </p>
           <p>
-            Separately, the API Hub runs a background job that <strong>terminates consents not authorised
-            within roughly two hours</strong>, moving them to <code>Rejected</code>. The two mechanisms are
-            independent, and conflating them causes confusion, so it is worth stating plainly that there are
-            <strong>two different clocks</strong>:
-          </p>
-          <ul class="ofp-gaps">
-            <li>
-              <strong>ExpirationDateTime</strong> — the consent’s usable lifetime, chosen by the TPP. It
-              governs how long an <em>authorised</em> consent remains valid for data sharing.
-            </li>
-            <li>
-              <strong>The ~2-hour authorisation timeout</strong> — an API Hub cleanup job. It governs how
-              long an <em>un-authorised</em> consent may sit waiting before it is rejected.
-            </li>
-          </ul>
-          <p>
-            We confirmed both by creating ten consents and leaving every one of them unauthorised. The three
-            with short expiries lapsed to <code>Expired</code> when their <code>ExpirationDateTime</code>
-            passed; the seven long-lived ones were swept to <code>Rejected</code> at about two hours by the
-            cleanup job:
-          </p>
-
-          <div class="ofp-code">
-            <div class="ofp-code__label">Observed — terminal status of ten unauthorised consents</div>
-            <pre class="ofp-code__pre">{{ evidenceLifecycle }}</pre>
-          </div>
-
-          <p>
-            That first group exposes a second gap. An unauthorised consent reaching its
-            <code>ExpirationDateTime</code> moves <code>AwaitingAuthorization → Expired</code> — but the
-            documented consent status model frames <code>Expired</code> as the end of an <em>authorised</em>
-            consent, and <code>Rejected</code> as “the unauthorized consent has been rejected at the LFI.”
-            The behaviour we observe (the Hub expiring, and elsewhere rejecting, a consent the LFI never
-            saw) is not what the status descriptions describe.
+            (Separately, the API Hub cleans up consents that are never authorised. That is independent of the
+            <code>ExpirationDateTime</code> the TPP sets, and this proposal is solely about that value — the
+            consent’s usable lifetime.)
           </p>
         </div>
       </div>
@@ -364,29 +356,14 @@ onMounted(() => {
             a first call), while still short enough that a TPP can keep a single-use consent tight.
           </p>
           <p>
-            Crucially, the minimum is anchored to the <strong>journey</strong>, not to the ~2-hour cleanup
-            job. The cleanup window is an internal operational value that may be retuned; the time a customer
-            needs to authenticate is not. Tying the floor to the journey keeps it correct independent of the
-            job, and the two clocks should be documented side by side so no one re-derives a false
-            dependency between them.
+            The minimum is anchored to the <strong>journey</strong> — the time a customer needs to be
+            redirected, authenticate, approve, and return — which is a stable, real-world constraint. Fifteen
+            minutes clears it comfortably while still letting a TPP keep a single-use consent tight.
           </p>
           <p>
-            Because a valid short consent (≥ 15 minutes) can still lapse while unauthorised — the customer
-            simply abandons the journey — this recommendation also <strong>legitimises the
-            <code>AwaitingAuthorization → Expired</code> transition</strong> in the consent status model and
-            pins down the two terminal meanings:
-          </p>
-          <ul class="ofp-gaps">
-            <li><strong><code>Expired</code></strong> — the consent reached its <code>ExpirationDateTime</code>, whether or not it had been authorised.</li>
-            <li><strong><code>Rejected</code></strong> — authorisation was not completed within the API Hub’s authorisation window (the ~2-hour cleanup), or the LFI rejected it.</li>
-          </ul>
-          <p>
-            That leaves one wrinkle to handle deliberately: an <code>Expired</code> consent that was never
-            authorised and one that expired after active use share a single status. A Consent Management
-            Interface should distinguish them from the <strong>consent audit</strong> (the status-transition
-            history) or a status reason — “expired before authorisation” versus “expired after use” — rather
-            than from the <code>Status</code> value alone. A TPP sets <code>ExpirationDateTime</code> in the
-            consent request for every type; the
+            This proposal changes validation only. It does not touch the consent status model or how the API
+            Hub cleans up consents that are never authorised. A TPP sets <code>ExpirationDateTime</code> in
+            the consent request for every type; the
             <RouterLink to="/tech/tpp-standards/v2.1/banking/data-sharing/api-guide/">Data Sharing API guide</RouterLink>
             shows one example.
           </p>
@@ -403,8 +380,8 @@ onMounted(() => {
           <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 03 · Technical changes</div>
           <h2 class="ofp-band__title">What changes in the spec</h2>
           <p class="ofp-band__lede">
-            One new validation bound, one alignment of the consent status model, and a documentation note —
-            no new fields, endpoints, or schemas.
+            One new validation bound and a documentation note — no new fields, endpoints, or schemas, and no
+            change to the consent status model.
           </p>
         </div>
 
@@ -421,26 +398,12 @@ onMounted(() => {
           </div>
 
           <div class="ofp-change">
-            <div class="ofp-change__label">02 · Consent status model (<code>AEConsentStatus.AEConsentStatusCodes</code>)</div>
+            <div class="ofp-change__label">02 · Documentation — the minimum</div>
             <p>
-              Explicitly permit the <code>AwaitingAuthorization → Expired</code> transition, and clarify the
-              terminal descriptions: <code>Expired</code> applies whenever <code>ExpirationDateTime</code> is
-              reached (authorised or not); <code>Rejected</code> covers an authorisation that was not
-              completed in time (the API Hub cleanup) as well as an LFI rejection. The current
-              <code>Rejected</code> text — “rejected at the LFI” — should be widened, since the ~2-hour
-              timeout is a Hub-side action on a consent the LFI never saw.
-            </p>
-          </div>
-
-          <div class="ofp-change">
-            <div class="ofp-change__label">03 · Documentation — the two clocks</div>
-            <p>
-              Add a consent-lifecycle note describing the two independent timers —
-              <code>ExpirationDateTime</code> (usable lifetime, TPP-chosen) and the authorisation-timeout
-              cleanup (Hub-side) — and the new minimum, on the consent lifecycle pages and the per-type API
-              guides, so TPPs size <code>ExpirationDateTime</code> against the journey rather than against
-              the cleanup window. The rule and the lifecycle apply to every consent type, not one product
-              area.
+              Document the new 15-minute minimum on the consent lifecycle pages and the per-type API guides,
+              alongside the existing “must be in the future” and one-year-maximum bounds, so TPPs size
+              <code>ExpirationDateTime</code> against the authorisation journey. The rule applies to every
+              consent type, not one product area.
             </p>
           </div>
         </div>
@@ -448,63 +411,12 @@ onMounted(() => {
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         04 · ALTERNATIVE APPROACH
+         04 · PROS
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ofp-band ofp-band--white">
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 04 · Alternative approach</div>
-          <h2 class="ofp-band__title">Align the minimum to the cleanup window (~130 minutes)</h2>
-          <p class="ofp-band__lede">
-            A larger floor — just over the ~2-hour authorisation timeout — that buys cleaner status
-            semantics at the cost of banning short consents.
-          </p>
-        </div>
-        <div class="ofp-prose">
-          <p>
-            Instead of a journey-based 15 minutes, set the minimum <code>ExpirationDateTime</code> to roughly
-            <strong>130 minutes</strong> — a little beyond the ~2-hour cleanup window. The effect is elegant:
-            any unauthorised consent is swept to <code>Rejected</code> by the cleanup <em>before</em> its
-            <code>ExpirationDateTime</code> (≥ 130 min) can ever be reached. So <code>Expired</code> would
-            then mean one thing only — <strong>“was authorised, then lapsed”</strong> — the
-            <code>AwaitingAuthorization → Expired</code> transition would not arise in practice, and the
-            documented status model could stay as it is. In a Consent Management Interface, an
-            <code>Expired</code> consent unambiguously had a life; you never see one that was never active.
-          </p>
-          <p><strong>Why we do not recommend it:</strong></p>
-          <ul class="ofp-gaps">
-            <li>
-              It forces <em>every</em> consent to live at least ~130 minutes, even when the use case wants a
-              tight, single-use one-off check — working directly against <strong>data minimisation</strong>,
-              and outlawing a legitimate short-lived pattern.
-            </li>
-            <li>
-              It couples a public standards value to a <strong>configurable internal job duration</strong>.
-              Retune the cleanup to 30 minutes or 4 hours and the 130-minute floor is immediately wrong.
-            </li>
-            <li>
-              It buys little for the actual problem. The dead-on-arrival case is already solved by a
-              15-minute floor; the extra ~115 minutes only delivers status tidiness — which the recommended
-              option recovers anyway through the consent audit.
-            </li>
-          </ul>
-          <p>
-            The trade is real, which is why it is presented here rather than dismissed: 130 minutes gives the
-            cleanest <code>Expired</code> semantics with no status-model change, but 15 minutes solves the
-            safety problem without sacrificing short consents. The recommendation takes the latter and
-            handles the status ambiguity explicitly.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══════════════════════════════════════════════════════════════════
-         05 · PROS
-    ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ofp-band ofp-band--cream">
-      <div class="ofp-band__inner">
-        <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 05 · Pros</div>
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 04 · Pros</div>
           <h2 class="ofp-band__title">What a journey-based minimum buys</h2>
         </div>
         <ul class="ofp-pros">
@@ -517,12 +429,12 @@ onMounted(() => {
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         06 · CONS
+         05 · CONS
     ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ofp-band ofp-band--white">
+    <section class="ofp-band ofp-band--cream">
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 06 · Cons</div>
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 05 · Cons</div>
           <h2 class="ofp-band__title">What it costs</h2>
         </div>
         <ul class="ofp-cons">
@@ -533,6 +445,8 @@ onMounted(() => {
         </ul>
       </div>
     </section>
+      </template>
+    </PvProposalTabs>
 
   </div>
 </template>

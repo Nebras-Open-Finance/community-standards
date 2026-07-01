@@ -47,7 +47,7 @@ const canvasRef = ref<HTMLCanvasElement | null>(null)
 let chartInstance: Chart | null = null
 
 const INLINE_TYPES: readonly ChartConfig['component'][] = [
-  'error-rate', 'error-codes', 'success-rate', 'pay-status', 'auth-rate',
+  'error-rate', 'error-codes', 'success-rate', 'pay-status', 'pay-size-dist', 'auth-rate',
 ]
 
 const ACCENT = {
@@ -167,6 +167,24 @@ const authRateSummary = computed<string>(() => {
               : numeratorType === 'doFail'    ? 'cancellation'
               : 'drop-off'
   return `${rate}% avg ${label} rate`
+})
+
+// Payment size bands (AED), keyed off each aggregate row's mean ticket size
+// (amount / count). Logarithmic edges span the observed range (~0.01–49K AED).
+const SIZE_BANDS: readonly { label: string; max: number }[] = [
+  { label: '< 1',        max: 1 },
+  { label: '1 – 10',     max: 10 },
+  { label: '10 – 100',   max: 100 },
+  { label: '100 – 1K',   max: 1_000 },
+  { label: '1K – 10K',   max: 10_000 },
+  { label: '10K+',       max: Infinity },
+]
+
+const paySizeSummary = computed<string>(() => {
+  if (props.config.component !== 'pay-size-dist') return ''
+  let payments = 0
+  for (const row of props.data) payments += asPaymentRow(row).count
+  return `${payments.toLocaleString()} payments`
 })
 
 // ── Inline chart builders ────────────────────────────────────────────────
@@ -320,6 +338,53 @@ function buildPayStatus(): void {
   chartInstance = new Chart(canvasRef.value!, config)
 }
 
+function buildPaySizeDist(): void {
+  // Each row is an aggregate of `count` payments totalling `amount` AED, so the
+  // true per-payment spread is unknown — we bucket every row by its mean ticket
+  // size (amount / count) and add its count to that band. An approximation of
+  // the underlying distribution, weighted by payment count.
+  const counts = SIZE_BANDS.map(() => 0)
+  for (const row of props.data) {
+    const r = asPaymentRow(row)
+    if (r.count <= 0 || r.amount <= 0) continue
+    const mean = r.amount / r.count
+    const found = SIZE_BANDS.findIndex(b => mean < b.max)
+    const band = found === -1 ? SIZE_BANDS.length - 1 : found
+    counts[band] = (counts[band] ?? 0) + r.count
+  }
+
+  const s = buildStyle()
+  const config: ChartConfiguration<'bar'> = {
+    type: 'bar',
+    data: {
+      labels: SIZE_BANDS.map(b => b.label),
+      datasets: [{
+        label: 'Payments',
+        data: counts,
+        backgroundColor: ACCENT.navy,
+        borderWidth: 0,
+        borderRadius: 0,
+        maxBarThickness: 80,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...s.TOOLTIP,
+          callbacks: { label: (ctx) => `  ${Number(ctx.parsed.y).toLocaleString()} payments` },
+        },
+      },
+      scales: {
+        y: { beginAtZero: true, grid: s.GRID, ticks: s.AXIS_TICK, title: { display: true, text: 'Payment Count', ...s.AXIS_TITLE } },
+        x: { grid: { display: false }, ticks: s.AXIS_LABEL, title: { display: true, text: 'Mean Ticket Size (AED)', ...s.AXIS_TITLE } },
+      },
+    },
+  }
+  chartInstance = new Chart(canvasRef.value!, config)
+}
+
 function buildAuthRate(): void {
   const groupBy = props.config.props?.groupBy ?? 'lfi'
   const numeratorType = props.config.props?.numeratorType ?? 'doConfirm'
@@ -388,6 +453,7 @@ function buildInlineChart(): void {
     case 'error-codes':  buildErrorCodes(); break
     case 'success-rate': buildSuccessRate(); break
     case 'pay-status':   buildPayStatus(); break
+    case 'pay-size-dist': buildPaySizeDist(); break
     case 'auth-rate':    buildAuthRate(); break
     default: /* not an inline type */ break
   }
@@ -456,6 +522,14 @@ onBeforeUnmount(destroyChart)
 
   <div v-else-if="config.component === 'pay-status'" class="chart-card">
     <div class="chart-card__title">{{ config.title }}</div>
+    <div class="chart-card__canvas">
+      <canvas ref="canvasRef" />
+    </div>
+  </div>
+
+  <div v-else-if="config.component === 'pay-size-dist'" class="chart-card">
+    <div class="chart-card__title">{{ config.title }}</div>
+    <div class="chart-card__meta">{{ paySizeSummary }}</div>
     <div class="chart-card__canvas">
       <canvas ref="canvasRef" />
     </div>

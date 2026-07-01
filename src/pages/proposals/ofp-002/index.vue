@@ -11,12 +11,13 @@ meta:
 // OFP-001. This proposal lives in its own folder so the two draft schema YAMLs
 // (domestic-payment-schema.yaml / international-payment-schema.yaml) sit beside the
 // page; they are imported raw below and shown in the Draft schemas section.
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, type Component } from 'vue'
 import { useHead } from '@unhead/vue'
 import { type Proposal, type Stance, type Status, type Priority, deriveStatus, PRIORITY } from '@/data/proposals'
 import { useProposals } from '@/composables/useProposals'
 import PvVotePanel from '@/components/proposals/PvVotePanel.vue'
 import PvStatusPill from '@/components/proposals/PvStatusPill.vue'
+import PvProposalTabs from '@/components/proposals/PvProposalTabs.vue'
 
 useHead({ title: 'OFP-002 · Split the payment schema into Domestic and International definitions' })
 
@@ -107,7 +108,7 @@ POST /payments                         # International
 // ─── Voting ─────────────────────────────────────────────────────────────────
 // Live tally + vote submission are backed by the proposals API (D1) via
 // useProposals. PvVotePanel takes a Proposal-shaped object; only id/status/
-// quorum/closes are read by the panel, the rest come from `meta` above.
+// closes are read by the panel, the rest come from `meta` above.
 const { myVotes, setVote, submitVote, hydrate, loadOne, loadMe, metaById } = useProposals()
 
 // The proposal's live metadata from the API (dates, priority). Drives the hero
@@ -124,6 +125,23 @@ const versionDisplay = ref(meta.version)
 
 const priorityLabel = computed(() => PRIORITY[priority.value]?.label ?? PRIORITY.high.label)
 
+// Voting has finished: swap the "Cast your vote" CTA for a closed treatment and
+// let the tally show through (draft/internal keep their frosted cover below).
+const isClosed = computed(() => status.value === 'closed')
+
+// Optional companion partials, authored per proposal and co-located in this
+// folder (ofp-002.outcome.vue / ofp-002.feedback.vue) — excluded from routing in
+// vite.config. Their presence drives the layout: an Outcome switches a closed
+// proposal to the tabbed view; Feedback is appended under the vote panel. When
+// neither exists the page renders exactly as before.
+const outcomeMods = import.meta.glob('./ofp-002.outcome.vue', { eager: true }) as Record<string, { default: Component }>
+const feedbackMods = import.meta.glob('./ofp-002.feedback.vue', { eager: true }) as Record<string, { default: Component }>
+const OutcomePartial = Object.values(outcomeMods)[0]?.default ?? null
+const FeedbackPartial = Object.values(feedbackMods)[0]?.default ?? null
+
+// Tabs appear only once voting has closed AND an Outcome has been written.
+const showTabs = computed(() => isClosed.value && !!OutcomePartial)
+
 const proposal = computed<Proposal>(() => ({
   id: meta.id,
   title: 'Split the payment schema into Domestic and International definitions',
@@ -135,7 +153,6 @@ const proposal = computed<Proposal>(() => ({
   opened: openedDisplay.value,
   closes: closesDisplay.value,
   closesIn: closesIn.value,
-  quorum: 16,
   body: [],
   questions: apiMeta.value?.questions ?? [],
   version: versionDisplay.value,
@@ -262,14 +279,26 @@ onMounted(() => {
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         CAST YOUR VOTE
+         DECISION · once closed with an Outcome, this whole region becomes tabs:
+         Outcome of Proposal · Votes Received & Feedback · Original Proposal.
+         Otherwise it renders straight through (the current single-scroll view).
     ═══════════════════════════════════════════════════════════════════ -->
+    <PvProposalTabs :tabbed="showTabs">
+      <template #outcome>
+        <component :is="OutcomePartial" />
+      </template>
+
+      <template #votes>
+    <!-- ─── CAST YOUR VOTE ─── -->
     <section class="ofp-band ofp-band--white ofp-vote-wrap">
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
           <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> Decision</div>
-          <h2 class="ofp-band__title">Cast your vote</h2>
-          <p class="ofp-band__lede">
+          <h2 class="ofp-band__title">{{ isClosed ? 'Voting is now closed' : 'Cast your vote' }}</h2>
+          <p v-if="isClosed" class="ofp-band__lede">
+            The voting period has ended. The votes cast are shown below.
+          </p>
+          <p v-else class="ofp-band__lede">
             Sign in with the Trust Framework to vote &mdash; For, Against, or Abstain &mdash; recorded in
             the open with your reasoning. Your organisation and name come from your directory profile, and
             each person may vote once.
@@ -279,23 +308,29 @@ onMounted(() => {
         <p v-if="submitError && status === 'open'" class="ofp-vote-error" role="alert">{{ submitError }}</p>
       </div>
 
-      <!-- When voting is not open, frost over the whole white block. -->
-      <div v-if="status !== 'open'" class="ofp-vote-cover" aria-hidden="false">
+      <!-- Before voting opens (or while internal), frost over the whole white
+           block. Once voting has closed the cover is dropped so the tally shows
+           through — the band head and panel carry the closed treatment instead. -->
+      <div v-if="status === 'draft' || status === 'internal'" class="ofp-vote-cover" aria-hidden="false">
         <div class="ofp-vote-cover__card">
           <div class="ofp-vote-cover__label">
-            {{ status === 'draft' ? 'Voting not yet open'
-              : status === 'internal' ? 'Internal proposal'
-              : 'Voting closed' }}
+            {{ status === 'internal' ? 'Internal proposal' : 'Voting not yet open' }}
           </div>
           <div class="ofp-vote-cover__msg">
-            {{ status === 'draft' ? `Voting opens ${openedDisplay}`
-              : status === 'internal' ? 'This proposal is under internal review.'
-              : 'Voting is now closed' }}
+            {{ status === 'internal'
+              ? 'This proposal is under internal review.'
+              : `Voting opens ${openedDisplay}` }}
           </div>
         </div>
       </div>
     </section>
 
+        <!-- Feedback: appended under the vote panel once voting has closed, when a
+             feedback partial has been authored (else just the vote panel shows). -->
+        <component :is="FeedbackPartial" v-if="FeedbackPartial && isClosed" />
+      </template>
+
+      <template #proposal>
     <!-- ═══════════════════════════════════════════════════════════════════
          THE PROPOSAL (starts here) · BACKGROUND
     ═══════════════════════════════════════════════════════════════════ -->
@@ -542,6 +577,8 @@ onMounted(() => {
         </ul>
       </div>
     </section>
+      </template>
+    </PvProposalTabs>
 
   </div>
 </template>

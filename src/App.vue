@@ -30,7 +30,7 @@ const canonicalUrl = computed(() => SITE_URL + route.path)
 // back to the per-page <title> (always populated by titleTemplate), which is
 // already correct per page. A page wanting a tailored card overrides og:image /
 // og:title / og:description in its own useHead() — later meta of the same
-// name/property wins under Unhead's dedupe. See src/pages/proposals/ofp-003.vue.
+// name/property wins under Unhead's dedupe. See src/pages/proposals/ofp-003/index.vue.
 useHead({
   titleTemplate: (title) => (title ? `${title} | ${SITE_NAME}` : SITE_NAME),
   link: [{ rel: 'canonical', href: canonicalUrl }],
