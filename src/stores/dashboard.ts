@@ -2,8 +2,14 @@
 // `state` and computed datasets. SSG-safe: `fetch` is guarded by
 // `typeof window !== 'undefined'`.
 
-import { reactive, computed, ref, type ComputedRef, type Ref } from 'vue'
-import type { DataSource, FilterKey } from '@/data/dashboard-charts'
+import { reactive, computed, ref, watchEffect, type ComputedRef, type Ref } from 'vue'
+import {
+  sectionInSector,
+  firstSectionOfSector,
+  type DataSource,
+  type FilterKey,
+  type Sector,
+} from '@/data/dashboard-charts'
 
 // Loose raw shapes — external JSON may have missing keys. The transform
 // functions normalise to safe defaults before anything reactive sees them.
@@ -116,6 +122,7 @@ export interface DashboardFilters {
 
 export interface DashboardState {
   filters:              DashboardFilters
+  sector:               Sector
   activeSection:        string
   sidebarCollapsed:     boolean
   excludePartialMonths: boolean
@@ -221,6 +228,29 @@ const rawRtData:      Ref<ApiRow[]>     = ref<ApiRow[]>([])
 const rawPaymentData: Ref<PaymentRow[]> = ref<PaymentRow[]>([])
 const rawAuthData:    Ref<AuthRow[]>    = ref<AuthRow[]>([])
 
+// LFI → directory sector ('bank' | 'insurer'), loaded at runtime from the
+// build-time map (public/api/lfi-sectors.json, generated from the participants
+// directory `lfi_type` flag).
+const lfiSectorMap = reactive<Record<string, string>>({})
+
+// Insurers observed in the API log: any LFI that has called the `insurance`
+// API family. Banks never call it, so this both confirms directory-listed
+// insurers and catches new entrants not yet reflected in the directory map.
+const observedInsurerLfis = computed<Set<string>>(() => {
+  const s = new Set<string>()
+  for (const r of rawApiData.value) if (r.family === 'insurance') s.add(r.lfi)
+  return s
+})
+
+// Resolve an LFI's sector. Insurance wins from either signal (observed
+// insurance traffic or the directory flag); everything else — including keys
+// we've never seen — defaults to banking.
+export function sectorOf(lfi: string): Sector {
+  if (observedInsurerLfis.value.has(lfi)) return 'insurance'
+  if (lfiSectorMap[lfi] === 'insurer') return 'insurance'
+  return 'banking'
+}
+
 export const filterOptions: FilterOptions = reactive({
   lfis:          [] as string[],
   tpps:          [] as string[],
@@ -249,10 +279,6 @@ function loadDataIfClient(): void {
       rawRtData.value = rows.filter(r =>
         r.status === 'success' && !RT_EXCLUDED_ENDPOINTS.includes(r.endpoint),
       )
-      filterOptions.lfis        = uniqueSorted(rows.map(r => r.lfi))
-      filterOptions.tpps        = uniqueSorted(rows.map(r => r.tpp))
-      filterOptions.months      = uniqueSorted(rows.map(r => r.month))
-      filterOptions.apiFamilies = uniqueSorted(rows.map(r => r.family))
     })
     .catch(err => console.error('[dashboard] Failed to load api-log.json', err))
 
@@ -260,11 +286,7 @@ function loadDataIfClient(): void {
     .then(r => r.json() as Promise<unknown>)
     .then(json => {
       const arr = Array.isArray(json) ? (json as RawPaymentRow[]) : []
-      const rows = arr.map(transformPaymentRow)
-      rawPaymentData.value = rows
-      filterOptions.paymentLfis   = uniqueSorted(rows.map(r => r.lfi).filter(v => v !== 'Unknown'))
-      filterOptions.paymentTpps   = uniqueSorted(rows.map(r => r.tpp).filter(v => v !== 'Unknown'))
-      filterOptions.paymentMonths = uniqueSorted(rows.map(r => r.month).filter(v => v !== 'unknown'))
+      rawPaymentData.value = arr.map(transformPaymentRow)
     })
     .catch(err => console.error('[dashboard] Failed to load payments-log.json', err))
 
@@ -272,21 +294,51 @@ function loadDataIfClient(): void {
     .then(r => r.json() as Promise<unknown>)
     .then(json => {
       const arr = Array.isArray(json) ? (json as RawAuthRow[]) : []
-      const rows = arr.map(transformAuthRow)
-      rawAuthData.value = rows
-      filterOptions.authLfis   = uniqueSorted(rows.map(r => r.lfi).filter(v => v !== 'Unknown'))
-      filterOptions.authMonths = uniqueSorted(rows.map(r => r.month).filter(v => v !== 'unknown'))
+      rawAuthData.value = arr.map(transformAuthRow)
     })
     .catch(err => console.error('[dashboard] Failed to load auth-log.json', err))
+
+  // Sector map is best-effort: the family-based fallback in `sectorOf` still
+  // classifies insurers from the API log if this file is missing.
+  fetch('/api/lfi-sectors.json')
+    .then(r => r.json() as Promise<unknown>)
+    .then(json => {
+      if (json && typeof json === 'object' && !Array.isArray(json)) {
+        Object.assign(lfiSectorMap, json as Record<string, string>)
+      }
+    })
+    .catch(() => { /* non-fatal */ })
 }
 
 loadDataIfClient()
 
 export const state: DashboardState = reactive({
   filters: { lfi: [], tpp: [], month: [], apiFamily: [] },
+  sector: 'banking',
   activeSection: 'api-volumes',
   sidebarCollapsed: false,
   excludePartialMonths: true,
+})
+
+// Filter option lists are scoped to the active sector so the dropdowns only
+// offer LFIs/TPPs/months/families that exist within it. Recomputed whenever the
+// source data, the sector map, or the selected sector changes.
+watchEffect(() => {
+  const sec = state.sector
+  const api = rawApiData.value.filter(r => sectorOf(r.lfi) === sec)
+  filterOptions.lfis        = uniqueSorted(api.map(r => r.lfi))
+  filterOptions.tpps        = uniqueSorted(api.map(r => r.tpp))
+  filterOptions.months      = uniqueSorted(api.map(r => r.month))
+  filterOptions.apiFamilies = uniqueSorted(api.map(r => r.family))
+
+  const pay = rawPaymentData.value.filter(r => sectorOf(r.lfi) === sec)
+  filterOptions.paymentLfis   = uniqueSorted(pay.map(r => r.lfi).filter(v => v !== 'Unknown'))
+  filterOptions.paymentTpps   = uniqueSorted(pay.map(r => r.tpp).filter(v => v !== 'Unknown'))
+  filterOptions.paymentMonths = uniqueSorted(pay.map(r => r.month).filter(v => v !== 'unknown'))
+
+  const auth = rawAuthData.value.filter(r => sectorOf(r.lfi) === sec)
+  filterOptions.authLfis   = uniqueSorted(auth.map(r => r.lfi).filter(v => v !== 'Unknown'))
+  filterOptions.authMonths = uniqueSorted(auth.map(r => r.month).filter(v => v !== 'unknown'))
 })
 
 // Skip when the user has explicitly picked one or more months — their
@@ -299,6 +351,7 @@ function monthIsAllowed(month: string): boolean {
 
 export const filteredApiData: ComputedRef<ApiRow[]> = computed(() =>
   rawApiData.value.filter(r =>
+    sectorOf(r.lfi) === state.sector                                              &&
     (!state.filters.lfi.length       || state.filters.lfi.includes(r.lfi))       &&
     (!state.filters.tpp.length       || state.filters.tpp.includes(r.tpp))       &&
     monthIsAllowed(r.month)                                                       &&
@@ -312,6 +365,7 @@ export const filteredSuccessApiData: ComputedRef<ApiRow[]> = computed(() =>
 
 export const filteredPaymentData: ComputedRef<PaymentRow[]> = computed(() =>
   rawPaymentData.value.filter(r =>
+    sectorOf(r.lfi) === state.sector                                &&
     (!state.filters.lfi.length || state.filters.lfi.includes(r.lfi)) &&
     (!state.filters.tpp.length || state.filters.tpp.includes(r.tpp)) &&
     monthIsAllowed(r.month),
@@ -330,6 +384,7 @@ export const filteredAllPaymentData: ComputedRef<PaymentRow[]> = computed(() =>
 
 export const filteredAuthData: ComputedRef<AuthRow[]> = computed(() =>
   rawAuthData.value.filter(r =>
+    sectorOf(r.lfi) === state.sector                                &&
     (!state.filters.lfi.length || state.filters.lfi.includes(r.lfi)) &&
     monthIsAllowed(r.month),
   ),
@@ -337,6 +392,7 @@ export const filteredAuthData: ComputedRef<AuthRow[]> = computed(() =>
 
 export const filteredRtData: ComputedRef<ApiRow[]> = computed(() =>
   rawRtData.value.filter(r =>
+    sectorOf(r.lfi) === state.sector                                              &&
     (!state.filters.lfi.length       || state.filters.lfi.includes(r.lfi))       &&
     (!state.filters.tpp.length       || state.filters.tpp.includes(r.tpp))       &&
     monthIsAllowed(r.month)                                                       &&
@@ -444,6 +500,18 @@ export function resetFilters(): void {
 
 export function setSection(id: string): void {
   state.activeSection = id
+}
+
+// Switch sector. LFI/TPP selections don't carry across sectors, so clear the
+// filters, and fall back to the sector's first section if the active one isn't
+// available there (e.g. leaving a Payments view for Insurance).
+export function setSector(sector: Sector): void {
+  if (state.sector === sector) return
+  state.sector = sector
+  resetFilters()
+  if (!sectionInSector(state.activeSection, sector)) {
+    state.activeSection = firstSectionOfSector(sector)
+  }
 }
 
 export function toggleSidebar(): void {

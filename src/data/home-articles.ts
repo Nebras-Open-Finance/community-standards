@@ -31,6 +31,16 @@ export interface HomeArticle extends RawHomeArticle {
 
 const rawArticles: RawHomeArticle[] = [
   {
+    link: 'https://fintechnews.media/2026/06/lean-and-ziina-launch-the-uaes-first-one-tap-pay-by-bank-experience-under-open-finance/',
+    source: 'Fintech News',
+    kind: 'press-release',
+    date: '2026-06-25',
+    dateLabel: '25 June 2026',
+    imageSrc: '/images/articles/lean-ziina.png',
+    title: "Lean and Ziina launch the UAE's first One-Tap Pay by Bank experience under Open Finance",
+    text: "Lean Technologies and Ziina have launched the UAE's first One-Tap Pay by Bank experience under the Open Finance framework, marking a significant step in the maturation of account-to-account payments in the region.",
+  },
+  {
     link: 'https://fintechnews.media/2026/05/06/lean-technologies-scales-pay-by-bank-in-the-uae-as-open-finance-payments-go-live/',
     source: 'Fintech News',
     kind: 'press-release',

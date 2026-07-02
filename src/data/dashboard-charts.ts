@@ -64,36 +64,75 @@ export interface SectionMeta {
   description: string
 }
 
-export const NAV_SECTIONS: readonly NavSection[] = [
-  {
-    id: 'api',
-    label: 'API',
-    icon: 'api',
-    items: [
-      { id: 'api-volumes',        label: 'API Volumes'    },
-      { id: 'api-errors',         label: 'API Errors'     },
-      { id: 'api-response-times', label: 'Response Times' },
-    ],
-  },
-  {
-    id: 'payments',
-    label: 'Payments',
-    icon: 'payments',
-    items: [
-      { id: 'payment-volumes', label: 'Payment Volumes' },
-      { id: 'payment-errors',  label: 'Payment Errors'  },
-      { id: 'payment-status',  label: 'Payment Status'  },
-    ],
-  },
-  {
-    id: 'authorization',
-    label: 'Authorization',
-    icon: 'auth',
-    items: [
-      { id: 'auth-conversion', label: 'Auth Conversion' },
-    ],
-  },
+// ── Sectors ────────────────────────────────────────────────────────────────
+// The dashboard is split by LFI sector. Banking LFIs offer the full API surface
+// (data sharing, payments, confirmation of payee, products, ATMs); insurers
+// offer data sharing + authorization only — there is no insurance payment
+// initiation, so the Payments group is banking-only. An LFI's sector is
+// resolved in the store (directory `lfi_type` flag, with a runtime fallback).
+export type Sector = 'banking' | 'insurance'
+
+export interface SectorDef {
+  id: Sector
+  label: string
+}
+
+export const SECTORS: readonly SectorDef[] = [
+  { id: 'banking',   label: 'Banking'   },
+  { id: 'insurance', label: 'Insurance' },
 ] as const
+
+const API_GROUP: NavSection = {
+  id: 'api',
+  label: 'API',
+  icon: 'api',
+  items: [
+    { id: 'api-volumes',        label: 'API Volumes'    },
+    { id: 'api-errors',         label: 'API Errors'     },
+    { id: 'api-response-times', label: 'Response Times' },
+  ],
+}
+
+const PAYMENTS_GROUP: NavSection = {
+  id: 'payments',
+  label: 'Payments',
+  icon: 'payments',
+  items: [
+    { id: 'payment-volumes', label: 'Payment Volumes' },
+    { id: 'payment-errors',  label: 'Payment Errors'  },
+    { id: 'payment-status',  label: 'Payment Status'  },
+  ],
+}
+
+const AUTH_GROUP: NavSection = {
+  id: 'authorization',
+  label: 'Authorization',
+  icon: 'auth',
+  items: [
+    { id: 'auth-conversion', label: 'Auth Conversion' },
+  ],
+}
+
+// Section ids are shared across sectors (the charts are identical; only the
+// underlying data is sector-filtered). Insurance omits the Payments group.
+export const SECTOR_NAV: Readonly<Record<Sector, readonly NavSection[]>> = {
+  banking:   [API_GROUP, PAYMENTS_GROUP, AUTH_GROUP],
+  insurance: [API_GROUP, AUTH_GROUP],
+}
+
+export function sectionIdsForSector(sector: Sector): string[] {
+  return SECTOR_NAV[sector].flatMap(g => g.items.map(i => i.id))
+}
+
+export function sectionInSector(sectionId: string, sector: Sector): boolean {
+  return sectionIdsForSector(sector).includes(sectionId)
+}
+
+// The default section when a sector is first shown (or when the active section
+// isn't available in the sector being switched to).
+export function firstSectionOfSector(sector: Sector): string {
+  return SECTOR_NAV[sector][0]?.items[0]?.id ?? 'api-volumes'
+}
 
 export const SECTION_META: Readonly<Record<string, SectionMeta>> = {
   'api-volumes':        { title: 'API Volumes',        description: 'Call volume across LFIs, TPPs and API families' },

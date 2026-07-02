@@ -22,8 +22,16 @@
 #   - Standards      · uae-bank-initiation-openapi.yaml
 #                        AECreditorReference / AEDebtorReference
 #                        AEBankServiceInitiation.AECreditorReference / .AEDebtorReference
-#   - Ozone Connect  · AEServiceInitiationCreditorReference / …DebtorReference
-#     / Consent Mgr      (the current-version branch of the anyOf only)
+#                    · uae-authorization-endpoints-openapi.yaml (PAR)
+#                        AEBankServiceInitiation.AECreditorReference / .AEDebtorReference
+#   - Ozone Connect  · uae-ozone-connect-bank-service-initiation-openapi.yaml
+#                        AECreditorReference / AEDebtorReference (plain string, no anyOf)
+#                    · uae-ozone-connect-consent-events-actions-openapi.yaml
+#                        AEServiceInitiationCreditorReference / …DebtorReference
+#                        (the current-version branch of the anyOf only)
+#   - Consent Mgr    · uae-api-hub-consent-manager-openapi.yaml
+#                        AEServiceInitiationCreditorReference / …DebtorReference
+#                        (the current-version branch of the anyOf only)
 #
 # The 35-character limit is counted in Unicode characters; the API Hub normalises
 # to Unicode NFC before validating. The deprecated structured (120-char) variants
@@ -69,9 +77,16 @@ components:
         A Debtor Reference is a note is for the reference of a given User that may be available as additional
         information in relation to a given payment instruction.
 
-    # ── Ozone Connect / Consent Manager (LFI-facing) ─────────────────────────
-    # The pattern is added to the CURRENT (free-text, 35-char) branch of the
-    # anyOf only. The deprecated structured 120-char branch is unchanged.
+    # ── Ozone Connect · bank-service-initiation (LFI-facing) ─────────────────
+    # This spec uses the SAME plain-string schemas as the Standards side —
+    # AECreditorReference / AEDebtorReference (no anyOf) — so the pattern is
+    # added identically to those shown above. Not repeated here to avoid
+    # duplicate schema keys in this excerpt.
+
+    # ── Consent Events (Ozone Connect) / Consent Manager (api-hub) ───────────
+    # These carry the deprecated structured variant, so the schema is an anyOf.
+    # The pattern is added to the CURRENT (free-text, 35-char) branch ONLY; the
+    # deprecated structured 120-char branch is unchanged.
     AEServiceInitiationCreditorReference:
       anyOf:
         - description: "**DEPRECATED AT v2.1** — structured 120-char Creditor reference. UNCHANGED (see published spec)."

@@ -444,11 +444,12 @@ onMounted(() => {
               Add a <code>pattern</code> that defines the allowed character set to the plain-string
               Debtor and Creditor reference schemas —
               <code>AEBankServiceInitiation.AEDebtorReference</code> /
-              <code>AECreditorReference</code> in the standards, and the current-version branch of
-              <code>AEServiceInitiationDebtorReference</code> /
-              <code>AEServiceInitiationCreditorReference</code> on the LFI side.
-              <code>minLength 1</code>, <code>maxLength 35</code>, and free-text-first all stay. The
-              deprecated structured variants retained for older versions are not touched.
+              <code>AECreditorReference</code> in the standards, the same plain
+              <code>AEDebtorReference</code> / <code>AECreditorReference</code> in Ozone Connect, and
+              the current-version branch of the <code>AEServiceInitiationDebtorReference</code> /
+              <code>AEServiceInitiationCreditorReference</code> anyOf in Consent Manager and Consent
+              Events. <code>minLength 1</code>, <code>maxLength 35</code>, and free-text-first all stay.
+              The deprecated structured variants retained for older versions are not touched.
             </p>
           </div>
 

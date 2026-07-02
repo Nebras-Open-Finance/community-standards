@@ -11,18 +11,41 @@ meta:
 import {
   state,
   setSection,
+  setSector,
   resetFilters,
 } from '@/stores/dashboard'
-import { NAV_SECTIONS } from '@/data/dashboard-charts'
+import {
+  SECTOR_NAV,
+  SECTORS,
+  sectionInSector,
+  firstSectionOfSector,
+  type NavSection,
+  type Sector,
+} from '@/data/dashboard-charts'
 
 const MOBILE_BREAKPOINT = 959
 
-// Whitelist for the URL search-param so `?section=garbage` is ignored on read.
-const ALL_SECTION_IDS: readonly string[] = NAV_SECTIONS.flatMap(g => g.items.map(i => i.id))
+// Sections shown in the sidebar depend on the active sector.
+const sections = computed<readonly NavSection[]>(() => SECTOR_NAV[state.sector])
 
-// Bind `state.activeSection` to `?section=…`. The store stays the source of
-// truth — mutate `state` directly, never the URL ref.
+// Whitelists for the URL search-params so garbage values are ignored on read.
+const SECTOR_IDS: readonly Sector[] = SECTORS.map((s) => s.id)
+const ALL_SECTION_IDS: readonly string[] = [
+  ...new Set(Object.values(SECTOR_NAV).flatMap((g) => g.flatMap((s) => s.items.map((i) => i.id)))),
+]
+
+// Bind `state.sector`/`state.activeSection` to `?sector=…`/`?section=…`. The
+// store stays the source of truth — mutate `state` (via setters) directly.
+const sectorParam = useUrlSearchParam<Sector>('sector', 'banking', { allowed: SECTOR_IDS })
 const sectionParam = useUrlSearchParam<string>('section', 'api-volumes', { allowed: ALL_SECTION_IDS })
+
+watch(sectorParam.value, (next) => {
+  if (next !== state.sector) setSector(next)
+}, { immediate: true })
+
+watch(() => state.sector, (next) => {
+  if (next !== sectorParam.value.value) sectorParam.value.value = next
+})
 
 watch(sectionParam.value, (next) => {
   if (next !== state.activeSection) state.activeSection = next
@@ -31,6 +54,12 @@ watch(sectionParam.value, (next) => {
 watch(() => state.activeSection, (next) => {
   if (next !== sectionParam.value.value) sectionParam.value.value = next
 })
+
+// Reconcile an out-of-sector section arriving from the URL, e.g.
+// `?sector=insurance&section=payment-status` (Payments is banking-only).
+if (!sectionInSector(state.activeSection, state.sector)) {
+  state.activeSection = firstSectionOfSector(state.sector)
+}
 
 onMounted(() => {
   if (typeof window !== 'undefined' && window.innerWidth <= MOBILE_BREAKPOINT) {
@@ -49,6 +78,12 @@ function onSelect(id: string): void {
   }
 }
 
+// Keep the drawer open after switching sector so the user can pick a section
+// within it (the section list changes with the sector).
+function onSelectSector(id: Sector): void {
+  setSector(id)
+}
+
 onUnmounted(() => resetFilters())
 </script>
 
@@ -58,10 +93,12 @@ onUnmounted(() => resetFilters())
     <DashboardNavbar @toggle-sidebar="onToggleSidebar" />
 
     <DashboardSidebar
-      :sections="NAV_SECTIONS"
+      :sections="sections"
       :active-section="state.activeSection"
+      :sector="state.sector"
       :collapsed="state.sidebarCollapsed"
       @select="onSelect"
+      @select-sector="onSelectSector"
     />
 
     <div

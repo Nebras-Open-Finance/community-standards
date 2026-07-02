@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { NavSection } from '@/data/dashboard-charts'
+import { SECTORS, type NavSection, type Sector } from '@/data/dashboard-charts'
 
 interface Props {
   sections:      readonly NavSection[]
   activeSection: string
+  sector:        Sector
   collapsed?:    boolean
 }
 
@@ -14,6 +15,7 @@ withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: 'select', id: string): void
+  (e: 'select-sector', id: Sector): void
 }>()
 
 const open = ref(false)
@@ -30,6 +32,10 @@ function onLeave(): void {
 
 function select(id: string): void {
   emit('select', id)
+}
+
+function selectSector(id: Sector): void {
+  emit('select-sector', id)
 }
 </script>
 
@@ -64,6 +70,20 @@ function select(id: string): void {
       <header class="db-sidebar__head">
         <span class="db-sidebar__title">Metrics</span>
       </header>
+      <div class="db-sidebar__sectors" role="tablist" aria-label="LFI sector">
+        <button
+          v-for="s in SECTORS"
+          :key="s.id"
+          type="button"
+          role="tab"
+          class="db-sidebar__sector"
+          :class="{ 'is-active': sector === s.id }"
+          :aria-selected="sector === s.id ? 'true' : 'false'"
+          @click="selectSector(s.id)"
+        >
+          {{ s.label }}
+        </button>
+      </div>
       <nav class="db-sidebar__nav">
         <ul class="db-sidebar__list">
           <li v-for="group in sections" :key="group.id" class="db-sidebar__group">
@@ -198,6 +218,35 @@ function select(id: string): void {
   font-weight: 600;
   letter-spacing: -0.015em;
   color: var(--at-navy-deep);
+}
+
+.db-sidebar__sectors {
+  display: flex;
+  gap: 0;
+  margin: 1.25rem 2rem 0;
+  border: 1px solid var(--at-grid-line-2);
+}
+.db-sidebar__sector {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--at-mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--at-mute-2);
+  transition: background 0.15s, color 0.15s;
+}
+.db-sidebar__sector + .db-sidebar__sector {
+  border-left: 1px solid var(--at-grid-line-2);
+}
+.db-sidebar__sector:hover { color: var(--at-navy-deep); }
+.db-sidebar__sector.is-active {
+  background: var(--at-navy-deep);
+  color: var(--at-bg-cream);
 }
 
 .db-sidebar__nav {
