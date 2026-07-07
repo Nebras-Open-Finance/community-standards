@@ -52,6 +52,7 @@ const pros = [
   'Small and additive — one extra bound on ExpirationDateTime at the API Hub, alongside the existing “must be in the future” rule and the documented one-year maximum.',
   'Purely a validation change — no new fields, endpoints, or schemas, and no change to the consent status model, which the API Hub handles independently.',
   'Cheap for TPPs to adopt — any sensible ExpirationDateTime already clears a 15-minute floor, so only absurd values are rejected.',
+  'Extends cleanly to multi-authorisation payments — the same floor guards AuthorizationExpirationDateTime, so a subsequent-authoriser deadline can no longer be set too tight to meet, without inventing a second rule.',
 ]
 
 const cons = [
@@ -372,15 +373,77 @@ onMounted(() => {
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         03 · TECHNICAL CHANGES
+         03 · AUTHORISATION EXPIRATION (payments / multi-authorisation)
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ofp-band ofp-band--cream">
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 03 · Technical changes</div>
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 03 · Authorisation expiration</div>
+          <h2 class="ofp-band__title">The same floor applies to multi-authorisation payments</h2>
+        </div>
+        <div class="ofp-prose">
+          <p>
+            One consent type carries a <strong>second</strong> expiry. When a TPP creates a Bank Service
+            Initiation (payment) consent and sets <code>IsSingleAuthorization</code> to <code>false</code>, it
+            also sets <code>AuthorizationExpirationDateTime</code> in the Rich Authorization Request — the
+            <code>AEBankServiceInitiationRichAuthorizationRequests.AuthorizationExpirationDateTime</code> field
+            — being the date and time by which every remaining authoriser must have acted for the consent to
+            reach <code>Authorized</code>. This field exists <strong>only for payments</strong>: the
+            <code>ExpirationDateTime</code> above is carried by every consent type, but this second deadline is
+            specific to multi-authorisation, which is why it is treated separately here.
+          </p>
+          <p>
+            Multi-authorisation covers payments that need more than one person to approve. The first customer
+            goes through the OAuth flow and authorises the consent at the LFI as usual; the consent then stays
+            in <code>AwaitingAuthorization</code> while the subsequent authorisers each approve in turn.
+            <code>AuthorizationExpirationDateTime</code> is the clock on those subsequent authorisers — if the
+            consent has not reached <code>Authorized</code> by then, it will not proceed. See the
+            <RouterLink to="/tech/tpp-standards/v2.1/banking/service-initiation/multi-authorization">Multi-Authorization guide</RouterLink>
+            for the full journey.
+          </p>
+          <p>
+            The reasoning is essentially the same as for the consent expiry. Today the only bound on
+            <code>AuthorizationExpirationDateTime</code> is that it MUST NOT be after
+            <code>ExpirationDateTime</code> — an upper bound. There is no lower bound, so a value seconds or
+            minutes in the future is accepted, and the subsequent authorisers then have no realistic chance to
+            act before it lapses. A multi-authorisation deadline set too tight is <strong>dead on
+            arrival</strong> for exactly the reason a consent expiry is.
+          </p>
+          <p>
+            <strong>Apply the same 15-minute floor.</strong> Reject, at consent creation, any
+            <code>AuthorizationExpirationDateTime</code> less than 15 minutes in the future — the subsequent
+            authorisers need at least as much time as a single customer does to complete their step. The
+            existing upper bound (no later than <code>ExpirationDateTime</code>) is unchanged.
+          </p>
+
+          <div class="ofp-rules">
+            <div class="ofp-rules__label">Just to confirm — the final validation rules</div>
+            <ul class="ofp-rules__list">
+              <li>
+                <code>ExpirationDateTime</code> (consent expiry) — more than <strong>15 minutes</strong> and no
+                more than <strong>one year</strong> in the future.
+              </li>
+              <li>
+                <code>AuthorizationExpirationDateTime</code> (multi-authorisation deadline, payments only) —
+                more than <strong>15 minutes</strong> in the future and <strong>on or before</strong> the
+                consent's <code>ExpirationDateTime</code>.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         04 · TECHNICAL CHANGES
+    ═══════════════════════════════════════════════════════════════════ -->
+    <section class="ofp-band ofp-band--white">
+      <div class="ofp-band__inner">
+        <div class="ofp-band__head">
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 04 · Technical changes</div>
           <h2 class="ofp-band__title">What changes in the spec</h2>
           <p class="ofp-band__lede">
-            One new validation bound and a documentation note — no new fields, endpoints, or schemas, and no
+            Two new validation bounds and a documentation note — no new fields, endpoints, or schemas, and no
             change to the consent status model.
           </p>
         </div>
@@ -398,12 +461,26 @@ onMounted(() => {
           </div>
 
           <div class="ofp-change">
-            <div class="ofp-change__label">02 · Documentation — the minimum</div>
+            <div class="ofp-change__label">02 · Minimum on <code>AuthorizationExpirationDateTime</code></div>
+            <p>
+              For Bank Service Initiation (payment) consents, validate that
+              <code>AuthorizationExpirationDateTime</code> — when present, i.e. when
+              <code>IsSingleAuthorization</code> is <code>false</code> — is at least <strong>15 minutes</strong>
+              in the future at consent creation, in addition to the existing upper bound that it MUST NOT be
+              after <code>ExpirationDateTime</code>. A value below the floor is rejected as a standard
+              request-validation error. This applies only to payments, where the field exists.
+            </p>
+          </div>
+
+          <div class="ofp-change">
+            <div class="ofp-change__label">03 · Documentation — the minimums</div>
             <p>
               Document the new 15-minute minimum on the consent lifecycle pages and the per-type API guides,
               alongside the existing “must be in the future” and one-year-maximum bounds, so TPPs size
-              <code>ExpirationDateTime</code> against the authorisation journey. The rule applies to every
-              consent type, not one product area.
+              <code>ExpirationDateTime</code> against the authorisation journey. Update the
+              <RouterLink to="/tech/tpp-standards/v2.1/banking/service-initiation/multi-authorization">Multi-Authorization guide</RouterLink>
+              to state the matching floor on <code>AuthorizationExpirationDateTime</code>. The consent-expiry
+              rule applies to every consent type; the authorisation-expiry rule applies to payments only.
             </p>
           </div>
         </div>
@@ -411,12 +488,12 @@ onMounted(() => {
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         04 · PROS
+         05 · PROS
     ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ofp-band ofp-band--white">
+    <section class="ofp-band ofp-band--cream">
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 04 · Pros</div>
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 05 · Pros</div>
           <h2 class="ofp-band__title">What a journey-based minimum buys</h2>
         </div>
         <ul class="ofp-pros">
@@ -429,12 +506,12 @@ onMounted(() => {
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         05 · CONS
+         06 · CONS
     ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ofp-band ofp-band--cream">
+    <section class="ofp-band ofp-band--white">
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 05 · Cons</div>
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 06 · Cons</div>
           <h2 class="ofp-band__title">What it costs</h2>
         </div>
         <ul class="ofp-cons">
@@ -748,6 +825,63 @@ onMounted(() => {
   line-height: 1.65;
   color: #d7e4f5;
   white-space: pre;
+}
+
+/* ─── Rules recap (final validation rules, in Authorisation expiration) ───── */
+.ofp-rules {
+  max-width: 52rem;
+  margin: 28px 0 0;
+  border: 1px solid var(--at-grid-line);
+  border-top: 2px solid var(--at-teal);
+  background: var(--at-surface);
+  padding: 20px 24px;
+}
+
+.ofp-rules__label {
+  font-family: var(--at-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: var(--at-teal);
+  margin-bottom: 12px;
+}
+
+.ofp-rules__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ofp-rules__list li {
+  position: relative;
+  padding-left: 1.2rem;
+  font-size: 15.5px;
+  line-height: 1.68;
+  color: var(--at-navy);
+  margin-bottom: 10px;
+}
+
+.ofp-rules__list li:last-child { margin-bottom: 0; }
+
+.ofp-rules__list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 7px;
+  height: 7px;
+  background: var(--at-teal);
+}
+
+.ofp-rules__list strong { color: var(--at-navy-deep); font-weight: 600; }
+
+.ofp-rules__list code {
+  font-family: var(--at-mono);
+  font-size: 0.86em;
+  background: var(--at-bg-paper);
+  border: 1px solid var(--at-grid-line);
+  padding: 1px 5px;
+  color: var(--at-navy-deep);
 }
 
 /* ─── Specification gaps (bullets in Background / Recommendation) ─────────── */
