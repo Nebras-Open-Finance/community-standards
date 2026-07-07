@@ -3,7 +3,7 @@
 // `scripts/build-search-index.mjs` (see search-data.ts). PageHeader.vue
 // lazy-loads this component so the index is only fetched once a user
 // opens search.
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { SEARCH_DATA, type SearchItem } from './search-data'
 
@@ -138,6 +138,16 @@ function clearQuery(): void {
   nextTick(() => inputRef.value?.focus())
 }
 
+function focusInput(): void {
+  nextTick(() => inputRef.value?.focus())
+}
+
+function resetAndFocus(): void {
+  query.value = ''
+  selectedIndex.value = 0
+  focusInput()
+}
+
 function navigate(path: string): void {
   emit('close')
   void router.push(path)
@@ -172,13 +182,15 @@ function onKeyDown(e: KeyboardEvent): void {
   }
 }
 
+onMounted(() => {
+  if (props.open) resetAndFocus()
+})
+
 watch(
   () => props.open,
   (open) => {
     if (open) {
-      query.value = ''
-      selectedIndex.value = 0
-      nextTick(() => inputRef.value?.focus())
+      resetAndFocus()
     }
   },
 )
