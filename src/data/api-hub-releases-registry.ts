@@ -53,6 +53,95 @@ export const AREAS = {
 
 export const API_HUB_RELEASES: ReleaseEntry[] = [
   // ─────────────────────────────────────────────────────────────────────────
+  // 2026.22.0 — 6 July 2026
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    release: '2026.22.0',
+    effectiveDate: '2026-07-06',
+    number: 1,
+    title: 'Mandatory paymentId field restored on Consent Manager GET /payment-log responses',
+    summary:
+      'GET /payment-log responses now consistently return the mandatory paymentId field defined by the API contract.',
+    description:
+      'Added the mandatory paymentId field to Consent Manager GET /payment-log responses.\n\n' +
+      'Previously, the paymentId field was omitted from GET /payment-log responses even though it is defined as mandatory in the API contract, which could cause response deserialization failures in consuming applications. paymentId is now returned consistently in accordance with the specification.',
+    impact:
+      'Applications consuming GET /payment-log can once again rely on paymentId being present, and may remove any workaround introduced for the missing field. Applies to Consent Manager v6, v7, and v8.',
+    audience: 'Both',
+    areas: [AREAS.consent, AREAS.serviceInitiation],
+    sections: [
+      { label: 'Consent Manager', path: 'api-hub/consent-manager/', target: 'lfi' },
+    ],
+    endpoints: [
+      { label: 'GET /payment-log', path: 'api-hub/consent-manager/open-api/payment-log', target: 'lfi' },
+    ],
+  },
+  {
+    release: '2026.22.0',
+    effectiveDate: '2026-07-06',
+    number: 2,
+    title: 'Consent revocation in non-revocable states now returns HTTP 400',
+    summary:
+      'Revoking a consent that cannot be revoked in its current state now returns an HTTP 400 business rule error instead of a no-op HTTP 204.',
+    description:
+      'Improved validation and error handling for consent revocation requests in the Consent Manager.\n\n' +
+      'Previously, a revocation request for a consent in a non-revocable state could return a successful HTTP 204 even though no action was performed and the consent status was unchanged. Such requests now return an HTTP 400 with a business rule validation error, giving API consumers clearer and more accurate feedback.',
+    impact:
+      'Consumers that treated HTTP 204 as confirmation of revocation MUST now handle an HTTP 400 business rule error when a consent cannot be revoked in its current state. Applies to Consent Manager v6, v7, and v8.',
+    audience: 'Both',
+    areas: [AREAS.consent],
+    sections: [
+      { label: 'Consent Manager', path: 'api-hub/consent-manager/', target: 'lfi' },
+    ],
+    endpoints: [
+      { label: 'POST /consents/{ConsentId}/action/revoke', path: 'api-hub/consent-manager/open-api/consents-consentId-action-revoke', target: 'lfi' },
+      { label: 'POST /consent-groups/{ConsentGroupId}/consents/action/revoke', path: 'api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents-action-revoke', target: 'lfi' },
+    ],
+  },
+  {
+    release: '2026.22.0',
+    effectiveDate: '2026-07-06',
+    number: 3,
+    title: 'Resolved HTTP 500 on PATCH /consents in Consent Manager v2025.47',
+    summary:
+      'Valid PATCH /consents requests on Consent Manager version v2025.47 no longer fail with an HTTP 500 schema validation error.',
+    description:
+      'Resolved a schema validation issue affecting PATCH /consents in Consent Manager API version v2025.47.\n\n' +
+      'Previously, valid PATCH /consents requests could fail with an HTTP 500 error due to a fault in the endpoint schema validation, while the same requests succeeded on earlier API versions. The validation logic has been fixed so consent update requests are processed successfully on v2025.47.',
+    impact:
+      'Consent update requests on Consent Manager v2025.47 are now processed successfully. No consumer changes are required. Applies to Consent Manager v6, v7, and v8.',
+    audience: 'Both',
+    areas: [AREAS.consent],
+    sections: [
+      { label: 'Consent Manager', path: 'api-hub/consent-manager/', target: 'lfi' },
+    ],
+    endpoints: [
+      { label: 'PATCH /consents/{ConsentId}', path: 'api-hub/consent-manager/open-api/patch-consents-consentId', target: 'lfi' },
+    ],
+  },
+  {
+    release: '2026.22.0',
+    effectiveDate: '2026-07-06',
+    number: 4,
+    title: 'OAuth token endpoint error responses aligned with RFC 6749',
+    summary:
+      'error_description values from the token endpoint now contain only RFC 6749-permitted characters, fixing FAPI conformance failures.',
+    description:
+      'Updated the OAuth token endpoint error responses to comply with RFC 6749 error formatting requirements.\n\n' +
+      'Previously, error_description values could contain unsupported characters such as double quotes, causing FAPI conformance tests to fail even though the underlying error response was correct. error_description values now contain only the characters permitted by RFC 6749 Section 5.2, improving standards compliance and FAPI conformance.',
+    impact:
+      'TPPs and conformance suites parsing token endpoint errors receive RFC 6749-compliant error_description values. No TPP changes are required. Applies to the Sandbox and TPP Interface across v1.2, v2.0, and v2.1.',
+    audience: 'TPP',
+    areas: [AREAS.tokens],
+    sections: [
+      { label: 'Tokens & Assertions', path: 'security/tokens', versioned: false },
+    ],
+    endpoints: [
+      { label: 'POST /token', path: 'security/tokens/open-api/token', versioned: false },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
   // 2026.19.0 — 9 June 2026 (Production; Pre-Production 2 June 2026)
   // ─────────────────────────────────────────────────────────────────────────
   {

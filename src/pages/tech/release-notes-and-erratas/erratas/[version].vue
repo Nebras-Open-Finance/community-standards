@@ -396,6 +396,7 @@ const SPEC_AREA: Record<string, string> = {
   'uae-authorization-endpoints-openapi': 'Tokens & Authorization',
   'uae-confirmation-of-payee-openapi': 'Confirmation of Payee',
   'uae-fx-service-initiation-openapi': 'Service Initiation',
+  'uae-insurance-openapi': 'Insurance',
   'uae-webhook-template-openapi': 'Webhooks',
   'uae-api-hub-consent-manager-openapi': 'Consent Management',
   'uae-ozone-connect-bank-service-initiation-openapi': 'Service Initiation',

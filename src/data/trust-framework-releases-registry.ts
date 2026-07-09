@@ -23,12 +23,319 @@ export const TRUST_FRAMEWORK_CATEGORIES: TrustFrameworkCategory[] = [
 
 export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   // ─────────────────────────────────────────────────────────────────────────
-  // 2.3.0 — release date to be confirmed (planned)
+  // 2.5.0 — release date to be confirmed (planned)
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    release: '2.5.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 1,
+    category: 'New Features',
+    title: 'Cross-client application and certificate management scope',
+    description:
+      'A new directory:software:organisation:application:management scope lets a software client programmatically create, update, suspend, and delete other clients within the same organisation, supporting automated onboarding workflows.',
+  },
+  {
+    release: '2.5.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 2,
+    category: 'Enhancements',
+    title: 'Expanded search, filtering, and sorting across Directory resources',
+    description:
+      'Directory API endpoints now support filtering, sorting, and partial-match search across organisations, contacts, authority claims, domain users, API resources, certifications, applications, and administrators.',
+  },
+  {
+    release: '2.5.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 3,
+    category: 'Enhancements',
+    title: 'Unified Documents view',
+    description:
+      'The Documents page has been redesigned into a single scrollable view, replacing the previous two-tab layout. Pending signatures and signing history are combined into collapsible sections.',
+  },
+  {
+    release: '2.5.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 4,
+    category: 'Enhancements',
+    title: 'Sortable audit table columns',
+    description:
+      'Audit table columns can now be sorted directly from the UI.',
+  },
+  {
+    release: '2.5.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 5,
+    category: 'Bug Fixes',
+    title: 'Sign button on deleted documents',
+    description:
+      'Resolved an error when using the sign button on deleted documents.',
+  },
+  {
+    release: '2.5.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 6,
+    category: 'Bug Fixes',
+    title: 'Authority role claim domain validation',
+    description:
+      'Fixed domain status validation when adding authority role claims.',
+  },
+  {
+    release: '2.5.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 7,
+    category: 'Bug Fixes',
+    title: 'Organisation search clear button and filters',
+    description:
+      'Corrected the organisation search clear button and filter persistence.',
+  },
+  {
+    release: '2.5.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 8,
+    category: 'Bug Fixes',
+    title: 'Terms & Conditions signers dropdown',
+    description:
+      'Fixed the Terms & Conditions signers dropdown to reflect the actual signer count.',
+  },
+  {
+    release: '2.5.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 9,
+    category: 'Bug Fixes',
+    title: 'Clients endpoint page size validation',
+    description:
+      'Improved page size validation on the clients endpoint.',
+  },
+  {
+    release: '2.5.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 10,
+    category: 'Bug Fixes',
+    title: 'Federation entity management type field',
+    description:
+      'Restored selectability of the type field in federation entity management.',
+  },
+  {
+    release: '2.5.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 11,
+    category: 'Bug Fixes',
+    title: 'Reference Data flags creation date',
+    description:
+      'Corrected the creation date displayed for Reference Data flags.',
+  },
+  {
+    release: '2.5.0',
+    effectiveDate: '2026',
+    planned: true,
+    number: 12,
+    category: 'Bug Fixes',
+    title: 'Token endpoint error handling',
+    description:
+      'Fixed token endpoint 500 errors on account lookup and short credential values.',
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 2.4.0 — 7 July 2026
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 1,
+    category: 'New Features',
+    title: 'Date-based sorting for the audit log endpoint',
+    description:
+      'The audit log endpoint now fully implements the sort parameter, letting consumers retrieve audit records ordered by date and rely on deterministic ordering when querying audit history.',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 2,
+    category: 'New Features',
+    title: 'External document links and regulatory document types for organisations',
+    description:
+      'Organisations can now register and manage links to external documents. A new Regulatory Documents tab, with dedicated API endpoints, captures a document type, a validated HTTPS URI, and an optional description, while a Regulatory Document Types tab in Reference Data lets administrators manage the available types. Read-only users see the list without edit controls. The feature is disabled by default and can be enabled per request.',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 3,
+    category: 'New Features',
+    title: 'Certificate Authorities management in Reference Data',
+    description:
+      'A new Certificate Authorities section in Reference Data provides full root CA lifecycle management: create, view, update, enable, and disable root CAs via PEM upload or paste. A unified wizard auto-detects the certificate type (root only, root with intermediate, or intermediate referencing an existing root) and visualises the trust chain as an interactive node graph. Administrators can edit a Root CA name or an Intermediate CA chain name directly, and the Intermediates tab supports View, Enable, and Disable with confirmation dialogs. The wizard resumes from the intermediates step on retry without re-creating the root CA, hierarchical mTLS trust constraints are enforced, and validation covers duplicate detection, invalid file formats, and required contact fields.',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 4,
+    category: 'New Features',
+    title: 'Audit log visibility for organisations',
+    description:
+      'Organisation records now expose an audit trail, consistent with the audit functionality already available for applications. Users with appropriate permissions can review a chronological history of changes made to an organisation.',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 5,
+    category: 'New Features',
+    title: 'Organisation name on the /clients endpoint',
+    description:
+      'The /clients endpoint response now includes an organisation_name field, populated from the organisation record, allowing identity providers to display the organisation name associated with a client and supporting distributor and representative model use cases.',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 6,
+    category: 'New Features',
+    title: 'Audit history for certificates, organisation roles, and domains',
+    description:
+      'Audit history is now available for application certificates (navigable by application and by certificate, identified by key type and KID), organisation roles (navigable by role name), and organisation domains (navigable by domain name).',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 7,
+    category: 'New Features',
+    title: 'grant_id returned by the token endpoint',
+    description:
+      'The /token endpoint response now includes a grant_id field for code exchange and refresh token flows, allowing TPPs to retrieve user consents even after tokens are revoked. It is included by default and can be disabled per environment via grant_id_in_token_response=false; existing token response structures and flows are unaffected.',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 8,
+    category: 'New Features',
+    title: 'Generic grant revocation endpoint with soft-delete',
+    description:
+      'A new generic grant revocation endpoint operates independently of specific consent flows. Grants are soft-deleted on revocation, preserving history and the revocation reason (for example TPP-initiated, refresh token reuse, or session end), with configurable TTL-based expiry — access tokens have a 1-hour lifetime while refresh tokens and grants have a 100-year lifetime. A migration is required to create or drop TTL indexes depending on the soft-deletion configuration.',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 9,
+    category: 'New Features',
+    title: 'Audit endpoint support for server certification and server roles',
+    description:
+      'The audit API now supports the authorisationServerCertification resource type alongside server roles and API resources, queryable with the standard actionType, organisationId, resourceId, performedBy, and date-range parameters. Requests using the server certification resource type previously returned a "resource type not implemented" error.',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 10,
+    category: 'Enhancements',
+    title: 'DELETE replaces PUT for removing server resources',
+    description:
+      'The Directory UI now uses HTTP DELETE when removing authorisation servers, API resources, and server certifications, replacing the previous behaviour of calling PUT with a status of Inactive. The change is internal to the UI and requires no action from API consumers or integrators.',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 11,
+    category: 'Enhancements',
+    title: 'Responsive wizard layout across device sizes',
+    description:
+      'Multi-step wizards now adapt to screen size: step numbers only on mobile, step numbers with hover tooltips on small laptops, and full step labels on larger screens.',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 12,
+    category: 'Enhancements',
+    title: 'Bound domain IDs in Authority deactivation errors',
+    description:
+      'When deactivating an Authority still bound to active authorisation domain mappings, the API error response now includes the IDs of all bound domains, allowing administrators to identify and remove the relevant mappings before retrying.',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 13,
+    category: 'Enhancements',
+    title: 'API auto-fill uses endpoint regex format',
+    description:
+      'API auto-fill now fetches the registered endpoint regex format for the relevant API family rather than the API family version, so auto-populated values more accurately reflect the expected endpoint structure.',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 14,
+    category: 'Bug Fixes',
+    title: 'Invalid UUID path segments return 400 not 500',
+    description:
+      'Path segments expected to be UUIDs — authorisation server ID, software statement ID, and domain user ID — now return a clean 400 Bad Request instead of an unhandled 500 Internal Server Error.',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 15,
+    category: 'Bug Fixes',
+    title: 'No reactivation email for already-active users',
+    description:
+      'Setting an organisation administrator to Active via PUT no longer triggers a reactivation email when the user is already active; the API now suppresses the email when no state change has occurred.',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 16,
+    category: 'Bug Fixes',
+    title: 'Cleared optional fields no longer submitted as empty strings',
+    description:
+      'When creating an authorisation server, optional fields that were edited and then cleared are now omitted from the request payload rather than submitted as empty strings, which previously caused an API error.',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 17,
+    category: 'Bug Fixes',
+    title: 'Concurrent duplicate user creation handled correctly',
+    description:
+      'A race condition that could cause duplicate key violations when multiple requests initialised the same user simultaneously is now handled correctly, returning a 400 Bad Request instead of an unhandled server error.',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 18,
+    category: 'Bug Fixes',
+    title: 'Audit entries generated for updated API resources',
+    description:
+      'Updates to API Resources now consistently produce audit entries retrievable via the audit API; previously no audit records were created, causing the audit endpoint to return empty results.',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 19,
+    category: 'Bug Fixes',
+    title: 'Flags included in replicated directory snapshots',
+    description:
+      'Flag values are now correctly returned for organisations, authorisation servers, and software statements in directory snapshot data replicated to Open Finance consumers, in line with the published API specification.',
+  },
+  {
+    release: '2.4.0',
+    effectiveDate: '2026-07-07',
+    number: 20,
+    category: 'Bug Fixes',
+    title: 'Accurate API error messages in IDP configuration',
+    description:
+      'When creating an IDP configuration fails, the UI now displays the meaningful error returned by the API rather than a generic message, giving administrators clear guidance on what to correct.',
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 2.3.0 — 8 June 2026
   // ─────────────────────────────────────────────────────────────────────────
   {
     release: '2.3.0',
-    effectiveDate: '2026',
-    planned: true,
+    effectiveDate: '2026-06-08',
     number: 1,
     category: 'New Features',
     title: 'Application change history and audit comparison',
@@ -37,8 +344,7 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   },
   {
     release: '2.3.0',
-    effectiveDate: '2026',
-    planned: true,
+    effectiveDate: '2026-06-08',
     number: 2,
     category: 'New Features',
     title: 'Filter Authorisation Servers by active status',
@@ -47,8 +353,7 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   },
   {
     release: '2.3.0',
-    effectiveDate: '2026',
-    planned: true,
+    effectiveDate: '2026-06-08',
     number: 3,
     category: 'New Features',
     title: 'Audit view resource navigation',
@@ -57,8 +362,7 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   },
   {
     release: '2.3.0',
-    effectiveDate: '2026',
-    planned: true,
+    effectiveDate: '2026-06-08',
     number: 4,
     category: 'Enhancements',
     title: 'Responsive filter layouts',
@@ -67,8 +371,7 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   },
   {
     release: '2.3.0',
-    effectiveDate: '2026',
-    planned: true,
+    effectiveDate: '2026-06-08',
     number: 5,
     category: 'Enhancements',
     title: 'Email format validation during registration',
@@ -77,8 +380,7 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   },
   {
     release: '2.3.0',
-    effectiveDate: '2026',
-    planned: true,
+    effectiveDate: '2026-06-08',
     number: 6,
     category: 'Enhancements',
     title: 'Flexible query parameter syntax in search',
@@ -87,8 +389,7 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   },
   {
     release: '2.3.0',
-    effectiveDate: '2026',
-    planned: true,
+    effectiveDate: '2026-06-08',
     number: 7,
     category: 'Enhancements',
     title: 'Service Desk contact visibility',
@@ -97,8 +398,7 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   },
   {
     release: '2.3.0',
-    effectiveDate: '2026',
-    planned: true,
+    effectiveDate: '2026-06-08',
     number: 8,
     category: 'Enhancements',
     title: 'Expanded global search criteria',
@@ -107,8 +407,7 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   },
   {
     release: '2.3.0',
-    effectiveDate: '2026',
-    planned: true,
+    effectiveDate: '2026-06-08',
     number: 9,
     category: 'Bug Fixes',
     title: 'Premature success modals in Application wizards',
@@ -117,8 +416,7 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   },
   {
     release: '2.3.0',
-    effectiveDate: '2026',
-    planned: true,
+    effectiveDate: '2026-06-08',
     number: 10,
     category: 'Bug Fixes',
     title: 'Domain user role validation feedback',
@@ -127,8 +425,7 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   },
   {
     release: '2.3.0',
-    effectiveDate: '2026',
-    planned: true,
+    effectiveDate: '2026-06-08',
     number: 11,
     category: 'Bug Fixes',
     title: 'Simulator consent flow message contrast',
@@ -137,8 +434,7 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   },
   {
     release: '2.3.0',
-    effectiveDate: '2026',
-    planned: true,
+    effectiveDate: '2026-06-08',
     number: 12,
     category: 'Bug Fixes',
     title: '"Family complete" flag for Open Data APIs',
@@ -147,8 +443,7 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   },
   {
     release: '2.3.0',
-    effectiveDate: '2026',
-    planned: true,
+    effectiveDate: '2026-06-08',
     number: 13,
     category: 'Bug Fixes',
     title: 'Authority list sorting',
@@ -157,8 +452,7 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   },
   {
     release: '2.3.0',
-    effectiveDate: '2026',
-    planned: true,
+    effectiveDate: '2026-06-08',
     number: 14,
     category: 'Bug Fixes',
     title: 'Duplicate network requests',
@@ -167,8 +461,7 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   },
   {
     release: '2.3.0',
-    effectiveDate: '2026',
-    planned: true,
+    effectiveDate: '2026-06-08',
     number: 15,
     category: 'Bug Fixes',
     title: 'Certificate table layout',
@@ -177,8 +470,7 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   },
   {
     release: '2.3.0',
-    effectiveDate: '2026',
-    planned: true,
+    effectiveDate: '2026-06-08',
     number: 16,
     category: 'Bug Fixes',
     title: 'Domain Mapping disable error visibility',
@@ -187,8 +479,7 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   },
   {
     release: '2.3.0',
-    effectiveDate: '2026',
-    planned: true,
+    effectiveDate: '2026-06-08',
     number: 17,
     category: 'Bug Fixes',
     title: 'IDP Configuration field toggles',
@@ -197,12 +488,11 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 2.2.0 — 2 June 2026 (planned)
+  // 2.2.0 — 2 June 2026
   // ─────────────────────────────────────────────────────────────────────────
   {
     release: '2.2.0',
     effectiveDate: '2026-06-02',
-    planned: true,
     number: 1,
     category: 'New Features',
     title: 'Directory version display',
@@ -212,7 +502,6 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   {
     release: '2.2.0',
     effectiveDate: '2026-06-02',
-    planned: true,
     number: 2,
     category: 'New Features',
     title: 'Server roles',
@@ -222,7 +511,6 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   {
     release: '2.2.0',
     effectiveDate: '2026-06-02',
-    planned: true,
     number: 3,
     category: 'New Features',
     title: 'Improved OTP validation in onboarding',
@@ -232,7 +520,6 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   {
     release: '2.2.0',
     effectiveDate: '2026-06-02',
-    planned: true,
     number: 4,
     category: 'New Features',
     title: 'New scope for audit log access across organisations',
@@ -242,7 +529,6 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   {
     release: '2.2.0',
     effectiveDate: '2026-06-02',
-    planned: true,
     number: 5,
     category: 'Enhancements',
     title: 'Disabled action icons when unavailable',
@@ -252,7 +538,6 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   {
     release: '2.2.0',
     effectiveDate: '2026-06-02',
-    planned: true,
     number: 6,
     category: 'Enhancements',
     title: 'Updated toggle design',
@@ -262,7 +547,6 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   {
     release: '2.2.0',
     effectiveDate: '2026-06-02',
-    planned: true,
     number: 7,
     category: 'Enhancements',
     title: 'Responsive search bar',
@@ -272,7 +556,6 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   {
     release: '2.2.0',
     effectiveDate: '2026-06-02',
-    planned: true,
     number: 8,
     category: 'Enhancements',
     title: 'Paginated certification types dropdown',
@@ -282,7 +565,6 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   {
     release: '2.2.0',
     effectiveDate: '2026-06-02',
-    planned: true,
     number: 9,
     category: 'Enhancements',
     title: 'Scroll-to-error behaviour in dialogs',
@@ -292,7 +574,6 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   {
     release: '2.2.0',
     effectiveDate: '2026-06-02',
-    planned: true,
     number: 10,
     category: 'Bug Fixes',
     title: 'Improved global search feedback',
@@ -302,7 +583,6 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   {
     release: '2.2.0',
     effectiveDate: '2026-06-02',
-    planned: true,
     number: 11,
     category: 'Bug Fixes',
     title: 'API metadata schema duplication across API families',
@@ -312,7 +592,6 @@ export const TRUST_FRAMEWORK_RELEASES: TrustFrameworkEntry[] = [
   {
     release: '2.2.0',
     effectiveDate: '2026-06-02',
-    planned: true,
     number: 12,
     category: 'Bug Fixes',
     title: 'API resources metadata permissions',

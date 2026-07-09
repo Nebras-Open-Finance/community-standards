@@ -743,6 +743,213 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
       '/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/accounts-AccountId-products',
     ],
   },
+  {
+    errataId: 'v2.1-errata1',
+    version: 'v2.1',
+    number: 1,
+    title: 'Insurance — Quote read responses restructured as a per-status discriminated oneOf',
+    summary:
+      'The GET quote-by-id response on every insurance line is now a discriminator-driven oneOf keyed on QuoteStatus, so each status declares only the fields valid for it; the flat AEInsuranceQuoteStatusCodes enum has been removed.',
+    description:
+      'The GET quote-by-id response on every insurance line was previously a single object — AEInsuranceQuoteReadResponseProperties for the Employment, Home, Life, Motor, Renters and Travel lines, and AEHealthInsuranceQuoteReadResponseProperties for Health — whose QuoteStatus referenced the shared AEInsuranceQuoteStatusCodes enum. Every status therefore advertised the same field set.\n\n' +
+      'Each response is now a oneOf across twelve per-status schemas — Pending, Available, ApplicationApproved, ApplicationPending, Completed, CustomerCancelled, Expired, KYCCaptured, LFICancelled, PaymentRequired, PolicyIssued and Rejected — with a discriminator on QuoteStatus. The fields common to every status moved into a new base schema, AEInsuranceQuoteProperties (and AEHealthInsuranceQuoteProperties for Health), which each status variant composes via allOf.\n\n' +
+      'The Pending variant is modelled distinctly: it requires only QuoteId and QuoteReference and carries a new PremiumTargetDateTime — the target time, within 24 hours of quote-resource creation, by which the insurer will generate the premium — reflecting that a pending quote does not yet carry premium data. The shared AEInsuranceQuoteStatusCodes enum has been removed; the status set is now expressed through the discriminator mapping, and the two values it declared that are absent from that mapping, UnderwritingCompleted and Issued, are no longer part of the set. The InsurancePlanName description was also simplified, dropping the "if the quote status is Pending this data may not be available" note now that the Pending shape expresses that structurally.',
+    rationale:
+      'The single-object form could not express that a quote carries different data at different points in its lifecycle: a Pending quote has no premium yet, whereas a PolicyIssued quote does. Modelling every status against one schema forced a lowest-common-denominator field set and pushed the distinctions into prose. The per-status discriminated oneOf lets each status declare exactly the fields valid for it, and lets a consumer branch on QuoteStatus to decode the correct shape.',
+    effectiveDate: '2026-04-10',
+    spec: 'uae-insurance-openapi',
+    endpoints: [
+      { label: 'GET /employment-insurance-quotes/{QuoteId}', path: '/tech/tpp-standards/v2.1/insurance/quotation/open-api/get-employment-insurance-quotes-QuoteId' },
+      { label: 'GET /health-insurance-quotes/{QuoteId}', path: '/tech/tpp-standards/v2.1/insurance/quotation/open-api/get-health-insurance-quotes-QuoteId' },
+      { label: 'GET /home-insurance-quotes/{QuoteId}', path: '/tech/tpp-standards/v2.1/insurance/quotation/open-api/get-home-insurance-quotes-QuoteId' },
+      { label: 'GET /life-insurance-quotes/{QuoteId}', path: '/tech/tpp-standards/v2.1/insurance/quotation/open-api/get-life-insurance-quotes-QuoteId' },
+      { label: 'GET /motor-insurance-quotes/{QuoteId}', path: '/tech/tpp-standards/v2.1/insurance/quotation/open-api/get-motor-insurance-quotes-QuoteId' },
+      { label: 'GET /renters-insurance-quotes/{QuoteId}', path: '/tech/tpp-standards/v2.1/insurance/quotation/open-api/get-renters-insurance-quotes-QuoteId' },
+      { label: 'GET /travel-insurance-quotes/{QuoteId}', path: '/tech/tpp-standards/v2.1/insurance/quotation/open-api/get-travel-insurance-quotes-QuoteId' },
+    ],
+    schemas: [
+      'AEInsuranceQuoteReadResponseProperties',
+      'AEHealthInsuranceQuoteReadResponseProperties',
+      'AEInsuranceQuoteProperties',
+      'AEHealthInsuranceQuoteProperties',
+      'AEInsuranceQuoteStatusCodes',
+    ],
+    githubSources: [
+      {
+        label: 'dist/standards/v2.1-errata1/uae-insurance-openapi.yaml',
+        url: `${OZONE}/dist/standards/v2.1-errata1/uae-insurance-openapi.yaml`,
+      },
+    ],
+    relatedStandards: [
+      { label: 'Insurance — Quotation', path: '/tech/tpp-standards/v2.1/insurance/quotation/' },
+    ],
+    affectedPaths: [
+      '/tech/tpp-standards/v2.1/insurance/quotation/open-api/get-employment-insurance-quotes-QuoteId',
+      '/tech/tpp-standards/v2.1/insurance/quotation/open-api/get-health-insurance-quotes-QuoteId',
+      '/tech/tpp-standards/v2.1/insurance/quotation/open-api/get-home-insurance-quotes-QuoteId',
+      '/tech/tpp-standards/v2.1/insurance/quotation/open-api/get-life-insurance-quotes-QuoteId',
+      '/tech/tpp-standards/v2.1/insurance/quotation/open-api/get-motor-insurance-quotes-QuoteId',
+      '/tech/tpp-standards/v2.1/insurance/quotation/open-api/get-renters-insurance-quotes-QuoteId',
+      '/tech/tpp-standards/v2.1/insurance/quotation/open-api/get-travel-insurance-quotes-QuoteId',
+      '/tech/lfi-api-hub/v2.1/insurance/quotation/open-api/get-employment-insurance-quotes-QuoteId',
+      '/tech/lfi-api-hub/v2.1/insurance/quotation/open-api/get-health-insurance-quotes-QuoteId',
+      '/tech/lfi-api-hub/v2.1/insurance/quotation/open-api/get-home-insurance-quotes-QuoteId',
+      '/tech/lfi-api-hub/v2.1/insurance/quotation/open-api/get-life-insurance-quotes-QuoteId',
+      '/tech/lfi-api-hub/v2.1/insurance/quotation/open-api/get-motor-insurance-quotes-QuoteId',
+      '/tech/lfi-api-hub/v2.1/insurance/quotation/open-api/get-renters-insurance-quotes-QuoteId',
+      '/tech/lfi-api-hub/v2.1/insurance/quotation/open-api/get-travel-insurance-quotes-QuoteId',
+    ],
+  },
+  {
+    errataId: 'v2.1-errata3',
+    version: 'v2.1',
+    number: 1,
+    title: 'Service Initiation — International Creditor restructured into Individual and Organization variants (SWIFT SR2026)',
+    summary:
+      'The international Creditor on the Bank Service Initiation RAR is now a oneOf of an Individual and an Organization variant, discriminated by IdentityType, carrying the structured beneficiary attributes required for cross-border payments. Domestic Creditor schemas are unchanged.',
+    description:
+      'As part of the SWIFT SR2026 alignment for cross-border payments, the international Creditor party on the Bank Service Initiation Rich Authorization Request was restructured from a single flat object — carrying only Name and PostalAddress — into a oneOf of an Individual variant and an Organization variant, discriminated by IdentityType. AEInternationalCreditorParty composes the two new variant schemas, AEInternationalIndividualCreditor and AEInternationalOrganisationCreditor.\n\n' +
+      'The variants add the structured beneficiary attributes required for cross-border payments: an object-valued Name (name parts), RelationshipToSender, DateOfBirth, Nationality, SourceOfFunds / SourceOfIncome, identity Evidence, and organisation identifiers such as AnyBIC and LEI. Domestic Creditor schemas are unchanged.\n\n' +
+      'The restructure is applied consistently across every surface that carries the Creditor in a RAR payload: PAR (uae-authorization-endpoints), the Payment API (uae-bank-initiation), the API Hub Consent Manager, and Ozone Connect (Bank Service Initiation and Consent Events). On PAR the Creditor is modelled as an array, so oasdiff reports the change as a property type change; on the Payments side it is a single object, so oasdiff reports it as removal of the previous flat Creditor.Name and Creditor.PostalAddress — both classifications describe the same restructure.',
+    rationale:
+      'The flat international Creditor object could not carry the beneficiary detail that cross-border (SWIFT SR2026) payments require. Splitting it into discriminated Individual and Organization variants lets each carry exactly the attributes valid for that party type. The change is backward-compatible in practice: the previously valid flat Creditor (Name and PostalAddress) maps onto the new variants, which retain those properties — a TPP must now set IdentityType and send a valid Individual or Organization object, but loses no previously accepted data.',
+    effectiveDate: '2026-07-08',
+    specs: [
+      'uae-authorization-endpoints-openapi',
+      'uae-bank-initiation-openapi',
+      'uae-api-hub-consent-manager-openapi',
+      'uae-ozone-connect-bank-service-initiation-openapi',
+      'uae-ozone-connect-consent-events-actions-openapi',
+    ],
+    schemas: [
+      'AEBankServiceInitiationRichAuthorizationRequests.AEInternationalCreditorParty',
+      'AEBankServiceInitiationRichAuthorizationRequests.AEInternationalIndividualCreditor',
+      'AEBankServiceInitiationRichAuthorizationRequests.AEInternationalOrganisationCreditor',
+      'AEBankServiceInitiationRichAuthorizationRequests.AEInternationalCreditorName',
+      'AEBankServiceInitiationRichAuthorizationRequests.AEInternationalCreditorNameComponent',
+      'AEBankServiceInitiationRichAuthorizationRequests.AEInternationalCreditorEvidence',
+    ],
+    githubSources: [
+      {
+        label: 'supporting/breaking-changes/standards/v2.1-errata3/uae-authorization-endpoints-openapi/breaking-changes.yaml',
+        url: `${OZONE}/supporting/breaking-changes/standards/v2.1-errata3/uae-authorization-endpoints-openapi/breaking-changes.yaml`,
+      },
+      {
+        label: 'supporting/breaking-changes/standards/v2.1-errata3/uae-bank-initiation-openapi/breaking-changes.yaml',
+        url: `${OZONE}/supporting/breaking-changes/standards/v2.1-errata3/uae-bank-initiation-openapi/breaking-changes.yaml`,
+      },
+      {
+        label: 'dist/standards/v2.1-errata3/uae-authorization-endpoints-openapi.yaml',
+        url: `${OZONE}/dist/standards/v2.1-errata3/uae-authorization-endpoints-openapi.yaml`,
+      },
+      {
+        label: 'dist/standards/v2.1-errata3/uae-bank-initiation-openapi.yaml',
+        url: `${OZONE}/dist/standards/v2.1-errata3/uae-bank-initiation-openapi.yaml`,
+      },
+    ],
+    relatedStandards: [
+      { label: 'Banking — Service Initiation', path: '/tech/tpp-standards/v2.1/banking/service-initiation/' },
+    ],
+    affectedPaths: [
+      '/tech/api-specs/v2.1/tpp/consent/par',
+      '/tech/api-specs/v2.1/tpp/consent/payment-consents',
+      '/tech/api-specs/v2.1/tpp/consent/payment-consents-ConsentId',
+      '/tech/api-specs/v2.1/tpp/consent/patch-payment-consents-ConsentId',
+      '/tech/api-specs/v2.1/tpp/service-initiation/payments',
+      '/tech/tpp-standards/v2.1/consent/open-api/par',
+      '/tech/tpp-standards/v2.1/consent/open-api/payment-consents',
+      '/tech/tpp-standards/v2.1/consent/open-api/payment-consents-ConsentId',
+      '/tech/tpp-standards/v2.1/consent/open-api/patch-payment-consents-ConsentId',
+      '/tech/tpp-standards/v2.1/banking/service-initiation/open-api/payments',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consents',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consents-consentId',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents-consentId',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents',
+      '/tech/api-specs/v2.1/ozone-connect/service-initiation/payments',
+      '/tech/api-specs/v2.1/ozone-connect/consent-events/validate',
+      '/tech/api-specs/v2.1/ozone-connect/consent-events/event-op',
+      '/tech/lfi-api-hub/v2.1/banking/service-initiation/open-api/payments',
+      '/tech/lfi-api-hub/v2.1/consent-events/open-api/validate',
+      '/tech/lfi-api-hub/v2.1/consent-events/open-api/event-op',
+    ],
+  },
+  {
+    errataId: 'v2.1-errata3',
+    version: 'v2.1',
+    number: 2,
+    title: 'Service Initiation — International Creditor Agent address aligned onto shared AEInternationalAddress (TownName required, max 70)',
+    summary:
+      'The international Creditor Agent PostalAddress now references the shared AEInternationalAddress used by the Creditor, which makes TownName required and tightens its maxLength from 140 to 70. The Creditor Agent address itself remains optional.',
+    description:
+      'As part of the same SWIFT SR2026 work, the international Creditor Agent PostalAddress was aligned onto the same address schema as the international Creditor. Both now reference a single shared AEInternationalAddress (renamed from AEInternationalCreditorAddress); the Creditor Agent previously referenced the legacy AEAddress.\n\n' +
+      'Relative to AEAddress, the shared AEInternationalAddress makes TownName required and tightens its maxLength from 140 to 70 — the ISO 20022 PostalAddress27 Max70Text bound. The Creditor Agent PostalAddress itself remains optional (only SchemeName and Identification are required on the Creditor Agent), so a BIC-only agent is unaffected.\n\n' +
+      'The change applies on the same surfaces as the Creditor restructure — PAR, Payments, the API Hub Consent Manager, and Ozone Connect.',
+    rationale:
+      'ISO 20022 models both a party address (Cdtr) and a financial-institution address (CdtrAgt/FinInstnId) with the same PostalAddress27 type, so a single shared AEInternationalAddress is the more standards-faithful design and removes the divergence between the two international address shapes. Impact: a TPP that supplies an international Creditor Agent address must now include TownName and keep it within 70 characters.',
+    effectiveDate: '2026-07-08',
+    specs: [
+      'uae-authorization-endpoints-openapi',
+      'uae-bank-initiation-openapi',
+      'uae-api-hub-consent-manager-openapi',
+      'uae-ozone-connect-bank-service-initiation-openapi',
+      'uae-ozone-connect-consent-events-actions-openapi',
+    ],
+    schemas: [
+      'AEBankServiceInitiationRichAuthorizationRequests.AEInternationalAddress',
+      'AEBankServiceInitiationRichAuthorizationRequests.AEInternationalCreditorAgentProperties',
+    ],
+    githubSources: [
+      {
+        label: 'supporting/breaking-changes/standards/v2.1-errata3/uae-authorization-endpoints-openapi/breaking-changes.yaml',
+        url: `${OZONE}/supporting/breaking-changes/standards/v2.1-errata3/uae-authorization-endpoints-openapi/breaking-changes.yaml`,
+      },
+      {
+        label: 'supporting/breaking-changes/standards/v2.1-errata3/uae-bank-initiation-openapi/breaking-changes.yaml',
+        url: `${OZONE}/supporting/breaking-changes/standards/v2.1-errata3/uae-bank-initiation-openapi/breaking-changes.yaml`,
+      },
+      {
+        label: 'dist/standards/v2.1-errata3/uae-authorization-endpoints-openapi.yaml',
+        url: `${OZONE}/dist/standards/v2.1-errata3/uae-authorization-endpoints-openapi.yaml`,
+      },
+      {
+        label: 'dist/standards/v2.1-errata3/uae-bank-initiation-openapi.yaml',
+        url: `${OZONE}/dist/standards/v2.1-errata3/uae-bank-initiation-openapi.yaml`,
+      },
+    ],
+    relatedStandards: [
+      { label: 'Banking — Service Initiation', path: '/tech/tpp-standards/v2.1/banking/service-initiation/' },
+    ],
+    affectedPaths: [
+      '/tech/api-specs/v2.1/tpp/consent/par',
+      '/tech/api-specs/v2.1/tpp/consent/payment-consents',
+      '/tech/api-specs/v2.1/tpp/consent/payment-consents-ConsentId',
+      '/tech/api-specs/v2.1/tpp/consent/patch-payment-consents-ConsentId',
+      '/tech/api-specs/v2.1/tpp/service-initiation/payments',
+      '/tech/tpp-standards/v2.1/consent/open-api/par',
+      '/tech/tpp-standards/v2.1/consent/open-api/payment-consents',
+      '/tech/tpp-standards/v2.1/consent/open-api/payment-consents-ConsentId',
+      '/tech/tpp-standards/v2.1/consent/open-api/patch-payment-consents-ConsentId',
+      '/tech/tpp-standards/v2.1/banking/service-initiation/open-api/payments',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consents',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consents-consentId',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId',
+      '/tech/api-specs/v2.1/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consents-consentId',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/patch-consents-consentId',
+      '/tech/lfi-api-hub/v2.1/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents',
+      '/tech/api-specs/v2.1/ozone-connect/service-initiation/payments',
+      '/tech/api-specs/v2.1/ozone-connect/consent-events/validate',
+      '/tech/api-specs/v2.1/ozone-connect/consent-events/event-op',
+      '/tech/lfi-api-hub/v2.1/banking/service-initiation/open-api/payments',
+      '/tech/lfi-api-hub/v2.1/consent-events/open-api/validate',
+      '/tech/lfi-api-hub/v2.1/consent-events/open-api/event-op',
+    ],
+  },
 ]
 
 function normalise(path: string): string {
