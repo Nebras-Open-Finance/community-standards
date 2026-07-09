@@ -20,7 +20,17 @@ const routes = setupLayouts(generatedRoutes)
 // Phase 1 skeleton — see supporting/internal_helpers/migration-plan.md §7 Phase 1.
 // vite-ssg drives both client hydration and the static crawl; `includedRoutes`,
 // head injection, and `getStaticPaths` for dynamic routes all hang off this entry.
-export const createApp = ViteSSG(App, { routes }, ({ router, isClient }) => {
+export const createApp = ViteSSG(App, {
+  routes,
+  // Reset scroll on every navigation so a new page always opens at the top.
+  // Honour the browser's saved position on back/forward, and jump to an
+  // in-page anchor when the target has a hash.
+  scrollBehavior(to, _from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.hash) return { el: to.hash, top: 0 }
+    return { top: 0 }
+  },
+}, ({ router, isClient }) => {
   if (!isClient) return
 
   // Stale-deploy recovery. Each build hashes its chunk filenames, so a client
