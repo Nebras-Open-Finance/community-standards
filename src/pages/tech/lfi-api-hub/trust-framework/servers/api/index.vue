@@ -101,7 +101,7 @@ meta:
         <p>
           An LFI can only publish API resources to the <strong>production</strong> Trust Framework once
           they have completed
-          <a href="/tech/lfi-api-hub/production/testing-certification/functional">Functional Certification</a>.
+          <a href="/tech/lfi-api-hub/production/testing-certification/functional/bank-data-sharing">Functional Certification</a>.
           API resources MAY be published to the <strong>sandbox</strong> Trust Framework at any time for
           development and testing.
         </p>
