@@ -5,12 +5,18 @@
 // Model Bank. Identity comes from Sandbox Trust Framework SSO; the bundle is
 // assembled entirely in the browser. Mirrors the LFI portal's look and flow.
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import type { FcArea, FcEndpoint } from '@/data/functional-certification/types'
+import type { FcArea, FcConsentOp, FcEndpoint } from '@/data/functional-certification/types'
 import { VERSIONS, type Version } from '@/data/versions'
 import { useSandboxAuth } from '@/composables/useSandboxAuth'
 import { createZip, downloadBlob, fileBytes, type ZipEntry } from '@/utils/zip'
-import { buildTppSummaryHtml, type TppEndpointEvidenceRef } from './summary-tpp'
-import { emptyTppEndpointState, emptyTppFormState, type TppEndpointState } from './types'
+import { buildTppSummaryHtml, type ConsentOpEvidenceRef, type TppEndpointEvidenceRef } from './summary-tpp'
+import {
+  emptyConsentOpState,
+  emptyTppEndpointState,
+  emptyTppFormState,
+  type ConsentOpState,
+  type TppEndpointState,
+} from './types'
 
 const props = defineProps<{ area: FcArea }>()
 
@@ -21,6 +27,23 @@ const endpointStates = reactive<Record<string, TppEndpointState>>(
   Object.fromEntries(props.area.endpoints.map((e) => [e.slug, emptyTppEndpointState()])),
 )
 const stateFor = (slug: string): TppEndpointState => endpointStates[slug] as TppEndpointState
+
+// Cross-cutting consent-lifecycle operations — always in scope, independent of
+// which endpoints the TPP consumes.
+const consentOps = computed<FcConsentOp[]>(() => props.area.consentOps ?? [])
+const consentOpStates = reactive<Record<string, ConsentOpState>>(
+  Object.fromEntries((props.area.consentOps ?? []).map((o) => [o.slug, emptyConsentOpState()])),
+)
+const consentStateFor = (slug: string): ConsentOpState => consentOpStates[slug] as ConsentOpState
+
+function consentOpComplete(op: FcConsentOp): boolean {
+  const st = consentStateFor(op.slug)
+  if (!st.postman) return false
+  if (op.captureErrorDetails && (!st.error.trim() || !st.errorDescription.trim())) return false
+  return true
+}
+const consentOpsComplete = computed(() => consentOps.value.every(consentOpComplete))
+const consentCompleteCount = computed(() => consentOps.value.filter(consentOpComplete).length)
 
 function setVersion(v: string): void {
   form.version = v as Version
@@ -107,7 +130,10 @@ function endpointComplete(e: FcEndpoint): boolean {
 }
 const completeCount = computed(() => selectedEndpoints.value.filter(endpointComplete).length)
 const allEvidenceComplete = computed(
-  () => selectedEndpoints.value.length > 0 && completeCount.value === selectedEndpoints.value.length,
+  () =>
+    selectedEndpoints.value.length > 0 &&
+    completeCount.value === selectedEndpoints.value.length &&
+    consentOpsComplete.value,
 )
 
 // Gate forward navigation.
@@ -132,6 +158,12 @@ function goTo(n: number): void {
 function next(): void {
   if (currentStep.value < STEPS.length && canAdvance.value) currentStep.value++
 }
+
+// Any step change (Back, Next, or a stepper click) returns the reader to the top
+// of the page — steps can be long, and the controls sit far below the heading.
+watch(currentStep, () => {
+  if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
+})
 
 const canGenerate = computed(() => selectedEndpoints.value.length > 0 && !generating.value)
 
@@ -164,12 +196,26 @@ async function generate(): Promise<void> {
       refs.push({ endpoint: e, state: st, paths })
     }
 
+    const consentRefs: ConsentOpEvidenceRef[] = []
+    for (const op of consentOps.value) {
+      const st = consentStateFor(op.slug)
+      const url = op.baseUrlTemplate.replace('{VERSION}', form.version) + op.path
+      if (st.postman) {
+        const postman = `evidence/consent-management/${op.slug}/postman.${extOf(st.postman.name)}`
+        entries.push({ name: postman, data: await fileBytes(st.postman) })
+        consentRefs.push({ op, state: st, url, postman })
+      } else {
+        consentRefs.push({ op, state: st, url })
+      }
+    }
+
     const summary = buildTppSummaryHtml({
       area: props.area,
       form,
       identity: { name: identityName.value, org: org.value, email: auth.value.email ?? '' },
       baseUrl: baseUrl.value,
       endpoints: refs,
+      consentOps: consentRefs,
       generatedAt: new Date().toLocaleString(),
     })
     entries.unshift({ name: 'summary.html', data: new TextEncoder().encode(summary) })
@@ -276,6 +322,28 @@ async function generate(): Promise<void> {
         <code>{{ area.wellKnownUrl }}</code>
       </p>
 
+      <!-- Consent management — always in scope, independent of endpoint selection -->
+      <template v-if="consentOps.length">
+        <h3 class="fc__h3">Consent management</h3>
+        <p class="fc__sub">
+          These consent-lifecycle operations are certified for every TPP, whichever endpoints you
+          consume. Retrieve and revoke a consent you staged against the sandbox Model Bank, and attach
+          a Postman screenshot of a successful call for each.
+        </p>
+        <div class="fc__progress-note" :class="{ 'fc__progress-note--done': consentOpsComplete }">
+          {{ consentCompleteCount }} of {{ consentOps.length }} consent operations complete.
+        </div>
+        <FcConsentOpEvidence
+          v-for="op in consentOps"
+          :key="op.slug"
+          :op="op"
+          :state="consentStateFor(op.slug)"
+          :version="form.version"
+          :complete="consentOpComplete(op)"
+        />
+      </template>
+
+      <h3 class="fc__h3">Endpoint evidence</h3>
       <div v-if="selectedEndpoints.length === 0" class="fc__empty">
         You haven’t selected any endpoints yet.
         <button type="button" class="fc__link" @click="goTo(2)">Go back to select endpoints</button>.
@@ -311,6 +379,7 @@ async function generate(): Promise<void> {
         <div><dt>Version</dt><dd>{{ form.version.toUpperCase() }}</dd></div>
         <div v-if="area.segments && area.segments.length"><dt>Segment</dt><dd>{{ form.segment.join(', ') || '—' }}</dd></div>
         <div><dt>Endpoints consumed</dt><dd>{{ selectedEndpoints.length }}</dd></div>
+        <div v-if="consentOps.length"><dt>Consent operations</dt><dd>{{ consentOps.length }}</dd></div>
         <div><dt>Permissions aligned</dt><dd>{{ form.alignmentConfirmed ? 'Confirmed' : 'Not confirmed' }}</dd></div>
       </dl>
 
@@ -369,6 +438,8 @@ async function generate(): Promise<void> {
 
 .fc__panel { min-height: 20rem; }
 .fc__h2 { font-family: var(--at-serif); font-size: 1.6rem; font-weight: 600; margin: 0 0 0.5rem; color: var(--at-navy-deep); }
+.fc__h3 { font-family: var(--at-serif); font-size: 1.2rem; font-weight: 600; margin: 1.75rem 0 0.4rem; color: var(--at-navy-deep); }
+.fc__sub { font-family: var(--at-sans); font-size: 0.9rem; line-height: 1.6; color: var(--at-mute-2); margin: 0 0 1rem; max-width: 48rem; }
 .fc__lede { font-family: var(--at-sans); font-size: 0.98rem; line-height: 1.65; color: var(--at-mute-2); margin: 0 0 1.5rem; max-width: 48rem; }
 .fc__lede a { color: var(--at-teal-deep); }
 

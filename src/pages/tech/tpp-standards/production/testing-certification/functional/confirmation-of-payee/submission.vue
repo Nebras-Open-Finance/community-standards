@@ -1,13 +1,13 @@
 <route lang="yaml">
 meta:
-  title: Bank Data Sharing — Functional Certification Submission
+  title: Confirmation of Payee — Functional Certification Submission
 </route>
 
 <script setup lang="ts">
-import { bankDataSharingArea } from '@/data/functional-certification/bank-data-sharing'
+import { confirmationOfPayeeTppArea } from '@/data/functional-certification/confirmation-of-payee-tpp'
 
 const explainerPath =
-  '/tech/lfi-api-hub/production/testing-certification/functional/bank-data-sharing'
+  '/tech/tpp-standards/production/testing-certification/functional/confirmation-of-payee'
 </script>
 
 <template>
@@ -16,12 +16,12 @@ const explainerPath =
       <div class="ed-doc__inner">
         <div class="ed-doc__eyebrow">
           <span class="ed-doc__eyebrow-dash" />
-          Functional Certification &middot; Bank Data Sharing
+          Functional Certification &middot; Confirmation of Payee
         </div>
         <h1 class="ed-doc__title">Build your submission</h1>
         <p class="ed-doc__lede">
           Complete each step, attach your evidence, and download a ZIP to attach to your
-          <strong>{{ bankDataSharingArea.certType }}</strong> Service Desk ticket. New here?
+          <strong>{{ confirmationOfPayeeTppArea.certType }}</strong> Service Desk ticket. New here?
           Read <a :href="explainerPath">what Functional Certification involves</a> first.
         </p>
       </div>
@@ -29,7 +29,7 @@ const explainerPath =
 
     <div class="ed-doc__body">
       <div class="ed-doc__inner">
-        <FcPortal :area="bankDataSharingArea" />
+        <FcCopPortal :area="confirmationOfPayeeTppArea" />
       </div>
     </div>
   </div>
@@ -45,7 +45,7 @@ const explainerPath =
 }
 
 .ed-doc__hero { background: var(--at-bg-cream); border-bottom: 1px solid var(--at-grid-line); }
-.ed-doc__inner { max-width: var(--at-page-max); margin: 0 auto; padding: 4rem 2rem 3rem; }
+.ed-doc__inner { max-width: var(--at-page-max); margin: 0 auto; padding: 3rem 2rem 2rem; }
 .ed-doc__body .ed-doc__inner { padding: 2rem 2rem 3rem; }
 
 .ed-doc__eyebrow {
@@ -63,30 +63,26 @@ const explainerPath =
 
 .ed-doc__title {
   font-family: var(--at-serif);
-  font-size: clamp(2.25rem, 5vw, 3.6rem);
+  font-size: clamp(2rem, 4.5vw, 3rem);
   font-weight: 600;
-  line-height: 1.02;
+  line-height: 1.05;
   letter-spacing: -0.03em;
   margin: 0;
 }
 
 .ed-doc__lede {
   font-family: var(--at-sans);
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   line-height: 1.65;
-  margin: 1.75rem 0 0;
+  margin: 1.25rem 0 0;
   max-width: 50rem;
   color: var(--at-mute-2);
 }
-.ed-doc__lede a {
-  color: var(--at-teal-deep);
-  text-decoration: none;
-  border-bottom: 1px solid currentColor;
-}
+.ed-doc__lede a { color: var(--at-teal-deep); }
 .ed-doc__lede strong { color: var(--at-navy-deep); }
 
 @media (max-width: 720px) {
-  .ed-doc__inner { padding: 2.75rem 1.25rem 2rem; }
+  .ed-doc__inner { padding: 2.25rem 1.25rem 1.5rem; }
   .ed-doc__body .ed-doc__inner { padding: 1.5rem 1.25rem 2rem; }
 }
 </style>

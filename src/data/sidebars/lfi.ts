@@ -604,6 +604,7 @@ export const lfiSidebar: SidebarItem[] = [
             collapsed: true,
             items: [
               { text: 'Bank Data Sharing', link: `${BASE}/production/testing-certification/functional/bank-data-sharing` },
+              { text: 'Confirmation of Payee', link: `${BASE}/production/testing-certification/functional/confirmation-of-payee` },
             ],
           },
           { text: 'User Experience Evidence', link: `${BASE}/production/testing-certification/user-experience` },

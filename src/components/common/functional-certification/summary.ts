@@ -1,8 +1,8 @@
 // Builds the summary.html at the root of an LFI certification bundle. It restates
 // every answer and links to the evidence files packaged alongside it.
 
-import type { FcArea, FcEndpoint } from '@/data/functional-certification/types'
-import type { EndpointState, FcFormState } from './types'
+import type { FcArea, FcConsentOp, FcEndpoint } from '@/data/functional-certification/types'
+import type { ConsentOpState, EndpointState, FcFormState } from './types'
 import { esc, fileLink, row, summaryShell } from './summary-shared'
 
 export interface EndpointEvidenceRef {
@@ -12,14 +12,41 @@ export interface EndpointEvidenceRef {
   paths: { testLog?: string; postman?: string; responseJson?: string }
 }
 
+export interface ConsentOpEvidenceRef {
+  op: FcConsentOp
+  state: ConsentOpState
+  /** Resolved call URL (version substituted). */
+  url: string
+  /** Archive-relative path of the Postman screenshot, if provided. */
+  postman?: string
+}
+
 export interface SummaryContext {
   area: FcArea
   form: FcFormState
   identity: { name: string; org: string; email: string }
   tppBaseUrl: string
   endpoints: EndpointEvidenceRef[]
+  consentOps: ConsentOpEvidenceRef[]
   /** Timestamp string, formatted by the caller. */
   generatedAt: string
+}
+
+function consentOpSection(ref: ConsentOpEvidenceRef): string {
+  const errRows = ref.op.captureErrorDetails
+    ? `<tr><th><code>error</code></th><td>${esc(ref.state.error) || '<em class="missing">Not provided</em>'}</td></tr>
+       <tr><th><code>error_description</code></th><td>${esc(ref.state.errorDescription) || '<em class="missing">Not provided</em>'}</td></tr>`
+    : ''
+  return `
+  <section class="endpoint">
+    <h3><span class="method">${esc(ref.op.method)}</span> <code>${esc(ref.op.path)}</code> — ${esc(ref.op.title)}</h3>
+    <p class="meta">${esc(ref.op.scenario)}</p>
+    <table>
+      <tr><th>Call</th><td><code>${esc(ref.url)}</code></td></tr>
+      <tr><th>Postman screenshot</th><td>${fileLink(ref.postman)}</td></tr>
+      ${errRows}
+    </table>
+  </section>`
 }
 
 function outcomeLabel(state: EndpointState): string {
@@ -29,7 +56,9 @@ function outcomeLabel(state: EndpointState): string {
 }
 
 export function buildSummaryHtml(ctx: SummaryContext): string {
-  const { area, form, identity, endpoints } = ctx
+  const { area, form, identity, endpoints, consentOps } = ctx
+
+  const consentSections = consentOps.map(consentOpSection).join('\n')
 
   const endpointSections = endpoints
     .map((e) => {
@@ -67,11 +96,19 @@ export function buildSummaryHtml(ctx: SummaryContext): string {
     ${row('TPP-facing base URL', ctx.tppBaseUrl)}
   </table>
 
-  <h2>2. Endpoints &amp; evidence</h2>
+  ${
+    consentOps.length
+      ? `<h2>2. Consent management</h2>
+  <p class="meta">${consentOps.length} consent-lifecycle operation(s), certified regardless of the endpoints in scope. Screenshots are included under <code>evidence/consent-management/</code>.</p>
+  ${consentSections}`
+      : ''
+  }
+
+  <h2>${consentOps.length ? '3' : '2'}. Endpoints &amp; evidence</h2>
   <p class="meta">${endpoints.length} endpoint(s) in scope. Evidence files are included in this bundle under <code>evidence/</code>.</p>
   ${endpointSections || '<p class="missing">No endpoints selected.</p>'}
 
-  <h2>3. Reviewer comments</h2>
+  <h2>${consentOps.length ? '4' : '3'}. Reviewer comments</h2>
   <pre>${esc(form.comments) || '<em>None</em>'}</pre>`
 
   return summaryShell(

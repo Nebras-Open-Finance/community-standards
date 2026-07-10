@@ -2,14 +2,23 @@
 // use case, the consent (RAR) object, the endpoints consumed, and links to the
 // Postman screenshots proving retrieval from the sandbox Model Bank.
 
-import type { FcArea, FcEndpoint } from '@/data/functional-certification/types'
-import type { FcTppFormState, TppEndpointState } from './types'
+import type { FcArea, FcConsentOp, FcEndpoint } from '@/data/functional-certification/types'
+import type { ConsentOpState, FcTppFormState, TppEndpointState } from './types'
 import { esc, fileLink, row, summaryShell } from './summary-shared'
 
 export interface TppEndpointEvidenceRef {
   endpoint: FcEndpoint
   state: TppEndpointState
   paths: { postman?: string }
+}
+
+export interface ConsentOpEvidenceRef {
+  op: FcConsentOp
+  state: ConsentOpState
+  /** Resolved call URL (version substituted). */
+  url: string
+  /** Archive-relative path of the Postman screenshot, if provided. */
+  postman?: string
 }
 
 export interface TppSummaryContext {
@@ -19,11 +28,34 @@ export interface TppSummaryContext {
   /** Resolved sandbox Model Bank base URL (version substituted). */
   baseUrl: string
   endpoints: TppEndpointEvidenceRef[]
+  consentOps: ConsentOpEvidenceRef[]
   generatedAt: string
 }
 
+function consentOpSection(ref: ConsentOpEvidenceRef): string {
+  const errRows = ref.op.captureErrorDetails
+    ? `<tr><th><code>error</code></th><td>${esc(ref.state.error) || '<em class="missing">Not provided</em>'}</td></tr>
+       <tr><th><code>error_description</code></th><td>${esc(ref.state.errorDescription) || '<em class="missing">Not provided</em>'}</td></tr>`
+    : ''
+  return `
+  <section class="endpoint">
+    <h3><span class="method">${esc(ref.op.method)}</span> <code>${esc(ref.op.path)}</code> — ${esc(ref.op.title)}</h3>
+    <p class="meta">${esc(ref.op.scenario)}</p>
+    <table>
+      <tr><th>Call</th><td><code>${esc(ref.url)}</code></td></tr>
+      <tr><th>Postman screenshot</th><td>${fileLink(ref.postman)}</td></tr>
+      ${errRows}
+    </table>
+  </section>`
+}
+
 export function buildTppSummaryHtml(ctx: TppSummaryContext): string {
-  const { area, form, identity, endpoints } = ctx
+  const { area, form, identity, endpoints, consentOps } = ctx
+
+  const consentSections = consentOps.map(consentOpSection).join('\n')
+  // Sections 1–3 are fixed; consent management (when present) takes 4 and pushes
+  // the endpoint and comments sections down by one.
+  const n = (base: number): number => (consentOps.length && base >= 4 ? base + 1 : base)
 
   const endpointSections = endpoints
     .map((e) => {
@@ -64,11 +96,19 @@ export function buildTppSummaryHtml(ctx: TppSummaryContext): string {
   </p>
   <pre>${esc(form.rarObject) || '<em class="missing">Not provided</em>'}</pre>
 
-  <h2>4. Endpoints consumed &amp; evidence</h2>
+  ${
+    consentOps.length
+      ? `<h2>4. Consent management</h2>
+  <p class="meta">${consentOps.length} consent-lifecycle operation(s), certified regardless of the endpoints consumed. Screenshots are included under <code>evidence/consent-management/</code>.</p>
+  ${consentSections}`
+      : ''
+  }
+
+  <h2>${n(4)}. Endpoints consumed &amp; evidence</h2>
   <p class="meta">${endpoints.length} endpoint(s) in scope. Screenshots are included in this bundle under <code>evidence/</code>.</p>
   ${endpointSections || '<p class="missing">No endpoints selected.</p>'}
 
-  <h2>5. Reviewer comments</h2>
+  <h2>${n(5)}. Reviewer comments</h2>
   <pre>${esc(form.comments) || '<em>None</em>'}</pre>`
 
   return summaryShell(

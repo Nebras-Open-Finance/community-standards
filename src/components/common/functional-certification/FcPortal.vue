@@ -5,12 +5,12 @@
 // never typed. Nothing is sent to a server: the bundle is assembled entirely in
 // the browser.
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import type { FcArea, FcEndpoint } from '@/data/functional-certification/types'
+import type { FcArea, FcConsentOp, FcEndpoint } from '@/data/functional-certification/types'
 import { VERSIONS, type Version } from '@/data/versions'
 import { useSandboxAuth } from '@/composables/useSandboxAuth'
 import { createZip, downloadBlob, fileBytes, type ZipEntry } from '@/utils/zip'
-import { buildSummaryHtml, type EndpointEvidenceRef } from './summary'
-import { emptyEndpointState, emptyFormState, type EndpointState } from './types'
+import { buildSummaryHtml, type ConsentOpEvidenceRef, type EndpointEvidenceRef } from './summary'
+import { emptyConsentOpState, emptyEndpointState, emptyFormState, type ConsentOpState, type EndpointState } from './types'
 
 const props = defineProps<{ area: FcArea }>()
 
@@ -23,6 +23,25 @@ const endpointStates = reactive<Record<string, EndpointState>>(
 // Every slug is seeded above, so indexing is always defined — this keeps the
 // template free of non-null assertions.
 const stateFor = (slug: string): EndpointState => endpointStates[slug] as EndpointState
+
+// Cross-cutting consent-lifecycle operations — always in scope, independent of
+// endpoint selection.
+const consentOps = computed<FcConsentOp[]>(() => props.area.consentOps ?? [])
+const consentOpStates = reactive<Record<string, ConsentOpState>>(
+  Object.fromEntries((props.area.consentOps ?? []).map((o) => [o.slug, emptyConsentOpState()])),
+)
+const consentStateFor = (slug: string): ConsentOpState => consentOpStates[slug] as ConsentOpState
+
+// A consent op is complete when it has a screenshot — and, for the do-fail
+// scenario, the error + error_description the certifier returns on cancel.
+function consentOpComplete(op: FcConsentOp): boolean {
+  const st = consentStateFor(op.slug)
+  if (!st.postman) return false
+  if (op.captureErrorDetails && (!st.error.trim() || !st.errorDescription.trim())) return false
+  return true
+}
+const consentOpsComplete = computed(() => consentOps.value.every(consentOpComplete))
+const consentCompleteCount = computed(() => consentOps.value.filter(consentOpComplete).length)
 
 function setVersion(v: string): void {
   form.version = v as Version
@@ -115,7 +134,10 @@ function endpointComplete(e: FcEndpoint): boolean {
 }
 const completeCount = computed(() => selectedEndpoints.value.filter(endpointComplete).length)
 const allEvidenceComplete = computed(
-  () => selectedEndpoints.value.length > 0 && completeCount.value === selectedEndpoints.value.length,
+  () =>
+    selectedEndpoints.value.length > 0 &&
+    completeCount.value === selectedEndpoints.value.length &&
+    consentOpsComplete.value,
 )
 
 // Gate forward navigation: you can only leave "Select endpoints" once at least
@@ -141,6 +163,12 @@ function goTo(n: number): void {
 function next(): void {
   if (currentStep.value < STEPS.length && canAdvance.value) currentStep.value++
 }
+
+// Any step change (Back, Next, or a stepper click) returns the reader to the top
+// of the page — steps can be long, and the controls sit far below the heading.
+watch(currentStep, () => {
+  if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
+})
 
 const canGenerate = computed(() => selectedEndpoints.value.length > 0 && !generating.value)
 
@@ -183,12 +211,26 @@ async function generate(): Promise<void> {
       refs.push({ endpoint: e, state: st, paths })
     }
 
+    const consentRefs: ConsentOpEvidenceRef[] = []
+    for (const op of consentOps.value) {
+      const st = consentStateFor(op.slug)
+      const url = op.baseUrlTemplate.replace('{VERSION}', form.version) + op.path
+      if (st.postman) {
+        const postman = `evidence/consent-management/${op.slug}/postman.${extOf(st.postman.name)}`
+        entries.push({ name: postman, data: await fileBytes(st.postman) })
+        consentRefs.push({ op, state: st, url, postman })
+      } else {
+        consentRefs.push({ op, state: st, url })
+      }
+    }
+
     const summary = buildSummaryHtml({
       area: props.area,
       form,
       identity: { name: identityName.value, org: org.value, email: auth.value.email ?? '' },
       tppBaseUrl: tppBaseUrl.value,
       endpoints: refs,
+      consentOps: consentRefs,
       generatedAt: new Date().toLocaleString(),
     })
     entries.unshift({ name: 'summary.html', data: new TextEncoder().encode(summary) })
@@ -252,10 +294,33 @@ async function generate(): Promise<void> {
       <h2 class="fc__h2">Evidence</h2>
       <p class="fc__lede">
         Attach the evidence for each endpoint you selected. Evidence must be from the
-        <a :href="area.sandboxEvidenceHref">AlTareq Model Bank</a> sandbox. All items are required for
-        each endpoint before you can continue.
+        <a :href="area.sandboxEvidenceHref">AlTareq Model Bank</a> sandbox. All items are required
+        before you can continue.
       </p>
 
+      <!-- Consent management — always in scope, independent of endpoint selection -->
+      <template v-if="consentOps.length">
+        <h3 class="fc__h3">Consent management</h3>
+        <p class="fc__sub">
+          These consent-lifecycle operations are certified for every LFI, whichever endpoints you
+          selected. Each is a call your Ozone Connect implementation makes to the API Hub Consent
+          Manager — except the cancelled-authorization scenario, which you drive on Headless Heimdall.
+          Attach a Postman screenshot of a successful call for each.
+        </p>
+        <div class="fc__progress-note" :class="{ 'fc__progress-note--done': consentOpsComplete }">
+          {{ consentCompleteCount }} of {{ consentOps.length }} consent operations complete.
+        </div>
+        <FcConsentOpEvidence
+          v-for="op in consentOps"
+          :key="op.slug"
+          :op="op"
+          :state="consentStateFor(op.slug)"
+          :version="form.version"
+          :complete="consentOpComplete(op)"
+        />
+      </template>
+
+      <h3 class="fc__h3">Endpoint evidence</h3>
       <div v-if="selectedEndpoints.length === 0" class="fc__empty">
         You haven’t selected any endpoints yet.
         <button type="button" class="fc__link" @click="goTo(2)">Go back to select endpoints</button>.
@@ -291,6 +356,7 @@ async function generate(): Promise<void> {
         <div><dt>Version</dt><dd>{{ form.version.toUpperCase() }}</dd></div>
         <div v-if="area.segments && area.segments.length"><dt>Segment</dt><dd>{{ form.segment.join(', ') || '—' }}</dd></div>
         <div><dt>Endpoints in scope</dt><dd>{{ selectedEndpoints.length }}</dd></div>
+        <div v-if="consentOps.length"><dt>Consent operations</dt><dd>{{ consentOps.length }}</dd></div>
       </dl>
 
       <!-- Comment box — proposals style -->
@@ -350,6 +416,8 @@ async function generate(): Promise<void> {
 
 .fc__panel { min-height: 20rem; }
 .fc__h2 { font-family: var(--at-serif); font-size: 1.6rem; font-weight: 600; margin: 0 0 0.5rem; color: var(--at-navy-deep); }
+.fc__h3 { font-family: var(--at-serif); font-size: 1.2rem; font-weight: 600; margin: 1.75rem 0 0.4rem; color: var(--at-navy-deep); }
+.fc__sub { font-family: var(--at-sans); font-size: 0.9rem; line-height: 1.6; color: var(--at-mute-2); margin: 0 0 1rem; max-width: 48rem; }
 .fc__lede { font-family: var(--at-sans); font-size: 0.98rem; line-height: 1.65; color: var(--at-mute-2); margin: 0 0 1.5rem; max-width: 48rem; }
 .fc__lede a { color: var(--at-teal-deep); }
 

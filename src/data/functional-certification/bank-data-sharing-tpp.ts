@@ -5,7 +5,40 @@
 // endpoint are the sandbox Model Bank's, not a production template.
 
 import { bankDataSharingEndpoints } from './bank-data-sharing'
-import type { FcArea } from './types'
+import type { FcArea, FcConsentOp } from './types'
+
+// Sandbox Model Bank resource server the TPP calls for consent-lifecycle ops —
+// the same base as the data endpoints (consent management lives on the resource
+// server, not a separate host, on the TPP side).
+const TPP_RS_BASE =
+  'https://rs1.altareq1.sandbox.apihub.openfinance.ae/open-finance/account-information/{VERSION}'
+const CONSENT_DOC = '/tech/tpp-standards/v2.1/consent/open-api'
+
+// Cross-cutting consent-lifecycle operations every TPP certifies, whichever data
+// endpoints it consumes. A TPP can retrieve and revoke its own consents; suspend
+// and the authorization do-fail are LFI-side and are not part of the TPP flow.
+const tppConsentOps: FcConsentOp[] = [
+  {
+    slug: 'get-consent-by-id',
+    title: 'Get consent by ConsentId',
+    method: 'GET',
+    path: '/account-access-consents/{ConsentId}',
+    baseUrlTemplate: TPP_RS_BASE,
+    scenario:
+      'Retrieve a Bank Data Sharing consent you staged by its ConsentId and confirm its status.',
+    docHref: `${CONSENT_DOC}/account-access-consents-ConsentId`,
+  },
+  {
+    slug: 'revoke-consent',
+    title: 'Revoke consent',
+    method: 'PATCH',
+    path: '/account-access-consents/{ConsentId}',
+    baseUrlTemplate: TPP_RS_BASE,
+    scenario:
+      'Revoke a consent by patching its status to Revoked (RevokedBy TPP.InitiatedByUser).',
+    docHref: `${CONSENT_DOC}/patch-account-access-consents-ConsentId`,
+  },
+]
 
 export const bankDataSharingTppArea: FcArea = {
   key: 'bank-data-sharing',
@@ -19,6 +52,7 @@ export const bankDataSharingTppArea: FcArea = {
   sandboxEvidenceHref: '/tech/tpp-standards/sandbox/model-bank',
   wellKnownUrl: 'https://auth1.altareq1.sandbox.apihub.openfinance.ae/.well-known/openid-configuration',
   endpoints: bankDataSharingEndpoints,
+  consentOps: tppConsentOps,
   rarEditor: {
     spec: '/openapi/v2.1/standards/uae-authorization-endpoints-openapi.yaml',
     schemaName:
