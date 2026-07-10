@@ -32,7 +32,9 @@ const ANNOTATIONS: Record<string, { permissions: string[]; tppPath?: string }> =
   '/accounts/{AccountId}/transactions': { permissions: ['ReadTransactionsBasic', 'ReadTransactionsDetail'], tppPath: '/accounts/{AccountId}/transactions' },
 }
 
-const endpoints: FcEndpoint[] = ozoneConnectEndpoints
+// Shared across the LFI and TPP Bank Data Sharing areas — same endpoint set,
+// permissions, and TPP-facing mapping.
+export const bankDataSharingEndpoints: FcEndpoint[] = ozoneConnectEndpoints
   .filter((e) => e.sectionSlug === 'data-sharing' && e.version === 'v2.1')
   .map((e): FcEndpoint => {
     const ann = ANNOTATIONS[e.path]
@@ -62,6 +64,7 @@ export const bankDataSharingArea: FcArea = {
   certType: 'LFI Functional Certification Evidence',
   tppBaseUrlTemplate:
     'https://rs1.{LFICODE}.apihub.openfinance.ae/open-finance/account-information/{VERSION}',
+  segments: ['Retail', 'SME', 'Corporate'],
   sandboxEvidenceHref: '/tech/tpp-standards/sandbox/model-bank',
-  endpoints,
+  endpoints: bankDataSharingEndpoints,
 }

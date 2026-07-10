@@ -53,6 +53,8 @@ const props = withDefaults(defineProps<{
   endpointLabel: 'View endpoint',
 })
 
+const emit = defineEmits<{ 'update:json': [value: string] }>()
+
 const { updateField } = useSharedState()
 
 const spec = ref<Spec | null>(null)
@@ -324,7 +326,12 @@ function updateFromJson() {
   }
 }
 
-watch(form, () => { jsonInput.value = JSON.stringify(form.value, null, 2) }, { deep: true })
+watch(form, () => {
+  jsonInput.value = JSON.stringify(form.value, null, 2)
+  // Emit only committed, schema-valid values (form.value changes on load and on
+  // a successful blur-commit — never on an invalid edit, which reverts instead).
+  emit('update:json', jsonInput.value)
+}, { deep: true })
 
 watch(jsonInput, (newValue) => {
   if (suppressNextStateUpdate) { suppressNextStateUpdate = false; return }

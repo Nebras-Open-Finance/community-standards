@@ -71,7 +71,7 @@ meta:
       </EdProse>
 
       <div class="ed-doc__contents-grid">
-        <a class="ed-link-card" href="/tech/tpp-standards/production/testing-certification/functional" :style="{ '--card-color': 'var(--at-blue-deep, #1d4ed8)' }">
+        <a class="ed-link-card" href="/tech/tpp-standards/production/testing-certification/functional/bank-data-sharing" :style="{ '--card-color': 'var(--at-blue-deep, #1d4ed8)' }">
           <span class="ed-link-card__top" />
           <div class="ed-link-card__meta">
             <span class="ed-link-card__cat">01 &middot; Evidence</span>
@@ -86,7 +86,7 @@ meta:
             <span class="ed-link-card__cert-value">TPP Functional Certification Evidence</span>
           </div>
           <div class="ed-link-card__foot">
-            <span class="ed-link-card__cta">Open template</span>
+            <span class="ed-link-card__cta">Start certification</span>
             <span class="ed-link-card__arrow">&nearr;</span>
           </div>
         </a>

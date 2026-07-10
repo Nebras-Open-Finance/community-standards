@@ -33,7 +33,7 @@ meta:
         <p>
           The Functional Evidence template for Confirmation of Payee is being prepared. In the meantime,
           refer to the
-          <a href="/tech/tpp-standards/production/testing-certification/functional">Bank Data Sharing
+          <a href="/tech/tpp-standards/production/testing-certification/functional/bank-data-sharing">Bank Data Sharing
           template</a> for the structure your submission will follow, and contact the Open Finance team
           via the <a href="/support-service-desk">Service Desk</a> if you need to submit Confirmation of
           Payee evidence before this page is published.

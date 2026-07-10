@@ -29,14 +29,48 @@ export function emptyEndpointState(): EndpointState {
 export interface FcFormState {
   /** Standards version being certified — chosen from the version dropdown options. */
   version: Version
-  /** LFI code used to build the TPP-facing resource-server URLs (e.g. 'adcb'). */
-  lfiCode: string
-  /** Optional implementation notes for the reviewer. */
-  implementationNotes: string
+  /** Customer segments being certified (Retail / SME / Corporate); [] when N/A. */
+  segment: string[]
   /** Free-text reviewer comments included in the submission. */
   comments: string
 }
 
 export function emptyFormState(): FcFormState {
-  return { version: CURRENT_VERSION, lfiCode: '', implementationNotes: '', comments: '' }
+  return { version: CURRENT_VERSION, segment: [], comments: '' }
+}
+
+// ── TPP portal ──────────────────────────────────────────────────────────────
+// The TPP flow is the consumer side: it demonstrates a TPP can retrieve data
+// from the sandbox Model Bank. Per endpoint, the only evidence is a Postman
+// screenshot of a successful retrieval.
+
+export interface TppEndpointState {
+  selected: boolean
+  /** Postman screenshot showing the data retrieved from the Model Bank. */
+  postman: File | null
+  /** Optional per-endpoint notes. */
+  notes: string
+}
+
+export function emptyTppEndpointState(): TppEndpointState {
+  return { selected: false, postman: null, notes: '' }
+}
+
+export interface FcTppFormState {
+  /** Standards version being certified — chosen from the version dropdown options. */
+  version: Version
+  /** Customer segments being certified (Retail / SME / Corporate); [] when N/A. */
+  segment: string[]
+  /** Brief write-up of the use case for consuming this data. */
+  useCase: string
+  /** The authorization_details (RAR) object sent in the consent. */
+  rarObject: string
+  /** Confirms the RAR permissions align to the selected endpoints. */
+  alignmentConfirmed: boolean
+  /** Free-text reviewer comments included in the submission. */
+  comments: string
+}
+
+export function emptyTppFormState(): FcTppFormState {
+  return { version: CURRENT_VERSION, segment: [], useCase: '', rarObject: '', alignmentConfirmed: false, comments: '' }
 }

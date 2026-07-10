@@ -1,28 +1,26 @@
 <script setup lang="ts">
-// Functional Certification portal — a guided, config-driven form that produces a
-// downloadable ZIP submission for an LFI to attach to its Service Desk evidence
-// ticket. Identity is pulled from the Sandbox Trust Framework session (SSO),
-// never typed. Nothing is sent to a server: the bundle is assembled entirely in
-// the browser.
+// TPP Functional Certification portal — the consumer side. A TPP states its use
+// case, the consent (RAR / authorization_details) it requests, the endpoints it
+// consumes, and provides Postman evidence of retrieving each from the sandbox
+// Model Bank. Identity comes from Sandbox Trust Framework SSO; the bundle is
+// assembled entirely in the browser. Mirrors the LFI portal's look and flow.
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import type { FcArea, FcEndpoint } from '@/data/functional-certification/types'
 import { VERSIONS, type Version } from '@/data/versions'
 import { useSandboxAuth } from '@/composables/useSandboxAuth'
 import { createZip, downloadBlob, fileBytes, type ZipEntry } from '@/utils/zip'
-import { buildSummaryHtml, type EndpointEvidenceRef } from './summary'
-import { emptyEndpointState, emptyFormState, type EndpointState } from './types'
+import { buildTppSummaryHtml, type TppEndpointEvidenceRef } from './summary-tpp'
+import { emptyTppEndpointState, emptyTppFormState, type TppEndpointState } from './types'
 
 const props = defineProps<{ area: FcArea }>()
 
 const { auth, loadMe, signIn } = useSandboxAuth()
 
-const form = reactive(emptyFormState())
-const endpointStates = reactive<Record<string, EndpointState>>(
-  Object.fromEntries(props.area.endpoints.map((e) => [e.slug, emptyEndpointState()])),
+const form = reactive(emptyTppFormState())
+const endpointStates = reactive<Record<string, TppEndpointState>>(
+  Object.fromEntries(props.area.endpoints.map((e) => [e.slug, emptyTppEndpointState()])),
 )
-// Every slug is seeded above, so indexing is always defined — this keeps the
-// template free of non-null assertions.
-const stateFor = (slug: string): EndpointState => endpointStates[slug] as EndpointState
+const stateFor = (slug: string): TppEndpointState => endpointStates[slug] as TppEndpointState
 
 function setVersion(v: string): void {
   form.version = v as Version
@@ -42,18 +40,15 @@ watch(
   { immediate: true },
 )
 
-const STEPS = ['Your details', 'Select endpoints', 'Evidence', 'Review & generate']
+// A TPP can only consume endpoints that have a TPP-facing equivalent.
+const consumable = computed(() => props.area.endpoints.filter((e) => e.tppPath))
+
+const STEPS = ['Your details', 'Proposition & consent', 'Evidence', 'Review & generate']
 const currentStep = ref(1)
 const generating = ref(false)
 const genError = ref('')
-// True while we bounce the user to Trust Framework SSO, so we show a redirect
-// notice rather than flashing the form.
 const redirecting = ref(false)
 
-// Identity is required, so on load we send an unauthenticated user straight to
-// Trust Framework SSO. A short-lived sessionStorage marker guards against a
-// redirect loop: if we come back still unauthenticated within the cooldown, we
-// stop and show the manual sign-in prompt instead of bouncing again.
 const LOGIN_MARKER = 'fc_login_attempt'
 const LOGIN_COOLDOWN_MS = 20_000
 
@@ -78,16 +73,21 @@ const org = computed(() =>
   auth.value.orgs.filter((o) => selectedOrgIds.value.includes(o.id)).map((o) => o.name).join(', '),
 )
 const identityName = computed(() => auth.value.name ?? auth.value.email ?? '')
-const tppBaseUrl = computed(() => props.area.tppBaseUrlTemplate.replace('{VERSION}', form.version))
+const baseUrl = computed(() => props.area.tppBaseUrlTemplate.replace('{VERSION}', form.version))
 
-const selectedEndpoints = computed(() => props.area.endpoints.filter((e) => stateFor(e.slug).selected))
+const selectedEndpoints = computed(() => consumable.value.filter((e) => stateFor(e.slug).selected))
+const permissionsInScope = computed(() => {
+  const set = new Set<string>()
+  for (const e of selectedEndpoints.value) e.permissions.forEach((p) => set.add(p))
+  return [...set].sort()
+})
 
 const endpointItems = computed(() =>
-  props.area.endpoints.map((e) => ({
+  consumable.value.map((e) => ({
     slug: e.slug,
     name: e.title,
     method: e.method,
-    path: e.ozonePath,
+    path: e.tppPath as string,
     selected: stateFor(e.slug).selected,
   })),
 )
@@ -96,36 +96,29 @@ function toggleEndpoint(slug: string): void {
   s.selected = !s.selected
 }
 function selectAllEndpoints(): void {
-  props.area.endpoints.forEach((e) => (stateFor(e.slug).selected = true))
+  consumable.value.forEach((e) => (stateFor(e.slug).selected = true))
 }
 function clearEndpoints(): void {
-  props.area.endpoints.forEach((e) => (stateFor(e.slug).selected = false))
+  consumable.value.forEach((e) => (stateFor(e.slug).selected = false))
 }
 
-// An endpoint's evidence is complete when it has a Testing Tool log, a stated
-// outcome (with notes when there were issues), and — where a TPP-facing
-// equivalent exists — both the Postman screenshot and the JSON response.
 function endpointComplete(e: FcEndpoint): boolean {
-  const st = stateFor(e.slug)
-  if (!st.testLog) return false
-  if (!st.outcome) return false
-  if (st.outcome === 'issues' && !st.notes.trim()) return false
-  if (e.tppPath && (!st.postman || !st.responseJson)) return false
-  return true
+  return !!stateFor(e.slug).postman
 }
 const completeCount = computed(() => selectedEndpoints.value.filter(endpointComplete).length)
 const allEvidenceComplete = computed(
   () => selectedEndpoints.value.length > 0 && completeCount.value === selectedEndpoints.value.length,
 )
 
-// Gate forward navigation: you can only leave "Select endpoints" once at least
-// one is ticked, and only leave "Evidence" once every selected endpoint is
-// complete.
+// Gate forward navigation.
 function canLeave(step: number): boolean {
   if (step === 2) {
     return (
+      form.useCase.trim().length > 0 &&
       selectedEndpoints.value.length > 0 &&
-      (!props.area.segments?.length || form.segment.length > 0)
+      (!props.area.segments?.length || form.segment.length > 0) &&
+      form.rarObject.trim().length > 0 &&
+      form.alignmentConfirmed
     )
   }
   if (step === 3) return allEvidenceComplete.value
@@ -133,8 +126,6 @@ function canLeave(step: number): boolean {
 }
 const canAdvance = computed(() => canLeave(currentStep.value))
 
-// The stepper only navigates to steps already reached; forward movement goes
-// through the gated Next button.
 function goTo(n: number): void {
   if (n <= currentStep.value) currentStep.value = n
 }
@@ -153,7 +144,7 @@ function slugify(s: string): string {
 }
 const zipName = computed(() => {
   const who = slugify(org.value) || 'submission'
-  return `functional-certification-${props.area.key}-${who}.zip`
+  return `functional-certification-tpp-${props.area.key}-${who}.zip`
 })
 
 async function generate(): Promise<void> {
@@ -161,33 +152,23 @@ async function generate(): Promise<void> {
   genError.value = ''
   try {
     const entries: ZipEntry[] = []
-    const refs: EndpointEvidenceRef[] = []
+    const refs: TppEndpointEvidenceRef[] = []
 
     for (const e of selectedEndpoints.value) {
       const st = stateFor(e.slug)
-      const dir = `evidence/${e.slug}`
-      const paths: EndpointEvidenceRef['paths'] = {}
-
-      if (st.testLog) {
-        paths.testLog = `${dir}/testing-tool-log.html`
-        entries.push({ name: paths.testLog, data: await fileBytes(st.testLog) })
-      }
-      if (e.tppPath && st.postman) {
-        paths.postman = `${dir}/postman-success.${extOf(st.postman.name)}`
+      const paths: TppEndpointEvidenceRef['paths'] = {}
+      if (st.postman) {
+        paths.postman = `evidence/${e.slug}/postman-model-bank.${extOf(st.postman.name)}`
         entries.push({ name: paths.postman, data: await fileBytes(st.postman) })
-      }
-      if (e.tppPath && st.responseJson) {
-        paths.responseJson = `${dir}/tpp-response.json`
-        entries.push({ name: paths.responseJson, data: await fileBytes(st.responseJson) })
       }
       refs.push({ endpoint: e, state: st, paths })
     }
 
-    const summary = buildSummaryHtml({
+    const summary = buildTppSummaryHtml({
       area: props.area,
       form,
       identity: { name: identityName.value, org: org.value, email: auth.value.email ?? '' },
-      tppBaseUrl: tppBaseUrl.value,
+      baseUrl: baseUrl.value,
       endpoints: refs,
       generatedAt: new Date().toLocaleString(),
     })
@@ -205,7 +186,6 @@ async function generate(): Promise<void> {
 
 <template>
   <div class="fc">
-    <!-- Redirecting to Trust Framework SSO -->
     <div v-if="redirecting" class="fc__redirect">
       Redirecting you to the Sandbox Trust Framework to sign in…
     </div>
@@ -218,20 +198,25 @@ async function generate(): Promise<void> {
       <h2 class="fc__h2">Your details</h2>
       <p class="fc__lede">
         Your organisation and name are taken from your Sandbox Trust Framework session — the same
-        sign-in used across the portal. Sign in so your submission is attributed to your LFI.
+        sign-in used across the portal. Sign in so your submission is attributed to your organisation.
       </p>
 
       <FcIdentity v-model:selected="selectedOrgIds" />
     </section>
 
-    <!-- Step 2 — Select endpoints -->
+    <!-- Step 2 — Proposition & consent -->
     <section v-show="currentStep === 2" class="fc__panel">
-      <h2 class="fc__h2">Select endpoints</h2>
+      <h2 class="fc__h2">Proposition &amp; consent</h2>
       <p class="fc__lede">
-        Choose the version and segment you are certifying, then tick every {{ area.label }} endpoint
-        your Ozone Connect implementation exposes. You will attach evidence for each on the next step.
+        Tell us briefly why you consume Bank Data Sharing, pick the version and endpoints you consume,
+        and provide the consent you request.
       </p>
 
+      <label class="fc__label" for="fc-usecase">Use case</label>
+      <p class="fc__hint">A sentence or two on what you use this data for — for example, powering a retail personal finance management (PFM) product with the customer’s balances and transactions.</p>
+      <textarea id="fc-usecase" v-model="form.useCase" class="fc__textarea fc__textarea--sm" placeholder="e.g. We aggregate the customer’s current-account balances and transactions to power a retail PFM dashboard and spending insights." />
+
+      <label class="fc__label">Endpoints you consume</label>
       <FcEndpointSelector
         :title="area.label"
         :items="endpointItems"
@@ -245,15 +230,50 @@ async function generate(): Promise<void> {
         @select-all="selectAllEndpoints"
         @clear="clearEndpoints"
       />
+
+      <label class="fc__label" for="fc-rar">Consent — authorization_details (RAR object)</label>
+      <p class="fc__hint">
+        Edit the <code>authorization_details</code> entry below to match your consent request. This is the
+        <strong>Rich Authorization Requests (RAR)</strong> object defined by
+        <a href="https://datatracker.ietf.org/doc/html/rfc9396" target="_blank" rel="noopener">RFC 9396</a>:
+        the entry you send at <code>/par</code> that declares the permissions and scope of the consent.
+        It is validated against the OpenAPI schema — edits commit on blur, and anything that does not
+        match the schema reverts.
+      </p>
+      <EditableJson
+        v-if="area.rarEditor"
+        :spec="area.rarEditor.spec"
+        :schema-name="area.rarEditor.schemaName"
+        :initial-data="area.rarEditor.initialData"
+        state-field="fcRarObject"
+        label="authorization_details"
+        description="PAR request body entry"
+        @update:json="form.rarObject = $event"
+      />
+      <textarea v-else id="fc-rar" v-model="form.rarObject" class="fc__textarea fc__textarea--mono" spellcheck="false" placeholder='{ "type": "urn:openfinanceuae:account-access-consent:v2.1", "consent": { "Permissions": [ … ] } }' />
+
+      <p v-if="permissionsInScope.length" class="fc__perms-note">
+        <span class="fc__id-label">Permissions your selected endpoints require</span>
+        <code v-for="p in permissionsInScope" :key="p" class="fc__perm">{{ p }}</code>
+      </p>
+
+      <label class="fc__confirm">
+        <input v-model="form.alignmentConfirmed" type="checkbox" />
+        <span>I confirm the permissions in my <code>authorization_details</code> object align to the endpoints selected above — I request no permission I do not consume, and consume no endpoint I have not requested.</span>
+      </label>
     </section>
 
     <!-- Step 3 — Evidence -->
     <section v-show="currentStep === 3" class="fc__panel">
       <h2 class="fc__h2">Evidence</h2>
       <p class="fc__lede">
-        Attach the evidence for each endpoint you selected. Evidence must be from the
-        <a :href="area.sandboxEvidenceHref">AlTareq Model Bank</a> sandbox. All items are required for
-        each endpoint before you can continue.
+        For each endpoint, attach a Postman screenshot showing you successfully retrieved the data from
+        the sandbox <a :href="area.sandboxEvidenceHref">AlTareq Model Bank</a>. Start from the Model
+        Bank’s discovery endpoint:
+      </p>
+      <p v-if="area.wellKnownUrl" class="fc__wellknown">
+        <span class="fc__id-label">Model Bank .well-known</span>
+        <code>{{ area.wellKnownUrl }}</code>
       </p>
 
       <div v-if="selectedEndpoints.length === 0" class="fc__empty">
@@ -265,12 +285,12 @@ async function generate(): Promise<void> {
         <div class="fc__progress-note" :class="{ 'fc__progress-note--done': allEvidenceComplete }">
           {{ completeCount }} of {{ selectedEndpoints.length }} endpoints complete{{ allEvidenceComplete ? ' — you can continue.' : '.' }}
         </div>
-        <FcEndpointEvidence
+        <FcTppEndpointEvidence
           v-for="e in selectedEndpoints"
           :key="e.slug"
           :endpoint="e"
           :state="stateFor(e.slug)"
-          :tpp-base-url="tppBaseUrl"
+          :base-url="baseUrl"
           :complete="endpointComplete(e)"
         />
       </template>
@@ -281,7 +301,7 @@ async function generate(): Promise<void> {
       <h2 class="fc__h2">Review &amp; generate</h2>
       <p class="fc__lede">
         Review the summary below, add any comments, then download your submission. The ZIP contains a
-        <code>summary.html</code> plus every evidence file — attach it to your
+        <code>summary.html</code> plus every screenshot — attach it to your
         <strong>{{ area.certType }}</strong> Service Desk ticket.
       </p>
 
@@ -290,10 +310,10 @@ async function generate(): Promise<void> {
         <div><dt>Submitted by</dt><dd>{{ identityName || '—' }}</dd></div>
         <div><dt>Version</dt><dd>{{ form.version.toUpperCase() }}</dd></div>
         <div v-if="area.segments && area.segments.length"><dt>Segment</dt><dd>{{ form.segment.join(', ') || '—' }}</dd></div>
-        <div><dt>Endpoints in scope</dt><dd>{{ selectedEndpoints.length }}</dd></div>
+        <div><dt>Endpoints consumed</dt><dd>{{ selectedEndpoints.length }}</dd></div>
+        <div><dt>Permissions aligned</dt><dd>{{ form.alignmentConfirmed ? 'Confirmed' : 'Not confirmed' }}</dd></div>
       </dl>
 
-      <!-- Comment box — proposals style -->
       <div class="fc-comment">
         <label class="fc-comment__label" for="fc-comments">Comments <span class="fc__opt">(optional)</span></label>
         <textarea
@@ -316,7 +336,6 @@ async function generate(): Promise<void> {
         type="button"
         class="fc__btn"
         :disabled="!canAdvance"
-        :title="!canAdvance && currentStep === 3 ? 'Attach all required evidence for each endpoint first' : ''"
         @click="next"
       >
         Next
@@ -366,6 +385,8 @@ async function generate(): Promise<void> {
 .fc__opt { opacity: 0.6; font-weight: 400; }
 .fc__hint { font-family: var(--at-sans); font-size: 0.85rem; color: var(--at-mute-2); margin: 0 0 0.5rem; line-height: 1.5; }
 .fc__hint code { font-family: var(--at-mono); font-size: 0.78rem; }
+.fc__hint a { color: var(--at-teal-deep); }
+.fc__hint strong { color: var(--at-navy-deep); }
 
 .fc__input, .fc__textarea, .fc__select {
   box-sizing: border-box;
@@ -376,10 +397,10 @@ async function generate(): Promise<void> {
   font-size: 0.9rem;
   color: var(--at-navy-deep);
 }
-.fc__input, .fc__textarea { width: 100%; }
-.fc__input:focus, .fc__textarea:focus, .fc__select:focus { outline: none; border-color: var(--at-navy-deep); }
-.fc__textarea { min-height: 110px; resize: vertical; line-height: 1.6; }
+.fc__textarea { width: 100%; min-height: 110px; resize: vertical; line-height: 1.6; }
 .fc__textarea--sm { min-height: 70px; }
+.fc__textarea--mono { font-family: var(--at-mono); font-size: 0.82rem; }
+.fc__input:focus, .fc__textarea:focus, .fc__select:focus { outline: none; border-color: var(--at-navy-deep); }
 .fc__select { min-width: 160px; background: var(--at-bg-cream); border-color: var(--at-grid-line-2); }
 
 .fc__identity {
@@ -397,6 +418,29 @@ async function generate(): Promise<void> {
 .fc__identity--muted { color: var(--at-mute); }
 .fc__identity--signin { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
 .fc__id-label { display: block; font-family: var(--at-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--at-mute); margin-bottom: 0.15rem; }
+
+.fc__perms-note { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-top: 1rem; }
+.fc__perm { font-family: var(--at-mono); font-size: 0.75rem; background: color-mix(in srgb, var(--at-teal) 7%, var(--at-bg-cream)); border: 1px solid var(--at-grid-line); padding: 0.1rem 0.4rem; color: var(--at-navy-deep); }
+
+.fc__confirm {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  margin-top: 1.25rem;
+  padding: 0.9rem 1.1rem;
+  background: var(--at-bg-cream);
+  border: 1px solid var(--at-grid-line);
+  border-left: 3px solid var(--at-gold);
+  font-family: var(--at-sans);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--at-navy-deep);
+  cursor: pointer;
+}
+.fc__confirm input { margin-top: 0.2rem; flex-shrink: 0; }
+
+.fc__wellknown { display: flex; flex-direction: column; gap: 0.25rem; margin: -0.5rem 0 1.25rem; }
+.fc__wellknown code { font-family: var(--at-mono); font-size: 0.8rem; color: var(--at-navy-deep); background: var(--at-surface); border: 1px solid var(--at-grid-line); padding: 0.3rem 0.5rem; word-break: break-all; }
 
 .fc__empty { font-family: var(--at-sans); font-size: 0.95rem; color: var(--at-mute-2); padding: 1.5rem 0; }
 .fc__link { background: none; border: none; padding: 0; font: inherit; color: var(--at-teal-deep); text-decoration: underline; cursor: pointer; }
@@ -419,7 +463,6 @@ async function generate(): Promise<void> {
 .fc__review dt { font-family: var(--at-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--at-mute); }
 .fc__review dd { margin: 0.2rem 0 0; font-family: var(--at-sans); font-size: 1rem; color: var(--at-navy-deep); }
 
-/* Comment box — proposals style */
 .fc-comment {
   padding: 1.25rem 1.5rem;
   background: var(--at-bg-cream);

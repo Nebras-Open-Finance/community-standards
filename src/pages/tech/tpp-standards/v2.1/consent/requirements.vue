@@ -23,7 +23,7 @@ meta:
         <p class="ed-doc__lede">
           These requirements apply to all TPPs operating within UAE Open Finance, regardless of the
           service type. They are assessed as part of the
-          <a href="/tech/tpp-standards/production/testing-certification/functional">Functional Evidence</a>
+          <a href="/tech/tpp-standards/production/testing-certification/functional/bank-data-sharing">Functional Certification</a>
           certification process.
         </p>
       </div>

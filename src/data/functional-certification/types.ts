@@ -46,8 +46,33 @@ export interface FcArea {
    * The portal substitutes the LFI code and the version selected on the form.
    */
   tppBaseUrlTemplate: string
+  /**
+   * Customer segments this area is certified per (e.g. Retail / SME / Corporate).
+   * Present for banking areas; omit for insurance (no segment).
+   */
+  segments?: string[]
   /** Route path of the sandbox evidence source (Model Bank). */
   sandboxEvidenceHref: string
+  /**
+   * Sandbox discovery (`.well-known`) URL for the Model Bank — shown to TPPs as
+   * the starting point for retrieving evidence. Optional (LFI areas omit it).
+   */
+  wellKnownUrl?: string
   /** Endpoints in scope, in presentation order. */
   endpoints: FcEndpoint[]
+  /**
+   * Config for the schema-validated consent (RAR / authorization_details)
+   * editor on the submission form. When present, the portal renders an
+   * EditableJson bound to this schema and seed; when omitted, it falls back to a
+   * plain textarea. The seed is a single authorization_details entry (an object,
+   * not the array) — enough to validate the shape against the OpenAPI schema.
+   */
+  rarEditor?: {
+    /** Path of the OpenAPI spec that defines the schema (served from public/). */
+    spec: string
+    /** Schema name within the spec's components — e.g. the Bank Data Sharing RAR schema. */
+    schemaName: string
+    /** Seed object the editor pre-populates and validates against the schema. */
+    initialData: Record<string, unknown>
+  }
 }
