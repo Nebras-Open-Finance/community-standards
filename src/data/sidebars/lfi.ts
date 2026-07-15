@@ -604,7 +604,22 @@ export const lfiSidebar: SidebarItem[] = [
             collapsed: true,
             items: [
               { text: 'Bank Data Sharing', link: `${BASE}/production/testing-certification/functional/bank-data-sharing` },
+              {
+                text: 'Domestic Payments',
+                collapsed: true,
+                items: [
+                  { text: 'Single Instant Payment', link: `${BASE}/production/testing-certification/functional/single-instant-payment` },
+                  { text: 'Variable On-Demand', link: `${BASE}/production/testing-certification/functional/variable-on-demand` },
+                  { text: 'Fixed On-Demand', link: `${BASE}/production/testing-certification/functional/fixed-on-demand` },
+                  { text: 'Variable Periodic Schedule', link: `${BASE}/production/testing-certification/functional/variable-periodic-schedule` },
+                  { text: 'Fixed Periodic Schedule', link: `${BASE}/production/testing-certification/functional/fixed-periodic-schedule` },
+                  { text: 'Variable Defined Schedule', link: `${BASE}/production/testing-certification/functional/variable-defined-schedule` },
+                  { text: 'Fixed Defined Schedule', link: `${BASE}/production/testing-certification/functional/fixed-defined-schedule` },
+                  { text: 'Delegated SCA', link: `${BASE}/production/testing-certification/functional/delegated-sca` },
+                ],
+              },
               { text: 'Confirmation of Payee', link: `${BASE}/production/testing-certification/functional/confirmation-of-payee` },
+              { text: 'Insurance Data Sharing', link: `${BASE}/production/testing-certification/functional/insurance-data-sharing` },
             ],
           },
           { text: 'User Experience Evidence', link: `${BASE}/production/testing-certification/user-experience` },

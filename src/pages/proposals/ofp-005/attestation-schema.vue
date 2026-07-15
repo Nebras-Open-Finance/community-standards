@@ -1,20 +1,20 @@
 <route lang="yaml">
 meta:
-  title: 'OFP-005 · Consent audit sub-resource (draft)'
+  title: 'OFP-005 · Consent attestations sub-resource (draft)'
 </route>
 
 <script setup lang="ts">
-// Renders the co-located OFP-005 consent-audit draft schema with the shared Redoc
-// wrapper and EndpointPage chrome — the same presentation as the published API
-// specs and the OFP-001/002 schema pages. The YAML lives in this folder, is
+// Renders the co-located OFP-005 consent-attestations draft schema with the shared
+// Redoc wrapper and EndpointPage chrome — the same presentation as the published
+// API specs and the OFP-001/002 schema pages. The YAML lives in this folder, is
 // imported raw, handed to RedocWrapper via `specText`, and offered as a
 // Download .yaml.
 import { useHead } from '@unhead/vue'
 
-useHead({ title: 'OFP-005 · Consent audit sub-resource (draft)' })
+useHead({ title: 'OFP-005 · Consent attestations sub-resource (draft)' })
 
 const sources = import.meta.glob('./*.yaml', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
-const spec = sources['./consent-audit-schema.yaml'] ?? ''
+const spec = sources['./attestation-schema.yaml'] ?? ''
 
 function downloadYaml(): void {
   if (typeof document === 'undefined') return
@@ -22,7 +22,7 @@ function downloadYaml(): void {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = 'ofp-005-consent-audit-schema.yaml'
+  a.download = 'ofp-005-consent-attestation-schema.yaml'
   document.body.appendChild(a)
   a.click()
   a.remove()
@@ -33,10 +33,10 @@ function downloadYaml(): void {
 <template>
   <EndpointPage
     eyebrow="OFP-005 · Draft schema"
-    title="Consent audit sub-resource"
+    title="Consent attestations sub-resource"
     version="Draft · V2.2"
     method="POST"
-    path="/{consent}/audit"
+    path="/{consent}/attestations"
   >
     <div class="ofp-schema-toolbar">
       <RouterLink to="/proposals/ofp-005" class="ofp-schema-back">
@@ -57,7 +57,7 @@ function downloadYaml(): void {
       :spec-text="spec"
       :override-servers="[]"
       hide-security
-      container-id="redoc-ofp005-audit"
+      container-id="redoc-ofp005-attestation"
     />
   </EndpointPage>
 </template>

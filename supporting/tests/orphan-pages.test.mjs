@@ -43,7 +43,15 @@ const CHROME_FILES = [
 
 // Pages we knowingly leave unlinked. Relative to src/pages/, forward slashes.
 // Add entries only with a reason — if a page belongs on a sidebar, wire it up.
-const ALLOWED_ORPHANS = new Set([])
+const ALLOWED_ORPHANS = new Set([
+  // Standalone Functional Certification landing pages — a card grid over every
+  // functional-cert area for one audience. Deliberately kept off the sidebar;
+  // they exist only to be linked from the Service Desk / Jira certification-
+  // evidence tickets as a single entry point. Their card links keep the area
+  // pages reachable, but nothing links to the landing pages themselves.
+  'tech/lfi-api-hub/production/testing-certification/functional/index.vue',
+  'tech/tpp-standards/production/testing-certification/functional/index.vue',
+])
 
 // Listing pages that render their children via data-driven `:href`. Once the
 // listing is reachable, every .vue under the child tree is treated reachable.
@@ -55,6 +63,25 @@ const LISTING_INFERENCE = [
   { listing: '/knowledge-base/', tree: 'knowledge-base/articles' },
   { listing: '/proposals', tree: 'proposals' },
   { listing: '/proposals/', tree: 'proposals' },
+  // Multi-Payment (and Delegated SCA) functional-cert index pages render their
+  // submission link via a computed `:href` in FcMultiPaymentExplainer /
+  // FcDelegatedScaExplainer, so the submission page is reached dynamically once the
+  // index (linked from the LFI sidebar) is reachable.
+  ...[
+    'variable-on-demand',
+    'fixed-on-demand',
+    'variable-periodic-schedule',
+    'fixed-periodic-schedule',
+    'variable-defined-schedule',
+    'fixed-defined-schedule',
+    'delegated-sca',
+  ].flatMap((k) => {
+    const base = `tech/lfi-api-hub/production/testing-certification/functional/${k}`
+    return [
+      { listing: `/${base}`, tree: base },
+      { listing: `/${base}/`, tree: base },
+    ]
+  }),
 ]
 
 let sidebars

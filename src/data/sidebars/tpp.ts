@@ -536,9 +536,9 @@ export const tppSidebar: SidebarItem[] = [
             collapsed: true,
             items: [
               { text: 'Bank Data Sharing', link: `${BASE}/production/testing-certification/functional/bank-data-sharing` },
-              { text: 'Banking Service Initiation', link: `${BASE}/production/testing-certification/functional-banking-service-initiation` },
+              { text: 'Domestic Payments', link: `${BASE}/production/testing-certification/functional/domestic-payments` },
               { text: 'Confirmation of Payee', link: `${BASE}/production/testing-certification/functional/confirmation-of-payee` },
-              { text: 'Insurance Data Sharing', link: `${BASE}/production/testing-certification/functional-insurance-data-sharing` },
+              { text: 'Insurance Data Sharing', link: `${BASE}/production/testing-certification/functional/insurance-data-sharing` },
             ],
           },
           { text: 'User Experience Evidence', link: `${BASE}/production/testing-certification/user-experience` },

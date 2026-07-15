@@ -1,11 +1,33 @@
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue'
+import { useHead } from '@unhead/vue'
+
+const props = defineProps<{
   eyebrow: string
   title: string
   version?: string
   method: string
   path: string
 }>()
+
+// Every API endpoint page renders through this component, so composing a unique
+// meta description here gives all ~200 of them a distinct, keyword-relevant
+// snippet instead of the site-wide default — derived entirely from props the
+// page already passes (title, method, path, eyebrow, version). Registered after
+// App.vue's parent useHead, so these win the description dedupe. og/twitter
+// descriptions are set to match so link-preview cards agree with the SERP snippet.
+const metaDescription = computed(() => {
+  const ver = props.version ? `${props.version} ` : ''
+  return `${props.title}: ${props.method} ${props.path}. ${props.eyebrow} endpoint in the UAE Open Finance ${ver}standards, with request and response schema, examples and validation rules.`
+})
+
+useHead({
+  meta: [
+    { name: 'description', content: metaDescription },
+    { property: 'og:description', content: metaDescription },
+    { name: 'twitter:description', content: metaDescription },
+  ],
+})
 </script>
 
 <template>

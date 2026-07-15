@@ -69,5 +69,11 @@ export default defineConfig({
     includedRoutes(paths: string[]): string[] {
       return paths.flatMap((p) => expandSsgPath(p))
     },
+    // After the static crawl writes every page, emit dist/sitemap.xml from the
+    // rendered canonical URLs. robots.txt already points search engines at it.
+    async onFinished() {
+      const { generateSitemap } = await import('./scripts/generate-sitemap.mjs')
+      generateSitemap()
+    },
   },
 })

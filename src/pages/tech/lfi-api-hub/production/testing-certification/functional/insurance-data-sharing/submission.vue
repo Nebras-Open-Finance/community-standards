@@ -1,7 +1,14 @@
 <route lang="yaml">
 meta:
-  title: Functional Evidence — Insurance Data Sharing
+  title: Insurance Data Sharing — Functional Certification Submission
 </route>
+
+<script setup lang="ts">
+import { insuranceDataSharingArea } from '@/data/functional-certification/insurance-data-sharing'
+
+const explainerPath =
+  '/tech/lfi-api-hub/production/testing-certification/functional/insurance-data-sharing'
+</script>
 
 <template>
   <div class="ed-doc">
@@ -9,35 +16,21 @@ meta:
       <div class="ed-doc__inner">
         <div class="ed-doc__eyebrow">
           <span class="ed-doc__eyebrow-dash" />
-          Testing &amp; Certification &middot; Functional Evidence
+          Functional Certification &middot; Insurance Data Sharing
         </div>
-        <h1 class="ed-doc__title">
-          Functional Evidence &mdash; Insurance Data Sharing
-        </h1>
+        <h1 class="ed-doc__title">Build your submission</h1>
         <p class="ed-doc__lede">
-          Documented evidence that your insurance data sharing proposition calls only the APIs it
-          needs, requests only the minimum permissions required, and handles consent states correctly.
+          Complete each step, attach your evidence, and download a ZIP to attach to your
+          <strong>{{ insuranceDataSharingArea.certType }}</strong> Service Desk ticket. New here?
+          Read <a :href="explainerPath">what Functional Certification involves</a> first.
         </p>
       </div>
     </section>
 
-    <div class="ed-doc__intro">
+    <div class="ed-doc__body">
       <div class="ed-doc__inner">
-        <CertificationTicketBanner cert-type="TPP Functional Certification Evidence" />
+        <FcPortal :area="insuranceDataSharingArea" />
       </div>
-    </div>
-
-    <div class="ed-doc__inner">
-      <EdNote type="note" title="Coming soon">
-        <p>
-          The Functional Evidence template for Insurance Data Sharing is being prepared. In the
-          meantime, refer to the
-          <a href="/tech/tpp-standards/production/testing-certification/functional/bank-data-sharing">Bank Data Sharing
-          template</a> for the structure your submission will follow, and contact the Open Finance team
-          via the <a href="/support-service-desk">Service Desk</a> if you need to submit Insurance Data
-          Sharing evidence before this page is published.
-        </p>
-      </EdNote>
     </div>
   </div>
 </template>
@@ -53,9 +46,7 @@ meta:
 
 .ed-doc__hero { background: var(--at-bg-cream); border-bottom: 1px solid var(--at-grid-line); }
 .ed-doc__inner { max-width: var(--at-page-max); margin: 0 auto; padding: 4rem 2rem 3rem; }
-
-.ed-doc__intro { background: var(--at-bg-cream); border-bottom: 1px solid var(--at-grid-line); }
-.ed-doc__intro .ed-doc__inner { padding: 2rem 2rem 2.5rem; }
+.ed-doc__body .ed-doc__inner { padding: 2rem 2rem 3rem; }
 
 .ed-doc__eyebrow {
   font-family: var(--at-mono);
@@ -77,10 +68,6 @@ meta:
   line-height: 1.02;
   letter-spacing: -0.03em;
   margin: 0;
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.85rem;
 }
 
 .ed-doc__lede {
@@ -91,13 +78,15 @@ meta:
   max-width: 50rem;
   color: var(--at-mute-2);
 }
-.ed-doc__lede :deep(a) {
+.ed-doc__lede a {
   color: var(--at-teal-deep);
   text-decoration: none;
   border-bottom: 1px solid currentColor;
 }
+.ed-doc__lede strong { color: var(--at-navy-deep); }
 
 @media (max-width: 720px) {
   .ed-doc__inner { padding: 2.75rem 1.25rem 2rem; }
+  .ed-doc__body .ed-doc__inner { padding: 1.5rem 1.25rem 2rem; }
 }
 </style>
