@@ -18,6 +18,39 @@
         } catch (e) { /* private mode / SSR */ }
       })();
     </script>
+    <script>
+      // Stale-deploy recovery (entry bundle). Each build hashes its asset
+      // filenames, so a browser still holding a PREVIOUS build's index.html
+      // requests an old /assets/*.js the new deploy no longer serves. On this
+      // host that 404 is returned as HTML, so the module is rejected ("Expected a
+      // JavaScript module but got text/html") and the app never boots. The in-app
+      // handler (src/main.ts, vite:preloadError / router.onError) cannot catch
+      // this — it lives inside the very bundle that failed to load — so we install
+      // a capture-phase listener HERE, before the module loads, to force ONE fresh
+      // document load. A 30s sessionStorage guard prevents a reload loop when a
+      // chunk is genuinely missing rather than merely stale. Mirrored by
+      // supporting/tests/stale-deploy-recovery.test.mjs.
+      (function () {
+        window.addEventListener('error', function (event) {
+          var el = event && event.target;
+          if (!el || el.tagName !== 'SCRIPT') return;
+          if (el.type !== 'module' && !/\/assets\/.*\.js(\?|$)/.test(el.src || '')) return;
+          // The cooldown is the ONLY thing bounding this reload, and it lives in
+          // sessionStorage. If storage is unreachable (blocked cookies, sandboxed
+          // iframe) we cannot persist a marker across the reload we are about to
+          // trigger, so recovery would repeat on every load — an unbounded refresh
+          // loop. A broken page beats hammering the host: bail out instead.
+          try {
+            var KEY = 'entry-reload-at';
+            if (Date.now() - (Number(sessionStorage.getItem(KEY)) || 0) < 30000) return;
+            sessionStorage.setItem(KEY, String(Date.now()));
+          } catch (e) {
+            return;
+          }
+          location.reload();
+        }, true); // capture: resource-load errors don't bubble
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>
