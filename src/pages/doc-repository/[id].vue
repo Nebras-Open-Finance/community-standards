@@ -44,12 +44,16 @@ interface FileEntry {
   file: string
   link: string
   date?: string
+  // Set for documents whose catalog entry requires an expiry date (e.g. Trade Licence).
+  expiry?: string | null
 }
 
 interface CatalogEntry {
   slug: string
   label: string
   monthly?: boolean
+  // Requires an expiry date to be captured at upload time.
+  expiry?: boolean
 }
 
 interface CatalogPayload {
@@ -86,6 +90,7 @@ const uploadError = ref<string>('')
 const uploadSuccess = ref<string>('')
 const selectedSlug = ref<string>('')
 const selectedMonth = ref<string>('')
+const selectedExpiry = ref<string>('')
 const fileInput = ref<HTMLInputElement | null>(null)
 
 function fileExtension(name: string): string {
@@ -246,6 +251,7 @@ watch(orgId, () => {
 watch(activeTab, () => {
   selectedSlug.value = ''
   selectedMonth.value = ''
+  selectedExpiry.value = ''
   uploadFile.value = null
   uploadError.value = ''
   uploadSuccess.value = ''
@@ -254,6 +260,7 @@ watch(activeTab, () => {
 
 watch(selectedSlug, () => {
   selectedMonth.value = ''
+  selectedExpiry.value = ''
 })
 
 const activeFiles = computed<FileEntry[]>(() =>
@@ -443,6 +450,17 @@ const selectedLabel = computed<string>(() => selectedEntry.value?.label || '')
 
 const selectedMonthly = computed<boolean>(() => selectedEntry.value?.monthly === true)
 
+// Document types flagged `expiry` in the catalogue cannot be uploaded without an
+// expiry date; the Worker rejects the PUT if the header is missing.
+const selectedNeedsExpiry = computed<boolean>(() => selectedEntry.value?.expiry === true)
+
+const uploadReady = computed<boolean>(
+  () =>
+    !!selectedSlug.value &&
+    (!selectedMonthly.value || !!selectedMonth.value) &&
+    (!selectedNeedsExpiry.value || !!selectedExpiry.value),
+)
+
 // Base file name (without extension): `<slug>` normally, `<slug>-<YYYY-MM>` for
 // monthly documents so each month is stored as a separate file.
 const uploadBaseName = computed<string>(() => {
@@ -468,6 +486,29 @@ function formatDate(iso: string | undefined): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+// Expiry badge for a stored document: the formatted date, plus a state used to
+// colour it once the document is within 60 days of expiring, or already expired.
+interface ExpiryInfo {
+  text: string
+  state: 'ok' | 'soon' | 'expired'
+}
+
+const EXPIRY_SOON_DAYS = 60
+
+function expiryInfo(entry: FileEntry): ExpiryInfo | null {
+  const raw = entry.expiry
+  if (!raw) return null
+  const d = new Date(`${raw}T00:00:00Z`)
+  if (Number.isNaN(d.getTime())) return null
+  const days = Math.floor((d.getTime() - Date.now()) / 86_400_000)
+  const state: ExpiryInfo['state'] = days < 0 ? 'expired' : days <= EXPIRY_SOON_DAYS ? 'soon' : 'ok'
+  const text =
+    state === 'expired'
+      ? `Expired ${formatDate(raw)}`
+      : `Expires ${formatDate(raw)}`
+  return { text, state }
 }
 
 async function handleDownload(entry: FileEntry): Promise<void> {
@@ -503,6 +544,10 @@ async function handleUpload(): Promise<void> {
     uploadError.value = 'Select the month this document is for.'
     return
   }
+  if (selectedNeedsExpiry.value && !selectedExpiry.value) {
+    uploadError.value = `Enter the expiry date shown on the ${selectedLabel.value}.`
+    return
+  }
   const ext = fileExtension(uploadFile.value.name)
   if (!ext) {
     uploadError.value = 'File must have an extension.'
@@ -532,6 +577,7 @@ async function handleUpload(): Promise<void> {
       credentials: 'include',
       headers: {
         'Content-Type': uploadFile.value.type || 'application/octet-stream',
+        ...(selectedExpiry.value ? { 'X-Document-Expiry': selectedExpiry.value } : {}),
       },
       body: uploadFile.value,
     })
@@ -542,9 +588,11 @@ async function handleUpload(): Promise<void> {
     uploadSuccess.value = 'Upload complete.'
     selectedSlug.value = ''
     selectedMonth.value = ''
+    selectedExpiry.value = ''
     uploadFile.value = null
     if (fileInput.value) fileInput.value.value = ''
-    if (activeTab.value === 'private') await loadPrivate()
+    if (visibility === 'private') await loadPrivate()
+    else if (visibility === 'protected') await loadProtected()
     else await loadPublic()
   } catch (e: unknown) {
     uploadError.value = e instanceof Error ? e.message : String(e)
@@ -851,16 +899,25 @@ function removeGrant(id: string): void {
                     aria-label="Document month"
                   />
                   <input
+                    v-if="selectedNeedsExpiry"
+                    v-model="selectedExpiry"
+                    type="date"
+                    class="ed-doc-upload__month"
+                    :disabled="uploading"
+                    required
+                    aria-label="Document expiry date"
+                  />
+                  <input
                     ref="fileInput"
                     type="file"
                     class="ed-doc-upload__input"
-                    :disabled="uploading || !selectedSlug || (selectedMonthly && !selectedMonth)"
+                    :disabled="uploading || !uploadReady"
                     @change="onFileSelected"
                   />
                   <button
                     type="button"
                     class="ed-doc-button ed-doc-upload__button"
-                    :disabled="uploading || !selectedSlug || !uploadFile || (selectedMonthly && !selectedMonth)"
+                    :disabled="uploading || !uploadReady || !uploadFile"
                     @click="handleUpload"
                   >
                     {{ uploading ? 'Uploading…' : 'Upload' }}
@@ -868,6 +925,9 @@ function removeGrant(id: string): void {
                 </div>
                 <div v-if="selectedMonthly && !selectedMonth" class="ed-doc-upload__hint ed-doc-upload__hint--month">
                   This document is filed monthly — pick the month it applies to. Each month is kept as a separate file.
+                </div>
+                <div v-if="selectedNeedsExpiry" class="ed-doc-upload__hint ed-doc-upload__hint--month">
+                  This document expires — enter the expiry date shown on the {{ selectedLabel }}. It is required.
                 </div>
                 <div v-if="willOverwrite" class="ed-doc-upload__warning">
                   Uploading will replace the existing <strong>{{ selectedLabel }}</strong>.
@@ -991,6 +1051,13 @@ function removeGrant(id: string): void {
                         <span v-if="fileType(item.entry.file)">{{ fileType(item.entry.file) }}</span>
                         <span v-if="fileType(item.entry.file) && item.entry.date" class="ed-doc-row__sep">·</span>
                         <span v-if="item.entry.date">Uploaded {{ formatDate(item.entry.date) }}</span>
+                        <template v-if="expiryInfo(item.entry)">
+                          <span class="ed-doc-row__sep">·</span>
+                          <span
+                            class="ed-doc-row__expiry"
+                            :class="`ed-doc-row__expiry--${expiryInfo(item.entry)!.state}`"
+                          >{{ expiryInfo(item.entry)!.text }}</span>
+                        </template>
                       </div>
                     </div>
                     <button
@@ -1019,6 +1086,13 @@ function removeGrant(id: string): void {
                       <span v-if="fileType(file.file)">{{ fileType(file.file) }}</span>
                       <span v-if="fileType(file.file) && file.date" class="ed-doc-row__sep">·</span>
                       <span v-if="file.date">{{ formatDate(file.date) }}</span>
+                      <template v-if="expiryInfo(file)">
+                        <span class="ed-doc-row__sep">·</span>
+                        <span
+                          class="ed-doc-row__expiry"
+                          :class="`ed-doc-row__expiry--${expiryInfo(file)!.state}`"
+                        >{{ expiryInfo(file)!.text }}</span>
+                      </template>
                     </div>
                   </div>
                   <button
@@ -1629,6 +1703,17 @@ function removeGrant(id: string): void {
 }
 
 .ed-doc-row__sep { opacity: 0.55; }
+
+/* Expiry badge — neutral until the document is close to expiring, then flagged. */
+.ed-doc-row__expiry--soon {
+  color: var(--at-gold);
+  font-weight: 600;
+}
+
+.ed-doc-row__expiry--expired {
+  color: #991b1b;
+  font-weight: 600;
+}
 
 /* ─── Button ────────────────────────────────────────────────────────────── */
 .ed-doc-button {
