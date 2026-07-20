@@ -13,7 +13,7 @@
     "build:search": "node scripts/build-search-index.mjs",
     "fetch:all": "npm run fetch:orgs && npm run fetch:sectors && npm run fetch:github && npm run fetch:specs && npm run fetch:postman && npm run build:search",
     "dev": "npm run fetch:all && vite",
-    "build": "npm run fetch:all && vite-ssg build",
+    "build": "npm run fetch:all && vite-ssg build && node scripts/minify-dist-json.mjs",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
     "pretest": "npm run fetch:specs && npm run fetch:orgs && npm run fetch:postman",
