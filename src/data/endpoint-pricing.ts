@@ -163,7 +163,7 @@ export const ENDPOINT_PRICING: readonly EndpointPricing[] = [
     chargeable: true,
   },
   {
-    docPath: 'tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts-AccountId-products',
+    docPath: 'tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts-AccountId-product',
     method: 'GET',
     path: '/accounts/{AccountId}/product',
     family: 'Data sharing',

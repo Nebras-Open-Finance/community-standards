@@ -259,15 +259,6 @@ function isActive(prefix: string): boolean {
         <a href="/knowledge-base" class="ed-drawer__sublink">Knowledge Base</a>
         <a href="/proposals/" class="ed-drawer__sublink">Proposals &amp; Voting</a>
         <a href="/tech/release-notes-and-erratas/" class="ed-drawer__sublink">Release Notes &amp; Erratas</a>
-
-        <hr class="ed-drawer__rule" />
-        <a href="/news" class="ed-drawer__link">News</a>
-        <a
-          href="https://github.com/Nebras-Open-Finance/community-standards"
-          class="ed-drawer__link"
-          target="_blank"
-          rel="noopener noreferrer"
-        >GitHub</a>
       </div>
     </div>
 
@@ -563,7 +554,7 @@ function isActive(prefix: string): boolean {
   right: 0;
   background: var(--at-bg-cream);
   border-bottom: 1px solid var(--at-grid-line);
-  overflow: hidden;
+  overflow-y: auto;
   max-height: 0;
   transition: max-height 0.28s ease;
 }
@@ -616,12 +607,6 @@ function isActive(prefix: string): boolean {
 
 .ed-drawer__link:hover,
 .ed-drawer__sublink:hover { color: var(--at-teal-deep); }
-
-.ed-drawer__rule {
-  border: 0;
-  border-top: 1px solid var(--at-grid-line);
-  margin: 0.5rem 0;
-}
 
 @media (max-width: 640px) {
   .ed-header__inner { padding: 0 1.25rem; gap: 1rem; }

@@ -216,7 +216,7 @@ const loopTabs = [
             <tr><td><span class="endpoint"><span class="http-method http-method--get">GET</span><code>/accounts/{AccountId}/direct-debits</code></span></td><td>Optional</td></tr>
             <tr><td><span class="endpoint"><span class="http-method http-method--get">GET</span><code>/accounts/{AccountId}/scheduled-payments</code></span></td><td>Optional</td></tr>
             <tr><td><span class="endpoint"><span class="http-method http-method--get">GET</span><code>/accounts/{AccountId}/standing-orders</code></span></td><td>Optional</td></tr>
-            <tr><td><span class="endpoint"><span class="http-method http-method--get">GET</span><code>/accounts/{AccountId}/products</code></span></td><td>Optional</td></tr>
+            <tr><td><span class="endpoint"><span class="http-method http-method--get">GET</span><code>/accounts/{AccountId}/product</code></span></td><td>Optional</td></tr>
             <tr><td><span class="endpoint"><span class="http-method http-method--get">GET</span><code>/accounts/{AccountId}/parties</code></span></td><td>Optional</td></tr>
           </tbody>
         </table>

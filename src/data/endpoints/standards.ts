@@ -322,6 +322,15 @@ export const standardsEndpoints: readonly Endpoint[] = [
   entry({
     section: 'Bank Data Sharing',
     sectionSlug: 'data-sharing',
+    slug: 'accounts-AccountId-product',
+    method: 'GET',
+    path: '/accounts/{AccountId}/product',
+    title: 'Get Product Configuration for an Account',
+    redoc: { spec: SPEC_ACCOUNT_INFO, filterPath: '/accounts/{AccountId}/product' },
+  }),
+  entry({
+    section: 'Bank Data Sharing',
+    sectionSlug: 'data-sharing',
     slug: 'accounts-AccountId-scheduled-payments',
     method: 'GET',
     path: '/accounts/{AccountId}/scheduled-payments',

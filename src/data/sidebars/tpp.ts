@@ -278,7 +278,7 @@ export const tppSidebar: SidebarItem[] = [
               apiRef('GET', '/accounts/{AccountId}/direct-debits', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-direct-debits`),
               apiRef('GET', '/parties', `${BASE}/${VERSION}/banking/data-sharing/open-api/parties`),
               apiRef('GET', '/accounts/{AccountId}/parties', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-parties`),
-              apiRef('GET', '/accounts/{AccountId}/products', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-products`),
+              apiRef('GET', '/accounts/{AccountId}/product', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-product`),
               apiRef('GET', '/accounts/{AccountId}/scheduled-payments', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-scheduled-payments`),
               apiRef('GET', '/accounts/{AccountId}/standing-orders', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-standing-orders`),
               apiRef('GET', '/accounts/{AccountId}/statements', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-statements`),

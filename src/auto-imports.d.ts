@@ -16,6 +16,7 @@ declare global {
   const PLACEHOLDER_LOGO_URL: typeof import('./composables/liveEcosystem')['PLACEHOLDER_LOGO_URL']
   const PROPOSALS_CONFIG: typeof import('./composables/useProposals')['PROPOSALS_CONFIG']
   const TRUST_FRAMEWORK_PROXY_URL: typeof import('./composables/liveEcosystem')['TRUST_FRAMEWORK_PROXY_URL']
+  const appPageSlugs: typeof import('./composables/useInternalPages')['appPageSlugs']
   const chartTokens: typeof import('./composables/useChartTheme')['chartTokens']
   const closeSearchModal: typeof import('./composables/useSearchModal')['closeSearchModal']
   const committedSlugs: typeof import('./composables/useInternalPages')['committedSlugs']

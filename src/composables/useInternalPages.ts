@@ -57,6 +57,18 @@ export const committedSlugs: string[] = Object.keys(committedModules)
   .map((p) => p.replace('/src/pages/internal/', '').replace(/\.md$/, '').replace(/\/index$/, ''))
   .sort()
 
+// ── App pages (build-time discovery) ─────────────────────────────────────────
+// Hand-written Vue pages under src/pages/internal/pages/**. They live behind the
+// same password gate and share the internal sidebar, but they are applications
+// rather than documents — so the layout renders them directly instead of wrapping
+// them in the Markdown source/preview shell.
+const appPageModules = import.meta.glob('/src/pages/internal/pages/**/*.vue')
+
+/** Slugs of internal app pages, e.g. "redirect-testing" → /internal/pages/redirect-testing. */
+export const appPageSlugs: string[] = Object.keys(appPageModules)
+  .map((p) => p.replace('/src/pages/internal/pages/', '').replace(/\.vue$/, '').replace(/\/index$/, ''))
+  .sort()
+
 // Raw Markdown source for each committed internal page — lets the duplicate
 // widget seed a draft with the exact text the example page is written in.
 const committedSources = import.meta.glob('/src/pages/internal/**/*.md', {

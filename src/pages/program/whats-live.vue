@@ -138,6 +138,7 @@ interface DirectoryEndpoint {
 
 interface DirectoryApiMetadata {
   AccountSubType?: string[]
+  OverLimitFees?: string
   SingleInstantPayment?: { Supported?: boolean }
   FixedOnDemand?: { Supported?: boolean }
   FixedPeriodicSchedule?: { Supported?: boolean }
@@ -209,6 +210,9 @@ interface LfiVersion {
   endpoints: string[]
   paymentTypes: string[]
   accountSubTypes: string[]
+  // Account Information only: over-limit fee (AED) per over-quota data request.
+  // Empty/absent in the directory is normalised to '0'.
+  overLimitFees: string
   // Insurance-only: the types offered (for pills) and per-type endpoint groups
   // (for collapsible sub-groups). Empty for banking families.
   insuranceTypes: InsuranceType[]
@@ -404,6 +408,10 @@ function processLfis(data: unknown): LfiServer[] {
             familyKey === 'account-information'
               ? resource.ApiMetadata?.AccountSubType || []
               : [],
+          overLimitFees:
+            familyKey === 'account-information'
+              ? formatOverLimitFees(resource.ApiMetadata?.OverLimitFees)
+              : '',
           insuranceTypes:
             familyKey === 'insurance' ? insuranceTypesOf(sortedEndpoints) : [],
           insuranceGroups:
@@ -509,6 +517,33 @@ function buildInsuranceGroups(endpoints: string[]): InsuranceGroup[] {
   return groups
 }
 
+// Normalise the account-information over-limit fee: an empty or absent value in
+// the directory is displayed as '0'.
+function formatOverLimitFees(v: string | undefined): string {
+  const s = (v || '').trim()
+  return s === '' ? '0' : s
+}
+
+// The supported beneficiary models for a consent type that carries the
+// Open/Single/Multiple beneficiary flags (Variable On-Demand, Delegated SCA),
+// in directory-declared order.
+function beneficiaryModes(
+  m:
+    | {
+        SingleBeneficiarySupported?: boolean
+        MultipleBeneficiariesSupported?: boolean
+        OpenBeneficiariesSupported?: boolean
+      }
+    | undefined,
+): string[] {
+  if (!m) return []
+  const modes: string[] = []
+  if (m.OpenBeneficiariesSupported) modes.push('Open')
+  if (m.SingleBeneficiarySupported) modes.push('Single')
+  if (m.MultipleBeneficiariesSupported) modes.push('Multiple')
+  return modes
+}
+
 function getPaymentTypes(meta: DirectoryApiMetadata | undefined): string[] {
   if (!meta) return []
   const types: string[] = []
@@ -516,21 +551,13 @@ function getPaymentTypes(meta: DirectoryApiMetadata | undefined): string[] {
   if (meta.FixedOnDemand?.Supported) types.push('Fixed On-Demand')
   if (meta.FixedPeriodicSchedule?.Supported) types.push('Fixed Periodic')
   if (meta.FixedDefinedSchedule?.Supported) types.push('Fixed Defined Schedule')
-  if (
-    meta.VariableOnDemand?.SingleBeneficiarySupported ||
-    meta.VariableOnDemand?.MultipleBeneficiariesSupported ||
-    meta.VariableOnDemand?.OpenBeneficiariesSupported
-  )
-    types.push('Variable On-Demand')
+  const vod = beneficiaryModes(meta.VariableOnDemand)
+  if (vod.length) types.push(`Variable On-Demand · ${vod.join(', ')}`)
   if (meta.VariablePeriodicSchedule?.Supported) types.push('Variable Periodic')
   if (meta.VariableDefinedSchedule?.Supported)
     types.push('Variable Defined Schedule')
-  if (
-    meta.DelegatedAuthentication?.SingleBeneficiarySupported ||
-    meta.DelegatedAuthentication?.MultipleBeneficiariesSupported ||
-    meta.DelegatedAuthentication?.OpenBeneficiariesSupported
-  )
-    types.push('Delegated SCA')
+  const dsca = beneficiaryModes(meta.DelegatedAuthentication)
+  if (dsca.length) types.push(`Delegated SCA · ${dsca.join(', ')}`)
   return types
 }
 
@@ -1041,6 +1068,10 @@ const prettifyConsentType = (s: string): string =>
                             :key="`ast-${t}`"
                             class="ed-le-pill ed-le-pill--subtype"
                           >{{ t }}</span>
+                          <span
+                            v-if="svc.familyKey === 'account-information'"
+                            class="ed-le-pill ed-le-pill--meta"
+                          >Over-limit fee: AED {{ v.overLimitFees }}</span>
                         </div>
                         <button
                           v-if="v.endpoints.length"

@@ -10,7 +10,7 @@ meta:
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useHead } from '@unhead/vue'
-import { useInternalPages, prettifySlug } from '@/composables/useInternalPages'
+import { useInternalPages, appPageSlugs, prettifySlug } from '@/composables/useInternalPages'
 
 useHead({ title: 'Internal' })
 
@@ -63,6 +63,23 @@ function formatDate(ts: number): string {
         and use the duplicate widget at the top to seed a fresh draft.
       </p>
       <a class="int-cta" href="/internal/example">Open the example page →</a>
+    </section>
+
+    <!-- Tools -->
+    <section v-if="appPageSlugs.length" class="int-card">
+      <h2 class="int-card__heading">Tools</h2>
+      <p class="int-card__hint">
+        Interactive pages built as Vue components. They sit behind the same password gate but are
+        applications rather than documents, so they have no Markdown/Preview toggle.
+      </p>
+      <ul class="int-list">
+        <li v-for="s in appPageSlugs" :key="s" class="int-list__item">
+          <a class="int-list__main" :href="'/internal/pages/' + s">
+            <span class="int-list__name">{{ prettifySlug(s) }}</span>
+            <span class="int-list__meta"><code>/internal/pages/{{ s }}</code></span>
+          </a>
+        </li>
+      </ul>
     </section>
 
     <!-- Drafts -->

@@ -15,6 +15,8 @@ public/api/trust-framework.json
 public/api/github-stats.json
 # Fetched LFI → sector map (see scripts/fetch-lfi-sectors.mjs)
 public/api/lfi-sectors.json
+# Fetched authorisation-server redirect endpoints (see scripts/fetch-auth-endpoints.mjs)
+public/api/authorization-endpoints.json
 # Fetched Postman collections (see scripts/fetch-postman-collections.mjs)
 public/postman/
 # Generated search index (see scripts/build-search-index.mjs)

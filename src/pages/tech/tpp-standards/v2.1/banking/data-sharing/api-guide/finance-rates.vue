@@ -222,7 +222,7 @@ const step5DisplayTabs = [{ label: 'Node.js', lang: 'typescript', code: step5Dis
     >
       <EdProse>
         The <code>FinanceRates</code> field on
-        <a href="/tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts-AccountId-products">
+        <a href="/tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts-AccountId-product">
         <code>GET /accounts/{AccountId}/product</code></a> is defined as <code>anyOf</code> a
         structured <code>AEProductFinanceRates</code> object or an <code>AEJwe</code> compact string.
         Each LFI decides, per product, whether to return the rate in cleartext or as an encrypted

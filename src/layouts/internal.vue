@@ -5,6 +5,7 @@ import { useInternalAuth } from '@/composables/useInternalAuth'
 import {
   useInternalPages,
   committedSlugs,
+  appPageSlugs,
   prettifySlug,
   getCommittedSource,
 } from '@/composables/useInternalPages'
@@ -39,12 +40,14 @@ function submit(): void {
   }
 }
 
-// /internal and /internal/draft/* are app UI; everything else under /internal
-// is a committed Markdown page and gets the prose shell (header + toggle).
+// /internal, /internal/draft/* and /internal/pages/* are app UI; everything else
+// under /internal is a committed Markdown page and gets the prose shell
+// (header + Markdown/Preview toggle).
 const isContentPage = computed(() => {
   const p = route.path.replace(/\/$/, '')
   if (p === '/internal') return false
   if (p.startsWith('/internal/draft/')) return false
+  if (p.startsWith('/internal/pages/')) return false
   return true
 })
 
@@ -73,7 +76,14 @@ const sidebarItems = computed<EdSidebarItemData[]>(() => {
     text: d.title || prettifySlug(d.slug),
     link: '/internal/draft/' + d.slug,
   }))
+  const toolItems: EdSidebarItemData[] = appPageSlugs.map((s) => ({
+    text: prettifySlug(s),
+    link: '/internal/pages/' + s,
+  }))
   return [
+    ...(toolItems.length
+      ? [{ text: 'Tools', collapsed: false, items: toolItems }]
+      : []),
     {
       text: 'Published pages',
       collapsed: false,
