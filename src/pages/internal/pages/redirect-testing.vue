@@ -9,17 +9,45 @@ meta:
 
 <script setup lang="ts">
 import { useHead } from '@unhead/vue'
-import { authServerEndpoints, authEndpointsSource, type AuthServerEndpoint } from '@/data/auth-endpoints'
+import {
+  authServerEndpoints,
+  authEndpointsSource,
+  type AuthServerEndpoint,
+  type Verification,
+  type VerificationProbe,
+  type VerificationVerdict,
+} from '@/data/auth-endpoints'
 
 useHead({ title: 'Redirect testing' })
 
 const query = ref('')
 const sector = ref<'all' | 'bank' | 'insurer'>('all')
+const verdictFilter = ref<'all' | 'issues'>('all')
+
+// Order the two probes for display and give each a human label + expected path.
+function probesOf(v: Verification): { label: string; file: string; probe: VerificationProbe }[] {
+  return [
+    { label: 'Android', file: '/.well-known/assetlinks.json', probe: v.android },
+    { label: 'iOS', file: '/.well-known/apple-app-site-association', probe: v.ios },
+  ]
+}
+
+// The worst of the two probes drives the card badge and the issues filter.
+function worstOf(v: Verification | null): VerificationVerdict | null {
+  if (!v) return null
+  if (v.android.verdict === 'fail' || v.ios.verdict === 'fail') return 'fail'
+  if (v.android.verdict === 'warn' || v.ios.verdict === 'warn') return 'warn'
+  return 'pass'
+}
 
 const filtered = computed<AuthServerEndpoint[]>(() => {
   const q = query.value.trim().toLowerCase()
   return authServerEndpoints.filter((s) => {
     if (sector.value !== 'all' && s.sector !== sector.value) return false
+    if (verdictFilter.value === 'issues') {
+      const w = worstOf(s.verification)
+      if (w !== 'fail' && w !== 'warn') return false
+    }
     if (!q) return true
     return (
       s.organisationName.toLowerCase().includes(q) ||
@@ -31,6 +59,22 @@ const filtered = computed<AuthServerEndpoint[]>(() => {
 })
 
 const orgCount = computed(() => new Set(filtered.value.map((s) => s.organisationId)).size)
+
+// Verification tallies across unique origins (several servers can share a host).
+const verifySummary = computed(() => {
+  const byOrigin = new Map<string, VerificationVerdict>()
+  for (const s of authServerEndpoints) {
+    const w = worstOf(s.verification)
+    if (s.verification && w) byOrigin.set(s.verification.origin, w)
+  }
+  const v = [...byOrigin.values()]
+  return {
+    total: v.length,
+    pass: v.filter((x) => x === 'pass').length,
+    warn: v.filter((x) => x === 'warn').length,
+    fail: v.filter((x) => x === 'fail').length,
+  }
+})
 
 // The redirect target's origin is what actually matters when testing — the path
 // varies per LFI but the host is what must be reachable and correctly certificated.
@@ -82,6 +126,16 @@ function onLogoError(e: Event): void {
         {{ new Set(authServerEndpoints.map(s => s.organisationId)).size }} organisations ·
         snapshot taken at build time from <a :href="authEndpointsSource" target="_blank" rel="noreferrer">{{ authEndpointsSource }}</a>
       </p>
+
+      <div class="rt__summary" v-if="verifySummary.total">
+        <span class="rt__summary-item rt__summary-item--pass">{{ verifySummary.pass }} pass</span>
+        <span class="rt__summary-item rt__summary-item--warn">{{ verifySummary.warn }} warn</span>
+        <span class="rt__summary-item rt__summary-item--fail">{{ verifySummary.fail }} fail</span>
+        <span class="rt__summary-note">
+          deep-link verification across {{ verifySummary.total }} origins ·
+          <code>assetlinks.json</code> (Android) &amp; <code>apple-app-site-association</code> (iOS)
+        </span>
+      </div>
     </section>
 
     <div class="rt__controls">
@@ -101,6 +155,18 @@ function onLogoError(e: Event): void {
           @click="sector = opt"
         >
           {{ opt === 'all' ? 'All' : opt === 'bank' ? 'Banks' : 'Insurers' }}
+        </button>
+      </div>
+      <div class="rt__tabs">
+        <button
+          v-for="opt in (['all', 'issues'] as const)"
+          :key="opt"
+          type="button"
+          class="rt__tab"
+          :class="{ 'rt__tab--on': verdictFilter === opt }"
+          @click="verdictFilter = opt"
+        >
+          {{ opt === 'all' ? 'All results' : 'Issues only' }}
         </button>
       </div>
     </div>
@@ -125,6 +191,11 @@ function onLogoError(e: Event): void {
             <h2 class="rt__org">{{ s.organisationName }}</h2>
             <p class="rt__server">{{ s.customerFriendlyName }}</p>
           </div>
+          <span
+            v-if="worstOf(s.verification)"
+            class="rt__verdict rt__verdict--head"
+            :class="`rt__verdict--${worstOf(s.verification)}`"
+          >{{ worstOf(s.verification) }}</span>
           <span v-if="s.sector" class="rt__badge" :class="`rt__badge--${s.sector}`">{{ s.sector }}</span>
         </div>
 
@@ -145,9 +216,6 @@ function onLogoError(e: Event): void {
             <span class="rt__origin">origin: <code>{{ originOf(s.authorizationEndpoint) }}</code></span>
           </dd>
 
-          <dt>Issuer</dt>
-          <dd><code class="rt__mono">{{ s.issuer }}</code></dd>
-
           <dt>Discovery</dt>
           <dd>
             <a class="rt__mono rt__link" :href="s.discoveryUri" target="_blank" rel="noreferrer">
@@ -155,6 +223,35 @@ function onLogoError(e: Event): void {
             </a>
           </dd>
         </dl>
+
+        <div v-if="s.verification" class="rt__verify">
+          <div class="rt__verify-head">Deep-link verification files</div>
+          <div
+            v-for="p in probesOf(s.verification)"
+            :key="p.label"
+            class="rt__probe"
+            :class="`rt__probe--${p.probe.verdict}`"
+          >
+            <span class="rt__verdict" :class="`rt__verdict--${p.probe.verdict}`">{{ p.probe.verdict }}</span>
+            <div class="rt__probe-body">
+              <div class="rt__probe-top">
+                <strong class="rt__probe-plat">{{ p.label }}</strong>
+                <a
+                  class="rt__probe-file"
+                  :href="s.verification.origin + p.file"
+                  target="_blank"
+                  rel="noreferrer"
+                ><code>{{ p.file }}</code></a>
+              </div>
+              <div class="rt__probe-meta">
+                {{ p.probe.status ?? 'network error' }} ·
+                {{ p.probe.contentType || 'no Content-Type' }} ·
+                {{ p.probe.jsonValid ? 'valid JSON' : 'not JSON' }}
+              </div>
+              <div v-if="p.probe.note" class="rt__probe-note">{{ p.probe.note }}</div>
+            </div>
+          </div>
+        </div>
 
         <div v-if="s.apiFamilies.length || s.accountTypes.length" class="rt__tags">
           <span v-for="f in s.apiFamilies" :key="f" class="rt__tag">{{ f }}</span>
@@ -434,6 +531,108 @@ function onLogoError(e: Event): void {
   font-size: 0.9rem;
   color: var(--at-mute);
   padding: 1.5rem 0;
+}
+
+/* ── Verification summary (hero) ─────────────────────────────────────────── */
+.rt__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.7rem;
+  margin: -0.75rem 0 2.25rem;
+}
+.rt__summary-item {
+  font-family: var(--at-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid currentColor;
+}
+.rt__summary-item--pass { color: var(--at-teal-deep); }
+.rt__summary-item--warn { color: #8a6d1f; }
+.rt__summary-item--fail { color: #b3261e; }
+.rt__summary-note { font-size: 0.75rem; color: var(--at-mute); }
+.rt__summary-note code { font-family: var(--at-mono); font-size: 0.95em; }
+
+/* ── Verdict pill ────────────────────────────────────────────────────────── */
+.rt__verdict {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  font-family: var(--at-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 0.18rem 0.44rem;
+  border: 1px solid currentColor;
+  line-height: 1;
+}
+.rt__verdict--pass { color: var(--at-teal-deep); }
+.rt__verdict--warn { color: #8a6d1f; }
+.rt__verdict--fail { color: #b3261e; }
+.rt__verdict--head { align-self: center; }
+
+/* ── Verification block (card) ───────────────────────────────────────────── */
+.rt__verify {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--at-grid-line);
+}
+.rt__verify-head {
+  font-family: var(--at-mono);
+  font-size: 0.63rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--at-mute);
+  margin-bottom: 0.6rem;
+}
+.rt__probe {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--at-grid-line);
+  border-left-width: 3px;
+}
+.rt__probe + .rt__probe { margin-top: 0.5rem; }
+.rt__probe--pass { border-left-color: var(--at-teal-deep); }
+.rt__probe--warn { border-left-color: #8a6d1f; }
+.rt__probe--fail { border-left-color: #b3261e; }
+
+.rt__probe-body { min-width: 0; flex: 1; }
+.rt__probe-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.rt__probe-plat {
+  font-size: 0.78rem;
+  color: var(--at-navy-deep);
+}
+.rt__probe-file {
+  text-decoration: none;
+  border-bottom: 1px solid var(--at-grid-line-2);
+}
+.rt__probe-file code {
+  font-family: var(--at-mono);
+  font-size: 0.72rem;
+  color: var(--at-mute-2);
+  word-break: break-all;
+}
+.rt__probe-file:hover code { color: var(--at-teal-deep); }
+.rt__probe-meta {
+  margin-top: 0.25rem;
+  font-family: var(--at-mono);
+  font-size: 0.7rem;
+  color: var(--at-mute);
+  word-break: break-word;
+}
+.rt__probe-note {
+  margin-top: 0.25rem;
+  font-size: 0.74rem;
+  color: var(--at-mute-2);
 }
 
 @media (max-width: 34rem) {

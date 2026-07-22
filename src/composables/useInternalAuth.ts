@@ -8,7 +8,7 @@
 import { ref, type Ref } from 'vue'
 
 /** Shared internal password. Intentionally in source — see note above. */
-export const INTERNAL_PASSWORD = 'NOF@1234'
+export const INTERNAL_PASSWORD = 'Draft up the email here just to HSBC. '
 
 const STORAGE_KEY = 'internal-unlocked'
 

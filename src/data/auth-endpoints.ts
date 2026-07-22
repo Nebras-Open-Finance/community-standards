@@ -5,6 +5,29 @@ import rawData from '../../public/api/authorization-endpoints.json'
  * directory, with the `authorization_endpoint` resolved from its OpenID
  * discovery document. Written by scripts/fetch-auth-endpoints.mjs.
  */
+export type VerificationVerdict = 'pass' | 'warn' | 'fail'
+
+/** Result of probing one deep-link verification file at build time. */
+export interface VerificationProbe {
+  url: string
+  /** HTTP status, or null on a network error / timeout. */
+  status: number | null
+  contentType: string | null
+  jsonValid: boolean
+  verdict: VerificationVerdict
+  /** Human-readable reason for a warn/fail, or null on a clean pass. */
+  note: string | null
+}
+
+/** Both verification files for one authorisation origin. */
+export interface Verification {
+  origin: string
+  /** /.well-known/assetlinks.json */
+  android: VerificationProbe
+  /** /.well-known/apple-app-site-association */
+  ios: VerificationProbe
+}
+
 export interface AuthServerEndpoint {
   organisationId: string
   organisationName: string
@@ -23,6 +46,8 @@ export interface AuthServerEndpoint {
   authorizationEndpoint: string
   parEndpoint: string | null
   tokenEndpoint: string | null
+  /** Deep-link verification-file probe for this server's origin, if resolved. */
+  verification: Verification | null
 }
 
 function str(v: unknown): string {
@@ -35,6 +60,34 @@ function strOrNull(v: unknown): string | null {
 
 function strArray(v: unknown): string[] {
   return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
+}
+
+function num(v: unknown): number | null {
+  return typeof v === 'number' && Number.isFinite(v) ? v : null
+}
+
+function narrowProbe(raw: unknown): VerificationProbe | null {
+  if (!raw || typeof raw !== 'object') return null
+  const r = raw as Record<string, unknown>
+  const v = r['verdict']
+  const verdict: VerificationVerdict = v === 'pass' || v === 'warn' ? v : 'fail'
+  return {
+    url: str(r['url']),
+    status: num(r['status']),
+    contentType: strOrNull(r['contentType']),
+    jsonValid: r['jsonValid'] === true,
+    verdict,
+    note: strOrNull(r['note']),
+  }
+}
+
+function narrowVerification(raw: unknown): Verification | null {
+  if (!raw || typeof raw !== 'object') return null
+  const r = raw as Record<string, unknown>
+  const android = narrowProbe(r['android'])
+  const ios = narrowProbe(r['ios'])
+  if (!android || !ios) return null
+  return { origin: str(r['origin']), android, ios }
 }
 
 function narrow(raw: unknown): AuthServerEndpoint | null {
@@ -65,6 +118,7 @@ function narrow(raw: unknown): AuthServerEndpoint | null {
     authorizationEndpoint,
     parEndpoint: strOrNull(r['parEndpoint']),
     tokenEndpoint: strOrNull(r['tokenEndpoint']),
+    verification: narrowVerification(r['verification']),
   }
 }
 
