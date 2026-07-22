@@ -30,6 +30,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.SPECS_READ_TOKEN }}
         run: |
           npm run fetch:orgs
+          npm run fetch:authendpoints
           npm run fetch:specs
           npm run fetch:postman
           npm run build:search
