@@ -98,12 +98,12 @@ const priorityLabel = computed(() => PRIORITY[priority.value]?.label ?? PRIORITY
 const isClosed = computed(() => status.value === 'closed')
 
 // Optional companion partials, authored per proposal and co-located with this
-// page (ofp-004.outcome.vue / ofp-004.feedback.vue) — excluded from routing in
-// vite.config. Their presence drives the layout: an Outcome switches a closed
-// proposal to the tabbed view; Feedback is appended under the vote panel. When
-// neither exists the page renders exactly as before.
-const outcomeMods = import.meta.glob('./ofp-004.outcome.vue', { eager: true }) as Record<string, { default: Component }>
-const feedbackMods = import.meta.glob('./ofp-004.feedback.vue', { eager: true }) as Record<string, { default: Component }>
+// page (outcome.vue / feedback.vue) — excluded from routing in vite.config.
+// Their presence drives the layout: an Outcome switches a closed proposal to the
+// tabbed view; Feedback is appended under the vote panel. When neither exists the
+// page renders exactly as before.
+const outcomeMods = import.meta.glob('./outcome.vue', { eager: true }) as Record<string, { default: Component }>
+const feedbackMods = import.meta.glob('./feedback.vue', { eager: true }) as Record<string, { default: Component }>
 const OutcomePartial = Object.values(outcomeMods)[0]?.default ?? null
 const FeedbackPartial = Object.values(feedbackMods)[0]?.default ?? null
 
