@@ -56,7 +56,7 @@ const year: number = new Date().getFullYear()
 
     <div class="ed-footer__base">
       <span>&copy; {{ year }} &middot; Community project &middot; Not an official CBUAE publication</span>
-      <span class="ed-footer__base-mono">Author &middot; Thomas Catchpole</span>
+      <span class="ed-footer__base-mono">Authors &middot; Thomas Catchpole &amp; Nowaier AlQahtani</span>
     </div>
   </footer>
 </template>

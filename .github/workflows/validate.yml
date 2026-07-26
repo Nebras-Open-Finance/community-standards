@@ -99,6 +99,14 @@ jobs:
       cancel-in-progress: false
 
     steps:
+      # `wrangler pages deploy` compiles Pages Functions from the ./functions
+      # directory in its working dir. The built dist/ artifact does NOT contain
+      # them, so without a checkout the functions/ dir (and its imports under
+      # scripts/) is absent and Functions are silently never deployed — every
+      # /api/* request then falls through to the SPA fallback.
+      - name: Check out repository
+        uses: actions/checkout@v4
+
       - name: Download built site
         uses: actions/download-artifact@v4
         with:
