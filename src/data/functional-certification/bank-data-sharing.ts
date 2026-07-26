@@ -132,7 +132,7 @@ export const bankDataSharingArea: FcArea = {
   tppBaseUrlTemplate:
     'https://rs1.{LFICODE}.apihub.openfinance.ae/open-finance/account-information/{VERSION}',
   segments: ['Retail', 'SME', 'Corporate'],
-  sandboxEvidenceHref: '/tech/tpp-standards/sandbox/model-bank',
+  sandboxEvidenceHref: '/tech/lfi-api-hub/getting-started/',
   endpoints: bankDataSharingEndpoints,
   consentOps: lfiConsentOps,
 }

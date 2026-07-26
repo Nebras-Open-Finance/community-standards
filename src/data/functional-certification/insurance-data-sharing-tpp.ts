@@ -1,8 +1,9 @@
 // Functional Certification config for the TPP (consumer) side of Insurance Data
 // Sharing. Reuses the exact endpoint set + permission mapping from the LFI area,
-// but the evidence base URL points at the sandbox Model Bank (altareq1) — the
+// but the evidence base URL points at the sandbox Model Insurer (altareq2) — the
 // TPP proves it can retrieve insurance policy data from the sandbox, so the URLs
-// and discovery endpoint are the sandbox Model Bank's, not a production template.
+// and discovery endpoint are the sandbox Model Insurer's, not a production
+// template. (Banking areas point at the Model Bank, altareq1, instead.)
 //
 // Scope note: the encrypted `Premium` field is certified separately, so this
 // area covers the policy-retrieval surface only (ReadInsurancePolicies).
@@ -10,11 +11,11 @@
 import { insuranceDataSharingEndpoints } from './insurance-data-sharing'
 import type { FcArea, FcConsentOp } from './types'
 
-// Sandbox Model Bank resource server the TPP calls for consent-lifecycle ops —
+// Sandbox Model Insurer resource server the TPP calls for consent-lifecycle ops —
 // the same base as the data endpoints (consent management lives on the resource
 // server, not a separate host, on the TPP side).
 const TPP_RS_BASE =
-  'https://rs1.altareq1.sandbox.apihub.openfinance.ae/open-finance/insurance/{VERSION}'
+  'https://rs1.altareq2.sandbox.apihub.openfinance.ae/open-finance/insurance/{VERSION}'
 const CONSENT_DOC = '/tech/tpp-standards/v2.1/consent/open-api'
 
 // Cross-cutting consent-lifecycle operations every TPP certifies, whichever data
@@ -49,12 +50,13 @@ export const insuranceDataSharingTppArea: FcArea = {
   label: 'Insurance Data Sharing',
   apiName: 'Insurance',
   certType: 'TPP Functional Certification Evidence',
-  // Sandbox Model Bank resource server — {VERSION} is substituted by the portal.
+  // Sandbox Model Insurer resource server — {VERSION} is substituted by the portal.
   tppBaseUrlTemplate:
-    'https://rs1.altareq1.sandbox.apihub.openfinance.ae/open-finance/insurance/{VERSION}',
+    'https://rs1.altareq2.sandbox.apihub.openfinance.ae/open-finance/insurance/{VERSION}',
   // Insurance has no customer segmentation — omit segments.
-  sandboxEvidenceHref: '/tech/tpp-standards/sandbox/model-bank',
-  wellKnownUrl: 'https://auth1.altareq1.sandbox.apihub.openfinance.ae/.well-known/openid-configuration',
+  sandboxEvidenceHref: '/tech/tpp-standards/sandbox/model-insurer',
+  sandboxName: 'AlTareq Model Insurer',
+  wellKnownUrl: 'https://auth1.altareq2.sandbox.apihub.openfinance.ae/.well-known/openid-configuration',
   endpoints: insuranceDataSharingEndpoints,
   consentOps: tppConsentOps,
   rarEditor: {

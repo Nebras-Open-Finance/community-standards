@@ -95,8 +95,8 @@ const url = computed(() => props.op.baseUrlTemplate.replace('{VERSION}', props.v
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #fff;
-  background: var(--at-navy-deep);
+  color: var(--at-inverse-fg);
+  background: var(--at-inverse-bg);
   padding: 0.15rem 0.4rem;
 }
 .fc-ev__path { font-family: var(--at-mono); font-size: 0.9rem; color: var(--at-navy-deep); }

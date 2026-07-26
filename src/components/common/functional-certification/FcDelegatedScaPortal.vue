@@ -295,8 +295,8 @@ async function generate(): Promise<void> {
       <section v-show="currentStep === 3" class="fc__panel">
         <h2 class="fc__h2">Evidence</h2>
         <p class="fc__lede">
-          Attach the evidence below. All evidence must come from the
-          <a :href="area.sandboxEvidenceHref">AlTareq Model Bank</a> sandbox.
+          Attach the evidence below. All evidence must come from your own
+          <strong>pre-production environment</strong>.
         </p>
 
         <div class="fc__progress-note" :class="{ 'fc__progress-note--done': evidenceComplete }">

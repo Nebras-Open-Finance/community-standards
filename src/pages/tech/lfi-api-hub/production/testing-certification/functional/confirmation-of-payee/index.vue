@@ -57,8 +57,8 @@ const sampleBaseUrl = confirmationOfPayeeArea.baseUrlTemplate
         account-holder name and <strong>the API Hub applies the name-matching rules</strong> to produce
         the verdict. Functional Certification therefore proves each match <em>outcome</em>, per segment:
         that the name you return, matched against the name a TPP submits, yields the correct
-        <code>NameMatchIndicator</code>. All evidence must come from the
-        <a :href="confirmationOfPayeeArea.sandboxEvidenceHref">AlTareq Model Bank</a> sandbox.
+        <code>NameMatchIndicator</code>. All evidence must come from your own
+        <strong>pre-production environment</strong>.
       </EdProse>
     </EdSectionBand>
 
@@ -204,8 +204,8 @@ const sampleBaseUrl = confirmationOfPayeeArea.baseUrlTemplate
   font-family: var(--at-sans);
   font-size: 1rem;
   font-weight: 600;
-  color: #fff;
-  background: var(--at-navy-deep);
+  color: var(--at-inverse-fg);
+  background: var(--at-inverse-bg);
   text-decoration: none;
   padding: 0.85rem 1.8rem;
   transition: background 0.15s;

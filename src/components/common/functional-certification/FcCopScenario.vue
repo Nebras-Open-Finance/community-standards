@@ -120,8 +120,8 @@ const uid = `${props.segment.key}-${props.outcome.key}`
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #fff;
-  background: var(--at-navy-deep);
+  color: var(--at-inverse-fg);
+  background: var(--at-inverse-bg);
   padding: 0.15rem 0.45rem;
 }
 .cop-sc__outcome { font-family: var(--at-serif); font-size: 1.05rem; font-weight: 600; color: var(--at-navy-deep); }

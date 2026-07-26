@@ -89,11 +89,21 @@ export interface FcArea {
    * Present for banking areas; omit for insurance (no segment).
    */
   segments?: string[]
-  /** Route path of the sandbox evidence source (Model Bank). */
+  /**
+   * Route path of the sandbox evidence source. For TPP areas this is the Model
+   * Bank (banking) or Model Insurer (insurance); for LFI areas it is the LFI's
+   * own pre-production environment guide.
+   */
   sandboxEvidenceHref: string
   /**
-   * Sandbox discovery (`.well-known`) URL for the Model Bank — shown to TPPs as
-   * the starting point for retrieving evidence. Optional (LFI areas omit it).
+   * Display name of the TPP evidence source shown in portal prose — e.g.
+   * 'AlTareq Model Bank' or 'AlTareq Model Insurer'. Optional; components default
+   * to 'AlTareq Model Bank' when omitted. Not used by LFI areas.
+   */
+  sandboxName?: string
+  /**
+   * Sandbox discovery (`.well-known`) URL for the evidence source — shown to TPPs
+   * as the starting point for retrieving evidence. Optional (LFI areas omit it).
    */
   wellKnownUrl?: string
   /** Endpoints in scope, in presentation order. */

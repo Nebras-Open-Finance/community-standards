@@ -131,7 +131,7 @@ export const singleInstantPaymentArea: FcPaymentArea = {
         'Authorise a payment whose Creditor name does not match the account holder. Screenshot your authorisation page showing the ConfirmationOfPayee.No indicator surfaced to the customer.',
     },
   ],
-  sandboxEvidenceHref: '/tech/tpp-standards/sandbox/model-bank',
+  sandboxEvidenceHref: '/tech/lfi-api-hub/getting-started/',
   paymentStatusDocHref:
     '/tech/lfi-api-hub/v2.1/banking/service-initiation/domestic-payments/overview/payment-status',
   accountPermsDocHref: '/knowledge-base/articles/payment-account-permissions',

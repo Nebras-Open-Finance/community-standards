@@ -192,6 +192,14 @@ export interface PaymentTimingState {
   terminalPatchTimestamp: string
   /** Screenshot evidencing the terminal-status PATCH (and its timestamp). */
   terminalPatchScreenshot: File | null
+  /**
+   * The CreditorReference received on POST /payments (from Open Finance) — the
+   * reconciliation reference for the Creditor / Creditor LFI (not DebtorReference,
+   * which stays on the debtor side). Evidenced as carried into the AANI submission.
+   */
+  creditorReference: string
+  /** Screenshot evidencing that same CreditorReference in the outbound AANI (pacs.008) submission. */
+  creditorRefScreenshot: File | null
 }
 
 export function emptyPaymentTimingState(): PaymentTimingState {
@@ -201,6 +209,8 @@ export function emptyPaymentTimingState(): PaymentTimingState {
     railSubmitScreenshot: null,
     terminalPatchTimestamp: '',
     terminalPatchScreenshot: null,
+    creditorReference: '',
+    creditorRefScreenshot: null,
   }
 }
 

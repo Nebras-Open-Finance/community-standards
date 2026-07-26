@@ -150,7 +150,7 @@ export const insuranceDataSharingArea: FcArea = {
   tppBaseUrlTemplate:
     'https://rs1.{LFICODE}.apihub.openfinance.ae/open-finance/insurance/{VERSION}',
   // Insurance has no customer segmentation — omit segments.
-  sandboxEvidenceHref: '/tech/tpp-standards/sandbox/model-bank',
+  sandboxEvidenceHref: '/tech/lfi-api-hub/getting-started/',
   endpoints: insuranceDataSharingEndpoints,
   consentOps: lfiConsentOps,
 }

@@ -25,7 +25,7 @@ const consumableCount = insuranceDataSharingTppArea.endpoints.filter((e) => e.tp
         <p class="ed-doc__lede">
           Functional Certification proves that your proposition consumes Insurance Data Sharing
           correctly: you request only the permissions your endpoints need, across the insurance sectors
-          you support, and you can retrieve that policy data from the AlTareq Model Bank. This page
+          you support, and you can retrieve that policy data from the AlTareq Model Insurer. This page
           explains what evidence to gather; the portal then builds your submission for you.
         </p>
         <div class="ed-doc__cta">
@@ -50,7 +50,7 @@ const consumableCount = insuranceDataSharingTppArea.endpoints.filter((e) => e.tp
         production access. For Insurance Data Sharing, it demonstrates that your consent requests only
         the permissions your proposition uses, that those permissions align to the endpoints you
         consume, and that you can retrieve the policy data from the
-        <a :href="insuranceDataSharingTppArea.sandboxEvidenceHref">AlTareq Model Bank</a> sandbox.
+        <a :href="insuranceDataSharingTppArea.sandboxEvidenceHref">AlTareq Model Insurer</a> sandbox.
       </EdProse>
 
       <EdNote type="note" title="Premium sharing is certified separately">
@@ -87,7 +87,7 @@ const consumableCount = insuranceDataSharingTppArea.endpoints.filter((e) => e.tp
         </li>
         <li>
           <strong>Postman evidence</strong> &mdash; for each endpoint you consume, a screenshot showing
-          you retrieved that policy data from the sandbox Model Bank.
+          you retrieved that policy data from the sandbox Model Insurer.
         </li>
       </EdBullets>
 
@@ -196,8 +196,8 @@ const consumableCount = insuranceDataSharingTppArea.endpoints.filter((e) => e.tp
   font-family: var(--at-sans);
   font-size: 1rem;
   font-weight: 600;
-  color: #fff;
-  background: var(--at-navy-deep);
+  color: var(--at-inverse-fg);
+  background: var(--at-inverse-bg);
   text-decoration: none;
   padding: 0.85rem 1.8rem;
   transition: background 0.15s;

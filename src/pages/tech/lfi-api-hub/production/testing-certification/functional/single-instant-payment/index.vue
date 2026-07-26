@@ -60,8 +60,7 @@ const sampleBaseUrl = singleInstantPaymentArea.tppBaseUrlTemplate
         your LFI is the only party that sees the raw rail outcome, Functional Certification proves that
         each supported rail reaches the correct terminal status, that timing and rejection are handled,
         and that the encryption-model steps — decrypting the Creditor and consuming the Risk object —
-        are performed. All evidence must come from the
-        <a :href="singleInstantPaymentArea.sandboxEvidenceHref">AlTareq Model Bank</a> sandbox.
+        are performed. All evidence must come from your own <strong>pre-production environment</strong>.
       </EdProse>
     </EdSectionBand>
 
@@ -91,8 +90,10 @@ const sampleBaseUrl = singleInstantPaymentArea.tppBaseUrlTemplate
           <code>AcceptedCreditSettlementCompleted</code>).
         </li>
         <li>
-          <strong>AANI timing &amp; a rejection</strong> &mdash; the <code>POST /payments</code>,
-          rail-submission, and terminal-PATCH timestamps (with screenshots), and one example of an AANI
+          <strong>AANI timing, reference &amp; a rejection</strong> &mdash; the <code>POST /payments</code>,
+          rail-submission, and terminal-PATCH timestamps (with screenshots); the
+          <code>CreditorReference</code> received on <code>POST /payments</code> and a screenshot showing
+          it carried into the AANI (pacs.008) submission to the receiving bank; and one example of an AANI
           rejection mapped to <code>Rejected</code> with an <code>AANI.&lt;code&gt;</code> reason.
         </li>
         <li>
@@ -221,8 +222,8 @@ const sampleBaseUrl = singleInstantPaymentArea.tppBaseUrlTemplate
   font-family: var(--at-sans);
   font-size: 1rem;
   font-weight: 600;
-  color: #fff;
-  background: var(--at-navy-deep);
+  color: var(--at-inverse-fg);
+  background: var(--at-inverse-bg);
   text-decoration: none;
   padding: 0.85rem 1.8rem;
   transition: background 0.15s;

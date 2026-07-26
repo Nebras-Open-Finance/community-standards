@@ -97,6 +97,9 @@ const org = computed(() =>
 )
 const identityName = computed(() => auth.value.name ?? auth.value.email ?? '')
 const baseUrl = computed(() => props.area.tppBaseUrlTemplate.replace('{VERSION}', form.version))
+// Display name of the evidence source — Model Bank (banking) or Model Insurer
+// (insurance). Falls back to the Model Bank when an area omits it.
+const sandboxName = computed(() => props.area.sandboxName ?? 'AlTareq Model Bank')
 
 const selectedEndpoints = computed(() => consumable.value.filter((e) => stateFor(e.slug).selected))
 const permissionsInScope = computed(() => {
@@ -314,11 +317,11 @@ async function generate(): Promise<void> {
       <h2 class="fc__h2">Evidence</h2>
       <p class="fc__lede">
         For each endpoint, attach a Postman screenshot showing you successfully retrieved the data from
-        the sandbox <a :href="area.sandboxEvidenceHref">AlTareq Model Bank</a>. Start from the Model
-        Bank’s discovery endpoint:
+        the sandbox <a :href="area.sandboxEvidenceHref">{{ sandboxName }}</a>. Start from its discovery
+        endpoint:
       </p>
       <p v-if="area.wellKnownUrl" class="fc__wellknown">
-        <span class="fc__id-label">Model Bank .well-known</span>
+        <span class="fc__id-label">{{ sandboxName }} .well-known</span>
         <code>{{ area.wellKnownUrl }}</code>
       </p>
 
@@ -327,8 +330,8 @@ async function generate(): Promise<void> {
         <h3 class="fc__h3">Consent management</h3>
         <p class="fc__sub">
           These consent-lifecycle operations are certified for every TPP, whichever endpoints you
-          consume. Retrieve and revoke a consent you staged against the sandbox Model Bank, and attach
-          a Postman screenshot of a successful call for each.
+          consume. Retrieve and revoke a consent you staged against the sandbox {{ sandboxName }}, and
+          attach a Postman screenshot of a successful call for each.
         </p>
         <div class="fc__progress-note" :class="{ 'fc__progress-note--done': consentOpsComplete }">
           {{ consentCompleteCount }} of {{ consentOps.length }} consent operations complete.
@@ -359,6 +362,7 @@ async function generate(): Promise<void> {
           :endpoint="e"
           :state="stateFor(e.slug)"
           :base-url="baseUrl"
+          :sandbox-name="sandboxName"
           :complete="endpointComplete(e)"
         />
       </template>

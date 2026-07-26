@@ -273,8 +273,10 @@ async function generate(): Promise<void> {
         per segment.</template>
         <template v-else>Evidence each match outcome per segment with a Postman screenshot of the
         <code>/confirmation</code> verdict.</template>
-        All evidence must come from the
-        <a :href="area.sandboxEvidenceHref">AlTareq Model Bank</a> sandbox.
+        <template v-if="area.role === 'lfi'">All evidence must come from your own
+        <strong>pre-production environment</strong>.</template>
+        <template v-else>All evidence must come from the
+        <a :href="area.sandboxEvidenceHref">AlTareq Model Bank</a> sandbox.</template>
       </p>
 
       <p v-if="area.wellKnownUrl" class="fc__wellknown">

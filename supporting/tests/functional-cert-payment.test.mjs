@@ -120,6 +120,20 @@ describe('Functional Certification — Single Instant Payment config', () => {
     }
   })
 
+  it('the spec defines AECreditorReference (the reconciliation reference carried through AANI)', () => {
+    // The AANI evidence asserts the CreditorReference received on POST /payments is
+    // carried into the AANI submission to the receiving bank. Guard that the field
+    // the portal names still exists in the spec and remains the Creditor-side
+    // reconciliation reference — not transposed with DebtorReference.
+    const schema = spec.components?.schemas?.AECreditorReference
+    assert.ok(schema, 'AECreditorReference schema not found in spec')
+    assert.match(
+      schema.description ?? '',
+      /Creditor/,
+      'AECreditorReference no longer describes the Creditor-side reference',
+    )
+  })
+
   it('every rail terminal status is a value in the spec payment status enum', () => {
     // The payment status enum is the one that carries both Pending and the
     // AANI terminal status; find it among all enums in the spec.

@@ -54,8 +54,7 @@ const sampleBaseUrl = bankDataSharingArea.tppBaseUrlTemplate
         API resources to the production Trust Framework. For Bank Data Sharing, it demonstrates &mdash;
         endpoint by endpoint &mdash; that your Ozone Connect endpoints behave as the standard requires,
         and that the same data is correctly returned to a TPP through the API Hub resource server. All
-        evidence must come from the
-        <a :href="bankDataSharingArea.sandboxEvidenceHref">AlTareq Model Bank</a> sandbox.
+        evidence must come from your own <strong>pre-production environment</strong>.
       </EdProse>
     </EdSectionBand>
 
@@ -198,8 +197,8 @@ const sampleBaseUrl = bankDataSharingArea.tppBaseUrlTemplate
   font-family: var(--at-sans);
   font-size: 1rem;
   font-weight: 600;
-  color: #fff;
-  background: var(--at-navy-deep);
+  color: var(--at-inverse-fg);
+  background: var(--at-inverse-bg);
   text-decoration: none;
   padding: 0.85rem 1.8rem;
   transition: background 0.15s;

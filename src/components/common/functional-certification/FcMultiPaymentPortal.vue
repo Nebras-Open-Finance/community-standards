@@ -286,7 +286,7 @@ async function generate(): Promise<void> {
           parameter set, one with only the required minimum. For each, share the ConsentId, paste the
           consent details, and attach the authorization screen linked to it.<template v-if="beneficiaryModels.length">
           Then evidence one consent for each beneficiary model below.</template> All evidence must come
-          from the <a :href="area.sandboxEvidenceHref">AlTareq Model Bank</a> sandbox.
+          from your own <strong>pre-production environment</strong>.
         </p>
 
         <div class="fc__progress-note" :class="{ 'fc__progress-note--done': evidenceComplete }">

@@ -49,7 +49,7 @@ const cards = [
   <FcCertLanding
     audience="TPP"
     title="Functional Certification"
-    lede="Functional Certification proves your TPP consumes Open Finance APIs through the API Hub correctly — the right consent, the endpoints you call, and evidence from the sandbox Model Bank. Choose the area you are submitting evidence for below; each area's page explains what the evidence is and how to produce it, then its portal builds your submission for you."
+    lede="Functional Certification proves your TPP consumes Open Finance APIs through the API Hub correctly — the right consent, the endpoints you call, and evidence retrieved from the sandbox: the AlTareq Model Bank for banking, the AlTareq Model Insurer for insurance. Choose the area you are submitting evidence for below; each area's page explains what the evidence is and how to produce it, then its portal builds your submission for you."
     :cards="cards"
   />
 </template>

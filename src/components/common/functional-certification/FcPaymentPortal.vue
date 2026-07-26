@@ -122,7 +122,9 @@ const timingComplete = computed(() => {
     !!timing.railSubmitTimestamp.trim() &&
     !!timing.railSubmitScreenshot &&
     !!timing.terminalPatchTimestamp.trim() &&
-    !!timing.terminalPatchScreenshot
+    !!timing.terminalPatchScreenshot &&
+    !!timing.creditorReference.trim() &&
+    !!timing.creditorRefScreenshot
   )
 })
 const aaniRejectComplete = computed(() => {
@@ -231,6 +233,7 @@ async function generate(): Promise<void> {
 
     const railSubmitPath = await push(entries, timing.railSubmitScreenshot, 'evidence/timing/rail-submission')
     const terminalPatchPath = await push(entries, timing.terminalPatchScreenshot, 'evidence/timing/terminal-patch')
+    const creditorRefPath = await push(entries, timing.creditorRefScreenshot, 'evidence/timing/creditor-reference-aani')
 
     const aaniRejectPath = await push(entries, aaniReject.postman, 'evidence/timing/aani-rejection')
 
@@ -264,7 +267,7 @@ async function generate(): Promise<void> {
       postPaymentsPath,
       limitPath,
       rails,
-      timing: { state: timing, railSubmitPath, terminalPatchPath },
+      timing: { state: timing, railSubmitPath, terminalPatchPath, creditorRefPath },
       aaniReject: { state: aaniReject, postman: aaniRejectPath },
       creditorRisk: { state: creditorRisk, decryptPath, creditorPath, riskPath },
       dataSharing: { state: dataSharing, accountsPath, balancesPath, postPaymentsPath: dsPostPath, authPath: dsAuthPath },
@@ -380,8 +383,8 @@ async function generate(): Promise<void> {
       <section v-show="currentStep === 3" class="fc__panel">
         <h2 class="fc__h2">Evidence</h2>
         <p class="fc__lede">
-          Attach the evidence below. All evidence must come from the
-          <a :href="area.sandboxEvidenceHref">AlTareq Model Bank</a> sandbox.
+          Attach the evidence below. All evidence must come from your own
+          <strong>pre-production environment</strong>.
         </p>
 
         <div class="fc__progress-note" :class="{ 'fc__progress-note--done': evidenceComplete }">
@@ -470,6 +473,23 @@ async function generate(): Promise<void> {
             label="Terminal-PATCH screenshot"
             accept="image/png,image/jpeg,image/webp"
             hint="Screenshot evidencing the PATCH /payment-log/{paymentId} to AcceptedWithoutPosting and its timestamp."
+          />
+          <p class="fc__hint" style="margin-top: 1rem">
+            Evidence that the <code>CreditorReference</code> received on <code>POST /payments</code> — the
+            reconciliation reference for the Creditor / Creditor LFI — is carried into the AANI
+            submission (pacs.008 remittance data) so it reaches the receiving bank. Use
+            <code>CreditorReference</code>, not <code>DebtorReference</code> (the debtor's own statement
+            narrative, which stays on the debtor side).
+          </p>
+          <label class="fc__field" style="max-width: 26rem; margin-bottom: 0.85rem">
+            <span class="fc__flabel">CreditorReference sent on POST /payments</span>
+            <input v-model="timing.creditorReference" class="fc__input fc__input--mono" placeholder="e.g. INV-2026-04-8817" spellcheck="false" />
+          </label>
+          <FcFileInput
+            v-model="timing.creditorRefScreenshot"
+            label="CreditorReference in AANI submission"
+            accept="image/png,image/jpeg,image/webp"
+            hint="Screenshot of the outbound AANI (pacs.008) submission showing the same CreditorReference value present in the remittance data sent to the receiving bank."
           />
         </div>
 

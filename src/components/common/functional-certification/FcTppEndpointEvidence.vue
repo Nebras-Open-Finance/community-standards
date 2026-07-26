@@ -1,21 +1,27 @@
 <script setup lang="ts">
 // TPP evidence block for one consumed endpoint: a Postman screenshot proving the
-// data was retrieved from the sandbox Model Bank, plus optional notes. `state`
-// is a reactive object owned by the portal; nested fields are bound directly.
+// data was retrieved from the sandbox evidence source (Model Bank for banking,
+// Model Insurer for insurance), plus optional notes. `state` is a reactive object
+// owned by the portal; nested fields are bound directly.
 import { computed } from 'vue'
 import type { FcEndpoint } from '@/data/functional-certification/types'
 import type { TppEndpointState } from './types'
 
-const props = defineProps<{
-  endpoint: FcEndpoint
-  state: TppEndpointState
-  /** Resolved sandbox Model Bank base URL (version substituted). */
-  baseUrl: string
-  /** Whether the required evidence for this endpoint is present. */
-  complete?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    endpoint: FcEndpoint
+    state: TppEndpointState
+    /** Resolved sandbox evidence-source base URL (version substituted). */
+    baseUrl: string
+    /** Display name of the evidence source — e.g. 'AlTareq Model Bank'. */
+    sandboxName?: string
+    /** Whether the required evidence for this endpoint is present. */
+    complete?: boolean
+  }>(),
+  { sandboxName: 'AlTareq Model Bank' },
+)
 
-const modelBankUrl = computed(() =>
+const retrieveUrl = computed(() =>
   props.endpoint.tppPath ? `${props.baseUrl}${props.endpoint.tppPath}` : '',
 )
 </script>
@@ -35,16 +41,16 @@ const modelBankUrl = computed(() =>
       <code v-for="p in endpoint.permissions" :key="p" class="fc-ev__perm">{{ p }}</code>
     </p>
 
-    <p v-if="modelBankUrl" class="fc-ev__url">
+    <p v-if="retrieveUrl" class="fc-ev__url">
       <span class="fc-ev__perms-label">Retrieve from</span>
-      <code class="fc-ev__urlval">{{ modelBankUrl }}</code>
+      <code class="fc-ev__urlval">{{ retrieveUrl }}</code>
     </p>
 
     <FcFileInput
       v-model="state.postman"
-      label="Postman evidence (Model Bank)"
+      :label="`Postman evidence (${sandboxName})`"
       accept="image/png,image/jpeg,image/webp"
-      hint="Screenshot from Postman showing you successfully retrieved this data from the sandbox Model Bank."
+      :hint="`Screenshot from Postman showing you successfully retrieved this data from the sandbox ${sandboxName}.`"
     />
 
     <div class="fc-ev__notes">
@@ -53,7 +59,7 @@ const modelBankUrl = computed(() =>
         :id="`tpp-notes-${endpoint.slug}`"
         v-model="state.notes"
         class="fc-ev__textarea"
-        placeholder="Anything worth noting about this call — e.g. which Model Bank account or consent you used."
+        :placeholder="`Anything worth noting about this call — e.g. which ${sandboxName} account or consent you used.`"
       />
     </div>
   </div>

@@ -22,6 +22,10 @@ const { drafts, committedSlugs, deleteDraft } = useInternalPages()
 const PUBLISHED_FILTER = new Set(['example'])
 const publishedContent = computed(() => committedSlugs.filter((s) => !PUBLISHED_FILTER.has(s)))
 
+// Only top-level tools are listed here; nested sub-pages (e.g.
+// "redirect-testing/checker") are reached from within their parent tool.
+const topLevelTools = appPageSlugs.filter((s) => !s.includes('/'))
+
 function openDraft(s: string): void {
   router.push('/internal/draft/' + s)
 }
@@ -66,14 +70,14 @@ function formatDate(ts: number): string {
     </section>
 
     <!-- Tools -->
-    <section v-if="appPageSlugs.length" class="int-card">
+    <section v-if="topLevelTools.length" class="int-card">
       <h2 class="int-card__heading">Tools</h2>
       <p class="int-card__hint">
         Interactive pages built as Vue components. They sit behind the same password gate but are
         applications rather than documents, so they have no Markdown/Preview toggle.
       </p>
       <ul class="int-list">
-        <li v-for="s in appPageSlugs" :key="s" class="int-list__item">
+        <li v-for="s in topLevelTools" :key="s" class="int-list__item">
           <a class="int-list__main" :href="'/internal/pages/' + s">
             <span class="int-list__name">{{ prettifySlug(s) }}</span>
             <span class="int-list__meta"><code>/internal/pages/{{ s }}</code></span>

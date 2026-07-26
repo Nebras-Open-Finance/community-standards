@@ -17,7 +17,7 @@
 import type { FcBeneficiaryModel, FcConsentScenario, FcMultiPaymentArea } from './types'
 
 const RS_BASE = 'https://rs1.{LFICODE}.apihub.openfinance.ae/open-finance/payment/{VERSION}'
-const SANDBOX = '/tech/tpp-standards/sandbox/model-bank'
+const SANDBOX = '/tech/lfi-api-hub/getting-started/'
 const SI_GUIDE = '/tech/lfi-api-hub/v2.1/banking/service-initiation/domestic-payments'
 const CREDITOR_DOC =
   '/tech/lfi-api-hub/v2.1/banking/service-initiation/personal-identifiable-information/creditor'

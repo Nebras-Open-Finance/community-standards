@@ -51,6 +51,7 @@ function consentOpSection(ref: ConsentOpEvidenceRef): string {
 
 export function buildTppSummaryHtml(ctx: TppSummaryContext): string {
   const { area, form, identity, endpoints, consentOps } = ctx
+  const sandboxName = area.sandboxName ?? 'AlTareq Model Bank'
 
   const consentSections = consentOps.map(consentOpSection).join('\n')
   // Sections 1–3 are fixed; consent management (when present) takes 4 and pushes
@@ -68,7 +69,7 @@ export function buildTppSummaryHtml(ctx: TppSummaryContext): string {
         <h3><span class="method">${esc(e.endpoint.method)}</span> <code>${esc(e.endpoint.tppPath || e.endpoint.ozonePath)}</code></h3>
         <table>
           <tr><th>Permission(s)</th><td>${e.endpoint.permissions.map((p) => `<code>${esc(p)}</code>`).join(' ')}</td></tr>
-          ${url ? `<tr><th>Model Bank URL</th><td><code>${esc(url)}</code></td></tr>` : ''}
+          ${url ? `<tr><th>${esc(sandboxName)} URL</th><td><code>${esc(url)}</code></td></tr>` : ''}
           <tr><th>Postman evidence</th><td>${fileLink(e.paths.postman)}</td></tr>
         </table>
         ${notes}
@@ -84,7 +85,7 @@ export function buildTppSummaryHtml(ctx: TppSummaryContext): string {
     ${row('Email', identity.email)}
     ${row('Standards version', form.version)}
     ${form.segment.length ? row('Segment', form.segment.join(', ')) : ''}
-    ${row('Model Bank base URL', ctx.baseUrl)}
+    ${row(`${sandboxName} base URL`, ctx.baseUrl)}
   </table>
 
   <h2>2. Use case</h2>

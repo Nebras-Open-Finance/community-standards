@@ -53,6 +53,7 @@ export const tppSidebar: SidebarItem[] = [
       { text: 'Sandbox Quickstart', link: `${BASE}/${VERSION}/getting-started/` },
       { text: 'Postman Guide', link: `${BASE}/${VERSION}/getting-started/postman` },
       { text: 'Sandbox Model Bank', link: `${BASE}/sandbox/model-bank` },
+      { text: 'Sandbox Model Insurer', link: `${BASE}/sandbox/model-insurer` },
     ],
   },
   {

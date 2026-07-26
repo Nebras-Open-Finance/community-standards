@@ -77,7 +77,7 @@ const examples: CmiExample[] = [
       <ClientOnly>
         <div class="ed-doc__previews">
           <figure class="ed-doc__preview">
-            <ConsentManagementConnections mode="data-sharing" />
+            <ConsentManagementConnections mode="data-sharing" perspective="lfi" />
           </figure>
         </div>
       </ClientOnly>

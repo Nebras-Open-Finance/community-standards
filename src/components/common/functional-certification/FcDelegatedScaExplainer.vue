@@ -199,8 +199,8 @@ const submissionPath = `/tech/lfi-api-hub/production/testing-certification/funct
   font-family: var(--at-sans);
   font-size: 1rem;
   font-weight: 600;
-  color: #fff;
-  background: var(--at-navy-deep);
+  color: var(--at-inverse-fg);
+  background: var(--at-inverse-bg);
   text-decoration: none;
   padding: 0.85rem 1.8rem;
   transition: background 0.15s;

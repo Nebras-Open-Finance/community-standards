@@ -293,8 +293,8 @@ async function generate(): Promise<void> {
     <section v-show="currentStep === 3" class="fc__panel">
       <h2 class="fc__h2">Evidence</h2>
       <p class="fc__lede">
-        Attach the evidence for each endpoint you selected. Evidence must be from the
-        <a :href="area.sandboxEvidenceHref">AlTareq Model Bank</a> sandbox. All items are required
+        Attach the evidence for each endpoint you selected. Evidence must come from your own
+        <strong>pre-production environment</strong>. All items are required
         before you can continue.
       </p>
 

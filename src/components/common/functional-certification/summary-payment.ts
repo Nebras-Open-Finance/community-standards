@@ -52,6 +52,8 @@ export interface PaymentSummaryContext {
     state: PaymentTimingState
     railSubmitPath?: string | undefined
     terminalPatchPath?: string | undefined
+    /** Archive-relative path of the CreditorReference-in-AANI-submission screenshot. */
+    creditorRefPath?: string | undefined
   }
   aaniReject: { state: PaymentAaniRejectState; postman?: string | undefined }
   creditorRisk: {
@@ -123,6 +125,11 @@ export function buildPaymentSummaryHtml(ctx: PaymentSummaryContext): string {
     <tr><th>Terminal-PATCH screenshot</th><td>${fileLink(ctx.timing.terminalPatchPath)}</td></tr>
     <tr><th>AANI rejection — reason code</th><td>${ctx.aaniReject.state.rejectCode.trim() ? `<code>${esc(ctx.aaniReject.state.rejectCode)}</code>` : '—'}</td></tr>
     <tr><th>AANI rejection — PATCH /payment-log screenshot</th><td>${fileLink(ctx.aaniReject.postman)}</td></tr>
+  </table>
+  <p class="meta">The <code>CreditorReference</code> received on <code>POST /payments</code> — the reconciliation reference for the Creditor / Creditor LFI — is carried into the AANI submission (pacs.008 remittance data) so it reaches the receiving bank. <code>DebtorReference</code> is the debtor's own statement narrative and is not evidenced here.</p>
+  <table>
+    <tr><th>CreditorReference sent on POST /payments</th><td>${t.creditorReference.trim() ? `<code>${esc(t.creditorReference)}</code>` : '—'}</td></tr>
+    <tr><th>CreditorReference in AANI submission — screenshot</th><td>${fileLink(ctx.timing.creditorRefPath)}</td></tr>
   </table>`
 
   const creditorRiskSection = `

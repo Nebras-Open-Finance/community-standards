@@ -136,6 +136,11 @@ function onLogoError(e: Event): void {
           <code>assetlinks.json</code> (Android) &amp; <code>apple-app-site-association</code> (iOS)
         </span>
       </div>
+
+      <p class="rt__meta">
+        Need to test a URL that isn't in the directory yet?
+        <a href="/internal/pages/redirect-testing/checker">Check an arbitrary redirect →</a>
+      </p>
     </section>
 
     <div class="rt__controls">
@@ -423,7 +428,7 @@ function onLogoError(e: Event): void {
 
 .rt__badge {
   flex: 0 0 auto;
-  align-self: flex-start;
+  align-self: center;
   padding: 0.2rem 0.5rem;
   font-family: var(--at-mono);
   font-size: 0.6rem;

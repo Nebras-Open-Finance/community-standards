@@ -72,5 +72,5 @@ export const confirmationOfPayeeArea: FcCopArea = {
   outcomes: OUTCOMES,
   requiresTestingTool: true,
   captureResponseName: true,
-  sandboxEvidenceHref: '/tech/tpp-standards/sandbox/model-bank',
+  sandboxEvidenceHref: '/tech/lfi-api-hub/getting-started/',
 }

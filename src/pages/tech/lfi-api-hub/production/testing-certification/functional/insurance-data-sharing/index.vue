@@ -54,8 +54,8 @@ const sampleBaseUrl = insuranceDataSharingArea.tppBaseUrlTemplate
         API resources to the production Trust Framework. For Insurance Data Sharing, it demonstrates
         &mdash; endpoint by endpoint &mdash; that your Ozone Connect endpoints return the policies the
         standard requires for each insurance sector you underwrite, and that the same data is correctly
-        returned to a TPP through the API Hub resource server. All evidence must come from the
-        <a :href="insuranceDataSharingArea.sandboxEvidenceHref">AlTareq Model Bank</a> sandbox.
+        returned to a TPP through the API Hub resource server. All evidence must come from your own
+        <strong>pre-production environment</strong>.
       </EdProse>
 
       <EdNote type="note" title="Premium sharing is certified separately">
@@ -208,8 +208,8 @@ const sampleBaseUrl = insuranceDataSharingArea.tppBaseUrlTemplate
   font-family: var(--at-sans);
   font-size: 1rem;
   font-weight: 600;
-  color: #fff;
-  background: var(--at-navy-deep);
+  color: var(--at-inverse-fg);
+  background: var(--at-inverse-bg);
   text-decoration: none;
   padding: 0.85rem 1.8rem;
   transition: background 0.15s;
