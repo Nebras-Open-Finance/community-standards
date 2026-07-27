@@ -552,6 +552,7 @@ export const lfiSidebar: SidebarItem[] = [
           { text: 'Requirements', link: `${BASE}/${VERSION}/consent-journey/authorization/requirements` },
         ],
       },
+      { text: 'Opening the Return Redirect', link: `${BASE}/${VERSION}/consent-journey/opening-the-redirect` },
       { text: 'API Guide', link: `${BASE}/${VERSION}/consent-journey/api-guide` },
     ],
   },

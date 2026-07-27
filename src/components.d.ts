@@ -161,6 +161,7 @@ declare module 'vue' {
     PvVoteAttribForm: typeof import('./components/proposals/PvVoteAttribForm.vue')['default']
     PvVoteBar: typeof import('./components/proposals/PvVoteBar.vue')['default']
     PvVotePanel: typeof import('./components/proposals/PvVotePanel.vue')['default']
+    RedirectLaunchGuidance: typeof import('./components/common/RedirectLaunchGuidance.vue')['default']
     RedocWrapper: typeof import('./components/common/RedocWrapper.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

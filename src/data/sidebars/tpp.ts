@@ -148,6 +148,7 @@ export const tppSidebar: SidebarItem[] = [
           { text: 'Message Signing', link: `${BASE}/security/fapi/message-signing` },
           { text: 'Message Encryption', link: `${BASE}/security/fapi/message-encryption` },
           { text: 'Receiving Event Notifications', link: `${BASE}/security/fapi/receiving-events` },
+          { text: 'Opening the Authorization Redirect', link: `${BASE}/security/fapi/opening-the-redirect` },
           { text: 'Handling Authorization Callbacks', link: `${BASE}/security/fapi/handling-callback` },
         ],
       },

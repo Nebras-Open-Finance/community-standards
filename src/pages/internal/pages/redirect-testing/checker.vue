@@ -110,15 +110,25 @@ onUnmounted(() => clearTimeout(copyTimer))
       <h1 class="chk__title">Redirect checker</h1>
       <p class="chk__lede">
         Paste any authorisation endpoint, redirect URI or origin. This probes the two deep-link
-        verification files at that origin and grades them by the same rules as the
-        <a href="/internal/pages/redirect-testing">participants directory</a> — a
-        <code>200</code> serving valid JSON as <code>application/json</code> passes; a wrong
-        <code>Content-Type</code> warns; a redirect, non-200, non-JSON body or network error fails.
+        verification files at that origin:
       </p>
-      <p class="chk__meta">
-        The probe runs server-side (a Cloudflare Pages Function) because a browser cannot read these
-        cross-origin files directly. Only the <strong>origin</strong> of what you paste is used —
-        the <code>/.well-known/</code> paths are fixed.
+      <ul class="chk__criteria">
+        <li>
+          <strong class="chk__c chk__c--pass">Pass</strong> — a <code>200</code> serving valid
+          JSON as <code>application/json</code>.
+        </li>
+        <li>
+          <strong class="chk__c chk__c--warn">Warn</strong> — a wrong <code>Content-Type</code>.
+        </li>
+        <li>
+          <strong class="chk__c chk__c--fail">Fail</strong> — a redirect, non-200, non-JSON body
+          or network error.
+        </li>
+      </ul>
+      <p class="chk__lede">
+        These are the same rules as the
+        <a href="/internal/pages/redirect-testing">redirect testing page</a> (built to check
+        published production <code>authorization_endpoint</code>s).
       </p>
     </section>
 
@@ -228,13 +238,24 @@ onUnmounted(() => clearTimeout(copyTimer))
 .chk__lede code, .chk__meta code { font-family: var(--at-mono); font-size: 0.9em; }
 .chk__lede a { color: var(--at-teal-deep); }
 
-.chk__meta {
-  font-size: 0.82rem;
-  color: var(--at-mute);
-  margin: 0 0 2.25rem;
+.chk__criteria {
+  margin: 0 0 1rem;
+  padding-left: 1.15rem;
   max-width: 46rem;
-  line-height: 1.55;
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
+.chk__criteria li { margin: 0.15rem 0; }
+.chk__criteria code { font-family: var(--at-mono); font-size: 0.9em; }
+.chk__c {
+  font-family: var(--at-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.chk__c--pass { color: var(--at-teal-deep); }
+.chk__c--warn { color: #8a6d1f; }
+.chk__c--fail { color: #b3261e; }
 
 /* ── Form ─────────────────────────────────────────────────────────────────── */
 .chk__form {
