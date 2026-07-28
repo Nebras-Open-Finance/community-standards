@@ -76,10 +76,31 @@ const sidebarItems = computed<EdSidebarItemData[]>(() => {
     text: d.title || prettifySlug(d.slug),
     link: '/internal/draft/' + d.slug,
   }))
-  const toolItems: EdSidebarItemData[] = appPageSlugs.map((s) => ({
-    text: prettifySlug(s),
-    link: '/internal/pages/' + s,
-  }))
+  // The two go-live certificate tools are grouped under their own subsection;
+  // every other tool stays flat under "Tools".
+  const CERT_LABELS: Record<string, string> = {
+    'lfi-certificate': 'LFI certificate',
+    'tpp-certificate': 'TPP certificate',
+  }
+  const certSlugs = appPageSlugs.filter((s) => s in CERT_LABELS)
+  const otherToolSlugs = appPageSlugs.filter((s) => !(s in CERT_LABELS))
+
+  const toolItems: EdSidebarItemData[] = [
+    ...otherToolSlugs.map((s) => ({
+      text: prettifySlug(s),
+      link: '/internal/pages/' + s,
+    })),
+    ...(certSlugs.length
+      ? [{
+          text: 'Commercial Go-Live Certificates',
+          collapsed: false,
+          items: certSlugs.map((s) => ({
+            text: CERT_LABELS[s] ?? prettifySlug(s),
+            link: '/internal/pages/' + s,
+          })),
+        }]
+      : []),
+  ]
   return [
     ...(toolItems.length
       ? [{ text: 'Tools', collapsed: false, items: toolItems }]

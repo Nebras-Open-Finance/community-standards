@@ -26,6 +26,18 @@ const publishedContent = computed(() => committedSlugs.filter((s) => !PUBLISHED_
 // "redirect-testing/checker") are reached from within their parent tool.
 const topLevelTools = appPageSlugs.filter((s) => !s.includes('/'))
 
+// The two go-live certificate tools are grouped under their own subsection;
+// every other tool stays flat. Mirrors the internal sidebar (see internal.vue).
+const CERT_LABELS: Record<string, string> = {
+  'lfi-certificate': 'LFI certificate',
+  'tpp-certificate': 'TPP certificate',
+}
+const certTools = computed(() => topLevelTools.filter((s) => s in CERT_LABELS))
+const otherTools = computed(() => topLevelTools.filter((s) => !(s in CERT_LABELS)))
+function toolLabel(s: string): string {
+  return CERT_LABELS[s] ?? prettifySlug(s)
+}
+
 function openDraft(s: string): void {
   router.push('/internal/draft/' + s)
 }
@@ -76,14 +88,26 @@ function formatDate(ts: number): string {
         Interactive pages built as Vue components. They sit behind the same password gate but are
         applications rather than documents, so they have no Markdown/Preview toggle.
       </p>
-      <ul class="int-list">
-        <li v-for="s in topLevelTools" :key="s" class="int-list__item">
+      <ul v-if="otherTools.length" class="int-list">
+        <li v-for="s in otherTools" :key="s" class="int-list__item">
           <a class="int-list__main" :href="'/internal/pages/' + s">
             <span class="int-list__name">{{ prettifySlug(s) }}</span>
             <span class="int-list__meta"><code>/internal/pages/{{ s }}</code></span>
           </a>
         </li>
       </ul>
+
+      <template v-if="certTools.length">
+        <h3 class="int-card__subheading">Commercial Go-Live Certificates</h3>
+        <ul class="int-list">
+          <li v-for="s in certTools" :key="s" class="int-list__item">
+            <a class="int-list__main" :href="'/internal/pages/' + s">
+              <span class="int-list__name">{{ toolLabel(s) }}</span>
+              <span class="int-list__meta"><code>/internal/pages/{{ s }}</code></span>
+            </a>
+          </li>
+        </ul>
+      </template>
     </section>
 
     <!-- Drafts -->
@@ -183,6 +207,16 @@ function formatDate(ts: number): string {
   line-height: 1.55;
   color: var(--at-mute);
   margin: 0 0 1.25rem;
+}
+
+.int-card__subheading {
+  font-family: var(--at-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--at-teal-deep);
+  margin: 1.5rem 0 0;
 }
 
 .int-cta {

@@ -59,6 +59,7 @@ declare module 'vue' {
     AuthorizationSingleInstantPayment: typeof import('./components/common/authorization-ui/AuthorizationSingleInstantPayment.vue')['default']
     AuthorizationSIPCOP: typeof import('./components/common/authorization-ui/AuthorizationSIPCOP.vue')['default']
     Carousel: typeof import('./components/common/Carousel.vue')['default']
+    CertificateDoc: typeof import('./components/common/certificates/CertificateDoc.vue')['default']
     CertificationTicketBanner: typeof import('./components/common/certification/CertificationTicketBanner.vue')['default']
     ConsentAuthLayout: typeof import('./components/common/ConsentAuthLayout.vue')['default']
     ConsentBankDataSharing: typeof import('./components/common/consent-ui/ConsentBankDataSharing.vue')['default']
