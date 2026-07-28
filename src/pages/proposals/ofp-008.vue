@@ -35,7 +35,7 @@ useHead({
 const meta = {
   id: 'OFP-008',
   proposedBy: 'Nebras',
-  author: 'Thomas Catchpole',
+  author: 'Nowaier AlQahtani',
   // Fallbacks shown until the API responds (and during the static build). The
   // live status/priority/dates are sourced from the API — see syncFromApi().
   opened: '4 Aug 2026',
