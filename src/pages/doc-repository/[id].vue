@@ -80,6 +80,11 @@ const catalog = ref<{ public: CatalogEntry[]; private: CatalogEntry[]; protected
 })
 const maxUploadBytes = ref<number>(5 * 1024 * 1024)
 
+// Global upload switch. Set to false to hide the upload UI for every org and
+// every document. NOTE: this is a front-end display switch only — it does not
+// block the upload API itself. Flip back to true to re-enable.
+const UPLOADS_ENABLED: boolean = false
+
 type Tab = 'public' | 'private' | 'protected'
 const activeTab = ref<Tab>('public')
 const search = ref<string>('')
@@ -865,8 +870,15 @@ function removeGrant(id: string): void {
               </button>
             </div>
 
+            <!-- Uploads globally disabled (Nebras only) -->
+            <div v-if="isNebras && !UPLOADS_ENABLED" class="ed-doc-upload">
+              <div class="ed-doc-upload__empty">
+                Document uploads are currently disabled.
+              </div>
+            </div>
+
             <!-- Upload (Nebras only) -->
-            <div v-if="isNebras" class="ed-doc-upload">
+            <div v-if="isNebras && UPLOADS_ENABLED" class="ed-doc-upload">
               <div class="ed-doc-upload__head">
                 <span class="ed-doc-upload__title">
                   Upload {{ activeTab === 'private' ? 'private' : 'public' }} document
