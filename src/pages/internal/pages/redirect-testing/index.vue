@@ -24,15 +24,47 @@ const query = ref('')
 const sector = ref<'all' | 'bank' | 'insurer'>('all')
 const verdictFilter = ref<'all' | 'issues'>('all')
 
-// Order the two probes for display and give each a human label + expected path.
-function probesOf(v: Verification): { label: string; file: string; probe: VerificationProbe }[] {
-  return [
-    { label: 'Android', file: '/.well-known/assetlinks.json', probe: v.android },
-    { label: 'iOS', file: '/.well-known/apple-app-site-association', probe: v.ios },
-  ]
+interface ProbeRow {
+  label: string
+  file: string
+  probe: VerificationProbe
+  /** Informational probe — excluded from the headline verdict; never shown red. */
+  optional: boolean
 }
 
-// The worst of the two probes drives the card badge and the issues filter.
+// Order the probes for display and give each a human label + expected path.
+// Huawei (HarmonyOS App Linking) is appended as an informational probe only.
+function probesOf(v: Verification): ProbeRow[] {
+  const rows: ProbeRow[] = [
+    { label: 'Android', file: '/.well-known/assetlinks.json', probe: v.android, optional: false },
+    { label: 'iOS', file: '/.well-known/apple-app-site-association', probe: v.ios, optional: false },
+  ]
+  if (v.huawei) {
+    rows.push({ label: 'Huawei', file: '/.well-known/applinking.json', probe: v.huawei, optional: true })
+  }
+  return rows
+}
+
+// Display tone for a probe row. An optional (Huawei) probe that isn't served is
+// shown as a neutral 'na' — informational, never a failure.
+function toneOf(row: ProbeRow): VerificationVerdict | 'na' {
+  if (row.optional && row.probe.verdict === 'fail') return 'na'
+  return row.probe.verdict
+}
+
+function labelOf(row: ProbeRow): string {
+  return toneOf(row) === 'na' ? 'n/a' : row.probe.verdict
+}
+
+function noteOf(row: ProbeRow): string | null {
+  if (toneOf(row) === 'na') {
+    return 'HarmonyOS App Linking not configured — optional; Huawei users use the browser fallback.'
+  }
+  return row.probe.note
+}
+
+// The worst of the two REQUIRED probes drives the card badge and issues filter.
+// Huawei is informational and deliberately excluded.
 function worstOf(v: Verification | null): VerificationVerdict | null {
   if (!v) return null
   if (v.android.verdict === 'fail' || v.ios.verdict === 'fail') return 'fail'
@@ -132,8 +164,9 @@ function onLogoError(e: Event): void {
         <span class="rt__summary-item rt__summary-item--warn">{{ verifySummary.warn }} warn</span>
         <span class="rt__summary-item rt__summary-item--fail">{{ verifySummary.fail }} fail</span>
         <span class="rt__summary-note">
-          deep-link verification across {{ verifySummary.total }} origins ·
-          <code>assetlinks.json</code> (Android) &amp; <code>apple-app-site-association</code> (iOS)
+          verdict across {{ verifySummary.total }} origins from the required files —
+          <code>assetlinks.json</code> (Android) &amp; <code>apple-app-site-association</code> (iOS).
+          Huawei <code>applinking.json</code> (HarmonyOS) is probed too, but shown for information only.
         </span>
       </div>
 
@@ -235,12 +268,13 @@ function onLogoError(e: Event): void {
             v-for="p in probesOf(s.verification)"
             :key="p.label"
             class="rt__probe"
-            :class="`rt__probe--${p.probe.verdict}`"
+            :class="`rt__probe--${toneOf(p)}`"
           >
-            <span class="rt__verdict" :class="`rt__verdict--${p.probe.verdict}`">{{ p.probe.verdict }}</span>
+            <span class="rt__verdict" :class="`rt__verdict--${toneOf(p)}`">{{ labelOf(p) }}</span>
             <div class="rt__probe-body">
               <div class="rt__probe-top">
                 <strong class="rt__probe-plat">{{ p.label }}</strong>
+                <span v-if="p.optional" class="rt__probe-opt">informational</span>
                 <a
                   class="rt__probe-file"
                   :href="s.verification.origin + p.file"
@@ -253,7 +287,7 @@ function onLogoError(e: Event): void {
                 {{ p.probe.contentType || 'no Content-Type' }} ·
                 {{ p.probe.jsonValid ? 'valid JSON' : 'not JSON' }}
               </div>
-              <div v-if="p.probe.note" class="rt__probe-note">{{ p.probe.note }}</div>
+              <div v-if="noteOf(p)" class="rt__probe-note">{{ noteOf(p) }}</div>
             </div>
           </div>
         </div>
@@ -577,6 +611,7 @@ function onLogoError(e: Event): void {
 .rt__verdict--pass { color: var(--at-teal-deep); }
 .rt__verdict--warn { color: #8a6d1f; }
 .rt__verdict--fail { color: #b3261e; }
+.rt__verdict--na { color: var(--at-mute); }
 .rt__verdict--head { align-self: center; }
 
 /* ── Verification block (card) ───────────────────────────────────────────── */
@@ -604,6 +639,7 @@ function onLogoError(e: Event): void {
 .rt__probe--pass { border-left-color: var(--at-teal-deep); }
 .rt__probe--warn { border-left-color: #8a6d1f; }
 .rt__probe--fail { border-left-color: #b3261e; }
+.rt__probe--na { border-left-color: var(--at-grid-line-2); }
 
 .rt__probe-body { min-width: 0; flex: 1; }
 .rt__probe-top {
@@ -615,6 +651,16 @@ function onLogoError(e: Event): void {
 .rt__probe-plat {
   font-size: 0.78rem;
   color: var(--at-navy-deep);
+}
+.rt__probe-opt {
+  font-family: var(--at-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--at-mute);
+  border: 1px solid var(--at-grid-line-2);
+  padding: 0.08rem 0.32rem;
 }
 .rt__probe-file {
   text-decoration: none;

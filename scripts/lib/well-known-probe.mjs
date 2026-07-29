@@ -13,10 +13,16 @@
  * AbortController, URL) so it runs unchanged under Node and the Workers runtime.
  */
 
-// The two deep-link verification files an LFI MUST serve from its auth origin.
+// The deep-link verification files probed at an LFI's auth origin.
+//   android / ios — REQUIRED: Google-Android App Links & iOS Universal Links.
+//   huawei         — INFORMATIONAL: HarmonyOS App Linking. Huawei devices ship
+//                    without Google Mobile Services, so `assetlinks.json` does
+//                    not cover HarmonyOS NEXT. This file is NOT mandated — a
+//                    missing one is reported as n/a, never as a failure.
 export const WELL_KNOWN = {
   android: '/.well-known/assetlinks.json',
   ios: '/.well-known/apple-app-site-association',
+  huawei: '/.well-known/applinking.json',
 }
 
 // A browser-like User-Agent. The OS verifiers (Apple CDN / Google Digital Asset
@@ -76,13 +82,16 @@ export async function probeFile(url, { timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
 }
 
 /**
- * Probe both deep-link verification files for one origin, in parallel.
- * Returns { origin, android, ios } — the shape the redirect-testing pages read.
+ * Probe the deep-link verification files for one origin, in parallel.
+ * Returns { origin, android, ios, huawei } — the shape the redirect-testing
+ * pages read. `huawei` is informational only; the pages exclude it from the
+ * headline verdict.
  */
 export async function probeOrigin(origin, opts = {}) {
-  const [android, ios] = await Promise.all([
+  const [android, ios, huawei] = await Promise.all([
     probeFile(origin + WELL_KNOWN.android, opts),
     probeFile(origin + WELL_KNOWN.ios, opts),
+    probeFile(origin + WELL_KNOWN.huawei, opts),
   ])
-  return { origin, android, ios }
+  return { origin, android, ios, huawei }
 }

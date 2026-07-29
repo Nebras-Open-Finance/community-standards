@@ -19,13 +19,19 @@ export interface VerificationProbe {
   note: string | null
 }
 
-/** Both verification files for one authorisation origin. */
+/** The deep-link verification files for one authorisation origin. */
 export interface Verification {
   origin: string
-  /** /.well-known/assetlinks.json */
+  /** /.well-known/assetlinks.json — Google-Android App Links (required) */
   android: VerificationProbe
-  /** /.well-known/apple-app-site-association */
+  /** /.well-known/apple-app-site-association — iOS Universal Links (required) */
   ios: VerificationProbe
+  /**
+   * /.well-known/applinking.json — HarmonyOS App Linking (informational).
+   * Optional so older snapshots without a Huawei probe still parse. Never
+   * contributes to the headline verdict.
+   */
+  huawei?: VerificationProbe
 }
 
 export interface AuthServerEndpoint {
@@ -87,7 +93,8 @@ function narrowVerification(raw: unknown): Verification | null {
   const android = narrowProbe(r['android'])
   const ios = narrowProbe(r['ios'])
   if (!android || !ios) return null
-  return { origin: str(r['origin']), android, ios }
+  const huawei = narrowProbe(r['huawei'])
+  return { origin: str(r['origin']), android, ios, ...(huawei ? { huawei } : {}) }
 }
 
 function narrow(raw: unknown): AuthServerEndpoint | null {

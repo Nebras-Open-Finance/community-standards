@@ -21,15 +21,47 @@ const result = ref<Verification | null>(null)
 // even after the user edits the box.
 const checkedInput = ref('')
 
-// Same ordering + labelling the directory page uses.
-function probesOf(v: Verification): { label: string; file: string; probe: VerificationProbe }[] {
-  return [
-    { label: 'Android', file: '/.well-known/assetlinks.json', probe: v.android },
-    { label: 'iOS', file: '/.well-known/apple-app-site-association', probe: v.ios },
-  ]
+interface ProbeRow {
+  label: string
+  file: string
+  probe: VerificationProbe
+  /** Informational probe — excluded from the headline verdict; never shown red. */
+  optional: boolean
 }
 
-// The worst of the two probes is the headline verdict.
+// Same ordering + labelling the directory page uses. Huawei (HarmonyOS App
+// Linking) is appended as an informational probe only.
+function probesOf(v: Verification): ProbeRow[] {
+  const rows: ProbeRow[] = [
+    { label: 'Android', file: '/.well-known/assetlinks.json', probe: v.android, optional: false },
+    { label: 'iOS', file: '/.well-known/apple-app-site-association', probe: v.ios, optional: false },
+  ]
+  if (v.huawei) {
+    rows.push({ label: 'Huawei', file: '/.well-known/applinking.json', probe: v.huawei, optional: true })
+  }
+  return rows
+}
+
+// Display tone: an optional (Huawei) probe that isn't served shows as a neutral
+// 'na' — informational, never a failure.
+function toneOf(row: ProbeRow): VerificationVerdict | 'na' {
+  if (row.optional && row.probe.verdict === 'fail') return 'na'
+  return row.probe.verdict
+}
+
+function labelOf(row: ProbeRow): string {
+  return toneOf(row) === 'na' ? 'n/a' : row.probe.verdict
+}
+
+function noteOf(row: ProbeRow): string | null {
+  if (toneOf(row) === 'na') {
+    return 'HarmonyOS App Linking not configured — optional; Huawei users use the browser fallback.'
+  }
+  return row.probe.note
+}
+
+// The worst of the two REQUIRED probes is the headline verdict. Huawei is
+// informational and deliberately excluded.
 function worstOf(v: Verification | null): VerificationVerdict | null {
   if (!v) return null
   if (v.android.verdict === 'fail' || v.ios.verdict === 'fail') return 'fail'
@@ -109,7 +141,7 @@ onUnmounted(() => clearTimeout(copyTimer))
       </div>
       <h1 class="chk__title">Redirect checker</h1>
       <p class="chk__lede">
-        Paste any authorisation endpoint, redirect URI or origin. This probes the two deep-link
+        Paste any authorisation endpoint, redirect URI or origin. This probes the deep-link
         verification files at that origin:
       </p>
       <ul class="chk__criteria">
@@ -123,6 +155,12 @@ onUnmounted(() => clearTimeout(copyTimer))
         <li>
           <strong class="chk__c chk__c--fail">Fail</strong> — a redirect, non-200, non-JSON body
           or network error.
+        </li>
+        <li>
+          <strong class="chk__c chk__c--na">n/a</strong> — Huawei
+          <code>applinking.json</code> (HarmonyOS App Linking) only. This file is
+          <strong>not required</strong>, so an absent one is informational, not a failure, and
+          never affects the headline verdict.
         </li>
       </ul>
       <p class="chk__lede">
@@ -167,12 +205,13 @@ onUnmounted(() => clearTimeout(copyTimer))
           v-for="p in probesOf(result)"
           :key="p.label"
           class="chk__probe"
-          :class="`chk__probe--${p.probe.verdict}`"
+          :class="`chk__probe--${toneOf(p)}`"
         >
-          <span class="chk__verdict" :class="`chk__verdict--${p.probe.verdict}`">{{ p.probe.verdict }}</span>
+          <span class="chk__verdict" :class="`chk__verdict--${toneOf(p)}`">{{ labelOf(p) }}</span>
           <div class="chk__probe-body">
             <div class="chk__probe-top">
               <strong class="chk__probe-plat">{{ p.label }}</strong>
+              <span v-if="p.optional" class="chk__probe-opt">informational</span>
               <a class="chk__probe-file" :href="result.origin + p.file" target="_blank" rel="noreferrer">
                 <code>{{ p.file }}</code>
               </a>
@@ -182,7 +221,7 @@ onUnmounted(() => clearTimeout(copyTimer))
               {{ p.probe.contentType || 'no Content-Type' }} ·
               {{ p.probe.jsonValid ? 'valid JSON' : 'not JSON' }}
             </div>
-            <div v-if="p.probe.note" class="chk__probe-note">{{ p.probe.note }}</div>
+            <div v-if="noteOf(p)" class="chk__probe-note">{{ noteOf(p) }}</div>
           </div>
         </div>
       </div>
@@ -256,6 +295,7 @@ onUnmounted(() => clearTimeout(copyTimer))
 .chk__c--pass { color: var(--at-teal-deep); }
 .chk__c--warn { color: #8a6d1f; }
 .chk__c--fail { color: #b3261e; }
+.chk__c--na { color: var(--at-mute); }
 
 /* ── Form ─────────────────────────────────────────────────────────────────── */
 .chk__form {
@@ -345,6 +385,7 @@ onUnmounted(() => clearTimeout(copyTimer))
 .chk__probe--pass { border-left-color: var(--at-teal-deep); }
 .chk__probe--warn { border-left-color: #8a6d1f; }
 .chk__probe--fail { border-left-color: #b3261e; }
+.chk__probe--na { border-left-color: var(--at-grid-line-2); }
 
 .chk__probe-body { min-width: 0; flex: 1; }
 .chk__probe-top {
@@ -354,6 +395,16 @@ onUnmounted(() => clearTimeout(copyTimer))
   gap: 0.5rem;
 }
 .chk__probe-plat { font-size: 0.8rem; color: var(--at-navy-deep); }
+.chk__probe-opt {
+  font-family: var(--at-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--at-mute);
+  border: 1px solid var(--at-grid-line-2);
+  padding: 0.08rem 0.32rem;
+}
 .chk__probe-file { text-decoration: none; border-bottom: 1px solid var(--at-grid-line-2); }
 .chk__probe-file code {
   font-family: var(--at-mono);
@@ -392,6 +443,7 @@ onUnmounted(() => clearTimeout(copyTimer))
 .chk__verdict--pass { color: var(--at-teal-deep); }
 .chk__verdict--warn { color: #8a6d1f; }
 .chk__verdict--fail { color: #b3261e; }
+.chk__verdict--na { color: var(--at-mute); }
 
 /* ── Footer ───────────────────────────────────────────────────────────────── */
 .chk__foot {
