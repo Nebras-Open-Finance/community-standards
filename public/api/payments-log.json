@@ -30001,13 +30001,53 @@
 	},
 	{
 		"date" : "2026-07-19",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+		"paymentpurposecode" : null,
+		"status" : "AcceptedWithoutPosting",
+		"paymentconsenttype" : "VariableOnDemand",
+		"amount" : 1.0,
+		"count" : 1.0
+	},
+	{
+		"date" : "2026-07-19",
 		"lfinamekey" : "uae-wioretail",
 		"tppname" : "LEAN TECH",
 		"paymentpurposecode" : null,
 		"status" : "AcceptedWithoutPosting",
+		"paymentconsenttype" : "VariableOnDemand",
+		"amount" : 1850.0,
+		"count" : 6.0
+	},
+	{
+		"date" : "2026-07-19",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"paymentpurposecode" : null,
+		"status" : "AcceptedWithoutPosting",
+		"paymentconsenttype" : "VariableOnDemand",
+		"amount" : 3028.91,
+		"count" : 16.0
+	},
+	{
+		"date" : "2026-07-19",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"paymentpurposecode" : null,
+		"status" : "AcceptedWithoutPosting",
+		"paymentconsenttype" : "VariableOnDemand",
+		"amount" : 12528.0,
+		"count" : 20.0
+	},
+	{
+		"date" : "2026-07-19",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"paymentpurposecode" : null,
+		"status" : "Rejected",
 		"paymentconsenttype" : "SingleInstantPayment",
-		"amount" : 156867.22,
-		"count" : 25.0
+		"amount" : 50000.0,
+		"count" : 1.0
 	},
 	{
 		"date" : "2026-07-19",
@@ -30017,6 +30057,26 @@
 		"status" : "AcceptedWithoutPosting",
 		"paymentconsenttype" : "SingleInstantPayment",
 		"amount" : 1.0,
+		"count" : 1.0
+	},
+	{
+		"date" : "2026-07-19",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"paymentpurposecode" : null,
+		"status" : "AcceptedSettlementCompleted",
+		"paymentconsenttype" : "VariableOnDemand",
+		"amount" : 2400.0,
+		"count" : 3.0
+	},
+	{
+		"date" : "2026-07-19",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"paymentpurposecode" : null,
+		"status" : "Pending",
+		"paymentconsenttype" : "SingleInstantPayment",
+		"amount" : 9800.0,
 		"count" : 1.0
 	},
 	{
@@ -30035,9 +30095,19 @@
 		"tppname" : "LEAN TECH",
 		"paymentpurposecode" : null,
 		"status" : "AcceptedWithoutPosting",
-		"paymentconsenttype" : "VariableOnDemand",
-		"amount" : 219.91,
-		"count" : 4.0
+		"paymentconsenttype" : "SingleInstantPayment",
+		"amount" : 221584.35,
+		"count" : 86.0
+	},
+	{
+		"date" : "2026-07-19",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"paymentpurposecode" : null,
+		"status" : "Pending",
+		"paymentconsenttype" : "SingleInstantPayment",
+		"amount" : 1060.0,
+		"count" : 1.0
 	},
 	{
 		"date" : "2026-07-19",
@@ -30045,39 +30115,9 @@
 		"tppname" : "LEAN TECH",
 		"paymentpurposecode" : null,
 		"status" : "AcceptedWithoutPosting",
-		"paymentconsenttype" : "VariableOnDemand",
-		"amount" : 400.0,
-		"count" : 1.0
-	},
-	{
-		"date" : "2026-07-19",
-		"lfinamekey" : "uae-adibrt",
-		"tppname" : "LEAN TECH",
-		"paymentpurposecode" : null,
-		"status" : "AcceptedWithoutPosting",
-		"paymentconsenttype" : "VariableOnDemand",
-		"amount" : 2100.0,
-		"count" : 3.0
-	},
-	{
-		"date" : "2026-07-19",
-		"lfinamekey" : "uae-mashrt",
-		"tppname" : "LEAN TECH",
-		"paymentpurposecode" : null,
-		"status" : "Pending",
 		"paymentconsenttype" : "SingleInstantPayment",
-		"amount" : 9800.0,
-		"count" : 1.0
-	},
-	{
-		"date" : "2026-07-19",
-		"lfinamekey" : "uae-mashrt",
-		"tppname" : "LEAN TECH",
-		"paymentpurposecode" : null,
-		"status" : "AcceptedWithoutPosting",
-		"paymentconsenttype" : "SingleInstantPayment",
-		"amount" : 57391.39,
-		"count" : 20.0
+		"amount" : 671911.88,
+		"count" : 96.0
 	},
 	{
 		"date" : "2026-07-20",

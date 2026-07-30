@@ -37,6 +37,12 @@ const pageDescription = computed(
   () => (route.meta.description as string | undefined) || DEFAULT_DESCRIPTION,
 )
 
+// TEMPORARY: while true, EVERY page emits noindex so the whole site stays out
+// of search results. Set back to false to restore per-route indexing (public
+// pages indexable; only the NOINDEX_RE routes below noindex). Single toggle —
+// revert by flipping this one line. Mirrored by supporting/tests/robots-noindex.test.mjs.
+const NOINDEX_ENTIRE_SITE = true
+
 // Routes that must not be indexed: internal/gated surfaces and developer
 // tooling. Kept in sync with the EXCLUDE list in scripts/generate-sitemap.mjs —
 // those routes are already absent from the sitemap; this also stops a crawler
@@ -49,7 +55,9 @@ const NOINDEX_RE = [
   /(^|\/)_shared(\/|$)/,
 ]
 const robotsDirective = computed(() =>
-  NOINDEX_RE.some((re) => re.test(route.path)) ? 'noindex, nofollow' : undefined,
+  NOINDEX_ENTIRE_SITE || NOINDEX_RE.some((re) => re.test(route.path))
+    ? 'noindex, nofollow'
+    : undefined,
 )
 
 // Pages that call useHead({ title: 'X' }) render as "X | UAE Open Finance".

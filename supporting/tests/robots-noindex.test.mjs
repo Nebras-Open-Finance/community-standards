@@ -13,6 +13,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..', '..')
 const DIST = resolve(ROOT, 'dist')
 
+// Mirrors NOINDEX_ENTIRE_SITE in src/App.vue: when the site-wide noindex flag is
+// on, EVERY page is expected to be noindex, so the "public pages must not be
+// noindex" (leaked) assertion is intentionally skipped. Flip both together.
+const NOINDEX_ENTIRE_SITE = true
+
 // Mirrors NOINDEX_RE in src/App.vue and EXCLUDE in scripts/generate-sitemap.mjs
 // (matched against the route path, i.e. the dist-relative path sans .html).
 const NOINDEX = [
@@ -44,12 +49,17 @@ describe('Robots noindex', {
     const leaked = [] // is noindex but shouldn't be
     for (const file of walkHtml(DIST)) {
       const rel = relative(DIST, file).replace(/\\/g, '/').replace(/\.html$/, '')
-      const shouldNoindex = NOINDEX.some((re) => re.test(rel))
+      // With the site-wide flag on, every page must be noindex.
+      const shouldNoindex = NOINDEX_ENTIRE_SITE || NOINDEX.some((re) => re.test(rel))
       const isNoindex = hasNoindex(readFileSync(file, 'utf-8'))
       if (shouldNoindex && !isNoindex) missing.push(rel)
       else if (!shouldNoindex && isNoindex) leaked.push(rel)
     }
-    assert.equal(missing.length, 0, `gated/dev pages missing noindex:\n  ${missing.slice(0, 10).join('\n  ')}`)
-    assert.equal(leaked.length, 0, `public pages wrongly marked noindex:\n  ${leaked.slice(0, 10).join('\n  ')}`)
+    assert.equal(missing.length, 0, `pages missing noindex:\n  ${missing.slice(0, 10).join('\n  ')}`)
+    // When the whole site is noindex there is no such thing as a wrongly-marked
+    // public page, so this assertion only applies with the flag off.
+    if (!NOINDEX_ENTIRE_SITE) {
+      assert.equal(leaked.length, 0, `public pages wrongly marked noindex:\n  ${leaked.slice(0, 10).join('\n  ')}`)
+    }
   })
 })
