@@ -10,7 +10,7 @@ meta:
 <script setup lang="ts">
 import { useHead } from '@unhead/vue'
 import { internalPolicyThemes, internalPolicies } from '@/data/internalPolicies'
-import type { InternalPolicy, InternalPolicyTheme } from '@/data/internalPolicies'
+import type { InternalPolicyTheme } from '@/data/internalPolicies'
 
 useHead({ title: 'Policies · Internal' })
 
