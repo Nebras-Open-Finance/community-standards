@@ -11,6 +11,7 @@ import {
 } from '@/composables/useInternalPages'
 import type { EdSidebarItemData } from '@/components/editorial/EdSidebarItem.vue'
 import InternalDuplicate from '@/components/common/InternalDuplicate.vue'
+import { internalPolicySidebar } from '@/data/internalPolicies'
 
 // Layout for every page under /internal. Pages opt in with `layout: internal`
 // in their <route> block (.vue) or frontmatter (.md). It does three things:
@@ -40,15 +41,23 @@ function submit(): void {
   }
 }
 
-// /internal, /internal/draft/* and /internal/pages/* are app UI; everything else
-// under /internal is a committed Markdown page and gets the prose shell
-// (header + Markdown/Preview toggle).
+// /internal, /internal/draft/*, /internal/pages/* and /internal/policies/* are
+// app UI (Vue components); everything else under /internal is a committed
+// Markdown page and gets the prose shell (header + Markdown/Preview toggle).
 const isContentPage = computed(() => {
   const p = route.path.replace(/\/$/, '')
   if (p === '/internal') return false
   if (p.startsWith('/internal/draft/')) return false
   if (p.startsWith('/internal/pages/')) return false
+  if (p === '/internal/policies' || p.startsWith('/internal/policies/')) return false
   return true
+})
+
+// The Policies space carries its own themed sidebar in place of the default
+// Tools / Published / Drafts sidebar.
+const isPoliciesSection = computed(() => {
+  const p = route.path.replace(/\/$/, '')
+  return p === '/internal/policies' || p.startsWith('/internal/policies/')
 })
 
 // The slug for a committed content page, e.g. "/internal/example" → "example".
@@ -151,7 +160,13 @@ const sidebarItems = computed<EdSidebarItemData[]>(() => {
 
       <!-- Unlocked: sidebar + page content -->
       <template v-else>
-        <EdHoverSidebar :items="sidebarItems" title="Internal" root-href="/internal/" />
+        <EdHoverSidebar
+          v-if="isPoliciesSection"
+          :items="internalPolicySidebar"
+          title="Policies"
+          root-href="/internal/policies/"
+        />
+        <EdHoverSidebar v-else :items="sidebarItems" title="Internal" root-href="/internal/" />
         <div v-if="isContentPage" class="int-shell">
           <header class="int-shell__head">
             <InternalDuplicate v-if="isExamplePage" source-page="example" />

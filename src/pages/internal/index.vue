@@ -71,6 +71,17 @@ function formatDate(ts: number): string {
       </p>
     </section>
 
+    <!-- Policies -->
+    <section class="int-card int-card--policies">
+      <h2 class="int-card__heading">Policies</h2>
+      <p class="int-card__hint">
+        Nebras&rsquo;s internal corporate governance policies &mdash; governance, risk,
+        security, conduct, and people frameworks &mdash; transcribed from the Restricted source
+        documents into browsable pages, grouped by theme.
+      </p>
+      <a class="int-cta" href="/internal/policies/">Open the policies space →</a>
+    </section>
+
     <!-- Start a new draft -->
     <section class="int-card int-card--example">
       <h2 class="int-card__heading">Start a new draft</h2>
@@ -192,6 +203,7 @@ function formatDate(ts: number): string {
   margin-bottom: 1.5rem;
 }
 .int-card--example { border-left: 3px solid var(--at-teal-deep); }
+.int-card--policies { border-left: 3px solid var(--at-navy); }
 
 .int-card__heading {
   font-family: var(--at-serif);
