@@ -12,9 +12,10 @@ exclude = [
   '^tel:',
 ]
 
-# Skip anchors — vite-ssg generates slugs at build time and lychee's
-# fragment resolution doesn't always match. Revisit if we want stricter checks.
-include_fragments = false
+# Anchors are deliberately NOT checked — vite-ssg generates slugs at build time
+# and lychee's fragment resolution doesn't always match. Fragment checking is
+# opt-in in lychee (`include_fragments = "full"`), so leaving it unset is enough.
+# Do not set it to `false`: since lychee 0.24 the key takes a string, not a bool.
 
 # vite-ssg emits clean URLs by default, so internal hrefs like `/foo/bar`
 # resolve to `/foo/bar.html` (or `/foo/bar/index.html`) in the built output.
