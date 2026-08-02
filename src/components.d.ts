@@ -86,6 +86,7 @@ declare module 'vue' {
     DashboardSidebar: typeof import('./components/dashboard/DashboardSidebar.vue')['default']
     DashResponseTimeChart: typeof import('./components/dashboard/DashResponseTimeChart.vue')['default']
     DirhamAmount: typeof import('./components/common/consent-ui/DirhamAmount.vue')['default']
+    DraftVersionBanner: typeof import('./components/chrome/DraftVersionBanner.vue')['default']
     EdBackStrip: typeof import('./components/editorial/EdBackStrip.vue')['default']
     EdBullets: typeof import('./components/editorial/EdBullets.vue')['default']
     EdCallout: typeof import('./components/editorial/EdCallout.vue')['default']

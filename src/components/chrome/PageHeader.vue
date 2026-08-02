@@ -137,7 +137,7 @@ function isActive(prefix: string): boolean {
             </a>
             <a href="/program/whats-live" class="ed-nav__menu-item">
               <span class="ed-nav__menu-kicker">Activity</span>
-              <span class="ed-nav__menu-label">Live Ecosystem</span>
+              <span class="ed-nav__menu-label">In Production</span>
             </a>
           </div>
         </div>
@@ -250,7 +250,7 @@ function isActive(prefix: string): boolean {
         <a href="/pricing/" class="ed-drawer__sublink">Pricing</a>
         <a href="/policy" class="ed-drawer__sublink">Policies</a>
         <a href="/doc-repository/" class="ed-drawer__sublink">Document Repository</a>
-        <a href="/program/whats-live" class="ed-drawer__sublink">Live Ecosystem</a>
+        <a href="/program/whats-live" class="ed-drawer__sublink">In Production</a>
 
         <div class="ed-drawer__section">Developer Docs</div>
         <a href="/tech/tpp-standards" class="ed-drawer__sublink">TPP &mdash; Open Finance Standards</a>

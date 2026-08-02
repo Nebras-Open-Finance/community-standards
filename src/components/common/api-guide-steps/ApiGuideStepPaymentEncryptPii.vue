@@ -57,6 +57,10 @@ const tabs = [
   { label: 'Node.js', lang: 'typescript', code: node },
   { label: 'Python',  lang: 'python',     code: python },
 ] as const
+
+// Shared by the v2.1 and v2.2-draft payment API guides, so the reference links
+// below follow the version of the page being viewed rather than naming one.
+const { docsVersion } = useRouteVersion()
 </script>
 
 <template>
@@ -96,7 +100,7 @@ const tabs = [
         undocumented fields or omit required ones.
       </p>
       <p>
-        See <a href="/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/">Personal
+        See <a :href="`/tech/tpp-standards/${docsVersion}/banking/service-initiation/personal-identifiable-information/`">Personal
         Identifiable Information</a> for the complete field reference, required vs optional fields, and
         creditor models for each domestic payment type.
       </p>
@@ -110,9 +114,9 @@ const tabs = [
         decrypts both PII tokens and compares them; any discrepancy results in rejection.
       </p>
       <p>
-        See <a href="/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/creditor">Creditor</a>
+        See <a :href="`/tech/tpp-standards/${docsVersion}/banking/service-initiation/personal-identifiable-information/creditor`">Creditor</a>
         for the full matching rules and
-        <a href="/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/creditor#validation-requirement">field
+        <a :href="`/tech/tpp-standards/${docsVersion}/banking/service-initiation/personal-identifiable-information/creditor#validation-requirement`">field
         validation requirements</a>.
       </p>
     </EdNote>
@@ -134,7 +138,7 @@ const tabs = [
     <EdCodeGroup :tabs="tabs" />
 
     <EdProse>
-      See <a href="/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/">Personal
+      See <a :href="`/tech/tpp-standards/${docsVersion}/banking/service-initiation/personal-identifiable-information/`">Personal
       Identifiable Information</a> for the complete field reference, required vs optional fields, and
       creditor models for each domestic payment type.
     </EdProse>

@@ -9,6 +9,11 @@
 //   1. Every pricing entry's docPath must resolve to a real .vue page.
 //   2. Every .vue page under `tpp-standards/.../open-api/` containing
 //      `<RedocWrapper` must have a matching pricing entry.
+//
+// Direction 2 is scoped to CURRENT_VERSION. The pricing catalogue is a single
+// unversioned list that links into the current version's pages; draft-version
+// mirrors deliberately have no separate entries, since pricing for an
+// unratified version is a commercial decision, not a documentation one.
 
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
@@ -22,6 +27,17 @@ const ROOT = resolve(__dirname, '..', '..')
 const PAGES = resolve(ROOT, 'src', 'pages')
 const TPP_ROOT = resolve(PAGES, 'tech', 'tpp-standards')
 const PRICING_FILE = resolve(ROOT, 'src', 'data', 'endpoint-pricing.ts')
+const VERSIONS_FILE = resolve(ROOT, 'src', 'data', 'versions.ts')
+
+// Cheap parser — no need to boot a bundler just to read one string literal.
+function parseCurrentVersion() {
+  const src = readFileSync(VERSIONS_FILE, 'utf-8')
+  const m = src.match(/CURRENT_VERSION\s*:\s*Version\s*=\s*['"]([^'"]+)['"]/)
+  if (!m) throw new Error('Could not parse CURRENT_VERSION from versions.ts')
+  return m[1]
+}
+
+const CURRENT_VERSION = parseCurrentVersion()
 
 let ENDPOINT_PRICING
 let dispose
@@ -88,8 +104,14 @@ describe('chargeable endpoints — coverage', () => {
     )
   })
 
-  it('every ReDoc-backed TPP page has a pricing entry', () => {
+  it(`every ReDoc-backed TPP page in ${CURRENT_VERSION} has a pricing entry`, () => {
     const discovered = discoverRedocPages()
+      .filter(p => p.docPath.includes(`/${CURRENT_VERSION}/`))
+    assert.ok(
+      discovered.length > 0,
+      `No ReDoc pages found under ${CURRENT_VERSION} — check CURRENT_VERSION parsing.`,
+    )
+
     const mapped = new Set(ENDPOINT_PRICING.map(e => e.docPath))
     const missing = discovered
       .map(p => p.docPath)

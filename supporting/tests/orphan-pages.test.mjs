@@ -2,9 +2,10 @@
 //
 // Reachability roots:
 //   1. src/pages/index.vue (the site home)
-//   2. Every `link` in tppSidebar, lfiSidebar, and buildApiSpecsSidebar(v)
-//      for every version (sidebars are evaluated, not regex-scraped, so
-//      template literals and helper calls resolve to real strings)
+//   2. Every `link` in buildTppSidebar(v), buildLfiSidebar(v), and
+//      buildApiSpecsSidebar(v) for every version (sidebars are evaluated, not
+//      regex-scraped, so template literals and helper calls resolve to real
+//      strings)
 //   3. Every static href in chrome (PageHeader, PageFooter, default layout)
 //
 // From those roots we BFS through static `<a href="...">`, `<RouterLink to="...">`,
@@ -89,8 +90,8 @@ let dispose
 
 before(async () => {
   const a = await bundleAndImport(`
-    export { tppSidebar } from ${JSON.stringify(join(SIDEBARS, 'tpp.ts'))}
-    export { lfiSidebar } from ${JSON.stringify(join(SIDEBARS, 'lfi.ts'))}
+    export { buildTppSidebar } from ${JSON.stringify(join(SIDEBARS, 'tpp.ts'))}
+    export { buildLfiSidebar } from ${JSON.stringify(join(SIDEBARS, 'lfi.ts'))}
     export { buildApiSpecsSidebar } from ${JSON.stringify(join(SIDEBARS, 'api-specs.ts'))}
     export { VERSIONS } from ${JSON.stringify(VERSIONS_FILE)}
   `)
@@ -247,9 +248,11 @@ async function computeReachable() {
 
   // 2. Sidebar links — every static + every dynamic version's api-specs.
   const sidebarLinks = new Set()
-  collectLinksFromTree(sidebars.tppSidebar, sidebarLinks)
-  collectLinksFromTree(sidebars.lfiSidebar, sidebarLinks)
+  // All three sidebars are version-parameterised, so every version has to be
+  // built — a page is only an orphan if no version's sidebar reaches it.
   for (const v of sidebars.VERSIONS) {
+    collectLinksFromTree(sidebars.buildTppSidebar(v), sidebarLinks)
+    collectLinksFromTree(sidebars.buildLfiSidebar(v), sidebarLinks)
     const apiSpecs = sidebars.buildApiSpecsSidebar(v)
     collectLinksFromTree(apiSpecs, sidebarLinks)
   }

@@ -32,6 +32,35 @@ function parseVersions() {
   return match[1].split(',').map(v => v.trim().replace(/['"]/g, '')).filter(Boolean)
 }
 
+// Pages that exist in some versions but not others, because the capability
+// they document was introduced (or withdrawn) at a version boundary.
+//
+// Each entry is a route path with the version segment replaced by `{v}`, plus
+// the versions it legitimately exists in. The dropdown must not offer these on
+// a version that lacks them — gate the sidebar entry too (see
+// DATA_DELETION_CONFIRMATION_VERSIONS in src/data/sidebars/tpp.ts).
+//
+// Add entries only with a reason. This is an escape hatch from version parity,
+// not a place to park pages nobody mirrored.
+// Data deletion confirmation (attestations) — introduced in v2.2 by OFP-005.
+// `prefix: true` covers the whole subtree, including the per-endpoint Redoc
+// pages under open-api/.
+const ONLY_IN = [
+  {
+    pattern: '/tech/tpp-standards/{v}/consent/data-deletion-confirmation/',
+    prefix: true,
+    versions: ['v2.2-draft'],
+  },
+]
+
+function allowedMissing(routePath, targetVersion) {
+  return ONLY_IN.some(({ pattern, prefix, versions }) => {
+    const expected = pattern.replace('{v}', targetVersion)
+    const hit = prefix ? routePath.startsWith(expected) : routePath === expected
+    return hit && !versions.includes(targetVersion)
+  })
+}
+
 function walkVue(dir, acc = []) {
   if (!existsSync(dir)) return acc
   for (const entry of readdirSync(dir)) {
@@ -104,7 +133,7 @@ describe('VersionDropdown navigation never lands on a dead page', () => {
       for (const targetVersion of VERSIONS) {
         if (targetVersion === sourceVersion) continue
         const swapped = routePath.replace(`/${sourceVersion}/`, `/${targetVersion}/`)
-        if (!resolveSitePath(swapped)) {
+        if (!resolveSitePath(swapped) && !allowedMissing(swapped, targetVersion)) {
           failures.push({ from: routePath, to: swapped, targetVersion })
         }
       }

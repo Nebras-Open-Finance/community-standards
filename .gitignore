@@ -9,6 +9,12 @@ supporting/*
 public/openapi/v*/
 # Generated .xlsx exports (see scripts/generate-openapi-xlsx.mjs)
 public/openapi/**/*.xlsx
+# Draft specs for unratified versions (see src/data/openapi-drafts.ts). The
+# hand-authored ones ARE tracked — they have no upstream to fetch. Only specs
+# derived from a fetched document by scripts/build-openapi-drafts.mjs are
+# ignored, for the same reason the fetched originals are. Keep this list in step
+# with the `generated` entries in DRAFT_SPECS.
+public/openapi-drafts/*/uae-api-hub-consent-manager-openapi.yaml
 # Fetched trust-framework organisations (see scripts/fetch-organisations.mjs)
 public/api/trust-framework.json
 # Fetched GitHub org stats (see scripts/fetch-github-stats.mjs)

@@ -8,6 +8,7 @@ import { docRepoIds } from './doc-repo-orgs'
 import { apiHubYears } from './api-hub-releases-registry'
 import { trustFrameworkYears } from './trust-framework-releases-registry'
 import { errataVersions } from './erratas-registry'
+import { changelogVersions } from './version-changes-registry'
 import { allEndpoints, endpointUrl, sectionUrl, surfaceUrl } from './endpoints'
 
 // Trailing-slash policy: doc-repository and erratas use a trailing slash
@@ -35,6 +36,9 @@ const expanders: Expander[] = [
     : null),
   (p) => (p === '/tech/release-notes-and-erratas/erratas/:version'
     ? errataVersions.map((v) => `/tech/release-notes-and-erratas/erratas/${v}/`)
+    : null),
+  (p) => (p === '/tech/release-notes-and-erratas/changelog/:version'
+    ? changelogVersions.map((v) => `/tech/release-notes-and-erratas/changelog/${v}/`)
     : null),
   // The `[...notFound].vue` catch-all is a runtime-only fallback;
   // returning `[]` drops it from the static path list.

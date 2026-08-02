@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "fetch:specs": "node scripts/fetch-openapi-specs.mjs && node scripts/generate-openapi-xlsx.mjs",
+    "fetch:specs": "node scripts/fetch-openapi-specs.mjs && node scripts/generate-openapi-xlsx.mjs && node scripts/build-openapi-drafts.mjs",
     "fetch:orgs": "node scripts/fetch-organisations.mjs",
     "fetch:sectors": "node scripts/fetch-lfi-sectors.mjs",
     "fetch:authendpoints": "node scripts/fetch-auth-endpoints.mjs",

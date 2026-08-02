@@ -28,6 +28,19 @@ const OUT_FILE = resolve(ROOT, 'src', 'components', 'chrome', 'search-data.ts')
 // Per-page caps. Keep the generated module small enough to load synchronously.
 const MAX_BODY_CHARS = 4000
 const MAX_HEADINGS = 12
+
+// Draft versions are mirrors of the current version plus a small delta, so
+// indexing them would return a near-duplicate hit for every query. They stay
+// reachable via the version dropdown and sidebar — just not via search.
+// Parsed from src/data/versions.ts so the list has a single source of truth.
+function parseDraftVersions() {
+  const src = readFileSync(resolve(ROOT, 'src', 'data', 'versions.ts'), 'utf-8')
+  const match = src.match(/DRAFT_VERSIONS[^=]*=\s*\[([^\]]*)\]/)
+  if (!match) throw new Error('Could not parse DRAFT_VERSIONS from versions.ts')
+  return match[1].split(',').map(v => v.trim().replace(/['"]/g, '')).filter(Boolean)
+}
+
+const DRAFT_VERSIONS = parseDraftVersions()
 const DESCRIPTION_CHARS = 180
 
 // ─── Route prefix → category/section ──────────────────────────────────────────
@@ -80,6 +93,8 @@ function walk(dir, files = []) {
     if (stat.isDirectory()) {
       // vite-plugin-pages excludes `_shared`; `_dev` is project-internal.
       if (name === '_shared' || name === '_dev') continue
+      // Draft-version trees are excluded from search (see DRAFT_VERSIONS above).
+      if (DRAFT_VERSIONS.includes(name)) continue
       walk(full, files)
     } else if (stat.isFile() && /\.(vue|md)$/.test(name)) {
       files.push(full)

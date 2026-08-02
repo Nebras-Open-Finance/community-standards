@@ -66,12 +66,62 @@ const SKIP_EXISTING = process.argv.includes('--skip-existing')
 // ─── Version config ────────────────────────────────────────────────────────────
 // Parse VERSIONS array from the TypeScript source so there is a single source of truth.
 
+function readVersionsSource() {
+  return readFileSync(resolve(ROOT, 'src', 'data', 'versions.ts'), 'utf-8')
+}
+
 function parseVersions() {
-  const versionFile = resolve(ROOT, 'src', 'data', 'versions.ts')
-  const src = readFileSync(versionFile, 'utf-8')
+  const src = readVersionsSource()
   const match = src.match(/VERSIONS\s*=\s*\[([^\]]+)\]/)
   if (!match) throw new Error('Could not parse VERSIONS from versions.ts')
   return match[1].split(',').map(v => v.trim().replace(/['"]/g, '')).filter(Boolean)
+}
+
+/**
+ * Parse SPEC_FOLDER — the map from a local version key to the folder its specs
+ * live in upstream. These diverge when a version is published here before it
+ * exists in api-specs: `v2.2-draft` currently serves the `v2.1` YAML.
+ *
+ * Returns a plain object; versions absent from the map resolve to themselves.
+ */
+function parseSpecFolders() {
+  return parseVersionMap('SPEC_FOLDER')
+}
+
+function parseProtocolVersions() {
+  return parseVersionMap('PROTOCOL_VERSION')
+}
+
+function parseVersionMap(name) {
+  const src = readVersionsSource()
+  const block = src.match(new RegExp(`${name}[^=]*=\\s*\\{([^}]+)\\}`))
+  if (!block) throw new Error(`Could not parse ${name} from versions.ts`)
+  const map = {}
+  for (const line of block[1].split('\n')) {
+    const entry = line.match(/['"]([^'"]+)['"]\s*:\s*['"]([^'"]+)['"]/)
+    if (entry) map[entry[1]] = entry[2]
+  }
+  return map
+}
+
+/**
+ * Uplift the version strings inside a borrowed spec.
+ *
+ * When a version serves another version's YAML (SPEC_FOLDER), the file still
+ * carries the source version in its consent-type URNs and server base paths.
+ * Left alone, the served spec contradicts the documentation built around it —
+ * e.g. a page that says `urn:openfinanceuae:account-access-consent:v2.2` while
+ * the schema enum only permits `:v2.1`.
+ *
+ * Only version-bearing identifiers are touched. Nothing else in the spec is
+ * rewritten; this is not a general-purpose patcher.
+ */
+function upliftProtocolVersion(yaml, fromVersion, toVersion) {
+  const from = fromVersion.replace(/\./g, '\\.')
+  return yaml
+    .replace(new RegExp(`(urn:openfinanceuae:[a-z-]+):${from}\\b`, 'g'), `$1:${toVersion}`)
+    .replace(new RegExp(`/open-finance/([a-z][a-z-]*)/${from}\\b`, 'g'), `/open-finance/$1/${toVersion}`)
+    .replace(new RegExp(`/open-finance/${from}\\b`, 'g'), `/open-finance/${toVersion}`)
 }
 
 // ─── Categories & version-folder mapping ───────────────────────────────────────
@@ -149,7 +199,9 @@ async function ghDownloadFile(remotePath) {
 
 // ─── Main ──────────────────────────────────────────────────────────────────────
 
-async function fetchCategory(version, category) {
+async function fetchCategory(version, specFolder, category, uplift) {
+  // Output is keyed by the LOCAL version; the remote folder it resolves from
+  // may differ (see SPEC_FOLDER in src/data/versions.ts).
   const outDir = resolve(ROOT, 'public', 'openapi', version, category)
 
   // Skip if already populated (only when --skip-existing is set)
@@ -162,10 +214,10 @@ async function fetchCategory(version, category) {
   const distPath = `dist/${category}`
   const remoteDirs = await ghListDir(distPath)
   const folderNames = remoteDirs.filter(d => d.type === 'dir').map(d => d.name)
-  const sorted = sortVersionFolders(folderNames, version)
+  const sorted = sortVersionFolders(folderNames, specFolder)
 
   if (sorted.length === 0) {
-    console.warn(`  ⚠ ${category} — no matching folders found for ${version}`)
+    console.warn(`  ⚠ ${category} — no matching folders found for ${specFolder}`)
     return
   }
 
@@ -191,23 +243,37 @@ async function fetchCategory(version, category) {
   mkdirSync(outDir, { recursive: true })
 
   const downloads = [...fileMap.entries()].map(async ([filename, remotePath]) => {
-    const content = await ghDownloadFile(remotePath)
+    let content = await ghDownloadFile(remotePath)
+    if (uplift) content = upliftProtocolVersion(content, uplift.from, uplift.to)
     writeFileSync(resolve(outDir, filename), content, 'utf-8')
     return filename
   })
 
   const downloaded = await Promise.all(downloads)
-  console.log(`  ✓ ${category} — ${downloaded.length} file(s)`)
+  const note = uplift ? ` (version strings uplifted ${uplift.from} → ${uplift.to})` : ''
+  console.log(`  ✓ ${category} — ${downloaded.length} file(s)${note}`)
 }
 
 async function main() {
   const versions = parseVersions()
+  const specFolders = parseSpecFolders()
+  const protocolVersions = parseProtocolVersions()
   console.log(`Fetching OpenAPI specs for versions: ${versions.join(', ')}\n`)
 
   for (const version of versions) {
-    console.log(`${version}:`)
+    const specFolder = specFolders[version] ?? version
+    // The version strings inside a borrowed spec are those of the folder it
+    // came from, so uplift them to this version's protocol version.
+    const sourceProtocol = protocolVersions[specFolder] ?? specFolder
+    const targetProtocol = protocolVersions[version] ?? version
+    const uplift = sourceProtocol === targetProtocol
+      ? null
+      : { from: sourceProtocol, to: targetProtocol }
+
+    const note = specFolder === version ? '' : `  (from upstream ${specFolder})`
+    console.log(`${version}:${note}`)
     for (const category of CATEGORIES) {
-      await fetchCategory(version, category)
+      await fetchCategory(version, specFolder, category, uplift)
     }
     console.log()
   }

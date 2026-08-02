@@ -1,5 +1,11 @@
 <script setup lang="ts">
-const examplePayload = `{
+// Shared by the v2.1 and v2.2-draft payment API guides. The example URLs and
+// the reference link below follow the version of the page being viewed:
+// `protocolVersion` is the version inside the standard's own paths (v2.2),
+// `docsVersion` is the route segment (v2.2-draft).
+const { docsVersion, protocolVersion } = useRouteVersion()
+
+const examplePayload = computed(() => `{
   "message": {
     "Data": {
       "PaymentId": "83b47199-90c2-4c05-9ef1-aeae68b0fc7c",
@@ -20,12 +26,12 @@ const examplePayload = `{
       }
     },
     "Links": {
-      "Self": "https://api.lfi.example/open-finance/payment/v2.1/payments/83b47199-90c2-4c05-9ef1-aeae68b0fc7c",
-      "Related": "https://api.lfi.example/open-finance/v2.1/payment-consents/b8f42378-10ac-46a1-8d20-4e020484216d"
+      "Self": "https://api.lfi.example/open-finance/payment/${protocolVersion.value}/payments/83b47199-90c2-4c05-9ef1-aeae68b0fc7c",
+      "Related": "https://api.lfi.example/open-finance/${protocolVersion.value}/payment-consents/b8f42378-10ac-46a1-8d20-4e020484216d"
     }
   }
 }
-`
+`)
 </script>
 
 <template>
@@ -42,7 +48,7 @@ const examplePayload = `{
           <tr><th>Header</th><th>Description</th></tr>
         </thead>
         <tbody>
-          <tr><td><code>Location</code></td><td>URL of the created payment resource &mdash; <code>/open-finance/payment/v2.1/payments/{PaymentId}</code></td></tr>
+          <tr><td><code>Location</code></td><td>URL of the created payment resource &mdash; <code>/open-finance/payment/{{ protocolVersion }}/payments/{PaymentId}</code></td></tr>
           <tr><td><code>x-fapi-interaction-id</code></td><td>Echo of the interaction ID from the request</td></tr>
           <tr><td><code>x-idempotency-key</code></td><td>Echo of the idempotency key from the request</td></tr>
         </tbody>
@@ -95,7 +101,7 @@ const examplePayload = `{
         </thead>
         <tbody>
           <tr><td><code>Self</code></td><td>URL to this payment resource &mdash; use for status polling</td></tr>
-          <tr><td><code>Related</code></td><td>URL to the associated consent &mdash; <code>/open-finance/v2.1/payment-consents/{ConsentId}</code></td></tr>
+          <tr><td><code>Related</code></td><td>URL to the associated consent &mdash; <code>/open-finance/{{ protocolVersion }}/payment-consents/{ConsentId}</code></td></tr>
         </tbody>
       </table>
     </EdRefTable>
@@ -119,7 +125,7 @@ const examplePayload = `{
 
     <EdProse>
       See the
-      <a href="/tech/tpp-standards/v2.1/banking/service-initiation/open-api/payments">POST /payments</a>
+      <a :href="`/tech/tpp-standards/${docsVersion}/banking/service-initiation/open-api/payments`">POST /payments</a>
       API reference for the full request and response schema.
     </EdProse>
   </div>

@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { tppSidebar } from '@/data/sidebars/tpp'
-import { lfiSidebar } from '@/data/sidebars/lfi'
+import { useTppSidebar } from '@/data/sidebars/tpp'
+import { useLfiSidebar } from '@/data/sidebars/lfi'
 import { useApiSpecsSidebar } from '@/data/sidebars/api-specs'
 import type { SidebarItem } from '@/data/sidebars/shared'
 
 const route = useRoute()
 const apiSpecsSidebar = useApiSpecsSidebar()
+const tppSidebar = useTppSidebar()
+const lfiSidebar = useLfiSidebar()
 
 interface ChromeSidebar {
   items: SidebarItem[]
@@ -23,10 +25,10 @@ const chromeSidebar = computed<ChromeSidebar | null>(() => {
     return { items: apiSpecsSidebar.value, title: 'API Specs', rootHref: '/tech/api-specs/' }
   }
   if (isPrefix(p, '/tech/tpp-standards')) {
-    return { items: tppSidebar, title: 'TPP Standards', rootHref: '/tech/tpp-standards/' }
+    return { items: tppSidebar.value, title: 'TPP Standards', rootHref: '/tech/tpp-standards/' }
   }
   if (isPrefix(p, '/tech/lfi-api-hub')) {
-    return { items: lfiSidebar, title: 'LFI Guide', rootHref: '/tech/lfi-api-hub/' }
+    return { items: lfiSidebar.value, title: 'LFI Guide', rootHref: '/tech/lfi-api-hub/' }
   }
   return null
 })
@@ -39,6 +41,7 @@ const isHome = computed<boolean>(() => route.path === '/')
   <div class="app-shell" :class="{ 'is-tech': isTech, 'is-home': isHome }">
     <PageHeader />
     <main class="app-shell__main">
+      <DraftVersionBanner />
       <EdHoverSidebar
         v-if="chromeSidebar"
         :items="chromeSidebar.items"

@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
-import { VERSIONS, type Version } from '@/data/versions'
+import { VERSIONS, isDraftVersion, type Version } from '@/data/versions'
 
 const route = useRoute()
 const router = useRouter()
 
 const { selectedVersion, setSelectedVersion } = useSelectedVersion()
 
-const showVersion = computed<boolean>(() => route.path.startsWith('/tech/'))
+// Release notes, erratas and changelogs cover every version at once, so there is
+// no single "selected version" for the reader to switch between there.
+const RELEASE_NOTES_PREFIX = '/tech/release-notes-and-erratas'
+
+const showVersion = computed<boolean>(
+  () => route.path.startsWith('/tech/') && !route.path.startsWith(RELEASE_NOTES_PREFIX),
+)
 
 const isOpen = ref<boolean>(false)
 const dropdownEl = ref<HTMLElement | null>(null)
@@ -62,7 +68,10 @@ onUnmounted(() => document.removeEventListener('click', handleOutsideClick, true
         :aria-selected="v === selectedVersion ? 'true' : 'false'"
         @click="selectVersion(v)"
       >
-        {{ v }}
+        <span class="vd-label">
+          {{ v }}
+          <span v-if="isDraftVersion(v)" class="vd-draft">draft</span>
+        </span>
         <svg v-if="v === selectedVersion" class="vd-check" xmlns="http://www.w3.org/2000/svg"
           width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -183,5 +192,22 @@ onUnmounted(() => document.removeEventListener('click', handleOutsideClick, true
 .vd-check {
   flex-shrink: 0;
   color: var(--at-teal-deep);
+}
+
+.vd-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.vd-draft {
+  font-family: var(--at-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7c2d12;
+  background: #fde68a;
+  padding: 0.12rem 0.35rem;
 }
 </style>

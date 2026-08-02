@@ -29,6 +29,7 @@ const SIDEBARS = resolve(ROOT, 'src', 'data', 'sidebars')
 const VERSIONS_FILE = resolve(ROOT, 'src', 'data', 'versions.ts')
 const ENDPOINTS_INDEX = resolve(ROOT, 'src', 'data', 'endpoints', 'index.ts')
 const ERRATAS_FILE = resolve(ROOT, 'src', 'data', 'erratas-registry.ts')
+const VERSION_CHANGES_FILE = resolve(ROOT, 'src', 'data', 'version-changes-registry.ts')
 const CHROME_FILES = [
   resolve(ROOT, 'src', 'components', 'chrome', 'PageHeader.vue'),
   resolve(ROOT, 'src', 'components', 'chrome', 'PageFooter.vue'),
@@ -43,12 +44,13 @@ let dispose
 
 before(async () => {
   const a = await bundleAndImport(`
-    export { tppSidebar } from ${JSON.stringify(join(SIDEBARS, 'tpp.ts'))}
-    export { lfiSidebar } from ${JSON.stringify(join(SIDEBARS, 'lfi.ts'))}
+    export { buildTppSidebar } from ${JSON.stringify(join(SIDEBARS, 'tpp.ts'))}
+    export { buildLfiSidebar } from ${JSON.stringify(join(SIDEBARS, 'lfi.ts'))}
     export { buildApiSpecsSidebar } from ${JSON.stringify(join(SIDEBARS, 'api-specs.ts'))}
     export { VERSIONS } from ${JSON.stringify(VERSIONS_FILE)}
     export { getEndpointBySlug } from ${JSON.stringify(ENDPOINTS_INDEX)}
     export { ERRATA_SECTIONS } from ${JSON.stringify(ERRATAS_FILE)}
+    export { VERSION_CHANGES, specUrl } from ${JSON.stringify(VERSION_CHANGES_FILE)}
   `)
   bundle = a.mod
   dispose = a.dispose
@@ -108,25 +110,34 @@ function extractStaticHrefs(src) {
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe('Link integrity — sidebars, chrome, and errata banners', () => {
-  it('every link in tppSidebar resolves to a real page or endpoint', () => {
-    const links = collectSidebarLinks(bundle.tppSidebar)
-    const broken = links.filter(l => !resolveOrEndpoint(l))
-    assert.deepStrictEqual(
-      broken,
-      [],
-      `Dead links in tppSidebar:\n` + broken.map(l => '  - ' + l).join('\n'),
-    )
-  })
+  // Each sidebar builder is exercised for every version. The non-empty guard
+  // matters: if a builder is renamed, the bundled export becomes `undefined`
+  // and the link set collapses to [], which would otherwise pass vacuously.
+  for (const [label, builderName] of [
+    ['buildTppSidebar', 'buildTppSidebar'],
+    ['buildLfiSidebar', 'buildLfiSidebar'],
+  ]) {
+    it(`every link in ${label}(v) resolves for every version`, () => {
+      const build = bundle[builderName]
+      assert.equal(typeof build, 'function', `${builderName} is not exported from its sidebar module`)
 
-  it('every link in lfiSidebar resolves to a real page or endpoint', () => {
-    const links = collectSidebarLinks(bundle.lfiSidebar)
-    const broken = links.filter(l => !resolveOrEndpoint(l))
-    assert.deepStrictEqual(
-      broken,
-      [],
-      `Dead links in lfiSidebar:\n` + broken.map(l => '  - ' + l).join('\n'),
-    )
-  })
+      const failures = []
+      let total = 0
+      for (const v of bundle.VERSIONS) {
+        const links = collectSidebarLinks(build(v))
+        total += links.length
+        for (const link of links) {
+          if (!resolveOrEndpoint(link)) failures.push(`${v}: ${link}`)
+        }
+      }
+      assert.ok(total > 0, `${builderName} produced no links at all`)
+      assert.deepStrictEqual(
+        failures,
+        [],
+        `Dead links in ${label}:\n` + failures.map(l => '  - ' + l).join('\n'),
+      )
+    })
+  }
 
   it('every link in buildApiSpecsSidebar(v) resolves for every version', () => {
     const failures = []
@@ -175,6 +186,60 @@ describe('Link integrity — sidebars, chrome, and errata banners', () => {
       failures,
       [],
       `affectedPaths entries pointing at dead routes:\n` +
+      failures.map(l => '  - ' + l).join('\n'),
+    )
+  })
+
+  // The changelog renders affectedPaths and endpoint paths as clickable chips,
+  // so a dead entry there is a dead link on the page.
+  it('every path in version-changes-registry resolves to a real page or endpoint', () => {
+    const changes = bundle.VERSION_CHANGES
+    assert.ok(Array.isArray(changes) && changes.length > 0,
+      'VERSION_CHANGES is not exported, or is empty')
+
+    const failures = []
+    for (const change of changes) {
+      const id = `${change.changeId} §${change.number}`
+      for (const path of change.affectedPaths || []) {
+        if (!resolveOrEndpoint(path)) failures.push(`${id} affectedPaths: ${path}`)
+      }
+      for (const ep of change.endpoints || []) {
+        if (!resolveOrEndpoint(ep.path)) failures.push(`${id} endpoint "${ep.label}": ${ep.path}`)
+      }
+    }
+    assert.deepStrictEqual(
+      failures,
+      [],
+      `version-changes entries pointing at dead routes:\n` +
+      failures.map(l => '  - ' + l).join('\n'),
+    )
+  })
+
+  // Spec chips link to the API Specs reference via specUrl(), which derives the
+  // route from the endpoint catalogue. A misspelt spec name resolves to null
+  // and silently degrades to a search button, so assert the names are real
+  // rather than waiting for someone to notice a chip that does not navigate.
+  it('every specs entry in version-changes-registry resolves to an API Specs page', () => {
+    const changes = bundle.VERSION_CHANGES
+    const specUrl = bundle.specUrl
+    assert.equal(typeof specUrl, 'function', 'specUrl is not exported from version-changes-registry')
+
+    const failures = []
+    for (const change of changes) {
+      const id = `${change.changeId} §${change.number}`
+      for (const spec of change.specs || []) {
+        const url = specUrl(spec, change.toVersion)
+        if (!url) {
+          failures.push(`${id} spec "${spec}": no catalogue entry at ${change.toVersion}`)
+        } else if (!url.startsWith(`/tech/api-specs/${change.toVersion}/`)) {
+          failures.push(`${id} spec "${spec}": resolved to ${url}, which is not a ${change.toVersion} API Specs route`)
+        }
+      }
+    }
+    assert.deepStrictEqual(
+      failures,
+      [],
+      `version-changes specs that do not resolve:\n` +
       failures.map(l => '  - ' + l).join('\n'),
     )
   })

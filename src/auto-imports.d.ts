@@ -89,6 +89,7 @@ declare global {
   const useModel: typeof import('vue')['useModel']
   const useProposals: typeof import('./composables/useProposals')['useProposals']
   const useRoute: typeof import('vue-router')['useRoute']
+  const useRouteVersion: typeof import('./composables/useSelectedVersion')['useRouteVersion']
   const useRouter: typeof import('vue-router')['useRouter']
   const useSandboxAuth: typeof import('./composables/useSandboxAuth')['useSandboxAuth']
   const useSearchModal: typeof import('./composables/useSearchModal')['useSearchModal']

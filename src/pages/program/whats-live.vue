@@ -1,11 +1,17 @@
 <route lang="yaml">
 meta:
-  title: Live Ecosystem
+  title: In Production
   isIndex: true
 </route>
 
 <script setup lang="ts">
 const DAYS_WINDOW = 30
+
+// Every participant in the directory feed is deployed in production. The
+// directory records commercial go-live as an AuthorisationServer certification:
+// a server holding a certified approval whose start date has passed is LIVE to
+// customers; the rest are in PRODUCTION TESTING.
+const GO_LIVE_PROFILE_TYPE = 'Commercial Go-Live Approval'
 
 const FAMILY_KEYS = [
   'account-information',
@@ -164,12 +170,21 @@ interface DirectoryResource {
   ApiMetadata?: DirectoryApiMetadata
 }
 
+interface DirectoryCertification {
+  ProfileType?: string
+  CertificationStatus?: string
+  Status?: string
+  CertificationStartDate?: string
+  CertificationExpirationDate?: string
+}
+
 interface DirectoryServer {
   AuthorisationServerId?: string
   CustomerFriendlyName?: string
   CustomerFriendlyLogoUri?: string
   Flags?: { AccountType?: string[] }
   ApiResources?: DirectoryResource[]
+  AuthorisationServerCertifications?: DirectoryCertification[]
 }
 
 interface DirectoryOrg {
@@ -233,6 +248,23 @@ interface LfiServer {
   logo: string
   accountTypes: string[]
   services: LfiService[]
+  // Commercial Go-Live Approval, when the directory records one. `goLiveDate`
+  // is the approval start date; `goLiveScheduled` marks an approval dated in
+  // the future (approved, not yet serving). `isLive` is the headline flag — a
+  // passed, unexpired approval.
+  goLiveDate: Date | null
+  goLiveScheduled: boolean
+  isLive: boolean
+}
+
+// One rendered group of LFI cards — live first, then those still in production
+// testing. Grouping lives in the script so the card markup stays
+// single-sourced in the template.
+interface ServerGroup {
+  key: 'live' | 'testing'
+  title: string
+  note: string
+  servers: LfiServer[]
 }
 
 interface TppEndpoint {
@@ -421,6 +453,8 @@ function processLfis(data: unknown): LfiServer[] {
       }
       if (serviceMap.size === 0) continue
 
+      const goLive = goLiveOf(server)
+
       const services: LfiService[] = []
       for (const [familyKey, versions] of serviceMap) {
         services.push({
@@ -442,10 +476,50 @@ function processLfis(data: unknown): LfiServer[] {
           'https://data.directory.openfinance.ae/logos/placeholder-logo.png',
         accountTypes: server.Flags?.AccountType || [],
         services,
+        goLiveDate: goLive?.date || null,
+        goLiveScheduled: goLive?.scheduled === true,
+        isLive: !!goLive && !goLive.scheduled,
       })
     }
   }
   return out
+}
+
+// The directory serves certification dates as DD/MM/YYYY.
+function parseDirectoryDate(value: string | undefined): Date | null {
+  const m = String(value || '').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (!m) return null
+  const d = new Date(Date.UTC(Number(m[3]), Number(m[2]) - 1, Number(m[1])))
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+// Earliest certified, unexpired Commercial Go-Live Approval on a server.
+// Returns null when the server has never been approved for go-live.
+function goLiveOf(server: DirectoryServer): { date: Date; scheduled: boolean } | null {
+  const now = Date.now()
+  let earliest: Date | null = null
+  for (const cert of server.AuthorisationServerCertifications || []) {
+    if (cert.ProfileType !== GO_LIVE_PROFILE_TYPE) continue
+    if ((cert.CertificationStatus || cert.Status || '') !== 'Certified') continue
+    const start = parseDirectoryDate(cert.CertificationStartDate)
+    if (!start) continue
+    const expiry = parseDirectoryDate(cert.CertificationExpirationDate)
+    if (expiry && expiry.getTime() < now) continue
+    if (!earliest || start.getTime() < earliest.getTime()) earliest = start
+  }
+  if (!earliest) return null
+  return { date: earliest, scheduled: earliest.getTime() > now }
+}
+
+const GO_LIVE_DATE_FORMAT = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
+
+function formatGoLive(d: Date | null): string {
+  return d ? GO_LIVE_DATE_FORMAT.format(d) : ''
 }
 
 // Strip everything up to and including the /v{version}/ segment, leaving the
@@ -626,9 +700,50 @@ function visibleInsuranceGroups(v: LfiVersion): InsuranceGroup[] {
   )
 }
 
-const lfiServerCount = computed<number>(() => visibleServers.value.length)
-const bankServerCount = computed<number>(() => bankServers.value.length)
-const insurerServerCount = computed<number>(() => insurerServers.value.length)
+// Headline numbers count live participants only — the tab counts are the
+// unfiltered live totals per sector, the masthead count respects the active
+// filter.
+const lfiServerCount = computed<number>(
+  () => visibleServers.value.filter((s) => s.isLive).length,
+)
+const bankServerCount = computed<number>(
+  () => bankServers.value.filter((s) => s.isLive).length,
+)
+const insurerServerCount = computed<number>(
+  () => insurerServers.value.filter((s) => s.isLive).length,
+)
+
+const sectorNoun = computed<string>(() =>
+  mode.value === 'lfi-insurer' ? 'Insurers' : 'Banks',
+)
+
+// Live cards sort by go-live date (earliest first); production-testing cards
+// sort by name.
+const serverGroups = computed<ServerGroup[]>(() => {
+  const live = visibleServers.value
+    .filter((s) => s.isLive)
+    .sort((a, b) => (a.goLiveDate?.getTime() || 0) - (b.goLiveDate?.getTime() || 0))
+  const testing = visibleServers.value
+    .filter((s) => !s.isLive)
+    .sort((a, b) => a.name.localeCompare(b.name))
+
+  const groups: ServerGroup[] = []
+  if (live.length)
+    groups.push({
+      key: 'live',
+      title: 'Live',
+      note: `${sectorNoun.value} holding a Commercial Go-Live Approval in the directory — fully live to all customers and all licensed, live TPPs.`,
+      servers: live,
+    })
+  if (testing.length)
+    groups.push({
+      key: 'testing',
+      title: 'Production testing',
+      note: `${sectorNoun.value} deployed and serving these APIs in the production environment, working towards Commercial Go-Live Approval. Not yet open to all customers and all TPPs.`,
+      servers: testing,
+    })
+  return groups
+})
 
 // ── TPP processing ─────────────────────────────────────────────────────────
 // Payment family uses a richer payment-specific log; everything else uses the
@@ -854,27 +969,27 @@ const summaryUnit = computed<string>(() => {
     return n === 1 ? 'live insurer' : 'live insurers'
   }
   const n = tppCount.value
-  return n === 1 ? 'TPP active' : 'TPPs active'
+  return n === 1 ? 'TPP live' : 'TPPs live'
 })
 
 const summarySub = computed<string>(() => {
   if (mode.value === 'lfi-bank') {
     const familyText =
       family.value === 'all' ? 'Open Finance' : filterLabel(family.value)
-    return `Banks currently offering live ${familyText} services through the API Hub. Data pulled directly from the Nebras Open Finance directory.`
+    return `Banks running ${familyText} in the production environment. Those holding a Commercial Go-Live Approval are fully live to all customers and all licensed, live TPPs; the rest are in production testing. Data pulled directly from the Nebras Open Finance directory.`
   }
   if (mode.value === 'lfi-insurer') {
     const typeText = activeInsuranceType.value
       ? `${INSURANCE_TYPE_LABELS[activeInsuranceType.value]} insurance`
       : 'insurance'
-    return `Insurers currently offering live ${typeText} products through the API Hub. Data pulled directly from the Nebras Open Finance directory.`
+    return `Insurers running ${typeText} in the production environment. Those holding a Commercial Go-Live Approval are fully live to all customers and all licensed, live TPPs; the rest are in production testing. Data pulled directly from the Nebras Open Finance directory.`
   }
   const familyText =
     family.value === 'all' ? 'Open Finance' : filterLabel(family.value)
   if (paymentOnly.value) {
-    return `Third-party providers who have initiated payments through the API Hub in the last ${DAYS_WINDOW} days, broken down by consent type.`
+    return `Third-party providers who have initiated payments in production through the API Hub in the last ${DAYS_WINDOW} days, broken down by consent type.`
   }
-  return `Third-party providers consuming live ${familyText} services through the API Hub in the last ${DAYS_WINDOW} days.`
+  return `Third-party providers consuming ${familyText} in production through the API Hub in the last ${DAYS_WINDOW} days.`
 })
 
 const formatNumber = (n: number): string => Number(n).toLocaleString()
@@ -894,14 +1009,14 @@ const prettifyConsentType = (s: string): string =>
         <div class="ed-le-masthead__meta">
           <div class="ed-le-masthead__label">
             <span class="ed-le-masthead__label-dash" />
-            Section &middot; Live Ecosystem
+            Section &middot; In Production
           </div>
           <div class="ed-le-masthead__updated">{{ updatedLabel }}</div>
         </div>
 
         <h1 class="ed-le-masthead__title">
           Open Finance<br/>
-          services live today.
+          in production today.
         </h1>
 
         <div class="ed-le-masthead__count">
@@ -1006,11 +1121,33 @@ const prettifyConsentType = (s: string): string =>
               {{ mode === 'lfi-insurer' ? 'Show all types' : 'Show all services' }} &rarr;
             </button>
           </div>
-          <div v-else class="ed-le-grid">
+
+          <template v-else>
+          <section
+            v-for="group in serverGroups"
+            :key="group.key"
+            class="ed-le-group"
+            :class="`ed-le-group--${group.key}`"
+          >
+            <header class="ed-le-group__head">
+              <h2 class="ed-le-group__title">
+                <span
+                  v-if="group.key === 'live'"
+                  class="ed-le-group__star"
+                  aria-hidden="true"
+                >&#9733;</span>
+                {{ group.title }}
+                <span class="ed-le-group__count">{{ group.servers.length }}</span>
+              </h2>
+              <p class="ed-le-group__note">{{ group.note }}</p>
+            </header>
+
+            <div class="ed-le-grid">
             <article
-              v-for="server in visibleServers"
+              v-for="server in group.servers"
               :key="server.key"
               class="ed-le-card"
+              :class="{ 'ed-le-card--live': server.isLive }"
             >
               <header class="ed-le-card__head">
                 <div class="ed-le-card__logo">
@@ -1018,6 +1155,17 @@ const prettifyConsentType = (s: string): string =>
                 </div>
                 <div class="ed-le-card__title">
                   <h3>{{ server.name }}</h3>
+                  <div
+                    v-if="server.goLiveDate"
+                    class="ed-le-card__golive"
+                    :class="{ 'is-scheduled': server.goLiveScheduled }"
+                  >
+                    <span class="ed-le-card__golive-star" aria-hidden="true">&#9733;</span>
+                    <span>
+                      {{ server.goLiveScheduled ? 'Go-live approved for' : 'Live since' }}
+                      {{ formatGoLive(server.goLiveDate) }}
+                    </span>
+                  </div>
                   <div class="ed-le-card__types">
                     <span
                       v-for="t in server.accountTypes"
@@ -1126,7 +1274,9 @@ const prettifyConsentType = (s: string): string =>
                 </li>
               </ul>
             </article>
-          </div>
+            </div>
+          </section>
+          </template>
         </template>
 
         <!-- TPP cards ────────────────────────────────────────────────── -->
@@ -1237,11 +1387,16 @@ const prettifyConsentType = (s: string): string =>
             </svg>
           </div>
           <div class="ed-le-source__text">
-            <strong>Live data sources.</strong>
-            LFI services come from the Nebras Open Finance directory.
-            TPP activity is aggregated from API Hub access logs over a rolling
-            {{ DAYS_WINDOW }}-day window. Listed institutions are CBUAE-licensed and
-            actively participating in the ecosystem.
+            <strong>How live status is determined.</strong>
+            Every LFI listed here is deployed in the production environment —
+            services and certifications come from the Nebras Open Finance
+            production directory. An LFI is marked live once its authorisation
+            server holds a certified <em>Commercial Go-Live Approval</em>; the
+            approval start date is the go-live date shown on the card.
+            Everything else is in production testing. TPP activity is aggregated
+            from production API Hub access logs over a rolling
+            {{ DAYS_WINDOW }}-day window. All listed institutions are
+            CBUAE-licensed.
           </div>
         </aside>
 
@@ -1510,6 +1665,56 @@ const prettifyConsentType = (s: string): string =>
 
 .ed-le-clear:hover { color: var(--at-navy-deep); }
 
+/* ── LFI groups (live vs production testing) ───────────────────────────── */
+.ed-le-group + .ed-le-group {
+  margin-top: 3rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--at-grid-line-2);
+}
+
+.ed-le-group__head {
+  margin-bottom: 1.5rem;
+}
+
+.ed-le-group__title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-family: var(--at-serif);
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.5rem;
+  color: var(--at-navy-deep);
+}
+
+.ed-le-group--testing .ed-le-group__title {
+  color: var(--at-mute-2);
+}
+
+.ed-le-group__star {
+  color: var(--at-teal-deep);
+  font-size: 1.1rem;
+}
+
+.ed-le-group__count {
+  font-family: var(--at-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  padding: 0.15rem 0.5rem;
+  background: rgba(0, 39, 127, 0.08);
+  color: var(--at-navy-deep);
+  font-variant-numeric: tabular-nums;
+}
+
+.ed-le-group__note {
+  max-width: 640px;
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--at-mute-2);
+}
+
 /* LFI grid */
 .ed-le-grid {
   display: grid;
@@ -1575,6 +1780,35 @@ const prettifyConsentType = (s: string): string =>
   display: flex;
   flex-wrap: wrap;
   gap: 0.3rem;
+}
+
+/* Commercial Go-Live Approval badge */
+.ed-le-card--live {
+  border-left: 3px solid var(--at-teal);
+}
+
+.ed-le-card__golive {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.45rem;
+  padding: 0.15rem 0.5rem 0.15rem 0.35rem;
+  font-family: var(--at-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--at-teal) 16%, transparent);
+  color: var(--at-teal-deep);
+}
+
+.ed-le-card__golive.is-scheduled {
+  background: color-mix(in srgb, var(--at-gold) 14%, transparent);
+  color: var(--at-gold);
+}
+
+.ed-le-card__golive-star {
+  font-size: 0.8rem;
+  line-height: 1;
 }
 
 .ed-le-card__services {

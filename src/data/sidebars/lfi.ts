@@ -1,7 +1,9 @@
+import { computed, type ComputedRef } from 'vue'
 import { apiRef, type SidebarItem } from './shared'
+import { useSelectedVersion } from '../../composables/useSelectedVersion'
+import type { Version } from '../versions'
 
 const BASE = '/tech/lfi-api-hub'
-const VERSION = 'v2.1'
 
 function multiPaymentItems(base: string): SidebarItem[] {
   return [
@@ -45,7 +47,7 @@ function insuranceQuotationApiRef(base: string): SidebarItem[] {
   }))
 }
 
-export const lfiSidebar: SidebarItem[] = [
+export const buildLfiSidebar = (version: Version): SidebarItem[] => [
   {
     text: 'Getting Started',
     collapsed: true,
@@ -140,33 +142,33 @@ export const lfiSidebar: SidebarItem[] = [
     text: 'API Hub',
     collapsed: true,
     items: [
-      { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/` },
-      { text: 'Connectivity & Certificates', link: `${BASE}/${VERSION}/api-hub/connectivity/` },
+      { text: 'Overview', link: `${BASE}/${version}/api-hub/` },
+      { text: 'Connectivity & Certificates', link: `${BASE}/${version}/api-hub/connectivity/` },
       {
         text: 'Onboarding',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/onboarding/` },
-          { text: 'Prerequisites Questionnaire', link: `${BASE}/${VERSION}/api-hub/onboarding/prerequisites` },
-          { text: 'Application Layer Authentication', link: `${BASE}/${VERSION}/api-hub/onboarding/application-layer-auth` },
+          { text: 'Overview', link: `${BASE}/${version}/api-hub/onboarding/` },
+          { text: 'Prerequisites Questionnaire', link: `${BASE}/${version}/api-hub/onboarding/prerequisites` },
+          { text: 'Application Layer Authentication', link: `${BASE}/${version}/api-hub/onboarding/application-layer-auth` },
           {
             text: 'Environment Specific',
             collapsed: true,
             items: [
-              { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/onboarding/environment-specific` },
-              { text: 'Certificate Walkthroughs', link: `${BASE}/${VERSION}/api-hub/onboarding/environment-specific/certificate-walkthroughs` },
-              { text: 'Ozone Connect Base URL', link: `${BASE}/${VERSION}/api-hub/onboarding/environment-specific/ozone-connect-url` },
-              { text: 'Authorization Endpoint', link: `${BASE}/${VERSION}/api-hub/onboarding/environment-specific/auth-endpoint` },
+              { text: 'Overview', link: `${BASE}/${version}/api-hub/onboarding/environment-specific` },
+              { text: 'Certificate Walkthroughs', link: `${BASE}/${version}/api-hub/onboarding/environment-specific/certificate-walkthroughs` },
+              { text: 'Ozone Connect Base URL', link: `${BASE}/${version}/api-hub/onboarding/environment-specific/ozone-connect-url` },
+              { text: 'Authorization Endpoint', link: `${BASE}/${version}/api-hub/onboarding/environment-specific/auth-endpoint` },
             ],
           },
           {
             text: 'Configuring Authentication',
             collapsed: true,
             items: [
-              { text: 'mTLS — Server-side', link: `${BASE}/${VERSION}/api-hub/onboarding/configuring-authentication/mtls-server` },
-              { text: 'mTLS — Client-side', link: `${BASE}/${VERSION}/api-hub/onboarding/configuring-authentication/mtls-client` },
-              { text: 'JWT — Server-side', link: `${BASE}/${VERSION}/api-hub/onboarding/configuring-authentication/jwt-server` },
-              { text: 'JWT — Client-side', link: `${BASE}/${VERSION}/api-hub/onboarding/configuring-authentication/jwt-client` },
+              { text: 'mTLS — Server-side', link: `${BASE}/${version}/api-hub/onboarding/configuring-authentication/mtls-server` },
+              { text: 'mTLS — Client-side', link: `${BASE}/${version}/api-hub/onboarding/configuring-authentication/mtls-client` },
+              { text: 'JWT — Server-side', link: `${BASE}/${version}/api-hub/onboarding/configuring-authentication/jwt-server` },
+              { text: 'JWT — Client-side', link: `${BASE}/${version}/api-hub/onboarding/configuring-authentication/jwt-client` },
             ],
           },
         ],
@@ -175,17 +177,17 @@ export const lfiSidebar: SidebarItem[] = [
         text: 'Admin Portal',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/admin-portal/` },
-          { text: 'TPP Management & Activation', link: `${BASE}/${VERSION}/api-hub/admin-portal/tpp-activation` },
-          { text: 'Logs', link: `${BASE}/${VERSION}/api-hub/admin-portal/logs` },
-          { text: 'Reports', link: `${BASE}/${VERSION}/api-hub/admin-portal/reports` },
+          { text: 'Overview', link: `${BASE}/${version}/api-hub/admin-portal/` },
+          { text: 'TPP Management & Activation', link: `${BASE}/${version}/api-hub/admin-portal/tpp-activation` },
+          { text: 'Logs', link: `${BASE}/${version}/api-hub/admin-portal/logs` },
+          { text: 'Reports', link: `${BASE}/${version}/api-hub/admin-portal/reports` },
         ],
       },
       {
         text: 'Headless Heimdall Auth Server',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/headless-heimdall` },
+          { text: 'Overview', link: `${BASE}/${version}/api-hub/headless-heimdall` },
           {
             text: 'API Reference',
             collapsed: true,
@@ -193,15 +195,15 @@ export const lfiSidebar: SidebarItem[] = [
               {
                 text: 'Health Check',
                 items: [
-                  apiRef('GET', '/hello-mtls', `${BASE}/${VERSION}/api-hub/headless-heimdall/open-api/hello-mtls`),
+                  apiRef('GET', '/hello-mtls', `${BASE}/${version}/api-hub/headless-heimdall/open-api/hello-mtls`),
                 ],
               },
               {
                 text: 'Authorization',
                 items: [
-                  apiRef('GET', '/auth', `${BASE}/${VERSION}/api-hub/headless-heimdall/open-api/auth`),
-                  apiRef('POST', '/auth/{interactionId}/doConfirm', `${BASE}/${VERSION}/api-hub/headless-heimdall/open-api/auth-interactionId-doConfirm`),
-                  apiRef('POST', '/auth/{interactionId}/doFail', `${BASE}/${VERSION}/api-hub/headless-heimdall/open-api/auth-interactionId-doFail`),
+                  apiRef('GET', '/auth', `${BASE}/${version}/api-hub/headless-heimdall/open-api/auth`),
+                  apiRef('POST', '/auth/{interactionId}/doConfirm', `${BASE}/${version}/api-hub/headless-heimdall/open-api/auth-interactionId-doConfirm`),
+                  apiRef('POST', '/auth/{interactionId}/doFail', `${BASE}/${version}/api-hub/headless-heimdall/open-api/auth-interactionId-doFail`),
                 ],
               },
             ],
@@ -212,7 +214,7 @@ export const lfiSidebar: SidebarItem[] = [
         text: 'Consent Manager',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/${VERSION}/api-hub/consent-manager/` },
+          { text: 'Overview', link: `${BASE}/${version}/api-hub/consent-manager/` },
           {
             text: 'API Reference',
             collapsed: true,
@@ -220,34 +222,34 @@ export const lfiSidebar: SidebarItem[] = [
               {
                 text: 'Health Check',
                 items: [
-                  apiRef('GET', '/hello-mtls', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/hello-mtls`),
+                  apiRef('GET', '/hello-mtls', `${BASE}/${version}/api-hub/consent-manager/open-api/hello-mtls`),
                 ],
               },
               {
                 text: 'Consents',
                 items: [
-                  apiRef('GET', '/consents', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/consents`),
-                  apiRef('GET', '/consents/{consentId}', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/consents-consentId`),
-                  apiRef('PATCH', '/consents/{consentId}', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/patch-consents-consentId`),
-                  apiRef('GET', '/consents/{consentId}/audit', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/consents-consentId-audit`),
-                  apiRef('GET', '/consent-groups/{consentGroupId}/consents', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents`),
-                  apiRef('GET', '/psu/{userId}/consents', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/psu-userId-consents`),
-                  apiRef('GET', '/accounts/{accountId}/consents', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/accounts-accountId-consents`),
-                  apiRef('POST', '/consent-groups/{consentGroupId}/consents/action/revoke', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents-action-revoke`),
-                  apiRef('POST', '/consents/{consentId}/action/revoke', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/consents-consentId-action-revoke`),
+                  apiRef('GET', '/consents', `${BASE}/${version}/api-hub/consent-manager/open-api/consents`),
+                  apiRef('GET', '/consents/{consentId}', `${BASE}/${version}/api-hub/consent-manager/open-api/consents-consentId`),
+                  apiRef('PATCH', '/consents/{consentId}', `${BASE}/${version}/api-hub/consent-manager/open-api/patch-consents-consentId`),
+                  apiRef('GET', '/consents/{consentId}/audit', `${BASE}/${version}/api-hub/consent-manager/open-api/consents-consentId-audit`),
+                  apiRef('GET', '/consent-groups/{consentGroupId}/consents', `${BASE}/${version}/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents`),
+                  apiRef('GET', '/psu/{userId}/consents', `${BASE}/${version}/api-hub/consent-manager/open-api/psu-userId-consents`),
+                  apiRef('GET', '/accounts/{accountId}/consents', `${BASE}/${version}/api-hub/consent-manager/open-api/accounts-accountId-consents`),
+                  apiRef('POST', '/consent-groups/{consentGroupId}/consents/action/revoke', `${BASE}/${version}/api-hub/consent-manager/open-api/consent-groups-consentGroupId-consents-action-revoke`),
+                  apiRef('POST', '/consents/{consentId}/action/revoke', `${BASE}/${version}/api-hub/consent-manager/open-api/consents-consentId-action-revoke`),
                 ],
               },
               {
                 text: 'Payment Log',
                 items: [
-                  apiRef('GET', '/payment-log', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/payment-log`),
-                  apiRef('PATCH', '/payment-log/{id}', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/payment-log-id`),
+                  apiRef('GET', '/payment-log', `${BASE}/${version}/api-hub/consent-manager/open-api/payment-log`),
+                  apiRef('PATCH', '/payment-log/{id}', `${BASE}/${version}/api-hub/consent-manager/open-api/payment-log-id`),
                 ],
               },
               {
                 text: 'Insurance Quote Log',
                 items: [
-                  apiRef('PATCH', '/insurance-quote-log/{logId}', `${BASE}/${VERSION}/api-hub/consent-manager/open-api/insurance-quote-log-logId`),
+                  apiRef('PATCH', '/insurance-quote-log/{logId}', `${BASE}/${version}/api-hub/consent-manager/open-api/insurance-quote-log-logId`),
                 ],
               },
             ],
@@ -261,14 +263,14 @@ export const lfiSidebar: SidebarItem[] = [
     text: 'Ozone Connect | Health Check',
     collapsed: true,
     items: [
-      { text: 'Overview', link: `${BASE}/${VERSION}/health-check/` },
+      { text: 'Overview', link: `${BASE}/${version}/health-check/` },
       {
         text: 'API Reference',
         collapsed: true,
         items: [
-          apiRef('GET', '/hello', `${BASE}/${VERSION}/health-check/open-api/hello`),
-          apiRef('GET', '/hello-mtls', `${BASE}/${VERSION}/health-check/open-api/hello-mtls`),
-          apiRef('GET', '/echo-cert', `${BASE}/${VERSION}/health-check/open-api/echo-cert`),
+          apiRef('GET', '/hello', `${BASE}/${version}/health-check/open-api/hello`),
+          apiRef('GET', '/hello-mtls', `${BASE}/${version}/health-check/open-api/hello-mtls`),
+          apiRef('GET', '/echo-cert', `${BASE}/${version}/health-check/open-api/echo-cert`),
         ],
       },
     ],
@@ -278,14 +280,14 @@ export const lfiSidebar: SidebarItem[] = [
     text: 'Ozone Connect | Consent Events',
     collapsed: true,
     items: [
-      { text: 'Overview', link: `${BASE}/${VERSION}/consent-events` },
-      { text: 'API Guide', link: `${BASE}/${VERSION}/consent-events/api-guide` },
+      { text: 'Overview', link: `${BASE}/${version}/consent-events` },
+      { text: 'API Guide', link: `${BASE}/${version}/consent-events/api-guide` },
       {
         text: 'API Reference',
         collapsed: true,
         items: [
-          apiRef('POST', '/consent/action/validate', `${BASE}/${VERSION}/consent-events/open-api/validate`),
-          apiRef('POST', '/consent/event/{operation}', `${BASE}/${VERSION}/consent-events/open-api/event-op`),
+          apiRef('POST', '/consent/action/validate', `${BASE}/${version}/consent-events/open-api/validate`),
+          apiRef('POST', '/consent/event/{operation}', `${BASE}/${version}/consent-events/open-api/event-op`),
         ],
       },
     ],
@@ -295,39 +297,39 @@ export const lfiSidebar: SidebarItem[] = [
     text: 'Ozone Connect | Banking',
     collapsed: true,
     items: [
-      { text: 'Overview', link: `${BASE}/${VERSION}/banking` },
+      { text: 'Overview', link: `${BASE}/${version}/banking` },
       {
         text: 'Data Sharing',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/${VERSION}/banking/data-sharing` },
-          { text: 'Requirements', link: `${BASE}/${VERSION}/banking/data-sharing/requirements` },
-          { text: 'User Experience', link: `${BASE}/${VERSION}/banking/data-sharing/user-journeys` },
+          { text: 'Overview', link: `${BASE}/${version}/banking/data-sharing` },
+          { text: 'Requirements', link: `${BASE}/${version}/banking/data-sharing/requirements` },
+          { text: 'User Experience', link: `${BASE}/${version}/banking/data-sharing/user-journeys` },
           {
             text: 'API Guide',
             collapsed: true,
             items: [
-              { text: 'Overview', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide` },
-              { text: 'Pagination', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide/pagination` },
-              { text: 'Encrypted FinanceRates', link: `${BASE}/${VERSION}/banking/data-sharing/api-guide/finance-rates` },
+              { text: 'Overview', link: `${BASE}/${version}/banking/data-sharing/api-guide` },
+              { text: 'Pagination', link: `${BASE}/${version}/banking/data-sharing/api-guide/pagination` },
+              { text: 'Encrypted FinanceRates', link: `${BASE}/${version}/banking/data-sharing/api-guide/finance-rates` },
             ],
           },
           {
             text: 'API Reference',
             collapsed: true,
             items: [
-              apiRef('GET', '/accounts', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts`),
-              apiRef('GET', '/accounts/{AccountId}', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId`),
-              apiRef('GET', '/accounts/{AccountId}/balances', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-balances`),
-              apiRef('GET', '/accounts/{AccountId}/beneficiaries', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-beneficiaries`),
-              apiRef('GET', '/customer', `${BASE}/${VERSION}/banking/data-sharing/open-api/customer`),
-              apiRef('GET', '/accounts/{AccountId}/customer', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-customer`),
-              apiRef('GET', '/accounts/{AccountId}/direct-debits', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-direct-debits`),
-              apiRef('GET', '/accounts/{AccountId}/products', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-products`),
-              apiRef('GET', '/accounts/{AccountId}/scheduled-payments', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-scheduled-payments`),
-              apiRef('GET', '/accounts/{AccountId}/standing-orders', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-standing-orders`),
-              apiRef('GET', '/accounts/{AccountId}/statements', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-statements`),
-              apiRef('GET', '/accounts/{AccountId}/transactions', `${BASE}/${VERSION}/banking/data-sharing/open-api/accounts-AccountId-transactions`),
+              apiRef('GET', '/accounts', `${BASE}/${version}/banking/data-sharing/open-api/accounts`),
+              apiRef('GET', '/accounts/{AccountId}', `${BASE}/${version}/banking/data-sharing/open-api/accounts-AccountId`),
+              apiRef('GET', '/accounts/{AccountId}/balances', `${BASE}/${version}/banking/data-sharing/open-api/accounts-AccountId-balances`),
+              apiRef('GET', '/accounts/{AccountId}/beneficiaries', `${BASE}/${version}/banking/data-sharing/open-api/accounts-AccountId-beneficiaries`),
+              apiRef('GET', '/customer', `${BASE}/${version}/banking/data-sharing/open-api/customer`),
+              apiRef('GET', '/accounts/{AccountId}/customer', `${BASE}/${version}/banking/data-sharing/open-api/accounts-AccountId-customer`),
+              apiRef('GET', '/accounts/{AccountId}/direct-debits', `${BASE}/${version}/banking/data-sharing/open-api/accounts-AccountId-direct-debits`),
+              apiRef('GET', '/accounts/{AccountId}/products', `${BASE}/${version}/banking/data-sharing/open-api/accounts-AccountId-products`),
+              apiRef('GET', '/accounts/{AccountId}/scheduled-payments', `${BASE}/${version}/banking/data-sharing/open-api/accounts-AccountId-scheduled-payments`),
+              apiRef('GET', '/accounts/{AccountId}/standing-orders', `${BASE}/${version}/banking/data-sharing/open-api/accounts-AccountId-standing-orders`),
+              apiRef('GET', '/accounts/{AccountId}/statements', `${BASE}/${version}/banking/data-sharing/open-api/accounts-AccountId-statements`),
+              apiRef('GET', '/accounts/{AccountId}/transactions', `${BASE}/${version}/banking/data-sharing/open-api/accounts-AccountId-transactions`),
             ],
           },
         ],
@@ -336,7 +338,7 @@ export const lfiSidebar: SidebarItem[] = [
         text: 'Payments (Service Initiation)',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/${VERSION}/banking/service-initiation/` },
+          { text: 'Overview', link: `${BASE}/${version}/banking/service-initiation/` },
           {
             text: 'Domestic Payments',
             collapsed: true,
@@ -345,13 +347,13 @@ export const lfiSidebar: SidebarItem[] = [
                 text: 'Overview',
                 collapsed: true,
                 items: [
-                  { text: 'Payment Rails and Status', link: `${BASE}/${VERSION}/banking/service-initiation/domestic-payments/overview/payment-status` },
+                  { text: 'Payment Rails and Status', link: `${BASE}/${version}/banking/service-initiation/domestic-payments/overview/payment-status` },
                 ],
               },
               {
                 text: 'Single Instant Payment',
                 collapsed: true,
-                items: multiPaymentItems(`${BASE}/${VERSION}/banking/service-initiation/domestic-payments/single-instant-payment`),
+                items: multiPaymentItems(`${BASE}/${version}/banking/service-initiation/domestic-payments/single-instant-payment`),
               },
               {
                 text: 'Multi Payments',
@@ -360,17 +362,17 @@ export const lfiSidebar: SidebarItem[] = [
                   {
                     text: 'Variable On Demand', collapsed: true,
                     items: [
-                      { text: 'Requirements', link: `${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/variable-on-demand/requirements` },
-                      { text: 'User Experience', link: `${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/variable-on-demand/user-journeys` },
-                      { text: 'API Guide', link: `${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/variable-on-demand/api-guide` },
+                      { text: 'Requirements', link: `${BASE}/${version}/banking/service-initiation/domestic-payments/multi-payments/variable-on-demand/requirements` },
+                      { text: 'User Experience', link: `${BASE}/${version}/banking/service-initiation/domestic-payments/multi-payments/variable-on-demand/user-journeys` },
+                      { text: 'API Guide', link: `${BASE}/${version}/banking/service-initiation/domestic-payments/multi-payments/variable-on-demand/api-guide` },
                     ],
                   },
-                  { text: 'Fixed On Demand', collapsed: true, items: multiPaymentItems(`${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/fixed-on-demand`) },
-                  { text: 'Variable Periodic Schedule', collapsed: true, items: multiPaymentItems(`${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/variable-periodic-schedule`) },
-                  { text: 'Fixed Periodic Schedule', collapsed: true, items: multiPaymentItems(`${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/fixed-periodic-schedule`) },
-                  { text: 'Variable Defined Schedule', collapsed: true, items: multiPaymentItems(`${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/variable-defined-schedule`) },
-                  { text: 'Fixed Defined Schedule', collapsed: true, items: multiPaymentItems(`${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/fixed-defined-schedule`) },
-                  { text: 'Delegated SCA', collapsed: true, items: multiPaymentItems(`${BASE}/${VERSION}/banking/service-initiation/domestic-payments/multi-payments/delegated-sca`) },
+                  { text: 'Fixed On Demand', collapsed: true, items: multiPaymentItems(`${BASE}/${version}/banking/service-initiation/domestic-payments/multi-payments/fixed-on-demand`) },
+                  { text: 'Variable Periodic Schedule', collapsed: true, items: multiPaymentItems(`${BASE}/${version}/banking/service-initiation/domestic-payments/multi-payments/variable-periodic-schedule`) },
+                  { text: 'Fixed Periodic Schedule', collapsed: true, items: multiPaymentItems(`${BASE}/${version}/banking/service-initiation/domestic-payments/multi-payments/fixed-periodic-schedule`) },
+                  { text: 'Variable Defined Schedule', collapsed: true, items: multiPaymentItems(`${BASE}/${version}/banking/service-initiation/domestic-payments/multi-payments/variable-defined-schedule`) },
+                  { text: 'Fixed Defined Schedule', collapsed: true, items: multiPaymentItems(`${BASE}/${version}/banking/service-initiation/domestic-payments/multi-payments/fixed-defined-schedule`) },
+                  { text: 'Delegated SCA', collapsed: true, items: multiPaymentItems(`${BASE}/${version}/banking/service-initiation/domestic-payments/multi-payments/delegated-sca`) },
                 ],
               },
             ],
@@ -379,45 +381,45 @@ export const lfiSidebar: SidebarItem[] = [
             text: 'Personal Identifiable Information',
             collapsed: true,
             items: [
-              { text: 'Overview', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/` },
-              { text: 'Debtor Account', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/debtor-account` },
-              { text: 'Creditor', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/creditor` },
+              { text: 'Overview', link: `${BASE}/${version}/banking/service-initiation/personal-identifiable-information/` },
+              { text: 'Debtor Account', link: `${BASE}/${version}/banking/service-initiation/personal-identifiable-information/debtor-account` },
+              { text: 'Creditor', link: `${BASE}/${version}/banking/service-initiation/personal-identifiable-information/creditor` },
               {
                 text: 'API Guide',
                 collapsed: true,
                 items: [
-                  { text: 'How to Decrypt PII', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/api-guide/decrypt-pii` },
-                  { text: 'Verify TPP Signature (Optional)', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/api-guide/verify-tpp-signature` },
+                  { text: 'How to Decrypt PII', link: `${BASE}/${version}/banking/service-initiation/personal-identifiable-information/api-guide/decrypt-pii` },
+                  { text: 'Verify TPP Signature (Optional)', link: `${BASE}/${version}/banking/service-initiation/personal-identifiable-information/api-guide/verify-tpp-signature` },
                 ],
               },
               {
                 text: 'API Schemas',
                 collapsed: true,
                 items: [
-                  { text: 'PII (Consent - Consent Manager)', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/api-schema/pii-par` },
-                  { text: 'PII (Payments - Ozone Connect)', link: `${BASE}/${VERSION}/banking/service-initiation/personal-identifiable-information/api-schema/pii-payments` },
+                  { text: 'PII (Consent - Consent Manager)', link: `${BASE}/${version}/banking/service-initiation/personal-identifiable-information/api-schema/pii-par` },
+                  { text: 'PII (Payments - Ozone Connect)', link: `${BASE}/${version}/banking/service-initiation/personal-identifiable-information/api-schema/pii-payments` },
                 ],
               },
             ],
           },
           {
-            text: 'Multi Authorization', link: `${BASE}/${VERSION}/banking/service-initiation/multi-authorization`,
+            text: 'Multi Authorization', link: `${BASE}/${version}/banking/service-initiation/multi-authorization`,
           },
           {
             text: 'Refunds',
             collapsed: true,
             items: [
-              { text: 'Requirements', link: `${BASE}/${VERSION}/banking/service-initiation/refunds/requirements` },
-              { text: 'API Guide', link: `${BASE}/${VERSION}/banking/service-initiation/refunds/api-guide` },
+              { text: 'Requirements', link: `${BASE}/${version}/banking/service-initiation/refunds/requirements` },
+              { text: 'API Guide', link: `${BASE}/${version}/banking/service-initiation/refunds/api-guide` },
             ],
           },
           {
             text: 'API Reference',
             collapsed: true,
             items: [
-              apiRef('POST', '/payments', `${BASE}/${VERSION}/banking/service-initiation/open-api/payments`),
-              apiRef('GET', '/payments/{PaymentId}', `${BASE}/${VERSION}/banking/service-initiation/open-api/payments-PaymentId`),
-              apiRef('GET', '/payment-consents/{ConsentId}/refund', `${BASE}/${VERSION}/banking/service-initiation/open-api/payment-consents-ConsentId-refund`),
+              apiRef('POST', '/payments', `${BASE}/${version}/banking/service-initiation/open-api/payments`),
+              apiRef('GET', '/payments/{PaymentId}', `${BASE}/${version}/banking/service-initiation/open-api/payments-PaymentId`),
+              apiRef('GET', '/payment-consents/{ConsentId}/refund', `${BASE}/${version}/banking/service-initiation/open-api/payment-consents-ConsentId-refund`),
             ],
           },
         ],
@@ -426,15 +428,15 @@ export const lfiSidebar: SidebarItem[] = [
         text: 'Confirmation of Payee',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/` },
-          { text: 'Requirements', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/requirements` },
-          { text: 'User Experience', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/user-journeys` },
-          { text: 'API Guide', link: `${BASE}/${VERSION}/banking/confirmation-of-payee/api-guide` },
+          { text: 'Overview', link: `${BASE}/${version}/banking/confirmation-of-payee/` },
+          { text: 'Requirements', link: `${BASE}/${version}/banking/confirmation-of-payee/requirements` },
+          { text: 'User Experience', link: `${BASE}/${version}/banking/confirmation-of-payee/user-journeys` },
+          { text: 'API Guide', link: `${BASE}/${version}/banking/confirmation-of-payee/api-guide` },
           {
             text: 'API Reference',
             collapsed: true,
             items: [
-              apiRef('POST', '/customers/action/cop-query', `${BASE}/${VERSION}/banking/confirmation-of-payee/open-api/cop-query`),
+              apiRef('POST', '/customers/action/cop-query', `${BASE}/${version}/banking/confirmation-of-payee/open-api/cop-query`),
             ],
           },
         ],
@@ -443,15 +445,15 @@ export const lfiSidebar: SidebarItem[] = [
         text: 'Products & Leads',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/${VERSION}/banking/products-and-leads/` },
-          { text: 'Requirements', link: `${BASE}/${VERSION}/banking/products-and-leads/requirements` },
-          { text: 'API Guide', link: `${BASE}/${VERSION}/banking/products-and-leads/api-guide` },
+          { text: 'Overview', link: `${BASE}/${version}/banking/products-and-leads/` },
+          { text: 'Requirements', link: `${BASE}/${version}/banking/products-and-leads/requirements` },
+          { text: 'API Guide', link: `${BASE}/${version}/banking/products-and-leads/api-guide` },
           {
             text: 'API Reference',
             collapsed: true,
             items: [
-              apiRef('GET', '/products', `${BASE}/${VERSION}/banking/products-and-leads/open-api/products`),
-              apiRef('POST', '/leads', `${BASE}/${VERSION}/banking/products-and-leads/open-api/leads`),
+              apiRef('GET', '/products', `${BASE}/${version}/banking/products-and-leads/open-api/products`),
+              apiRef('POST', '/leads', `${BASE}/${version}/banking/products-and-leads/open-api/leads`),
             ],
           },
         ],
@@ -460,14 +462,14 @@ export const lfiSidebar: SidebarItem[] = [
         text: 'ATMs',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/${VERSION}/banking/atms/` },
-          { text: 'Requirements', link: `${BASE}/${VERSION}/banking/atms/requirements` },
-          { text: 'API Guide', link: `${BASE}/${VERSION}/banking/atms/api-guide` },
+          { text: 'Overview', link: `${BASE}/${version}/banking/atms/` },
+          { text: 'Requirements', link: `${BASE}/${version}/banking/atms/requirements` },
+          { text: 'API Guide', link: `${BASE}/${version}/banking/atms/api-guide` },
           {
             text: 'API Reference',
             collapsed: true,
             items: [
-              apiRef('GET', '/atm', `${BASE}/${VERSION}/banking/atms/open-api/atm`),
+              apiRef('GET', '/atm', `${BASE}/${version}/banking/atms/open-api/atm`),
             ],
           },
         ],
@@ -480,26 +482,26 @@ export const lfiSidebar: SidebarItem[] = [
     text: 'Ozone Connect | Insurance',
     collapsed: true,
     items: [
-      { text: 'Overview', link: `${BASE}/${VERSION}/insurance/` },
+      { text: 'Overview', link: `${BASE}/${version}/insurance/` },
       {
         text: 'Data Sharing',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/${VERSION}/insurance/data-sharing/` },
-          { text: 'Requirements', link: `${BASE}/${VERSION}/insurance/data-sharing/requirements` },
-          { text: 'User Experience', link: `${BASE}/${VERSION}/insurance/data-sharing/user-journeys` },
+          { text: 'Overview', link: `${BASE}/${version}/insurance/data-sharing/` },
+          { text: 'Requirements', link: `${BASE}/${version}/insurance/data-sharing/requirements` },
+          { text: 'User Experience', link: `${BASE}/${version}/insurance/data-sharing/user-journeys` },
           {
             text: 'API Guide',
             collapsed: true,
             items: [
-              { text: 'Overview', link: `${BASE}/${VERSION}/insurance/data-sharing/api-guide/` },
-              { text: 'Encrypted Premiums', link: `${BASE}/${VERSION}/insurance/data-sharing/api-guide/premiums` },
+              { text: 'Overview', link: `${BASE}/${version}/insurance/data-sharing/api-guide/` },
+              { text: 'Encrypted Premiums', link: `${BASE}/${version}/insurance/data-sharing/api-guide/premiums` },
             ],
           },
           {
             text: 'API Reference',
             collapsed: true,
-            items: insuranceApiRef(`${BASE}/${VERSION}/insurance/data-sharing/open-api`),
+            items: insuranceApiRef(`${BASE}/${version}/insurance/data-sharing/open-api`),
           },
         ],
       },
@@ -507,23 +509,23 @@ export const lfiSidebar: SidebarItem[] = [
         text: 'Quotation',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/${VERSION}/insurance/quotation/` },
-          { text: 'Requirements', link: `${BASE}/${VERSION}/insurance/quotation/requirements` },
-          { text: 'Quote Types (New / Renewal / Switch)', link: `${BASE}/${VERSION}/insurance/quotation/quote-types` },
-          { text: 'User Journeys', link: `${BASE}/${VERSION}/insurance/quotation/user-journeys` },
+          { text: 'Overview', link: `${BASE}/${version}/insurance/quotation/` },
+          { text: 'Requirements', link: `${BASE}/${version}/insurance/quotation/requirements` },
+          { text: 'Quote Types (New / Renewal / Switch)', link: `${BASE}/${version}/insurance/quotation/quote-types` },
+          { text: 'User Journeys', link: `${BASE}/${version}/insurance/quotation/user-journeys` },
           {
             text: 'API Guide',
             collapsed: true,
             items: [
-              { text: 'Overview & Status Events', link: `${BASE}/${VERSION}/insurance/quotation/api-guide/` },
-              { text: 'LFI-Led Flow', link: `${BASE}/${VERSION}/insurance/quotation/api-guide/lfi-led` },
-              { text: 'TPP-Led Flow', link: `${BASE}/${VERSION}/insurance/quotation/api-guide/tpp-led` },
+              { text: 'Overview & Status Events', link: `${BASE}/${version}/insurance/quotation/api-guide/` },
+              { text: 'LFI-Led Flow', link: `${BASE}/${version}/insurance/quotation/api-guide/lfi-led` },
+              { text: 'TPP-Led Flow', link: `${BASE}/${version}/insurance/quotation/api-guide/tpp-led` },
             ],
           },
           {
             text: 'API Reference',
             collapsed: true,
-            items: insuranceQuotationApiRef(`${BASE}/${VERSION}/insurance/quotation/open-api`),
+            items: insuranceQuotationApiRef(`${BASE}/${version}/insurance/quotation/open-api`),
           },
         ],
       },
@@ -538,22 +540,22 @@ export const lfiSidebar: SidebarItem[] = [
         text: 'Authentication',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/${VERSION}/consent-journey/authentication` },
-          { text: 'Requirements', link: `${BASE}/${VERSION}/consent-journey/authentication/requirements` },
-          { text: 'Strong Customer Authentication', link: `${BASE}/${VERSION}/consent-journey/authentication/sca` },
-          { text: 'Implementation Guide', link: `${BASE}/${VERSION}/consent-journey/authentication/implementation` },
+          { text: 'Overview', link: `${BASE}/${version}/consent-journey/authentication` },
+          { text: 'Requirements', link: `${BASE}/${version}/consent-journey/authentication/requirements` },
+          { text: 'Strong Customer Authentication', link: `${BASE}/${version}/consent-journey/authentication/sca` },
+          { text: 'Implementation Guide', link: `${BASE}/${version}/consent-journey/authentication/implementation` },
         ],
       },
       {
         text: 'Authorization',
         collapsed: true,
         items: [
-          { text: 'Overview', link: `${BASE}/${VERSION}/consent-journey/authorization` },
-          { text: 'Requirements', link: `${BASE}/${VERSION}/consent-journey/authorization/requirements` },
+          { text: 'Overview', link: `${BASE}/${version}/consent-journey/authorization` },
+          { text: 'Requirements', link: `${BASE}/${version}/consent-journey/authorization/requirements` },
         ],
       },
-      { text: 'Opening the Return Redirect', link: `${BASE}/${VERSION}/consent-journey/opening-the-redirect` },
-      { text: 'API Guide', link: `${BASE}/${VERSION}/consent-journey/api-guide` },
+      { text: 'Opening the Return Redirect', link: `${BASE}/${version}/consent-journey/opening-the-redirect` },
+      { text: 'API Guide', link: `${BASE}/${version}/consent-journey/api-guide` },
     ],
   },
 
@@ -561,32 +563,32 @@ export const lfiSidebar: SidebarItem[] = [
     text: 'Consent Management Interface',
     collapsed: true,
     items: [
-      { text: 'Overview', link: `${BASE}/${VERSION}/consent-management-interface/` },
+      { text: 'Overview', link: `${BASE}/${version}/consent-management-interface/` },
       {
         text: 'Bank Data Sharing',
         collapsed: true,
         items: [
-          { text: 'Requirements', link: `${BASE}/${VERSION}/consent-management-interface/bank-data-sharing/requirements` },
-          { text: 'User Experience', link: `${BASE}/${VERSION}/consent-management-interface/bank-data-sharing/user-experience` },
+          { text: 'Requirements', link: `${BASE}/${version}/consent-management-interface/bank-data-sharing/requirements` },
+          { text: 'User Experience', link: `${BASE}/${version}/consent-management-interface/bank-data-sharing/user-experience` },
         ],
       },
       {
         text: 'Bank Service Initiation',
         collapsed: true,
         items: [
-          { text: 'Requirements', link: `${BASE}/${VERSION}/consent-management-interface/bank-service-initiation/requirements` },
-          { text: 'User Experience', link: `${BASE}/${VERSION}/consent-management-interface/bank-service-initiation/user-experience` },
+          { text: 'Requirements', link: `${BASE}/${version}/consent-management-interface/bank-service-initiation/requirements` },
+          { text: 'User Experience', link: `${BASE}/${version}/consent-management-interface/bank-service-initiation/user-experience` },
         ],
       },
       {
         text: 'Insurance Data Sharing',
         collapsed: true,
         items: [
-          { text: 'Requirements', link: `${BASE}/${VERSION}/consent-management-interface/insurance-data-sharing/requirements` },
-          { text: 'User Experience', link: `${BASE}/${VERSION}/consent-management-interface/insurance-data-sharing/user-experience` },
+          { text: 'Requirements', link: `${BASE}/${version}/consent-management-interface/insurance-data-sharing/requirements` },
+          { text: 'User Experience', link: `${BASE}/${version}/consent-management-interface/insurance-data-sharing/user-experience` },
         ],
       },
-      { text: 'API Guide', link: `${BASE}/${VERSION}/consent-management-interface/api-guide` },
+      { text: 'API Guide', link: `${BASE}/${version}/consent-management-interface/api-guide` },
     ],
 
   },
@@ -643,10 +645,10 @@ export const lfiSidebar: SidebarItem[] = [
     text: 'CAAP',
     collapsed: true,
     items: [
-      { text: 'Overview', link: `${BASE}/${VERSION}/caap/` },
-      { text: 'User Experience', link: `${BASE}/${VERSION}/caap/user-experience` },
-      { text: 'API Guide', link: `${BASE}/${VERSION}/caap/api-guide` },
-      { text: 'Pricing', link: `${BASE}/${VERSION}/caap/pricing` },
+      { text: 'Overview', link: `${BASE}/${version}/caap/` },
+      { text: 'User Experience', link: `${BASE}/${version}/caap/user-experience` },
+      { text: 'API Guide', link: `${BASE}/${version}/caap/api-guide` },
+      { text: 'Pricing', link: `${BASE}/${version}/caap/pricing` },
       {
         text: 'API Reference',
         collapsed: true,
@@ -655,53 +657,53 @@ export const lfiSidebar: SidebarItem[] = [
             text: 'User Verification',
             collapsed: true,
             items: [
-              apiRef('POST', '/users/actions/challenge/initialize', `${BASE}/${VERSION}/caap/open-api/users-challenge-initialize`),
-              apiRef('POST', '/users/actions/challenge/query', `${BASE}/${VERSION}/caap/open-api/users-challenge-query`),
-              apiRef('POST', '/users/actions/challenge/complete', `${BASE}/${VERSION}/caap/open-api/users-challenge-complete`),
+              apiRef('POST', '/users/actions/challenge/initialize', `${BASE}/${version}/caap/open-api/users-challenge-initialize`),
+              apiRef('POST', '/users/actions/challenge/query', `${BASE}/${version}/caap/open-api/users-challenge-query`),
+              apiRef('POST', '/users/actions/challenge/complete', `${BASE}/${version}/caap/open-api/users-challenge-complete`),
             ],
           },
           {
             text: 'User Registration',
             collapsed: true,
             items: [
-              apiRef('POST', '/users/actions/register/initialize', `${BASE}/${VERSION}/caap/open-api/users-register-initialize`),
-              apiRef('POST', '/users/actions/register/complete', `${BASE}/${VERSION}/caap/open-api/users-register-complete`),
-              apiRef('POST', '/users/actions/deregister', `${BASE}/${VERSION}/caap/open-api/users-deregister`),
+              apiRef('POST', '/users/actions/register/initialize', `${BASE}/${version}/caap/open-api/users-register-initialize`),
+              apiRef('POST', '/users/actions/register/complete', `${BASE}/${version}/caap/open-api/users-register-complete`),
+              apiRef('POST', '/users/actions/deregister', `${BASE}/${version}/caap/open-api/users-deregister`),
             ],
           },
           {
             text: 'PII Decryption',
             collapsed: true,
             items: [
-              apiRef('POST', '/users/actions/pii/decrypt', `${BASE}/${VERSION}/caap/open-api/users-pii-decrypt`),
+              apiRef('POST', '/users/actions/pii/decrypt', `${BASE}/${version}/caap/open-api/users-pii-decrypt`),
             ],
           },
           {
             text: 'Consent',
             collapsed: true,
             items: [
-              apiRef('POST', '/consent/actions/validate', `${BASE}/${VERSION}/caap/open-api/consent-actions-validate`),
+              apiRef('POST', '/consent/actions/validate', `${BASE}/${version}/caap/open-api/consent-actions-validate`),
             ],
           },
           {
             text: 'Accounts',
             collapsed: true,
             items: [
-              apiRef('GET', '/accounts', `${BASE}/${VERSION}/caap/open-api/accounts`),
-              apiRef('GET', '/accounts/{accountId}', `${BASE}/${VERSION}/caap/open-api/accounts-accountId`),
+              apiRef('GET', '/accounts', `${BASE}/${version}/caap/open-api/accounts`),
+              apiRef('GET', '/accounts/{accountId}', `${BASE}/${version}/caap/open-api/accounts-accountId`),
             ],
           },
           {
             text: 'Insurance Policies',
             collapsed: true,
             items: [
-              apiRef('GET', '/employment-insurance-policies', `${BASE}/${VERSION}/caap/open-api/employment-insurance-policies`),
-              apiRef('GET', '/health-insurance-policies', `${BASE}/${VERSION}/caap/open-api/health-insurance-policies`),
-              apiRef('GET', '/home-insurance-policies', `${BASE}/${VERSION}/caap/open-api/home-insurance-policies`),
-              apiRef('GET', '/life-insurance-policies', `${BASE}/${VERSION}/caap/open-api/life-insurance-policies`),
-              apiRef('GET', '/motor-insurance-policies', `${BASE}/${VERSION}/caap/open-api/motor-insurance-policies`),
-              apiRef('GET', '/renters-insurance-policies', `${BASE}/${VERSION}/caap/open-api/renters-insurance-policies`),
-              apiRef('GET', '/travel-insurance-policies', `${BASE}/${VERSION}/caap/open-api/travel-insurance-policies`),
+              apiRef('GET', '/employment-insurance-policies', `${BASE}/${version}/caap/open-api/employment-insurance-policies`),
+              apiRef('GET', '/health-insurance-policies', `${BASE}/${version}/caap/open-api/health-insurance-policies`),
+              apiRef('GET', '/home-insurance-policies', `${BASE}/${version}/caap/open-api/home-insurance-policies`),
+              apiRef('GET', '/life-insurance-policies', `${BASE}/${version}/caap/open-api/life-insurance-policies`),
+              apiRef('GET', '/motor-insurance-policies', `${BASE}/${version}/caap/open-api/motor-insurance-policies`),
+              apiRef('GET', '/renters-insurance-policies', `${BASE}/${version}/caap/open-api/renters-insurance-policies`),
+              apiRef('GET', '/travel-insurance-policies', `${BASE}/${version}/caap/open-api/travel-insurance-policies`),
             ],
           },
         ],
@@ -710,3 +712,13 @@ export const lfiSidebar: SidebarItem[] = [
   },
 
 ]
+
+/**
+ * Reactive LFI Guide sidebar that follows the selected version. Unversioned
+ * entries (trust framework, registration, security, certification) are shared
+ * across versions and carry no version segment.
+ */
+export function useLfiSidebar(): ComputedRef<SidebarItem[]> {
+  const { selectedVersion } = useSelectedVersion()
+  return computed(() => buildLfiSidebar(selectedVersion.value))
+}

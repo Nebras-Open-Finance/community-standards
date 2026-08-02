@@ -7,6 +7,7 @@ meta:
 <script setup lang="ts">
 import { CURRENT_VERSION } from '@/data/versions'
 import { ERRATA_SECTIONS } from '@/data/erratas-registry'
+import { VERSION_CHANGES, changelogVersions } from '@/data/version-changes-registry'
 import {
   latestApiHubYear,
   latestTrustFrameworkYear,
@@ -45,6 +46,14 @@ const errataIds: string[] = [
   ),
 ].sort()
 
+// Newest transition wins the card link; the chips list every pair on record.
+const latestChangelogVersion: string | undefined =
+  changelogVersions[changelogVersions.length - 1]
+
+const changelogPairs: string[] = [
+  ...new Set(VERSION_CHANGES.map((c) => `${c.fromVersion} → ${c.toVersion}`)),
+].sort()
+
 const registers: Register[] = [
   {
     tone: 'teal',
@@ -77,6 +86,19 @@ const registers: Register[] = [
     subs: [],
     items: errataIds,
     itemsLabel: `Erratas in ${CURRENT_VERSION}`,
+  },
+  {
+    tone: 'teal',
+    category: 'Between versions',
+    title: 'Version Changelog',
+    url: latestChangelogVersion
+      ? `/tech/release-notes-and-erratas/changelog/${latestChangelogVersion}/`
+      : null,
+    desc: 'Every change made <strong>between one Standards version and the next</strong> &mdash; consent identifiers, API paths, new capabilities, and areas explicitly left unchanged. Each entry records what changed, why, and who it affects.',
+    scope: 'Differences between published Standards versions.',
+    subs: [],
+    items: changelogPairs,
+    itemsLabel: 'Version transitions',
   },
 ]
 

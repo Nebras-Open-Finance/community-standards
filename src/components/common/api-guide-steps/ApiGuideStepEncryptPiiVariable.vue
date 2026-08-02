@@ -111,6 +111,10 @@ const tabs = [
   { label: 'Node.js', lang: 'typescript', code: encryptNode },
   { label: 'Python',  lang: 'python',     code: encryptPython },
 ] as const
+
+// Shared by the v2.1 and v2.2-draft payment API guides, so the reference links
+// below follow the version of the page being viewed rather than naming one.
+const { docsVersion } = useRouteVersion()
 </script>
 
 <template>
@@ -145,7 +149,7 @@ const tabs = [
         fields or omit required ones.
       </p>
       <p>
-        See <a href="/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/">Personal
+        See <a :href="`/tech/tpp-standards/${docsVersion}/banking/service-initiation/personal-identifiable-information/`">Personal
         Identifiable Information</a> for the complete field reference, required vs optional fields, and
         creditor models for each domestic payment type.
       </p>
@@ -169,7 +173,7 @@ const tabs = [
         </table>
       </EdRefTable>
       <p>
-        See <a href="/tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/creditor">Creditor</a>
+        See <a :href="`/tech/tpp-standards/${docsVersion}/banking/service-initiation/personal-identifiable-information/creditor`">Creditor</a>
         for the field schema, matching rules, and validation requirements.
       </p>
     </EdNote>

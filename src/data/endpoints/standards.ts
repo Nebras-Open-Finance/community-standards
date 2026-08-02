@@ -58,6 +58,9 @@ const SPEC_INSURANCE = '/openapi/v2.1/standards/uae-insurance-openapi.yaml'
 const SPEC_AUTH_ENDPOINTS = '/openapi/v2.1/standards/uae-authorization-endpoints-openapi.yaml'
 const SPEC_REGISTRATION = '/openapi/v2.1/api-hub/uae-api-hub-tpp-onboarding-openapi.yaml'
 const SPEC_WEBHOOK = '/openapi/v2.1/standards/uae-webhook-template-openapi.yaml'
+// Not yet published in api-specs, so served from public/openapi-drafts/ rather
+// than the fetched (and gitignored) public/openapi/{version}/ tree.
+const SPEC_ATTESTATIONS = '/openapi-drafts/v2.2-draft/uae-consent-attestations-openapi.yaml'
 
 // ── Helper --------------------------------------------------------------------
 
@@ -79,6 +82,21 @@ function entry(input: EntryInput): Endpoint {
     ...input,
   }
 }
+
+// Endpoints that exist only from v2.2 onwards.
+function draftEntry(input: EntryInput): Endpoint {
+  return {
+    surface: 'standards',
+    version: 'v2.2-draft',
+    ...input,
+  }
+}
+
+const ATTESTATION_CONSENTS = [
+  ['/account-access-consents', 'account-access-consents', 'a Bank Data Sharing'],
+  ['/payment-consents', 'payment-consents', 'a Bank Service Initiation'],
+  ['/insurance-consents', 'insurance-consents', 'an Insurance'],
+] as const
 
 // ── Endpoints -----------------------------------------------------------------
 
@@ -647,4 +665,27 @@ export const standardsEndpoints: readonly Endpoint[] = [
       overrideServers: WEBHOOK_SERVERS,
     },
   }),
+
+  // ── Consent · Data Deletion Confirmation (v2.2-draft only) ────────────────
+  // Introduced by OFP-005. Authored here rather than produced by
+  // cloneForVersion (see src/data/endpoints/index.ts), which only mirrors the
+  // endpoints v2.1 and v2.2-draft have in common.
+  ...ATTESTATION_CONSENTS.flatMap(([path, slug, label]) =>
+    (['POST', 'GET'] as const).map((method) => draftEntry({
+      section: 'Consent',
+      sectionSlug: 'consent',
+      subsection: 'Data Deletion Confirmation',
+      slug: `${method.toLowerCase()}-${slug}-ConsentId-attestations`,
+      method,
+      path: `${path}/{ConsentId}/attestations`,
+      title: method === 'POST'
+        ? `Append ${label} Attestation Event`
+        : `List ${label} Attestation Events`,
+      redoc: {
+        spec: SPEC_ATTESTATIONS,
+        filterPath: `${path}/{ConsentId}/attestations`,
+        filterMethod: method,
+      },
+    })),
+  ),
 ] as const

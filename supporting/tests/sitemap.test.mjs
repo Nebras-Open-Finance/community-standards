@@ -73,7 +73,11 @@ describe('Sitemap', {
         /^_dev(\/|$)/.test(rel) ||
         /^internal(\/|$)/.test(rel) ||
         /^proposals\/internal(\/|$)/.test(rel) ||
-        /(^|\/)_shared(\/|$)/.test(rel)
+        /(^|\/)_shared(\/|$)/.test(rel) ||
+        // Draft standards versions are deliberately kept out of the sitemap —
+        // they mirror the current version, so indexing them would duplicate
+        // every page. Mirrors the EXCLUDE entry in scripts/generate-sitemap.mjs.
+        /(^|\/)v2\.2-draft(\/|$)/.test(rel)
       ) continue
       const m = readFileSync(file, 'utf-8').match(/<link\s+rel="canonical"\s+href="([^"]+)"/i)
       if (m) expected.add(m[1])
