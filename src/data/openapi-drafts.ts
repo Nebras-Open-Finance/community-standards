@@ -57,7 +57,9 @@ export const DRAFT_SPECS: Record<string, readonly DraftSpec[]> = {
       origin: 'generated',
       reason:
         'v2.1-to-v2.2 §5 — transactionInformation is required on CbuaeTransaction, ' +
-        'and bounded to match the TPP-facing schema',
+        'and bounded to match the TPP-facing schema; ' +
+        '§6 — the Confirmation of Payee response is flattened, removing the ' +
+        'verifiedClaims / verification envelope',
     },
   ],
 }

@@ -76,6 +76,7 @@ const TPP = '/tech/tpp-standards/v2.2-draft'
 const LFI = '/tech/lfi-api-hub/v2.2-draft'
 const DDC = `${TPP}/consent/data-deletion-confirmation`
 const CM = `${LFI}/api-hub/consent-manager`
+const COP = `${LFI}/banking/confirmation-of-payee`
 
 // Version-number uplifts (consent URNs, `/open-finance/{family}/v2.2` base
 // paths) are not recorded here. They follow mechanically from the version
@@ -294,6 +295,46 @@ export const VERSION_CHANGES: VersionChange[] = [
       `${LFI}/banking/data-sharing/`,
       `${LFI}/banking/data-sharing/requirements`,
       `${LFI}/banking/data-sharing/open-api/accounts-AccountId-transactions`,
+    ],
+  },
+  {
+    changeId: 'v2.1-to-v2.2',
+    fromVersion: 'v2.1',
+    toVersion: 'v2.2-draft',
+    number: 6,
+    category: 'Behaviour change',
+    title: 'Confirmation of Payee — the LFI response is flattened',
+    summary:
+      'The Ozone Connect CoP response carries the account holder\'s name directly. The `verifiedClaims` / `verification` identity-assurance envelope, and the wider customer data it wrapped, are removed from the operation.',
+    description:
+      'Confirmation of Payee asks one question: does this name belong to this IBAN? In v2.1 the LFI answers it through a four-level structure borrowed from OpenID Connect for Identity Assurance — `data[]` → `verifiedClaims[]` → `verification{…}` → `claims{…}` — of which only the innermost name is used.\n\n' +
+      'In v2.2 the two middle levels are removed. Each entry in `data` carries `name` directly, which is either a `CbuaeCopPersonName` (`fullName` required) or a `CbuaeCopBusinessName` (`businessName` required). The person and business branches are retained, mirroring the `PersonName` / `BusinessName` split the request already uses.\n\n' +
+      'The `verification` subtree goes with it. Trust framework, assurance level, assurance process, evidence references and evidence metadata are no longer part of this operation — every LFI builds that structure today and the API Hub does not read it.\n\n' +
+      'So does the wider customer data. The v2.1 `ConfirmationOfPayeePersonClaims` schema carries 23 fields, among them `salary`, `employerName`, `maritalStatus`, `residentialAddress`, `emiratesId`, `birthDate` and `nationality`. None of it is needed to compare two names, and Confirmation of Payee runs **without a consent** — so the response is reduced to the name data the question requires. The optional `number` field is dropped for the same reason. `id` is retained: it is pseudonymous by definition and is the only handle for investigating a disputed result.\n\n' +
+      'Structured name fields are retained as **optional** members, so that the Hub\'s matching algorithm can be improved without a second breaking change to this contract. A person name may carry `firstName`, `middleName`, `lastName`, `fullNameAr` (the name in Arabic script) and `alsoKnownAs`; a business name may carry `businessNameAr` and `alsoKnownAs`. Only `fullName` and `businessName` are matched today, and a response carrying nothing but `fullName` is fully conformant.\n\n' +
+      'The response also settles a naming inconsistency. The same three values carried three different names across v2.1: the Ozone Connect request used `fullName`/`firstName`/`lastName`, the Ozone Connect response used `fullName`/`givenName`/`familyName`, and the TPP-facing surface uses `FullName`/`GivenName`/`LastName`. v2.2 settles the Ozone Connect contract on the request vocabulary, so the same value carries the same name in both directions of one operation. `givenName` and `familyName` were in any case already documented as withdrawn — the v2.1 schema records that implementing them was "removed as of v1.2.1".\n\n' +
+      'Three semantics that were previously implicit are now stated in the specification rather than only in the guide. The LFI performs no matching: it MUST NOT compare the submitted name to its own records, and MUST NOT filter, rank or omit holders by how well they match — the API Hub owns the rules. A joint account MUST return one entry per holder, and the API Hub evaluates every entry in `data` rather than stopping at the first. Not found is `200` with an empty `data` array, never `204`, `404`, `201` or `202`; account-not-found, account-barred and customer-opted-out are deliberately indistinguishable so a CoP query cannot be used to probe for the existence of an account.\n\n' +
+      'This is a breaking change to the response and requires action from every LFI. It is confined to the response body of this one operation — the request, headers, query parameters, status codes and error codes are unchanged, so the work is a rewrite of the response builder rather than a new integration. The TPP-facing `/confirmation` and `/discovery` endpoints do not move: the API Hub already normalises between the two surfaces.\n\n' +
+      'One known limitation is unchanged. Claim-block selection still follows the TPP\'s request type rather than the data the LFI holds, so submitting a business name against an account held as a personal name is answered as a protocol error rather than as a no-match. Flattening the envelope does not address this, and it is left for a separate change.\n\n' +
+      'The Ozone Connect Bank Data Sharing specification has no v2.2 release in the api-specs repository yet, so this change is shown as a draft specification: the endpoint page below renders the published v2.1 document with the reshaped CoP schemas applied to it. Everything else in that document is unchanged from v2.1.',
+    docsPaths: [
+      { label: 'Full specification', path: `${COP}/api-guide` },
+      { label: 'OpenAPI reference', path: `${COP}/open-api/cop-query` },
+    ],
+    audience: 'LFI',
+    areas: ['Confirmation of Payee', 'Ozone Connect', 'Payments'],
+    specs: ['uae-ozone-connect-bank-data-sharing-openapi'],
+    endpoints: [
+      {
+        label: 'POST /customers/action/cop-query',
+        path: `${COP}/open-api/cop-query`,
+      },
+    ],
+    affectedPaths: [
+      `${COP}/`,
+      `${COP}/api-guide`,
+      `${COP}/requirements`,
+      `${COP}/open-api/cop-query`,
     ],
   },
 ]

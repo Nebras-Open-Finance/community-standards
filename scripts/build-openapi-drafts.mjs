@@ -280,6 +280,156 @@ const PATCHES = [
     version: 'v2.2-draft',
     surface: 'ozone-connect',
     spec: 'uae-ozone-connect-bank-data-sharing-openapi',
+    change: 'v2.1-to-v2.2 §6 — Confirmation of Payee response is flattened',
+    apply(doc) {
+      // CoP asks one question: does this name belong to this IBAN? The v2.1
+      // response answers it through a four-level identity-assurance envelope
+      // borrowed from OpenID Connect for Identity Assurance —
+      //   data[] → verifiedClaims[] → verification{…} → claims{…}
+      // — of which only the innermost name is read. This patch removes the two
+      // middle levels, leaving data[] → name{…}.
+      //
+      // The whole CoP subtree is reachable ONLY from
+      // POST /customers/action/cop-query: ConfirmationResponse, CbuaeCopCustomer,
+      // CbuaeVerifiedCopClaim and ConfirmationOfPayeePersonClaims have no other
+      // referrer in this document. GET /accounts/{accountId}/customer has its own
+      // parallel CbuaeCustomer / CbuaeVerifiedClaim schemas and is untouched, so
+      // nothing outside CoP moves.
+      const S = ['components', 'schemas']
+
+      // Guard before mutating: if upstream has already reshaped these, the patch
+      // is stale and silently double-applying it would be worse than failing.
+      for (const name of ['CbuaeCopCustomer', 'CbuaeVerifiedCopClaim', 'ConfirmationOfPayeePersonClaims']) {
+        if (!doc.getIn([...S, name])) throw new Error(`No ${name} schema — CoP subtree already reshaped?`)
+      }
+
+      // Person and business stay separate branches, mirroring the request's
+      // PersonName / BusinessName oneOf. `additionalProperties: false` on both
+      // keeps the oneOf unambiguous: the branches share no property.
+      //
+      // Only `fullName` / `businessName` is required. Everything else is an
+      // OPTIONAL input to future matching — the Hub compares full names today,
+      // and these fields exist so the algorithm can improve without a second
+      // breaking change to this contract.
+      doc.setIn([...S, 'CbuaeCopPersonName'], doc.createNode({
+        description: [
+          'The name of a personal account holder, as held by the LFI.',
+          '`fullName` is the only required field and is what the API Hub matches on today. The remaining fields are OPTIONAL and are not required for a match to succeed — supply them where your systems hold them separately, so that improvements to the matching algorithm can use them without a further change to this contract.',
+        ].join('\n\n'),
+        type: 'object',
+        required: ['fullName'],
+        additionalProperties: false,
+        properties: {
+          fullName: {
+            description: 'The full name of the account holder, as it appears on the account, as a single string.',
+            type: 'string', minLength: 1, maxLength: 140,
+          },
+          firstName: {
+            description: 'Given name of the account holder. Optional. Named to match `firstName` on the request `PersonName`, so the same value carries the same name in both directions.',
+            type: 'string', minLength: 1, maxLength: 70,
+          },
+          middleName: {
+            description: 'Middle name(s) of the account holder. Optional.',
+            type: 'string', minLength: 1, maxLength: 70,
+          },
+          lastName: {
+            description: 'Family name of the account holder. Optional. Named to match `lastName` on the request `PersonName`.',
+            type: 'string', minLength: 1, maxLength: 70,
+          },
+          fullNameAr: {
+            description: 'The full name of the account holder in Arabic script, where the LFI holds one. Optional. Not matched today.',
+            type: 'string', minLength: 1, maxLength: 140,
+          },
+          alsoKnownAs: {
+            description: 'Other names the account is legitimately known by — for example a maiden name, or a transliteration variant the LFI holds. Optional. Not matched today.',
+            type: 'array',
+            items: { type: 'string', minLength: 1, maxLength: 140 },
+          },
+        },
+      }))
+
+      doc.setIn([...S, 'CbuaeCopBusinessName'], doc.createNode({
+        description: [
+          'The name of a business account holder, as held by the LFI.',
+          '`businessName` is the only required field and is what the API Hub matches on today. The remaining fields are OPTIONAL inputs to future matching.',
+        ].join('\n\n'),
+        type: 'object',
+        required: ['businessName'],
+        additionalProperties: false,
+        properties: {
+          businessName: {
+            description: 'The registered business name on the account.',
+            type: 'string', minLength: 1, maxLength: 140,
+          },
+          businessNameAr: {
+            description: 'The registered business name in Arabic script, where the LFI holds one. Optional. Not matched today.',
+            type: 'string', minLength: 1, maxLength: 140,
+          },
+          alsoKnownAs: {
+            description: 'Other names the business is legitimately known by — for example a trading name distinct from the registered name. Optional. Not matched today.',
+            type: 'array',
+            items: { type: 'string', minLength: 1, maxLength: 140 },
+          },
+        },
+      }))
+
+      // `number` is dropped along with the envelope. It was optional, never read
+      // by matching, and is customer data this operation has no need of — CoP
+      // runs WITHOUT a consent, so the response carries only what the question
+      // requires. `id` is retained: it is pseudonymous by definition ("no meaning
+      // to the account owner") and is the only handle for investigating a
+      // disputed result.
+      doc.setIn([...S, 'CbuaeCopCustomer'], doc.createNode({
+        description: [
+          'One account holder returned for a Confirmation of Payee query.',
+          'A joint account returns one entry per holder. The API Hub evaluates EVERY entry in `data` — returning the holders in any order is safe, and the LFI MUST NOT attempt to order them by likelihood of match.',
+        ].join('\n\n'),
+        type: 'object',
+        required: ['id', 'name'],
+        additionalProperties: false,
+        properties: {
+          id: {
+            description: 'A unique and immutable identifier used to identify the customer resource. This identifier has no meaning to the account owner.',
+            type: 'string', minLength: 1, maxLength: 40,
+          },
+          name: {
+            description: 'The name held against the account for this holder — a personal name or a business name.',
+            oneOf: [
+              { $ref: `#/components/schemas/CbuaeCopPersonName` },
+              { $ref: `#/components/schemas/CbuaeCopBusinessName` },
+            ],
+          },
+        },
+      }))
+
+      // Deleted last, so the guard above still had them to check. Both are
+      // unreachable once CbuaeCopCustomer no longer refers to them.
+      // ConfirmationOfPayeePersonClaims carried salary, employer, marital status,
+      // residential address, Emirates ID and 15 other fields on a response whose
+      // only job is to compare two names.
+      doc.deleteIn([...S, 'CbuaeVerifiedCopClaim'])
+      doc.deleteIn([...S, 'ConfirmationOfPayeePersonClaims'])
+
+      // Make the response semantics explicit. Every statement here was already
+      // true of v2.1 — they were implicit, or stated only in the operation
+      // description where an implementer reading the schema would not find them.
+      // See the folded-scalar note on the §2 patch: one entry per paragraph.
+      const OP = ['paths', '/customers/action/cop-query', 'post']
+      if (!doc.getIn(OP)) throw new Error('No POST /customers/action/cop-query operation')
+      doc.setIn([...OP, 'description'], doc.createNode([
+        'Used by the API Hub to find the name(s) held against an account, so that the Hub can answer a Confirmation of Payee query.',
+        'The API Hub sends an IBAN and the name the TPP submitted. The LFI returns the name(s) it holds against that account. **The LFI performs no matching** — it MUST NOT compare the submitted name to its own records, and MUST NOT filter, rank, or omit holders on the basis of how well they match. The API Hub owns the matching rules and applies them to what is returned.',
+        'A joint account MUST return **one entry per holder**. The API Hub evaluates every entry in `data`; it does not stop at the first.',
+        '**Not found is `200` with an empty `data` array** — never `204`, `404`, `201`, or `202`. Return it where the account does not exist, is under a bar, or the customer has opted out of Confirmation of Payee. The three cases are deliberately indistinguishable to the TPP, so that a CoP query cannot be used to probe for the existence of an account.',
+        'From v2.2 the response is **flattened**: each entry in `data` carries `name` directly. The v2.1 `verifiedClaims` / `verification` identity-assurance envelope is removed from this operation — the API Hub never read it. See the migration note in the LFI API Guide.',
+        'This operation is not carried out under a consent, and the call will not have an `o3-consent-id` header. The response MUST therefore carry only the name data this question requires, and no wider customer data.',
+      ].join('\n\n')))
+    },
+  },
+  {
+    version: 'v2.2-draft',
+    surface: 'ozone-connect',
+    spec: 'uae-ozone-connect-bank-data-sharing-openapi',
     change: 'v2.1-to-v2.2 §5 — transaction narrative is required',
     apply(doc) {
       requireProperty(doc, ['components', 'schemas', 'CbuaeTransaction'], 'transactionInformation')

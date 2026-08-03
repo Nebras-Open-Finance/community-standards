@@ -36,18 +36,12 @@ const examplePersonalResponse = `{
   "data": [
     {
       "id": "cust-001",
-      "verifiedClaims": [
-        {
-          "verification": {
-            "trustFramework": "UAE.FI"
-          },
-          "claims": {
-            "fullName": "Ahmed Al Mansouri",
-            "givenName": "Ahmed",
-            "familyName": "Al Mansouri"
-          }
-        }
-      ]
+      "name": {
+        "fullName": "Ahmed Al Mansouri",
+        "firstName": "Ahmed",
+        "lastName": "Al Mansouri",
+        "fullNameAr": "أحمد المنصوري"
+      }
     }
   ],
   "meta": {
@@ -57,20 +51,59 @@ const examplePersonalResponse = `{
 }
 `
 
+// The minimum a conformant response can be: fullName and nothing else. Shown
+// because the optional fields read as expected unless it is stated that they
+// are not.
+const exampleMinimalResponse = `{
+  "data": [
+    {
+      "id": "cust-001",
+      "name": {
+        "fullName": "Ahmed Al Mansouri"
+      }
+    }
+  ],
+  "meta": {
+    "totalPages": 1,
+    "totalRecords": 1
+  }
+}
+`
+
+const exampleJointResponse = `{
+  "data": [
+    {
+      "id": "cust-001",
+      "name": {
+        "fullName": "Ahmed Al Mansouri",
+        "firstName": "Ahmed",
+        "lastName": "Al Mansouri"
+      }
+    },
+    {
+      "id": "cust-002",
+      "name": {
+        "fullName": "Fatima Al Mansouri",
+        "firstName": "Fatima",
+        "lastName": "Al Mansouri"
+      }
+    }
+  ],
+  "meta": {
+    "totalPages": 1,
+    "totalRecords": 2
+  }
+}
+`
+
 const exampleBusinessResponse = `{
   "data": [
     {
-      "id": "cust-002",
-      "verifiedClaims": [
-        {
-          "verification": {
-            "trustFramework": "UAE.FI"
-          },
-          "organisationClaims": {
-            "name": "Al Mansouri Trading LLC"
-          }
-        }
-      ]
+      "id": "cust-003",
+      "name": {
+        "businessName": "Al Mansouri Trading LLC",
+        "alsoKnownAs": ["Al Mansouri Trading"]
+      }
     }
   ],
   "meta": {
@@ -88,6 +121,7 @@ const exampleNotFoundResponse = `{
   }
 }
 `
+
 </script>
 
 <template>
@@ -221,31 +255,50 @@ const exampleNotFoundResponse = `{
 
       <h4 class="ed-doc__subhead ed-doc__subhead--small"><code>200</code> &mdash; Account found</h4>
       <EdProse>
-        Return a <code>data</code> array containing one record per account holder. Joint accounts may
-        return multiple records.
+        Return a <code>data</code> array containing <strong>one entry per account holder</strong>.
+        <code>id</code> and <code>name</code> are the only required members of an entry.
       </EdProse>
 
       <h5 class="ed-doc__subhead ed-doc__subhead--xs">Personal account</h5>
       <EdProse>
-        <code>verifiedClaims[].claims.fullName</code> is mandatory. Include <code>givenName</code> and
-        <code>familyName</code> if your system holds them separately &mdash; the Hub uses these to
-        improve match precision.
+        <code>name.fullName</code> is mandatory and is the value the Hub matches on today. Every other
+        field is <strong>optional</strong> &mdash; supply <code>firstName</code>,
+        <code>middleName</code>, <code>lastName</code>, <code>fullNameAr</code> and
+        <code>alsoKnownAs</code> where your systems hold them separately, so that improvements to the
+        matching algorithm can use them without a further change to this contract. A response carrying
+        only <code>fullName</code> is fully conformant.
       </EdProse>
       <EdCode :code="examplePersonalResponse" lang="json" filename="personal account response" />
 
+      <h5 class="ed-doc__subhead ed-doc__subhead--xs">Personal account &mdash; minimum conformant response</h5>
+      <EdCode :code="exampleMinimalResponse" lang="json" filename="minimum conformant response" />
+
+      <h5 class="ed-doc__subhead ed-doc__subhead--xs">Joint account</h5>
+      <EdProse>
+        Return one entry per holder. The Hub evaluates <strong>every</strong> entry in
+        <code>data</code>, so the order is not significant &mdash; do not attempt to place the most
+        likely match first.
+      </EdProse>
+      <EdCode :code="exampleJointResponse" lang="json" filename="joint account response" />
+
       <h5 class="ed-doc__subhead ed-doc__subhead--xs">Business account</h5>
       <EdProse>
-        Populate <code>verifiedClaims[].organisationClaims.name</code> with the registered business
-        name on the account.
+        Populate <code>name.businessName</code> with the registered business name on the account.
+        <code>businessNameAr</code> and <code>alsoKnownAs</code> are optional.
       </EdProse>
       <EdCode :code="exampleBusinessResponse" lang="json" filename="business account response" />
 
       <h4 class="ed-doc__subhead ed-doc__subhead--small"><code>200</code> &mdash; Account not found, opted out</h4>
       <EdProse>
-        Return <code>200</code> with an empty <code>data</code> array for scenarios where no account
-        was found matching the IBAN or if the account opted out of CoP. Do not use <code>404</code> or
-        <code>204</code> &mdash; the Hub expects <code>200</code> and treats an empty array as a
+        Return <code>200</code> with an empty <code>data</code> array where no account was found
+        matching the IBAN, the account is under a bar, or the customer has opted out of CoP. Do
+        <strong>not</strong> use <code>204</code>, <code>404</code>, <code>201</code> or
+        <code>202</code> &mdash; the Hub expects <code>200</code> and treats an empty array as a
         no-result response.
+      </EdProse>
+      <EdProse>
+        The three cases are deliberately indistinguishable to the TPP, so that a CoP query cannot be
+        used to probe for the existence of an account.
       </EdProse>
       <EdCode :code="exampleNotFoundResponse" lang="json" filename="not found response" />
 
