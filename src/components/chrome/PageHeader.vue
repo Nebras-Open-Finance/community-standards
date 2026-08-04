@@ -99,6 +99,7 @@ function isActive(prefix: string): boolean {
       <!-- Masthead / wordmark -->
       <a href="/" class="ed-masthead" aria-label="AlTareq home">
         <img src="/AlTareq.png" alt="AlTareq" class="ed-masthead__logo" />
+        <span class="ed-masthead__beta">Beta<i aria-hidden="true"></i></span>
         <span class="ed-masthead__tag">Built by the community</span>
       </a>
 
@@ -345,6 +346,48 @@ function isActive(prefix: string): boolean {
   display: block;
   height: 1.85rem;
   width: auto;
+}
+
+/* -- BETA badge -------------------------------------------------------- */
+/* Uses the signature --at-gradient ramp and the square corners of the rest
+   of the chrome, so it reads as program status rather than a nav accent.
+   The <i> is a slow sheen sweep; it holds on both light and dark surfaces. */
+.ed-masthead__beta {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-family: var(--at-mono);
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  color: #fff;
+  background: linear-gradient(90deg, #00267E 0%, #00A2FB 55%, #00C2A9 100%);
+  padding: 0.25rem 0.5rem 0.25rem 0.56rem;
+  white-space: nowrap;
+}
+
+.ed-masthead__beta i {
+  position: absolute;
+  inset: 0;
+  width: 34%;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0) 100%);
+  animation: ed-beta-sheen 4.5s ease-in-out infinite;
+}
+
+@keyframes ed-beta-sheen {
+  0%        { transform: translateX(-120%); }
+  55%, 100% { transform: translateX(220%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ed-masthead__beta i { animation: none; opacity: 0; }
 }
 
 .ed-masthead__tag {
@@ -611,5 +654,6 @@ function isActive(prefix: string): boolean {
 @media (max-width: 640px) {
   .ed-header__inner { padding: 0 1.25rem; gap: 1rem; }
   .ed-masthead__tag { display: none; }
+  /* .ed-masthead__beta intentionally stays visible on mobile */
 }
 </style>

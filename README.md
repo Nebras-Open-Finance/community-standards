@@ -102,6 +102,20 @@ npm test                 # run the supporting test suite
 
 You can run any of these on their own via `npm run fetch:specs`, `npm run fetch:orgs`, or `npm run fetch:github` if you only want to refresh one data source.
 
+### Metrics logs
+
+`public/api/payments-log.json`, `auth-log.json` and the `api-log-*.json` shards are committed, append-only daily aggregates exported from the API Hub dashboard — they are not fetched at build time. A fresh export overlaps the log's last (partial) day and extends forward, so merging is always *replace and extend*: drop the overlapping day, then append.
+
+The API log is large enough to need splitting. It is sharded by quarter, listed in `api-log-index.json`, and merged with:
+
+```bash
+node scripts/merge-api-log.mjs "public/api/api-log (8).json"
+```
+
+That routes the export's records to the right shards, opens a new shard and manifest entry when a quarter rolls over, and rewrites only the tail of the files it touches. Read it via [`loadApiLog()`](src/composables/apiLog.ts) rather than fetching a URL — never assume a single `api-log.json`.
+
+The committed shards stay pretty-printed so merges remain a readable textual splice. At build time [`encode-api-log.mjs`](scripts/encode-api-log.mjs) rewrites the `dist/` copies into a dictionary-coded form (~34 MiB → ~2.8 MiB), because Cloudflare Pages rejects any single file over 25 MiB. `loadApiLog()` decodes both shapes, so `npm run dev` serves the committed files directly. `api-log-shards.test.mjs` and `api-log-merge.test.mjs` assert the whole path is lossless.
+
 ---
 
 ## Contributing

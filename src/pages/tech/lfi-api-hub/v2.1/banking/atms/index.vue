@@ -10,7 +10,7 @@ import { allEndpoints, endpointUrl } from '@/data/endpoints'
 // Live-ecosystem mini-feed for the ATMs landing page. Fetches the same two
 // data sources the full Live Ecosystem page (`/program/whats-live`) uses:
 //   * /api/trust-framework.json     — org directory (logos, type)
-//   * /api/api-log.json             — TPP usage log (which TPPs called what)
+//   * the API log via loadApiLog() — TPP usage (which TPPs called what)
 // Filters api-log to ATM-family rows, derives a unique list of consuming
 // TPPs, joins each to its directory entry for the logo, and renders the
 // first few. Wrapped in <ClientOnly> so SSG doesn't try to fetch at build

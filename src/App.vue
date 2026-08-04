@@ -37,11 +37,11 @@ const pageDescription = computed(
   () => (route.meta.description as string | undefined) || DEFAULT_DESCRIPTION,
 )
 
-// TEMPORARY: while true, EVERY page emits noindex so the whole site stays out
-// of search results. Set back to false to restore per-route indexing (public
-// pages indexable; only the NOINDEX_RE routes below noindex). Single toggle —
-// revert by flipping this one line. Mirrored by supporting/tests/robots-noindex.test.mjs.
-const NOINDEX_ENTIRE_SITE = true
+// Kill switch: while true, EVERY page emits noindex so the whole site stays out
+// of search results. While false (the normal state) per-route indexing applies —
+// public pages indexable; only the NOINDEX_RE routes below noindex. Single
+// toggle — flip this one line. Mirrored by supporting/tests/robots-noindex.test.mjs.
+const NOINDEX_ENTIRE_SITE = false
 
 // Routes that must not be indexed: internal/gated surfaces and developer
 // tooling. Kept in sync with the EXCLUDE list in scripts/generate-sitemap.mjs —

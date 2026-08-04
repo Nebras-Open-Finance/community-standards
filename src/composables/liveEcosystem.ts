@@ -35,7 +35,8 @@ export const DIRECTORY_PARTICIPANTS_URL =
   'https://data.directory.openfinance.ae/participants'
 
 export const TRUST_FRAMEWORK_PROXY_URL = '/api/trust-framework.json'
-export const API_LOG_URL = '/api/api-log.json'
+// The API log is sharded by quarter — read it via `loadApiLog()` in
+// ./apiLog.ts rather than fetching a URL directly.
 
 export const PLACEHOLDER_LOGO_URL =
   'https://data.directory.openfinance.ae/logos/placeholder-logo.png'

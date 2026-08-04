@@ -53,6 +53,12 @@ function toggleOrg(id: string): void {
     </div>
   </div>
 
+  <!-- Hard-blocked identities read as unauthenticated; offering sign-in would
+       only be denied again at the Worker's callback, so say why instead. -->
+  <div v-else-if="auth.blocked" class="fc-id fc-id--signin">
+    <p>Your Trust Framework account is not permitted to use this service.</p>
+  </div>
+
   <div v-else class="fc-id fc-id--signin">
     <p>You are not signed in.</p>
     <button type="button" class="fc-id__btn" @click="signIn">Sign in with the Sandbox Trust Framework</button>

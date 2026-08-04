@@ -1,8 +1,13 @@
 // Module-level singleton — every component on `/metrics` shares the same
 // `state` and computed datasets. SSG-safe: `fetch` is guarded by
 // `typeof window !== 'undefined'`.
+//
+// The log downloads are NOT started on import — `/metrics` is behind a Trust
+// Framework sign-in gate, so the page calls `ensureDashboardData()` only once
+// the session resolves. Every consumer of this store lives on `/metrics`.
 
 import { reactive, computed, ref, watchEffect, type ComputedRef, type Ref } from 'vue'
+import { loadApiLog } from '@/composables/apiLog'
 import {
   sectionInSector,
   firstSectionOfSector,
@@ -267,11 +272,21 @@ function uniqueSorted<T>(values: readonly T[]): T[] {
   return [...new Set(values)].sort()
 }
 
+// Called by `/metrics` once the Trust Framework session has resolved, so an
+// unauthenticated visitor sitting on the sign-in gate never triggers the log
+// downloads. Idempotent — repeat calls are ignored.
+let dataRequested = false
+
+export function ensureDashboardData(): void {
+  if (dataRequested) return
+  dataRequested = true
+  loadDataIfClient()
+}
+
 function loadDataIfClient(): void {
   if (typeof window === 'undefined') return
 
-  fetch('/api/api-log.json')
-    .then(r => r.json() as Promise<unknown>)
+  loadApiLog()
     .then(json => {
       const arr = Array.isArray(json) ? (json as RawApiRow[]) : []
       const rows = arr.map(transformApiRow)
@@ -280,7 +295,7 @@ function loadDataIfClient(): void {
         r.status === 'success' && !RT_EXCLUDED_ENDPOINTS.includes(r.endpoint),
       )
     })
-    .catch(err => console.error('[dashboard] Failed to load api-log.json', err))
+    .catch(err => console.error('[dashboard] Failed to load the API log', err))
 
   fetch('/api/payments-log.json')
     .then(r => r.json() as Promise<unknown>)
@@ -309,8 +324,6 @@ function loadDataIfClient(): void {
     })
     .catch(() => { /* non-fatal */ })
 }
-
-loadDataIfClient()
 
 export const state: DashboardState = reactive({
   filters: { lfi: [], tpp: [], month: [], apiFamily: [] },

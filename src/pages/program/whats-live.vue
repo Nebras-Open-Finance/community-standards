@@ -65,7 +65,7 @@ const FAMILY_LABELS: Record<'all' | FamilyKey, string> = {
   'insurance': 'Insurance',
 }
 
-// Maps family keys → URL prefix segment in api-log.json
+// Maps family keys → URL prefix segment in the API log
 const FAMILY_URL_PREFIX: Record<FamilyKey, string> = {
   'account-information': 'account-information',
   'payment': 'payment',
@@ -367,9 +367,7 @@ onMounted(async () => {
       fetch('https://data.directory.openfinance.ae/participants').then(
         (r) => r.json() as Promise<unknown>,
       ),
-      fetch('/api/api-log.json')
-        .then((r) => r.json() as Promise<unknown>)
-        .catch(() => [] as unknown),
+      loadApiLog().catch(() => [] as unknown),
       fetch('/api/payments-log.json')
         .then((r) => r.json() as Promise<unknown>)
         .catch(() => [] as unknown),

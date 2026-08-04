@@ -18,7 +18,10 @@ const year: number = new Date().getFullYear()
     <div class="ed-footer__inner">
 
       <div class="ed-footer__col ed-footer__col--brand">
-        <img src="/AlTareq.png" alt="AlTareq" class="ed-footer__logo" />
+        <div class="ed-footer__brand">
+          <img src="/AlTareq.png" alt="AlTareq" class="ed-footer__logo" />
+          <span class="ed-footer__beta">Beta<i aria-hidden="true"></i></span>
+        </div>
         <div class="ed-footer__tag">UAE Open Finance &middot; Community</div>
       </div>
 
@@ -89,6 +92,53 @@ const year: number = new Date().getFullYear()
   width: 110px;
   height: auto;
   opacity: 0.85;
+}
+
+.ed-footer__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+/* -- BETA badge -------------------------------------------------------- */
+/* Matches the header badge: signature gradient ramp, square corners, slow
+   sheen sweep. The <i> is decorative only. */
+.ed-footer__beta {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-family: var(--at-mono);
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  color: #fff;
+  background: linear-gradient(90deg, #00267E 0%, #00A2FB 55%, #00C2A9 100%);
+  padding: 0.25rem 0.5rem 0.25rem 0.56rem;
+  white-space: nowrap;
+}
+
+.ed-footer__beta i {
+  position: absolute;
+  inset: 0;
+  width: 34%;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0) 100%);
+  animation: ed-beta-sheen 4.5s ease-in-out infinite;
+}
+
+@keyframes ed-beta-sheen {
+  0%        { transform: translateX(-120%); }
+  55%, 100% { transform: translateX(220%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ed-footer__beta i { animation: none; opacity: 0; }
 }
 
 .ed-footer__tag {

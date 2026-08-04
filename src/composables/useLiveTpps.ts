@@ -5,17 +5,17 @@
 // TPP tab. The cutoff is computed relative to the latest log entry (not the
 // current wall clock) so the figure is stable even if the log lags.
 //
-// `/api/trust-framework.json` provides logo / legal-name lookup. URLs in
-// `/api/api-log.json` follow the shape `open-finance/{family}/v{ver}/...`.
+// `/api/trust-framework.json` provides logo / legal-name lookup. URLs in the
+// API log follow the shape `open-finance/{family}/v{ver}/...`.
 
 import {
-  API_LOG_URL,
   FAMILY_URL_PREFIX,
   FAMILY_KEYS,
   LIVE_TPP_DAYS_WINDOW,
   TRUST_FRAMEWORK_PROXY_URL,
   type FamilyKey,
 } from './liveEcosystem'
+import { loadApiLog } from './apiLog'
 
 export interface LiveTpp {
   name: string
@@ -58,13 +58,12 @@ export function useLiveTpps(
 
   async function load(): Promise<void> {
     try {
-      const [directoryRes, logRes] = await Promise.all([
+      const [directoryRes, log] = await Promise.all([
         fetch(TRUST_FRAMEWORK_PROXY_URL),
-        fetch(API_LOG_URL),
+        loadApiLog(),
       ])
-      if (!directoryRes.ok || !logRes.ok) { loadError.value = true; return }
+      if (!directoryRes.ok) { loadError.value = true; return }
       const directory = (await directoryRes.json()) as unknown
-      const log = (await logRes.json()) as unknown
       if (!Array.isArray(directory) || !Array.isArray(log)) {
         loadError.value = true; return
       }

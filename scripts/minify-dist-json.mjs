@@ -2,8 +2,9 @@
 //
 // The committed sources under public/api/ are pretty-printed so that merging
 // fresh exports stays a readable textual splice. Cloudflare Pages rejects any
-// single file over 25 MiB, and api-log.json crosses that when pretty-printed,
-// so the shipped copy is re-serialised without indentation.
+// single file over 25 MiB, so the shipped copies are re-serialised without
+// indentation. The API log shards need more than that and are dictionary-coded
+// first by scripts/encode-api-log.mjs, which runs immediately before this.
 //
 // Fails loudly if a file is still over the Pages limit after minifying —
 // silently deploying a broken build is worse than failing the gate.

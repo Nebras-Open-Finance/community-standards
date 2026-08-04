@@ -78,7 +78,7 @@ const authData    = ref<AuthLogRow[]>([])
 onMounted(async () => {
   const [tf, api, payments, auth] = await Promise.all([
     axios.get<unknown>('/api/trust-framework.json').catch(() => ({ data: [] as unknown })),
-    fetch('/api/api-log.json').then(r => r.json() as Promise<unknown>).catch(() => [] as unknown),
+    loadApiLog().catch(() => [] as unknown),
     fetch('/api/payments-log.json').then(r => r.json() as Promise<unknown>).catch(() => [] as unknown),
     fetch('/api/auth-log.json').then(r => r.json() as Promise<unknown>).catch(() => [] as unknown),
   ])

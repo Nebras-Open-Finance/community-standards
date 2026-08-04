@@ -16,7 +16,7 @@ const DIST = resolve(ROOT, 'dist')
 // Mirrors NOINDEX_ENTIRE_SITE in src/App.vue: when the site-wide noindex flag is
 // on, EVERY page is expected to be noindex, so the "public pages must not be
 // noindex" (leaked) assertion is intentionally skipped. Flip both together.
-const NOINDEX_ENTIRE_SITE = true
+const NOINDEX_ENTIRE_SITE = false
 
 // Mirrors NOINDEX_RE in src/App.vue and EXCLUDE in scripts/generate-sitemap.mjs
 // (matched against the route path, i.e. the dist-relative path sans .html).

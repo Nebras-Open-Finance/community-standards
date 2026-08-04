@@ -22,12 +22,17 @@ export interface SandboxAuthState {
   // "sign in" prompt before we know whether there is a session.
   loaded: boolean
   authenticated: boolean
+  // The identity is on the Worker's hard-block list. It reads as unauthenticated,
+  // but callers should say so rather than offer a sign-in that the Worker would
+  // deny at the callback. See blocked_identities.json in the terraform-controller
+  // repo (cloudflare/document-repository), shared by both Workers.
+  blocked: boolean
   name?: string | undefined
   email?: string | undefined
   orgs: SandboxOrg[]
 }
 
-const auth: Ref<SandboxAuthState> = ref({ loaded: false, authenticated: false, orgs: [] })
+const auth: Ref<SandboxAuthState> = ref({ loaded: false, authenticated: false, blocked: false, orgs: [] })
 
 // Normalise the orgs field, which the Worker returns either as objects
 // ({ id, name }) or as bare strings depending on the endpoint.
@@ -45,11 +50,12 @@ async function loadMe(): Promise<void> {
   try {
     const res = await fetch(`${API_BASE}/me`, { credentials: 'include' })
     if (!res.ok) {
-      auth.value = { loaded: true, authenticated: false, orgs: [] }
+      auth.value = { loaded: true, authenticated: false, blocked: false, orgs: [] }
       return
     }
     const d = (await res.json()) as {
       authenticated?: boolean
+      blocked?: boolean
       name?: string
       email?: string
       orgs?: unknown
@@ -57,12 +63,13 @@ async function loadMe(): Promise<void> {
     auth.value = {
       loaded: true,
       authenticated: !!d.authenticated,
+      blocked: !!d.blocked,
       name: d.name,
       email: d.email,
       orgs: normaliseOrgs(d.orgs),
     }
   } catch {
-    auth.value = { loaded: true, authenticated: false, orgs: [] }
+    auth.value = { loaded: true, authenticated: false, blocked: false, orgs: [] }
   }
 }
 
