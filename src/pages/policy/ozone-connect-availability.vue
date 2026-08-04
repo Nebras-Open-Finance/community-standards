@@ -234,11 +234,11 @@ const severities: SeverityRow[] = [
 
     <EdRelatedCards eyebrow="Read alongside" title="Related policies">
       <EdRelatedCard
-        href="/policy/ozone-connect-response-time"
+        href="/policy/api-response-time"
         category="LFIs · Nebras"
         category-color="var(--at-teal)"
-        title="Ozone Connect Response Time Policy"
-        desc="The 500 ms p95 latency standard for the same Ozone Connect endpoints."
+        title="API Response Time Policy"
+        desc="The 500 ms p95 standard, measured end to end across the whole TPP-facing request."
       />
       <EdRelatedCard
         href="/policy/ozone-connect-data-quality"

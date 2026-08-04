@@ -68,7 +68,7 @@ const keyNums: KeyNum[] = [
 
       <h3>Out of scope</h3>
       <EdBullets>
-        <li>Action and initiation endpoints that do not return domain data (for example <code>POST /payments</code>, <code>POST /customers/action/cop-query</code>, and similar). These are governed by the <a href="/policy/ozone-connect-availability">Availability Policy</a> and the <a href="/policy/ozone-connect-response-time">Response Time Policy</a>, not this one.</li>
+        <li>Action and initiation endpoints that do not return domain data (for example <code>POST /payments</code>, <code>POST /customers/action/cop-query</code>, and similar). These are governed by the <a href="/policy/ozone-connect-availability">Availability Policy</a> and the <a href="/policy/api-response-time">API Response Time Policy</a>, not this one.</li>
         <li>Internal system data that is not part of the published Ozone Connect OpenAPI specifications</li>
       </EdBullets>
 
@@ -220,11 +220,11 @@ const keyNums: KeyNum[] = [
         desc="The 99.5% monthly availability standard for the same endpoints."
       />
       <EdRelatedCard
-        href="/policy/ozone-connect-response-time"
+        href="/policy/api-response-time"
         category="LFIs · Nebras"
         category-color="var(--at-teal)"
-        title="Ozone Connect Response Time Policy"
-        desc="The 500 ms p95 latency standard for the same endpoints."
+        title="API Response Time Policy"
+        desc="The 500 ms p95 standard, measured end to end across the whole TPP-facing request."
       />
     </EdRelatedCards>
   </div>

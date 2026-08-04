@@ -314,12 +314,12 @@ onMounted(() => {
                 A transaction returned from
                 <RouterLink to="/tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts-AccountId-transactions">
                 <code>GET /accounts/{AccountId}/transactions</code></RouterLink> carries the structured
-                essentials — an amount, a date, a credit/debit indicator, a type. What tells a TPP what the
-                transaction was actually <em>for</em> is the narrative: the free-text
-                <code>TransactionInformation</code> field. It is the single most important input to the
-                use cases Open Finance exists to enable — <strong>categorisation</strong>,
-                <strong>affordability assessment</strong>, and <strong>underwriting</strong>. Strip it out
-                and a statement collapses into a column of amounts a TPP cannot reason about.
+                essentials — an amount, a date, a credit/debit indicator, and a type. What tells a TPP what
+                the transaction was actually <em>for</em> is the narrative: the free-text
+                <code>TransactionInformation</code> field. It is an important input to many Open Finance use
+                cases, including <strong>categorisation</strong>, <strong>affordability assessment</strong>,
+                and <strong>underwriting</strong>. Strip it out and a statement collapses into a column of
+                amounts a TPP cannot reason about.
               </p>
               <p>
                 Yet in the specification the field is <strong>defined but not required</strong>. In the TPP

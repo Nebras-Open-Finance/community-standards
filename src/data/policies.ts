@@ -16,7 +16,7 @@ const ORDER: readonly string[] = [
   'version-management',
   'lfi-deprecation',
   'ozone-connect-availability',
-  'ozone-connect-response-time',
+  'api-response-time',
   'ozone-connect-data-quality',
   'changes-to-published-content',
   'secure-management',
