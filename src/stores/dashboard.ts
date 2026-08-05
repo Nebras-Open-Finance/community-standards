@@ -2,9 +2,9 @@
 // `state` and computed datasets. SSG-safe: `fetch` is guarded by
 // `typeof window !== 'undefined'`.
 //
-// The log downloads are NOT started on import — `/metrics` is behind a Trust
-// Framework sign-in gate, so the page calls `ensureDashboardData()` only once
-// the session resolves. Every consumer of this store lives on `/metrics`.
+// The log downloads are NOT started on import — the page calls
+// `ensureDashboardData()` on mount, so importing the store from a prerender
+// pass costs nothing. Every consumer of this store lives on `/metrics`.
 
 import { reactive, computed, ref, watchEffect, type ComputedRef, type Ref } from 'vue'
 import { loadApiLog } from '@/composables/apiLog'
@@ -272,9 +272,7 @@ function uniqueSorted<T>(values: readonly T[]): T[] {
   return [...new Set(values)].sort()
 }
 
-// Called by `/metrics` once the Trust Framework session has resolved, so an
-// unauthenticated visitor sitting on the sign-in gate never triggers the log
-// downloads. Idempotent — repeat calls are ignored.
+// Called by `/metrics` on mount. Idempotent — repeat calls are ignored.
 let dataRequested = false
 
 export function ensureDashboardData(): void {
