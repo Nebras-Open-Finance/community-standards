@@ -117,9 +117,13 @@ const copied = ref(false)
 let copyTimer: ReturnType<typeof setTimeout> | undefined
 async function copyCurl(): Promise<void> {
   if (!result.value) return
+  // Must mirror probeFile() in scripts/lib/well-known-probe.mjs exactly, or the
+  // copied command can contradict the verdict shown above it: GET (not HEAD, so
+  // the body is graded), `Accept: */*` (gateways vary on Accept), and no
+  // redirect following (a redirect is itself a failure).
   const cmd =
-    `curl -sSI -A 'Mozilla/5.0 (Linux; Android 14; Pixel 8)' ` +
-    `'${result.value.origin}/.well-known/assetlinks.json'`
+    `curl -sS -D- -o- --max-redirs 0 -A 'Mozilla/5.0 (Linux; Android 14; Pixel 8)' ` +
+    `-H 'Accept: */*' '${result.value.origin}/.well-known/assetlinks.json'`
   try {
     await navigator.clipboard.writeText(cmd)
     copied.value = true

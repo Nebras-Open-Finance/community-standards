@@ -1,9 +1,55 @@
 import { computed, type ComputedRef } from 'vue'
-import { apiRef, type SidebarItem } from './shared'
+import { apiRef, type HttpMethod, type SidebarItem } from './shared'
 import { useSelectedVersion } from '../../composables/useSelectedVersion'
 import type { Version } from '../versions'
 
 const BASE = '/tech/lfi-api-hub'
+
+// Field Mapping sits directly below each capability's API Reference, one page
+// per endpoint, badged the same way as the API Reference entries above it.
+// Entries are [method, path, slug]; the path is the Ozone Connect operation the
+// LFI implements, except where the API Hub serves the endpoint itself.
+type FieldMapEntry = readonly [HttpMethod, string, string]
+
+function fieldMapItems(base: string, endpoints: readonly FieldMapEntry[]): SidebarItem {
+  return {
+    text: 'Field Mapping',
+    collapsed: true,
+    items: endpoints.map(([method, path, slug]) =>
+      apiRef(method, path, `${base}/field-mapping/${slug}`),
+    ),
+  }
+}
+
+const DATA_SHARING_FIELD_MAP: readonly FieldMapEntry[] = [
+  ['GET', '/accounts', 'accounts'],
+  ['GET', '/accounts/{accountId}', 'accounts-AccountId'],
+  ['GET', '/accounts/{accountId}/balances', 'accounts-AccountId-balances'],
+  ['GET', '/accounts/{accountId}/beneficiaries', 'accounts-AccountId-beneficiaries'],
+  ['GET', '/accounts/{accountId}/customer', 'accounts-AccountId-customer'],
+  ['GET', '/accounts/{accountId}/direct-debits', 'accounts-AccountId-direct-debits'],
+  ['GET', '/accounts/{accountId}/products', 'accounts-AccountId-products'],
+  ['GET', '/accounts/{accountId}/scheduled-payments', 'accounts-AccountId-scheduled-payments'],
+  ['GET', '/accounts/{accountId}/standing-orders', 'accounts-AccountId-standing-orders'],
+  ['GET', '/accounts/{accountId}/statements', 'accounts-AccountId-statements'],
+  ['GET', '/accounts/{accountId}/transactions', 'accounts-AccountId-transactions'],
+  ['GET', '/customer', 'customer'],
+]
+
+// Most of the generated bank-initiation family is not published here: the API
+// Hub serves the payment-consent reads itself, file payments have no Ozone
+// Connect surface for an LFI to implement, and the payment operations
+// themselves are held back pending review.
+const SERVICE_INITIATION_FIELD_MAP: readonly FieldMapEntry[] = [
+  ['GET', '/payment-consents/{consentId}/refund', 'payment-consents-ConsentId-refund'],
+]
+
+const PRODUCTS_LEADS_FIELD_MAP: readonly FieldMapEntry[] = [
+  ['GET', '/products', 'products'],
+  ['POST', '/leads', 'leads'],
+]
+
+const ATMS_FIELD_MAP: readonly FieldMapEntry[] = [['GET', '/atm', 'atm']]
 
 function multiPaymentItems(base: string): SidebarItem[] {
   return [
@@ -332,6 +378,7 @@ export const buildLfiSidebar = (version: Version): SidebarItem[] => [
               apiRef('GET', '/accounts/{AccountId}/transactions', `${BASE}/${version}/banking/data-sharing/open-api/accounts-AccountId-transactions`),
             ],
           },
+          fieldMapItems(`${BASE}/${version}/banking/data-sharing`, DATA_SHARING_FIELD_MAP),
         ],
       },
       {
@@ -422,6 +469,7 @@ export const buildLfiSidebar = (version: Version): SidebarItem[] => [
               apiRef('GET', '/payment-consents/{ConsentId}/refund', `${BASE}/${version}/banking/service-initiation/open-api/payment-consents-ConsentId-refund`),
             ],
           },
+          fieldMapItems(`${BASE}/${version}/banking/service-initiation`, SERVICE_INITIATION_FIELD_MAP),
         ],
       },
       {
@@ -456,6 +504,7 @@ export const buildLfiSidebar = (version: Version): SidebarItem[] => [
               apiRef('POST', '/leads', `${BASE}/${version}/banking/products-and-leads/open-api/leads`),
             ],
           },
+          fieldMapItems(`${BASE}/${version}/banking/products-and-leads`, PRODUCTS_LEADS_FIELD_MAP),
         ],
       },
       {
@@ -472,6 +521,7 @@ export const buildLfiSidebar = (version: Version): SidebarItem[] => [
               apiRef('GET', '/atm', `${BASE}/${version}/banking/atms/open-api/atm`),
             ],
           },
+          fieldMapItems(`${BASE}/${version}/banking/atms`, ATMS_FIELD_MAP),
         ],
       },
     ],

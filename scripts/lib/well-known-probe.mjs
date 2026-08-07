@@ -50,7 +50,12 @@ export async function probeFile(url, { timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
     const res = await fetch(url, {
       signal: controller.signal,
       redirect: 'manual', // a redirect on these paths is itself a failure
-      headers: { 'User-Agent': PROBE_UA, Accept: 'application/json, */*' },
+      // Deliberately `*/*`, not `application/json`. The OS verifiers do not
+      // negotiate for JSON, and some LFI gateways vary on Accept: ADIB's
+      // WebSEAL returns an HTML login page to `*/*` but a JSON `401
+      // invalid_token` to `application/json`. Asking for JSON would grade the
+      // origin on a response no device ever receives.
+      headers: { 'User-Agent': PROBE_UA, Accept: '*/*' },
     })
     const status = res.status
     const contentType = res.headers.get('content-type')

@@ -392,6 +392,11 @@ const customerPsuJson = `{
           <a href="/tech/lfi-api-hub/v2.2-draft/banking/data-sharing/requirements">Bank Data Sharing Requirements</a>. This guide covers the request
           and response shape of each endpoint.
         </p>
+        <p class="ed-doc__lede">
+          To see what the TPP receives for each field you return &mdash; and which consent
+          permission exposes it &mdash; use the
+          <a href="/tech/lfi-api-hub/v2.2-draft/banking/data-sharing/field-mapping/">Ozone Connect to Standards field map</a>.
+        </p>
       </div>
     </section>
 

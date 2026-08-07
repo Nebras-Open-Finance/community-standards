@@ -8,6 +8,12 @@ const props = defineProps<{
   version?: string
   method: string
   path: string
+  /**
+   * Overrides the composed meta description. Pages that render something other
+   * than the endpoint's schema — the field maps, for one — pass their own so the
+   * snippet describes what is actually on the page.
+   */
+  description?: string
 }>()
 
 // Every API endpoint page renders through this component, so composing a unique
@@ -17,6 +23,7 @@ const props = defineProps<{
 // App.vue's parent useHead, so these win the description dedupe. og/twitter
 // descriptions are set to match so link-preview cards agree with the SERP snippet.
 const metaDescription = computed(() => {
+  if (props.description) return props.description
   const ver = props.version ? `${props.version} ` : ''
   return `${props.title}: ${props.method} ${props.path}. ${props.eyebrow} endpoint in the UAE Open Finance ${ver}standards, with request and response schema, examples and validation rules.`
 })

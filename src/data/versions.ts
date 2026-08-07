@@ -39,6 +39,19 @@ export const SPEC_FOLDER: Record<Version, string> = {
   'v2.2-draft': 'v2.1',
 }
 
+// Which field-map export each version reads, as a directory under public/api/.
+// The directory holds `index.json` (meta, coverage, one entry per endpoint) and
+// `resources/<slug>.json` (the field records for one endpoint).
+//
+// The map is generated outside this repo and dropped in whole — see the Field
+// Mapping pages under each Ozone Connect capability. A version with no export of
+// its own points at the one whose specs it serves, mirroring SPEC_FOLDER above,
+// so adding a real v2.2 export later is a drop-in with no code change.
+export const FIELD_MAP_DIR: Record<Version, string> = {
+  'v2.1': 'field-map/v2.1',
+  'v2.2-draft': 'field-map/v2.1',
+}
+
 // Maps each Ozone Connect version to the TPP Standards versions it supports.
 // When a new major version is added, also list the prior version(s) it
 // dual-runs alongside, e.g. 'v3.0': ['v3.0', 'v2.1'].
