@@ -394,8 +394,8 @@ const customerPsuJson = `{
         </p>
         <p class="ed-doc__lede">
           To see what the TPP receives for each field you return &mdash; and which consent
-          permission exposes it &mdash; use the
-          <a href="/tech/lfi-api-hub/v2.2-draft/banking/data-sharing/field-mapping/">Ozone Connect to Standards field map</a>.
+          permission exposes it &mdash; see the Field Mapping pages, one per endpoint, starting with
+          <a href="/tech/lfi-api-hub/v2.2-draft/banking/data-sharing/field-mapping/accounts"><code>GET /accounts</code></a>.
         </p>
       </div>
     </section>
