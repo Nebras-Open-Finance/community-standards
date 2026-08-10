@@ -11,6 +11,8 @@ meta:
     version="v2.1"
     method="GET"
     path="/accounts/{accountId}/direct-debits"
+    resource="/accounts/{}/direct-debits"
+    ozone="GET /accounts/{accountId}/direct-debits"
     standards="GET /accounts/{AccountId}/direct-debits"
   />
 </template>

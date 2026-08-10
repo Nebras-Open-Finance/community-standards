@@ -11,6 +11,8 @@ meta:
     version="v2.2-draft"
     method="GET"
     path="/accounts/{accountId}/customer"
+    resource="/accounts/{}/customer"
+    ozone="GET /accounts/{accountId}/customer"
     standards="GET /accounts/{AccountId}/parties"
   />
 </template>

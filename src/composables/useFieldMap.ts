@@ -252,6 +252,98 @@ export function permissionSourceMeta(source: string): LabelMeta {
   )
 }
 
+// ─── Endpoint pages ───────────────────────────────────────────────────────────
+
+// Resource key → the two API Reference pages describing each side of the
+// boundary, relative to the version root of each tree. `null` means that side
+// has no page of its own: the API Hub serves the endpoint, so there is no Ozone
+// Connect implementation to document.
+interface ResourcePages {
+  lfi: string | null
+  tpp: string | null
+}
+
+const RESOURCE_PAGES: Record<string, ResourcePages> = {
+  '/accounts': {
+    lfi: '/banking/data-sharing/open-api/accounts',
+    tpp: '/banking/data-sharing/open-api/accounts',
+  },
+  '/accounts/{}': {
+    lfi: '/banking/data-sharing/open-api/accounts-AccountId',
+    tpp: '/banking/data-sharing/open-api/accounts-AccountId',
+  },
+  '/accounts/{}/balances': {
+    lfi: '/banking/data-sharing/open-api/accounts-AccountId-balances',
+    tpp: '/banking/data-sharing/open-api/accounts-AccountId-balances',
+  },
+  '/accounts/{}/beneficiaries': {
+    lfi: '/banking/data-sharing/open-api/accounts-AccountId-beneficiaries',
+    tpp: '/banking/data-sharing/open-api/accounts-AccountId-beneficiaries',
+  },
+  '/accounts/{}/direct-debits': {
+    lfi: '/banking/data-sharing/open-api/accounts-AccountId-direct-debits',
+    tpp: '/banking/data-sharing/open-api/accounts-AccountId-direct-debits',
+  },
+  '/accounts/{}/products': {
+    lfi: '/banking/data-sharing/open-api/accounts-AccountId-products',
+    tpp: '/banking/data-sharing/open-api/accounts-AccountId-product',
+  },
+  '/accounts/{}/scheduled-payments': {
+    lfi: '/banking/data-sharing/open-api/accounts-AccountId-scheduled-payments',
+    tpp: '/banking/data-sharing/open-api/accounts-AccountId-scheduled-payments',
+  },
+  '/accounts/{}/standing-orders': {
+    lfi: '/banking/data-sharing/open-api/accounts-AccountId-standing-orders',
+    tpp: '/banking/data-sharing/open-api/accounts-AccountId-standing-orders',
+  },
+  '/accounts/{}/transactions': {
+    lfi: '/banking/data-sharing/open-api/accounts-AccountId-transactions',
+    tpp: '/banking/data-sharing/open-api/accounts-AccountId-transactions',
+  },
+  '/accounts/{}/customer': {
+    lfi: '/banking/data-sharing/open-api/accounts-AccountId-customer',
+    tpp: '/banking/data-sharing/open-api/accounts-AccountId-parties',
+  },
+  '/accounts/{}/statements': {
+    lfi: '/banking/data-sharing/open-api/accounts-AccountId-statements',
+    tpp: '/banking/data-sharing/open-api/accounts-AccountId-statements',
+  },
+  '/customer': {
+    lfi: '/banking/data-sharing/open-api/customer',
+    tpp: '/banking/data-sharing/open-api/parties',
+  },
+  '/payment-consents/{}/refund': {
+    lfi: '/banking/service-initiation/open-api/payment-consents-ConsentId-refund',
+    tpp: '/banking/service-initiation/open-api/payment-consents-ConsentId-refund',
+  },
+  '/products': {
+    lfi: '/banking/products-and-leads/open-api/products',
+    tpp: '/banking/products-leads/open-api/products',
+  },
+  '/leads': {
+    lfi: '/banking/products-and-leads/open-api/leads',
+    tpp: '/banking/products-leads/open-api/leads',
+  },
+  '/atm': {
+    lfi: '/banking/atms/open-api/atm',
+    tpp: '/banking/atms/open-api/atms',
+  },
+}
+
+export interface ResourceLinks {
+  lfi: string | null
+  tpp: string | null
+}
+
+export function resourceLinks(resource: string, version: Version): ResourceLinks {
+  const pages = RESOURCE_PAGES[resource]
+  if (!pages) return { lfi: null, tpp: null }
+  return {
+    lfi: pages.lfi ? `/tech/lfi-api-hub/${version}${pages.lfi}` : null,
+    tpp: pages.tpp ? `/tech/tpp-standards/${version}${pages.tpp}` : null,
+  }
+}
+
 // ─── Loading ──────────────────────────────────────────────────────────────────
 
 // Module-level so several components on one page share a single round trip, and

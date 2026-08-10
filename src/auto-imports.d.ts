@@ -72,6 +72,7 @@ declare global {
   const ref: typeof import('vue')['ref']
   const resetSelectedVersion: typeof import('./composables/useSelectedVersion')['resetSelectedVersion']
   const resolveComponent: typeof import('vue')['resolveComponent']
+  const resourceLinks: typeof import('./composables/useFieldMap')['resourceLinks']
   const setSelectedVersion: typeof import('./composables/useSelectedVersion')['setSelectedVersion']
   const shallowReactive: typeof import('vue')['shallowReactive']
   const shallowReadonly: typeof import('vue')['shallowReadonly']

@@ -11,6 +11,8 @@ meta:
     version="v2.2-draft"
     method="GET"
     path="/accounts/{accountId}/beneficiaries"
+    resource="/accounts/{}/beneficiaries"
+    ozone="GET /accounts/{accountId}/beneficiaries"
     standards="GET /accounts/{AccountId}/beneficiaries"
   />
 </template>

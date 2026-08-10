@@ -53,6 +53,10 @@ useHead({
           <span :class="['http-badge', `http-${method.toLowerCase()}`]">{{ method }}</span>
           <code class="ed-api-endpoint__hero-path">{{ path }}</code>
         </div>
+
+        <!-- Optional trailer under the method/path line. The field-map pages use
+             it to show both sides of the boundary; endpoint pages leave it empty. -->
+        <slot name="hero" />
       </div>
     </section>
 

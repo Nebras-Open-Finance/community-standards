@@ -11,6 +11,8 @@ meta:
     version="v2.2-draft"
     method="GET"
     path="/atm"
+    resource="/atm"
+    ozone="GET /atm"
     standards="GET /atms"
   />
 </template>

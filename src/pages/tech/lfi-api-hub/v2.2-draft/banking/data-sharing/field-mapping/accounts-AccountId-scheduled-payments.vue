@@ -11,6 +11,8 @@ meta:
     version="v2.2-draft"
     method="GET"
     path="/accounts/{accountId}/scheduled-payments"
+    resource="/accounts/{}/scheduled-payments"
+    ozone="GET /accounts/{accountId}/scheduled-payments"
     standards="GET /accounts/{AccountId}/scheduled-payments"
   />
 </template>

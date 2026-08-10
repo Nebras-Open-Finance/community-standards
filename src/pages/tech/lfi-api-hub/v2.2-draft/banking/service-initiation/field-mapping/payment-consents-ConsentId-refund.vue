@@ -11,6 +11,8 @@ meta:
     version="v2.2-draft"
     method="GET"
     path="/payment-consents/{consentId}/refund"
+    resource="/payment-consents/{}/refund"
+    ozone="GET /payment-consents/{consentId}/refund"
     standards="GET /payment-consents/{ConsentId}/refund"
   />
 </template>

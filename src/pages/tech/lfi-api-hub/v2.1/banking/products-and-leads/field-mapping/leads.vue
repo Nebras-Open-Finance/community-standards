@@ -11,6 +11,8 @@ meta:
     version="v2.1"
     method="POST"
     path="/leads"
+    resource="/leads"
+    ozone="POST /leads"
     standards="POST /leads"
   />
 </template>

@@ -77,6 +77,17 @@ const permissionSets = computed(() => {
         </div>
       </div>
 
+      <!-- The Hub is the enforcement point for consent. Said as a relief from
+           work rather than a prohibition: an LFI that wants to filter as well
+           is free to, it just gains nothing by it. -->
+      <p v-if="showPermissions" class="fm__enforcement">
+        <strong>The API Hub applies these permissions before the TPP sees the response.</strong>
+        Your Ozone Connect endpoint can return the full payload for the account it was asked
+        about, and the Hub removes whatever the consent does not permit. You may apply the same
+        filtering yourself if you prefer, but nothing requires it &mdash; the Hub enforces the
+        consent either way.
+      </p>
+
       <FieldMapTable :rows="rows" :show-permissions="showPermissions" />
     </template>
   </div>
@@ -102,6 +113,18 @@ const permissionSets = computed(() => {
   gap: 0.75rem 1.25rem;
   padding-bottom: 0.9rem;
 }
+
+.fm__enforcement {
+  margin: 0 0 1.1rem;
+  padding: 0.7rem 0.9rem;
+  border-left: 3px solid var(--at-teal);
+  background: color-mix(in srgb, var(--at-teal) 6%, var(--at-surface));
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--at-mute-2);
+  max-width: 60rem;
+}
+.fm__enforcement strong { color: var(--at-navy-deep); font-weight: 600; }
 
 .fm__perm-sets {
   display: flex;
