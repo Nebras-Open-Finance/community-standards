@@ -75,6 +75,30 @@ function unmaskIban(masked) {
 const isMultiPayment   = computed(() => props.connection?.type?.startsWith('Multi Payment'))
 const isSinglePayment  = computed(() => !isDataSharing.value && !isMultiPayment.value)
 
+// ─── Beneficiary model ────────────────────────────────────────────────────────
+// The shape of Initiation.Creditor[] the consent was authorized against: a single
+// entry (single), 2–10 entries (multiple), or the array omitted (open). Only
+// Variable On Demand and Delegated SCA accept multiple or open; every other type
+// is bound to one creditor. See the Creditor PII page for the model definitions.
+const beneficiaryModel   = computed(() => props.connection?.beneficiary ?? 'single')
+const isMultiBeneficiary = computed(() => beneficiaryModel.value === 'multiple')
+const isOpenBeneficiary  = computed(() => beneficiaryModel.value === 'open')
+
+// Example creditor list — mirrors the reference Multiple Beneficiaries PII payload.
+const EXAMPLE_BENEFICIARIES = [
+  { name: 'Ivan England',                     iban: 'AE07 0331 2345 6789 0123 456' },
+  { name: 'Al Noor Trading LLC',              iban: 'AE32 0260 0012 3456 7890 123' },
+  { name: 'Emirates Telecommunications Group', iban: 'AE98 0350 0000 0987 6543 210' }
+]
+
+const benefListOpen = ref(true)
+
+const toAccountHeader = computed(() => isMultiBeneficiary.value ? 'To accounts' : 'To account')
+
+const openBeneficiaryText = computed(() => isLfi.value
+  ? `No payee was fixed when this permission was given. [${entityLabel.value} ${props.connection?.lfiDigit}] chooses who to pay for each payment, within the payment rules.`
+  : 'You did not choose a payee when you gave this permission. We choose who to pay for each payment, within the payment rules.')
+
 const SIP_EXAMPLE = {
   amount:    '500.00',
   reference: 'INV-2025-00142',
@@ -329,19 +353,48 @@ provide('detailConnection', computed(() => props.connection))
         </div>
       </div>
 
-      <!-- Payment: To account card -->
+      <!-- Payment: To account card — shape follows the beneficiary model the
+           consent was authorized against -->
       <div v-if="!isDataSharing" class="cmd-accounts-card">
-        <div class="cmd-accounts-header-section">
-          <div class="cmd-accounts-header-text">To account</div>
+        <!-- Open Beneficiary carries no payee to head, so the card is text only -->
+        <div v-if="!isOpenBeneficiary" class="cmd-accounts-header-section">
+          <div class="cmd-accounts-header-text">{{ toAccountHeader }}</div>
         </div>
-        <div class="cmd-detail-rows">
+
+        <!-- Open Beneficiary: no payee fixed at consent — supplied per payment -->
+        <div v-if="isOpenBeneficiary" class="cmd-detail-rows">
+          <p class="cmd-open-benef-text">{{ openBeneficiaryText }}</p>
+        </div>
+
+        <!-- Multiple Beneficiaries: the 2–10 payees the consent authorises -->
+        <div v-else-if="isMultiBeneficiary" class="cmd-benef-card">
+          <button type="button" class="cmd-benef-header" :aria-expanded="benefListOpen" @click="benefListOpen = !benefListOpen">
+            <span class="cmd-benef-label">Beneficiary List</span>
+            <svg class="cmd-benef-arrow" :class="{ 'cmd-benef-arrow-collapsed': !benefListOpen }"
+              width="8" height="13" viewBox="0 0 8 13" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M1 1L7 6.5L1 12" stroke="#0C1441" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <div v-if="benefListOpen" class="cmd-benef-items">
+            <div v-for="benef in EXAMPLE_BENEFICIARIES" :key="benef.iban" class="cmd-benef-item">
+              <div class="cmd-benef-name">{{ benef.name }}</div>
+              <div class="cmd-detail-row">
+                <span class="cmd-meta-row-label">IBAN</span>
+                <span class="cmd-meta-row-value cmd-iban-value">{{ benef.iban }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Single Beneficiary: the one payee every payment must go to -->
+        <div v-else class="cmd-detail-rows">
           <div class="cmd-detail-row">
             <span class="cmd-meta-row-label">Payee Name</span>
-            <span class="cmd-meta-row-value">Ivan England</span>
+            <span class="cmd-meta-row-value">{{ EXAMPLE_BENEFICIARIES[0].name }}</span>
           </div>
           <div class="cmd-detail-row">
             <span class="cmd-meta-row-label">IBAN</span>
-            <span class="cmd-meta-row-value cmd-iban-value">AE07 0331 2345 6789 0123 456</span>
+            <span class="cmd-meta-row-value cmd-iban-value">{{ EXAMPLE_BENEFICIARIES[0].iban }}</span>
           </div>
         </div>
       </div>
@@ -841,6 +894,84 @@ provide('detailConnection', computed(() => props.connection))
 
 .cmd-iban-value {
   font-size: 11px;
+}
+
+/* ── Beneficiary model variants of the To account card ─────────────────── */
+
+.cmd-open-benef-text {
+  margin: 0;
+  width: 292px;
+  font-family: 'Poppins';
+  font-weight: 300;
+  font-size: 12px;
+  line-height: 160%;
+  letter-spacing: -0.01em;
+  color: #616786;
+}
+
+.cmd-benef-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 292px;
+}
+
+.cmd-benef-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.cmd-benef-label {
+  font-family: 'Poppins';
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 120%;
+  letter-spacing: -0.01em;
+  color: #616786;
+}
+
+.cmd-benef-arrow {
+  transform: rotate(90deg);
+  transition: transform 0.2s ease;
+}
+
+.cmd-benef-arrow-collapsed {
+  transform: rotate(0deg);
+}
+
+.cmd-benef-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 292px;
+}
+
+.cmd-benef-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 292px;
+}
+
+.cmd-benef-item + .cmd-benef-item {
+  padding-top: 12px;
+  border-top: 1px solid rgba(217, 217, 217, 0.6);
+}
+
+.cmd-benef-name {
+  font-family: 'Poppins';
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 160%;
+  letter-spacing: -0.01em;
+  color: #0b1340;
 }
 
 .cmd-sip-amount {

@@ -10,6 +10,7 @@ interface Consent {
   type: string
   maskedIban?: string | undefined
   paymentStatus?: string | undefined
+  beneficiary?: string | undefined
   baseConsentId?: string | number
 }
 
@@ -72,6 +73,25 @@ const PAYMENT_STATUSES = [
   'Rejected',
 ]
 
+// Beneficiary model — the shape of Initiation.Creditor[] the consent was authorized
+// against. Only Variable On Demand and Delegated SCA accept more than one entry or
+// no entry at all; every other type is fixed to a single creditor. See
+// /tech/tpp-standards/v2.1/banking/service-initiation/personal-identifiable-information/creditor
+const BENEFICIARY_MODELS = [
+  { value: 'single',   label: 'Single Beneficiary' },
+  { value: 'multiple', label: 'Multiple Beneficiaries' },
+  { value: 'open',     label: 'Open Beneficiary' },
+]
+
+const MULTI_BENEFICIARY_TYPES = new Set([
+  'Multi Payment (VariableOnDemand)',
+  'Multi Payment (DelegatedSCA)',
+])
+
+function supportsBeneficiaryModel(type: string) {
+  return MULTI_BENEFICIARY_TYPES.has(type)
+}
+
 const LFI_DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 const MAX_CONSENTS = 12
 
@@ -111,9 +131,20 @@ function ensureMaskedIban(consent: Consent) {
   }
 }
 
+function ensureBeneficiary(consent: Consent) {
+  if (!supportsBeneficiaryModel(consent.type)) {
+    consent.beneficiary = undefined
+    return
+  }
+  if (!BENEFICIARY_MODELS.some((m) => m.value === consent.beneficiary)) {
+    consent.beneficiary = 'single'
+  }
+}
+
 function onTypeChanged(consent: Consent) {
   consent.status = normalizeStatusForType(consent.type, consent.status)
   ensureMaskedIban(consent)
+  ensureBeneficiary(consent)
 }
 
 const ALL_SEED_CONSENTS: Consent[] = [
@@ -128,12 +159,12 @@ const ALL_SEED_CONSENTS: Consent[] = [
   { id: 9,  status: 'Consumed',              lfiDigit: randomLfiDigit(), type: 'Single Instant Payment',     maskedIban: generateMaskedIban(9),  paymentStatus: 'AcceptedWithoutPosting', baseConsentId: '' },
   { id: 10, status: 'Consumed',              lfiDigit: randomLfiDigit(), type: 'Single Instant Payment',     maskedIban: generateMaskedIban(10), paymentStatus: 'Rejected',                baseConsentId: '' },
   { id: 11, status: 'Rejected',              lfiDigit: randomLfiDigit(), type: 'Single Instant Payment',     maskedIban: generateMaskedIban(11), baseConsentId: '' },
-  { id: 12, status: 'Authorized',            lfiDigit: 4, type: 'Multi Payment (VariableOnDemand)',          maskedIban: generateMaskedIban(12), baseConsentId: 15 },
+  { id: 12, status: 'Authorized',            lfiDigit: 4, type: 'Multi Payment (VariableOnDemand)',          maskedIban: generateMaskedIban(12), beneficiary: 'multiple', baseConsentId: 15 },
   { id: 13, status: 'Suspended',             lfiDigit: randomLfiDigit(), type: 'Multi Payment (FixedOnDemand)', maskedIban: generateMaskedIban(13), baseConsentId: '' },
   { id: 14, status: 'Authorized',            lfiDigit: 6, type: 'Multi Payment (VariablePeriodicSchedule)',  maskedIban: generateMaskedIban(14), baseConsentId: '' },
-  { id: 15, status: 'Revoked',               lfiDigit: 4, type: 'Multi Payment (VariableOnDemand)',          maskedIban: generateMaskedIban(12), baseConsentId: '' },
+  { id: 15, status: 'Revoked',               lfiDigit: 4, type: 'Multi Payment (VariableOnDemand)',          maskedIban: generateMaskedIban(12), beneficiary: 'multiple', baseConsentId: '' },
   { id: 16, status: 'Expired',               lfiDigit: 3, type: 'Multi Payment (FixedDefinedSchedule)',      maskedIban: generateMaskedIban(16), baseConsentId: '' },
-  { id: 17, status: 'Authorized',            lfiDigit: 8, type: 'Multi Payment (DelegatedSCA)',              maskedIban: generateMaskedIban(17), baseConsentId: '' },
+  { id: 17, status: 'Authorized',            lfiDigit: 8, type: 'Multi Payment (DelegatedSCA)',              maskedIban: generateMaskedIban(17), beneficiary: 'open', baseConsentId: '' },
 ]
 
 function seedConsents(): Consent[] {
@@ -168,6 +199,7 @@ watch(
     for (const consent of val) {
       consent.status = normalizeStatusForType(consent.type, consent.status)
       ensureMaskedIban(consent)
+      ensureBeneficiary(consent)
       if (isSingleInstantPayment(consent.type) && consent.status === 'Consumed') {
         if (!consent.paymentStatus) consent.paymentStatus = 'Pending'
       } else {
@@ -182,6 +214,7 @@ watch(
       type: item.type,
       maskedIban: item.maskedIban,
       paymentStatus: item.paymentStatus,
+      beneficiary: item.beneficiary,
       baseConsentId: item.baseConsentId || undefined,
     }))
     updateField('consentConnections', JSON.stringify(payload))
@@ -225,6 +258,13 @@ watch(
           <label class="cce__label">Type</label>
           <select class="cce__control" v-model="consent.type" @change="onTypeChanged(consent)">
             <option v-for="type in CONSENT_TYPES" :key="type" :value="type">{{ type }}</option>
+          </select>
+        </div>
+
+        <div v-if="supportsBeneficiaryModel(consent.type)" class="cce__field cce__field--beneficiary">
+          <label class="cce__label">Beneficiary</label>
+          <select class="cce__control" v-model="consent.beneficiary">
+            <option v-for="model in BENEFICIARY_MODELS" :key="model.value" :value="model.value">{{ model.label }}</option>
           </select>
         </div>
 
@@ -331,6 +371,7 @@ watch(
 .cce__field--status  { min-width: 220px; }
 .cce__field--lfi     { width: 90px; }
 .cce__field--type    { min-width: 200px; }
+.cce__field--beneficiary { min-width: 150px; }
 .cce__field--payment { min-width: 240px; }
 .cce__field--base    { width: 110px; }
 

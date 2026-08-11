@@ -5,8 +5,8 @@
     :all-connections="resolvedConnections"
     :perspective="perspective"
     :header-color="headerColor"
-    @back="selectedConnection = null"
-    @navigate="selectedConnection = $event"
+    @back="selectConnection(null)"
+    @navigate="selectConnection($event)"
   />
   <div
     v-else
@@ -209,7 +209,10 @@ const isLfi = computed(() => props.perspective === 'lfi')
 const barTitle = computed(() => isLfi.value ? 'LFI' : 'TPP')
 const entityLabel = computed(() => isLfi.value ? 'TPP' : 'LFI')
 const filterEntityLabel = computed(() => isLfi.value ? 'TPP Name' : 'LFI Name')
-const selectedConnection = ref(null)
+// Hold the *identity* of the open consent, not the object itself — the editor
+// rebuilds resolvedConnections on every change, so a captured object would go
+// stale and the detail view would keep rendering the pre-edit consent.
+const selectedKey = ref(null)
 const activeTab = ref('current')
 const isFilterPanelOpen = ref(false)
 const filters = reactive({
@@ -277,6 +280,28 @@ const resolvedConnections = computed(() => {
     normalizeConnection(connection, defaultConnections[index % defaultConnections.length]),
   )
 })
+
+// Resolve the open consent from the live list each render, so edits made while the
+// detail view is open are reflected immediately.
+const selectedConnection = computed(() => {
+  const key = selectedKey.value
+  if (!key) return null
+  if (key.id != null) return resolvedConnections.value.find(c => c.id === key.id) ?? null
+  return resolvedConnections.value[key.index] ?? null
+})
+
+function selectConnection(connection) {
+  if (!connection) {
+    selectedKey.value = null
+    return
+  }
+  if (connection.id != null) {
+    selectedKey.value = { id: connection.id }
+    return
+  }
+  const index = resolvedConnections.value.indexOf(connection)
+  selectedKey.value = index >= 0 ? { index } : null
+}
 
 const currentConnections = computed(() =>
   resolvedConnections.value.filter(c => !HISTORY_STATUSES.has(c.status)),
@@ -353,7 +378,7 @@ function insuranceTypeListLabel(connection) {
 }
 
 function handleManage(connection) {
-  selectedConnection.value = connection
+  selectConnection(connection)
 }
 
 function statusClass(status) {

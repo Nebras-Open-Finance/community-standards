@@ -5,8 +5,8 @@
     :all-connections="resolvedConnections"
     :perspective="perspective"
     :header-color="headerColor"
-    @back="selectedConnection = null"
-    @navigate="selectedConnection = $event"
+    @back="selectConnection(null)"
+    @navigate="selectConnection($event)"
   />
   <div
     v-else
@@ -244,7 +244,10 @@ const isLfi = computed(() => props.perspective === 'lfi')
 const barTitle = computed(() => isLfi.value ? 'LFI' : 'TPP')
 const entityLabel = computed(() => isLfi.value ? 'TPP' : 'LFI')
 const filterEntityLabel = computed(() => isLfi.value ? 'TPP Name' : 'LFI Name')
-const selectedConnection = ref(null)
+// Hold the *identity* of the open consent, not the object itself — the editor
+// rebuilds resolvedConnections on every change, so a captured object would go
+// stale and the detail view would keep rendering the pre-edit consent.
+const selectedKey = ref(null)
 const activeTab = ref('current')
 const isFilterPanelOpen = ref(false)
 const filters = reactive({
@@ -291,6 +294,17 @@ const VALID_PAYMENT_STATUSES = [
   'AcceptedWithoutPosting',
   'Rejected'
 ]
+
+// Beneficiary model — the shape of Initiation.Creditor[] the consent was authorized
+// against. Only Variable On Demand and Delegated SCA may carry 2–10 entries
+// (multiple) or omit the array entirely (open); every other type is bound to a
+// single creditor.
+const VALID_BENEFICIARY_MODELS = ['single', 'multiple', 'open']
+
+const MULTI_BENEFICIARY_TYPES = new Set([
+  'Multi Payment (VariableOnDemand)',
+  'Multi Payment (DelegatedSCA)'
+])
 
 const MULTI_PAYMENT_EXPIRY = 'Connection expires 30/03/2025'
 const EMPTY_DATE = '--/--/----'
@@ -415,6 +429,10 @@ function normalizeConnection(connection, fallback) {
         ? (VALID_PAYMENT_STATUSES.includes(fallback?.paymentStatus) ? fallback.paymentStatus : undefined)
         : undefined)
 
+  const beneficiary = MULTI_BENEFICIARY_TYPES.has(type)
+    ? (VALID_BENEFICIARY_MODELS.includes(connection?.beneficiary) ? connection.beneficiary : 'single')
+    : 'single'
+
   const id = connection?.id ?? fallback?.id ?? undefined
   const baseConsentId = connection?.baseConsentId ?? fallback?.baseConsentId ?? undefined
 
@@ -430,6 +448,7 @@ function normalizeConnection(connection, fallback) {
     paymentAmount: normalizedPaymentAmount,
     maskedIban,
     paymentStatus,
+    beneficiary,
     baseConsentId
   }
 }
@@ -490,6 +509,28 @@ const resolvedConnections = computed(() => {
   }
   return normalized
 })
+
+// Resolve the open consent from the live list each render, so edits made while the
+// detail view is open are reflected immediately.
+const selectedConnection = computed(() => {
+  const key = selectedKey.value
+  if (!key) return null
+  if (key.id != null) return resolvedConnections.value.find(c => c.id === key.id) ?? null
+  return resolvedConnections.value[key.index] ?? null
+})
+
+function selectConnection(connection) {
+  if (!connection) {
+    selectedKey.value = null
+    return
+  }
+  if (connection.id != null) {
+    selectedKey.value = { id: connection.id }
+    return
+  }
+  const index = resolvedConnections.value.indexOf(connection)
+  selectedKey.value = index >= 0 ? { index } : null
+}
 
 const currentConnections = computed(() =>
   resolvedConnections.value.filter(connection => !HISTORY_STATUSES.has(connection.status))
@@ -604,7 +645,7 @@ const ACCEPTED_PAYMENT_STATUSES = new Set([
 ])
 
 function handleManage(connection) {
-  selectedConnection.value = connection
+  selectConnection(connection)
 }
 
 function statusClass(status) {
