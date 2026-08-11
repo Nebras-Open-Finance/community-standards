@@ -23,7 +23,6 @@ const NOINDEX_ENTIRE_SITE = false
 const NOINDEX = [
   /^_dev(\/|$)/,
   /^internal(\/|$)/,
-  /^proposals\/internal(\/|$)/,
   /(^|\/)_shared(\/|$)/,
 ]
 

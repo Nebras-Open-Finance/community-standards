@@ -51,7 +51,6 @@ const NOINDEX_ENTIRE_SITE = false
 const NOINDEX_RE = [
   /^\/_dev(\/|$)/,
   /^\/internal(\/|$)/,
-  /^\/proposals\/internal(\/|$)/,
   /(^|\/)_shared(\/|$)/,
 ]
 const robotsDirective = computed(() =>

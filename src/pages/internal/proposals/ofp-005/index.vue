@@ -1,5 +1,6 @@
 <route lang="yaml">
 meta:
+  layout: internal
   title: 'OFP-005 · Confirm data deletion when a consent is revoked'
 </route>
 
@@ -312,8 +313,8 @@ onMounted(() => {
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ofp-hero">
       <div class="ofp-hero__inner">
-        <RouterLink to="/proposals/" class="ofp__back">
-          <span class="ofp__back-arrow">&larr;</span> All proposals
+        <RouterLink to="/internal/proposals/" class="ofp__back">
+          <span class="ofp__back-arrow">&larr;</span> Internal proposals
         </RouterLink>
 
         <div class="ofp__meta-row">
@@ -841,7 +842,7 @@ onMounted(() => {
 
         <div class="ofp-cards">
           <RouterLink
-            to="/proposals/ofp-005/attestation-schema"
+            to="/internal/proposals/ofp-005/attestation-schema"
             class="ofp-card"
             :style="{ '--card-color': '#008B78' }"
           >

@@ -1,15 +1,20 @@
 <route lang="yaml">
 meta:
+  layout: internal
   title: Internal proposals
+  next: false
+  prev: false
+  aside: false
 </route>
 
 <script setup lang="ts">
 // Internal proposals listing — the counterpart to the public /proposals index.
 // It shows ONLY proposals flagged `internal` by the API (see the proposals
-// Worker / proposals.seed.json). Reached by URL only: it is deliberately not in
-// any nav or sitemap, and is marked noindex. The list is loaded client-side from
-// the API (like the public index), so the prerendered HTML carries no proposal
-// data. Access is not hard-gated — anyone with the URL can view it.
+// Worker / proposals.seed.json). It sits inside the password-gated /internal
+// section, so it is absent from the sitemap and marked noindex, and each
+// proposal's own page lives beside it under /internal/proposals/<id>. The list
+// is loaded client-side from the API (like the public index), so the
+// prerendered HTML carries no proposal data.
 import { computed, onMounted } from 'vue'
 import { useHead } from '@unhead/vue'
 import { useProposals } from '@/composables/useProposals'
@@ -51,7 +56,7 @@ const shown = computed(() => proposalList.value.filter((p) => p.internal))
         <p class="pv-hero__sub">
           Proposals still under <strong>internal review</strong> &mdash; not yet on the public
           <RouterLink to="/proposals/" class="pv-hero__inline-link">Proposals &amp; Voting</RouterLink>
-          page. This page is reachable by direct link only.
+          page. Each one lives behind the internal password gate until it is published.
         </p>
       </div>
     </section>

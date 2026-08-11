@@ -1,16 +1,14 @@
 <route lang="yaml">
 meta:
-  title: 'OFP-002 · Split the payment schema into Domestic and International definitions'
+  layout: internal
+  title: 'OFP-008 · Protect FinanceRates with an LFI-hosted display element'
 </route>
 
 <script setup lang="ts">
-// Bespoke detail page for OFP-002. Hand-authored (not rendered from the proposals
-// data array) so the content can be laid out in named sections — Background,
-// Recommendation, Technical changes, Draft schemas, Pros, Cons, and the specific
-// asks of the ecosystem. Styling follows the site's editorial system and mirrors
-// OFP-001. This proposal lives in its own folder so the two draft schema YAMLs
-// (domestic-payment-schema.yaml / international-payment-schema.yaml) sit beside the
-// page; they are imported raw below and shown in the Draft schemas section.
+// Bespoke detail page for OFP-008. Hand-authored (not rendered from the
+// proposals data array) so the content can be laid out in named sections —
+// Background, Recommendation, Scope, Technical changes, Cost, Pros, and Cons.
+// Styling follows the site's editorial system and mirrors OFP-006.
 import { ref, computed, onMounted, watch, type Component } from 'vue'
 import { useHead } from '@unhead/vue'
 import { type Proposal, type Stance, type Status, type Priority, deriveStatus, PRIORITY } from '@/data/proposals'
@@ -19,91 +17,75 @@ import PvVotePanel from '@/components/proposals/PvVotePanel.vue'
 import PvStatusPill from '@/components/proposals/PvStatusPill.vue'
 import PvProposalTabs from '@/components/proposals/PvProposalTabs.vue'
 
-useHead({ title: 'OFP-002 · Split the payment schema into Domestic and International definitions' })
+// Per-page link-preview override: a tailored title + description so a shared
+// link to this proposal reads as the proposal itself, not the site default.
+// (og:image is inherited from the branded site default in App.vue.) Later meta
+// of the same property/name wins under Unhead's dedupe.
+const OG_TITLE = 'OFP-008 · Protect FinanceRates with an LFI-hosted display element'
+const OG_DESCRIPTION =
+  'Retire the encrypted-JWE protection for FinanceRates. Instead of handing the TPP an encrypted rate to decrypt locally, the LFI returns a reference to a surface it renders itself, which the TPP embeds as a cross-origin element — 3DS-style — so the rate is never received by the TPP at all.'
+useHead({
+  title: OG_TITLE,
+  meta: [
+    { property: 'og:title', content: `${OG_TITLE} | UAE Open Finance` },
+    { property: 'og:description', content: OG_DESCRIPTION },
+    { name: 'twitter:description', content: OG_DESCRIPTION },
+  ],
+})
 
 const meta = {
-  id: 'OFP-002',
+  id: 'OFP-008',
   proposedBy: 'Nebras',
-  author: 'Thomas Catchpole',
+  author: 'Nowaier AlQahtani',
   // Fallbacks shown until the API responds (and during the static build). The
   // live status/priority/dates are sourced from the API — see syncFromApi().
-  opened: '17 Jun 2026',
-  closes: '28 Jul 2026',
-  priority: 'high' as Priority,
+  opened: '4 Aug 2026',
+  closes: '25 Aug 2026',
+  priority: 'medium' as Priority,
   version: 'V2.2',
 }
 
 const pros = [
-  'Domestic vs international is read from the top of the request — not inferred from whether an optional object is present or from which shape happens to be inside the encrypted PII blob.',
-  'The common case gets simpler: domestic no longer carries the international-only CurrencyRequest (FX) object at all.',
-  'International gets its own schema that can be modelled to cross-border reality, so the fields LFIs need live in the standard instead of in bespoke per-LFI consent and authorization journeys.',
-  'One standard international schema means one consistent customer experience across the ecosystem, rather than each LFI diverging.',
-  'Validation becomes context-specific: the API Hub can require FX / currency-of-transfer only for international, and Confirmation of Payee only for domestic.',
-  'Restricting international to Single Instant Payment and Fixed Periodic Schedule matches what is realistically supported cross-border and shrinks what each LFI must build.',
+  'The rate never enters the TPP’s systems in any form — protection is structural (cross-origin isolation), not a matter of trusting the TPP’s conduct after a point-in-time certification.',
+  'Removes the heaviest parts of the LFI build: JWE generation and the PBES2 / A256GCM crypto, per-call one-time-code minting and out-of-band delivery, and OTP-spam rate limiting.',
+  'Expiry is enforced by the LFI server-side, eliminating today’s “the TPP must honour exp” weakness and the header-vs-plaintext ambiguity in the current design.',
+  'Lets LFIs reuse existing 3DS / challenge infrastructure to authenticate the customer inside the surface, rather than build a bespoke encryption-and-OTP flow.',
+  'Makes the certification meaningful and technically enforceable at consent creation — closing the gap where nothing today stops an uncertified TPP requesting ReadProductFinanceRates.',
+  'Cleartext stays available for LFIs that do not consider a given rate sensitive, so no forced friction is added where none is wanted.',
+  'No LFI has a live JWE implementation, so removing AEJwe affects no one — this is a clean introduction, not a migration, with no deprecation window to run.',
 ]
 
 const cons = [
-  'It is a breaking change to the consent (PAR) and payment-creation request that every implementer must adopt.',
-  'The detailed international field set still has to be designed — this proposal makes the split and moves CurrencyRequest across; the field-by-field cross-border modelling is a follow-up worked through with LFIs.',
+  'LFIs must expose a customer-facing web surface with token validation — more front-end responsibility than a pure API contract, even where it reuses existing customer channels.',
+  'Embedded cross-origin frames bring UX cost: sizing, theming to fit the TPP’s design, mobile-webview quirks, and accessibility. 3DS challenge windows are a known source of friction.',
+  'The TPP cannot theme or localise the rate presentation — it is the LFI’s element. Consistency of protection is bought at the price of TPP brand control.',
+  'Clickjacking / overlay attempts belong in the threat model. They are mitigated by the LFI’s framing hygiene, the certification, and the low value of a display-only surface showing the customer their own rate — but we deliberately do not defend them with a per-TPP origin allowlist.',
+  'Viewing a protected rate now requires a live, customer-present context and an LFI round-trip — it is not a server-side or batch-friendly path. (This already applies to today’s JWE + OTP path, which is also customer-present.)',
 ]
 
-const exampleToday = `# ONE shared schema for domestic AND international.
-# Which one it is gets signalled only IMPLICITLY:
-POST /payments
-{
-  "Data": {
-    "ConsentId": "pcon_8821",
-    "Instruction": { "Amount": { "Amount": "5000.00", "Currency": "AED" } },
-    "CurrencyRequest": {                # optional — its PRESENCE means "international"
-      "ExtendedPurpose": "Family support",
-      "CurrencyOfTransfer": "GBP",
-      "DestinationCountryCode": "GB"
-    },
-    "PersonalIdentifiableInformation": "<JWE>",   # anyOf[ Domestic | International ]
-    "PaymentPurposeCode": "GDDS",
-    "OpenFinanceBilling": { ... }
-  }
-}
-# Domestic vs international is decided by (a) whether CurrencyRequest is present and
-# (b) which PII shape happens to sit inside the encrypted blob — never stated outright.`
+// The JWE shape LFIs return TODAY, rendered in the Background section.
+const todayExample = `# Today — the LFI returns FinanceRates as an encrypted JWE
+GET /accounts/{AccountId}/product
 
-const exampleProposed = `# TWO definitions, chosen at the TOP of the request.
+"FinanceRates": "eyJhbGciOiJQQkVTMi1IUzUxMitBMjU2S1ciLCJlbmMiOiJBMjU2R0NNIn0..."
 
-# == DOMESTIC == today's shape, CurrencyRequest removed
-POST /payments                         # Domestic
-{
-  "Data": {
-    "ConsentId": "pcon_8821",
-    "Instruction": { "Amount": { "Amount": "5000.00", "Currency": "AED" } },
-    "PersonalIdentifiableInformation": "<JWE: domestic creditor (IBAN) + CoP>",
-    "PaymentPurposeCode": "GDDS",
-    "OpenFinanceBilling": { ... }
-  }
+# The TPP forwards this compact JWE to the customer’s browser and decrypts it
+# locally using a one-time code the LFI sent out of band. Once decrypted, the
+# cleartext rate exists in a context the TPP controls — whether it is stored or
+# leaves the device rests on the TPP behaving as it demonstrated at certification.`
+
+// The proposed display-reference shape, rendered in the Recommendation section.
+const proposedExample = `# Proposed — the LFI returns a reference to a surface it renders itself
+GET /accounts/{AccountId}/product
+
+"FinanceRates": {
+  "DisplayUrl": "https://display.altareq1.example.ae/rates?rt=eyJhbGciOi...",
+  "ExpiresAt": "2026-08-01T14:30:00Z"
 }
 
-# == INTERNATIONAL == banking cross-border (FX quoting is a separate spec)
-POST /payments                         # International
-{
-  "Data": {
-    "ConsentId": "pcon_9034",
-    "Instruction": {                   # external (instructed) XOR internal (equivalent)
-      "EquivalentAmount": {            # debtor pays 5,000 AED, converted to GBP
-        "Amount": { "Amount": "5000.00", "Currency": "AED" },
-        "CurrencyOfTransfer": "GBP"
-      }
-    },
-    "ExchangeRateInformation": { "UnitCurrency": "AED", "RateType": "Indicative" },
-    "ChargeBearer": "Shared",
-    "DestinationCountryCode": "GB",
-    "PaymentPurposeCode": "GDDS",      # external — ISO ExternalPurpose1Code, not Aani
-    "ProprietaryPurposeCode": "FAMILY-SUPPORT",   # internal — bank/corridor code
-    "ExtendedPurpose": "Family support",
-    "EndToEndIdentification": "e2e-9034-jun26",
-    "PersonalIdentifiableInformation": "<JWE: international creditor + agent — unchanged>",
-    "OpenFinanceBilling": { ... }
-  }
-}
-# International payment types: SingleInstantPayment and FixedPeriodicSchedule only.`
+# The TPP embeds DisplayUrl as a cross-origin iframe. The customer sees the rate
+# rendered by LFI-origin content; the TPP’s own code cannot read it. The rate
+# value never reaches the TPP in any form, encrypted or cleartext.`
 
 // ─── Voting ─────────────────────────────────────────────────────────────────
 // Live tally + vote submission are backed by the proposals API (D1) via
@@ -117,25 +99,25 @@ const { myVotes, setVote, submitVote, hydrate, loadOne, loadMe, metaById } = use
 const apiMeta = computed(() => metaById.value[meta.id])
 
 const closesIn = ref('')
-const status = ref<Status>('open')
+const status = ref<Status>('draft')
 const priority = ref<Priority>(meta.priority)
 const openedDisplay = ref(meta.opened)
 const closesDisplay = ref(meta.closes)
 const versionDisplay = ref(meta.version)
 
-const priorityLabel = computed(() => PRIORITY[priority.value]?.label ?? PRIORITY.high.label)
+const priorityLabel = computed(() => PRIORITY[priority.value]?.label ?? PRIORITY.medium.label)
 
 // Voting has finished: swap the "Cast your vote" CTA for a closed treatment and
-// let the tally show through (draft/internal keep their frosted cover below).
+// let the tally show through (the draft state keeps its frosted cover below).
 const isClosed = computed(() => status.value === 'closed')
 
-// Optional companion partials, authored per proposal and co-located in this
-// folder (ofp-002.outcome.vue / ofp-002.feedback.vue) — excluded from routing in
+// Optional companion partials, authored per proposal and co-located with this
+// page (ofp-008.outcome.vue / ofp-008.feedback.vue) — excluded from routing in
 // vite.config. Their presence drives the layout: an Outcome switches a closed
 // proposal to the tabbed view; Feedback is appended under the vote panel. When
 // neither exists the page renders exactly as before.
-const outcomeMods = import.meta.glob('./ofp-002.outcome.vue', { eager: true }) as Record<string, { default: Component }>
-const feedbackMods = import.meta.glob('./ofp-002.feedback.vue', { eager: true }) as Record<string, { default: Component }>
+const outcomeMods = import.meta.glob('./ofp-008.outcome.vue', { eager: true }) as Record<string, { default: Component }>
+const feedbackMods = import.meta.glob('./ofp-008.feedback.vue', { eager: true }) as Record<string, { default: Component }>
 const OutcomePartial = Object.values(outcomeMods)[0]?.default ?? null
 const FeedbackPartial = Object.values(feedbackMods)[0]?.default ?? null
 
@@ -144,7 +126,7 @@ const showTabs = computed(() => isClosed.value && !!OutcomePartial)
 
 const proposal = computed<Proposal>(() => ({
   id: meta.id,
-  title: 'Split the payment schema into Domestic and International definitions',
+  title: 'Protect FinanceRates with an LFI-hosted display element',
   summary: '',
   category: '',
   priority: priority.value,
@@ -189,7 +171,7 @@ function daysLeft(iso: string): string {
   return `${days} days left`
 }
 
-// Format an ISO date ('2026-06-16') as the strip's display form ('16 Jun 2026').
+// Format an ISO date ('2026-06-29') as the strip's display form ('29 Jun 2026').
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 function fmtDate(iso: string): string {
   const d = new Date(`${iso}T00:00:00Z`)
@@ -205,10 +187,7 @@ function syncFromApi(): void {
   const m = apiMeta.value
   const openedISO = m?.opened || toISO(meta.opened)
   const closesISO = m?.closes || toISO(meta.closes)
-  // OFP-002 is internal — once the API confirms it, the status becomes 'internal'
-  // (overriding the date-derived open/closed), which the hero pill and the vote
-  // cover below key off.
-  status.value = deriveStatus(openedISO, closesISO, undefined, m?.internal ?? false)
+  status.value = deriveStatus(openedISO, closesISO)
   closesIn.value = daysLeft(closesISO)
   priority.value = (m?.priority as Priority) || meta.priority
   openedDisplay.value = m?.opened ? fmtDate(m.opened) : meta.opened
@@ -234,8 +213,8 @@ onMounted(() => {
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ofp-hero">
       <div class="ofp-hero__inner">
-        <RouterLink to="/proposals/" class="ofp__back">
-          <span class="ofp__back-arrow">&larr;</span> All proposals
+        <RouterLink to="/internal/proposals/" class="ofp__back">
+          <span class="ofp__back-arrow">&larr;</span> Internal proposals
         </RouterLink>
 
         <div class="ofp__meta-row">
@@ -245,12 +224,12 @@ onMounted(() => {
           <span class="ofp__tag ofp__tag--priority">{{ priorityLabel }}</span>
         </div>
 
-        <h1 class="ofp__title">Split the payment schema into Domestic and International definitions</h1>
+        <h1 class="ofp__title">Protect FinanceRates with an LFI-hosted display element</h1>
         <p class="ofp__summary">
-          PAR and <code>POST /payments</code> carry both domestic and international payments through one
-          shared schema, where international is only signalled implicitly. Split them at the top into a
-          Domestic definition (today&rsquo;s shape, minus the FX object) and an International definition that
-          can be modelled to cross-border reality.
+          Retire the encrypted-JWE protection for <code>FinanceRates</code>. Instead of handing the TPP
+          an encrypted rate to decrypt on the device, the LFI returns a reference to a surface it
+          <strong>renders itself</strong>, which the TPP embeds as a cross-origin element &mdash;
+          3DS-style &mdash; so the rate is never received by the TPP at all.
         </p>
 
         <div class="ofp__strip">
@@ -263,7 +242,7 @@ onMounted(() => {
             <div class="ofp__strip-val">{{ meta.author }}</div>
           </div>
           <div class="ofp__strip-item">
-            <div class="ofp__strip-key">Target version</div>
+            <div class="ofp__strip-key">Target</div>
             <div class="ofp__strip-val">{{ versionDisplay }}</div>
           </div>
           <div class="ofp__strip-item">
@@ -279,9 +258,7 @@ onMounted(() => {
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         DECISION · once closed with an Outcome, this whole region becomes tabs:
-         Outcome of Proposal · Votes Received & Feedback · Original Proposal.
-         Otherwise it renders straight through (the current single-scroll view).
+         DECISION · once closed with an Outcome, this whole region becomes tabs.
     ═══════════════════════════════════════════════════════════════════ -->
     <PvProposalTabs :tabbed="showTabs">
       <template #outcome>
@@ -301,26 +278,20 @@ onMounted(() => {
           <p v-else class="ofp-band__lede">
             Sign in with the Trust Framework to vote &mdash; For, Against, or Abstain &mdash; recorded in
             the open with your reasoning. Your organisation and name come from your directory profile, and
-            each person may vote once.
+            each person may vote once. This changes how a protected rate reaches the customer for every
+            LFI and TPP, so the reasoning you record carries as much weight as the tally itself.
           </p>
         </div>
         <PvVotePanel :proposal="proposal" :my-vote="myVote" @vote="onVote" @submit="onSubmit" />
         <p v-if="submitError && status === 'open'" class="ofp-vote-error" role="alert">{{ submitError }}</p>
       </div>
 
-      <!-- Before voting opens (or while internal), frost over the whole white
-           block. Once voting has closed the cover is dropped so the tally shows
-           through — the band head and panel carry the closed treatment instead. -->
-      <div v-if="status === 'draft' || status === 'internal'" class="ofp-vote-cover" aria-hidden="false">
+      <!-- Before voting opens, frost over the whole white block. Once voting has
+           closed the cover is dropped so the tally shows through. -->
+      <div v-if="status === 'draft'" class="ofp-vote-cover" aria-hidden="false">
         <div class="ofp-vote-cover__card">
-          <div class="ofp-vote-cover__label">
-            {{ status === 'internal' ? 'Internal proposal' : 'Voting not yet open' }}
-          </div>
-          <div class="ofp-vote-cover__msg">
-            {{ status === 'internal'
-              ? 'This proposal is under internal review.'
-              : `Voting opens ${openedDisplay}` }}
-          </div>
+          <div class="ofp-vote-cover__label">Voting not yet open</div>
+          <div class="ofp-vote-cover__msg">Voting opens {{ openedDisplay }}</div>
         </div>
       </div>
     </section>
@@ -332,224 +303,268 @@ onMounted(() => {
 
       <template #proposal>
     <!-- ═══════════════════════════════════════════════════════════════════
-         THE PROPOSAL (starts here) · BACKGROUND
+         01 · BACKGROUND
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ofp-band ofp-band--cream ofp-band--seam">
       <span class="ofp-seam-label">The proposal</span>
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
           <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 01 · Background</div>
-          <h2 class="ofp-band__title">One schema asked to be two</h2>
+          <h2 class="ofp-band__title">The encrypted-rate design is heavy to build and thin on protection</h2>
         </div>
         <div class="ofp-prose">
           <p>
-            PAR (<code>POST /par</code>) and <code>POST /payments</code> were designed to carry
-            <strong>both</strong> domestic and international payments through a single payment schema. Nothing
-            at the top of the request says which one is being made. The distinction is signalled only
-            indirectly: by whether the optional <code>CurrencyRequest</code> (FX) object is present, and by
-            which shape — domestic or international — happens to sit inside the encrypted
-            <code>PersonalIdentifiableInformation</code> blob, expressed as an <code>anyOf</code> rather than
-            an explicit choice.
+            When a TPP holds <code>ReadProductFinanceRates</code> and calls
+            <RouterLink to="/tech/tpp-standards/v2.1/banking/data-sharing/open-api/accounts-AccountId-product"><code>GET /accounts/{AccountId}/product</code></RouterLink>,
+            the LFI MAY return the <code>FinanceRates</code> field as a compact JWE rather than a
+            cleartext object. The TPP forwards that JWE to the customer’s browser and decrypts it
+            locally, using a one-time code the LFI sends the customer out of band. The
+            <RouterLink to="/tech/tpp-standards/v2.1/banking/data-sharing/api-guide/finance-rates">Encrypted FinanceRates</RouterLink>
+            guide documents the full flow.
+          </p>
+
+          <div class="ofp-code">
+            <div class="ofp-code__label">Today &mdash; the rate is handed to the TPP encrypted, then decrypted on the device</div>
+            <pre class="ofp-code__pre">{{ todayExample }}</pre>
+          </div>
+
+          <p>
+            LFI feedback has surfaced two structural problems. First, it is
+            <strong>heavy to implement for thin protection</strong>. The LFI must generate a per-call JWE
+            (PBES2-HS512+A256KW / A256GCM), mint and deliver a one-time code on a channel it controls,
+            and operate OTP-spam rate limits &mdash; a significant build. Yet once the browser decrypts
+            the JWE, the cleartext rate exists in a context the TPP controls; whether it is stored or
+            leaves the device rests on trusting the TPP to behave as it demonstrated at certification.
           </p>
           <p>
-            In practice the two have diverged sharply. <strong>Domestic payments have made real
-            headway; international payments have not been delivered.</strong> Multiple LFIs have raised
-            issues and asked for clarifications because the international fields have not mapped naturally to
-            how a cross-border payment actually works — the international creditor shape is thin (a creditor
-            account plus a single creditor agent), with none of the structure a SWIFT / ISO 20022 payment
-            needs.
+            Second, that <strong>certification is a point-in-time check, and it is not technically
+            required</strong>. The optional certification attests, once, that the TPP decrypts and
+            displays locally and does not persist the rate &mdash; it cannot bind the TPP’s runtime
+            behaviour thereafter. Separately, nothing in the API Hub currently prevents an
+            <em>uncertified</em> TPP from requesting <code>ReadProductFinanceRates</code> when it creates
+            a consent; the dependency is documented but not enforced.
           </p>
           <p>
-            Because the international schema was not what it needed to be, <strong>LFIs have moved the
-            fields they actually require out of the standard and into their own Open Finance international
-            consent and authorization journeys.</strong> If the API is adopted as it stands, that leads to a
-            <strong>varying customer experience across the ecosystem</strong> — the opposite of what a shared
-            standard is meant to deliver.
-          </p>
-          <p>
-            The split is cheap to make now and expensive to defer. With little to no live international
-            integration to migrate, separating the two definitions keeps the domestic schema free of
-            international-only complexity and gives international its own home to be modelled properly.
+            The net effect is real engineering cost on the LFI side buying protection that still rests on
+            trust, with an enforcement gap on top.
           </p>
         </div>
       </div>
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         RECOMMENDATION
+         02 · RECOMMENDATION
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ofp-band ofp-band--white">
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
           <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 02 · Recommendation</div>
-          <h2 class="ofp-band__title">Make the split explicit at the top</h2>
+          <h2 class="ofp-band__title">Have the LFI show the rate itself, inside the TPP&rsquo;s screen</h2>
         </div>
         <div class="ofp-prose">
           <p>
-            <strong>Replace the single shared payment schema with an explicit choice between a Domestic
-            definition and an International definition</strong>, made at the top of both the PAR consent and
-            <code>POST /payments</code> — in place of today&rsquo;s implicit signalling through an
-            <code>anyOf</code> PII and an optional <code>CurrencyRequest</code>.
+            <strong>On <code>GET /accounts/{AccountId}/product</code>, an LFI protecting a rate returns
+            &mdash; in place of the rate value &mdash; a short-lived reference to an LFI-hosted display
+            surface. The TPP embeds that surface as a cross-origin element (a plain iframe, or an
+            LFI-provided web component) within its own screen.</strong> The customer sees the rate in the
+            flow of the TPP application; it is rendered by LFI-origin content that the TPP’s code
+            cannot read, script into, or capture.
+          </p>
+
+          <div class="ofp-code">
+            <div class="ofp-code__label">Proposed &mdash; the LFI returns a reference to a surface it renders itself</div>
+            <pre class="ofp-code__pre">{{ proposedExample }}</pre>
+          </div>
+
+          <p>
+            This mirrors 3-D Secure: the LFI is the issuer, the TPP is the merchant, and the sensitive
+            interaction happens in an issuer-controlled frame the merchant hosts but cannot see into.
+            LFIs that already run 3DS challenge infrastructure can reuse that tooling to authenticate the
+            customer inside the surface, replacing the out-of-band OTP entirely.
           </p>
           <p>
-            The <strong>Domestic definition is today&rsquo;s schema, unchanged, with one removal</strong>:
-            the <code>CurrencyRequest</code> object goes. A domestic payment is always a same-currency
-            (AED&nbsp;&rarr;&nbsp;AED) transfer, so FX never applies; the domestic creditor (IBAN-only, with
-            Confirmation of Payee) stays exactly as it is.
-          </p>
-          <p>
-            The <strong>International definition gets its own schema</strong>. As a first step it carries
-            today&rsquo;s international PII plus the <code>CurrencyRequest</code> object — moved across and
-            made a <strong>required, first-class part</strong> of the definition rather than an optional
-            add-on. From there we realign its fields, field by field and with the LFIs, to cross-border
-            SWIFT / ISO 20022 (pacs.008) practice. International is limited to <strong>two payment
-            types</strong>: Single Instant Payment and Fixed Periodic Schedule.
+            The customer’s browser or app loads the LFI surface <strong>directly from the LFI
+            origin</strong>, exactly as it already reaches the LFI when the customer authenticates during
+            consent authorisation. Strict mediation is preserved &mdash; the invariant governs API and
+            data traffic, and the rate value is never proxied to the TPP; only a reference is.
           </p>
         </div>
       </div>
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         TECHNICAL CHANGES
+         03 · SCOPE AND BEHAVIOUR
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ofp-band ofp-band--cream">
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 03 · Technical changes</div>
-          <h2 class="ofp-band__title">What changes in the spec</h2>
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 03 · Scope and behaviour</div>
+          <h2 class="ofp-band__title">What the reference means, precisely</h2>
           <p class="ofp-band__lede">
-            One structural change — an explicit top-level split — and what each definition then looks like.
+            The reference and the surface behind it become something TPPs and LFIs build against, so the
+            shape and the controls have to be pinned down rather than left to implementation.
+          </p>
+        </div>
+        <div class="ofp-prose">
+          <div class="ofp-rules">
+            <div class="ofp-rules__label">Proposed rules</div>
+            <ul class="ofp-rules__list">
+              <li>
+                <code>FinanceRates</code> becomes <code>anyOf</code> a cleartext
+                <code>AEProductFinanceRates</code> object <strong>or</strong> a new
+                <code>AERateDisplayRef</code>. The <code>AEJwe</code> shape is
+                <strong>removed</strong> from this field.
+              </li>
+              <li>
+                <code>AERateDisplayRef</code> carries a <code>DisplayUrl</code> on the LFI’s
+                customer-facing display origin &mdash; itself carrying a signed, single-use request token
+                bound to the consent, <code>AccountId</code>, <code>ProductId</code>, and the TPP’s
+                client identity &mdash; and an <code>ExpiresAt</code>.
+              </li>
+              <li>
+                <strong>Confidentiality comes from cross-origin isolation.</strong> Because the frame is
+                cross-origin, the TPP page cannot read the rate from the DOM, script into the frame, or
+                capture its content. This holds regardless of any allowlist.
+              </li>
+              <li>
+                <strong>Access comes from the token.</strong> A valid <code>DisplayUrl</code> only ever
+                reaches the legitimate TPP, because obtaining one requires an authenticated, consented
+                call through the API Hub. The LFI validates the token before rendering anything.
+              </li>
+              <li>
+                <strong>Expiry is enforced by the LFI, server-side.</strong> After <code>ExpiresAt</code>
+                the surface stops rendering the rate &mdash; it is no longer a TPP obligation to honour a
+                display window.
+              </li>
+              <li>
+                <strong>No per-TPP embedding-origin registration.</strong> We deliberately avoid a
+                <code>frame-ancestors</code> allowlist; it would only add clickjacking defence for a
+                display-only surface showing the customer their own rate, at the cost of a new
+                registration artifact and LFI upkeep, and it does not map cleanly onto native / webview.
+              </li>
+              <li>
+                <code>ReadProductFinanceRates</code> is <strong>unchanged</strong>. It still gates whether
+                the LFI surfaces the rate at all; if the permission is absent, <code>FinanceRates</code>
+                is omitted from the <code>Product</code> record, exactly as today.
+              </li>
+            </ul>
+          </div>
+          <p>
+            The baseline embedding is a plain cross-origin iframe &mdash; the lowest common denominator
+            and the closest reuse of 3DS browser flows &mdash; with an optional LFI-provided web-component
+            or mobile-SDK profile defined for richer embedding, and for native contexts where an iframe is
+            not the host.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         04 · TECHNICAL CHANGES
+    ═══════════════════════════════════════════════════════════════════ -->
+    <section class="ofp-band ofp-band--white">
+      <div class="ofp-band__inner">
+        <div class="ofp-band__head">
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 04 · Technical changes</div>
+          <h2 class="ofp-band__title">What changes</h2>
+          <p class="ofp-band__lede">
+            One schema change, a display surface on the LFI side, a repurposed certification the API Hub
+            can enforce, and documentation. The consent, audit, and billing semantics are untouched.
           </p>
         </div>
 
         <div class="ofp-changes">
           <div class="ofp-change">
-            <div class="ofp-change__label">01 · Top-level split (PAR + <code>POST /payments</code>)</div>
+            <div class="ofp-change__label">01 · Standards schema</div>
             <p>
-              Introduce an explicit Domestic / International choice at the top of the consent and the
-              payment-creation request, replacing the <code>anyOf</code> over the two
-              <code>PersonalIdentifiableInformation</code> shapes and the &ldquo;is
-              <code>CurrencyRequest</code> present?&rdquo; heuristic. The payment context is stated, not
-              inferred.
+              In the account-information specification, change <code>FinanceRates</code> to
+              <code>anyOf</code> <code>[ AEProductFinanceRates, AERateDisplayRef ]</code>, add the
+              <code>AERateDisplayRef</code> schema, and <strong>remove <code>AEJwe</code></strong> from
+              this field. Targets <strong>V2.2</strong>. Because no LFI has a live JWE implementation, the
+              removal affects no one and needs no deprecation window.
             </p>
           </div>
 
           <div class="ofp-change">
-            <div class="ofp-change__label">02 · Domestic definition</div>
+            <div class="ofp-change__label">02 · LFI display surface</div>
             <p>
-              Remove the <code>CurrencyRequest</code> object — FX never applies to a same-currency domestic
-              transfer. Everything else (the IBAN-only domestic creditor, Confirmation of Payee, the full
-              payment-type taxonomy, references, billing) is unchanged.
+              A protecting LFI stands up (or reuses) a tokenised, customer-facing display surface that
+              validates the request token, authenticates the customer where it chooses to &mdash; reusing
+              existing 3DS / challenge infrastructure &mdash; renders the rate, and enforces
+              <code>ExpiresAt</code> server-side. In return it retires the JWE generation, the one-time-code
+              minting and delivery, and the OTP-spam rate limits. No per-TPP allowlist is maintained.
             </p>
           </div>
 
           <div class="ofp-change">
-            <div class="ofp-change__label">03 · International definition — request body</div>
+            <div class="ofp-change__label">03 · Certification &amp; enforcement</div>
             <p>
-              The old <code>CurrencyRequest</code> object is unpacked onto the request. <strong>Amount becomes
-              an explicit choice</strong>: <code>InstructedAmount</code> (the external / target amount the
-              creditor receives, in the currency of transfer) or <code>EquivalentAmount</code> (the internal /
-              source amount debited in the debtor’s currency, plus the currency it converts into) — both
-              reusing the domestic <code>{ Amount, Currency }</code> shape. <strong>Purpose splits</strong>
-              into an external <code>PaymentPurposeCode</code> (ISO 20022 <code>ExternalPurpose1Code</code>;
-              the domestic Aani 3-letter list no longer applies) and a simple internal
-              <code>ProprietaryPurposeCode</code>, alongside the free-text <code>ExtendedPurpose</code>.
-              <code>ExchangeRateInformation</code>, <code>ChargeBearer</code>, <code>InstructionPriority</code>
-              and <code>DestinationCountryCode</code> stay; <code>EndToEndIdentification</code> is added; and
-              the exchange-house <code>FxQuoteId</code> is removed (FX quoting is the separate FX Service
-              Initiation spec). Payment types are restricted to <code>SingleInstantPayment</code> and
-              <code>FixedPeriodicSchedule</code>.
+              Rename the optional <em>Access Encrypted Resource Data</em> certification &mdash; a misnomer
+              once there is no encryption &mdash; to <strong>Rate Display Embedding</strong>, and repurpose
+              it: the TPP demonstrates it can correctly embed and operate the LFI element and does not
+              attempt to defeat its isolation. The API Hub SHOULD then reject a consent requesting
+              <code>ReadProductFinanceRates</code> from a TPP that does not hold the certification, using
+              the trust-framework record it already holds &mdash; closing today’s enforcement gap.
             </p>
           </div>
 
           <div class="ofp-change">
-            <div class="ofp-change__label">04 · International definition — creditor (next step)</div>
+            <div class="ofp-change__label">04 · Documentation</div>
             <p>
-              The encrypted creditor block is <strong>unchanged in this draft</strong>. The cross-border
-              additions LFIs need — intermediary agents, ultimate creditor / debtor, regulatory reporting, and
-              structured remittance information, on top of the structured creditor address the schema already
-              carries — are <strong>recommended as the next step</strong> and called out in the asks below,
-              rather than modelled here yet.
+              Rewrite the two <em>Encrypted FinanceRates</em> guides (TPP and LFI) and the Data Sharing
+              requirements tables around the embedded surface, update the certification page under its new
+              name, and record the change as an errata. No new registration field is introduced.
             </p>
           </div>
-        </div>
-
-        <div class="ofp-code">
-          <div class="ofp-code__label">Today — one shared schema, international signalled implicitly</div>
-          <pre class="ofp-code__pre">{{ exampleToday }}</pre>
-        </div>
-
-        <div class="ofp-code">
-          <div class="ofp-code__label">Proposed — Domestic and International, chosen at the top</div>
-          <pre class="ofp-code__pre">{{ exampleProposed }}</pre>
         </div>
       </div>
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         DRAFT SCHEMAS
-    ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ofp-band ofp-band--white">
-      <div class="ofp-band__inner">
-        <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 04 · Draft schemas</div>
-          <h2 class="ofp-band__title">The split, written out</h2>
-          <p class="ofp-band__lede">
-            Working drafts attached to this proposal — open each to read it in the same rendered view as
-            the published API specs. Schemas the proposal changes are defined in full; schemas unchanged
-            from the published spec are shown as stubs marked &ldquo;unchanged&rdquo;. The International draft
-            restructures the cleartext request body (the instructed / equivalent amount choice, split purpose
-            codes, <code>EndToEndIdentification</code>) while leaving today&rsquo;s encrypted creditor block
-            unchanged — the cross-border creditor fields are the next step.
-          </p>
-        </div>
-
-        <div class="ofp-cards">
-          <RouterLink
-            to="/proposals/ofp-002/domestic-schema"
-            class="ofp-card"
-            :style="{ '--card-color': '#008B78' }"
-          >
-            <span class="ofp-card__top" :style="{ background: '#008B78' }" />
-            <div class="ofp-card__meta">
-              <span class="ofp-card__cat" :style="{ color: '#008B78' }">Domestic</span>
-            </div>
-            <h3 class="ofp-card__title">domestic-payment-schema.yaml</h3>
-            <p class="ofp-card__desc">Today&rsquo;s shape, with the CurrencyRequest object removed.</p>
-            <div class="ofp-card__foot">
-              <span class="ofp-card__cta">Open rendered schema</span>
-              <span class="ofp-card__arrow" :style="{ color: '#008B78' }">&rarr;</span>
-            </div>
-          </RouterLink>
-
-          <RouterLink
-            to="/proposals/ofp-002/international-schema"
-            class="ofp-card"
-            :style="{ '--card-color': '#0043A6' }"
-          >
-            <span class="ofp-card__top" :style="{ background: '#0043A6' }" />
-            <div class="ofp-card__meta">
-              <span class="ofp-card__cat" :style="{ color: '#0043A6' }">International</span>
-            </div>
-            <h3 class="ofp-card__title">international-payment-schema.yaml</h3>
-            <p class="ofp-card__desc">Banking cross-border request body, two payment types.</p>
-            <div class="ofp-card__foot">
-              <span class="ofp-card__cta">Open rendered schema</span>
-              <span class="ofp-card__arrow" :style="{ color: '#0043A6' }">&rarr;</span>
-            </div>
-          </RouterLink>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══════════════════════════════════════════════════════════════════
-         PROS
+         05 · WHAT THIS COSTS TO BUILD
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ofp-band ofp-band--cream">
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 05 · Pros</div>
-          <h2 class="ofp-band__title">What the split buys</h2>
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 05 · What this costs to build</div>
+          <h2 class="ofp-band__title">A different shape of work, not obviously less of it</h2>
+        </div>
+        <div class="ofp-prose">
+          <p>
+            This proposal trades one build for another. It retires the JWE crypto, the one-time-code
+            delivery, and the OTP rate limiting &mdash; genuinely the heaviest parts of today’s LFI
+            work &mdash; but in their place a protecting LFI has to expose a <strong>customer-facing
+            display surface</strong> with token validation and, if it wants friction control, a challenge
+            step. For an LFI that already runs 3DS this is largely reuse; for one that does not, it is new
+            front-end responsibility.
+          </p>
+          <p>
+            The change is <strong>meaningful for TPPs too</strong>: they move from forwarding a JWE and
+            decrypting in-browser to embedding and operating a cross-origin element they cannot style. And
+            it is a <strong>breaking schema change</strong> to <code>FinanceRates</code>, taken at V2.2.
+            The one thing that makes it cheap right now is that <strong>no LFI has shipped the JWE
+            path</strong>, so nothing has to be migrated &mdash; this is close to a clean start rather than
+            a transition.
+          </p>
+          <p>
+            A vote in favour is a statement that your institution would <em>build to</em> this &mdash; an
+            LFI that it would host the surface, a TPP that it would embed it &mdash; not merely that it
+            reads as more secure. If the ecosystem would rather keep the encrypted-rate design, or would
+            not use the protected path at all, that is a perfectly good outcome and the work will not be
+            scheduled.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         06 · PROS
+    ═══════════════════════════════════════════════════════════════════ -->
+    <section class="ofp-band ofp-band--white">
+      <div class="ofp-band__inner">
+        <div class="ofp-band__head">
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 06 · Pros</div>
+          <h2 class="ofp-band__title">What the display surface buys</h2>
         </div>
         <ul class="ofp-pros">
           <li v-for="(p, i) in pros" :key="i" class="ofp-pros__item">
@@ -561,13 +576,13 @@ onMounted(() => {
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         CONS
+         07 · CONS
     ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ofp-band ofp-band--white">
+    <section class="ofp-band ofp-band--cream">
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 06 · Cons</div>
-          <h2 class="ofp-band__title">What the split costs</h2>
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 07 · Cons</div>
+          <h2 class="ofp-band__title">What it costs</h2>
         </div>
         <ul class="ofp-cons">
           <li v-for="(c, i) in cons" :key="i" class="ofp-cons__item">
@@ -674,10 +689,11 @@ onMounted(() => {
 
 .ofp__summary code {
   font-family: var(--at-mono);
-  font-size: 0.82em;
-  background: var(--at-surface);
+  font-size: 0.84em;
+  background: var(--at-bg-paper);
   border: 1px solid var(--at-grid-line);
   padding: 1px 5px;
+  color: var(--at-navy-deep);
 }
 
 .ofp__strip {
@@ -760,21 +776,20 @@ onMounted(() => {
   color: var(--at-navy-deep);
 }
 
+/* Inline code inside a serif heading — keep it monospaced but sized to the
+   heading rather than boxed like body code. */
+.ofp-band__title code {
+  font-family: var(--at-mono);
+  font-size: 0.78em;
+  letter-spacing: -0.01em;
+}
+
 .ofp-band__lede {
   font-family: var(--at-sans);
   font-size: 1rem;
   line-height: 1.65;
   color: var(--at-mute-2);
   margin: 1.1rem 0 0;
-}
-
-.ofp-band__lede code {
-  font-family: var(--at-mono);
-  font-size: 0.85em;
-  background: var(--at-bg-paper);
-  border: 1px solid var(--at-grid-line);
-  padding: 1px 5px;
-  color: var(--at-navy-deep);
 }
 
 /* ─── Prose ─────────────────────────────────────────────────────────────── */
@@ -791,6 +806,13 @@ onMounted(() => {
 .ofp-prose p:last-child { margin-bottom: 0; }
 .ofp-prose strong { color: var(--at-navy-deep); font-weight: 600; }
 .ofp-prose em { font-style: italic; }
+
+.ofp-prose a {
+  color: var(--at-teal-deep, #008b78);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.ofp-prose a:hover { color: var(--at-navy-deep); }
 
 .ofp-prose code {
   font-family: var(--at-mono);
@@ -846,6 +868,12 @@ onMounted(() => {
   color: var(--at-navy-deep);
 }
 
+.ofp-change a {
+  color: var(--at-teal-deep, #008b78);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* Inline code inside the mono label is unboxed (overrides .ofp-change code). */
 .ofp-change__label code {
   font-size: 0.92em;
@@ -881,101 +909,64 @@ onMounted(() => {
   line-height: 1.65;
   color: #d7e4f5;
   white-space: pre;
-  max-height: 32rem;
-  overflow-y: auto;
 }
 
-/* ─── Draft-schema cards (rendered via Redoc) — mirrors /tech card style ─── */
-.ofp-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(22.5rem, 1fr));
-  gap: 1.25rem;
-  max-width: 60rem;
-}
-
-.ofp-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  background: var(--at-bg-cream);
+/* ─── Rules recap (proposed rules, in Scope and behaviour) ───────────────── */
+.ofp-rules {
+  max-width: 52rem;
+  margin: 0 0 24px;
   border: 1px solid var(--at-grid-line);
-  padding: 2rem 1.75rem 1.5rem;
-  text-decoration: none;
-  color: inherit;
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  border-top: 2px solid var(--at-teal);
+  background: var(--at-surface);
+  padding: 20px 24px;
 }
 
-.ofp-card:hover {
-  border-color: var(--card-color, var(--at-navy));
-  transform: translateY(-2px);
+.ofp-rules__label {
+  font-family: var(--at-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: var(--at-teal);
+  margin-bottom: 12px;
 }
 
-.ofp-card__top {
+.ofp-rules__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ofp-rules__list li {
+  position: relative;
+  padding-left: 1.2rem;
+  font-size: 15.5px;
+  line-height: 1.68;
+  color: var(--at-navy);
+  margin-bottom: 10px;
+}
+
+.ofp-rules__list li:last-child { margin-bottom: 0; }
+
+.ofp-rules__list li::before {
+  content: '';
   position: absolute;
-  top: 0;
   left: 0;
-  width: 48px;
-  height: 3px;
+  top: 0.62em;
+  width: 7px;
+  height: 7px;
+  background: var(--at-teal);
 }
 
-.ofp-card__meta {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  margin-bottom: 0.85rem;
-  font-family: var(--at-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
+.ofp-rules__list strong { color: var(--at-navy-deep); font-weight: 600; }
 
-.ofp-card__cat { font-weight: 700; }
-
-.ofp-card__title {
+.ofp-rules__list code {
   font-family: var(--at-mono);
-  font-size: 1.05rem;
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
+  font-size: 0.86em;
+  background: var(--at-bg-paper);
+  border: 1px solid var(--at-grid-line);
+  padding: 1px 5px;
   color: var(--at-navy-deep);
-  margin: 0 0 0.85rem;
-  word-break: break-all;
 }
-
-.ofp-card__desc {
-  font-family: var(--at-sans);
-  font-size: 0.92rem;
-  line-height: 1.6;
-  color: var(--at-mute-2);
-  margin: 0 0 1.1rem;
-  flex: 1;
-}
-
-.ofp-card__foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 1rem;
-  border-top: 1px solid var(--at-grid-line);
-}
-
-.ofp-card__cta {
-  font-family: var(--at-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  font-weight: 600;
-  color: var(--at-mute);
-}
-
-.ofp-card__arrow {
-  font-family: var(--at-mono);
-  font-size: 1rem;
-  transition: transform 0.2s;
-}
-
-.ofp-card:hover .ofp-card__arrow { transform: translateX(4px); }
-.ofp-card:hover .ofp-card__cta { color: var(--at-navy-deep); }
 
 /* ─── Pros ──────────────────────────────────────────────────────────────── */
 .ofp-pros {
@@ -1045,111 +1036,9 @@ onMounted(() => {
   margin-top: 1px;
 }
 
-/* ─── Asks ──────────────────────────────────────────────────────────────── */
-.ofp-asks {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-width: 56rem;
-  border: 1px solid var(--at-grid-line);
-  border-top: 2px solid var(--at-navy-deep);
-}
-
-.ofp-ask {
-  display: flex;
-  align-items: flex-start;
-  gap: 18px;
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--at-grid-line);
-}
-
-.ofp-ask:last-child { border-bottom: none; }
-
-.ofp-ask__num {
-  font-family: var(--at-mono);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--at-teal);
-  padding-top: 2px;
-  flex-shrink: 0;
-}
-
-.ofp-ask__text {
-  font-size: 15.5px;
-  line-height: 1.55;
-  color: var(--at-navy-deep);
-}
-
-/* ─── Reference chip ────────────────────────────────────────────────────── */
-.ofp-ref {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 2rem;
-  flex-wrap: wrap;
-}
-
-.ofp-ref__label {
-  font-family: var(--at-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--at-navy);
-  opacity: 0.5;
-}
-
-.ofp-ref__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--at-navy-deep);
-  padding: 8px 14px;
-  border: 1px solid var(--at-grid-line);
-  background: var(--at-surface);
-  font-weight: 500;
-  text-decoration: none;
-  transition: border-color 0.15s ease, background 0.15s ease;
-}
-
-.ofp-ref__chip:hover {
-  border-color: var(--at-teal);
-  background: var(--at-bg-cream);
-}
-
-.ofp-ref__square { width: 6px; height: 6px; background: var(--at-teal); flex-shrink: 0; }
-
-/* External (GitHub api-specs) links — deliberately distinct from the internal
-   chips: monospace, dashed border, and a trailing arrow-out glyph. */
-.ofp-ref--ext { margin-top: 12px; }
-
-.ofp-ref__chip--ext {
-  gap: 10px;
-  font-family: var(--at-mono);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--at-navy);
-  border: 1px dashed var(--at-grid-line);
-  background: transparent;
-}
-
-.ofp-ref__chip--ext:hover {
-  border-color: var(--at-navy-deep);
-  border-style: solid;
-  background: var(--at-surface);
-  color: var(--at-navy-deep);
-}
-
-.ofp-ref__ext-arrow {
-  font-size: 14px;
-  line-height: 1;
-  color: var(--at-teal);
-  transition: transform 0.15s ease;
-}
-
-.ofp-ref__chip--ext:hover .ofp-ref__ext-arrow { transform: translate(1px, -1px); }
-
 /* ─── Vote cover (shown when voting is not open) ─────────────────────────── */
+/* The panel still renders underneath, frosted and non-interactive, so the
+   section reads as "covered up" rather than missing. */
 .ofp-vote-wrap { position: relative; }
 
 .ofp-vote-cover {
@@ -1213,6 +1102,5 @@ onMounted(() => {
   .ofp-band__inner { padding: 0 1.25rem; }
   .ofp-pros { grid-template-columns: 1fr; }
   .ofp-cons { grid-template-columns: 1fr; }
-  .ofp-cards { grid-template-columns: 1fr; }
 }
 </style>

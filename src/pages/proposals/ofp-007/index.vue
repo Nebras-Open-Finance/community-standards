@@ -112,7 +112,9 @@ const { myVotes, setVote, submitVote, hydrate, loadOne, loadMe, metaById } = use
 const apiMeta = computed(() => metaById.value[meta.id])
 
 const closesIn = ref('')
-const status = ref<Status>('draft')
+// Voting has closed — the fallback matches, so the pre-rendered HTML opens on the
+// Outcome tab rather than briefly showing the "voting not yet open" cover.
+const status = ref<Status>('closed')
 const priority = ref<Priority>(meta.priority)
 const openedDisplay = ref(meta.opened)
 const closesDisplay = ref(meta.closes)
@@ -125,12 +127,12 @@ const priorityLabel = computed(() => PRIORITY[priority.value]?.label ?? PRIORITY
 const isClosed = computed(() => status.value === 'closed')
 
 // Optional companion partials, authored per proposal and co-located with this
-// page (ofp-007.outcome.vue / ofp-007.feedback.vue) — excluded from routing in
-// vite.config. Their presence drives the layout: an Outcome switches a closed
-// proposal to the tabbed view; Feedback is appended under the vote panel. When
-// neither exists the page renders exactly as before.
-const outcomeMods = import.meta.glob('./ofp-007.outcome.vue', { eager: true }) as Record<string, { default: Component }>
-const feedbackMods = import.meta.glob('./ofp-007.feedback.vue', { eager: true }) as Record<string, { default: Component }>
+// page (outcome.vue / feedback.vue) — excluded from routing in vite.config.
+// Their presence drives the layout: an Outcome switches a closed proposal to the
+// tabbed view; Feedback is appended under the vote panel. When neither exists the
+// page renders exactly as before.
+const outcomeMods = import.meta.glob('./outcome.vue', { eager: true }) as Record<string, { default: Component }>
+const feedbackMods = import.meta.glob('./feedback.vue', { eager: true }) as Record<string, { default: Component }>
 const OutcomePartial = Object.values(outcomeMods)[0]?.default ?? null
 const FeedbackPartial = Object.values(feedbackMods)[0]?.default ?? null
 

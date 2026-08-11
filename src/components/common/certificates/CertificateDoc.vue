@@ -77,10 +77,27 @@ function initFields(): void {
       if (e.key === 'Enter') { e.preventDefault(); el.blur() }
     })
   })
+
+  // The handwritten signature and the printed name beneath it are the same
+  // person, so editing either mirrors into the other. Only the field that is
+  // NOT being edited is written to, so the caret never jumps.
+  const sigEl = root.querySelector<HTMLElement>('.sblock:not(.dblock) .sig')
+  const nameEl = root.querySelector<HTMLElement>('.sblock:not(.dblock) .sname')
+  if (sigEl && nameEl) {
+    const mirror = (from: HTMLElement, to: HTMLElement): void => {
+      from.addEventListener('input', () => {
+        to.textContent = from.textContent
+        to.classList.toggle('ph', to.textContent?.trim() === '')
+      })
+    }
+    mirror(sigEl, nameEl)
+    mirror(nameEl, sigEl)
+  }
 }
 
 function clearFields(): void {
-  rootEl.value?.querySelectorAll<HTMLElement>('.lfi, .sblock .sig').forEach((el) => {
+  const editable = '.lfi, .sblock .sig, .sblock:not(.dblock) .sname, .sblock:not(.dblock) .srole'
+  rootEl.value?.querySelectorAll<HTMLElement>(editable).forEach((el) => {
     el.innerHTML = ''
     el.classList.add('ph')
   })
@@ -122,7 +139,8 @@ onBeforeUnmount(() => ro?.disconnect())
       <div class="cdoc__bar-inner">
         <span class="cdoc__live"><span class="cdoc__live-dot" />Live</span>
         <span class="cdoc__hint">
-          Click any highlighted field to type. The signature name renders as a handwritten signature.
+          Click any highlighted field to type. The signature renders as a handwritten signature and stays in
+          sync with the printed signatory name below it.
         </span>
         <div class="cdoc__bar-actions">
           <button type="button" @click="clearFields">Clear fields</button>
@@ -171,8 +189,8 @@ onBeforeUnmount(() => ro?.disconnect())
                 <div class="sblock">
                   <div class="sig" contenteditable="true" data-ph="Type name to sign">Jonathan Holman</div>
                   <div class="srule" />
-                  <div class="sname">Jonathan Holman</div>
-                  <div class="srole">Chief Executive Officer · Nebras</div>
+                  <div class="sname" contenteditable="true" data-ph="Signatory name">Jonathan Holman</div>
+                  <div class="srole" contenteditable="true" data-ph="Signatory role">Chief Executive Officer · Nebras</div>
                 </div>
 
                 <div class="seal">
@@ -438,7 +456,7 @@ onBeforeUnmount(() => ro?.disconnect())
 /* signature row */
 .foot { display: grid; grid-template-columns: 1fr auto 1fr; gap: .5in; align-items: end; margin-top: .22in; padding-top: .18in; border-top: 1px solid var(--line-soft); width: 100%; }
 .sblock { display: flex; flex-direction: column; }
-.sig { font-family: var(--script); font-size: 40px; line-height: .95; color: var(--navy); min-height: 44px; padding: 0 4px 2px; white-space: nowrap; overflow: hidden; }
+.sig { font-family: var(--script); font-size: 40px; color: var(--navy); min-height: 44px; padding: 0 4px 2px; white-space: nowrap; overflow: hidden; }
 .srule { height: 1px; background: var(--navy); opacity: .42; margin-bottom: 6px; }
 .sname { font-family: var(--serif); font-size: 14.5px; font-weight: 600; color: var(--navy-deep); line-height: 1.25; }
 .srole { font-family: var(--mono); font-size: 8.2px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); margin-top: 3px; }

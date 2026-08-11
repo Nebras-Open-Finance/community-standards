@@ -22,8 +22,7 @@ const DIST = resolve(ROOT, 'dist')
 // that carries no public SEO value.
 const EXCLUDE = [
   /^_dev(\/|$)/, // component viewer / kit
-  /^internal(\/|$)/, // internal landing + pages
-  /^proposals\/internal(\/|$)/, // internal proposals view
+  /^internal(\/|$)/, // internal landing, pages, policies, proposals
   /(^|\/)_shared(\/|$)/, // route-less partials (safety net)
   // Draft standards versions — published for review, not ratified. Mirrors of
   // the current version, so indexing them would duplicate every page. Keep in

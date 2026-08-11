@@ -3,3 +3,21 @@ https://www.nebras-open-finance.com/* https://nebras-open-finance.com/:splat 301
 # Ozone Connect Response Time Policy was rescoped to the whole TPP-facing request (Aug 2026).
 /policy/ozone-connect-response-time  /policy/api-response-time  301
 /policy/ozone-connect-response-time/ /policy/api-response-time  301
+
+# Proposals still under internal review moved behind the /internal password gate
+# (Aug 2026). The listing moved from /proposals/internal to /internal/proposals,
+# and each proposal's page moved with it. Listed one path at a time rather than
+# with a splat, so /proposals/<id>/votes — the admin vote breakdown, a
+# client-side-only route that is never prerendered — keeps resolving.
+# When a proposal is published, move its page back to src/pages/proposals/ and
+# DELETE its lines here: a stale rule would send the live page to the gate.
+/proposals/internal                       /internal/proposals                       301
+/proposals/internal/                      /internal/proposals                       301
+/proposals/ofp-002                        /internal/proposals/ofp-002               301
+/proposals/ofp-002/                       /internal/proposals/ofp-002               301
+/proposals/ofp-002/domestic-schema        /internal/proposals/ofp-002/domestic-schema      301
+/proposals/ofp-002/international-schema   /internal/proposals/ofp-002/international-schema 301
+/proposals/ofp-005                        /internal/proposals/ofp-005               301
+/proposals/ofp-005/                       /internal/proposals/ofp-005               301
+/proposals/ofp-005/attestation-schema     /internal/proposals/ofp-005/attestation-schema   301
+/proposals/ofp-008                        /internal/proposals/ofp-008               301

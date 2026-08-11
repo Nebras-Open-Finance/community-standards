@@ -1,5 +1,6 @@
 <route lang="yaml">
 meta:
+  layout: internal
   title: 'OFP-002 · Domestic payment schema (draft)'
 </route>
 
@@ -38,7 +39,7 @@ function downloadYaml(): void {
     path="/payments"
   >
     <div class="ofp-schema-toolbar">
-      <RouterLink to="/proposals/ofp-002" class="ofp-schema-back">
+      <RouterLink to="/internal/proposals/ofp-002" class="ofp-schema-back">
         <span aria-hidden="true">&larr;</span> Back to OFP-002
       </RouterLink>
       <button type="button" class="ofp-schema-download" @click="downloadYaml">

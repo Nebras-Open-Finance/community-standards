@@ -1,5 +1,6 @@
 <route lang="yaml">
 meta:
+  layout: internal
   title: 'OFP-005 · Consent attestations sub-resource (draft)'
 </route>
 
@@ -39,7 +40,7 @@ function downloadYaml(): void {
     path="/{consent}/attestations"
   >
     <div class="ofp-schema-toolbar">
-      <RouterLink to="/proposals/ofp-005" class="ofp-schema-back">
+      <RouterLink to="/internal/proposals/ofp-005" class="ofp-schema-back">
         <span aria-hidden="true">&larr;</span> Back to OFP-005
       </RouterLink>
       <button type="button" class="ofp-schema-download" @click="downloadYaml">

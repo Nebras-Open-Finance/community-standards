@@ -41,15 +41,17 @@ function submit(): void {
   }
 }
 
-// /internal, /internal/draft/*, /internal/pages/* and /internal/policies/* are
-// app UI (Vue components); everything else under /internal is a committed
-// Markdown page and gets the prose shell (header + Markdown/Preview toggle).
+// /internal, /internal/draft/*, /internal/pages/*, /internal/policies/* and
+// /internal/proposals/* are app UI (Vue components); everything else under
+// /internal is a committed Markdown page and gets the prose shell (header +
+// Markdown/Preview toggle).
 const isContentPage = computed(() => {
   const p = route.path.replace(/\/$/, '')
   if (p === '/internal') return false
   if (p.startsWith('/internal/draft/')) return false
   if (p.startsWith('/internal/pages/')) return false
   if (p === '/internal/policies' || p.startsWith('/internal/policies/')) return false
+  if (p === '/internal/proposals' || p.startsWith('/internal/proposals/')) return false
   return true
 })
 
@@ -111,6 +113,9 @@ const sidebarItems = computed<EdSidebarItemData[]>(() => {
       : []),
   ]
   return [
+    // Proposals under internal review. The list itself is API-driven, so only
+    // the listing is linked here — it renders the individual pages.
+    { text: 'Internal proposals', link: '/internal/proposals/' },
     ...(toolItems.length
       ? [{ text: 'Tools', collapsed: false, items: toolItems }]
       : []),

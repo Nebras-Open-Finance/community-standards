@@ -19,7 +19,14 @@ const reveal = computed(
   () => config.resultsVisibility === 'always' || !!props.myVote || decided.value,
 )
 const myStance = computed(() => props.myVote?.stance)
-const slug = computed(() => props.proposal.id.toLowerCase())
+// Internal proposals are authored under src/pages/internal/proposals/<id>/ and
+// live behind the /internal password gate; published ones sit at /proposals/<id>.
+// The `internal` flag from the API decides which page this row points at, so it
+// MUST track where the page file actually lives (see the note in useProposals).
+const href = computed(() => {
+  const slug = props.proposal.id.toLowerCase()
+  return props.proposal.internal ? `/internal/proposals/${slug}` : `/proposals/${slug}`
+})
 
 // "Closes" countdown, derived from the ISO close date. Decided proposals read
 // "Closed".
@@ -36,7 +43,7 @@ const closesLabel = computed(() => {
 </script>
 
 <template>
-  <RouterLink :to="`/proposals/${slug}`" class="pv-row">
+  <RouterLink :to="href" class="pv-row">
     <div class="pv-row__id">{{ proposal.id }}</div>
 
     <div class="pv-row__main">

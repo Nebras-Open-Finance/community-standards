@@ -19,8 +19,8 @@ onMounted(() => {
   void loadAll()
 })
 
-// This is the PUBLIC list — internal proposals live on the unlinked
-// /proposals/internal page and are filtered out here.
+// This is the PUBLIC list — internal proposals live behind the password gate on
+// /internal/proposals and are filtered out here.
 const externalList = computed(() => proposalList.value.filter((p) => !p.internal))
 
 // Status is derived from each proposal's open/close dates (not returned by the API).

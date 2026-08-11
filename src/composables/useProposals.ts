@@ -94,8 +94,12 @@ export interface ProposalMeta {
   questions?: string[]
   // Target standards version (when the change will be made), e.g. 'V2.2'; '' if unset.
   version?: string | null
-  // Whether this proposal is internal (shown only on /proposals/internal) rather
-  // than external/public. Absent → external. Drives the 'internal' status.
+  // Whether this proposal is internal rather than external/public. Absent →
+  // external. Drives the 'internal' status, and decides where the row links:
+  // internal proposals are listed on /internal/proposals and authored under
+  // src/pages/internal/proposals/<id>/; published ones sit at /proposals/<id>.
+  // Flipping this flag in the API therefore REQUIRES moving the page file
+  // between the two trees (and adding a redirect) — see public/_redirects.
   internal?: boolean
   tally: Counts
 }

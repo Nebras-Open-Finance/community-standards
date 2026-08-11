@@ -11,7 +11,8 @@
  *
  * Dynamic routes (filenames containing `[`) and helpers (`_shared/`, `_dev/`)
  * are skipped — those pages either have no concrete URL at this stage or
- * aren't user-facing.
+ * aren't user-facing. Internal, password-gated routes are excluded too — see
+ * EXCLUDE_ROUTES below.
  *
  * Output: src/components/chrome/search-data.ts
  */
@@ -42,6 +43,14 @@ function parseDraftVersions() {
 
 const DRAFT_VERSIONS = parseDraftVersions()
 const DESCRIPTION_CHARS = 180
+
+// Routes kept out of search: internal/gated surfaces. A hit on one of these
+// lands the reader on the internal password gate, not on content. Kept in step
+// with the EXCLUDE list in scripts/generate-sitemap.mjs and NOINDEX_RE in
+// src/App.vue. (`_dev` and `_shared` are skipped during the walk instead.)
+const EXCLUDE_ROUTES = [
+  /^\/internal(\/|$)/,
+]
 
 // ─── Route prefix → category/section ──────────────────────────────────────────
 // Order matters: longer prefixes first so they win the `startsWith` check.
@@ -97,6 +106,10 @@ function walk(dir, files = []) {
       if (DRAFT_VERSIONS.includes(name)) continue
       walk(full, files)
     } else if (stat.isFile() && /\.(vue|md)$/.test(name)) {
+      // Proposal companion partials (outcome/feedback, in either the folder or the
+      // flat convention) are rendered INSIDE their proposal page and excluded from
+      // routing in vite.config — indexing them would yield search hits that 404.
+      if (/^(.*\.)?(outcome|feedback)\.vue$/.test(name)) continue
       files.push(full)
     }
   }
@@ -244,6 +257,7 @@ function build() {
   for (const file of files) {
     const route = fileToRoute(file)
     if (!route) continue
+    if (EXCLUDE_ROUTES.some((re) => re.test(route))) continue
     const src = readFileSync(file, 'utf-8')
     const ext = file.endsWith('.md') ? 'md' : 'vue'
     const fallback = fallbackTitle(route)
