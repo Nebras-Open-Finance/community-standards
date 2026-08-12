@@ -4,29 +4,13 @@ meta:
 </route>
 
 <script setup lang="ts">
-const examplePersonalRequest = `{
+// The whole request. The name the TPP submitted is not sent to the LFI — it has
+// nothing to do with it, since the Hub does the matching.
+const exampleRequest = `{
   "data": {
     "account": {
       "schemeName": "IBAN",
-      "identification": "AE070331234567890123456",
-      "name": {
-        "fullName": "Ahmed Al Mansouri",
-        "firstName": "Ahmed",
-        "lastName": "Al Mansouri"
-      }
-    }
-  }
-}
-`
-
-const exampleBusinessRequest = `{
-  "data": {
-    "account": {
-      "schemeName": "IBAN",
-      "identification": "AE070331234567890123456",
-      "name": {
-        "businessName": "Al Mansouri Trading LLC"
-      }
+      "identification": "AE070331234567890123456"
     }
   }
 }
@@ -152,7 +136,7 @@ const exampleNotFoundResponse = `{
       tone="cream"
     >
       <APIFlowViewer title="Confirmation of Payee API Flow">
-        <APIFlowsConfirmationOfPayee />
+        <APIFlowsConfirmationOfPayee version="v2.2-draft" />
       </APIFlowViewer>
     </EdSectionBand>
 
@@ -161,13 +145,33 @@ const exampleNotFoundResponse = `{
       num="02"
       color="var(--at-blue-deep, #1d4ed8)"
       eyebrow="POST /customers/action/cop-query"
-      title="Match an IBAN against an account holder"
+      title="Return the name(s) held against an IBAN"
       tone="surface"
     >
       <div class="ed-doc__endpoint">
         <span class="http-badge http-post">POST</span>
         <code class="ed-doc__endpoint-path">/customers/action/cop-query</code>
       </div>
+
+      <EdNote type="important" title="Migrating from v2.1">
+        <p>
+          Both bodies changed in v2.2. The request no longer carries
+          <code>data.account.name</code> &mdash; drop it from your parser, and stop reading it if you
+          used it to select which name to return. The response is flattened: replace
+          <code>data[].verifiedClaims[].verification</code> and
+          <code>data[].verifiedClaims[].claims</code> with a single
+          <code>data[].name</code>, mapping <code>claims.fullName</code> to <code>name.fullName</code>,
+          <code>givenName</code> to <code>firstName</code>, <code>familyName</code> to
+          <code>lastName</code>, and <code>organisationClaims.name</code> to
+          <code>name.businessName</code>. Everything else the envelope carried &mdash; trust framework,
+          assurance evidence, and the wider customer fields such as <code>emiratesId</code>,
+          <code>birthDate</code> and <code>salary</code> &mdash; is removed and MUST NOT be sent.
+        </p>
+        <p>
+          Headers, query parameters, status codes and error codes are unchanged, so this is a rewrite
+          of your request parser and response builder rather than a new integration.
+        </p>
+      </EdNote>
 
       <h3 class="ed-doc__subhead">Request headers</h3>
       <EdRefTable>
@@ -201,8 +205,10 @@ const exampleNotFoundResponse = `{
       <h3 class="ed-doc__subhead">Request body</h3>
       <EdProse><code>Content-Type: application/json</code></EdProse>
       <EdProse>
-        The Hub sends a plain JSON body &mdash; not a JWS. The body always contains a single account
-        identified by IBAN and a name to match against.
+        The Hub sends a plain JSON body &mdash; not a JWS. The body identifies a single account by
+        IBAN, and carries nothing else. The name the TPP submitted is <strong>not</strong> sent to
+        you: look the account up by IBAN and return the holders you have, and the Hub does the
+        comparing.
       </EdProse>
 
       <h4 class="ed-doc__subhead ed-doc__subhead--small"><code>data.account</code></h4>
@@ -212,38 +218,12 @@ const exampleNotFoundResponse = `{
           <tbody>
             <tr><td><code>schemeName</code></td><td>string</td><td>Yes</td><td>Always <code>IBAN</code></td></tr>
             <tr><td><code>identification</code></td><td>string</td><td>Yes</td><td>The IBAN to look up</td></tr>
-            <tr><td><code>name</code></td><td>object</td><td>Yes</td><td>Either a <code>PersonName</code> or <code>BusinessName</code> &mdash; see below</td></tr>
           </tbody>
         </table>
       </EdRefTable>
 
-      <h4 class="ed-doc__subhead ed-doc__subhead--small"><code>PersonName</code></h4>
-      <EdRefTable>
-        <table>
-          <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
-          <tbody>
-            <tr><td><code>fullName</code></td><td>string</td><td>Yes</td><td>The full name of the person as submitted by the TPP</td></tr>
-            <tr><td><code>firstName</code></td><td>string</td><td>No</td><td>Given name, if provided by the TPP</td></tr>
-            <tr><td><code>lastName</code></td><td>string</td><td>No</td><td>Family name, if provided by the TPP</td></tr>
-          </tbody>
-        </table>
-      </EdRefTable>
-
-      <h4 class="ed-doc__subhead ed-doc__subhead--small"><code>BusinessName</code></h4>
-      <EdRefTable>
-        <table>
-          <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
-          <tbody>
-            <tr><td><code>businessName</code></td><td>string</td><td>Yes</td><td>The business name as submitted by the TPP</td></tr>
-          </tbody>
-        </table>
-      </EdRefTable>
-
-      <h4 class="ed-doc__subhead ed-doc__subhead--small">Example &mdash; personal name</h4>
-      <EdCode :code="examplePersonalRequest" lang="json" filename="personal name request" />
-
-      <h4 class="ed-doc__subhead ed-doc__subhead--small">Example &mdash; business name</h4>
-      <EdCode :code="exampleBusinessRequest" lang="json" filename="business name request" />
+      <h4 class="ed-doc__subhead ed-doc__subhead--small">Example</h4>
+      <EdCode :code="exampleRequest" lang="json" filename="cop-query request" />
 
       <h3 class="ed-doc__subhead">Response</h3>
       <EdProse><code>Content-Type: application/json</code></EdProse>

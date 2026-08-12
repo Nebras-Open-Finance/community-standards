@@ -8,6 +8,7 @@ meta:
 
 <script setup>
 import { purposeCodes } from '@/components/common/composables/aaniPaymentCodes.ts'
+import { domesticPaymentPiiScenarios, paymentConsentScenarios } from '@/data/editor-scenarios'
 import { futureDateTime } from '@/components/common/composables/futureDates.ts'
 import WireframePreview from './_shared/WireframePreview.vue'
 import AccountSetup from './_shared/AccountSetup.vue'
@@ -120,6 +121,9 @@ const initialFormDataPII = ref({
     ]
   }
 })
+
+const piiScenarios = domesticPaymentPiiScenarios(initialFormDataPII.value, { beneficiaries: 'flexible' })
+const consentScenarios = paymentConsentScenarios(initialFormDataSIP.value, 'consent')
 </script>
 
 <template>
@@ -175,6 +179,7 @@ const initialFormDataPII = ref({
         spec="/openapi/v2.1/standards/uae-authorization-endpoints-openapi.yaml"
         schema-name="AEBankServiceInitiationRichAuthorizationRequests.AEDomesticPaymentPII"
         :initial-data="initialFormDataPII"
+        :scenarios="piiScenarios"
         state-field="pii"
         :custom-validator="myPIICustomValidator"
         label="domestic_payment_pii"
@@ -188,6 +193,7 @@ const initialFormDataPII = ref({
         schema-name="AEBankServiceInitiationRichAuthorizationRequestsV21.AEBankServiceInitiationAuthorizationDetailsProperties"
         :excluded-fields="['consent.PersonalIdentifiableInformation']"
         :initial-data="initialFormDataSIP"
+        :scenarios="consentScenarios"
         :custom-validator="myCustomValidator"
         label="authorization_details"
         description="PAR request body field"

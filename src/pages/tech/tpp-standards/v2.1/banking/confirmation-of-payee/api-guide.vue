@@ -468,7 +468,7 @@ const decodeJwsTabs = [{ label: 'Node.js', lang: 'typescript', code: decodeJwsNo
       tone="surface"
     >
       <APIFlowViewer title="Confirmation of Payee API Flow">
-        <APIFlowsConfirmationOfPayee />
+        <APIFlowsConfirmationOfPayee version="v2.1" />
       </APIFlowViewer>
     </EdSectionBand>
 

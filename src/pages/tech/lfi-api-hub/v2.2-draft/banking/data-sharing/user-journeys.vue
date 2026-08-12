@@ -8,6 +8,7 @@ meta:
 
 <script setup>
 import { futureDateTime } from '@/components/common/composables/futureDates.ts'
+import { bankDataSharingScenarios } from '@/data/editor-scenarios'
 import WireframePreview from '../../../../tpp-standards/v2.2-draft/banking/data-sharing/_shared/WireframePreview.vue'
 import AccountSetup from '../../../../tpp-standards/v2.2-draft/banking/data-sharing/_shared/AccountSetup.vue'
 import UIBehaviour from '../../../../tpp-standards/v2.2-draft/banking/data-sharing/_shared/UIBehaviour.vue'
@@ -110,6 +111,8 @@ const initialFormData = ref({
     },
   },
 })
+
+const scenarios = bankDataSharingScenarios(initialFormData.value, 'Data')
 </script>
 
 <template>
@@ -158,7 +161,7 @@ const initialFormData = ref({
       <EdProse>
         Customise the <code>consentBody</code> object below and watch the wireframes above update live.
         Try changing permissions, account types, date ranges, or the TPP name to see how the pages
-        respond.
+        respond, or pick one of the scenarios beside the editor to load a preset consent.
       </EdProse>
 
       <EditableJson
@@ -166,6 +169,7 @@ const initialFormData = ref({
         schema-name="AEAccountAccessConsentBody"
         :initial-data="initialFormData"
         :custom-validator="myCustomValidator"
+        :scenarios="scenarios"
         state-field="consent"
         label="consentBody"
         description="AEAccountAccessConsentBody"

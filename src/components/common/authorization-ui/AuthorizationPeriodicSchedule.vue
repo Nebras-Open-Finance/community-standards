@@ -67,10 +67,18 @@
                 <div class="auth-page-text-header">
                     Flexi-Pay Setup
                     <div v-if="sharedState?.pii?.Initiation?.Creditor?.length" class="auth-page-text-header-sub">
-                        [TPP trading name] needs your permission to make payment(s) from your account within the payment rules below:
+                        [TPP trading name] needs your permission
+                        <template v-if="merchantName">
+                            on-behalf of {{ merchantName }}
+                        </template>
+                        to make payment(s) from your account within the payment rules below:
                     </div>
                     <div v-else class="auth-page-text-header-sub">
-                        [TPP trading name] needs your permission to make payments from your account under the rules below. They will process payments in line with your agreement and are responsible for selecting the beneficiaries.
+                        [TPP trading name] needs your permission
+                        <template v-if="merchantName">
+                            on-behalf of {{ merchantName }}
+                        </template>
+                        to make payments from your account under the rules below. They will process payments in line with your agreement and are responsible for selecting the beneficiaries.
                     </div>
                 </div>
                 <div class="auth-page-accounts-section">
@@ -488,6 +496,10 @@ import { getAuthPaymentPermissionText } from '../composables/serviceInitiationPe
 import DirhamAmount from '../consent-ui/DirhamAmount.vue'
 
 const { sharedState, consentData } = useSharedState()
+
+// Mirrors AuthorizationSingleInstantPayment: when the TPP names the merchant it
+// collects for, the customer is told who the payment is really on behalf of.
+const merchantName = computed(() => sharedState.value?.pii?.Risk?.CreditorIndicators?.MerchantDetails?.MerchantName)
 
 const selected = ref(null)
 const benefListOpen = ref(true)
@@ -1420,10 +1432,12 @@ height: 10px;
 
 .auth-page-error-image-container {
     width: 292px;
+    display: flex;
+    justify-content: center;
 }
 
 .auth-page-error-image {
-    margin: auto
+    display: block;
 }
 
 .auth-page-account-checkbox-inactive {

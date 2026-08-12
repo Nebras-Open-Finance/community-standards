@@ -118,7 +118,7 @@ const exampleNotFoundResponse = `{
       tone="cream"
     >
       <APIFlowViewer title="Confirmation of Payee API Flow">
-        <APIFlowsConfirmationOfPayee />
+        <APIFlowsConfirmationOfPayee version="v2.1" />
       </APIFlowViewer>
     </EdSectionBand>
 

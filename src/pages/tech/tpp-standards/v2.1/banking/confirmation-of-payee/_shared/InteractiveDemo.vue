@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useSharedState } from '@/components/common/composables/useSharedState.ts'
+import { confirmationOfPayeeScenarios } from '@/data/editor-scenarios'
 
 const { sharedState } = useSharedState()
 
@@ -16,15 +17,14 @@ const myCustomValidator = (value) => {
      &&
     !value.MaskedName)
   ){
-      return "MaskedName returned when NameMatchIndicator is No or Partial"
+      return "MaskedName must be returned when NameMatchIndicator is Partial or No, and omitted when it is Yes"
     }
   return null
 }
 
-const initialFormData = ref({
-  "NameMatchIndicator": "ConfirmationOfPayee.Partial",
-  "MaskedName": "Ib*** A***** Sa***"
-})
+const scenarios = confirmationOfPayeeScenarios()
+
+const initialFormData = ref(scenarios.find(s => s.id === 'match-partial').data)
 </script>
 
 <template>
@@ -33,6 +33,8 @@ const initialFormData = ref({
     schema-name="AEAccountConfirmationResponseProperties"
     :initial-data="initialFormData"
     :custom-validator="myCustomValidator"
+    :scenarios="scenarios"
+    scenarios-label="Match results"
     state-field="copData"
     label="message.Data"
     description="Confirmation Response"

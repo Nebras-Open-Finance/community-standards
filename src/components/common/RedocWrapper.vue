@@ -86,8 +86,14 @@ function loadScript(src: string): Promise<void> {
   })
 }
 
+// Bumped on every render request. Each `await` below rechecks it so a render
+// that started earlier can't init over the top of a newer one — the version
+// dropdown can swap props while a spec fetch is still in flight.
+let renderToken = 0
+
 async function renderRedoc(): Promise<void> {
   const w = window as Win
+  const token = ++renderToken
 
   if (!w.Redoc) {
     await loadScript('https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js')
@@ -97,9 +103,11 @@ async function renderRedoc(): Promise<void> {
   }
 
   if (!w.Redoc || !w.jsyaml) return
+  if (token !== renderToken) return
 
   const yamlText = props.specText ?? (props.spec ? await (await fetch(props.spec)).text() : '')
   if (!yamlText) return
+  if (token !== renderToken) return
   const fullSpec = w.jsyaml.load(yamlText) as OpenApiDoc
 
   let finalSpec: OpenApiDoc = fullSpec
@@ -264,6 +272,30 @@ onMounted(() => {
 
 // Re-init Redoc when the theme toggles so it picks up the new palette.
 onThemeChange(() => { void renderRedoc() })
+
+// Re-init when the spec being shown changes without the component remounting.
+// The version dropdown pushes a route that resolves to the same route record
+// (e.g. /tech/api-specs/:slug), so Vue reuses this instance and only the props
+// change — without this the reader keeps seeing the previous version's spec
+// until a full page reload.
+//
+// Deliberately scoped to the scalar props that select the document and
+// operation. `overrideServers` and `patchSchemas` are excluded: several call
+// sites pass them as inline literals, which are fresh references on every
+// parent render and would retrigger a full re-init for no visible change.
+watch(
+  [
+    () => props.spec,
+    () => props.specText,
+    () => props.filterPath,
+    () => props.filterMethod,
+    () => props.displayPath,
+    () => props.filterSchema,
+    () => props.hideSecurity,
+    () => props.containerId,
+  ],
+  () => { void renderRedoc() },
+)
 
 // Downloads are only offered for versioned specs served out of /openapi/v*/...
 // Unversioned assets (e.g. /openapi/trust-framework.yaml) aren't exported as

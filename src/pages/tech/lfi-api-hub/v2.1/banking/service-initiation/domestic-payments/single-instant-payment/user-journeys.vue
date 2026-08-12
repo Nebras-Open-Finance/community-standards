@@ -10,6 +10,7 @@ meta:
 import { watch } from 'vue'
 import { useSharedState } from '@/components/common/composables/useSharedState.ts'
 import { purposeCodes } from '@/components/common/composables/aaniPaymentCodes.ts'
+import { domesticPaymentPiiScenarios, paymentConsentScenarios } from '@/data/editor-scenarios'
 import { futureDateTime } from '@/components/common/composables/futureDates.ts'
 import WireframePreview from '../../../../../../tpp-standards/v2.1/banking/service-initiation/domestic-payments/single-instant-payment/_shared/WireframePreview.vue'
 import AccountSetup from '../../../../../../tpp-standards/v2.1/banking/service-initiation/domestic-payments/single-instant-payment/_shared/AccountSetup.vue'
@@ -91,7 +92,6 @@ const initialFormDataSIP = ref({
     "IsSingleAuthorization": true,
     "ExpirationDateTime": expirationDateTime,
     "BaseConsentId": "b9f42378-10ac-46a1-8d20-4e020484216d",
-    "AuthorizationExpirationDateTime": expirationDateTime,
     "Permissions": ["ReadAccountsBasic", "ReadAccountsDetail", "ReadBalances", "ReadRefundAccount"],
     "ControlParameters": {
       "ConsentSchedule": {
@@ -157,6 +157,9 @@ const initialFormDataPII = ref({
     }
   }
 })
+
+const piiScenarios = domesticPaymentPiiScenarios(initialFormDataPII.value)
+const consentScenarios = paymentConsentScenarios(initialFormDataSIP.value, 'Data')
 </script>
 
 <template>
@@ -216,6 +219,7 @@ const initialFormDataPII = ref({
         spec="/openapi/v2.1/api-hub/uae-api-hub-consent-manager-openapi.yaml"
         schema-name="AEBankServiceInitiationRichAuthorizationRequests.AEDomesticPaymentPII"
         :initial-data="initialFormDataPII"
+        :scenarios="piiScenarios"
         state-field="pii"
         :custom-validator="myPIICustomValidator"
         label="domestic_payment_pii"
@@ -229,6 +233,7 @@ const initialFormDataPII = ref({
         schema-name="AEPaymentConsentResponse"
         :excluded-fields="['Data.PersonalIdentifiableInformation']"
         :initial-data="initialFormDataSIP"
+        :scenarios="consentScenarios"
         :custom-validator="myCustomValidator"
         label="consentBody"
         description="(AEPaymentConsentResponse)"

@@ -30,6 +30,13 @@ interface Spec {
   components?: { schemas?: Record<string, Schema> }
 }
 
+interface Scenario {
+  id: string
+  label: string
+  description?: string
+  data: Record<string, unknown>
+}
+
 const props = withDefaults(defineProps<{
   spec: string
   schemaName?: string
@@ -41,6 +48,8 @@ const props = withDefaults(defineProps<{
   description?: string
   endpointHref?: string
   endpointLabel?: string
+  scenarios?: Scenario[]
+  scenariosLabel?: string
 }>(), {
   schemaName: 'AEBankDataSharingRichAuthorizationRequestsV21.AEBankDataSharingAuthorizationDetailsProperties',
   initialData: () => ({}),
@@ -51,6 +60,8 @@ const props = withDefaults(defineProps<{
   description: '',
   endpointHref: '',
   endpointLabel: 'View endpoint',
+  scenarios: () => [],
+  scenariosLabel: 'Scenarios',
 })
 
 const emit = defineEmits<{ 'update:json': [value: string] }>()
@@ -277,6 +288,34 @@ function validateAgainstSchema(value: unknown, schema: Schema, path = ''): strin
   return `Unknown schema type at ${path}`
 }
 
+// Scenarios are resolved the same way the initial data is — merged over the
+// schema defaults — so switching to a scenario yields exactly the body the page
+// would have loaded with. Merging against the defaults (not the current form)
+// is what lets a scenario *drop* an optional field such as `OnBehalfOf`.
+const schemaDefaults = ref<unknown>({})
+
+const resolvedScenarios = computed(() =>
+  props.scenarios.map((scenario) => ({
+    ...scenario,
+    json: JSON.stringify(deepMerge(schemaDefaults.value, scenario.data), null, 2),
+  })),
+)
+
+const activeScenarioId = computed(
+  () => resolvedScenarios.value.find((s) => s.json === jsonInput.value)?.id ?? null,
+)
+
+function applyScenario(scenario: { id: string, label: string, json: string }) {
+  const next = JSON.parse(scenario.json)
+  const validationError = rootSchema.value ? validateAgainstSchema(next, rootSchema.value) : null
+  const customError = props.customValidator(next)
+  if (validationError || customError) {
+    addError(`${scenario.label}: ${validationError || customError}`)
+    return
+  }
+  form.value = next
+}
+
 async function loadSpec() {
   try {
     const response = await fetch(props.spec)
@@ -290,6 +329,7 @@ async function loadSpec() {
     rootSchema.value = fullResolveSchema(maybeSchema)
     removeProperties(rootSchema.value, props.excludedFields)
     const defaults = initFormValue(rootSchema.value)
+    schemaDefaults.value = defaults
     const merged = deepMerge(defaults, props.initialData)
     const validationError = validateAgainstSchema(merged, rootSchema.value)
     const customError = props.customValidator(merged)
@@ -368,6 +408,22 @@ watchEffect(() => { loadSpec() })
         class="ej__textarea"
         @blur="updateFromJson"
       />
+
+      <aside v-if="resolvedScenarios.length" class="ej__scenarios">
+        <span class="ej__scenarios-title">{{ scenariosLabel }}</span>
+        <button
+          v-for="scenario in resolvedScenarios"
+          :key="scenario.id"
+          type="button"
+          class="ej__scenario"
+          :class="{ 'ej__scenario--active': scenario.id === activeScenarioId }"
+          :aria-pressed="scenario.id === activeScenarioId"
+          @click="applyScenario(scenario)"
+        >
+          <span class="ej__scenario-label">{{ scenario.label }}</span>
+          <span v-if="scenario.description" class="ej__scenario-desc">{{ scenario.description }}</span>
+        </button>
+      </aside>
 
       <Transition name="ej-toast">
         <div v-if="toastShowing" class="ej__toast" role="status">{{ toastMessage }}</div>
@@ -486,11 +542,15 @@ watchEffect(() => { loadSpec() })
 
 .ej__canvas {
   position: relative;
+  display: flex;
+  align-items: stretch;
 }
 
 .ej__textarea {
   display: block;
+  flex: 1 1 auto;
   width: 100%;
+  min-width: 0;
   min-height: 320px;
   padding: 1rem 1.15rem;
   background: var(--at-bg-paper);
@@ -507,6 +567,71 @@ watchEffect(() => { loadSpec() })
 }
 .ej__textarea:focus {
   box-shadow: inset 0 -2px 0 var(--at-teal);
+}
+
+.ej__scenarios {
+  flex: 0 0 15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--at-bg-cream);
+  border-left: 1px solid var(--at-grid-line);
+  box-sizing: border-box;
+}
+.ej__scenarios-title {
+  font-family: var(--at-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--at-mute-2);
+  margin-bottom: 0.15rem;
+}
+.ej__scenario {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  background: var(--at-surface);
+  border: 1px solid var(--at-grid-line-2);
+  border-left: 3px solid var(--at-grid-line-2);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.ej__scenario:hover {
+  border-color: var(--at-navy-deep);
+  border-left-color: var(--at-teal);
+}
+.ej__scenario--active,
+.ej__scenario--active:hover {
+  border-color: var(--at-teal-deep);
+  border-left-color: var(--at-teal-deep);
+  background: color-mix(in srgb, var(--at-teal) 8%, var(--at-surface));
+}
+.ej__scenario-label {
+  font-family: var(--at-sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--at-navy-deep);
+}
+.ej__scenario-desc {
+  font-family: var(--at-mono);
+  font-size: 0.62rem;
+  line-height: 1.45;
+  color: var(--at-mute-2);
+}
+
+@media (max-width: 860px) {
+  .ej__canvas { flex-direction: column; }
+  .ej__scenarios {
+    flex: 0 0 auto;
+    border-left: 0;
+    border-top: 1px solid var(--at-grid-line);
+  }
 }
 
 .ej__toast {

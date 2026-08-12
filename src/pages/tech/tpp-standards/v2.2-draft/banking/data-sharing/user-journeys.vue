@@ -8,6 +8,7 @@ meta:
 
 <script setup>
 import { futureDateTime } from '@/components/common/composables/futureDates.ts'
+import { bankDataSharingScenarios } from '@/data/editor-scenarios'
 import WireframePreview from './_shared/WireframePreview.vue'
 import AccountSetup from './_shared/AccountSetup.vue'
 import UIBehaviour from './_shared/UIBehaviour.vue'
@@ -112,6 +113,8 @@ const initialFormData = ref({
     },
   },
 })
+
+const scenarios = bankDataSharingScenarios(initialFormData.value, 'consent')
 </script>
 
 <template>
@@ -156,7 +159,7 @@ const initialFormData = ref({
       <EdProse>
         Customise the <code>authorization_details</code> object below and watch the wireframes above
         update live. Try changing permissions, account types, date ranges, or the TPP name to see how the
-        pages respond.
+        pages respond, or pick one of the scenarios beside the editor to load a preset consent.
       </EdProse>
 
       <EditableJson
@@ -164,6 +167,7 @@ const initialFormData = ref({
         schema-name="AEBankDataSharingRichAuthorizationRequestsV21.AEBankDataSharingAuthorizationDetailsProperties"
         :initial-data="initialFormData"
         :custom-validator="myCustomValidator"
+        :scenarios="scenarios"
         state-field="consent"
         label="authorization_details"
         description="PAR request body field"

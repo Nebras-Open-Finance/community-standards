@@ -1399,10 +1399,12 @@ height: 10px;
 
 .auth-page-error-image-container {
     width: 292px;
+    display: flex;
+    justify-content: center;
 }
 
 .auth-page-error-image {
-    margin: auto
+    display: block;
 }
 
 .auth-page-account-checkbox-inactive {

@@ -280,17 +280,19 @@ const PATCHES = [
     version: 'v2.2-draft',
     surface: 'ozone-connect',
     spec: 'uae-ozone-connect-bank-data-sharing-openapi',
-    change: 'v2.1-to-v2.2 §6 — Confirmation of Payee response is flattened',
+    change: 'v2.1-to-v2.2 §6 — Confirmation of Payee is reduced to the query',
     apply(doc) {
       // CoP asks one question: does this name belong to this IBAN? The v2.1
       // response answers it through a four-level identity-assurance envelope
       // borrowed from OpenID Connect for Identity Assurance —
       //   data[] → verifiedClaims[] → verification{…} → claims{…}
       // — of which only the innermost name is read. This patch removes the two
-      // middle levels, leaving data[] → name{…}.
+      // middle levels, leaving data[] → name{…}, and removes the submitted name
+      // from the request, which the LFI has no use for.
       //
       // The whole CoP subtree is reachable ONLY from
-      // POST /customers/action/cop-query: ConfirmationResponse, CbuaeCopCustomer,
+      // POST /customers/action/cop-query: ConfirmationRequest, PersonName,
+      // BusinessName, ConfirmationResponse, CbuaeCopCustomer,
       // CbuaeVerifiedCopClaim and ConfirmationOfPayeePersonClaims have no other
       // referrer in this document. GET /accounts/{accountId}/customer has its own
       // parallel CbuaeCustomer / CbuaeVerifiedClaim schemas and is untouched, so
@@ -299,13 +301,17 @@ const PATCHES = [
 
       // Guard before mutating: if upstream has already reshaped these, the patch
       // is stale and silently double-applying it would be worse than failing.
-      for (const name of ['CbuaeCopCustomer', 'CbuaeVerifiedCopClaim', 'ConfirmationOfPayeePersonClaims']) {
+      for (const name of [
+        'CbuaeCopCustomer', 'CbuaeVerifiedCopClaim', 'ConfirmationOfPayeePersonClaims',
+        'PersonName', 'BusinessName',
+      ]) {
         if (!doc.getIn([...S, name])) throw new Error(`No ${name} schema — CoP subtree already reshaped?`)
       }
 
-      // Person and business stay separate branches, mirroring the request's
-      // PersonName / BusinessName oneOf. `additionalProperties: false` on both
-      // keeps the oneOf unambiguous: the branches share no property.
+      // Person and business stay separate branches — the LFI knows which kind of
+      // holder it has, and the two carry different fields.
+      // `additionalProperties: false` on both keeps the oneOf unambiguous: the
+      // branches share no property.
       //
       // Only `fullName` / `businessName` is required. Everything else is an
       // OPTIONAL input to future matching — the Hub compares full names today,
@@ -325,7 +331,7 @@ const PATCHES = [
             type: 'string', minLength: 1, maxLength: 140,
           },
           firstName: {
-            description: 'Given name of the account holder. Optional. Named to match `firstName` on the request `PersonName`, so the same value carries the same name in both directions.',
+            description: 'Given name of the account holder. Optional. Named `firstName` rather than the v2.1 `givenName`, which the v2.1 schema already recorded as withdrawn.',
             type: 'string', minLength: 1, maxLength: 70,
           },
           middleName: {
@@ -333,7 +339,7 @@ const PATCHES = [
             type: 'string', minLength: 1, maxLength: 70,
           },
           lastName: {
-            description: 'Family name of the account holder. Optional. Named to match `lastName` on the request `PersonName`.',
+            description: 'Family name of the account holder. Optional. Named `lastName` rather than the v2.1 `familyName`, which the v2.1 schema already recorded as withdrawn.',
             type: 'string', minLength: 1, maxLength: 70,
           },
           fullNameAr: {
@@ -410,6 +416,33 @@ const PATCHES = [
       doc.deleteIn([...S, 'CbuaeVerifiedCopClaim'])
       doc.deleteIn([...S, 'ConfirmationOfPayeePersonClaims'])
 
+      // The request carries the IBAN and nothing else. The name the TPP
+      // submitted was never the LFI's to act on — the LFI looks the account up
+      // by IBAN and returns the holders it has, and the API Hub compares.
+      // Sending the name invited exactly the matching this operation forbids,
+      // and it disclosed a third party's name to an institution that has no use
+      // for it on a call made without a consent.
+      const ACCOUNT = [
+        ...S, 'ConfirmationRequest', 'properties', 'data', 'properties', 'account',
+      ]
+      if (!doc.getIn([...ACCOUNT, 'properties', 'name'])) {
+        throw new Error('ConfirmationRequest account has no name — request already reshaped?')
+      }
+      doc.deleteIn([...ACCOUNT, 'properties', 'name'])
+
+      const required = doc.getIn([...ACCOUNT, 'required'])
+      if (!required?.items) throw new Error('ConfirmationRequest account has no required list')
+      required.items = required.items.filter((item) => String(item) !== 'name')
+
+      doc.setIn([...ACCOUNT, 'description'], doc.createNode(
+        'The account the Confirmation of Payee query is about, identified by IBAN. From v2.2 the name the TPP submitted is NOT sent to the LFI — the LFI returns the name(s) it holds against this account, and the API Hub compares them.',
+      ))
+
+      // Unreachable once the request no longer carries a name: both schemas were
+      // referenced only from `account.name`.
+      doc.deleteIn([...S, 'PersonName'])
+      doc.deleteIn([...S, 'BusinessName'])
+
       // Make the response semantics explicit. Every statement here was already
       // true of v2.1 — they were implicit, or stated only in the operation
       // description where an implementer reading the schema would not find them.
@@ -418,10 +451,10 @@ const PATCHES = [
       if (!doc.getIn(OP)) throw new Error('No POST /customers/action/cop-query operation')
       doc.setIn([...OP, 'description'], doc.createNode([
         'Used by the API Hub to find the name(s) held against an account, so that the Hub can answer a Confirmation of Payee query.',
-        'The API Hub sends an IBAN and the name the TPP submitted. The LFI returns the name(s) it holds against that account. **The LFI performs no matching** — it MUST NOT compare the submitted name to its own records, and MUST NOT filter, rank, or omit holders on the basis of how well they match. The API Hub owns the matching rules and applies them to what is returned.',
+        'The API Hub sends an IBAN, and nothing else. The LFI returns the name(s) it holds against that account. **The LFI performs no matching** — the name the TPP submitted is not sent to it, and it MUST NOT filter, rank, or omit holders on any basis. The API Hub owns the matching rules and applies them to what is returned.',
         'A joint account MUST return **one entry per holder**. The API Hub evaluates every entry in `data`; it does not stop at the first.',
         '**Not found is `200` with an empty `data` array** — never `204`, `404`, `201`, or `202`. Return it where the account does not exist, is under a bar, or the customer has opted out of Confirmation of Payee. The three cases are deliberately indistinguishable to the TPP, so that a CoP query cannot be used to probe for the existence of an account.',
-        'From v2.2 the response is **flattened**: each entry in `data` carries `name` directly. The v2.1 `verifiedClaims` / `verification` identity-assurance envelope is removed from this operation — the API Hub never read it. See the migration note in the LFI API Guide.',
+        'From v2.2 the request carries the IBAN only, and the response is **flattened**: each entry in `data` carries `name` directly. The v2.1 `verifiedClaims` / `verification` identity-assurance envelope is removed from this operation — the API Hub never read it. See the migration note in the LFI API Guide.',
         'This operation is not carried out under a consent, and the call will not have an `o3-consent-id` header. The response MUST therefore carry only the name data this question requires, and no wider customer data.',
       ].join('\n\n')))
     },
