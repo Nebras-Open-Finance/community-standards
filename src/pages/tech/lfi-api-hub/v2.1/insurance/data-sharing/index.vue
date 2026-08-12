@@ -7,8 +7,17 @@ meta:
 <script setup lang="ts">
 import { allEndpoints, endpointUrl } from '@/data/endpoints'
 
-const sectionEndpoints = allEndpoints.filter(
-  (e) => e.surface === 'ozone-connect' && e.sectionSlug === 'insurance-data-sharing',
+// The endpoint registry spans every version, so listings are scoped to the
+// version segment of this page's route.
+const { docsVersion } = useRouteVersion()
+
+const sectionEndpoints = computed(() =>
+  allEndpoints.filter(
+    (e) =>
+      e.surface === 'ozone-connect'
+      && e.sectionSlug === 'insurance-data-sharing'
+      && e.version === docsVersion.value,
+  ),
 )
 
 const insuranceTypes = [

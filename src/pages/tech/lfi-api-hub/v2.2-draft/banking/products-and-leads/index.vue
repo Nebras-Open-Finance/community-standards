@@ -7,6 +7,10 @@ meta:
 <script setup lang="ts">
 import { allEndpoints, endpointUrl } from '@/data/endpoints'
 
+// The endpoint registry spans every version, so listings are scoped to the
+// version segment of this page's route.
+const { docsVersion } = useRouteVersion()
+
 // Live-ecosystem mini-feed — TPPs that called product endpoints in the last
 // 30 days. Aligned with `/program/whats-live?family=product&type=tpp`.
 const { liveTpps, totalCount: totalTppCount, loadError } = useLiveTpps(['product'], 4)
@@ -15,8 +19,13 @@ function initials(name: string): string {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('')
 }
 
-const sectionEndpoints = allEndpoints.filter(
-  (e) => e.surface === 'ozone-connect' && e.sectionSlug === 'products-and-leads',
+const sectionEndpoints = computed(() =>
+  allEndpoints.filter(
+    (e) =>
+      e.surface === 'ozone-connect'
+      && e.sectionSlug === 'products-and-leads'
+      && e.version === docsVersion.value,
+  ),
 )
 </script>
 

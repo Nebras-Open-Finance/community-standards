@@ -7,6 +7,10 @@ meta:
 <script setup lang="ts">
 import { allEndpoints, endpointUrl } from '@/data/endpoints'
 
+// The endpoint registry spans every version, so listings are scoped to the
+// version segment of this page's route.
+const { docsVersion } = useRouteVersion()
+
 // Live-ecosystem mini-feed for the ATMs landing page. Fetches the same two
 // data sources the full Live Ecosystem page (`/program/whats-live`) uses:
 //   * /api/trust-framework.json     — org directory (logos, type)
@@ -17,8 +21,13 @@ import { allEndpoints, endpointUrl } from '@/data/endpoints'
 // time.
 
 // Endpoints in this section, sourced from the API specs registry.
-const sectionEndpoints = allEndpoints.filter(
-  (e) => e.surface === 'ozone-connect' && e.sectionSlug === 'atms',
+const sectionEndpoints = computed(() =>
+  allEndpoints.filter(
+    (e) =>
+      e.surface === 'ozone-connect'
+      && e.sectionSlug === 'atms'
+      && e.version === docsVersion.value,
+  ),
 )
 
 // Live-ecosystem mini-feed — TPPs that called ATM endpoints in the last 30

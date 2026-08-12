@@ -7,6 +7,10 @@ meta:
 <script setup lang="ts">
 import { allEndpoints, endpointUrl } from '@/data/endpoints'
 
+// The endpoint registry spans every version, so listings are scoped to the
+// version segment of this page's route.
+const { docsVersion } = useRouteVersion()
+
 // Live-ecosystem mini-feed — LFIs listed in the Nebras directory as exposing
 // Account Information. Sources from `useLiveLfis` so the count stays aligned
 // with `/program/whats-live?family=account-information`.
@@ -20,8 +24,13 @@ function initials(name: string): string {
 }
 
 // Endpoints in this section, sourced from the API specs registry.
-const sectionEndpoints = allEndpoints.filter(
-  (e) => e.surface === 'standards' && e.sectionSlug === 'data-sharing',
+const sectionEndpoints = computed(() =>
+  allEndpoints.filter(
+    (e) =>
+      e.surface === 'standards'
+      && e.sectionSlug === 'data-sharing'
+      && e.version === docsVersion.value,
+  ),
 )
 
 // Coverage tables (preserved from the previous MD).

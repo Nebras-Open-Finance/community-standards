@@ -7,6 +7,10 @@ meta:
 <script setup lang="ts">
 import { allEndpoints, endpointUrl } from '@/data/endpoints'
 
+// The endpoint registry spans every version, so listings are scoped to the
+// version segment of this page's route.
+const { docsVersion } = useRouteVersion()
+
 // Live-ecosystem mini-feed — LFIs listed in the directory as exposing ATM
 // data. Aligned with `/program/whats-live?family=atm`.
 const { liveLfis, totalCount: totalLfiCount, loadError } = useLiveLfis(['atm'], 4)
@@ -15,8 +19,13 @@ function initials(name: string): string {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('')
 }
 
-const sectionEndpoints = allEndpoints.filter(
-  (e) => e.surface === 'standards' && e.sectionSlug === 'atms',
+const sectionEndpoints = computed(() =>
+  allEndpoints.filter(
+    (e) =>
+      e.surface === 'standards'
+      && e.sectionSlug === 'atms'
+      && e.version === docsVersion.value,
+  ),
 )
 </script>
 
