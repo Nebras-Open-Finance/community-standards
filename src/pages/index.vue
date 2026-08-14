@@ -44,7 +44,12 @@ const AUTH_START_URL = '/auth'
 
 // ── Log-row shapes (loose by design — these JSON files are external) ─────
 interface TrustFrameworkOrg {
+  id?: string
   type?: string
+  name?: string
+  legalName?: string
+  isProduction?: boolean
+  lfiGoLiveDate?: string
   tppGoLiveDate?: string
 }
 
@@ -201,12 +206,32 @@ function compact(n: number | null | undefined): string {
 // Orgs are pre-filtered (active only) and pre-deduped (one entry per id) by
 // the upstream pull. An LFI with a tppGoLiveDate is counted as *both* an LFI
 // and a TPP.
-function countLfis(orgs: readonly TrustFrameworkOrg[]): number {
-  return orgs.filter(o => o.type === 'LFI').length
+function lfiOrgs(orgs: readonly TrustFrameworkOrg[]): TrustFrameworkOrg[] {
+  return orgs.filter(o => o.type === 'LFI')
 }
 
-function countTpps(orgs: readonly TrustFrameworkOrg[]): number {
-  return orgs.filter(o => o.type === 'TPP' || !!o.tppGoLiveDate).length
+function tppOrgs(orgs: readonly TrustFrameworkOrg[]): TrustFrameworkOrg[] {
+  return orgs.filter(o => o.type === 'TPP' || !!o.tppGoLiveDate)
+}
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0')
+}
+
+// The API log's `tppname` is a free-text caller name — it also carries LFIs
+// that call APIs without holding a TPP registration. Map it back to the
+// directory (by legal name or short name, case-insensitively) so "active
+// TPPs" can never exceed the number of registered TPPs, and so an org logged
+// under both of its names is still counted once.
+function tppIdsByName(orgs: readonly TrustFrameworkOrg[]): Map<string, string> {
+  const byName = new Map<string, string>()
+  for (const o of tppOrgs(orgs)) {
+    const id = o.id ?? o.legalName ?? o.name ?? ''
+    if (!id) continue
+    if (o.legalName) byName.set(o.legalName.toUpperCase(), id)
+    if (o.name) byName.set(o.name.toUpperCase(), id)
+  }
+  return byName
 }
 
 // ── Last-updated label (max date across the ticker's data sources) ───────
@@ -227,7 +252,7 @@ const lastUpdatedLabel = computed<string>(() => {
   return `${parseInt(d, 10)} ${MONTH_SHORT[idx] ?? m} ${y}`
 })
 
-// ── Live ticker (4 cells, hooked to live data) ───────────────────────────
+// ── Live ticker — volume rows (sparkline) + participant rows (counts) ────
 interface TickerCell {
   label: string
   value: string
@@ -250,11 +275,6 @@ const tickerCells = computed<TickerCell[]>(() => {
   const payComplete   = completeMonthly(paySuccess, r => r.amount, r => r.date)
   const payDelta      = avgMonthlyPct(payComplete.series)
 
-  const lfis       = countLfis(tfData.value)
-  const tpps       = countTpps(tfData.value)
-  const lfiSeries  = [Math.max(lfis - 4, 0), Math.max(lfis - 3, 0), Math.max(lfis - 2, 0), Math.max(lfis - 1, 0), lfis]
-  const tppSeries  = [Math.max(tpps - 3, 0), Math.max(tpps - 2, 0), Math.max(tpps - 1, 0), tpps]
-
   return [
     {
       label: 'API Calls',
@@ -270,19 +290,39 @@ const tickerCells = computed<TickerCell[]>(() => {
       color: ACCENT.gold,
       series: lastMonths(payComplete.series),
     },
+  ]
+})
+
+// Participant counts are nested sets: live ⊆ production ⊆ onboarded.
+// "Live" is driven by the go-live date field, not by isProduction alone.
+interface ParticipantRow {
+  label: string
+  color: string
+  stats: { label: string, value: string }[]
+}
+
+const participantRows = computed<ParticipantRow[]>(() => {
+  const lfis = lfiOrgs(tfData.value)
+  const tpps = tppOrgs(tfData.value)
+
+  return [
     {
-      label: 'Onboarded LFIs',
-      value: String(lfis).padStart(2, '0'),
-      delta: '+ ' + Math.min(lfis, 3),
+      label: 'LFIs',
       color: ACCENT.navy,
-      series: lfiSeries,
+      stats: [
+        { label: 'Live',       value: pad2(lfis.filter(o => !!o.lfiGoLiveDate).length) },
+        { label: 'Production', value: pad2(lfis.filter(o => o.isProduction === true).length) },
+        { label: 'Onboarded',  value: pad2(lfis.length) },
+      ],
     },
     {
-      label: 'Onboarded TPPs',
-      value: String(tpps).padStart(2, '0'),
-      delta: '+ ' + Math.min(tpps, 2),
+      label: 'TPPs',
       color: ACCENT.blueDeep,
-      series: tppSeries,
+      stats: [
+        { label: 'Live',       value: pad2(tpps.filter(o => !!o.tppGoLiveDate).length) },
+        { label: 'Production', value: pad2(tpps.filter(o => o.isProduction === true).length) },
+        { label: 'Onboarded',  value: pad2(tpps.length) },
+      ],
     },
   ]
 })
@@ -373,9 +413,10 @@ const heroKpis = computed<HeroKpi[]>(() => {
 
   // Unique LFIs/TPPs that sent or received *any* API call in the trailing
   // 30 days, anchored to the latest date in the log (data may lag real
-  // time).
+  // time). Callers are restricted to registered TPPs — see tppNameKeys().
   let activeLfis = 0
   let activeTpps = 0
+  const registeredTpps = tppIdsByName(tfData.value)
   if (apiData.value.length > 0) {
     const first = apiData.value[0]
     const initial = first?.date ?? ''
@@ -392,7 +433,8 @@ const heroKpis = computed<HeroKpi[]>(() => {
       for (const r of apiData.value) {
         if (r.date && r.date >= windowStart) {
           if (r.lfinamekey) lfiSet.add(r.lfinamekey)
-          if (r.tppname) tppSet.add(r.tppname)
+          const tppId = r.tppname ? registeredTpps.get(r.tppname.toUpperCase()) : undefined
+          if (tppId) tppSet.add(tppId)
         }
       }
       activeLfis = lfiSet.size
@@ -414,15 +456,15 @@ const heroKpis = computed<HeroKpi[]>(() => {
       color: ACCENT.sky,
     },
     {
-      label: 'Active LFIs · 30d',
+      label: 'LFIs Serving Traffic · 30d',
       value: String(activeLfis).padStart(2, '0'),
-      desc:  'Serving live API traffic',
+      desc:  'Received API traffic in the last 30 days',
       color: ACCENT.navy,
     },
     {
-      label: 'Active TPPs · 30d',
+      label: 'TPPs Making Requests · 30d',
       value: String(activeTpps).padStart(2, '0'),
-      desc:  'Calling live APIs',
+      desc:  'Sent API requests in the last 30 days',
       color: ACCENT.blueDeep,
     },
   ]
@@ -682,6 +724,19 @@ const communityWays: readonly CommunityItem[] = [
               <div class="ed-ticker__delta" :style="{ color: t.color }">{{ t.delta }}</div>
               <div class="ed-ticker__spark">
                 <MiniChart :data="t.series" :color="t.color" type="area" :height="40" />
+              </div>
+            </div>
+            <div
+              v-for="p in participantRows"
+              :key="p.label"
+              class="ed-ticker__row ed-ticker__row--counts"
+            >
+              <div class="ed-ticker__label">{{ p.label }}</div>
+              <div class="ed-ticker__counts">
+                <div v-for="s in p.stats" :key="s.label" class="ed-ticker__count">
+                  <div class="ed-ticker__value">{{ s.value }}</div>
+                  <div class="ed-ticker__count-label" :style="{ color: p.color }">{{ s.label }}</div>
+                </div>
               </div>
             </div>
           </aside>
@@ -1200,6 +1255,27 @@ const communityWays: readonly CommunityItem[] = [
 }
 
 .ed-ticker__row:last-child { border-bottom: 0; }
+
+/* Participant rows: label on top, three counts across the full block. */
+.ed-ticker__row--counts {
+  display: block;
+}
+
+.ed-ticker__counts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 0.35rem;
+}
+
+.ed-ticker__count-label {
+  font-family: var(--at-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-top: 0.15rem;
+}
 
 .ed-ticker__label {
   font-family: var(--at-mono);
