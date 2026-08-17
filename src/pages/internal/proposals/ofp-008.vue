@@ -23,7 +23,7 @@ import PvProposalTabs from '@/components/proposals/PvProposalTabs.vue'
 // of the same property/name wins under Unhead's dedupe.
 const OG_TITLE = 'OFP-008 · Protect FinanceRates with an LFI-hosted display element'
 const OG_DESCRIPTION =
-  'Retire the encrypted-JWE protection for FinanceRates. Instead of handing the TPP an encrypted rate to decrypt locally, the LFI returns a reference to a surface it renders itself, which the TPP embeds as a cross-origin element — 3DS-style — so the rate is never received by the TPP at all.'
+  'Retire the encrypted-JWE protection for FinanceRates. Instead of handing the TPP an encrypted rate to decrypt locally, the LFI returns a reference to a surface it renders itself on its own origin — so the rate value is never received by the TPP at all. How that surface is presented to the customer is left to a proof of concept and an agreed CX.'
 useHead({
   title: OG_TITLE,
   meta: [
@@ -48,8 +48,9 @@ const meta = {
 const pros = [
   'The rate never enters the TPP’s systems in any form — protection is structural (cross-origin isolation), not a matter of trusting the TPP’s conduct after a point-in-time certification.',
   'Removes the heaviest parts of the LFI build: JWE generation and the PBES2 / A256GCM crypto, per-call one-time-code minting and out-of-band delivery, and OTP-spam rate limiting.',
+  'The LFI no longer has to read the consent’s permissions before it responds. It returns the rate it holds — cleartext or reference — and the API Hub withholds FinanceRates when ReadProductFinanceRates is absent, exactly as it does for every other permission-gated field. The JWE path forces the LFI to make that check itself, from a local consent store or a Consent Manager round-trip, before it mints an OTP.',
   'Expiry is enforced by the LFI server-side, eliminating today’s “the TPP must honour exp” weakness and the header-vs-plaintext ambiguity in the current design.',
-  'Lets LFIs reuse existing 3DS / challenge infrastructure to authenticate the customer inside the surface, rather than build a bespoke encryption-and-OTP flow.',
+  'Lets LFIs reuse existing 3DS / challenge infrastructure to authenticate the customer before revealing the rate, rather than build a bespoke encryption-and-OTP flow.',
   'Makes the certification meaningful and technically enforceable at consent creation — closing the gap where nothing today stops an uncertified TPP requesting ReadProductFinanceRates.',
   'Cleartext stays available for LFIs that do not consider a given rate sensitive, so no forced friction is added where none is wanted.',
   'No LFI has a live JWE implementation, so removing AEJwe affects no one — this is a clean introduction, not a migration, with no deprecation window to run.',
@@ -57,9 +58,8 @@ const pros = [
 
 const cons = [
   'LFIs must expose a customer-facing web surface with token validation — more front-end responsibility than a pure API contract, even where it reuses existing customer channels.',
-  'Embedded cross-origin frames bring UX cost: sizing, theming to fit the TPP’s design, mobile-webview quirks, and accessibility. 3DS challenge windows are a known source of friction.',
-  'The TPP cannot theme or localise the rate presentation — it is the LFI’s element. Consistency of protection is bought at the price of TPP brand control.',
-  'Clickjacking / overlay attempts belong in the threat model. They are mitigated by the LFI’s framing hygiene, the certification, and the low value of a display-only surface showing the customer their own rate — but we deliberately do not defend them with a per-TPP origin allowlist.',
+  'The customer experience is not designed yet. How the surface is presented, sized, dismissed, and returned from is left to a proof of concept and an agreed CX, so neither side can fully size the front-end work from this proposal alone.',
+  'The rate presentation belongs to the LFI, not the TPP. Consistency of protection is bought at the price of TPP control over how the rate appears in its own journey.',
   'Viewing a protected rate now requires a live, customer-present context and an LFI round-trip — it is not a server-side or batch-friendly path. (This already applies to today’s JWE + OTP path, which is also customer-present.)',
 ]
 
@@ -83,9 +83,11 @@ GET /accounts/{AccountId}/product
   "ExpiresAt": "2026-08-01T14:30:00Z"
 }
 
-# The TPP embeds DisplayUrl as a cross-origin iframe. The customer sees the rate
-# rendered by LFI-origin content; the TPP’s own code cannot read it. The rate
-# value never reaches the TPP in any form, encrypted or cleartext.`
+# The customer is shown the rate by LFI-origin content loaded from DisplayUrl.
+# Because that content is cross-origin to the TPP, the TPP’s own code cannot read
+# it — and the rate value never reaches the TPP in any form, encrypted or
+# cleartext. How the surface is presented to the customer is settled by the proof
+# of concept and the agreed CX, not fixed by this proposal.`
 
 // ─── Voting ─────────────────────────────────────────────────────────────────
 // Live tally + vote submission are backed by the proposals API (D1) via
@@ -228,8 +230,9 @@ onMounted(() => {
         <p class="ofp__summary">
           Retire the encrypted-JWE protection for <code>FinanceRates</code>. Instead of handing the TPP
           an encrypted rate to decrypt on the device, the LFI returns a reference to a surface it
-          <strong>renders itself</strong>, which the TPP embeds as a cross-origin element &mdash;
-          3DS-style &mdash; so the rate is never received by the TPP at all.
+          <strong>renders itself</strong>, on its own origin &mdash; so the rate value is never received
+          by the TPP at all. How that surface is presented to the customer is left to a proof of concept
+          and an agreed CX.
         </p>
 
         <div class="ofp__strip">
@@ -359,16 +362,16 @@ onMounted(() => {
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
           <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 02 · Recommendation</div>
-          <h2 class="ofp-band__title">Have the LFI show the rate itself, inside the TPP&rsquo;s screen</h2>
+          <h2 class="ofp-band__title">Have the LFI show the rate itself, within the customer&rsquo;s journey</h2>
         </div>
         <div class="ofp-prose">
           <p>
             <strong>On <code>GET /accounts/{AccountId}/product</code>, an LFI protecting a rate returns
             &mdash; in place of the rate value &mdash; a short-lived reference to an LFI-hosted display
-            surface. The TPP embeds that surface as a cross-origin element (a plain iframe, or an
-            LFI-provided web component) within its own screen.</strong> The customer sees the rate in the
-            flow of the TPP application; it is rendered by LFI-origin content that the TPP’s code
-            cannot read, script into, or capture.
+            surface. The customer reaches that surface from within the TPP’s journey, and the LFI renders
+            the rate itself.</strong> Because the surface is served from the LFI’s own origin, it is
+            cross-origin to the TPP: the TPP’s code cannot read the rate out of it, script into it, or
+            capture its content.
           </p>
 
           <div class="ofp-code">
@@ -377,16 +380,22 @@ onMounted(() => {
           </div>
 
           <p>
-            This mirrors 3-D Secure: the LFI is the issuer, the TPP is the merchant, and the sensitive
-            interaction happens in an issuer-controlled frame the merchant hosts but cannot see into.
+            This mirrors 3-D Secure in shape: the LFI is the issuer, the TPP is the merchant, and the
+            sensitive interaction happens in an issuer-controlled context the merchant cannot see into.
             LFIs that already run 3DS challenge infrastructure can reuse that tooling to authenticate the
-            customer inside the surface, replacing the out-of-band OTP entirely.
+            customer before the rate is revealed, replacing the out-of-band OTP entirely.
           </p>
           <p>
             The customer’s browser or app loads the LFI surface <strong>directly from the LFI
             origin</strong>, exactly as it already reaches the LFI when the customer authenticates during
             consent authorisation. Strict mediation is preserved &mdash; the invariant governs API and
             data traffic, and the rate value is never proxied to the TPP; only a reference is.
+          </p>
+          <p>
+            <strong>How the surface is presented to the customer is deliberately left open by this
+            proposal</strong> &mdash; it is a placeholder pending a proof of concept and an agreed
+            customer experience. What is being put to the vote is the security model: the rate is
+            rendered by the LFI and the value never reaches the TPP.
           </p>
         </div>
       </div>
@@ -418,13 +427,20 @@ onMounted(() => {
               <li>
                 <code>AERateDisplayRef</code> carries a <code>DisplayUrl</code> on the LFI’s
                 customer-facing display origin &mdash; itself carrying a signed, single-use request token
-                bound to the consent, <code>AccountId</code>, <code>ProductId</code>, and the TPP’s
-                client identity &mdash; and an <code>ExpiresAt</code>.
+                &mdash; and an <code>ExpiresAt</code>.
               </li>
               <li>
-                <strong>Confidentiality comes from cross-origin isolation.</strong> Because the frame is
-                cross-origin, the TPP page cannot read the rate from the DOM, script into the frame, or
-                capture its content. This holds regardless of any allowlist.
+                <strong>The reference is bound to one customer and one account.</strong> The token binds
+                the consent, the <strong>customer</strong> that consent was authorised by, the
+                <code>AccountId</code>, the <code>ProductId</code>, and the TPP’s client identity. The LFI
+                MUST refuse to render unless the customer present at the surface is that same customer,
+                and MUST NOT serve a rate for any account other than the bound <code>AccountId</code>. A
+                <code>DisplayUrl</code> obtained for one customer or one account is useless for another.
+              </li>
+              <li>
+                <strong>Confidentiality comes from cross-origin isolation.</strong> Because the LFI
+                content is served from the LFI’s origin, the TPP cannot read the rate out of it, script
+                into it, or capture its content &mdash; whatever presentation the agreed CX settles on.
               </li>
               <li>
                 <strong>Access comes from the token.</strong> A valid <code>DisplayUrl</code> only ever
@@ -437,23 +453,27 @@ onMounted(() => {
                 display window.
               </li>
               <li>
-                <strong>No per-TPP embedding-origin registration.</strong> We deliberately avoid a
-                <code>frame-ancestors</code> allowlist; it would only add clickjacking defence for a
-                display-only surface showing the customer their own rate, at the cost of a new
-                registration artifact and LFI upkeep, and it does not map cleanly onto native / webview.
+                <strong>The LFI does not check the consent’s permissions on this path.</strong> It returns
+                whichever shape it holds for the product &mdash; cleartext object or reference &mdash; and
+                the API Hub withholds <code>FinanceRates</code> from the TPP when the consent does not
+                carry <code>ReadProductFinanceRates</code>, exactly as it does for every other
+                permission-gated field. Under the JWE design the LFI MUST make that check itself before
+                minting an OTP, because issuing one has a real cost and is visible to the customer;
+                returning a reference has neither property.
               </li>
               <li>
                 <code>ReadProductFinanceRates</code> is <strong>unchanged</strong>. It still gates whether
-                the LFI surfaces the rate at all; if the permission is absent, <code>FinanceRates</code>
-                is omitted from the <code>Product</code> record, exactly as today.
+                the rate reaches the TPP at all; if the permission is absent, <code>FinanceRates</code>
+                does not appear on the <code>Product</code> record the TPP receives.
               </li>
             </ul>
           </div>
           <p>
-            The baseline embedding is a plain cross-origin iframe &mdash; the lowest common denominator
-            and the closest reuse of 3DS browser flows &mdash; with an optional LFI-provided web-component
-            or mobile-SDK profile defined for richer embedding, and for native contexts where an iframe is
-            not the host.
+            <strong>The embedding and presentation profile is a placeholder.</strong> This proposal fixes
+            the reference, its bindings, and the isolation property; it does not fix how the surface is
+            launched, sized, dismissed, or returned from, nor the native / webview variant. Those are
+            settled by a proof of concept run with LFIs and TPPs and by the customer experience agreed
+            from it, and documented once agreed.
           </p>
         </div>
       </div>
@@ -489,10 +509,11 @@ onMounted(() => {
             <div class="ofp-change__label">02 · LFI display surface</div>
             <p>
               A protecting LFI stands up (or reuses) a tokenised, customer-facing display surface that
-              validates the request token, authenticates the customer where it chooses to &mdash; reusing
-              existing 3DS / challenge infrastructure &mdash; renders the rate, and enforces
-              <code>ExpiresAt</code> server-side. In return it retires the JWE generation, the one-time-code
-              minting and delivery, and the OTP-spam rate limits. No per-TPP allowlist is maintained.
+              validates the request token, confirms the customer present is the one the token is bound to,
+              authenticates them where it chooses to &mdash; reusing existing 3DS / challenge
+              infrastructure &mdash; renders the rate, and enforces <code>ExpiresAt</code> server-side. In
+              return it retires the JWE generation, the one-time-code minting and delivery, the OTP-spam
+              rate limits, and the consent-permission lookup this endpoint requires today.
             </p>
           </div>
 
@@ -501,8 +522,9 @@ onMounted(() => {
             <p>
               Rename the optional <em>Access Encrypted Resource Data</em> certification &mdash; a misnomer
               once there is no encryption &mdash; to <strong>Rate Display Embedding</strong>, and repurpose
-              it: the TPP demonstrates it can correctly embed and operate the LFI element and does not
-              attempt to defeat its isolation. The API Hub SHOULD then reject a consent requesting
+              it: the TPP demonstrates it can correctly present and operate the LFI display surface and
+              does not attempt to defeat its isolation. The precise conformance criteria follow the agreed
+              CX. The API Hub SHOULD then reject a consent requesting
               <code>ReadProductFinanceRates</code> from a TPP that does not hold the certification, using
               the trust-framework record it already holds &mdash; closing today’s enforcement gap.
             </p>
@@ -512,8 +534,9 @@ onMounted(() => {
             <div class="ofp-change__label">04 · Documentation</div>
             <p>
               Rewrite the two <em>Encrypted FinanceRates</em> guides (TPP and LFI) and the Data Sharing
-              requirements tables around the embedded surface, update the certification page under its new
-              name, and record the change as an errata. No new registration field is introduced.
+              requirements tables around the display surface, update the certification page under its new
+              name, and record the change as an errata. The presentation half of those guides waits on the
+              proof of concept and the agreed CX. No new registration field is introduced.
             </p>
           </div>
         </div>
@@ -532,23 +555,27 @@ onMounted(() => {
         <div class="ofp-prose">
           <p>
             This proposal trades one build for another. It retires the JWE crypto, the one-time-code
-            delivery, and the OTP rate limiting &mdash; genuinely the heaviest parts of today’s LFI
-            work &mdash; but in their place a protecting LFI has to expose a <strong>customer-facing
-            display surface</strong> with token validation and, if it wants friction control, a challenge
-            step. For an LFI that already runs 3DS this is largely reuse; for one that does not, it is new
-            front-end responsibility.
+            delivery, the OTP rate limiting, and the consent-permission lookup &mdash; genuinely the
+            heaviest parts of today’s LFI work &mdash; but in their place a protecting LFI has to expose a
+            <strong>customer-facing display surface</strong> with token validation and, if it wants
+            friction control, a challenge step. For an LFI that already runs 3DS this is largely reuse; for
+            one that does not, it is new front-end responsibility.
           </p>
           <p>
             The change is <strong>meaningful for TPPs too</strong>: they move from forwarding a JWE and
-            decrypting in-browser to embedding and operating a cross-origin element they cannot style. And
-            it is a <strong>breaking schema change</strong> to <code>FinanceRates</code>, taken at V2.2.
-            The one thing that makes it cheap right now is that <strong>no LFI has shipped the JWE
-            path</strong>, so nothing has to be migrated &mdash; this is close to a clean start rather than
-            a transition.
+            decrypting in-browser to presenting and operating a surface the LFI renders. And it is a
+            <strong>breaking schema change</strong> to <code>FinanceRates</code>, taken at V2.2. The one
+            thing that makes it cheap right now is that <strong>no LFI has shipped the JWE path</strong>,
+            so nothing has to be migrated &mdash; this is close to a clean start rather than a transition.
+          </p>
+          <p>
+            Both sides should read the front-end estimate as <strong>provisional</strong>: the presentation
+            is a placeholder until the proof of concept and the agreed CX land, so the security model is
+            what a vote is being cast on, not a finished integration design.
           </p>
           <p>
             A vote in favour is a statement that your institution would <em>build to</em> this &mdash; an
-            LFI that it would host the surface, a TPP that it would embed it &mdash; not merely that it
+            LFI that it would host the surface, a TPP that it would present it &mdash; not merely that it
             reads as more secure. If the ecosystem would rather keep the encrypted-rate design, or would
             not use the protected path at all, that is a perfectly good outcome and the work will not be
             scheduled.
