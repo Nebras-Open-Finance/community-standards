@@ -532,7 +532,7 @@ async function generate(): Promise<void> {
             v-model="creditorRisk.creditorScreenshot"
             label="Creditor validation"
             accept="image/png,image/jpeg,image/webp"
-            hint="Screenshot evidencing Creditor account validation — reachability and/or CoP confirmation (Risk.CreditorIndicators.IsCreditorConfirmed)."
+            hint="Screenshot evidencing Creditor account validation — reachability and/or validation of the Confirmation of Payee JWS the TPP carries in ConfirmationOfPayeeResponse, inside the creditor entry of the Initiation.Creditor array in the decrypted PII."
           />
           <label class="fc__flabel fc__flabel--block" for="cr-creditor-text">Creditor validation rules — beyond the OpenAPI spec</label>
           <textarea

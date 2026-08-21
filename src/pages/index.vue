@@ -185,14 +185,21 @@ function lastMonths<T>(arr: readonly T[], n = CHART_MONTHS): T[] {
   return arr.length <= n ? arr.slice() : arr.slice(arr.length - n)
 }
 
-// Average monthly growth: total growth from the first month to the last full
-// month, spread across the months it covers (rather than raw month-over-month).
-function avgMonthlyPct(series: readonly number[]): number | null {
+// Momentum: the last complete month measured against the average of the
+// months immediately before it. Comparing first-to-last instead is dominated
+// by a near-zero opening month and yields absurd percentages for a series
+// that grew from a standing start.
+const BASELINE_MONTHS = 3
+
+interface Momentum { pct: number, months: number }
+
+function vsRecentAvg(series: readonly number[]): Momentum | null {
   if (series.length < 2) return null
-  const first = series[0] ?? 0
   const last = series[series.length - 1] ?? 0
-  if (first <= 0) return null
-  return Math.round(((last / first - 1) * 100) / series.length)
+  const prior = series.slice(Math.max(0, series.length - 1 - BASELINE_MONTHS), series.length - 1)
+  const base = prior.reduce((sum, v) => sum + v, 0) / prior.length
+  if (base <= 0) return null
+  return { pct: Math.round((last / base - 1) * 100), months: prior.length }
 }
 
 function compact(n: number | null | undefined): string {
@@ -261,32 +268,37 @@ interface TickerCell {
   series: number[]
 }
 
+function fmtMomentum(d: Momentum | null): string {
+  if (d == null) return '—'
+  return `${d.pct >= 0 ? '↑' : '↓'} ${Math.abs(d.pct)}%`
+}
+
 const tickerCells = computed<TickerCell[]>(() => {
   // Totals keep the full amount (incl. the in-progress month); the sparkline
   // and growth % use only complete months.
   const apiTotal      = monthlySeries(apiData.value, r => r.totalapicalls, r => r.date).reduce((s, v) => s + v, 0)
   const apiComplete   = completeMonthly(apiData.value, r => r.totalapicalls, r => r.date)
-  const apiDelta      = avgMonthlyPct(apiComplete.series)
+  const apiDelta      = vsRecentAvg(apiComplete.series)
 
   const paySuccess = paymentData.value.filter(r =>
     typeof r.status === 'string' && SUCCESS_PAYMENT_STATUSES.has(r.status) && !!r.lfinamekey,
   )
   const payTotal      = monthlySeries(paySuccess, r => r.amount, r => r.date).reduce((s, v) => s + v, 0)
   const payComplete   = completeMonthly(paySuccess, r => r.amount, r => r.date)
-  const payDelta      = avgMonthlyPct(payComplete.series)
+  const payDelta      = vsRecentAvg(payComplete.series)
 
   return [
     {
       label: 'API Calls',
       value: compact(apiTotal),
-      delta: apiDelta != null ? `${apiDelta >= 0 ? '↑' : '↓'} ${Math.abs(apiDelta)}% / mo` : '—',
+      delta: fmtMomentum(apiDelta),
       color: ACCENT.teal,
       series: lastMonths(apiComplete.series),
     },
     {
       label: 'Payments (AED)',
       value: compact(payTotal),
-      delta: payDelta != null ? `${payDelta >= 0 ? '↑' : '↓'} ${Math.abs(payDelta)}% / mo` : '—',
+      delta: fmtMomentum(payDelta),
       color: ACCENT.gold,
       series: lastMonths(payComplete.series),
     },
@@ -331,16 +343,9 @@ const participantRows = computed<ParticipantRow[]>(() => {
 interface StoryChart {
   label: string
   value: string
-  delta: string
-  deltaColor: string
   color: string
   series: number[]
   labels: string[]
-}
-
-function fmtDelta(d: number | null): string {
-  if (d == null) return '—'
-  return `${d >= 0 ? '↑' : '↓'} ${Math.abs(d)}% / mo avg`
 }
 
 const storyCharts = computed<StoryChart[]>(() => {
@@ -349,7 +354,6 @@ const storyCharts = computed<StoryChart[]>(() => {
   // only complete months.
   const consentsTotal    = monthlySeries(consentSuccess, r => r.totalapicalls, r => r.date).reduce((s, v) => s + v, 0)
   const consentsComplete = completeMonthly(consentSuccess, r => r.totalapicalls, r => r.date)
-  const consentsDelta    = avgMonthlyPct(consentsComplete.series)
 
   const confByMonth  = monthlyTotals(authData.value.filter(isConsentAuthorised), r => r.totalapicalls, r => r.date)
   const startByMonth = monthlyTotals(authData.value.filter(isAuthStart),         r => r.totalapicalls, r => r.date)
@@ -364,17 +368,11 @@ const storyCharts = computed<StoryChart[]>(() => {
   const totalStarts = Object.values(startByMonth).reduce((s, v) => s + v, 0)
   const totalConf   = Object.values(confByMonth).reduce((s, v) => s + v, 0)
   const overallRate = totalStarts > 0 ? (totalConf / totalStarts) * 100 : null
-  // Average percentage-point change per month across complete months.
-  const ratePpDelta = rateSeries.length >= 2
-    ? ((rateSeries[rateSeries.length - 1] ?? 0) - (rateSeries[0] ?? 0)) / rateSeries.length
-    : null
 
   return [
     {
       label: 'Consents Authorised · by Month',
       value: consentsTotal.toLocaleString(),
-      delta: fmtDelta(consentsDelta),
-      deltaColor: consentsDelta != null && consentsDelta < 0 ? '#B33A3A' : ACCENT.teal,
       color: ACCENT.teal,
       series: lastMonths(consentsComplete.series),
       labels: thinLabels(lastMonths(consentsComplete.labels)),
@@ -382,10 +380,6 @@ const storyCharts = computed<StoryChart[]>(() => {
     {
       label: 'Consent Success Rate · by Month',
       value: overallRate == null ? '—' : `${overallRate.toFixed(1)}%`,
-      delta: ratePpDelta == null
-        ? '—'
-        : `${ratePpDelta >= 0 ? '↑' : '↓'} ${Math.abs(ratePpDelta).toFixed(1)}pp / mo avg`,
-      deltaColor: ratePpDelta != null && ratePpDelta < 0 ? '#B33A3A' : ACCENT.sky,
       color: ACCENT.sky,
       series: lastMonths(rateSeries),
       labels: thinLabels(lastMonths(rateMonths)),
@@ -791,7 +785,6 @@ const communityWays: readonly CommunityItem[] = [
               <span class="ed-story-chart__label">{{ c.label }}</span>
             </div>
             <div class="ed-story-chart__value">{{ c.value }}</div>
-            <div class="ed-story-chart__delta" :style="{ color: c.deltaColor }">{{ c.delta }}</div>
             <MiniChart :data="c.series" :color="c.color" type="area" :height="200" />
             <div v-if="c.labels.length" class="ed-story-chart__axis">
               <span v-for="(l, i) in c.labels" :key="i">{{ l }}</span>
@@ -1465,13 +1458,7 @@ const communityWays: readonly CommunityItem[] = [
   letter-spacing: -0.025em;
   color: var(--at-navy-deep);
   line-height: 1;
-}
-
-.ed-story-chart__delta {
-  font-family: var(--at-mono);
-  font-size: 0.72rem;
-  font-weight: 600;
-  margin: 0.55rem 0 1.25rem;
+  margin-bottom: 1.25rem;
 }
 
 .ed-story-chart__axis {
