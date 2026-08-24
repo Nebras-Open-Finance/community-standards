@@ -1,0 +1,18 @@
+<route lang="yaml">
+meta:
+  title: Retrieve Account Details for a Refund — Field Mapping
+</route>
+
+<template>
+  <FieldMapEndpointPage
+    slug="bank-initiation__payment-consents--id--refund"
+    eyebrow="LFI · Banking · Service Initiation · Field Mapping"
+    title="Retrieve Account Details for a Refund — Field Mapping"
+    version="v2.2-rc1"
+    method="GET"
+    path="/payment-consents/{consentId}/refund"
+    resource="/payment-consents/{}/refund"
+    ozone="GET /payment-consents/{consentId}/refund"
+    standards="GET /payment-consents/{ConsentId}/refund"
+  />
+</template>

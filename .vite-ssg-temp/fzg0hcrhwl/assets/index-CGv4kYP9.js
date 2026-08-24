@@ -1,0 +1,1018 @@
+import { defineComponent, ref, computed, onUnmounted, mergeProps, unref, useSSRContext } from "vue";
+import { ssrRenderAttrs, ssrInterpolate, ssrRenderAttr, ssrRenderList, ssrRenderClass } from "vue/server-renderer";
+import { useHead } from "@unhead/vue";
+import { _ as _export_sfc, b as block0 } from "../main.mjs";
+import "vite-ssg";
+import "axios";
+import "vue-router";
+const source = "https://data.directory.openfinance.ae/participants";
+const servers = [
+  {
+    organisationId: "36b067c3-8017-4144-bb7e-49cf794089c9",
+    organisationName: "ADCB",
+    legalEntityName: "Abu Dhabi Commercial Bank PBJC",
+    sector: "bank",
+    authorisationServerId: "3343845f-a3de-4cfe-9034-6841a35a8898",
+    customerFriendlyName: "ADCB",
+    customerFriendlyDescription: "Data sharing, Payment initiation, Refunds, CoP",
+    logoUri: "https://data.directory.openfinance.ae/logos/36b067c3-8017-4144-bb7e-49cf794089c9/authorisationservers/3343845f-a3de-4cfe-9034-6841a35a8898.jpg",
+    issuer: "https://auth1.adcbrt.apihub.openfinance.ae",
+    discoveryUri: "https://auth1.adcbrt.apihub.openfinance.ae/.well-known/openid-configuration",
+    lfiCode: "adcbrt",
+    accountTypes: [
+      "Retail"
+    ],
+    apiFamilies: [
+      "account-information",
+      "confirmation",
+      "payment",
+      "product"
+    ],
+    authorizationEndpoint: "https://www.adcb.com/openfin/auth",
+    parEndpoint: "https://as1.adcbrt.apihub.openfinance.ae/par",
+    tokenEndpoint: "https://as1.adcbrt.apihub.openfinance.ae/token",
+    verification: {
+      origin: "https://www.adcb.com",
+      android: {
+        url: "https://www.adcb.com/.well-known/assetlinks.json",
+        status: 200,
+        contentType: "application/json",
+        jsonValid: true,
+        verdict: "pass",
+        note: null
+      },
+      ios: {
+        url: "https://www.adcb.com/.well-known/apple-app-site-association",
+        status: 200,
+        contentType: "application/json",
+        jsonValid: true,
+        verdict: "pass",
+        note: null
+      },
+      huawei: {
+        url: "https://www.adcb.com/.well-known/applinking.json",
+        status: 404,
+        contentType: "text/html; charset=utf-8",
+        jsonValid: false,
+        verdict: "fail",
+        note: "HTTP 404"
+      }
+    }
+  },
+  {
+    organisationId: "1b4f7317-8b67-4179-bdfb-8054f74c25d0",
+    organisationName: "ADIB",
+    legalEntityName: "Abu Dhabi Islamic Bank P.J.S.C",
+    sector: "bank",
+    authorisationServerId: "87ede4c2-b388-42b2-8cea-1404892fee06",
+    customerFriendlyName: "ADIB",
+    customerFriendlyDescription: "Adib Retail API Provider",
+    logoUri: "https://data.directory.openfinance.ae/logos/1b4f7317-8b67-4179-bdfb-8054f74c25d0/authorisationservers/87ede4c2-b388-42b2-8cea-1404892fee06.jpg",
+    issuer: "https://auth1.adibrt.apihub.openfinance.ae",
+    discoveryUri: "https://auth1.adibrt.apihub.openfinance.ae/.well-known/openid-configuration",
+    lfiCode: "adibrt",
+    accountTypes: [
+      "Retail"
+    ],
+    apiFamilies: [
+      "account-information",
+      "confirmation",
+      "payment"
+    ],
+    authorizationEndpoint: "https://simple.adib.ae/openfinance",
+    parEndpoint: "https://as1.adibrt.apihub.openfinance.ae/par",
+    tokenEndpoint: "https://as1.adibrt.apihub.openfinance.ae/token",
+    verification: {
+      origin: "https://simple.adib.ae",
+      android: {
+        url: "https://simple.adib.ae/.well-known/assetlinks.json",
+        status: 200,
+        contentType: "application/json",
+        jsonValid: true,
+        verdict: "pass",
+        note: null
+      },
+      ios: {
+        url: "https://simple.adib.ae/.well-known/apple-app-site-association",
+        status: 200,
+        contentType: "application/json",
+        jsonValid: true,
+        verdict: "pass",
+        note: null
+      },
+      huawei: {
+        url: "https://simple.adib.ae/.well-known/applinking.json",
+        status: 200,
+        contentType: "text/html",
+        jsonValid: false,
+        verdict: "fail",
+        note: "body is not valid JSON"
+      }
+    }
+  },
+  {
+    organisationId: "b1b75d1a-648e-4e88-8d1f-a2a3cf43de5c",
+    organisationName: "ADNIC",
+    legalEntityName: "ABU DHABI NATIONAL INSURANCE COMPANY PJSC",
+    sector: "insurer",
+    authorisationServerId: "9ad6bff9-5064-45e5-904f-3ba1eeb43b04",
+    customerFriendlyName: "ABU DHABI NATIONAL INSURANCE COMPANY",
+    customerFriendlyDescription: "ADNIC Server",
+    logoUri: "https://data.directory.openfinance.ae/logos/b1b75d1a-648e-4e88-8d1f-a2a3cf43de5c/authorisationservers/9ad6bff9-5064-45e5-904f-3ba1eeb43b04.png",
+    issuer: "https://auth1.adnic.apihub.openfinance.ae",
+    discoveryUri: "https://auth1.adnic.apihub.openfinance.ae/.well-known/openid-configuration",
+    lfiCode: "adnic",
+    accountTypes: [],
+    apiFamilies: [
+      "insurance"
+    ],
+    authorizationEndpoint: "https://authprod.adnic.ae/web/sign-in/auth",
+    parEndpoint: "https://as1.adnic.apihub.openfinance.ae/par",
+    tokenEndpoint: "https://as1.adnic.apihub.openfinance.ae/token",
+    verification: {
+      origin: "https://authprod.adnic.ae",
+      android: {
+        url: "https://authprod.adnic.ae/.well-known/assetlinks.json",
+        status: 200,
+        contentType: "application/json",
+        jsonValid: true,
+        verdict: "pass",
+        note: null
+      },
+      ios: {
+        url: "https://authprod.adnic.ae/.well-known/apple-app-site-association",
+        status: 200,
+        contentType: "application/json",
+        jsonValid: true,
+        verdict: "pass",
+        note: null
+      },
+      huawei: {
+        url: "https://authprod.adnic.ae/.well-known/applinking.json",
+        status: 404,
+        contentType: "text/html",
+        jsonValid: false,
+        verdict: "fail",
+        note: "HTTP 404"
+      }
+    }
+  },
+  {
+    organisationId: "2f9981d9-47e6-4cd5-ba04-d6bdadf52591",
+    organisationName: "CBD",
+    legalEntityName: "COMMERCIAL BANK OF DUBAI",
+    sector: "bank",
+    authorisationServerId: "63687d3f-a336-476c-ac98-7c4c7de5696b",
+    customerFriendlyName: "CBD",
+    customerFriendlyDescription: "CBD Retail Server",
+    logoUri: "https://data.directory.openfinance.ae/logos/2f9981d9-47e6-4cd5-ba04-d6bdadf52591/authorisationservers/63687d3f-a336-476c-ac98-7c4c7de5696b.png",
+    issuer: "https://auth1.cbdrt.apihub.openfinance.ae",
+    discoveryUri: "https://auth1.cbdrt.apihub.openfinance.ae/.well-known/openid-configuration",
+    lfiCode: "cbdrt",
+    accountTypes: [
+      "Retail"
+    ],
+    apiFamilies: [
+      "account-information",
+      "confirmation",
+      "payment",
+      "product"
+    ],
+    authorizationEndpoint: "https://cbdonline.cbd.ae/RIB_Portal_Web/Openfinance",
+    parEndpoint: "https://as1.cbdrt.apihub.openfinance.ae/par",
+    tokenEndpoint: "https://as1.cbdrt.apihub.openfinance.ae/token",
+    verification: {
+      origin: "https://cbdonline.cbd.ae",
+      android: {
+        url: "https://cbdonline.cbd.ae/.well-known/assetlinks.json",
+        status: 520,
+        contentType: "text/html; charset=UTF-8",
+        jsonValid: false,
+        verdict: "fail",
+        note: "HTTP 520"
+      },
+      ios: {
+        url: "https://cbdonline.cbd.ae/.well-known/apple-app-site-association",
+        status: 520,
+        contentType: "text/html; charset=UTF-8",
+        jsonValid: false,
+        verdict: "fail",
+        note: "HTTP 520"
+      },
+      huawei: {
+        url: "https://cbdonline.cbd.ae/.well-known/applinking.json",
+        status: 520,
+        contentType: "text/html; charset=UTF-8",
+        jsonValid: false,
+        verdict: "fail",
+        note: "HTTP 520"
+      }
+    }
+  },
+  {
+    organisationId: "2f9981d9-47e6-4cd5-ba04-d6bdadf52591",
+    organisationName: "CBD",
+    legalEntityName: "COMMERCIAL BANK OF DUBAI",
+    sector: "bank",
+    authorisationServerId: "10397d19-043f-4a12-8672-ea1fdfefe12b",
+    customerFriendlyName: "CBD",
+    customerFriendlyDescription: "Commercial Bank of Dubai Corporate",
+    logoUri: "https://data.directory.openfinance.ae/logos/2f9981d9-47e6-4cd5-ba04-d6bdadf52591/authorisationservers/10397d19-043f-4a12-8672-ea1fdfefe12b.png",
+    issuer: "https://auth1.cbdcorp.apihub.openfinance.ae",
+    discoveryUri: "https://auth1.cbdcorp.apihub.openfinance.ae/.well-known/openid-configuration",
+    lfiCode: "cbdcorp",
+    accountTypes: [
+      "SME",
+      "Corporate"
+    ],
+    apiFamilies: [],
+    authorizationEndpoint: "https://ibusiness.cbd.ae/CIB_Corporate_Web/Openfinance",
+    parEndpoint: "https://as1.cbdcorp.apihub.openfinance.ae/par",
+    tokenEndpoint: "https://as1.cbdcorp.apihub.openfinance.ae/token",
+    verification: {
+      origin: "https://ibusiness.cbd.ae",
+      android: {
+        url: "https://ibusiness.cbd.ae/.well-known/assetlinks.json",
+        status: 302,
+        contentType: null,
+        jsonValid: false,
+        verdict: "fail",
+        note: "redirect to https://ibusiness.cbd.ae/CIB_Login_Web/"
+      },
+      ios: {
+        url: "https://ibusiness.cbd.ae/.well-known/apple-app-site-association",
+        status: 302,
+        contentType: null,
+        jsonValid: false,
+        verdict: "fail",
+        note: "redirect to https://ibusiness.cbd.ae/CIB_Login_Web/"
+      },
+      huawei: {
+        url: "https://ibusiness.cbd.ae/.well-known/applinking.json",
+        status: 302,
+        contentType: null,
+        jsonValid: false,
+        verdict: "fail",
+        note: "redirect to https://ibusiness.cbd.ae/CIB_Login_Web/"
+      }
+    }
+  },
+  {
+    organisationId: "690c1e21-5806-43bb-aa16-15bcda631922",
+    organisationName: "DIB",
+    legalEntityName: "Dubai Islamic Bank P.J.S.C",
+    sector: "bank",
+    authorisationServerId: "e708d551-a8e8-4468-a2ea-177061f73bb4",
+    customerFriendlyName: "DIB",
+    customerFriendlyDescription: "DIB Retail",
+    logoUri: "https://data.directory.openfinance.ae/logos/690c1e21-5806-43bb-aa16-15bcda631922/authorisationservers/e708d551-a8e8-4468-a2ea-177061f73bb4.png",
+    issuer: "https://auth1.dibrt.apihub.openfinance.ae",
+    discoveryUri: "https://auth1.dibrt.apihub.openfinance.ae/.well-known/openid-configuration",
+    lfiCode: "dibrt",
+    accountTypes: [
+      "Retail"
+    ],
+    apiFamilies: [
+      "account-information",
+      "confirmation",
+      "payment",
+      "product"
+    ],
+    authorizationEndpoint: "https://online.dib.ae/OFP",
+    parEndpoint: "https://as1.dibrt.apihub.openfinance.ae/par",
+    tokenEndpoint: "https://as1.dibrt.apihub.openfinance.ae/token",
+    verification: {
+      origin: "https://online.dib.ae",
+      android: {
+        url: "https://online.dib.ae/.well-known/assetlinks.json",
+        status: 200,
+        contentType: "text/html; charset=utf-8",
+        jsonValid: false,
+        verdict: "fail",
+        note: "body is not valid JSON"
+      },
+      ios: {
+        url: "https://online.dib.ae/.well-known/apple-app-site-association",
+        status: 302,
+        contentType: "text/html; charset=utf-8",
+        jsonValid: false,
+        verdict: "fail",
+        note: "redirect to /Login"
+      },
+      huawei: {
+        url: "https://online.dib.ae/.well-known/applinking.json",
+        status: 200,
+        contentType: "text/html; charset=utf-8",
+        jsonValid: false,
+        verdict: "fail",
+        note: "body is not valid JSON"
+      }
+    }
+  },
+  {
+    organisationId: "64e5061d-437f-43c8-9f17-1df9a4600705",
+    organisationName: "Emirates NBD",
+    legalEntityName: "EMIRATES NBD BANK PJSC",
+    sector: "bank",
+    authorisationServerId: "a2b2a880-e0fc-4f86-86bc-60bb833064b6",
+    customerFriendlyName: "ENBD X",
+    customerFriendlyDescription: "ENBDX",
+    logoUri: "https://data.directory.openfinance.ae/logos/64e5061d-437f-43c8-9f17-1df9a4600705/authorisationservers/a2b2a880-e0fc-4f86-86bc-60bb833064b6.png",
+    issuer: "https://auth1.enbdx.apihub.openfinance.ae",
+    discoveryUri: "https://auth1.enbdx.apihub.openfinance.ae/.well-known/openid-configuration",
+    lfiCode: "enbdx",
+    accountTypes: [
+      "Retail"
+    ],
+    apiFamilies: [
+      "account-information",
+      "confirmation",
+      "payment",
+      "product"
+    ],
+    authorizationEndpoint: "https://app.emiratesnbd.com/external-login",
+    parEndpoint: "https://as1.enbdx.apihub.openfinance.ae/par",
+    tokenEndpoint: "https://as1.enbdx.apihub.openfinance.ae/token",
+    verification: {
+      origin: "https://app.emiratesnbd.com",
+      android: {
+        url: "https://app.emiratesnbd.com/.well-known/assetlinks.json",
+        status: 200,
+        contentType: "application/json; charset=utf-8",
+        jsonValid: true,
+        verdict: "pass",
+        note: null
+      },
+      ios: {
+        url: "https://app.emiratesnbd.com/.well-known/apple-app-site-association",
+        status: 200,
+        contentType: "application/json; charset=utf-8",
+        jsonValid: true,
+        verdict: "pass",
+        note: null
+      },
+      huawei: {
+        url: "https://app.emiratesnbd.com/.well-known/applinking.json",
+        status: 404,
+        contentType: "text/html",
+        jsonValid: false,
+        verdict: "fail",
+        note: "HTTP 404"
+      }
+    }
+  },
+  {
+    organisationId: "64e5061d-437f-43c8-9f17-1df9a4600705",
+    organisationName: "Emirates NBD",
+    legalEntityName: "EMIRATES NBD BANK PJSC",
+    sector: "bank",
+    authorisationServerId: "14f9f927-e369-422e-b794-5caf505aeae1",
+    customerFriendlyName: "Liv by Emirates NBD",
+    customerFriendlyDescription: "LIVX LFI",
+    logoUri: "https://data.directory.openfinance.ae/logos/64e5061d-437f-43c8-9f17-1df9a4600705/authorisationservers/14f9f927-e369-422e-b794-5caf505aeae1.png",
+    issuer: "https://auth1.livx.apihub.openfinance.ae",
+    discoveryUri: "https://auth1.livx.apihub.openfinance.ae/.well-known/openid-configuration",
+    lfiCode: "livx",
+    accountTypes: [
+      "Retail"
+    ],
+    apiFamilies: [
+      "account-information",
+      "confirmation",
+      "payment",
+      "product"
+    ],
+    authorizationEndpoint: "https://app.liv.me/external-login",
+    parEndpoint: "https://as1.livx.apihub.openfinance.ae/par",
+    tokenEndpoint: "https://as1.livx.apihub.openfinance.ae/token",
+    verification: {
+      origin: "https://app.liv.me",
+      android: {
+        url: "https://app.liv.me/.well-known/assetlinks.json",
+        status: 200,
+        contentType: "application/json; charset=utf-8",
+        jsonValid: true,
+        verdict: "pass",
+        note: null
+      },
+      ios: {
+        url: "https://app.liv.me/.well-known/apple-app-site-association",
+        status: 200,
+        contentType: "application/json; charset=utf-8",
+        jsonValid: true,
+        verdict: "pass",
+        note: null
+      },
+      huawei: {
+        url: "https://app.liv.me/.well-known/applinking.json",
+        status: 404,
+        contentType: "text/html",
+        jsonValid: false,
+        verdict: "fail",
+        note: "HTTP 404"
+      }
+    }
+  },
+  {
+    organisationId: "8a37e74c-2827-496c-abf6-985bf177b5ea",
+    organisationName: "FAB",
+    legalEntityName: "First Abu Dhabi Islamic Finance PJSC",
+    sector: "bank",
+    authorisationServerId: "a9223ea1-8027-41ae-a9a4-9d026c575127",
+    customerFriendlyName: "FAB",
+    customerFriendlyDescription: "FAB Retail - Consumer Banking",
+    logoUri: "https://data.directory.openfinance.ae/logos/8a37e74c-2827-496c-abf6-985bf177b5ea/authorisationservers/a9223ea1-8027-41ae-a9a4-9d026c575127.jpg",
+    issuer: "https://auth1.fabretail.apihub.openfinance.ae",
+    discoveryUri: "https://auth1.fabretail.apihub.openfinance.ae/.well-known/openid-configuration",
+    lfiCode: "fabretail",
+    accountTypes: [
+      "Retail"
+    ],
+    apiFamilies: [
+      "account-information",
+      "confirmation",
+      "payment",
+      "product"
+    ],
+    authorizationEndpoint: "https://openbanking.bankfab.com/v1/ae/consumer/auth",
+    parEndpoint: "https://as1.fabretail.apihub.openfinance.ae/par",
+    tokenEndpoint: "https://as1.fabretail.apihub.openfinance.ae/token",
+    verification: {
+      origin: "https://openbanking.bankfab.com",
+      android: {
+        url: "https://openbanking.bankfab.com/.well-known/assetlinks.json",
+        status: 200,
+        contentType: "text/html; charset=UTF-8",
+        jsonValid: false,
+        verdict: "fail",
+        note: "body is not valid JSON"
+      },
+      ios: {
+        url: "https://openbanking.bankfab.com/.well-known/apple-app-site-association",
+        status: 200,
+        contentType: "text/html; charset=UTF-8",
+        jsonValid: false,
+        verdict: "fail",
+        note: "body is not valid JSON"
+      },
+      huawei: {
+        url: "https://openbanking.bankfab.com/.well-known/applinking.json",
+        status: 200,
+        contentType: "text/html; charset=UTF-8",
+        jsonValid: false,
+        verdict: "fail",
+        note: "body is not valid JSON"
+      }
+    }
+  },
+  {
+    organisationId: "8a37e74c-2827-496c-abf6-985bf177b5ea",
+    organisationName: "FAB",
+    legalEntityName: "First Abu Dhabi Islamic Finance PJSC",
+    sector: "bank",
+    authorisationServerId: "1a3f530f-f276-4964-b83d-f6cc5e0faac1",
+    customerFriendlyName: "FAB",
+    customerFriendlyDescription: "Business Banking for Medium and Small Enterprises",
+    logoUri: "https://data.directory.openfinance.ae/logos/placeholder-logo.png",
+    issuer: "https://auth1.fabbusiness.apihub.openfinance.ae",
+    discoveryUri: "https://auth1.fabbusiness.apihub.openfinance.ae/.well-known/openid-configuration",
+    lfiCode: "fabbusiness",
+    accountTypes: [
+      "SME"
+    ],
+    apiFamilies: [
+      "account-information"
+    ],
+    authorizationEndpoint: "https://openbanking.bankfab.com/v1/ae/business/auth",
+    parEndpoint: "https://as1.fabbusiness.apihub.openfinance.ae/par",
+    tokenEndpoint: "https://as1.fabbusiness.apihub.openfinance.ae/token",
+    verification: {
+      origin: "https://openbanking.bankfab.com",
+      android: {
+        url: "https://openbanking.bankfab.com/.well-known/assetlinks.json",
+        status: 200,
+        contentType: "text/html; charset=UTF-8",
+        jsonValid: false,
+        verdict: "fail",
+        note: "body is not valid JSON"
+      },
+      ios: {
+        url: "https://openbanking.bankfab.com/.well-known/apple-app-site-association",
+        status: 200,
+        contentType: "text/html; charset=UTF-8",
+        jsonValid: false,
+        verdict: "fail",
+        note: "body is not valid JSON"
+      },
+      huawei: {
+        url: "https://openbanking.bankfab.com/.well-known/applinking.json",
+        status: 200,
+        contentType: "text/html; charset=UTF-8",
+        jsonValid: false,
+        verdict: "fail",
+        note: "body is not valid JSON"
+      }
+    }
+  },
+  {
+    organisationId: "db16163c-efb3-4ec2-aa3d-a3d4f466814e",
+    organisationName: "HSBC",
+    legalEntityName: "HSBC Bank Middle East Limited",
+    sector: "bank",
+    authorisationServerId: "927bc61c-c0ba-469b-aa68-74f201e4c5a2",
+    customerFriendlyName: "HSBC",
+    customerFriendlyDescription: "HSBC-Server-Retail : Externally Published Endpoints",
+    logoUri: "https://data.directory.openfinance.ae/logos/db16163c-efb3-4ec2-aa3d-a3d4f466814e/authorisationservers/927bc61c-c0ba-469b-aa68-74f201e4c5a2.png",
+    issuer: "https://auth1.hsbcrt.apihub.openfinance.ae",
+    discoveryUri: "https://auth1.hsbcrt.apihub.openfinance.ae/.well-known/openid-configuration",
+    lfiCode: "hsbcrt",
+    accountTypes: [
+      "Retail"
+    ],
+    apiFamilies: [
+      "account-information",
+      "atm",
+      "confirmation",
+      "payment",
+      "product"
+    ],
+    authorizationEndpoint: "https://ob.hsbc.ae/cbuae/open-banking/v1.2/oauth2/authorize",
+    parEndpoint: "https://as1.hsbcrt.apihub.openfinance.ae/par",
+    tokenEndpoint: "https://as1.hsbcrt.apihub.openfinance.ae/token",
+    verification: {
+      origin: "https://ob.hsbc.ae",
+      android: {
+        url: "https://ob.hsbc.ae/.well-known/assetlinks.json",
+        status: 200,
+        contentType: "application/json",
+        jsonValid: true,
+        verdict: "pass",
+        note: null
+      },
+      ios: {
+        url: "https://ob.hsbc.ae/.well-known/apple-app-site-association",
+        status: 200,
+        contentType: "application/json",
+        jsonValid: true,
+        verdict: "pass",
+        note: null
+      },
+      huawei: {
+        url: "https://ob.hsbc.ae/.well-known/applinking.json",
+        status: 403,
+        contentType: "application/xml",
+        jsonValid: false,
+        verdict: "fail",
+        note: "HTTP 403"
+      }
+    }
+  },
+  {
+    organisationId: "db16163c-efb3-4ec2-aa3d-a3d4f466814e",
+    organisationName: "HSBC",
+    legalEntityName: "HSBC Bank Middle East Limited",
+    sector: "bank",
+    authorisationServerId: "e4d0b0d6-e3e4-4b5f-afd3-74a71f99ac9f",
+    customerFriendlyName: "HSBC",
+    customerFriendlyDescription: "HSBC-Server-Corporate: Externally Published Endpoints",
+    logoUri: "https://data.directory.openfinance.ae/logos/db16163c-efb3-4ec2-aa3d-a3d4f466814e/authorisationservers/e4d0b0d6-e3e4-4b5f-afd3-74a71f99ac9f.png",
+    issuer: "https://auth1.hsbcws.apihub.openfinance.ae",
+    discoveryUri: "https://auth1.hsbcws.apihub.openfinance.ae/.well-known/openid-configuration",
+    lfiCode: "hsbcws",
+    accountTypes: [
+      "Corporate"
+    ],
+    apiFamilies: [
+      "account-information",
+      "payment"
+    ],
+    authorizationEndpoint: "https://ob.business.hsbc.ae/cbuae/open-banking/v1.2/oauth2/authorize",
+    parEndpoint: "https://as1.hsbcws.apihub.openfinance.ae/par",
+    tokenEndpoint: "https://as1.hsbcws.apihub.openfinance.ae/token",
+    verification: {
+      origin: "https://ob.business.hsbc.ae",
+      android: {
+        url: "https://ob.business.hsbc.ae/.well-known/assetlinks.json",
+        status: 200,
+        contentType: "application/json",
+        jsonValid: true,
+        verdict: "pass",
+        note: null
+      },
+      ios: {
+        url: "https://ob.business.hsbc.ae/.well-known/apple-app-site-association",
+        status: 200,
+        contentType: "application/json",
+        jsonValid: true,
+        verdict: "pass",
+        note: null
+      },
+      huawei: {
+        url: "https://ob.business.hsbc.ae/.well-known/applinking.json",
+        status: 403,
+        contentType: "application/xml",
+        jsonValid: false,
+        verdict: "fail",
+        note: "HTTP 403"
+      }
+    }
+  },
+  {
+    organisationId: "879f9b11-5905-41ae-9dbe-7cb151b16546",
+    organisationName: "LIVA",
+    legalEntityName: "Liva Insurance BSC (c)",
+    sector: "insurer",
+    authorisationServerId: "2a6f9db6-7202-40f3-87f8-9079e13de987",
+    customerFriendlyName: "LIVA Insurance",
+    customerFriendlyDescription: "Liva Insurance Server",
+    logoUri: "https://data.directory.openfinance.ae/logos/879f9b11-5905-41ae-9dbe-7cb151b16546/authorisationservers/2a6f9db6-7202-40f3-87f8-9079e13de987.png",
+    issuer: "https://auth1.liva.apihub.openfinance.ae",
+    discoveryUri: "https://auth1.liva.apihub.openfinance.ae/.well-known/openid-configuration",
+    lfiCode: "liva",
+    accountTypes: [],
+    apiFamilies: [
+      "insurance"
+    ],
+    authorizationEndpoint: "https://authorize.livainsurance.ae/sign-in",
+    parEndpoint: "https://as1.liva.apihub.openfinance.ae/par",
+    tokenEndpoint: "https://as1.liva.apihub.openfinance.ae/token",
+    verification: {
+      origin: "https://authorize.livainsurance.ae",
+      android: {
+        url: "https://authorize.livainsurance.ae/.well-known/assetlinks.json",
+        status: 200,
+        contentType: "text/html",
+        jsonValid: false,
+        verdict: "fail",
+        note: "body is not valid JSON"
+      },
+      ios: {
+        url: "https://authorize.livainsurance.ae/.well-known/apple-app-site-association",
+        status: 200,
+        contentType: "application/octet-stream",
+        jsonValid: true,
+        verdict: "warn",
+        note: "served as application/octet-stream — expected application/json"
+      },
+      huawei: {
+        url: "https://authorize.livainsurance.ae/.well-known/applinking.json",
+        status: 200,
+        contentType: "text/html",
+        jsonValid: false,
+        verdict: "fail",
+        note: "body is not valid JSON"
+      }
+    }
+  },
+  {
+    organisationId: "4767786f-ab28-4d5c-8fdb-0f27e1c4eb9c",
+    organisationName: "Mashreq",
+    legalEntityName: "MASHREQ BANK PSC",
+    sector: "bank",
+    authorisationServerId: "eb54ae6a-b47a-477c-ab6c-0d1766c3200b",
+    customerFriendlyName: "Mashreq",
+    customerFriendlyDescription: "Server for Mashreq Retail",
+    logoUri: "https://data.directory.openfinance.ae/logos/4767786f-ab28-4d5c-8fdb-0f27e1c4eb9c/authorisationservers/eb54ae6a-b47a-477c-ab6c-0d1766c3200b.png",
+    issuer: "https://auth1.mashrt.apihub.openfinance.ae",
+    discoveryUri: "https://auth1.mashrt.apihub.openfinance.ae/.well-known/openid-configuration",
+    lfiCode: "mashrt",
+    accountTypes: [
+      "Retail"
+    ],
+    apiFamilies: [
+      "account-information",
+      "confirmation",
+      "payment",
+      "product"
+    ],
+    authorizationEndpoint: "https://mashreq.onelink.me/L7F9/zbda47wh",
+    parEndpoint: "https://as1.mashrt.apihub.openfinance.ae/par",
+    tokenEndpoint: "https://as1.mashrt.apihub.openfinance.ae/token",
+    verification: {
+      origin: "https://mashreq.onelink.me",
+      android: {
+        url: "https://mashreq.onelink.me/.well-known/assetlinks.json",
+        status: 200,
+        contentType: "application/json",
+        jsonValid: true,
+        verdict: "pass",
+        note: null
+      },
+      ios: {
+        url: "https://mashreq.onelink.me/.well-known/apple-app-site-association",
+        status: 200,
+        contentType: "application/json",
+        jsonValid: true,
+        verdict: "pass",
+        note: null
+      },
+      huawei: {
+        url: "https://mashreq.onelink.me/.well-known/applinking.json",
+        status: 404,
+        contentType: "text/plain; charset=utf-8",
+        jsonValid: false,
+        verdict: "fail",
+        note: "HTTP 404"
+      }
+    }
+  },
+  {
+    organisationId: "d86e6704-e92b-4368-a425-5a7ba230e986",
+    organisationName: "WIO Bank",
+    legalEntityName: "WIO Bank",
+    sector: "bank",
+    authorisationServerId: "cee4ffa5-ba55-4925-ac10-7aaff8dd69bf",
+    customerFriendlyName: "WIO",
+    customerFriendlyDescription: "allow TPP's to connect to retail server for open finance services",
+    logoUri: "https://data.directory.openfinance.ae/logos/d86e6704-e92b-4368-a425-5a7ba230e986/authorisationservers/cee4ffa5-ba55-4925-ac10-7aaff8dd69bf.png",
+    issuer: "https://auth1.wioretail.apihub.openfinance.ae",
+    discoveryUri: "https://auth1.wioretail.apihub.openfinance.ae/.well-known/openid-configuration",
+    lfiCode: "wioretail",
+    accountTypes: [
+      "Retail"
+    ],
+    apiFamilies: [
+      "account-information",
+      "confirmation",
+      "payment",
+      "product"
+    ],
+    authorizationEndpoint: "https://ob.personal.wio.io/app/open-finance/auth",
+    parEndpoint: "https://as1.wioretail.apihub.openfinance.ae/par",
+    tokenEndpoint: "https://as1.wioretail.apihub.openfinance.ae/token",
+    verification: {
+      origin: "https://ob.personal.wio.io",
+      android: {
+        url: "https://ob.personal.wio.io/.well-known/assetlinks.json",
+        status: 200,
+        contentType: "application/json",
+        jsonValid: true,
+        verdict: "pass",
+        note: null
+      },
+      ios: {
+        url: "https://ob.personal.wio.io/.well-known/apple-app-site-association",
+        status: 200,
+        contentType: "application/json",
+        jsonValid: true,
+        verdict: "pass",
+        note: null
+      },
+      huawei: {
+        url: "https://ob.personal.wio.io/.well-known/applinking.json",
+        status: 404,
+        contentType: "text/html",
+        jsonValid: false,
+        verdict: "fail",
+        note: "HTTP 404"
+      }
+    }
+  }
+];
+const rawData = {
+  source,
+  servers
+};
+function str(v) {
+  return typeof v === "string" ? v : "";
+}
+function strOrNull(v) {
+  return typeof v === "string" && v ? v : null;
+}
+function strArray(v) {
+  return Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
+}
+function num(v) {
+  return typeof v === "number" && Number.isFinite(v) ? v : null;
+}
+function narrowProbe(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw;
+  const v = r["verdict"];
+  const verdict = v === "pass" || v === "warn" ? v : "fail";
+  return {
+    url: str(r["url"]),
+    status: num(r["status"]),
+    contentType: strOrNull(r["contentType"]),
+    jsonValid: r["jsonValid"] === true,
+    verdict,
+    note: strOrNull(r["note"])
+  };
+}
+function narrowVerification(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw;
+  const android = narrowProbe(r["android"]);
+  const ios = narrowProbe(r["ios"]);
+  if (!android || !ios) return null;
+  const huawei = narrowProbe(r["huawei"]);
+  return { origin: str(r["origin"]), android, ios, ...huawei ? { huawei } : {} };
+}
+function narrow(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw;
+  const organisationName = str(r["organisationName"]);
+  const authorizationEndpoint = str(r["authorizationEndpoint"]);
+  if (!organisationName || !authorizationEndpoint) return null;
+  const sectorRaw = r["sector"];
+  const sector = sectorRaw === "bank" || sectorRaw === "insurer" ? sectorRaw : null;
+  return {
+    organisationId: str(r["organisationId"]),
+    organisationName,
+    legalEntityName: str(r["legalEntityName"]),
+    sector,
+    authorisationServerId: str(r["authorisationServerId"]),
+    customerFriendlyName: str(r["customerFriendlyName"]) || organisationName,
+    customerFriendlyDescription: strOrNull(r["customerFriendlyDescription"]),
+    logoUri: strOrNull(r["logoUri"]),
+    issuer: str(r["issuer"]),
+    discoveryUri: str(r["discoveryUri"]),
+    lfiCode: strOrNull(r["lfiCode"]),
+    accountTypes: strArray(r["accountTypes"]),
+    apiFamilies: strArray(r["apiFamilies"]),
+    authorizationEndpoint,
+    parEndpoint: strOrNull(r["parEndpoint"]),
+    tokenEndpoint: strOrNull(r["tokenEndpoint"]),
+    verification: narrowVerification(r["verification"])
+  };
+}
+const payload = rawData ?? {};
+const authEndpointsSource = str(payload.source);
+const authServerEndpoints = (Array.isArray(payload.servers) ? payload.servers : []).map(narrow).filter((s) => s !== null);
+if (authServerEndpoints.length === 0) {
+  console.error(
+    "[redirect-testing] No authorisation servers in authorization-endpoints.json — run `npm run fetch:authendpoints`."
+  );
+}
+const _sfc_main = /* @__PURE__ */ defineComponent({
+  __name: "index",
+  __ssrInlineRender: true,
+  setup(__props) {
+    useHead({ title: "Redirect testing" });
+    const query = ref("");
+    const sector = ref("all");
+    const verdictFilter = ref("all");
+    function probesOf(v) {
+      const rows = [
+        { label: "Android", file: "/.well-known/assetlinks.json", probe: v.android, optional: false },
+        { label: "iOS", file: "/.well-known/apple-app-site-association", probe: v.ios, optional: false }
+      ];
+      if (v.huawei) {
+        rows.push({ label: "Huawei", file: "/.well-known/applinking.json", probe: v.huawei, optional: true });
+      }
+      return rows;
+    }
+    function toneOf(row) {
+      if (row.optional && row.probe.verdict === "fail") return "na";
+      return row.probe.verdict;
+    }
+    function labelOf(row) {
+      return toneOf(row) === "na" ? "n/a" : row.probe.verdict;
+    }
+    function noteOf(row) {
+      if (toneOf(row) === "na") {
+        return "HarmonyOS App Linking not configured — optional; Huawei users use the browser fallback.";
+      }
+      return row.probe.note;
+    }
+    function worstOf(v) {
+      if (!v) return null;
+      if (v.android.verdict === "fail" || v.ios.verdict === "fail") return "fail";
+      if (v.android.verdict === "warn" || v.ios.verdict === "warn") return "warn";
+      return "pass";
+    }
+    const filtered = computed(() => {
+      const q = query.value.trim().toLowerCase();
+      return authServerEndpoints.filter((s) => {
+        if (sector.value !== "all" && s.sector !== sector.value) return false;
+        if (verdictFilter.value === "issues") {
+          const w = worstOf(s.verification);
+          if (w !== "fail" && w !== "warn") return false;
+        }
+        if (!q) return true;
+        return s.organisationName.toLowerCase().includes(q) || s.customerFriendlyName.toLowerCase().includes(q) || s.authorizationEndpoint.toLowerCase().includes(q) || (s.lfiCode || "").toLowerCase().includes(q);
+      });
+    });
+    const orgCount = computed(() => new Set(filtered.value.map((s) => s.organisationId)).size);
+    const verifySummary = computed(() => {
+      const byOrigin = /* @__PURE__ */ new Map();
+      for (const s of authServerEndpoints) {
+        const w = worstOf(s.verification);
+        if (s.verification && w) byOrigin.set(s.verification.origin, w);
+      }
+      const v = [...byOrigin.values()];
+      return {
+        total: v.length,
+        pass: v.filter((x) => x === "pass").length,
+        warn: v.filter((x) => x === "warn").length,
+        fail: v.filter((x) => x === "fail").length
+      };
+    });
+    function originOf(url) {
+      try {
+        return new URL(url).origin;
+      } catch {
+        return url;
+      }
+    }
+    const copied = ref(null);
+    let copyTimer;
+    onUnmounted(() => clearTimeout(copyTimer));
+    return (_ctx, _push, _parent, _attrs) => {
+      _push(`<div${ssrRenderAttrs(mergeProps({ class: "rt" }, _attrs))} data-v-41b8b6e5><section class="rt__hero" data-v-41b8b6e5><div class="rt__eyebrow" data-v-41b8b6e5><span class="rt__dash" data-v-41b8b6e5></span> Internal </div><h1 class="rt__title" data-v-41b8b6e5>Redirect testing</h1><p class="rt__lede" data-v-41b8b6e5> Every Active authorisation server in the participants directory, with the <code data-v-41b8b6e5>authorization_endpoint</code> resolved from its OpenID discovery document. This is the LFI-hosted URL the customer is redirected to for authentication — not an API Hub host. </p><p class="rt__meta" data-v-41b8b6e5>${ssrInterpolate(unref(authServerEndpoints).length)} authorisation servers · ${ssrInterpolate(new Set(unref(authServerEndpoints).map((s) => s.organisationId)).size)} organisations · snapshot taken at build time from <a${ssrRenderAttr("href", unref(authEndpointsSource))} target="_blank" rel="noreferrer" data-v-41b8b6e5>${ssrInterpolate(unref(authEndpointsSource))}</a></p>`);
+      if (unref(verifySummary).total) {
+        _push(`<div class="rt__summary" data-v-41b8b6e5><span class="rt__summary-item rt__summary-item--pass" data-v-41b8b6e5>${ssrInterpolate(unref(verifySummary).pass)} pass</span><span class="rt__summary-item rt__summary-item--warn" data-v-41b8b6e5>${ssrInterpolate(unref(verifySummary).warn)} warn</span><span class="rt__summary-item rt__summary-item--fail" data-v-41b8b6e5>${ssrInterpolate(unref(verifySummary).fail)} fail</span><span class="rt__summary-note" data-v-41b8b6e5> verdict across ${ssrInterpolate(unref(verifySummary).total)} origins from the required files — <code data-v-41b8b6e5>assetlinks.json</code> (Android) &amp; <code data-v-41b8b6e5>apple-app-site-association</code> (iOS). Huawei <code data-v-41b8b6e5>applinking.json</code> (HarmonyOS) is probed too, but shown for information only. </span></div>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<p class="rt__meta" data-v-41b8b6e5> Need to test a URL that isn&#39;t in the directory yet? <a href="/internal/pages/redirect-testing/checker" data-v-41b8b6e5>Check an arbitrary redirect →</a></p></section><div class="rt__controls" data-v-41b8b6e5><input${ssrRenderAttr("value", unref(query))} type="search" class="rt__search" placeholder="Filter by LFI, server name, code or endpoint…" data-v-41b8b6e5><div class="rt__tabs" data-v-41b8b6e5><!--[-->`);
+      ssrRenderList(["all", "bank", "insurer"], (opt) => {
+        _push(`<button type="button" class="${ssrRenderClass([{ "rt__tab--on": unref(sector) === opt }, "rt__tab"])}" data-v-41b8b6e5>${ssrInterpolate(opt === "all" ? "All" : opt === "bank" ? "Banks" : "Insurers")}</button>`);
+      });
+      _push(`<!--]--></div><div class="rt__tabs" data-v-41b8b6e5><!--[-->`);
+      ssrRenderList(["all", "issues"], (opt) => {
+        _push(`<button type="button" class="${ssrRenderClass([{ "rt__tab--on": unref(verdictFilter) === opt }, "rt__tab"])}" data-v-41b8b6e5>${ssrInterpolate(opt === "all" ? "All results" : "Issues only")}</button>`);
+      });
+      _push(`<!--]--></div></div>`);
+      if (unref(query) || unref(sector) !== "all") {
+        _push(`<p class="rt__count" data-v-41b8b6e5>${ssrInterpolate(unref(filtered).length)} server${ssrInterpolate(unref(filtered).length === 1 ? "" : "s")} across ${ssrInterpolate(unref(orgCount))} organisation${ssrInterpolate(unref(orgCount) === 1 ? "" : "s")}</p>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<ul class="rt__grid" data-v-41b8b6e5><!--[-->`);
+      ssrRenderList(unref(filtered), (s) => {
+        _push(`<li class="rt__card" data-v-41b8b6e5><div class="rt__card-head" data-v-41b8b6e5><div class="rt__logo" data-v-41b8b6e5>`);
+        if (s.logoUri) {
+          _push(`<img${ssrRenderAttr("src", s.logoUri)}${ssrRenderAttr("alt", `${s.organisationName} logo`)} loading="lazy" data-v-41b8b6e5>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`</div><div class="rt__ident" data-v-41b8b6e5><h2 class="rt__org" data-v-41b8b6e5>${ssrInterpolate(s.organisationName)}</h2><p class="rt__server" data-v-41b8b6e5>${ssrInterpolate(s.customerFriendlyName)}</p></div>`);
+        if (worstOf(s.verification)) {
+          _push(`<span class="${ssrRenderClass([`rt__verdict--${worstOf(s.verification)}`, "rt__verdict rt__verdict--head"])}" data-v-41b8b6e5>${ssrInterpolate(worstOf(s.verification))}</span>`);
+        } else {
+          _push(`<!---->`);
+        }
+        if (s.sector) {
+          _push(`<span class="${ssrRenderClass([`rt__badge--${s.sector}`, "rt__badge"])}" data-v-41b8b6e5>${ssrInterpolate(s.sector)}</span>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`</div><dl class="rt__fields" data-v-41b8b6e5><dt data-v-41b8b6e5>Authorization endpoint</dt><dd data-v-41b8b6e5><a class="rt__endpoint"${ssrRenderAttr("href", s.authorizationEndpoint)} target="_blank" rel="noreferrer" data-v-41b8b6e5>${ssrInterpolate(s.authorizationEndpoint)}</a><button type="button" class="${ssrRenderClass([{ "rt__copy--done": unref(copied) === s.authorisationServerId }, "rt__copy"])}" data-v-41b8b6e5>${ssrInterpolate(unref(copied) === s.authorisationServerId ? "Copied" : "Copy")}</button><span class="rt__origin" data-v-41b8b6e5>origin: <code data-v-41b8b6e5>${ssrInterpolate(originOf(s.authorizationEndpoint))}</code></span></dd><dt data-v-41b8b6e5>Discovery</dt><dd data-v-41b8b6e5><a class="rt__mono rt__link"${ssrRenderAttr("href", s.discoveryUri)} target="_blank" rel="noreferrer" data-v-41b8b6e5>${ssrInterpolate(s.discoveryUri)}</a></dd></dl>`);
+        if (s.verification) {
+          _push(`<div class="rt__verify" data-v-41b8b6e5><div class="rt__verify-head" data-v-41b8b6e5>Deep-link verification files</div><!--[-->`);
+          ssrRenderList(probesOf(s.verification), (p) => {
+            _push(`<div class="${ssrRenderClass([`rt__probe--${toneOf(p)}`, "rt__probe"])}" data-v-41b8b6e5><span class="${ssrRenderClass([`rt__verdict--${toneOf(p)}`, "rt__verdict"])}" data-v-41b8b6e5>${ssrInterpolate(labelOf(p))}</span><div class="rt__probe-body" data-v-41b8b6e5><div class="rt__probe-top" data-v-41b8b6e5><strong class="rt__probe-plat" data-v-41b8b6e5>${ssrInterpolate(p.label)}</strong>`);
+            if (p.optional) {
+              _push(`<span class="rt__probe-opt" data-v-41b8b6e5>informational</span>`);
+            } else {
+              _push(`<!---->`);
+            }
+            _push(`<a class="rt__probe-file"${ssrRenderAttr("href", s.verification.origin + p.file)} target="_blank" rel="noreferrer" data-v-41b8b6e5><code data-v-41b8b6e5>${ssrInterpolate(p.file)}</code></a></div><div class="rt__probe-meta" data-v-41b8b6e5>${ssrInterpolate(p.probe.status ?? "network error")} · ${ssrInterpolate(p.probe.contentType || "no Content-Type")} · ${ssrInterpolate(p.probe.jsonValid ? "valid JSON" : "not JSON")}</div>`);
+            if (noteOf(p)) {
+              _push(`<div class="rt__probe-note" data-v-41b8b6e5>${ssrInterpolate(noteOf(p))}</div>`);
+            } else {
+              _push(`<!---->`);
+            }
+            _push(`</div></div>`);
+          });
+          _push(`<!--]--></div>`);
+        } else {
+          _push(`<!---->`);
+        }
+        if (s.apiFamilies.length || s.accountTypes.length) {
+          _push(`<div class="rt__tags" data-v-41b8b6e5><!--[-->`);
+          ssrRenderList(s.apiFamilies, (f) => {
+            _push(`<span class="rt__tag" data-v-41b8b6e5>${ssrInterpolate(f)}</span>`);
+          });
+          _push(`<!--]--><!--[-->`);
+          ssrRenderList(s.accountTypes, (a) => {
+            _push(`<span class="rt__tag rt__tag--alt" data-v-41b8b6e5>${ssrInterpolate(a)}</span>`);
+          });
+          _push(`<!--]--></div>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`</li>`);
+      });
+      _push(`<!--]--></ul>`);
+      if (!unref(filtered).length) {
+        _push(`<p class="rt__empty" data-v-41b8b6e5>No authorisation servers match that filter.</p>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</div>`);
+    };
+  }
+});
+if (typeof block0 === "function") block0(_sfc_main);
+const _sfc_setup = _sfc_main.setup;
+_sfc_main.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("src/pages/internal/pages/redirect-testing/index.vue");
+  return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
+};
+const index = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-41b8b6e5"]]);
+export {
+  index as default
+};

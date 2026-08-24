@@ -58,7 +58,7 @@ const tabs = [
   { label: 'Python',  lang: 'python',     code: python },
 ] as const
 
-// Shared by the v2.1 and v2.2-draft payment API guides, so the reference links
+// Shared by the v2.1 and v2.2-rc1 payment API guides, so the reference links
 // below follow the version of the page being viewed rather than naming one.
 const { docsVersion } = useRouteVersion()
 </script>

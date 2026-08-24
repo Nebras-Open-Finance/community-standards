@@ -9,7 +9,7 @@ const BASE = '/tech/tpp-standards'
 // the ONLY_IN allowlist in supporting/tests/version-dropdown-coverage.test.mjs
 // — a page listed there must also be gated here, or the sidebar offers a link
 // that only resolves on some versions.
-const DATA_DELETION_CONFIRMATION_VERSIONS: readonly string[] = ['v2.2-draft']
+const DATA_DELETION_CONFIRMATION_VERSIONS: readonly string[] = ['v2.2-rc1']
 
 function hasDataDeletionConfirmation(version: Version): boolean {
   return DATA_DELETION_CONFIRMATION_VERSIONS.includes(version)

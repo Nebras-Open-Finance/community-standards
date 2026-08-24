@@ -58,9 +58,6 @@ const SPEC_INSURANCE = '/openapi/v2.1/standards/uae-insurance-openapi.yaml'
 const SPEC_AUTH_ENDPOINTS = '/openapi/v2.1/standards/uae-authorization-endpoints-openapi.yaml'
 const SPEC_REGISTRATION = '/openapi/v2.1/api-hub/uae-api-hub-tpp-onboarding-openapi.yaml'
 const SPEC_WEBHOOK = '/openapi/v2.1/standards/uae-webhook-template-openapi.yaml'
-// Not yet published in api-specs, so served from public/openapi-drafts/ rather
-// than the fetched (and gitignored) public/openapi/{version}/ tree.
-const SPEC_ATTESTATIONS = '/openapi-drafts/v2.2-draft/uae-consent-attestations-openapi.yaml'
 
 // ── Helper --------------------------------------------------------------------
 
@@ -87,15 +84,19 @@ function entry(input: EntryInput): Endpoint {
 function draftEntry(input: EntryInput): Endpoint {
   return {
     surface: 'standards',
-    version: 'v2.2-draft',
+    version: 'v2.2-rc1',
     ...input,
   }
 }
 
+// Each consent family carries the attestations sub-resource in its own standards
+// document, so the spec is per family rather than one shared constant. These
+// entries are authored at v2.2-rc1 rather than cloned from v2.1 (see
+// draftEntry above), so the spec path is written at that version directly.
 const ATTESTATION_CONSENTS = [
-  ['/account-access-consents', 'account-access-consents', 'a Bank Data Sharing'],
-  ['/payment-consents', 'payment-consents', 'a Bank Service Initiation'],
-  ['/insurance-consents', 'insurance-consents', 'an Insurance'],
+  ['/account-access-consents', 'account-access-consents', 'a Bank Data Sharing', 'uae-account-information-openapi'],
+  ['/payment-consents', 'payment-consents', 'a Bank Service Initiation', 'uae-bank-initiation-openapi'],
+  ['/insurance-consents', 'insurance-consents', 'an Insurance', 'uae-insurance-openapi'],
 ] as const
 
 // ── Endpoints -----------------------------------------------------------------
@@ -666,11 +667,11 @@ export const standardsEndpoints: readonly Endpoint[] = [
     },
   }),
 
-  // ── Consent · Data Deletion Confirmation (v2.2-draft only) ────────────────
+  // ── Consent · Data Deletion Confirmation (v2.2-rc1 only) ────────────────
   // Introduced by OFP-005. Authored here rather than produced by
   // cloneForVersion (see src/data/endpoints/index.ts), which only mirrors the
-  // endpoints v2.1 and v2.2-draft have in common.
-  ...ATTESTATION_CONSENTS.flatMap(([path, slug, label]) =>
+  // endpoints v2.1 and v2.2-rc1 have in common.
+  ...ATTESTATION_CONSENTS.flatMap(([path, slug, label, spec]) =>
     (['POST', 'GET'] as const).map((method) => draftEntry({
       section: 'Consent',
       sectionSlug: 'consent',
@@ -682,7 +683,7 @@ export const standardsEndpoints: readonly Endpoint[] = [
         ? `Append ${label} Attestation Event`
         : `List ${label} Attestation Events`,
       redoc: {
-        spec: SPEC_ATTESTATIONS,
+        spec: `/openapi/v2.2-rc1/standards/${spec}.yaml`,
         filterPath: `${path}/{ConsentId}/attestations`,
         filterMethod: method,
       },

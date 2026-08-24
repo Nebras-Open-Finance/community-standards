@@ -49,7 +49,7 @@ const ONLY_IN = [
   {
     pattern: '/tech/tpp-standards/{v}/consent/data-deletion-confirmation/',
     prefix: true,
-    versions: ['v2.2-draft'],
+    versions: ['v2.2-rc1'],
   },
 ]
 

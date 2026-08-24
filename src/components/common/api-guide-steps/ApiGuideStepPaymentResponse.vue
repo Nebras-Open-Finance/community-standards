@@ -1,8 +1,8 @@
 <script setup lang="ts">
-// Shared by the v2.1 and v2.2-draft payment API guides. The example URLs and
+// Shared by the v2.1 and v2.2-rc1 payment API guides. The example URLs and
 // the reference link below follow the version of the page being viewed:
 // `protocolVersion` is the version inside the standard's own paths (v2.2),
-// `docsVersion` is the route segment (v2.2-draft).
+// `docsVersion` is the route segment (v2.2-rc1).
 const { docsVersion, protocolVersion } = useRouteVersion()
 
 const examplePayload = computed(() => `{

@@ -1,4 +1,4 @@
-export const VERSIONS = ['v2.1', 'v2.2-draft'] as const
+export const VERSIONS = ['v2.1', 'v2.2-rc1'] as const
 
 export type Version = (typeof VERSIONS)[number]
 
@@ -8,7 +8,7 @@ export const CURRENT_VERSION: Version = 'v2.1'
 
 // Versions that are published for review but not ratified. Draft versions get
 // a banner and a dropdown chip, and are excluded from search and the sitemap.
-export const DRAFT_VERSIONS: readonly Version[] = ['v2.2-draft']
+export const DRAFT_VERSIONS: readonly Version[] = ['v2.2-rc1']
 
 export function isDraftVersion(v: string): boolean {
   return (DRAFT_VERSIONS as readonly string[]).includes(v)
@@ -23,20 +23,27 @@ export function isDraftVersion(v: string): boolean {
 // nothing in the specs changes when a draft is ratified.
 export const PROTOCOL_VERSION: Record<Version, string> = {
   'v2.1': 'v2.1',
-  'v2.2-draft': 'v2.2',
+  'v2.2-rc1': 'v2.2',
 }
 
-// Which folder in the api-specs repo each version's OpenAPI files come from.
-// Read by scripts/fetch-openapi-specs.mjs, which writes them to
-// public/openapi/{version}/ under the *local* version key.
+// Which folder(s) in the api-specs repo each version's OpenAPI files come from,
+// most-preferred first. Read by scripts/fetch-openapi-specs.mjs, which writes
+// the resolved set to public/openapi/{version}/ under the *local* version key.
 //
-// TODO: v2.2-draft currently serves the v2.1 specs because api-specs has no
-// v2.2 yet (dist/standards tops out at v2.1-errata3). Flip to 'v2.2' once the
-// attestations sub-resource lands upstream — see
-// supporting/internal_helpers/v2.2-draft-plan.md, phase 3.
-export const SPEC_FOLDER: Record<Version, string> = {
-  'v2.1': 'v2.1',
-  'v2.2-draft': 'v2.1',
+// Resolution is per file, not per version: the first folder in the chain that
+// publishes a given spec wins. A version that has only partly landed upstream
+// therefore falls back to the previous version's latest errata for the specs it
+// has not republished — v2.2-rc1 publishes five of the standards documents and
+// borrows the rest from v2.1-errata3.
+//
+// A borrowed file still carries the source version's consent URNs and base
+// paths, so the fetch script uplifts those to PROTOCOL_VERSION for this version.
+// Folder naming is not uniform upstream: standards uses `v2.2-rc1`, api-hub and
+// ozone-connect use `v2.2.x`. Both belong to the v2.2 release and the script
+// matches on the release, so one chain entry covers every category.
+export const SPEC_FOLDER: Record<Version, readonly string[]> = {
+  'v2.1': ['v2.1'],
+  'v2.2-rc1': ['v2.2-rc1', 'v2.1'],
 }
 
 // Which field-map export each version reads, as a directory under public/api/.
@@ -49,7 +56,7 @@ export const SPEC_FOLDER: Record<Version, string> = {
 // so adding a real v2.2 export later is a drop-in with no code change.
 export const FIELD_MAP_DIR: Record<Version, string> = {
   'v2.1': 'field-map/v2.1',
-  'v2.2-draft': 'field-map/v2.1',
+  'v2.2-rc1': 'field-map/v2.1',
 }
 
 // Maps each Ozone Connect version to the TPP Standards versions it supports.
@@ -57,5 +64,5 @@ export const FIELD_MAP_DIR: Record<Version, string> = {
 // dual-runs alongside, e.g. 'v3.0': ['v3.0', 'v2.1'].
 export const VERSION_TPP_COMPATIBILITY: Record<Version, readonly Version[]> = {
   'v2.1': ['v2.1'],
-  'v2.2-draft': ['v2.2-draft', 'v2.1'],
+  'v2.2-rc1': ['v2.2-rc1', 'v2.1'],
 }

@@ -5,9 +5,12 @@
  * (standards, api-hub, ozone-connect), this script:
  *
  *   1. Lists available version folders in the remote repo (including errata).
- *   2. Resolves per-file: uses the highest errata that contains the file,
- *      falling back to the base version.
- *   3. Downloads each YAML file to public/openapi/{version}/{category}/.
+ *   2. Resolves per-file across the version chain in SPEC_FOLDER: the most
+ *      preferred release that publishes the file wins, and within a release the
+ *      highest errata wins over the base, which wins over a release candidate.
+ *   3. Downloads each YAML file to public/openapi/{version}/{category}/,
+ *      uplifting the version strings of any file borrowed from an older
+ *      release.
  *
  * Usage:  node scripts/fetch-openapi-specs.mjs [--skip-existing] [--branch <name>]
  *   --skip-existing  Skip download if the target directory already has files.
@@ -78,14 +81,25 @@ function parseVersions() {
 }
 
 /**
- * Parse SPEC_FOLDER — the map from a local version key to the folder its specs
- * live in upstream. These diverge when a version is published here before it
- * exists in api-specs: `v2.2-draft` currently serves the `v2.1` YAML.
+ * Parse SPEC_FOLDER — the map from a local version key to the chain of upstream
+ * folders its specs resolve from, most-preferred first. The chain diverges from
+ * the version key when a release has only partly landed in api-specs:
+ * `v2.2-rc1` takes what upstream publishes at v2.2 and falls back to v2.1.
  *
  * Returns a plain object; versions absent from the map resolve to themselves.
  */
 function parseSpecFolders() {
-  return parseVersionMap('SPEC_FOLDER')
+  const src = readVersionsSource()
+  const block = src.match(/SPEC_FOLDER[^=]*=\s*\{([^}]+)\}/)
+  if (!block) throw new Error('Could not parse SPEC_FOLDER from versions.ts')
+  const map = {}
+  for (const entry of block[1].matchAll(/['"]([^'"]+)['"]\s*:\s*\[([^\]]*)\]/g)) {
+    map[entry[1]] = entry[2]
+      .split(',')
+      .map(v => v.trim().replace(/['"]/g, ''))
+      .filter(Boolean)
+  }
+  return map
 }
 
 function parseProtocolVersions() {
@@ -125,46 +139,51 @@ function upliftProtocolVersion(yaml, fromVersion, toVersion) {
 }
 
 // ─── Categories & version-folder mapping ───────────────────────────────────────
-// The remote repo uses slightly different folder names per category.
-// standards:      v2.1, v2.1-errata2
-// api-hub:        v2.1.x, v2.1.x-errata2
-// ozone-connect:  v2.1.x, v2.1.x-errata2
+// Folder naming upstream is not uniform, either between categories or between
+// releases:
+//   standards:      v2.1, v2.1-errata3, v2.2-rc1
+//   api-hub:        v2.1.x, v2.1.x-errata2, v2.2.x
+//   ozone-connect:  v2.1.x, v2.1.x-errata2, v2.2.x
 //
-// Both patterns (with and without .x) may appear, so we match on both.
+// `.x`, `-rcN` and `-errataN` are all qualifiers on the same release, so
+// folders are grouped by the release they qualify rather than matched literally.
 
 const CATEGORIES = ['standards', 'api-hub', 'ozone-connect']
 
 /**
- * Build regex patterns that match base + errata folders for a given version.
- * e.g. for version "v2.1" → matches v2.1, v2.1.x, v2.1-errata2, v2.1.x-errata2, etc.
+ * The release a folder (or a SPEC_FOLDER chain entry) belongs to, with its
+ * qualifiers stripped: `v2.2-rc1` and `v2.2.x` are both the v2.2 release.
  */
-function buildVersionPattern(version) {
-  // Escape dots for regex
-  const escaped = version.replace(/\./g, '\\.')
-  // Match: v2.1 or v2.1.x, optionally followed by -errataN
-  return new RegExp(`^${escaped}(\\.x)?(-errata(\\d+))?$`)
+function releaseOf(folder) {
+  return folder
+    .replace(/-errata\d+$/, '')
+    .replace(/-rc\d+$/, '')
+    .replace(/\.x$/, '')
 }
 
 /**
- * Given a list of remote folder names and a version, return them sorted so the
- * base version comes first and errata in ascending order.
- * Returns array of { folder, errataNum } where errataNum = 0 for base.
+ * Where a folder sits within its release. Lower comes first, and later entries
+ * override earlier ones, so the order is: release candidates, then the base
+ * release, then errata in ascending order.
+ */
+function folderRank(folder) {
+  const errata = folder.match(/-errata(\d+)$/)
+  if (errata) return parseInt(errata[1], 10)
+  const rc = folder.match(/-rc(\d+)$/)
+  if (rc) return parseInt(rc[1], 10) - 1000
+  return 0
+}
+
+/**
+ * Given a list of remote folder names and a version, return those belonging to
+ * the same release, ordered so the last entry is the one that wins.
  */
 function sortVersionFolders(folders, version) {
-  const pattern = buildVersionPattern(version)
-  const matched = []
-
-  for (const folder of folders) {
-    const m = folder.match(pattern)
-    if (m) {
-      const errataNum = m[3] ? parseInt(m[3], 10) : 0
-      matched.push({ folder, errataNum })
-    }
-  }
-
-  // Sort ascending by errata number (base = 0 first, then errata1, errata2, …)
-  matched.sort((a, b) => a.errataNum - b.errataNum)
-  return matched
+  const release = releaseOf(version)
+  return folders
+    .filter(folder => releaseOf(folder) === release)
+    .map(folder => ({ folder, rank: folderRank(folder) }))
+    .sort((a, b) => a.rank - b.rank)
 }
 
 // ─── GitHub helpers ────────────────────────────────────────────────────────────
@@ -199,8 +218,8 @@ async function ghDownloadFile(remotePath) {
 
 // ─── Main ──────────────────────────────────────────────────────────────────────
 
-async function fetchCategory(version, specFolder, category, uplift) {
-  // Output is keyed by the LOCAL version; the remote folder it resolves from
+async function fetchCategory(version, chain, targetProtocol, category) {
+  // Output is keyed by the LOCAL version; the upstream folders it resolves from
   // may differ (see SPEC_FOLDER in src/data/versions.ts).
   const outDir = resolve(ROOT, 'public', 'openapi', version, category)
 
@@ -214,24 +233,35 @@ async function fetchCategory(version, specFolder, category, uplift) {
   const distPath = `dist/${category}`
   const remoteDirs = await ghListDir(distPath)
   const folderNames = remoteDirs.filter(d => d.type === 'dir').map(d => d.name)
-  const sorted = sortVersionFolders(folderNames, specFolder)
 
-  if (sorted.length === 0) {
-    console.warn(`  ⚠ ${category} — no matching folders found for ${specFolder}`)
-    return
-  }
+  // 2. Collect files, walking the chain from LEAST to MOST preferred and, within
+  //    each release, from base to highest errata. Later entries overwrite
+  //    earlier ones, so a file lands on the most preferred release that
+  //    publishes it and everything else falls back down the chain.
+  const fileMap = new Map() // filename → { remotePath, sourceRelease }
+  const releasesUsed = []
 
-  // 2. Collect files from base → highest errata (later entries override earlier)
-  const fileMap = new Map() // filename → remote path
-
-  for (const { folder } of sorted) {
-    const versionPath = `dist/${category}/${folder}`
-    const files = await ghListDir(versionPath)
-    for (const f of files) {
-      if (f.type === 'file' && f.name.endsWith('.yaml')) {
-        fileMap.set(f.name, `${versionPath}/${f.name}`)
+  for (const chainEntry of [...chain].reverse()) {
+    const sorted = sortVersionFolders(folderNames, chainEntry)
+    if (sorted.length === 0) continue
+    releasesUsed.push(releaseOf(chainEntry))
+    for (const { folder } of sorted) {
+      const versionPath = `dist/${category}/${folder}`
+      const files = await ghListDir(versionPath)
+      for (const f of files) {
+        if (f.type === 'file' && f.name.endsWith('.yaml')) {
+          fileMap.set(f.name, {
+            remotePath: `${versionPath}/${f.name}`,
+            sourceRelease: releaseOf(folder),
+          })
+        }
       }
     }
+  }
+
+  if (releasesUsed.length === 0) {
+    console.warn(`  ⚠ ${category} — no matching folders found for ${chain.join(' → ')}`)
+    return
   }
 
   if (fileMap.size === 0) {
@@ -239,18 +269,23 @@ async function fetchCategory(version, specFolder, category, uplift) {
     return
   }
 
-  // 3. Download all resolved files
+  // 3. Download all resolved files, uplifting only those borrowed from a release
+  //    older than the one this version documents.
   mkdirSync(outDir, { recursive: true })
 
-  const downloads = [...fileMap.entries()].map(async ([filename, remotePath]) => {
+  let uplifted = 0
+  const downloads = [...fileMap.entries()].map(async ([filename, { remotePath, sourceRelease }]) => {
     let content = await ghDownloadFile(remotePath)
-    if (uplift) content = upliftProtocolVersion(content, uplift.from, uplift.to)
+    if (sourceRelease !== targetProtocol) {
+      content = upliftProtocolVersion(content, sourceRelease, targetProtocol)
+      uplifted++
+    }
     writeFileSync(resolve(outDir, filename), content, 'utf-8')
     return filename
   })
 
   const downloaded = await Promise.all(downloads)
-  const note = uplift ? ` (version strings uplifted ${uplift.from} → ${uplift.to})` : ''
+  const note = uplifted === 0 ? '' : ` (${uplifted} borrowed, version strings uplifted to ${targetProtocol})`
   console.log(`  ✓ ${category} — ${downloaded.length} file(s)${note}`)
 }
 
@@ -261,19 +296,17 @@ async function main() {
   console.log(`Fetching OpenAPI specs for versions: ${versions.join(', ')}\n`)
 
   for (const version of versions) {
-    const specFolder = specFolders[version] ?? version
-    // The version strings inside a borrowed spec are those of the folder it
-    // came from, so uplift them to this version's protocol version.
-    const sourceProtocol = protocolVersions[specFolder] ?? specFolder
+    const chain = specFolders[version] ?? [version]
+    // Files borrowed from an older release carry that release's version strings,
+    // so they are uplifted to the version this documentation publishes.
     const targetProtocol = protocolVersions[version] ?? version
-    const uplift = sourceProtocol === targetProtocol
-      ? null
-      : { from: sourceProtocol, to: targetProtocol }
 
-    const note = specFolder === version ? '' : `  (from upstream ${specFolder})`
+    const note = chain.length === 1 && chain[0] === version
+      ? ''
+      : `  (upstream ${chain.join(', falling back to ')})`
     console.log(`${version}:${note}`)
     for (const category of CATEGORIES) {
-      await fetchCategory(version, specFolder, category, uplift)
+      await fetchCategory(version, chain, targetProtocol, category)
     }
     console.log()
   }

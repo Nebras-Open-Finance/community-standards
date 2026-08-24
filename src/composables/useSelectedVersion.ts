@@ -13,7 +13,7 @@ function isVersion(value: string): value is Version {
 }
 
 // Match on whole path segments against VERSIONS rather than parsing a version
-// shape out of the path. Version identifiers are not all `vN.N` — `v2.2-draft`
+// shape out of the path. Version identifiers are not all `vN.N` — `v2.2-rc1`
 // is one — so the list is the only reliable source of truth.
 function versionFromPath(path: string): Version | null {
   const segments = path.split('/').filter(Boolean)
@@ -39,6 +39,19 @@ function seedFromRoute(): void {
   }
 }
 
+// Release notes, erratas and changelogs cover every version at once, so there is
+// no single "selected version" for the reader to switch between there.
+const RELEASE_NOTES_PREFIX = '/tech/release-notes-and-erratas'
+
+/**
+ * Whether the header renders the version dropdown for this route. Shared so the
+ * dropdown itself and anything that wants to point the reader at it (see
+ * useVersionTour) agree on when it exists.
+ */
+export function routeHasVersionDropdown(path: string): boolean {
+  return path.startsWith('/tech/') && !path.startsWith(RELEASE_NOTES_PREFIX)
+}
+
 export function setSelectedVersion(v: string): void {
   if (!isVersion(v)) return
   selectedVersion.value = v
@@ -60,7 +73,7 @@ export function useSelectedVersion(): UseSelectedVersion {
 }
 
 export interface UseRouteVersion {
-  /** Version segment of the current route, e.g. `v2.2-draft`. */
+  /** Version segment of the current route, e.g. `v2.2-rc1`. */
   docsVersion: ComputedRef<Version>
   /** Version as it appears in the standard itself, e.g. `v2.2`. */
   protocolVersion: ComputedRef<string>

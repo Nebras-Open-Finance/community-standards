@@ -1,0 +1,4778 @@
+import { _ as __unplugin_components_7 } from "./EdNote-BQLptLjy.js";
+import { _ as __unplugin_components_12 } from "./EdRefTable-B_zH_eaF.js";
+import { E as EdCode } from "./EdCode-BQ4YLUeg.js";
+import { _ as __unplugin_components_9 } from "./EdCodeGroup-zEBrHWfH.js";
+import { _ as _sfc_main$1 } from "./APIFlowsPeriodicSchedule-0VYNDgWj.js";
+import { _ as __unplugin_components_8 } from "./APIFlowViewer-C5xJUdUs.js";
+import { _ as __unplugin_components_5 } from "./EdBullets-DF2K09hg.js";
+import { _ as __unplugin_components_4 } from "./EdProse-DgPVkafE.js";
+import { _ as __unplugin_components_3 } from "./EdSectionBand-cb9ozyvX.js";
+import { defineComponent, mergeProps, withCtx, createTextVNode, createVNode, useSSRContext } from "vue";
+import { ssrRenderAttrs, ssrRenderComponent } from "vue/server-renderer";
+import { _ as _export_sfc, b as block0 } from "../main.mjs";
+import "mermaid";
+import "./useChartTheme-DtmiKid7.js";
+import "vite-ssg";
+import "axios";
+import "vue-router";
+import "@unhead/vue";
+const piiDecryptNode = `import { compactDecrypt, importPKCS8, decodeJwt } from 'jose'
+
+async function decryptAndValidateConsentPII(
+  piiJwe: string
+): Promise<Record<string, unknown>> {
+  // 1. kid → private key
+  const [headerB64] = piiJwe.split('.')
+  const { kid } = JSON.parse(Buffer.from(headerB64, 'base64url').toString())
+  const privateKey = await importPKCS8(
+    enc1KeyStore.getPrivateKeyPem(kid),
+    'RSA-OAEP-256'
+  )
+
+  // 2. JWE → JWS
+  const { plaintext } = await compactDecrypt(piiJwe, privateKey)
+
+  // 3. JWS → payload (signature verification is optional)
+  const pii = decodeJwt(new TextDecoder().decode(plaintext))
+
+  // 4. Schema validation against AEDomesticPaymentPII
+  validateConsentPiiSchema(pii)
+
+  return pii
+}
+`;
+const piiDecryptPython = `import json, base64
+from jwcrypto import jwe as jwecrypto
+
+def decrypt_and_validate_consent_pii(pii_jwe: str) -> dict:
+    # 1. kid → private key
+    header = json.loads(base64.urlsafe_b64decode(pii_jwe.split(".")[0] + "=="))
+    private_key = enc1_key_store.get_private_key(header["kid"])
+
+    # 2. JWE → JWS
+    token = jwecrypto.JWE()
+    token.deserialize(pii_jwe, key=private_key)
+    jws = token.payload.decode()
+
+    # 3. JWS → payload (signature verification is optional)
+    payload_b64 = jws.split(".")[1]
+    pii = json.loads(base64.urlsafe_b64decode(payload_b64 + "=="))
+
+    # 4. Schema validation against AEDomesticPaymentPII
+    validate_consent_pii_schema(pii)
+
+    return pii
+`;
+const consentPiiJson = `{
+  "Initiation": {
+    "Creditor": [
+      {
+        "CreditorAccount": {
+          "SchemeName": "IBAN",
+          "Identification": "AE220331234567890876543",
+          "Name": { "en": "Fatima Al Zaabi" }
+        },
+        "CreditorAgent": {
+          "SchemeName": "BICFI",
+          "Identification": "BARBAEAAXXX"
+        }
+      }
+    ],
+    "DebtorAccount": {
+      "SchemeName": "IBAN",
+      "Identification": "AE070331234567890123456"
+    }
+  },
+  "Risk": {
+    "PaymentContextCode": "BillPayment",
+    "MerchantCategoryCode": "6012"
+  },
+  "iat": 1745020800,
+  "exp": 1745021100,
+  "iss": "tpp-client-id"
+}
+`;
+const creditorValidateNode = `function isValidUaeIban(iban: string): boolean {
+  // UAE IBAN: AE + 21 digits = 23 chars
+  if (!/^AE\\d{21}$/.test(iban)) return false
+  // ISO 13616 mod-97 check
+  const rearranged = iban.slice(4) + iban.slice(0, 4)
+  const numeric = rearranged
+    .split('')
+    .map(c => (/[A-Z]/.test(c) ? (c.charCodeAt(0) - 55).toString() : c))
+    .join('')
+  let remainder = 0
+  for (const digit of numeric) {
+    remainder = (remainder * 10 + Number(digit)) % 97
+  }
+  return remainder === 1
+}
+
+function deriveBicFromIban(iban: string): string {
+  // UAE IBAN positions 5-7 (0-indexed 4-6) carry the bank code.
+  return bicDirectory.lookupByUaeBankCode(iban.slice(4, 7))
+}
+
+interface InvalidResponse { status: 'invalid'; code: string; description: string }
+
+async function validateCreditor(
+  creditor: Array<{
+    CreditorAccount: {
+      SchemeName: string
+      Identification: string
+      Name?: { en?: string; ar?: string }
+    }
+    CreditorAgent?: { SchemeName: string; Identification: string }
+  }>
+): Promise<InvalidResponse | null> {
+  // 1. Cardinality
+  if (!Array.isArray(creditor) || creditor.length !== 1) {
+    return invalid('InvalidCreditor',
+      'Fixed Periodic Schedule requires exactly one creditor entry.')
+  }
+  const c = creditor[0]
+
+  // 2. Mandatory fields
+  if (c.CreditorAccount.SchemeName !== 'IBAN') {
+    return invalid('InvalidCreditor',
+      'CreditorAccount.SchemeName MUST be "IBAN" for domestic payments.')
+  }
+  if (!isValidUaeIban(c.CreditorAccount.Identification)) {
+    return invalid('InvalidCreditor',
+      'CreditorAccount.Identification is not a valid UAE IBAN.')
+  }
+  if (!c.CreditorAccount.Name?.en && !c.CreditorAccount.Name?.ar) {
+    return invalid('InvalidCreditor',
+      'CreditorAccount.Name MUST include at least one of \`en\` or \`ar\`.')
+  }
+
+  // 3. BIC consistency
+  const derivedBic = deriveBicFromIban(c.CreditorAccount.Identification)
+  if (c.CreditorAgent?.Identification && c.CreditorAgent.Identification !== derivedBic) {
+    return invalid('InvalidCreditor',
+      'CreditorAgent.Identification does not match the BIC derived from the IBAN.')
+  }
+
+  // 4. Domestic rail reachability + receiving account state
+  const r = await lookupRailReachability(derivedBic)
+  if (!r.reachableOnAani && !r.reachableOnUaefts) {
+    return invalid('UnreachableCreditorAccount',
+      'Creditor bank is not reachable on AANI or UAEFTS.')
+  }
+  if (r.canDetermineAccountState && !r.accountCanReceive) {
+    return invalid('UnreachableCreditorAccount',
+      'Creditor account cannot currently receive payments.')
+  }
+
+  return null
+}
+
+const invalid = (code: string, description: string): InvalidResponse =>
+  ({ status: 'invalid', code, description })
+`;
+const creditorValidatePython = `import re
+
+def is_valid_uae_iban(iban: str) -> bool:
+    if not re.fullmatch(r"AE\\d{21}", iban):
+        return False
+    rearranged = iban[4:] + iban[:4]
+    numeric = "".join(
+        str(ord(c) - 55) if c.isalpha() else c for c in rearranged
+    )
+    return int(numeric) % 97 == 1
+
+
+def derive_bic_from_iban(iban: str) -> str:
+    return bic_directory.lookup_by_uae_bank_code(iban[4:7])
+
+
+def _invalid(code, description):
+    return {"status": "invalid", "code": code, "description": description}
+
+
+def validate_creditor(creditor):
+    # 1. Cardinality
+    if not isinstance(creditor, list) or len(creditor) != 1:
+        return _invalid("InvalidCreditor",
+            "Fixed Periodic Schedule requires exactly one creditor entry.")
+    c = creditor[0]
+    acc = c["CreditorAccount"]
+
+    # 2. Mandatory fields
+    if acc["SchemeName"] != "IBAN":
+        return _invalid("InvalidCreditor",
+            'CreditorAccount.SchemeName MUST be "IBAN" for domestic payments.')
+    if not is_valid_uae_iban(acc["Identification"]):
+        return _invalid("InvalidCreditor",
+            "CreditorAccount.Identification is not a valid UAE IBAN.")
+    name = acc.get("Name") or {}
+    if not name.get("en") and not name.get("ar"):
+        return _invalid("InvalidCreditor",
+            "CreditorAccount.Name MUST include at least one of \`en\` or \`ar\`.")
+
+    # 3. BIC consistency
+    derived_bic = derive_bic_from_iban(acc["Identification"])
+    agent_bic = (c.get("CreditorAgent") or {}).get("Identification")
+    if agent_bic and agent_bic != derived_bic:
+        return _invalid("InvalidCreditor",
+            "CreditorAgent.Identification does not match the BIC derived from the IBAN.")
+
+    # 4. Domestic rail reachability + receiving account state
+    r = lookup_rail_reachability(derived_bic)
+    if not r.reachable_on_aani and not r.reachable_on_uaefts:
+        return _invalid("UnreachableCreditorAccount",
+            "Creditor bank is not reachable on AANI or UAEFTS.")
+    if r.can_determine_account_state and not r.account_can_receive:
+        return _invalid("UnreachableCreditorAccount",
+            "Creditor account cannot currently receive payments.")
+
+    return None
+`;
+const invalidResponseJson = `{
+  "data": {
+    "status": "invalid",
+    "code": "InvalidCreditor",
+    "description": "CreditorAccount.Identification is not a valid UAE IBAN."
+  },
+  "meta": {}
+}
+`;
+const piiPaymentNode = `async function decryptAndValidatePaymentPII(piiJwe: string) {
+  const pii = await decryptPii(piiJwe) // shared decrypt helper
+  validatePaymentPiiSchema(pii)         // AEDomesticPaymentPIIProperties
+  return pii
+}
+`;
+const piiPaymentPython = `def decrypt_and_validate_payment_pii(pii_jwe: str) -> dict:
+    pii = decrypt_pii(pii_jwe)              # shared decrypt helper
+    validate_payment_pii_schema(pii)        # AEDomesticPaymentPIIProperties
+    return pii
+`;
+const matchPiiNode = `async function matchPaymentCreditorToConsent(
+  consentId: string,
+  paymentPii: { Initiation: { Creditor: ConsentTimeCreditor } }
+): Promise<void> {
+  const consentCreditor = await consentStore.getCreditor(consentId)
+  if (!consentCreditor) {
+    throw httpError(400, 'Consent.Invalid', \`No stored consent for \${consentId}.\`)
+  }
+
+  if (!isExactMatch(consentCreditor, paymentPii.Initiation.Creditor)) {
+    throw httpError(400, 'Consent.FailsControlParameters',
+      'Payment creditor does not match the creditor authorised on the consent.')
+  }
+}
+
+function isExactMatch(consentCreditor: any, paymentCreditor: any): boolean {
+  // Compare every field that was authorised — case-sensitive.
+  return (
+    consentCreditor.CreditorAccount.SchemeName === paymentCreditor.CreditorAccount.SchemeName &&
+    consentCreditor.CreditorAccount.Identification === paymentCreditor.CreditorAccount.Identification &&
+    consentCreditor.CreditorAccount.Name?.en === paymentCreditor.CreditorAccount.Name?.en &&
+    consentCreditor.CreditorAccount.Name?.ar === paymentCreditor.CreditorAccount.Name?.ar &&
+    consentCreditor.CreditorAgent?.SchemeName === paymentCreditor.CreditorAgent?.SchemeName &&
+    consentCreditor.CreditorAgent?.Identification === paymentCreditor.CreditorAgent?.Identification
+  )
+}
+`;
+const matchPiiPython = `def match_payment_creditor_to_consent(consent_id: str, payment_pii: dict) -> None:
+    consent_creditor = consent_store.get_creditor(consent_id)
+    if consent_creditor is None:
+        raise HttpError(400, "Consent.Invalid",
+            f"No stored consent for {consent_id}.")
+
+    if not is_exact_match(consent_creditor, payment_pii["Initiation"]["Creditor"]):
+        raise HttpError(400, "Consent.FailsControlParameters",
+            "Payment creditor does not match the creditor authorised on the consent.")
+
+
+def is_exact_match(consent_creditor: dict, payment_creditor: dict) -> bool:
+    a, b = consent_creditor, payment_creditor
+    return (
+        a["CreditorAccount"]["SchemeName"] == b["CreditorAccount"]["SchemeName"]
+        and a["CreditorAccount"]["Identification"] == b["CreditorAccount"]["Identification"]
+        and (a["CreditorAccount"].get("Name") or {}).get("en") == (b["CreditorAccount"].get("Name") or {}).get("en")
+        and (a["CreditorAccount"].get("Name") or {}).get("ar") == (b["CreditorAccount"].get("Name") or {}).get("ar")
+        and (a.get("CreditorAgent") or {}).get("SchemeName") == (b.get("CreditorAgent") or {}).get("SchemeName")
+        and (a.get("CreditorAgent") or {}).get("Identification") == (b.get("CreditorAgent") or {}).get("Identification")
+    )
+`;
+const paymentRequestJson = `{
+  "requestUrl": "https://rs1.[LFICode].apihub.openfinance.ae/open-finance/payment/v2.2/payments",
+  "paymentType": "cbuae-payment",
+  "request": {
+    "Data": {
+      "ConsentId": "cac2381a-7111-4c5f-bc2f-4319a93da7c5",
+      "Instruction": {
+        "Amount": { "Amount": "1500.00", "Currency": "AED" }
+      },
+      "PaymentPurposeCode": "LOAN",
+      "PersonalIdentifiableInformation": "eyJhbGciOiJSU0EtT0FFUC0yNTYi...",
+      "OpenFinanceBilling": { "Type": "Collection" }
+    }
+  },
+  "requestHeaders": {
+    "o3-provider-id": "lfi-123",
+    "o3-caller-org-id": "tpp-456",
+    "o3-caller-client-id": "client-789",
+    "o3-api-uri": "/open-finance/payment/v2.2/payments",
+    "o3-api-operation": "POST",
+    "o3-ozone-interaction-id": "ozone-xyz",
+    "o3-consent-id": "cac2381a-7111-4c5f-bc2f-4319a93da7c5",
+    "o3-psu-identifier": "eyJwczoi...",
+    "x-fapi-interaction-id": "0f4d3a16-9e27-4f8d-9a5a-3a2f7e9c1b22",
+    "x-idempotency-key": "idem-2026-04-18-001"
+  },
+  "tpp": {
+    "clientId": "1675793e-d6e3-4954-96c8-acb9aaa83c53",
+    "orgId": "a1b2c3d4-e5f6-7890-abcd-ef0123456789",
+    "tppId": "fdd6e0ac-ba7a-4bc4-a986-c45c5daaaf00",
+    "tppName": "Example TPP",
+    "softwareStatementId": "XvAjPeeYZAdWwrFF..",
+    "decodedSsa": {
+      "client_id": "1675793e-d6e3-4954-96c8-acb9aaa83c53",
+      "client_name": "Example TPP",
+      "roles": ["BSIP"]
+    }
+  },
+  "supplementaryInformation": {}
+}
+`;
+const paymentSuccessJson = `{
+  "data": {
+    "id": "5ff155ea-853f-480c-ac74-1eaed7c1201f",
+    "consentId": "cac2381a-7111-4c5f-bc2f-4319a93da7c5",
+    "status": "Pending",
+    "statusUpdateDateTime": "2026-04-18T10:14:23Z",
+    "creationDateTime": "2026-04-18T10:14:23Z",
+    "instruction": {
+      "Amount": { "amount": "1500.00", "currency": "AED" }
+    },
+    "paymentPurposeCode": "LOAN",
+    "openFinanceBilling": { "Type": "Collection" }
+  },
+  "meta": {}
+}
+`;
+const paymentErrorJson = `{
+  "errorCode": "Consent.FailsControlParameters",
+  "errorMessage": "Payment creditor does not match the creditor authorised on the consent."
+}
+`;
+const patchSettleJson = `{
+  "paymentResponse.status": "AcceptedSettlementCompleted",
+  "paymentResponse.paymentTransactionId": "de857816-3016-4567-86b6-8f418e36fb27"
+}
+`;
+const patchRailRejectJson = `{
+  "paymentResponse.status": "Rejected",
+  "paymentResponse.paymentTransactionId": "de857816-3016-4567-86b6-8f418e36fb27",
+  "paymentResponse.RejectReasonCode": [
+    {
+      "Code": "AANI.AM04",
+      "Message": "Payment request cannot be executed as insufficient funds at debtor account."
+    }
+  ]
+}
+`;
+const patchScreeningRejectJson = `{
+  "paymentResponse.status": "Rejected",
+  "paymentResponse.RejectReasonCode": [
+    {
+      "Code": "LFI.ScreeningRejected",
+      "Message": "Payment rejected by LFI screening controls."
+    }
+  ]
+}
+`;
+const getPaymentJson = `{
+  "data": {
+    "id": "5ff155ea-853f-480c-ac74-1eaed7c1201f",
+    "consentId": "cac2381a-7111-4c5f-bc2f-4319a93da7c5",
+    "paymentTransactionId": "de857816-3016-4567-86b6-8f418e36fb27",
+    "status": "AcceptedSettlementCompleted",
+    "statusUpdateDateTime": "2026-04-18T10:14:31Z",
+    "creationDateTime": "2026-04-18T10:14:23Z",
+    "instruction": {
+      "Amount": { "amount": "1500.00", "currency": "AED" }
+    },
+    "paymentPurposeCode": "LOAN",
+    "openFinanceBilling": { "Type": "Collection" }
+  },
+  "meta": {}
+}
+`;
+const _sfc_main = /* @__PURE__ */ defineComponent({
+  __name: "api-guide",
+  __ssrInlineRender: true,
+  setup(__props) {
+    const piiDecryptTabs = [{ label: "Node.js", lang: "typescript", code: piiDecryptNode }, { label: "Python", lang: "python", code: piiDecryptPython }];
+    const creditorValidateTabs = [{ label: "Node.js", lang: "typescript", code: creditorValidateNode }, { label: "Python", lang: "python", code: creditorValidatePython }];
+    const piiPaymentTabs = [{ label: "Node.js", lang: "typescript", code: piiPaymentNode }, { label: "Python", lang: "python", code: piiPaymentPython }];
+    const matchPiiTabs = [{ label: "Node.js", lang: "typescript", code: matchPiiNode }, { label: "Python", lang: "python", code: matchPiiPython }];
+    return (_ctx, _push, _parent, _attrs) => {
+      const _component_EdSectionBand = __unplugin_components_3;
+      const _component_EdProse = __unplugin_components_4;
+      const _component_EdBullets = __unplugin_components_5;
+      const _component_APIFlowViewer = __unplugin_components_8;
+      const _component_APIFlowsPeriodicSchedule = _sfc_main$1;
+      const _component_EdCodeGroup = __unplugin_components_9;
+      const _component_EdCode = EdCode;
+      const _component_EdRefTable = __unplugin_components_12;
+      const _component_EdNote = __unplugin_components_7;
+      _push(`<div${ssrRenderAttrs(mergeProps({ class: "ed-doc" }, _attrs))} data-v-7d0b59ab><section class="ed-doc__hero" data-v-7d0b59ab><div class="ed-doc__inner" data-v-7d0b59ab><div class="ed-doc__eyebrow" data-v-7d0b59ab><span class="ed-doc__eyebrow-dash" data-v-7d0b59ab></span> LFI · Banking · Service Initiation · Multi-Payments · Fixed Periodic Schedule </div><h1 class="ed-doc__title" data-v-7d0b59ab> Fixed Periodic Schedule — API Guide <span class="ed-doc__read" data-v-7d0b59ab>14 min read</span></h1><p class="ed-doc__lede" data-v-7d0b59ab> Fixed Periodic Schedule lets a TPP initiate a recurring series of domestic payments at a <strong data-v-7d0b59ab>fixed amount</strong> on a <strong data-v-7d0b59ab>regular period</strong> (e.g. weekly, monthly, quarterly) from a customer&#39;s account at your LFI via the API Hub. The TPP supplies the amount, the period, and the overall date range at consent time, and the customer authorises the full periodic schedule once. In each period the TPP submits one payment without re-authorisation — the Hub enforces at-most-one execution per period. Payments run on AANI as the primary rail with UAEFTS as the fallback. This guide covers the Ozone Connect endpoints your LFI MUST implement so the Hub can serve every periodic payment under the consent from creation through to execution and status retrieval. </p><p class="ed-doc__lede" data-v-7d0b59ab> The behavioural rules for each endpoint — validation conditions, error mappings, post-execution lifecycle — are in the <a href="./requirements" data-v-7d0b59ab>Fixed Periodic Schedule Requirements</a>. This guide covers the request and response shape of each endpoint, with code walkthroughs for the parts that need them: decrypting the PII, validating the creditor, and matching the payment-time PII against the consent. </p></div></section>`);
+      _push(ssrRenderComponent(_component_EdSectionBand, {
+        id: "prerequisites",
+        num: "01",
+        color: "var(--at-teal)",
+        eyebrow: "Prerequisites",
+        title: "What must be in place before you implement",
+        tone: "cream"
+      }, {
+        default: withCtx((_, _push2, _parent2, _scopeId) => {
+          if (_push2) {
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`Before implementing Fixed Periodic Schedule, ensure the following are in place:`);
+                } else {
+                  return [
+                    createTextVNode("Before implementing Fixed Periodic Schedule, ensure the following are in place:")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdBullets, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<li data-v-7d0b59ab${_scopeId2}><strong data-v-7d0b59ab${_scopeId2}>API Hub onboarded</strong> — Your API Hub instance is provisioned and your <a href="/tech/lfi-api-hub/v2.2-rc1/api-hub/onboarding/environment-specific/" data-v-7d0b59ab${_scopeId2}>environment-specific configuration</a> is complete.</li><li data-v-7d0b59ab${_scopeId2}><strong data-v-7d0b59ab${_scopeId2}>Enc1 key pair generated and registered</strong> — The TPP encrypts PII to your LFI&#39;s <a href="/tech/lfi-api-hub/v2.2-rc1/api-hub/onboarding/environment-specific/#enc1-encryption-key" data-v-7d0b59ab${_scopeId2}>Enc1 public key</a>. Your LFI MUST hold the corresponding private key and be able to look it up by <code data-v-7d0b59ab${_scopeId2}>kid</code>.</li><li data-v-7d0b59ab${_scopeId2}><strong data-v-7d0b59ab${_scopeId2}>Consent Journey implemented</strong> — The <a href="/tech/lfi-api-hub/v2.2-rc1/consent-journey/api-guide" data-v-7d0b59ab${_scopeId2}>Consent Journey API Guide</a> MUST be implemented first. A payment cannot be initiated without an authorized consent.</li><li data-v-7d0b59ab${_scopeId2}><strong data-v-7d0b59ab${_scopeId2}>Ozone Connect connectivity verified</strong> — Bidirectional mTLS connectivity is confirmed between the API Hub and your Ozone Connect base URL. See <a href="/tech/lfi-api-hub/v2.2-rc1/api-hub/connectivity/" data-v-7d0b59ab${_scopeId2}>Connectivity &amp; Certificates</a>.</li><li data-v-7d0b59ab${_scopeId2}><strong data-v-7d0b59ab${_scopeId2}>Fixed Periodic Schedule advertised</strong> — <code data-v-7d0b59ab${_scopeId2}>ApiMetadata.FixedPeriodicSchedule.Supported</code> is set to <code data-v-7d0b59ab${_scopeId2}>true</code> on your authorisation server entry in the Trust Framework.</li>`);
+                } else {
+                  return [
+                    createVNode("li", null, [
+                      createVNode("strong", null, "API Hub onboarded"),
+                      createTextVNode(" — Your API Hub instance is provisioned and your "),
+                      createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/onboarding/environment-specific/" }, "environment-specific configuration"),
+                      createTextVNode(" is complete.")
+                    ]),
+                    createVNode("li", null, [
+                      createVNode("strong", null, "Enc1 key pair generated and registered"),
+                      createTextVNode(" — The TPP encrypts PII to your LFI's "),
+                      createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/onboarding/environment-specific/#enc1-encryption-key" }, "Enc1 public key"),
+                      createTextVNode(". Your LFI MUST hold the corresponding private key and be able to look it up by "),
+                      createVNode("code", null, "kid"),
+                      createTextVNode(".")
+                    ]),
+                    createVNode("li", null, [
+                      createVNode("strong", null, "Consent Journey implemented"),
+                      createTextVNode(" — The "),
+                      createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/consent-journey/api-guide" }, "Consent Journey API Guide"),
+                      createTextVNode(" MUST be implemented first. A payment cannot be initiated without an authorized consent.")
+                    ]),
+                    createVNode("li", null, [
+                      createVNode("strong", null, "Ozone Connect connectivity verified"),
+                      createTextVNode(" — Bidirectional mTLS connectivity is confirmed between the API Hub and your Ozone Connect base URL. See "),
+                      createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/connectivity/" }, "Connectivity & Certificates"),
+                      createTextVNode(".")
+                    ]),
+                    createVNode("li", null, [
+                      createVNode("strong", null, "Fixed Periodic Schedule advertised"),
+                      createTextVNode(" — "),
+                      createVNode("code", null, "ApiMetadata.FixedPeriodicSchedule.Supported"),
+                      createTextVNode(" is set to "),
+                      createVNode("code", null, "true"),
+                      createTextVNode(" on your authorisation server entry in the Trust Framework.")
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+          } else {
+            return [
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode("Before implementing Fixed Periodic Schedule, ensure the following are in place:")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdBullets, null, {
+                default: withCtx(() => [
+                  createVNode("li", null, [
+                    createVNode("strong", null, "API Hub onboarded"),
+                    createTextVNode(" — Your API Hub instance is provisioned and your "),
+                    createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/onboarding/environment-specific/" }, "environment-specific configuration"),
+                    createTextVNode(" is complete.")
+                  ]),
+                  createVNode("li", null, [
+                    createVNode("strong", null, "Enc1 key pair generated and registered"),
+                    createTextVNode(" — The TPP encrypts PII to your LFI's "),
+                    createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/onboarding/environment-specific/#enc1-encryption-key" }, "Enc1 public key"),
+                    createTextVNode(". Your LFI MUST hold the corresponding private key and be able to look it up by "),
+                    createVNode("code", null, "kid"),
+                    createTextVNode(".")
+                  ]),
+                  createVNode("li", null, [
+                    createVNode("strong", null, "Consent Journey implemented"),
+                    createTextVNode(" — The "),
+                    createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/consent-journey/api-guide" }, "Consent Journey API Guide"),
+                    createTextVNode(" MUST be implemented first. A payment cannot be initiated without an authorized consent.")
+                  ]),
+                  createVNode("li", null, [
+                    createVNode("strong", null, "Ozone Connect connectivity verified"),
+                    createTextVNode(" — Bidirectional mTLS connectivity is confirmed between the API Hub and your Ozone Connect base URL. See "),
+                    createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/connectivity/" }, "Connectivity & Certificates"),
+                    createTextVNode(".")
+                  ]),
+                  createVNode("li", null, [
+                    createVNode("strong", null, "Fixed Periodic Schedule advertised"),
+                    createTextVNode(" — "),
+                    createVNode("code", null, "ApiMetadata.FixedPeriodicSchedule.Supported"),
+                    createTextVNode(" is set to "),
+                    createVNode("code", null, "true"),
+                    createTextVNode(" on your authorisation server entry in the Trust Framework.")
+                  ])
+                ]),
+                _: 1
+              })
+            ];
+          }
+        }),
+        _: 1
+      }, _parent));
+      _push(ssrRenderComponent(_component_EdSectionBand, {
+        id: "api-sequence-flow",
+        num: "02",
+        color: "var(--at-gold)",
+        eyebrow: "API Sequence Flow",
+        title: "End-to-end Fixed Periodic Schedule",
+        tone: "surface"
+      }, {
+        default: withCtx((_, _push2, _parent2, _scopeId) => {
+          if (_push2) {
+            _push2(ssrRenderComponent(_component_APIFlowViewer, { title: "Fixed Periodic Schedule API Flow" }, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(ssrRenderComponent(_component_APIFlowsPeriodicSchedule, null, null, _parent3, _scopeId2));
+                } else {
+                  return [
+                    createVNode(_component_APIFlowsPeriodicSchedule)
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+          } else {
+            return [
+              createVNode(_component_APIFlowViewer, { title: "Fixed Periodic Schedule API Flow" }, {
+                default: withCtx(() => [
+                  createVNode(_component_APIFlowsPeriodicSchedule)
+                ]),
+                _: 1
+              })
+            ];
+          }
+        }),
+        _: 1
+      }, _parent));
+      _push(ssrRenderComponent(_component_EdSectionBand, {
+        id: "consent-validation",
+        num: "03",
+        color: "var(--at-blue-deep, #1d4ed8)",
+        eyebrow: "Consent Validation",
+        title: "Validate the consent before it is created",
+        tone: "cream"
+      }, {
+        default: withCtx((_, _push2, _parent2, _scopeId) => {
+          if (_push2) {
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` When a TPP creates a payment consent, the API Hub calls your <a href="/tech/lfi-api-hub/v2.2-rc1/consent-events/open-api/validate" class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--post" data-v-7d0b59ab${_scopeId2}>POST</span><code data-v-7d0b59ab${_scopeId2}>/consent/action/validate</code></a> endpoint <strong data-v-7d0b59ab${_scopeId2}>before</strong> the consent is created. Your LFI MUST validate the consent and respond with <code data-v-7d0b59ab${_scopeId2}>data.status: &quot;valid&quot;</code> or <code data-v-7d0b59ab${_scopeId2}>data.status: &quot;invalid&quot;</code>. An <code data-v-7d0b59ab${_scopeId2}>invalid</code> response prevents the consent being created and the TPP receives an error. `);
+                } else {
+                  return [
+                    createTextVNode(" When a TPP creates a payment consent, the API Hub calls your "),
+                    createVNode("a", {
+                      href: "/tech/lfi-api-hub/v2.2-rc1/consent-events/open-api/validate",
+                      class: "endpoint"
+                    }, [
+                      createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                      createVNode("code", null, "/consent/action/validate")
+                    ]),
+                    createTextVNode(" endpoint "),
+                    createVNode("strong", null, "before"),
+                    createTextVNode(" the consent is created. Your LFI MUST validate the consent and respond with "),
+                    createVNode("code", null, 'data.status: "valid"'),
+                    createTextVNode(" or "),
+                    createVNode("code", null, 'data.status: "invalid"'),
+                    createTextVNode(". An "),
+                    createVNode("code", null, "invalid"),
+                    createTextVNode(" response prevents the consent being created and the TPP receives an error. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` The full set of validation rules — <code data-v-7d0b59ab${_scopeId2}>standardVersion</code>, <code data-v-7d0b59ab${_scopeId2}>Initiation.DebtorAccount</code>, <code data-v-7d0b59ab${_scopeId2}>BaseConsentId</code>, <code data-v-7d0b59ab${_scopeId2}>CurrencyRequest</code>, payment-type support, PII conformance, creditor checks — is enumerated in <a href="./requirements#consent-validation" data-v-7d0b59ab${_scopeId2}>Fixed Periodic Schedule Requirements — Consent Validation</a>. The two parts that need a code walkthrough are <strong data-v-7d0b59ab${_scopeId2}>decrypting the PII</strong> and <strong data-v-7d0b59ab${_scopeId2}>validating the creditor</strong>; both are covered below. `);
+                } else {
+                  return [
+                    createTextVNode(" The full set of validation rules — "),
+                    createVNode("code", null, "standardVersion"),
+                    createTextVNode(", "),
+                    createVNode("code", null, "Initiation.DebtorAccount"),
+                    createTextVNode(", "),
+                    createVNode("code", null, "BaseConsentId"),
+                    createTextVNode(", "),
+                    createVNode("code", null, "CurrencyRequest"),
+                    createTextVNode(", payment-type support, PII conformance, creditor checks — is enumerated in "),
+                    createVNode("a", { href: "./requirements#consent-validation" }, "Fixed Periodic Schedule Requirements — Consent Validation"),
+                    createTextVNode(". The two parts that need a code walkthrough are "),
+                    createVNode("strong", null, "decrypting the PII"),
+                    createTextVNode(" and "),
+                    createVNode("strong", null, "validating the creditor"),
+                    createTextVNode("; both are covered below. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h3 class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Decrypting and validating the PII</h3>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` The <code data-v-7d0b59ab${_scopeId2}>consent.PersonalIdentifiableInformation</code> field arrives as a JWE compact string encrypted by the TPP to your LFI&#39;s Enc1 public key. The API Hub passes it through unchanged — it cannot inspect the contents and has not validated them. Decryption, schema validation, and field-level checks are entirely the LFI&#39;s responsibility. `);
+                } else {
+                  return [
+                    createTextVNode(" The "),
+                    createVNode("code", null, "consent.PersonalIdentifiableInformation"),
+                    createTextVNode(" field arrives as a JWE compact string encrypted by the TPP to your LFI's Enc1 public key. The API Hub passes it through unchanged — it cannot inspect the contents and has not validated them. Decryption, schema validation, and field-level checks are entirely the LFI's responsibility. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`The end-to-end flow is:`);
+                } else {
+                  return [
+                    createTextVNode("The end-to-end flow is:")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdBullets, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<li data-v-7d0b59ab${_scopeId2}>Read the <code data-v-7d0b59ab${_scopeId2}>kid</code> from the JWE protected header and look up the matching Enc1 private key</li><li data-v-7d0b59ab${_scopeId2}>Decrypt the JWE → recover the inner JWS</li><li data-v-7d0b59ab${_scopeId2}>Decode the JWS payload (signature verification is <strong data-v-7d0b59ab${_scopeId2}>optional</strong> — the outer Ozone Connect request is itself a JWS that the API Hub has already verified, so the PII cannot have been tampered with in transit)</li><li data-v-7d0b59ab${_scopeId2}>Validate the decoded payload against the consent-time PII schema — <code data-v-7d0b59ab${_scopeId2}>AEBankServiceInitiationRichAuthorizationRequests.AEDomesticPaymentPII</code> in <code data-v-7d0b59ab${_scopeId2}>uae-api-hub-consent-manager-openapi.yaml</code>. <code data-v-7d0b59ab${_scopeId2}>additionalProperties: false</code> is set at every level, so any unexpected field fails validation</li>`);
+                } else {
+                  return [
+                    createVNode("li", null, [
+                      createTextVNode("Read the "),
+                      createVNode("code", null, "kid"),
+                      createTextVNode(" from the JWE protected header and look up the matching Enc1 private key")
+                    ]),
+                    createVNode("li", null, "Decrypt the JWE → recover the inner JWS"),
+                    createVNode("li", null, [
+                      createTextVNode("Decode the JWS payload (signature verification is "),
+                      createVNode("strong", null, "optional"),
+                      createTextVNode(" — the outer Ozone Connect request is itself a JWS that the API Hub has already verified, so the PII cannot have been tampered with in transit)")
+                    ]),
+                    createVNode("li", null, [
+                      createTextVNode("Validate the decoded payload against the consent-time PII schema — "),
+                      createVNode("code", null, "AEBankServiceInitiationRichAuthorizationRequests.AEDomesticPaymentPII"),
+                      createTextVNode(" in "),
+                      createVNode("code", null, "uae-api-hub-consent-manager-openapi.yaml"),
+                      createTextVNode(". "),
+                      createVNode("code", null, "additionalProperties: false"),
+                      createTextVNode(" is set at every level, so any unexpected field fails validation")
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`Happy-path snippet:`);
+                } else {
+                  return [
+                    createTextVNode("Happy-path snippet:")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdCodeGroup, { tabs: piiDecryptTabs }, null, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` For the per-step deep dive — <code data-v-7d0b59ab${_scopeId2}>kid</code> lookup conventions, key import options, the optional JWS signature verification, building the <code data-v-7d0b59ab${_scopeId2}>ajv</code> / <code data-v-7d0b59ab${_scopeId2}>jsonschema</code> validator with all <code data-v-7d0b59ab${_scopeId2}>$ref</code> schemas registered — see <a href="/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/personal-identifiable-information/api-guide/decrypt-pii" data-v-7d0b59ab${_scopeId2}>How to Decrypt PII</a>. `);
+                } else {
+                  return [
+                    createTextVNode(" For the per-step deep dive — "),
+                    createVNode("code", null, "kid"),
+                    createTextVNode(" lookup conventions, key import options, the optional JWS signature verification, building the "),
+                    createVNode("code", null, "ajv"),
+                    createTextVNode(" / "),
+                    createVNode("code", null, "jsonschema"),
+                    createTextVNode(" validator with all "),
+                    createVNode("code", null, "$ref"),
+                    createTextVNode(" schemas registered — see "),
+                    createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/personal-identifiable-information/api-guide/decrypt-pii" }, "How to Decrypt PII"),
+                    createTextVNode(". ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`The decrypted consent-time PII for a Fixed Periodic Schedule consent looks like:`);
+                } else {
+                  return [
+                    createTextVNode("The decrypted consent-time PII for a Fixed Periodic Schedule consent looks like:")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdCode, {
+              code: consentPiiJson,
+              lang: "json",
+              filename: "decrypted consent-time PII"
+            }, null, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` If decryption fails, schema validation fails, or any required field is missing, respond with <code data-v-7d0b59ab${_scopeId2}>invalid</code> per <a href="/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/personal-identifiable-information/creditor#rejecting-an-invalid-consent" data-v-7d0b59ab${_scopeId2}>Rejecting an invalid consent</a>. `);
+                } else {
+                  return [
+                    createTextVNode(" If decryption fails, schema validation fails, or any required field is missing, respond with "),
+                    createVNode("code", null, "invalid"),
+                    createTextVNode(" per "),
+                    createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/personal-identifiable-information/creditor#rejecting-an-invalid-consent" }, "Rejecting an invalid consent"),
+                    createTextVNode(". ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h3 class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Validating the Creditor</h3>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` For Fixed Periodic Schedule, <code data-v-7d0b59ab${_scopeId2}>Initiation.Creditor</code> MUST be an array of exactly <strong data-v-7d0b59ab${_scopeId2}>one</strong> entry — every periodic payment under this consent pays the same creditor. The full Creditor rules — cardinality, mandatory fields, BIC derivation — are in <a href="/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/personal-identifiable-information/creditor" data-v-7d0b59ab${_scopeId2}>Creditor</a>. This section walks through the validation in code. `);
+                } else {
+                  return [
+                    createTextVNode(" For Fixed Periodic Schedule, "),
+                    createVNode("code", null, "Initiation.Creditor"),
+                    createTextVNode(" MUST be an array of exactly "),
+                    createVNode("strong", null, "one"),
+                    createTextVNode(" entry — every periodic payment under this consent pays the same creditor. The full Creditor rules — cardinality, mandatory fields, BIC derivation — are in "),
+                    createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/personal-identifiable-information/creditor" }, "Creditor"),
+                    createTextVNode(". This section walks through the validation in code. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`The validation breaks into four parts:`);
+                } else {
+                  return [
+                    createTextVNode("The validation breaks into four parts:")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdBullets, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<li data-v-7d0b59ab${_scopeId2}><strong data-v-7d0b59ab${_scopeId2}>Cardinality</strong> — exactly one entry</li><li data-v-7d0b59ab${_scopeId2}><strong data-v-7d0b59ab${_scopeId2}>Mandatory fields</strong> — <code data-v-7d0b59ab${_scopeId2}>CreditorAccount.SchemeName == &quot;IBAN&quot;</code>, <code data-v-7d0b59ab${_scopeId2}>Identification</code> is a syntactically valid UAE IBAN, at least one of <code data-v-7d0b59ab${_scopeId2}>Name.en</code> or <code data-v-7d0b59ab${_scopeId2}>Name.ar</code> is present</li><li data-v-7d0b59ab${_scopeId2}><strong data-v-7d0b59ab${_scopeId2}>BIC consistency</strong> — derive the BIC from the IBAN; if <code data-v-7d0b59ab${_scopeId2}>CreditorAgent.Identification</code> was supplied it MUST match</li><li data-v-7d0b59ab${_scopeId2}><strong data-v-7d0b59ab${_scopeId2}>Domestic rail reachability</strong> — the receiving bank is reachable on AANI or UAEFTS, and (where the LFI can determine it) the receiving account is in a state that can accept a payment</li>`);
+                } else {
+                  return [
+                    createVNode("li", null, [
+                      createVNode("strong", null, "Cardinality"),
+                      createTextVNode(" — exactly one entry")
+                    ]),
+                    createVNode("li", null, [
+                      createVNode("strong", null, "Mandatory fields"),
+                      createTextVNode(" — "),
+                      createVNode("code", null, 'CreditorAccount.SchemeName == "IBAN"'),
+                      createTextVNode(", "),
+                      createVNode("code", null, "Identification"),
+                      createTextVNode(" is a syntactically valid UAE IBAN, at least one of "),
+                      createVNode("code", null, "Name.en"),
+                      createTextVNode(" or "),
+                      createVNode("code", null, "Name.ar"),
+                      createTextVNode(" is present")
+                    ]),
+                    createVNode("li", null, [
+                      createVNode("strong", null, "BIC consistency"),
+                      createTextVNode(" — derive the BIC from the IBAN; if "),
+                      createVNode("code", null, "CreditorAgent.Identification"),
+                      createTextVNode(" was supplied it MUST match")
+                    ]),
+                    createVNode("li", null, [
+                      createVNode("strong", null, "Domestic rail reachability"),
+                      createTextVNode(" — the receiving bank is reachable on AANI or UAEFTS, and (where the LFI can determine it) the receiving account is in a state that can accept a payment")
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` Steps 1–3 are universal. Step 4 depends on each LFI&#39;s BIC directory and rail integration — the snippet below uses a stubbed <code data-v-7d0b59ab${_scopeId2}>lookupRailReachability(bic)</code> interface that your LFI replaces with its own implementation. `);
+                } else {
+                  return [
+                    createTextVNode(" Steps 1–3 are universal. Step 4 depends on each LFI's BIC directory and rail integration — the snippet below uses a stubbed "),
+                    createVNode("code", null, "lookupRailReachability(bic)"),
+                    createTextVNode(" interface that your LFI replaces with its own implementation. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdCodeGroup, { tabs: creditorValidateTabs }, null, _parent2, _scopeId));
+            _push2(`<h3 class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Validating the DebtorAccount</h3>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` If the TPP supplied <code data-v-7d0b59ab${_scopeId2}>Initiation.DebtorAccount</code> in the consent PII, your LFI MUST also validate it before approving the consent: <code data-v-7d0b59ab${_scopeId2}>SchemeName</code> is <code data-v-7d0b59ab${_scopeId2}>IBAN</code>, the IBAN corresponds to an account held at this LFI and reachable through this API Hub integration, and the account is in a state that permits payment initiation (not blocked, dormant, or closed). Customer ownership of the account is <strong data-v-7d0b59ab${_scopeId2}>not</strong> checked here — it is checked later during the authorisation journey, once the customer has authenticated. `);
+                } else {
+                  return [
+                    createTextVNode(" If the TPP supplied "),
+                    createVNode("code", null, "Initiation.DebtorAccount"),
+                    createTextVNode(" in the consent PII, your LFI MUST also validate it before approving the consent: "),
+                    createVNode("code", null, "SchemeName"),
+                    createTextVNode(" is "),
+                    createVNode("code", null, "IBAN"),
+                    createTextVNode(", the IBAN corresponds to an account held at this LFI and reachable through this API Hub integration, and the account is in a state that permits payment initiation (not blocked, dormant, or closed). Customer ownership of the account is "),
+                    createVNode("strong", null, "not"),
+                    createTextVNode(" checked here — it is checked later during the authorisation journey, once the customer has authenticated. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` The full check list and the <code data-v-7d0b59ab${_scopeId2}>invalid</code> response shape (with <code data-v-7d0b59ab${_scopeId2}>code: InvalidDebtorAccount</code>) are in <a href="/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/personal-identifiable-information/debtor-account" data-v-7d0b59ab${_scopeId2}>Debtor Account</a>. `);
+                } else {
+                  return [
+                    createTextVNode(" The full check list and the "),
+                    createVNode("code", null, "invalid"),
+                    createTextVNode(" response shape (with "),
+                    createVNode("code", null, "code: InvalidDebtorAccount"),
+                    createTextVNode(") are in "),
+                    createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/personal-identifiable-information/debtor-account" }, "Debtor Account"),
+                    createTextVNode(". ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h3 class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Returning the validate response</h3>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` If <code data-v-7d0b59ab${_scopeId2}>validateCreditor</code> (or the DebtorAccount checks) returns a non-null result, return it inside <code data-v-7d0b59ab${_scopeId2}>data</code> on the validate response: `);
+                } else {
+                  return [
+                    createTextVNode(" If "),
+                    createVNode("code", null, "validateCreditor"),
+                    createTextVNode(" (or the DebtorAccount checks) returns a non-null result, return it inside "),
+                    createVNode("code", null, "data"),
+                    createTextVNode(" on the validate response: ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdCode, {
+              code: invalidResponseJson,
+              lang: "json",
+              filename: "invalid validate response"
+            }, null, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` See <a href="/tech/lfi-api-hub/v2.2-rc1/consent-events/api-guide#validate-post-consent-action-validate" data-v-7d0b59ab${_scopeId2}>Consent Events &amp; Actions — API Guide</a> for the full validate request and response schema. `);
+                } else {
+                  return [
+                    createTextVNode(" See "),
+                    createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/consent-events/api-guide#validate-post-consent-action-validate" }, "Consent Events & Actions — API Guide"),
+                    createTextVNode(" for the full validate request and response schema. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+          } else {
+            return [
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" When a TPP creates a payment consent, the API Hub calls your "),
+                  createVNode("a", {
+                    href: "/tech/lfi-api-hub/v2.2-rc1/consent-events/open-api/validate",
+                    class: "endpoint"
+                  }, [
+                    createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                    createVNode("code", null, "/consent/action/validate")
+                  ]),
+                  createTextVNode(" endpoint "),
+                  createVNode("strong", null, "before"),
+                  createTextVNode(" the consent is created. Your LFI MUST validate the consent and respond with "),
+                  createVNode("code", null, 'data.status: "valid"'),
+                  createTextVNode(" or "),
+                  createVNode("code", null, 'data.status: "invalid"'),
+                  createTextVNode(". An "),
+                  createVNode("code", null, "invalid"),
+                  createTextVNode(" response prevents the consent being created and the TPP receives an error. ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" The full set of validation rules — "),
+                  createVNode("code", null, "standardVersion"),
+                  createTextVNode(", "),
+                  createVNode("code", null, "Initiation.DebtorAccount"),
+                  createTextVNode(", "),
+                  createVNode("code", null, "BaseConsentId"),
+                  createTextVNode(", "),
+                  createVNode("code", null, "CurrencyRequest"),
+                  createTextVNode(", payment-type support, PII conformance, creditor checks — is enumerated in "),
+                  createVNode("a", { href: "./requirements#consent-validation" }, "Fixed Periodic Schedule Requirements — Consent Validation"),
+                  createTextVNode(". The two parts that need a code walkthrough are "),
+                  createVNode("strong", null, "decrypting the PII"),
+                  createTextVNode(" and "),
+                  createVNode("strong", null, "validating the creditor"),
+                  createTextVNode("; both are covered below. ")
+                ]),
+                _: 1
+              }),
+              createVNode("h3", { class: "ed-doc__subhead" }, "Decrypting and validating the PII"),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" The "),
+                  createVNode("code", null, "consent.PersonalIdentifiableInformation"),
+                  createTextVNode(" field arrives as a JWE compact string encrypted by the TPP to your LFI's Enc1 public key. The API Hub passes it through unchanged — it cannot inspect the contents and has not validated them. Decryption, schema validation, and field-level checks are entirely the LFI's responsibility. ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode("The end-to-end flow is:")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdBullets, null, {
+                default: withCtx(() => [
+                  createVNode("li", null, [
+                    createTextVNode("Read the "),
+                    createVNode("code", null, "kid"),
+                    createTextVNode(" from the JWE protected header and look up the matching Enc1 private key")
+                  ]),
+                  createVNode("li", null, "Decrypt the JWE → recover the inner JWS"),
+                  createVNode("li", null, [
+                    createTextVNode("Decode the JWS payload (signature verification is "),
+                    createVNode("strong", null, "optional"),
+                    createTextVNode(" — the outer Ozone Connect request is itself a JWS that the API Hub has already verified, so the PII cannot have been tampered with in transit)")
+                  ]),
+                  createVNode("li", null, [
+                    createTextVNode("Validate the decoded payload against the consent-time PII schema — "),
+                    createVNode("code", null, "AEBankServiceInitiationRichAuthorizationRequests.AEDomesticPaymentPII"),
+                    createTextVNode(" in "),
+                    createVNode("code", null, "uae-api-hub-consent-manager-openapi.yaml"),
+                    createTextVNode(". "),
+                    createVNode("code", null, "additionalProperties: false"),
+                    createTextVNode(" is set at every level, so any unexpected field fails validation")
+                  ])
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode("Happy-path snippet:")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdCodeGroup, { tabs: piiDecryptTabs }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" For the per-step deep dive — "),
+                  createVNode("code", null, "kid"),
+                  createTextVNode(" lookup conventions, key import options, the optional JWS signature verification, building the "),
+                  createVNode("code", null, "ajv"),
+                  createTextVNode(" / "),
+                  createVNode("code", null, "jsonschema"),
+                  createTextVNode(" validator with all "),
+                  createVNode("code", null, "$ref"),
+                  createTextVNode(" schemas registered — see "),
+                  createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/personal-identifiable-information/api-guide/decrypt-pii" }, "How to Decrypt PII"),
+                  createTextVNode(". ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode("The decrypted consent-time PII for a Fixed Periodic Schedule consent looks like:")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdCode, {
+                code: consentPiiJson,
+                lang: "json",
+                filename: "decrypted consent-time PII"
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" If decryption fails, schema validation fails, or any required field is missing, respond with "),
+                  createVNode("code", null, "invalid"),
+                  createTextVNode(" per "),
+                  createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/personal-identifiable-information/creditor#rejecting-an-invalid-consent" }, "Rejecting an invalid consent"),
+                  createTextVNode(". ")
+                ]),
+                _: 1
+              }),
+              createVNode("h3", { class: "ed-doc__subhead" }, "Validating the Creditor"),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" For Fixed Periodic Schedule, "),
+                  createVNode("code", null, "Initiation.Creditor"),
+                  createTextVNode(" MUST be an array of exactly "),
+                  createVNode("strong", null, "one"),
+                  createTextVNode(" entry — every periodic payment under this consent pays the same creditor. The full Creditor rules — cardinality, mandatory fields, BIC derivation — are in "),
+                  createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/personal-identifiable-information/creditor" }, "Creditor"),
+                  createTextVNode(". This section walks through the validation in code. ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode("The validation breaks into four parts:")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdBullets, null, {
+                default: withCtx(() => [
+                  createVNode("li", null, [
+                    createVNode("strong", null, "Cardinality"),
+                    createTextVNode(" — exactly one entry")
+                  ]),
+                  createVNode("li", null, [
+                    createVNode("strong", null, "Mandatory fields"),
+                    createTextVNode(" — "),
+                    createVNode("code", null, 'CreditorAccount.SchemeName == "IBAN"'),
+                    createTextVNode(", "),
+                    createVNode("code", null, "Identification"),
+                    createTextVNode(" is a syntactically valid UAE IBAN, at least one of "),
+                    createVNode("code", null, "Name.en"),
+                    createTextVNode(" or "),
+                    createVNode("code", null, "Name.ar"),
+                    createTextVNode(" is present")
+                  ]),
+                  createVNode("li", null, [
+                    createVNode("strong", null, "BIC consistency"),
+                    createTextVNode(" — derive the BIC from the IBAN; if "),
+                    createVNode("code", null, "CreditorAgent.Identification"),
+                    createTextVNode(" was supplied it MUST match")
+                  ]),
+                  createVNode("li", null, [
+                    createVNode("strong", null, "Domestic rail reachability"),
+                    createTextVNode(" — the receiving bank is reachable on AANI or UAEFTS, and (where the LFI can determine it) the receiving account is in a state that can accept a payment")
+                  ])
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" Steps 1–3 are universal. Step 4 depends on each LFI's BIC directory and rail integration — the snippet below uses a stubbed "),
+                  createVNode("code", null, "lookupRailReachability(bic)"),
+                  createTextVNode(" interface that your LFI replaces with its own implementation. ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdCodeGroup, { tabs: creditorValidateTabs }),
+              createVNode("h3", { class: "ed-doc__subhead" }, "Validating the DebtorAccount"),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" If the TPP supplied "),
+                  createVNode("code", null, "Initiation.DebtorAccount"),
+                  createTextVNode(" in the consent PII, your LFI MUST also validate it before approving the consent: "),
+                  createVNode("code", null, "SchemeName"),
+                  createTextVNode(" is "),
+                  createVNode("code", null, "IBAN"),
+                  createTextVNode(", the IBAN corresponds to an account held at this LFI and reachable through this API Hub integration, and the account is in a state that permits payment initiation (not blocked, dormant, or closed). Customer ownership of the account is "),
+                  createVNode("strong", null, "not"),
+                  createTextVNode(" checked here — it is checked later during the authorisation journey, once the customer has authenticated. ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" The full check list and the "),
+                  createVNode("code", null, "invalid"),
+                  createTextVNode(" response shape (with "),
+                  createVNode("code", null, "code: InvalidDebtorAccount"),
+                  createTextVNode(") are in "),
+                  createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/personal-identifiable-information/debtor-account" }, "Debtor Account"),
+                  createTextVNode(". ")
+                ]),
+                _: 1
+              }),
+              createVNode("h3", { class: "ed-doc__subhead" }, "Returning the validate response"),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" If "),
+                  createVNode("code", null, "validateCreditor"),
+                  createTextVNode(" (or the DebtorAccount checks) returns a non-null result, return it inside "),
+                  createVNode("code", null, "data"),
+                  createTextVNode(" on the validate response: ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdCode, {
+                code: invalidResponseJson,
+                lang: "json",
+                filename: "invalid validate response"
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" See "),
+                  createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/consent-events/api-guide#validate-post-consent-action-validate" }, "Consent Events & Actions — API Guide"),
+                  createTextVNode(" for the full validate request and response schema. ")
+                ]),
+                _: 1
+              })
+            ];
+          }
+        }),
+        _: 1
+      }, _parent));
+      _push(ssrRenderComponent(_component_EdSectionBand, {
+        id: "consent-flow",
+        num: "04",
+        color: "var(--at-navy)",
+        eyebrow: "Consent Flow",
+        title: "Authorize the customer once at your LFI",
+        tone: "surface"
+      }, {
+        default: withCtx((_, _push2, _parent2, _scopeId) => {
+          if (_push2) {
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` After consent creation passes validation, the TPP redirects the customer to your LFI&#39;s <a href="/tech/lfi-api-hub/v2.2-rc1/api-hub/onboarding/environment-specific/auth-endpoint" data-v-7d0b59ab${_scopeId2}>authorization endpoint</a> and your LFI runs the standard consent journey: authenticate the customer, retrieve the consent, present the debtor account selection screen subject to the rules in <a href="./requirements#authorization-account-selection" data-v-7d0b59ab${_scopeId2}>Authorization — Account Selection</a>, patch the selected debtor account and customer identifier onto the consent, and redirect back to the Hub. `);
+                } else {
+                  return [
+                    createTextVNode(" After consent creation passes validation, the TPP redirects the customer to your LFI's "),
+                    createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/onboarding/environment-specific/auth-endpoint" }, "authorization endpoint"),
+                    createTextVNode(" and your LFI runs the standard consent journey: authenticate the customer, retrieve the consent, present the debtor account selection screen subject to the rules in "),
+                    createVNode("a", { href: "./requirements#authorization-account-selection" }, "Authorization — Account Selection"),
+                    createTextVNode(", patch the selected debtor account and customer identifier onto the consent, and redirect back to the Hub. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`The endpoints your LFI implements against the API Hub for this flow are:`);
+                } else {
+                  return [
+                    createTextVNode("The endpoints your LFI implements against the API Hub for this flow are:")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdRefTable, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<table data-v-7d0b59ab${_scopeId2}><thead data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><th data-v-7d0b59ab${_scopeId2}>Endpoint</th><th data-v-7d0b59ab${_scopeId2}>Direction</th><th data-v-7d0b59ab${_scopeId2}>Purpose</th></tr></thead><tbody data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><a href="/tech/lfi-api-hub/v2.2-rc1/api-hub/headless-heimdall/open-api/auth" class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--get" data-v-7d0b59ab${_scopeId2}>GET</span><code data-v-7d0b59ab${_scopeId2}>/auth</code></a></td><td data-v-7d0b59ab${_scopeId2}>LFI → API Hub</td><td data-v-7d0b59ab${_scopeId2}>Initiate the authorization interaction</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><a href="/tech/lfi-api-hub/v2.2-rc1/api-hub/consent-manager/open-api/consents-consentId" class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--get" data-v-7d0b59ab${_scopeId2}>GET</span><code data-v-7d0b59ab${_scopeId2}>/consents/{consentId}</code></a></td><td data-v-7d0b59ab${_scopeId2}>LFI → API Hub</td><td data-v-7d0b59ab${_scopeId2}>Retrieve the full consent details</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><a href="/tech/lfi-api-hub/v2.2-rc1/api-hub/consent-manager/open-api/patch-consents-consentId" class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--patch" data-v-7d0b59ab${_scopeId2}>PATCH</span><code data-v-7d0b59ab${_scopeId2}>/consents/{consentId}</code></a></td><td data-v-7d0b59ab${_scopeId2}>LFI → API Hub</td><td data-v-7d0b59ab${_scopeId2}>Update consent status, customer identifiers, and the selected debtor account</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><a href="/tech/lfi-api-hub/v2.2-rc1/api-hub/headless-heimdall/open-api/auth-interactionId-doConfirm" class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--post" data-v-7d0b59ab${_scopeId2}>POST</span><code data-v-7d0b59ab${_scopeId2}>/auth/{interactionId}/doConfirm</code></a></td><td data-v-7d0b59ab${_scopeId2}>LFI → API Hub</td><td data-v-7d0b59ab${_scopeId2}>Complete the interaction and redirect back to the TPP successfully</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><a href="/tech/lfi-api-hub/v2.2-rc1/api-hub/headless-heimdall/open-api/auth-interactionId-doFail" class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--post" data-v-7d0b59ab${_scopeId2}>POST</span><code data-v-7d0b59ab${_scopeId2}>/auth/{interactionId}/doFail</code></a></td><td data-v-7d0b59ab${_scopeId2}>LFI → API Hub</td><td data-v-7d0b59ab${_scopeId2}>Complete the interaction and redirect back to the TPP with a failure</td></tr></tbody></table>`);
+                } else {
+                  return [
+                    createVNode("table", null, [
+                      createVNode("thead", null, [
+                        createVNode("tr", null, [
+                          createVNode("th", null, "Endpoint"),
+                          createVNode("th", null, "Direction"),
+                          createVNode("th", null, "Purpose")
+                        ])
+                      ]),
+                      createVNode("tbody", null, [
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("a", {
+                              href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/headless-heimdall/open-api/auth",
+                              class: "endpoint"
+                            }, [
+                              createVNode("span", { class: "http-method http-method--get" }, "GET"),
+                              createVNode("code", null, "/auth")
+                            ])
+                          ]),
+                          createVNode("td", null, "LFI → API Hub"),
+                          createVNode("td", null, "Initiate the authorization interaction")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("a", {
+                              href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/consent-manager/open-api/consents-consentId",
+                              class: "endpoint"
+                            }, [
+                              createVNode("span", { class: "http-method http-method--get" }, "GET"),
+                              createVNode("code", null, "/consents/{consentId}")
+                            ])
+                          ]),
+                          createVNode("td", null, "LFI → API Hub"),
+                          createVNode("td", null, "Retrieve the full consent details")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("a", {
+                              href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/consent-manager/open-api/patch-consents-consentId",
+                              class: "endpoint"
+                            }, [
+                              createVNode("span", { class: "http-method http-method--patch" }, "PATCH"),
+                              createVNode("code", null, "/consents/{consentId}")
+                            ])
+                          ]),
+                          createVNode("td", null, "LFI → API Hub"),
+                          createVNode("td", null, "Update consent status, customer identifiers, and the selected debtor account")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("a", {
+                              href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/headless-heimdall/open-api/auth-interactionId-doConfirm",
+                              class: "endpoint"
+                            }, [
+                              createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                              createVNode("code", null, "/auth/{interactionId}/doConfirm")
+                            ])
+                          ]),
+                          createVNode("td", null, "LFI → API Hub"),
+                          createVNode("td", null, "Complete the interaction and redirect back to the TPP successfully")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("a", {
+                              href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/headless-heimdall/open-api/auth-interactionId-doFail",
+                              class: "endpoint"
+                            }, [
+                              createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                              createVNode("code", null, "/auth/{interactionId}/doFail")
+                            ])
+                          ]),
+                          createVNode("td", null, "LFI → API Hub"),
+                          createVNode("td", null, "Complete the interaction and redirect back to the TPP with a failure")
+                        ])
+                      ])
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` Full details are in the <a href="/tech/lfi-api-hub/v2.2-rc1/consent-journey/api-guide" data-v-7d0b59ab${_scopeId2}>Consent Journey API Guide</a>. `);
+                } else {
+                  return [
+                    createTextVNode(" Full details are in the "),
+                    createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/consent-journey/api-guide" }, "Consent Journey API Guide"),
+                    createTextVNode(". ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h3 class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>After the consent is authorized</h3>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` When the TPP submits a payment instruction to the API Hub&#39;s resource server, the API Hub validates the access token, checks the consent is <code data-v-7d0b59ab${_scopeId2}>Authorised</code>, checks the amount matches the consent-time fixed amount, checks that the period containing the <code data-v-7d0b59ab${_scopeId2}>PaymentExecutionDate</code> has not already been consumed, and validates the request against the OpenAPI schema — all before forwarding to your Ozone Connect <a href="/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/open-api/payments" class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--post" data-v-7d0b59ab${_scopeId2}>POST</span><code data-v-7d0b59ab${_scopeId2}>/payments</code></a> endpoint covered in the next section. `);
+                } else {
+                  return [
+                    createTextVNode(" When the TPP submits a payment instruction to the API Hub's resource server, the API Hub validates the access token, checks the consent is "),
+                    createVNode("code", null, "Authorised"),
+                    createTextVNode(", checks the amount matches the consent-time fixed amount, checks that the period containing the "),
+                    createVNode("code", null, "PaymentExecutionDate"),
+                    createTextVNode(" has not already been consumed, and validates the request against the OpenAPI schema — all before forwarding to your Ozone Connect "),
+                    createVNode("a", {
+                      href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/open-api/payments",
+                      class: "endpoint"
+                    }, [
+                      createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                      createVNode("code", null, "/payments")
+                    ]),
+                    createTextVNode(" endpoint covered in the next section. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` The Hub does <strong data-v-7d0b59ab${_scopeId2}>not</strong> decrypt or inspect the PII. Re-validating the PII and matching it against the consent at payment time is the LFI&#39;s responsibility, covered below. `);
+                } else {
+                  return [
+                    createTextVNode(" The Hub does "),
+                    createVNode("strong", null, "not"),
+                    createTextVNode(" decrypt or inspect the PII. Re-validating the PII and matching it against the consent at payment time is the LFI's responsibility, covered below. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+          } else {
+            return [
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" After consent creation passes validation, the TPP redirects the customer to your LFI's "),
+                  createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/onboarding/environment-specific/auth-endpoint" }, "authorization endpoint"),
+                  createTextVNode(" and your LFI runs the standard consent journey: authenticate the customer, retrieve the consent, present the debtor account selection screen subject to the rules in "),
+                  createVNode("a", { href: "./requirements#authorization-account-selection" }, "Authorization — Account Selection"),
+                  createTextVNode(", patch the selected debtor account and customer identifier onto the consent, and redirect back to the Hub. ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode("The endpoints your LFI implements against the API Hub for this flow are:")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdRefTable, null, {
+                default: withCtx(() => [
+                  createVNode("table", null, [
+                    createVNode("thead", null, [
+                      createVNode("tr", null, [
+                        createVNode("th", null, "Endpoint"),
+                        createVNode("th", null, "Direction"),
+                        createVNode("th", null, "Purpose")
+                      ])
+                    ]),
+                    createVNode("tbody", null, [
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("a", {
+                            href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/headless-heimdall/open-api/auth",
+                            class: "endpoint"
+                          }, [
+                            createVNode("span", { class: "http-method http-method--get" }, "GET"),
+                            createVNode("code", null, "/auth")
+                          ])
+                        ]),
+                        createVNode("td", null, "LFI → API Hub"),
+                        createVNode("td", null, "Initiate the authorization interaction")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("a", {
+                            href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/consent-manager/open-api/consents-consentId",
+                            class: "endpoint"
+                          }, [
+                            createVNode("span", { class: "http-method http-method--get" }, "GET"),
+                            createVNode("code", null, "/consents/{consentId}")
+                          ])
+                        ]),
+                        createVNode("td", null, "LFI → API Hub"),
+                        createVNode("td", null, "Retrieve the full consent details")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("a", {
+                            href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/consent-manager/open-api/patch-consents-consentId",
+                            class: "endpoint"
+                          }, [
+                            createVNode("span", { class: "http-method http-method--patch" }, "PATCH"),
+                            createVNode("code", null, "/consents/{consentId}")
+                          ])
+                        ]),
+                        createVNode("td", null, "LFI → API Hub"),
+                        createVNode("td", null, "Update consent status, customer identifiers, and the selected debtor account")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("a", {
+                            href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/headless-heimdall/open-api/auth-interactionId-doConfirm",
+                            class: "endpoint"
+                          }, [
+                            createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                            createVNode("code", null, "/auth/{interactionId}/doConfirm")
+                          ])
+                        ]),
+                        createVNode("td", null, "LFI → API Hub"),
+                        createVNode("td", null, "Complete the interaction and redirect back to the TPP successfully")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("a", {
+                            href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/headless-heimdall/open-api/auth-interactionId-doFail",
+                            class: "endpoint"
+                          }, [
+                            createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                            createVNode("code", null, "/auth/{interactionId}/doFail")
+                          ])
+                        ]),
+                        createVNode("td", null, "LFI → API Hub"),
+                        createVNode("td", null, "Complete the interaction and redirect back to the TPP with a failure")
+                      ])
+                    ])
+                  ])
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" Full details are in the "),
+                  createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/consent-journey/api-guide" }, "Consent Journey API Guide"),
+                  createTextVNode(". ")
+                ]),
+                _: 1
+              }),
+              createVNode("h3", { class: "ed-doc__subhead" }, "After the consent is authorized"),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" When the TPP submits a payment instruction to the API Hub's resource server, the API Hub validates the access token, checks the consent is "),
+                  createVNode("code", null, "Authorised"),
+                  createTextVNode(", checks the amount matches the consent-time fixed amount, checks that the period containing the "),
+                  createVNode("code", null, "PaymentExecutionDate"),
+                  createTextVNode(" has not already been consumed, and validates the request against the OpenAPI schema — all before forwarding to your Ozone Connect "),
+                  createVNode("a", {
+                    href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/open-api/payments",
+                    class: "endpoint"
+                  }, [
+                    createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                    createVNode("code", null, "/payments")
+                  ]),
+                  createTextVNode(" endpoint covered in the next section. ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" The Hub does "),
+                  createVNode("strong", null, "not"),
+                  createTextVNode(" decrypt or inspect the PII. Re-validating the PII and matching it against the consent at payment time is the LFI's responsibility, covered below. ")
+                ]),
+                _: 1
+              })
+            ];
+          }
+        }),
+        _: 1
+      }, _parent));
+      _push(ssrRenderComponent(_component_EdSectionBand, {
+        id: "post-payments",
+        num: "05",
+        color: "var(--at-teal-deep)",
+        eyebrow: "Endpoint",
+        title: "POST /payments",
+        tone: "cream"
+      }, {
+        default: withCtx((_, _push2, _parent2, _scopeId) => {
+          if (_push2) {
+            _push2(`<div class="ed-doc__endpoint" data-v-7d0b59ab${_scopeId}><span class="http-badge http-post" data-v-7d0b59ab${_scopeId}>POST</span><code class="ed-doc__endpoint-path" data-v-7d0b59ab${_scopeId}>/payments</code></div>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<span class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--post" data-v-7d0b59ab${_scopeId2}>POST</span><code data-v-7d0b59ab${_scopeId2}>/payments</code></span> is the central endpoint your LFI implements for payment execution. The API Hub calls it each time the TPP submits a periodic payment under an authorized Fixed Periodic Schedule consent. Your LFI MUST decrypt and validate the PII, match it against the consent, run the synchronous validations listed in <a href="./requirements#post-payments-payment-execution" data-v-7d0b59ab${_scopeId2}>POST <code data-v-7d0b59ab${_scopeId2}>/payments</code> Requirements</a>, create the payment record, and return <code data-v-7d0b59ab${_scopeId2}>201</code> with the assigned <code data-v-7d0b59ab${_scopeId2}>PaymentId</code>. `);
+                } else {
+                  return [
+                    createVNode("span", { class: "endpoint" }, [
+                      createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                      createVNode("code", null, "/payments")
+                    ]),
+                    createTextVNode(" is the central endpoint your LFI implements for payment execution. The API Hub calls it each time the TPP submits a periodic payment under an authorized Fixed Periodic Schedule consent. Your LFI MUST decrypt and validate the PII, match it against the consent, run the synchronous validations listed in "),
+                    createVNode("a", { href: "./requirements#post-payments-payment-execution" }, [
+                      createTextVNode("POST "),
+                      createVNode("code", null, "/payments"),
+                      createTextVNode(" Requirements")
+                    ]),
+                    createTextVNode(", create the payment record, and return "),
+                    createVNode("code", null, "201"),
+                    createTextVNode(" with the assigned "),
+                    createVNode("code", null, "PaymentId"),
+                    createTextVNode(". ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` Screening, rail submission, and status propagation happen <strong data-v-7d0b59ab${_scopeId2}>after</strong> the <code data-v-7d0b59ab${_scopeId2}>201</code> response — see <a href="#after-201" data-v-7d0b59ab${_scopeId2}>After returning 201</a>. `);
+                } else {
+                  return [
+                    createTextVNode(" Screening, rail submission, and status propagation happen "),
+                    createVNode("strong", null, "after"),
+                    createTextVNode(" the "),
+                    createVNode("code", null, "201"),
+                    createTextVNode(" response — see "),
+                    createVNode("a", { href: "#after-201" }, "After returning 201"),
+                    createTextVNode(". ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h3 id="common-request-headers" class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Common request headers</h3>`);
+            _push2(ssrRenderComponent(_component_EdRefTable, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<table data-v-7d0b59ab${_scopeId2}><thead data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><th data-v-7d0b59ab${_scopeId2}>Header</th><th data-v-7d0b59ab${_scopeId2}>Required</th><th data-v-7d0b59ab${_scopeId2}>Description</th></tr></thead><tbody data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-provider-id</code></td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>Identifier for your LFI registered in the Hub</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-aspsp-id</code></td><td data-v-7d0b59ab${_scopeId2}>Yes <em data-v-7d0b59ab${_scopeId2}>(deprecated)</em></td><td data-v-7d0b59ab${_scopeId2}>Deprecated alias for <code data-v-7d0b59ab${_scopeId2}>o3-provider-id</code>. Will be removed in a future version — use <code data-v-7d0b59ab${_scopeId2}>o3-provider-id</code></td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-caller-org-id</code></td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>Organisation ID of the TPP making the underlying request</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-caller-client-id</code></td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>OIDC client ID of the TPP application</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-caller-software-statement-id</code></td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>Software statement ID of the TPP application</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-api-uri</code></td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>The parameterised URL of the API being called by the TPP</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-api-operation</code></td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>The HTTP method of the operation carried out by the TPP (<code data-v-7d0b59ab${_scopeId2}>POST</code>)</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-ozone-interaction-id</code></td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>Hub-generated interaction ID. Equals <code data-v-7d0b59ab${_scopeId2}>o3-caller-interaction-id</code> if the TPP provided one</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-consent-id</code></td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>The <code data-v-7d0b59ab${_scopeId2}>consentId</code> for which this call is being made — the lookup key for the stored consent context</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-psu-identifier</code></td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>Base64-encoded customer identifier JSON object — the opaque LFI-issued reference patched onto the consent at authorization</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-caller-interaction-id</code></td><td data-v-7d0b59ab${_scopeId2}>No</td><td data-v-7d0b59ab${_scopeId2}>Interaction ID passed in by the TPP, if present</td></tr></tbody></table>`);
+                } else {
+                  return [
+                    createVNode("table", null, [
+                      createVNode("thead", null, [
+                        createVNode("tr", null, [
+                          createVNode("th", null, "Header"),
+                          createVNode("th", null, "Required"),
+                          createVNode("th", null, "Description")
+                        ])
+                      ]),
+                      createVNode("tbody", null, [
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-provider-id")
+                          ]),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, "Identifier for your LFI registered in the Hub")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-aspsp-id")
+                          ]),
+                          createVNode("td", null, [
+                            createTextVNode("Yes "),
+                            createVNode("em", null, "(deprecated)")
+                          ]),
+                          createVNode("td", null, [
+                            createTextVNode("Deprecated alias for "),
+                            createVNode("code", null, "o3-provider-id"),
+                            createTextVNode(". Will be removed in a future version — use "),
+                            createVNode("code", null, "o3-provider-id")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-caller-org-id")
+                          ]),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, "Organisation ID of the TPP making the underlying request")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-caller-client-id")
+                          ]),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, "OIDC client ID of the TPP application")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-caller-software-statement-id")
+                          ]),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, "Software statement ID of the TPP application")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-api-uri")
+                          ]),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, "The parameterised URL of the API being called by the TPP")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-api-operation")
+                          ]),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, [
+                            createTextVNode("The HTTP method of the operation carried out by the TPP ("),
+                            createVNode("code", null, "POST"),
+                            createTextVNode(")")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-ozone-interaction-id")
+                          ]),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, [
+                            createTextVNode("Hub-generated interaction ID. Equals "),
+                            createVNode("code", null, "o3-caller-interaction-id"),
+                            createTextVNode(" if the TPP provided one")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-consent-id")
+                          ]),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, [
+                            createTextVNode("The "),
+                            createVNode("code", null, "consentId"),
+                            createTextVNode(" for which this call is being made — the lookup key for the stored consent context")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-psu-identifier")
+                          ]),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, "Base64-encoded customer identifier JSON object — the opaque LFI-issued reference patched onto the consent at authorization")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-caller-interaction-id")
+                          ]),
+                          createVNode("td", null, "No"),
+                          createVNode("td", null, "Interaction ID passed in by the TPP, if present")
+                        ])
+                      ])
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdNote, {
+              type: "warning",
+              title: "Customer-set FAPI headers are inside the body, not the HTTP request"
+            }, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<p data-v-7d0b59ab${_scopeId2}> The headers the TPP set on its original call to the API Hub — including <code data-v-7d0b59ab${_scopeId2}>x-fapi-interaction-id</code>, <code data-v-7d0b59ab${_scopeId2}>x-fapi-auth-date</code>, <code data-v-7d0b59ab${_scopeId2}>x-customer-user-agent</code>, and <code data-v-7d0b59ab${_scopeId2}>x-idempotency-key</code> — are forwarded to your LFI <strong data-v-7d0b59ab${_scopeId2}>inside the request body</strong> as <code data-v-7d0b59ab${_scopeId2}>requestHeaders</code>, not on the HTTP headers of the API Hub → LFI call. Scheduled payment types (Fixed Defined Schedule, Fixed Periodic Schedule, Variable Defined Schedule, Variable Periodic Schedule) do <strong data-v-7d0b59ab${_scopeId2}>not</strong> require <code data-v-7d0b59ab${_scopeId2}>x-fapi-customer-ip-address</code> — the customer is not present when the TPP triggers a scheduled payment. </p>`);
+                } else {
+                  return [
+                    createVNode("p", null, [
+                      createTextVNode(" The headers the TPP set on its original call to the API Hub — including "),
+                      createVNode("code", null, "x-fapi-interaction-id"),
+                      createTextVNode(", "),
+                      createVNode("code", null, "x-fapi-auth-date"),
+                      createTextVNode(", "),
+                      createVNode("code", null, "x-customer-user-agent"),
+                      createTextVNode(", and "),
+                      createVNode("code", null, "x-idempotency-key"),
+                      createTextVNode(" — are forwarded to your LFI "),
+                      createVNode("strong", null, "inside the request body"),
+                      createTextVNode(" as "),
+                      createVNode("code", null, "requestHeaders"),
+                      createTextVNode(", not on the HTTP headers of the API Hub → LFI call. Scheduled payment types (Fixed Defined Schedule, Fixed Periodic Schedule, Variable Defined Schedule, Variable Periodic Schedule) do "),
+                      createVNode("strong", null, "not"),
+                      createTextVNode(" require "),
+                      createVNode("code", null, "x-fapi-customer-ip-address"),
+                      createTextVNode(" — the customer is not present when the TPP triggers a scheduled payment. ")
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h3 class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Request body</h3>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<code data-v-7d0b59ab${_scopeId2}>Content-Type: application/json</code>. The Hub sends a plain JSON payload (not a JWS) containing the payment details, the headers the TPP supplied, and the TPP&#39;s directory record. `);
+                } else {
+                  return [
+                    createVNode("code", null, "Content-Type: application/json"),
+                    createTextVNode(". The Hub sends a plain JSON payload (not a JWS) containing the payment details, the headers the TPP supplied, and the TPP's directory record. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h4 class="ed-doc__subhead-minor" data-v-7d0b59ab${_scopeId}>Top-level fields</h4>`);
+            _push2(ssrRenderComponent(_component_EdRefTable, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<table data-v-7d0b59ab${_scopeId2}><thead data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><th data-v-7d0b59ab${_scopeId2}>Field</th><th data-v-7d0b59ab${_scopeId2}>Type</th><th data-v-7d0b59ab${_scopeId2}>Required</th><th data-v-7d0b59ab${_scopeId2}>Description</th></tr></thead><tbody data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>requestUrl</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>No</td><td data-v-7d0b59ab${_scopeId2}>The TPP-facing resource URL the TPP called, e.g. <code data-v-7d0b59ab${_scopeId2}>https://rs1.[LFICode].apihub.openfinance.ae/open-finance/payment/v2.2/payments</code></td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>paymentType</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>The payment type. MUST be <code data-v-7d0b59ab${_scopeId2}>cbuae-payment</code> for domestic Fixed Periodic Schedule</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>request.Data</code></td><td data-v-7d0b59ab${_scopeId2}>object</td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>The payment payload — see <code data-v-7d0b59ab${_scopeId2}>request.Data</code> below</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>requestHeaders</code></td><td data-v-7d0b59ab${_scopeId2}>object</td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>The complete set of HTTP headers the TPP sent to the API Hub. The TPP&#39;s FAPI headers live here</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>tpp</code></td><td data-v-7d0b59ab${_scopeId2}>object</td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>The TPP&#39;s directory record (<code data-v-7d0b59ab${_scopeId2}>clientId</code>, <code data-v-7d0b59ab${_scopeId2}>orgId</code>, <code data-v-7d0b59ab${_scopeId2}>tppId</code>, <code data-v-7d0b59ab${_scopeId2}>tppName</code>, <code data-v-7d0b59ab${_scopeId2}>softwareStatementId</code>, <code data-v-7d0b59ab${_scopeId2}>decodedSsa</code>, optional <code data-v-7d0b59ab${_scopeId2}>directoryRecord</code>)</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>supplementaryInformation</code></td><td data-v-7d0b59ab${_scopeId2}>object</td><td data-v-7d0b59ab${_scopeId2}>No</td><td data-v-7d0b59ab${_scopeId2}>Free-form pass-through context. The LFI MUST safely ignore unrecognised properties</td></tr></tbody></table>`);
+                } else {
+                  return [
+                    createVNode("table", null, [
+                      createVNode("thead", null, [
+                        createVNode("tr", null, [
+                          createVNode("th", null, "Field"),
+                          createVNode("th", null, "Type"),
+                          createVNode("th", null, "Required"),
+                          createVNode("th", null, "Description")
+                        ])
+                      ]),
+                      createVNode("tbody", null, [
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "requestUrl")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "No"),
+                          createVNode("td", null, [
+                            createTextVNode("The TPP-facing resource URL the TPP called, e.g. "),
+                            createVNode("code", null, "https://rs1.[LFICode].apihub.openfinance.ae/open-finance/payment/v2.2/payments")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "paymentType")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, [
+                            createTextVNode("The payment type. MUST be "),
+                            createVNode("code", null, "cbuae-payment"),
+                            createTextVNode(" for domestic Fixed Periodic Schedule")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "request.Data")
+                          ]),
+                          createVNode("td", null, "object"),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, [
+                            createTextVNode("The payment payload — see "),
+                            createVNode("code", null, "request.Data"),
+                            createTextVNode(" below")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "requestHeaders")
+                          ]),
+                          createVNode("td", null, "object"),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, "The complete set of HTTP headers the TPP sent to the API Hub. The TPP's FAPI headers live here")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "tpp")
+                          ]),
+                          createVNode("td", null, "object"),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, [
+                            createTextVNode("The TPP's directory record ("),
+                            createVNode("code", null, "clientId"),
+                            createTextVNode(", "),
+                            createVNode("code", null, "orgId"),
+                            createTextVNode(", "),
+                            createVNode("code", null, "tppId"),
+                            createTextVNode(", "),
+                            createVNode("code", null, "tppName"),
+                            createTextVNode(", "),
+                            createVNode("code", null, "softwareStatementId"),
+                            createTextVNode(", "),
+                            createVNode("code", null, "decodedSsa"),
+                            createTextVNode(", optional "),
+                            createVNode("code", null, "directoryRecord"),
+                            createTextVNode(")")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "supplementaryInformation")
+                          ]),
+                          createVNode("td", null, "object"),
+                          createVNode("td", null, "No"),
+                          createVNode("td", null, "Free-form pass-through context. The LFI MUST safely ignore unrecognised properties")
+                        ])
+                      ])
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h4 class="ed-doc__subhead-minor" data-v-7d0b59ab${_scopeId}>request.Data</h4>`);
+            _push2(ssrRenderComponent(_component_EdRefTable, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<table data-v-7d0b59ab${_scopeId2}><thead data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><th data-v-7d0b59ab${_scopeId2}>Field</th><th data-v-7d0b59ab${_scopeId2}>Type</th><th data-v-7d0b59ab${_scopeId2}>Required</th><th data-v-7d0b59ab${_scopeId2}>Description</th></tr></thead><tbody data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>ConsentId</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>The consent the payment is being executed under. MUST equal the <code data-v-7d0b59ab${_scopeId2}>o3-consent-id</code> header</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>Instruction.Amount.Amount</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>Decimal amount with two fraction digits. MUST equal the consent-time fixed amount — the Hub enforces this before forwarding</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>Instruction.Amount.Currency</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>ISO-4217 currency code. MUST be <code data-v-7d0b59ab${_scopeId2}>AED</code> for domestic payments</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>PaymentPurposeCode</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>3-letter ISO 20022 purpose code, e.g. <code data-v-7d0b59ab${_scopeId2}>LOAN</code></td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>PersonalIdentifiableInformation</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>No</td><td data-v-7d0b59ab${_scopeId2}>Encrypted PII payload as a JWE compact string. Required for the Creditor at payment time — see <a href="#read-pii" data-v-7d0b59ab${_scopeId2}>Reading the PII at payment time</a></td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>DebtorReference</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>No</td><td data-v-7d0b59ab${_scopeId2}>Reference shown on the debtor&#39;s statement</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>CreditorReference</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>No</td><td data-v-7d0b59ab${_scopeId2}>Reference shown on the creditor&#39;s statement</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>OpenFinanceBilling.Type</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>Billing type, e.g. <code data-v-7d0b59ab${_scopeId2}>Collection</code>, <code data-v-7d0b59ab${_scopeId2}>PushP2P</code>, <code data-v-7d0b59ab${_scopeId2}>PullP2P</code>, <code data-v-7d0b59ab${_scopeId2}>Me2Me</code></td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>OpenFinanceBilling.MerchantId</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>No</td><td data-v-7d0b59ab${_scopeId2}>Optional merchant identifier</td></tr></tbody></table>`);
+                } else {
+                  return [
+                    createVNode("table", null, [
+                      createVNode("thead", null, [
+                        createVNode("tr", null, [
+                          createVNode("th", null, "Field"),
+                          createVNode("th", null, "Type"),
+                          createVNode("th", null, "Required"),
+                          createVNode("th", null, "Description")
+                        ])
+                      ]),
+                      createVNode("tbody", null, [
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "ConsentId")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, [
+                            createTextVNode("The consent the payment is being executed under. MUST equal the "),
+                            createVNode("code", null, "o3-consent-id"),
+                            createTextVNode(" header")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "Instruction.Amount.Amount")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, "Decimal amount with two fraction digits. MUST equal the consent-time fixed amount — the Hub enforces this before forwarding")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "Instruction.Amount.Currency")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, [
+                            createTextVNode("ISO-4217 currency code. MUST be "),
+                            createVNode("code", null, "AED"),
+                            createTextVNode(" for domestic payments")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "PaymentPurposeCode")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, [
+                            createTextVNode("3-letter ISO 20022 purpose code, e.g. "),
+                            createVNode("code", null, "LOAN")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "PersonalIdentifiableInformation")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "No"),
+                          createVNode("td", null, [
+                            createTextVNode("Encrypted PII payload as a JWE compact string. Required for the Creditor at payment time — see "),
+                            createVNode("a", { href: "#read-pii" }, "Reading the PII at payment time")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "DebtorReference")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "No"),
+                          createVNode("td", null, "Reference shown on the debtor's statement")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "CreditorReference")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "No"),
+                          createVNode("td", null, "Reference shown on the creditor's statement")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "OpenFinanceBilling.Type")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, [
+                            createTextVNode("Billing type, e.g. "),
+                            createVNode("code", null, "Collection"),
+                            createTextVNode(", "),
+                            createVNode("code", null, "PushP2P"),
+                            createTextVNode(", "),
+                            createVNode("code", null, "PullP2P"),
+                            createTextVNode(", "),
+                            createVNode("code", null, "Me2Me")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "OpenFinanceBilling.MerchantId")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "No"),
+                          createVNode("td", null, "Optional merchant identifier")
+                        ])
+                      ])
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` For the full schema — including <code data-v-7d0b59ab${_scopeId2}>tpp</code> and <code data-v-7d0b59ab${_scopeId2}>decodedSsa</code> field-by-field — see the <a href="/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/open-api/payments" data-v-7d0b59ab${_scopeId2}>POST <code data-v-7d0b59ab${_scopeId2}>/payments</code> API Reference</a>. `);
+                } else {
+                  return [
+                    createTextVNode(" For the full schema — including "),
+                    createVNode("code", null, "tpp"),
+                    createTextVNode(" and "),
+                    createVNode("code", null, "decodedSsa"),
+                    createTextVNode(" field-by-field — see the "),
+                    createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/open-api/payments" }, [
+                      createTextVNode("POST "),
+                      createVNode("code", null, "/payments"),
+                      createTextVNode(" API Reference")
+                    ]),
+                    createTextVNode(". ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h4 class="ed-doc__subhead-minor" data-v-7d0b59ab${_scopeId}>Request example</h4>`);
+            _push2(ssrRenderComponent(_component_EdCode, {
+              code: paymentRequestJson,
+              lang: "json",
+              filename: "POST /payments request"
+            }, null, _parent2, _scopeId));
+            _push2(`<h3 id="read-pii" class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Reading the PII at payment time</h3>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`The payment-time PII follows a different shape from the consent-time PII:`);
+                } else {
+                  return [
+                    createTextVNode("The payment-time PII follows a different shape from the consent-time PII:")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdBullets, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<li data-v-7d0b59ab${_scopeId2}><strong data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>Initiation.Creditor</code> is a single object</strong>, not an array — the consent fixed exactly one creditor at consent time</li><li data-v-7d0b59ab${_scopeId2}><strong data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>DebtorAccount</code> is absent</strong> — the debtor was selected and pinned during consent authorisation</li><li data-v-7d0b59ab${_scopeId2}>The schema to validate against is <code data-v-7d0b59ab${_scopeId2}>AEBankServiceInitiation.AEDomesticPaymentPIIProperties</code> in <code data-v-7d0b59ab${_scopeId2}>uae-ozone-connect-bank-service-initiation-openapi.yaml</code> — <strong data-v-7d0b59ab${_scopeId2}>not</strong> the consent-time schema</li>`);
+                } else {
+                  return [
+                    createVNode("li", null, [
+                      createVNode("strong", null, [
+                        createVNode("code", null, "Initiation.Creditor"),
+                        createTextVNode(" is a single object")
+                      ]),
+                      createTextVNode(", not an array — the consent fixed exactly one creditor at consent time")
+                    ]),
+                    createVNode("li", null, [
+                      createVNode("strong", null, [
+                        createVNode("code", null, "DebtorAccount"),
+                        createTextVNode(" is absent")
+                      ]),
+                      createTextVNode(" — the debtor was selected and pinned during consent authorisation")
+                    ]),
+                    createVNode("li", null, [
+                      createTextVNode("The schema to validate against is "),
+                      createVNode("code", null, "AEBankServiceInitiation.AEDomesticPaymentPIIProperties"),
+                      createTextVNode(" in "),
+                      createVNode("code", null, "uae-ozone-connect-bank-service-initiation-openapi.yaml"),
+                      createTextVNode(" — "),
+                      createVNode("strong", null, "not"),
+                      createTextVNode(" the consent-time schema")
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` The decrypt + decode flow is identical to consent time — read the <code data-v-7d0b59ab${_scopeId2}>kid</code>, decrypt with the matching Enc1 private key, decode the JWS payload. Re-use the helper from <a href="#consent-validation" data-v-7d0b59ab${_scopeId2}>Decrypting and validating the PII</a>; only swap the schema: `);
+                } else {
+                  return [
+                    createTextVNode(" The decrypt + decode flow is identical to consent time — read the "),
+                    createVNode("code", null, "kid"),
+                    createTextVNode(", decrypt with the matching Enc1 private key, decode the JWS payload. Re-use the helper from "),
+                    createVNode("a", { href: "#consent-validation" }, "Decrypting and validating the PII"),
+                    createTextVNode("; only swap the schema: ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdCodeGroup, { tabs: piiPaymentTabs }, null, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` If decryption fails, reject with <code data-v-7d0b59ab${_scopeId2}>400 JWE.DecryptionError</code>. If schema validation fails (missing required field, wrong type, additional property), reject with <code data-v-7d0b59ab${_scopeId2}>400 Body.InvalidFormat</code>. `);
+                } else {
+                  return [
+                    createTextVNode(" If decryption fails, reject with "),
+                    createVNode("code", null, "400 JWE.DecryptionError"),
+                    createTextVNode(". If schema validation fails (missing required field, wrong type, additional property), reject with "),
+                    createVNode("code", null, "400 Body.InvalidFormat"),
+                    createTextVNode(". ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h3 id="match-pii" class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Matching the PII against the consent</h3>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` Per <a href="./requirements#post-payments-payment-execution" data-v-7d0b59ab${_scopeId2}>POST <code data-v-7d0b59ab${_scopeId2}>/payments</code> Requirements</a> rule 2, the submitted creditor at payment time MUST exactly match the single creditor entry that was on the consent at consent time. Mismatch → <code data-v-7d0b59ab${_scopeId2}>400 Consent.FailsControlParameters</code>. `);
+                } else {
+                  return [
+                    createTextVNode(" Per "),
+                    createVNode("a", { href: "./requirements#post-payments-payment-execution" }, [
+                      createTextVNode("POST "),
+                      createVNode("code", null, "/payments"),
+                      createTextVNode(" Requirements")
+                    ]),
+                    createTextVNode(" rule 2, the submitted creditor at payment time MUST exactly match the single creditor entry that was on the consent at consent time. Mismatch → "),
+                    createVNode("code", null, "400 Consent.FailsControlParameters"),
+                    createTextVNode(". ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` The link between the payment and the consent is the <code data-v-7d0b59ab${_scopeId2}>o3-consent-id</code> request header (also surfaced as <code data-v-7d0b59ab${_scopeId2}>request.Data.ConsentId</code> in the body). Two implementation patterns are valid; pick whichever matches your LFI&#39;s persistence model: `);
+                } else {
+                  return [
+                    createTextVNode(" The link between the payment and the consent is the "),
+                    createVNode("code", null, "o3-consent-id"),
+                    createTextVNode(" request header (also surfaced as "),
+                    createVNode("code", null, "request.Data.ConsentId"),
+                    createTextVNode(" in the body). Two implementation patterns are valid; pick whichever matches your LFI's persistence model: ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h4 class="ed-doc__subhead-minor" data-v-7d0b59ab${_scopeId}>Pattern A — LFI persisted the decrypted creditor at consent time</h4>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` The most common pattern. At consent validation, after you decrypted and validated the consent-time PII, you persisted the single creditor entry keyed by <code data-v-7d0b59ab${_scopeId2}>consentId</code>. At payment time you fetch it and deep-compare against the payment-time creditor. `);
+                } else {
+                  return [
+                    createTextVNode(" The most common pattern. At consent validation, after you decrypted and validated the consent-time PII, you persisted the single creditor entry keyed by "),
+                    createVNode("code", null, "consentId"),
+                    createTextVNode(". At payment time you fetch it and deep-compare against the payment-time creditor. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdCodeGroup, { tabs: matchPiiTabs }, null, _parent2, _scopeId));
+            _push2(`<h4 class="ed-doc__subhead-minor" data-v-7d0b59ab${_scopeId}>Pattern B — LFI did not persist the consent-time PII</h4>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` If your LFI did not persist the decrypted PII at consent time, fetch the consent from the API Hub via <a href="/tech/lfi-api-hub/v2.2-rc1/api-hub/consent-manager/open-api/consents-consentId" class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--get" data-v-7d0b59ab${_scopeId2}>GET</span><code data-v-7d0b59ab${_scopeId2}>/consents/{consentId}</code></a>, decrypt the consent&#39;s <code data-v-7d0b59ab${_scopeId2}>PersonalIdentifiableInformation</code> field, and run the same <code data-v-7d0b59ab${_scopeId2}>isExactMatch</code> comparison against <code data-v-7d0b59ab${_scopeId2}>Initiation.Creditor[0]</code> (the consent-time creditor is an array of one). `);
+                } else {
+                  return [
+                    createTextVNode(" If your LFI did not persist the decrypted PII at consent time, fetch the consent from the API Hub via "),
+                    createVNode("a", {
+                      href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/consent-manager/open-api/consents-consentId",
+                      class: "endpoint"
+                    }, [
+                      createVNode("span", { class: "http-method http-method--get" }, "GET"),
+                      createVNode("code", null, "/consents/{consentId}")
+                    ]),
+                    createTextVNode(", decrypt the consent's "),
+                    createVNode("code", null, "PersonalIdentifiableInformation"),
+                    createTextVNode(" field, and run the same "),
+                    createVNode("code", null, "isExactMatch"),
+                    createTextVNode(" comparison against "),
+                    createVNode("code", null, "Initiation.Creditor[0]"),
+                    createTextVNode(" (the consent-time creditor is an array of one). ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` Pattern B trades a stored creditor for a network round-trip and a second decryption on every payment. Choose Pattern A unless persistence is not an option for your LFI. `);
+                } else {
+                  return [
+                    createTextVNode(" Pattern B trades a stored creditor for a network round-trip and a second decryption on every payment. Choose Pattern A unless persistence is not an option for your LFI. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h3 class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Response</h3>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<code data-v-7d0b59ab${_scopeId2}>Content-Type: application/json</code>. Return <code data-v-7d0b59ab${_scopeId2}>201</code> on successful payment record creation. `);
+                } else {
+                  return [
+                    createVNode("code", null, "Content-Type: application/json"),
+                    createTextVNode(". Return "),
+                    createVNode("code", null, "201"),
+                    createTextVNode(" on successful payment record creation. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdRefTable, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<table data-v-7d0b59ab${_scopeId2}><thead data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><th data-v-7d0b59ab${_scopeId2}>Field</th><th data-v-7d0b59ab${_scopeId2}>Type</th><th data-v-7d0b59ab${_scopeId2}>Required</th><th data-v-7d0b59ab${_scopeId2}>Description</th></tr></thead><tbody data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>data.id</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>The LFI-assigned <code data-v-7d0b59ab${_scopeId2}>PaymentId</code>. MUST be unique within your payment system, MUST NOT be reassigned, and MUST resolve to the same payment for the full 1-year <span class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--get" data-v-7d0b59ab${_scopeId2}>GET</span><code data-v-7d0b59ab${_scopeId2}>/payments/{paymentId}</code></span> sustain window</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>data.consentId</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>No</td><td data-v-7d0b59ab${_scopeId2}>The consent under which the payment was created</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>data.paymentTransactionId</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>No</td><td data-v-7d0b59ab${_scopeId2}>End-to-end identifier from the rail. Omit until AANI/UAEFTS has assigned one — do not return an empty string</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>data.status</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>One of <code data-v-7d0b59ab${_scopeId2}>Pending</code>, <code data-v-7d0b59ab${_scopeId2}>AcceptedSettlementCompleted</code>, <code data-v-7d0b59ab${_scopeId2}>AcceptedCreditSettlementCompleted</code>, <code data-v-7d0b59ab${_scopeId2}>AcceptedWithoutPosting</code>, <code data-v-7d0b59ab${_scopeId2}>Rejected</code>, <code data-v-7d0b59ab${_scopeId2}>Received</code></td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>data.statusUpdateDateTime</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>ISO 8601 timestamp of the last status update</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>data.creationDateTime</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>ISO 8601 timestamp the payment record was created</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>data.instruction.Amount.amount</code> / <code data-v-7d0b59ab${_scopeId2}>Amount.currency</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>No</td><td data-v-7d0b59ab${_scopeId2}>The payment amount and currency</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>data.paymentPurposeCode</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>The purpose code from the request</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>data.openFinanceBilling.Type</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>The billing type from the request</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>meta</code></td><td data-v-7d0b59ab${_scopeId2}>object</td><td data-v-7d0b59ab${_scopeId2}>No</td><td data-v-7d0b59ab${_scopeId2}>Free-form metadata</td></tr></tbody></table>`);
+                } else {
+                  return [
+                    createVNode("table", null, [
+                      createVNode("thead", null, [
+                        createVNode("tr", null, [
+                          createVNode("th", null, "Field"),
+                          createVNode("th", null, "Type"),
+                          createVNode("th", null, "Required"),
+                          createVNode("th", null, "Description")
+                        ])
+                      ]),
+                      createVNode("tbody", null, [
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "data.id")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, [
+                            createTextVNode("The LFI-assigned "),
+                            createVNode("code", null, "PaymentId"),
+                            createTextVNode(". MUST be unique within your payment system, MUST NOT be reassigned, and MUST resolve to the same payment for the full 1-year "),
+                            createVNode("span", { class: "endpoint" }, [
+                              createVNode("span", { class: "http-method http-method--get" }, "GET"),
+                              createVNode("code", null, "/payments/{paymentId}")
+                            ]),
+                            createTextVNode(" sustain window")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "data.consentId")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "No"),
+                          createVNode("td", null, "The consent under which the payment was created")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "data.paymentTransactionId")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "No"),
+                          createVNode("td", null, "End-to-end identifier from the rail. Omit until AANI/UAEFTS has assigned one — do not return an empty string")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "data.status")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, [
+                            createTextVNode("One of "),
+                            createVNode("code", null, "Pending"),
+                            createTextVNode(", "),
+                            createVNode("code", null, "AcceptedSettlementCompleted"),
+                            createTextVNode(", "),
+                            createVNode("code", null, "AcceptedCreditSettlementCompleted"),
+                            createTextVNode(", "),
+                            createVNode("code", null, "AcceptedWithoutPosting"),
+                            createTextVNode(", "),
+                            createVNode("code", null, "Rejected"),
+                            createTextVNode(", "),
+                            createVNode("code", null, "Received")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "data.statusUpdateDateTime")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, "ISO 8601 timestamp of the last status update")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "data.creationDateTime")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, "ISO 8601 timestamp the payment record was created")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "data.instruction.Amount.amount"),
+                            createTextVNode(" / "),
+                            createVNode("code", null, "Amount.currency")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "No"),
+                          createVNode("td", null, "The payment amount and currency")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "data.paymentPurposeCode")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, "The purpose code from the request")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "data.openFinanceBilling.Type")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, "The billing type from the request")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "meta")
+                          ]),
+                          createVNode("td", null, "object"),
+                          createVNode("td", null, "No"),
+                          createVNode("td", null, "Free-form metadata")
+                        ])
+                      ])
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h4 class="ed-doc__subhead-minor" data-v-7d0b59ab${_scopeId}>Example — successful initiation</h4>`);
+            _push2(ssrRenderComponent(_component_EdCode, {
+              code: paymentSuccessJson,
+              lang: "json",
+              filename: "POST /payments 201 response"
+            }, null, _parent2, _scopeId));
+            _push2(`<h3 class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Error responses</h3>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` Only return an error when the request is invalid or a server condition prevents you from responding. All error bodies MUST include <code data-v-7d0b59ab${_scopeId2}>errorCode</code> and <code data-v-7d0b59ab${_scopeId2}>errorMessage</code>. The <code data-v-7d0b59ab${_scopeId2}>errorCode</code> values are drawn from the <a href="/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/open-api/payments" data-v-7d0b59ab${_scopeId2}>POST <code data-v-7d0b59ab${_scopeId2}>/payments</code> OpenAPI schema</a><code data-v-7d0b59ab${_scopeId2}>Error400</code> / <code data-v-7d0b59ab${_scopeId2}>Error403</code> enums. `);
+                } else {
+                  return [
+                    createTextVNode(" Only return an error when the request is invalid or a server condition prevents you from responding. All error bodies MUST include "),
+                    createVNode("code", null, "errorCode"),
+                    createTextVNode(" and "),
+                    createVNode("code", null, "errorMessage"),
+                    createTextVNode(". The "),
+                    createVNode("code", null, "errorCode"),
+                    createTextVNode(" values are drawn from the "),
+                    createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/open-api/payments" }, [
+                      createTextVNode("POST "),
+                      createVNode("code", null, "/payments"),
+                      createTextVNode(" OpenAPI schema")
+                    ]),
+                    createVNode("code", null, "Error400"),
+                    createTextVNode(" / "),
+                    createVNode("code", null, "Error403"),
+                    createTextVNode(" enums. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h4 class="ed-doc__subhead-minor" data-v-7d0b59ab${_scopeId}><code data-v-7d0b59ab${_scopeId}>400</code> — Bad request</h4>`);
+            _push2(ssrRenderComponent(_component_EdRefTable, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<table data-v-7d0b59ab${_scopeId2}><thead data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><th data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>errorCode</code></th><th data-v-7d0b59ab${_scopeId2}>When to use</th></tr></thead><tbody data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>Body.InvalidFormat</code></td><td data-v-7d0b59ab${_scopeId2}>Body is absent, not valid JSON, or fails schema validation</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>Resource.InvalidFormat</code></td><td data-v-7d0b59ab${_scopeId2}>A field is present but not syntactically valid</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>Consent.Invalid</code></td><td data-v-7d0b59ab${_scopeId2}>The consent referenced by <code data-v-7d0b59ab${_scopeId2}>o3-consent-id</code> is unknown to the LFI or has been revoked</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>Consent.FailsControlParameters</code></td><td data-v-7d0b59ab${_scopeId2}>The payment-time creditor does not match the consent-time creditor</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>Consent.BusinessRuleViolation</code></td><td data-v-7d0b59ab${_scopeId2}>An LFI-side business rule blocks the payment</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>JWE.DecryptionError</code></td><td data-v-7d0b59ab${_scopeId2}>PII JWE cannot be decrypted with any registered Enc1 key</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>JWE.InvalidHeader</code></td><td data-v-7d0b59ab${_scopeId2}>PII JWE header is malformed</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>JWS.InvalidSignature</code> / <code data-v-7d0b59ab${_scopeId2}>JWS.Malformed</code> / <code data-v-7d0b59ab${_scopeId2}>JWS.InvalidClaim</code> / <code data-v-7d0b59ab${_scopeId2}>JWS.InvalidHeader</code></td><td data-v-7d0b59ab${_scopeId2}>PII inner JWS fails verification (only relevant if you have opted in to verifying the TPP&#39;s signature)</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>GenericRecoverableError</code></td><td data-v-7d0b59ab${_scopeId2}>Recoverable validation error not covered above — Hub may retry</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>GenericError</code></td><td data-v-7d0b59ab${_scopeId2}>Unrecoverable validation error not covered above (including insufficient funds — see requirements rule 3)</td></tr></tbody></table>`);
+                } else {
+                  return [
+                    createVNode("table", null, [
+                      createVNode("thead", null, [
+                        createVNode("tr", null, [
+                          createVNode("th", null, [
+                            createVNode("code", null, "errorCode")
+                          ]),
+                          createVNode("th", null, "When to use")
+                        ])
+                      ]),
+                      createVNode("tbody", null, [
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "Body.InvalidFormat")
+                          ]),
+                          createVNode("td", null, "Body is absent, not valid JSON, or fails schema validation")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "Resource.InvalidFormat")
+                          ]),
+                          createVNode("td", null, "A field is present but not syntactically valid")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "Consent.Invalid")
+                          ]),
+                          createVNode("td", null, [
+                            createTextVNode("The consent referenced by "),
+                            createVNode("code", null, "o3-consent-id"),
+                            createTextVNode(" is unknown to the LFI or has been revoked")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "Consent.FailsControlParameters")
+                          ]),
+                          createVNode("td", null, "The payment-time creditor does not match the consent-time creditor")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "Consent.BusinessRuleViolation")
+                          ]),
+                          createVNode("td", null, "An LFI-side business rule blocks the payment")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "JWE.DecryptionError")
+                          ]),
+                          createVNode("td", null, "PII JWE cannot be decrypted with any registered Enc1 key")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "JWE.InvalidHeader")
+                          ]),
+                          createVNode("td", null, "PII JWE header is malformed")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "JWS.InvalidSignature"),
+                            createTextVNode(" / "),
+                            createVNode("code", null, "JWS.Malformed"),
+                            createTextVNode(" / "),
+                            createVNode("code", null, "JWS.InvalidClaim"),
+                            createTextVNode(" / "),
+                            createVNode("code", null, "JWS.InvalidHeader")
+                          ]),
+                          createVNode("td", null, "PII inner JWS fails verification (only relevant if you have opted in to verifying the TPP's signature)")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "GenericRecoverableError")
+                          ]),
+                          createVNode("td", null, "Recoverable validation error not covered above — Hub may retry")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "GenericError")
+                          ]),
+                          createVNode("td", null, "Unrecoverable validation error not covered above (including insufficient funds — see requirements rule 3)")
+                        ])
+                      ])
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h4 class="ed-doc__subhead-minor" data-v-7d0b59ab${_scopeId}><code data-v-7d0b59ab${_scopeId}>403</code> — Forbidden</h4>`);
+            _push2(ssrRenderComponent(_component_EdRefTable, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<table data-v-7d0b59ab${_scopeId2}><thead data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><th data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>errorCode</code></th><th data-v-7d0b59ab${_scopeId2}>When to use</th></tr></thead><tbody data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>AccessToken.InvalidScope</code></td><td data-v-7d0b59ab${_scopeId2}>The Hub&#39;s token does not include the required scope</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>Consent.AccountTemporarilyBlocked</code></td><td data-v-7d0b59ab${_scopeId2}>Debtor account is <code data-v-7d0b59ab${_scopeId2}>Inactive</code>, <code data-v-7d0b59ab${_scopeId2}>Dormant</code>, or <code data-v-7d0b59ab${_scopeId2}>Suspended</code></td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>Consent.PermanentAccountAccessFailure</code></td><td data-v-7d0b59ab${_scopeId2}>Debtor account is <code data-v-7d0b59ab${_scopeId2}>Closed</code>, <code data-v-7d0b59ab${_scopeId2}>Deceased</code>, or <code data-v-7d0b59ab${_scopeId2}>Unclaimed</code></td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>Consent.TransientAccountAccessFailure</code></td><td data-v-7d0b59ab${_scopeId2}>Debtor account temporarily inaccessible — Hub may retry after a delay</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>GenericRecoverableError</code> / <code data-v-7d0b59ab${_scopeId2}>GenericError</code></td><td data-v-7d0b59ab${_scopeId2}>Other forbidden conditions</td></tr></tbody></table>`);
+                } else {
+                  return [
+                    createVNode("table", null, [
+                      createVNode("thead", null, [
+                        createVNode("tr", null, [
+                          createVNode("th", null, [
+                            createVNode("code", null, "errorCode")
+                          ]),
+                          createVNode("th", null, "When to use")
+                        ])
+                      ]),
+                      createVNode("tbody", null, [
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "AccessToken.InvalidScope")
+                          ]),
+                          createVNode("td", null, "The Hub's token does not include the required scope")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "Consent.AccountTemporarilyBlocked")
+                          ]),
+                          createVNode("td", null, [
+                            createTextVNode("Debtor account is "),
+                            createVNode("code", null, "Inactive"),
+                            createTextVNode(", "),
+                            createVNode("code", null, "Dormant"),
+                            createTextVNode(", or "),
+                            createVNode("code", null, "Suspended")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "Consent.PermanentAccountAccessFailure")
+                          ]),
+                          createVNode("td", null, [
+                            createTextVNode("Debtor account is "),
+                            createVNode("code", null, "Closed"),
+                            createTextVNode(", "),
+                            createVNode("code", null, "Deceased"),
+                            createTextVNode(", or "),
+                            createVNode("code", null, "Unclaimed")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "Consent.TransientAccountAccessFailure")
+                          ]),
+                          createVNode("td", null, "Debtor account temporarily inaccessible — Hub may retry after a delay")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "GenericRecoverableError"),
+                            createTextVNode(" / "),
+                            createVNode("code", null, "GenericError")
+                          ]),
+                          createVNode("td", null, "Other forbidden conditions")
+                        ])
+                      ])
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h4 class="ed-doc__subhead-minor" data-v-7d0b59ab${_scopeId}><code data-v-7d0b59ab${_scopeId}>500</code></h4>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<code data-v-7d0b59ab${_scopeId2}>500</code> for transient/unrecoverable server errors. Use <code data-v-7d0b59ab${_scopeId2}>GenericRecoverableError</code> if the Hub may retry, <code data-v-7d0b59ab${_scopeId2}>GenericError</code> otherwise. `);
+                } else {
+                  return [
+                    createVNode("code", null, "500"),
+                    createTextVNode(" for transient/unrecoverable server errors. Use "),
+                    createVNode("code", null, "GenericRecoverableError"),
+                    createTextVNode(" if the Hub may retry, "),
+                    createVNode("code", null, "GenericError"),
+                    createTextVNode(" otherwise. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h4 class="ed-doc__subhead-minor" data-v-7d0b59ab${_scopeId}>Example error response</h4>`);
+            _push2(ssrRenderComponent(_component_EdCode, {
+              code: paymentErrorJson,
+              lang: "json",
+              filename: "error response"
+            }, null, _parent2, _scopeId));
+          } else {
+            return [
+              createVNode("div", { class: "ed-doc__endpoint" }, [
+                createVNode("span", { class: "http-badge http-post" }, "POST"),
+                createVNode("code", { class: "ed-doc__endpoint-path" }, "/payments")
+              ]),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createVNode("span", { class: "endpoint" }, [
+                    createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                    createVNode("code", null, "/payments")
+                  ]),
+                  createTextVNode(" is the central endpoint your LFI implements for payment execution. The API Hub calls it each time the TPP submits a periodic payment under an authorized Fixed Periodic Schedule consent. Your LFI MUST decrypt and validate the PII, match it against the consent, run the synchronous validations listed in "),
+                  createVNode("a", { href: "./requirements#post-payments-payment-execution" }, [
+                    createTextVNode("POST "),
+                    createVNode("code", null, "/payments"),
+                    createTextVNode(" Requirements")
+                  ]),
+                  createTextVNode(", create the payment record, and return "),
+                  createVNode("code", null, "201"),
+                  createTextVNode(" with the assigned "),
+                  createVNode("code", null, "PaymentId"),
+                  createTextVNode(". ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" Screening, rail submission, and status propagation happen "),
+                  createVNode("strong", null, "after"),
+                  createTextVNode(" the "),
+                  createVNode("code", null, "201"),
+                  createTextVNode(" response — see "),
+                  createVNode("a", { href: "#after-201" }, "After returning 201"),
+                  createTextVNode(". ")
+                ]),
+                _: 1
+              }),
+              createVNode("h3", {
+                id: "common-request-headers",
+                class: "ed-doc__subhead"
+              }, "Common request headers"),
+              createVNode(_component_EdRefTable, null, {
+                default: withCtx(() => [
+                  createVNode("table", null, [
+                    createVNode("thead", null, [
+                      createVNode("tr", null, [
+                        createVNode("th", null, "Header"),
+                        createVNode("th", null, "Required"),
+                        createVNode("th", null, "Description")
+                      ])
+                    ]),
+                    createVNode("tbody", null, [
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-provider-id")
+                        ]),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, "Identifier for your LFI registered in the Hub")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-aspsp-id")
+                        ]),
+                        createVNode("td", null, [
+                          createTextVNode("Yes "),
+                          createVNode("em", null, "(deprecated)")
+                        ]),
+                        createVNode("td", null, [
+                          createTextVNode("Deprecated alias for "),
+                          createVNode("code", null, "o3-provider-id"),
+                          createTextVNode(". Will be removed in a future version — use "),
+                          createVNode("code", null, "o3-provider-id")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-caller-org-id")
+                        ]),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, "Organisation ID of the TPP making the underlying request")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-caller-client-id")
+                        ]),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, "OIDC client ID of the TPP application")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-caller-software-statement-id")
+                        ]),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, "Software statement ID of the TPP application")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-api-uri")
+                        ]),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, "The parameterised URL of the API being called by the TPP")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-api-operation")
+                        ]),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, [
+                          createTextVNode("The HTTP method of the operation carried out by the TPP ("),
+                          createVNode("code", null, "POST"),
+                          createTextVNode(")")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-ozone-interaction-id")
+                        ]),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, [
+                          createTextVNode("Hub-generated interaction ID. Equals "),
+                          createVNode("code", null, "o3-caller-interaction-id"),
+                          createTextVNode(" if the TPP provided one")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-consent-id")
+                        ]),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, [
+                          createTextVNode("The "),
+                          createVNode("code", null, "consentId"),
+                          createTextVNode(" for which this call is being made — the lookup key for the stored consent context")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-psu-identifier")
+                        ]),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, "Base64-encoded customer identifier JSON object — the opaque LFI-issued reference patched onto the consent at authorization")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-caller-interaction-id")
+                        ]),
+                        createVNode("td", null, "No"),
+                        createVNode("td", null, "Interaction ID passed in by the TPP, if present")
+                      ])
+                    ])
+                  ])
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdNote, {
+                type: "warning",
+                title: "Customer-set FAPI headers are inside the body, not the HTTP request"
+              }, {
+                default: withCtx(() => [
+                  createVNode("p", null, [
+                    createTextVNode(" The headers the TPP set on its original call to the API Hub — including "),
+                    createVNode("code", null, "x-fapi-interaction-id"),
+                    createTextVNode(", "),
+                    createVNode("code", null, "x-fapi-auth-date"),
+                    createTextVNode(", "),
+                    createVNode("code", null, "x-customer-user-agent"),
+                    createTextVNode(", and "),
+                    createVNode("code", null, "x-idempotency-key"),
+                    createTextVNode(" — are forwarded to your LFI "),
+                    createVNode("strong", null, "inside the request body"),
+                    createTextVNode(" as "),
+                    createVNode("code", null, "requestHeaders"),
+                    createTextVNode(", not on the HTTP headers of the API Hub → LFI call. Scheduled payment types (Fixed Defined Schedule, Fixed Periodic Schedule, Variable Defined Schedule, Variable Periodic Schedule) do "),
+                    createVNode("strong", null, "not"),
+                    createTextVNode(" require "),
+                    createVNode("code", null, "x-fapi-customer-ip-address"),
+                    createTextVNode(" — the customer is not present when the TPP triggers a scheduled payment. ")
+                  ])
+                ]),
+                _: 1
+              }),
+              createVNode("h3", { class: "ed-doc__subhead" }, "Request body"),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createVNode("code", null, "Content-Type: application/json"),
+                  createTextVNode(". The Hub sends a plain JSON payload (not a JWS) containing the payment details, the headers the TPP supplied, and the TPP's directory record. ")
+                ]),
+                _: 1
+              }),
+              createVNode("h4", { class: "ed-doc__subhead-minor" }, "Top-level fields"),
+              createVNode(_component_EdRefTable, null, {
+                default: withCtx(() => [
+                  createVNode("table", null, [
+                    createVNode("thead", null, [
+                      createVNode("tr", null, [
+                        createVNode("th", null, "Field"),
+                        createVNode("th", null, "Type"),
+                        createVNode("th", null, "Required"),
+                        createVNode("th", null, "Description")
+                      ])
+                    ]),
+                    createVNode("tbody", null, [
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "requestUrl")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "No"),
+                        createVNode("td", null, [
+                          createTextVNode("The TPP-facing resource URL the TPP called, e.g. "),
+                          createVNode("code", null, "https://rs1.[LFICode].apihub.openfinance.ae/open-finance/payment/v2.2/payments")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "paymentType")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, [
+                          createTextVNode("The payment type. MUST be "),
+                          createVNode("code", null, "cbuae-payment"),
+                          createTextVNode(" for domestic Fixed Periodic Schedule")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "request.Data")
+                        ]),
+                        createVNode("td", null, "object"),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, [
+                          createTextVNode("The payment payload — see "),
+                          createVNode("code", null, "request.Data"),
+                          createTextVNode(" below")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "requestHeaders")
+                        ]),
+                        createVNode("td", null, "object"),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, "The complete set of HTTP headers the TPP sent to the API Hub. The TPP's FAPI headers live here")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "tpp")
+                        ]),
+                        createVNode("td", null, "object"),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, [
+                          createTextVNode("The TPP's directory record ("),
+                          createVNode("code", null, "clientId"),
+                          createTextVNode(", "),
+                          createVNode("code", null, "orgId"),
+                          createTextVNode(", "),
+                          createVNode("code", null, "tppId"),
+                          createTextVNode(", "),
+                          createVNode("code", null, "tppName"),
+                          createTextVNode(", "),
+                          createVNode("code", null, "softwareStatementId"),
+                          createTextVNode(", "),
+                          createVNode("code", null, "decodedSsa"),
+                          createTextVNode(", optional "),
+                          createVNode("code", null, "directoryRecord"),
+                          createTextVNode(")")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "supplementaryInformation")
+                        ]),
+                        createVNode("td", null, "object"),
+                        createVNode("td", null, "No"),
+                        createVNode("td", null, "Free-form pass-through context. The LFI MUST safely ignore unrecognised properties")
+                      ])
+                    ])
+                  ])
+                ]),
+                _: 1
+              }),
+              createVNode("h4", { class: "ed-doc__subhead-minor" }, "request.Data"),
+              createVNode(_component_EdRefTable, null, {
+                default: withCtx(() => [
+                  createVNode("table", null, [
+                    createVNode("thead", null, [
+                      createVNode("tr", null, [
+                        createVNode("th", null, "Field"),
+                        createVNode("th", null, "Type"),
+                        createVNode("th", null, "Required"),
+                        createVNode("th", null, "Description")
+                      ])
+                    ]),
+                    createVNode("tbody", null, [
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "ConsentId")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, [
+                          createTextVNode("The consent the payment is being executed under. MUST equal the "),
+                          createVNode("code", null, "o3-consent-id"),
+                          createTextVNode(" header")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "Instruction.Amount.Amount")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, "Decimal amount with two fraction digits. MUST equal the consent-time fixed amount — the Hub enforces this before forwarding")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "Instruction.Amount.Currency")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, [
+                          createTextVNode("ISO-4217 currency code. MUST be "),
+                          createVNode("code", null, "AED"),
+                          createTextVNode(" for domestic payments")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "PaymentPurposeCode")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, [
+                          createTextVNode("3-letter ISO 20022 purpose code, e.g. "),
+                          createVNode("code", null, "LOAN")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "PersonalIdentifiableInformation")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "No"),
+                        createVNode("td", null, [
+                          createTextVNode("Encrypted PII payload as a JWE compact string. Required for the Creditor at payment time — see "),
+                          createVNode("a", { href: "#read-pii" }, "Reading the PII at payment time")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "DebtorReference")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "No"),
+                        createVNode("td", null, "Reference shown on the debtor's statement")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "CreditorReference")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "No"),
+                        createVNode("td", null, "Reference shown on the creditor's statement")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "OpenFinanceBilling.Type")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, [
+                          createTextVNode("Billing type, e.g. "),
+                          createVNode("code", null, "Collection"),
+                          createTextVNode(", "),
+                          createVNode("code", null, "PushP2P"),
+                          createTextVNode(", "),
+                          createVNode("code", null, "PullP2P"),
+                          createTextVNode(", "),
+                          createVNode("code", null, "Me2Me")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "OpenFinanceBilling.MerchantId")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "No"),
+                        createVNode("td", null, "Optional merchant identifier")
+                      ])
+                    ])
+                  ])
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" For the full schema — including "),
+                  createVNode("code", null, "tpp"),
+                  createTextVNode(" and "),
+                  createVNode("code", null, "decodedSsa"),
+                  createTextVNode(" field-by-field — see the "),
+                  createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/open-api/payments" }, [
+                    createTextVNode("POST "),
+                    createVNode("code", null, "/payments"),
+                    createTextVNode(" API Reference")
+                  ]),
+                  createTextVNode(". ")
+                ]),
+                _: 1
+              }),
+              createVNode("h4", { class: "ed-doc__subhead-minor" }, "Request example"),
+              createVNode(_component_EdCode, {
+                code: paymentRequestJson,
+                lang: "json",
+                filename: "POST /payments request"
+              }),
+              createVNode("h3", {
+                id: "read-pii",
+                class: "ed-doc__subhead"
+              }, "Reading the PII at payment time"),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode("The payment-time PII follows a different shape from the consent-time PII:")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdBullets, null, {
+                default: withCtx(() => [
+                  createVNode("li", null, [
+                    createVNode("strong", null, [
+                      createVNode("code", null, "Initiation.Creditor"),
+                      createTextVNode(" is a single object")
+                    ]),
+                    createTextVNode(", not an array — the consent fixed exactly one creditor at consent time")
+                  ]),
+                  createVNode("li", null, [
+                    createVNode("strong", null, [
+                      createVNode("code", null, "DebtorAccount"),
+                      createTextVNode(" is absent")
+                    ]),
+                    createTextVNode(" — the debtor was selected and pinned during consent authorisation")
+                  ]),
+                  createVNode("li", null, [
+                    createTextVNode("The schema to validate against is "),
+                    createVNode("code", null, "AEBankServiceInitiation.AEDomesticPaymentPIIProperties"),
+                    createTextVNode(" in "),
+                    createVNode("code", null, "uae-ozone-connect-bank-service-initiation-openapi.yaml"),
+                    createTextVNode(" — "),
+                    createVNode("strong", null, "not"),
+                    createTextVNode(" the consent-time schema")
+                  ])
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" The decrypt + decode flow is identical to consent time — read the "),
+                  createVNode("code", null, "kid"),
+                  createTextVNode(", decrypt with the matching Enc1 private key, decode the JWS payload. Re-use the helper from "),
+                  createVNode("a", { href: "#consent-validation" }, "Decrypting and validating the PII"),
+                  createTextVNode("; only swap the schema: ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdCodeGroup, { tabs: piiPaymentTabs }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" If decryption fails, reject with "),
+                  createVNode("code", null, "400 JWE.DecryptionError"),
+                  createTextVNode(". If schema validation fails (missing required field, wrong type, additional property), reject with "),
+                  createVNode("code", null, "400 Body.InvalidFormat"),
+                  createTextVNode(". ")
+                ]),
+                _: 1
+              }),
+              createVNode("h3", {
+                id: "match-pii",
+                class: "ed-doc__subhead"
+              }, "Matching the PII against the consent"),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" Per "),
+                  createVNode("a", { href: "./requirements#post-payments-payment-execution" }, [
+                    createTextVNode("POST "),
+                    createVNode("code", null, "/payments"),
+                    createTextVNode(" Requirements")
+                  ]),
+                  createTextVNode(" rule 2, the submitted creditor at payment time MUST exactly match the single creditor entry that was on the consent at consent time. Mismatch → "),
+                  createVNode("code", null, "400 Consent.FailsControlParameters"),
+                  createTextVNode(". ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" The link between the payment and the consent is the "),
+                  createVNode("code", null, "o3-consent-id"),
+                  createTextVNode(" request header (also surfaced as "),
+                  createVNode("code", null, "request.Data.ConsentId"),
+                  createTextVNode(" in the body). Two implementation patterns are valid; pick whichever matches your LFI's persistence model: ")
+                ]),
+                _: 1
+              }),
+              createVNode("h4", { class: "ed-doc__subhead-minor" }, "Pattern A — LFI persisted the decrypted creditor at consent time"),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" The most common pattern. At consent validation, after you decrypted and validated the consent-time PII, you persisted the single creditor entry keyed by "),
+                  createVNode("code", null, "consentId"),
+                  createTextVNode(". At payment time you fetch it and deep-compare against the payment-time creditor. ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdCodeGroup, { tabs: matchPiiTabs }),
+              createVNode("h4", { class: "ed-doc__subhead-minor" }, "Pattern B — LFI did not persist the consent-time PII"),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" If your LFI did not persist the decrypted PII at consent time, fetch the consent from the API Hub via "),
+                  createVNode("a", {
+                    href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/consent-manager/open-api/consents-consentId",
+                    class: "endpoint"
+                  }, [
+                    createVNode("span", { class: "http-method http-method--get" }, "GET"),
+                    createVNode("code", null, "/consents/{consentId}")
+                  ]),
+                  createTextVNode(", decrypt the consent's "),
+                  createVNode("code", null, "PersonalIdentifiableInformation"),
+                  createTextVNode(" field, and run the same "),
+                  createVNode("code", null, "isExactMatch"),
+                  createTextVNode(" comparison against "),
+                  createVNode("code", null, "Initiation.Creditor[0]"),
+                  createTextVNode(" (the consent-time creditor is an array of one). ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" Pattern B trades a stored creditor for a network round-trip and a second decryption on every payment. Choose Pattern A unless persistence is not an option for your LFI. ")
+                ]),
+                _: 1
+              }),
+              createVNode("h3", { class: "ed-doc__subhead" }, "Response"),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createVNode("code", null, "Content-Type: application/json"),
+                  createTextVNode(". Return "),
+                  createVNode("code", null, "201"),
+                  createTextVNode(" on successful payment record creation. ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdRefTable, null, {
+                default: withCtx(() => [
+                  createVNode("table", null, [
+                    createVNode("thead", null, [
+                      createVNode("tr", null, [
+                        createVNode("th", null, "Field"),
+                        createVNode("th", null, "Type"),
+                        createVNode("th", null, "Required"),
+                        createVNode("th", null, "Description")
+                      ])
+                    ]),
+                    createVNode("tbody", null, [
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "data.id")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, [
+                          createTextVNode("The LFI-assigned "),
+                          createVNode("code", null, "PaymentId"),
+                          createTextVNode(". MUST be unique within your payment system, MUST NOT be reassigned, and MUST resolve to the same payment for the full 1-year "),
+                          createVNode("span", { class: "endpoint" }, [
+                            createVNode("span", { class: "http-method http-method--get" }, "GET"),
+                            createVNode("code", null, "/payments/{paymentId}")
+                          ]),
+                          createTextVNode(" sustain window")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "data.consentId")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "No"),
+                        createVNode("td", null, "The consent under which the payment was created")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "data.paymentTransactionId")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "No"),
+                        createVNode("td", null, "End-to-end identifier from the rail. Omit until AANI/UAEFTS has assigned one — do not return an empty string")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "data.status")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, [
+                          createTextVNode("One of "),
+                          createVNode("code", null, "Pending"),
+                          createTextVNode(", "),
+                          createVNode("code", null, "AcceptedSettlementCompleted"),
+                          createTextVNode(", "),
+                          createVNode("code", null, "AcceptedCreditSettlementCompleted"),
+                          createTextVNode(", "),
+                          createVNode("code", null, "AcceptedWithoutPosting"),
+                          createTextVNode(", "),
+                          createVNode("code", null, "Rejected"),
+                          createTextVNode(", "),
+                          createVNode("code", null, "Received")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "data.statusUpdateDateTime")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, "ISO 8601 timestamp of the last status update")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "data.creationDateTime")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, "ISO 8601 timestamp the payment record was created")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "data.instruction.Amount.amount"),
+                          createTextVNode(" / "),
+                          createVNode("code", null, "Amount.currency")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "No"),
+                        createVNode("td", null, "The payment amount and currency")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "data.paymentPurposeCode")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, "The purpose code from the request")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "data.openFinanceBilling.Type")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, "The billing type from the request")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "meta")
+                        ]),
+                        createVNode("td", null, "object"),
+                        createVNode("td", null, "No"),
+                        createVNode("td", null, "Free-form metadata")
+                      ])
+                    ])
+                  ])
+                ]),
+                _: 1
+              }),
+              createVNode("h4", { class: "ed-doc__subhead-minor" }, "Example — successful initiation"),
+              createVNode(_component_EdCode, {
+                code: paymentSuccessJson,
+                lang: "json",
+                filename: "POST /payments 201 response"
+              }),
+              createVNode("h3", { class: "ed-doc__subhead" }, "Error responses"),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" Only return an error when the request is invalid or a server condition prevents you from responding. All error bodies MUST include "),
+                  createVNode("code", null, "errorCode"),
+                  createTextVNode(" and "),
+                  createVNode("code", null, "errorMessage"),
+                  createTextVNode(". The "),
+                  createVNode("code", null, "errorCode"),
+                  createTextVNode(" values are drawn from the "),
+                  createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/open-api/payments" }, [
+                    createTextVNode("POST "),
+                    createVNode("code", null, "/payments"),
+                    createTextVNode(" OpenAPI schema")
+                  ]),
+                  createVNode("code", null, "Error400"),
+                  createTextVNode(" / "),
+                  createVNode("code", null, "Error403"),
+                  createTextVNode(" enums. ")
+                ]),
+                _: 1
+              }),
+              createVNode("h4", { class: "ed-doc__subhead-minor" }, [
+                createVNode("code", null, "400"),
+                createTextVNode(" — Bad request")
+              ]),
+              createVNode(_component_EdRefTable, null, {
+                default: withCtx(() => [
+                  createVNode("table", null, [
+                    createVNode("thead", null, [
+                      createVNode("tr", null, [
+                        createVNode("th", null, [
+                          createVNode("code", null, "errorCode")
+                        ]),
+                        createVNode("th", null, "When to use")
+                      ])
+                    ]),
+                    createVNode("tbody", null, [
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "Body.InvalidFormat")
+                        ]),
+                        createVNode("td", null, "Body is absent, not valid JSON, or fails schema validation")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "Resource.InvalidFormat")
+                        ]),
+                        createVNode("td", null, "A field is present but not syntactically valid")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "Consent.Invalid")
+                        ]),
+                        createVNode("td", null, [
+                          createTextVNode("The consent referenced by "),
+                          createVNode("code", null, "o3-consent-id"),
+                          createTextVNode(" is unknown to the LFI or has been revoked")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "Consent.FailsControlParameters")
+                        ]),
+                        createVNode("td", null, "The payment-time creditor does not match the consent-time creditor")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "Consent.BusinessRuleViolation")
+                        ]),
+                        createVNode("td", null, "An LFI-side business rule blocks the payment")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "JWE.DecryptionError")
+                        ]),
+                        createVNode("td", null, "PII JWE cannot be decrypted with any registered Enc1 key")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "JWE.InvalidHeader")
+                        ]),
+                        createVNode("td", null, "PII JWE header is malformed")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "JWS.InvalidSignature"),
+                          createTextVNode(" / "),
+                          createVNode("code", null, "JWS.Malformed"),
+                          createTextVNode(" / "),
+                          createVNode("code", null, "JWS.InvalidClaim"),
+                          createTextVNode(" / "),
+                          createVNode("code", null, "JWS.InvalidHeader")
+                        ]),
+                        createVNode("td", null, "PII inner JWS fails verification (only relevant if you have opted in to verifying the TPP's signature)")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "GenericRecoverableError")
+                        ]),
+                        createVNode("td", null, "Recoverable validation error not covered above — Hub may retry")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "GenericError")
+                        ]),
+                        createVNode("td", null, "Unrecoverable validation error not covered above (including insufficient funds — see requirements rule 3)")
+                      ])
+                    ])
+                  ])
+                ]),
+                _: 1
+              }),
+              createVNode("h4", { class: "ed-doc__subhead-minor" }, [
+                createVNode("code", null, "403"),
+                createTextVNode(" — Forbidden")
+              ]),
+              createVNode(_component_EdRefTable, null, {
+                default: withCtx(() => [
+                  createVNode("table", null, [
+                    createVNode("thead", null, [
+                      createVNode("tr", null, [
+                        createVNode("th", null, [
+                          createVNode("code", null, "errorCode")
+                        ]),
+                        createVNode("th", null, "When to use")
+                      ])
+                    ]),
+                    createVNode("tbody", null, [
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "AccessToken.InvalidScope")
+                        ]),
+                        createVNode("td", null, "The Hub's token does not include the required scope")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "Consent.AccountTemporarilyBlocked")
+                        ]),
+                        createVNode("td", null, [
+                          createTextVNode("Debtor account is "),
+                          createVNode("code", null, "Inactive"),
+                          createTextVNode(", "),
+                          createVNode("code", null, "Dormant"),
+                          createTextVNode(", or "),
+                          createVNode("code", null, "Suspended")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "Consent.PermanentAccountAccessFailure")
+                        ]),
+                        createVNode("td", null, [
+                          createTextVNode("Debtor account is "),
+                          createVNode("code", null, "Closed"),
+                          createTextVNode(", "),
+                          createVNode("code", null, "Deceased"),
+                          createTextVNode(", or "),
+                          createVNode("code", null, "Unclaimed")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "Consent.TransientAccountAccessFailure")
+                        ]),
+                        createVNode("td", null, "Debtor account temporarily inaccessible — Hub may retry after a delay")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "GenericRecoverableError"),
+                          createTextVNode(" / "),
+                          createVNode("code", null, "GenericError")
+                        ]),
+                        createVNode("td", null, "Other forbidden conditions")
+                      ])
+                    ])
+                  ])
+                ]),
+                _: 1
+              }),
+              createVNode("h4", { class: "ed-doc__subhead-minor" }, [
+                createVNode("code", null, "500")
+              ]),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createVNode("code", null, "500"),
+                  createTextVNode(" for transient/unrecoverable server errors. Use "),
+                  createVNode("code", null, "GenericRecoverableError"),
+                  createTextVNode(" if the Hub may retry, "),
+                  createVNode("code", null, "GenericError"),
+                  createTextVNode(" otherwise. ")
+                ]),
+                _: 1
+              }),
+              createVNode("h4", { class: "ed-doc__subhead-minor" }, "Example error response"),
+              createVNode(_component_EdCode, {
+                code: paymentErrorJson,
+                lang: "json",
+                filename: "error response"
+              })
+            ];
+          }
+        }),
+        _: 1
+      }, _parent));
+      _push(ssrRenderComponent(_component_EdSectionBand, {
+        id: "after-201",
+        num: "06",
+        color: "var(--at-teal)",
+        eyebrow: "After returning 201",
+        title: "Asynchronous lifecycle is the LFI's responsibility",
+        tone: "surface"
+      }, {
+        default: withCtx((_, _push2, _parent2, _scopeId) => {
+          if (_push2) {
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` The <code data-v-7d0b59ab${_scopeId2}>201</code> returned to the API Hub means the payment record exists at your LFI; it does <strong data-v-7d0b59ab${_scopeId2}>not</strong> mean the payment has settled. The lifecycle from here is asynchronous and is the LFI&#39;s responsibility: `);
+                } else {
+                  return [
+                    createTextVNode(" The "),
+                    createVNode("code", null, "201"),
+                    createTextVNode(" returned to the API Hub means the payment record exists at your LFI; it does "),
+                    createVNode("strong", null, "not"),
+                    createTextVNode(" mean the payment has settled. The lifecycle from here is asynchronous and is the LFI's responsibility: ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdRefTable, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<table data-v-7d0b59ab${_scopeId2}><thead data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><th data-v-7d0b59ab${_scopeId2}>Stage</th><th data-v-7d0b59ab${_scopeId2}>LFI behaviour</th><th data-v-7d0b59ab${_scopeId2}>Reference</th></tr></thead><tbody data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}>Screening</td><td data-v-7d0b59ab${_scopeId2}>Run the LFI&#39;s standard fraud / sanctions / AML controls on the payment record. SHOULD complete within 3 seconds. On a screening failure, immediately PATCH the payment to <code data-v-7d0b59ab${_scopeId2}>Rejected</code> with an <code data-v-7d0b59ab${_scopeId2}>LFI.</code>-namespaced reject reason</td><td data-v-7d0b59ab${_scopeId2}><a href="./requirements#screening-checks" data-v-7d0b59ab${_scopeId2}>Screening Checks</a></td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}>Rail submission</td><td data-v-7d0b59ab${_scopeId2}>Submit to AANI as primary. Fall back to UAEFTS automatically if AANI is unavailable or the receiving bank cannot receive via AANI — no TPP/customer intervention</td><td data-v-7d0b59ab${_scopeId2}><a href="./requirements#rail-submission" data-v-7d0b59ab${_scopeId2}>Rail Submission</a></td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}>Status propagation</td><td data-v-7d0b59ab${_scopeId2}>On every rail status change that maps to an Open Finance status, call <a href="/tech/lfi-api-hub/v2.2-rc1/api-hub/consent-manager/open-api/payment-log" class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--patch" data-v-7d0b59ab${_scopeId2}>PATCH</span><code data-v-7d0b59ab${_scopeId2}>/payment-log/{id}</code></a> on the API Hub Consent Manager. Once AANI/UAEFTS assigns the end-to-end identifier, include it as <code data-v-7d0b59ab${_scopeId2}>paymentTransactionId</code> on the next PATCH</td><td data-v-7d0b59ab${_scopeId2}><a href="/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/domestic-payments/overview/payment-status" data-v-7d0b59ab${_scopeId2}>Payment Status</a></td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}>Rail rejection</td><td data-v-7d0b59ab${_scopeId2}>If the rail rejects the payment, PATCH <code data-v-7d0b59ab${_scopeId2}>paymentResponse.status: Rejected</code> with <code data-v-7d0b59ab${_scopeId2}>RejectReasonCode.Code</code> namespaced as <code data-v-7d0b59ab${_scopeId2}>AANI.</code> or <code data-v-7d0b59ab${_scopeId2}>FTS.</code> and a sanitised <code data-v-7d0b59ab${_scopeId2}>Message</code> for relay to the TPP</td><td data-v-7d0b59ab${_scopeId2}><a href="./requirements#rail-submission" data-v-7d0b59ab${_scopeId2}>Rail Submission</a></td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}>Status retrieval</td><td data-v-7d0b59ab${_scopeId2}>Continue serving <a href="/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/open-api/payments-PaymentId" class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--get" data-v-7d0b59ab${_scopeId2}>GET</span><code data-v-7d0b59ab${_scopeId2}>/payments/{paymentId}</code></a> for at least 1 year, with <code data-v-7d0b59ab${_scopeId2}>Status</code> and <code data-v-7d0b59ab${_scopeId2}>paymentTransactionId</code> consistent with the most recent PATCH</td><td data-v-7d0b59ab${_scopeId2}><a href="#get-payments-paymentid" data-v-7d0b59ab${_scopeId2}>GET <code data-v-7d0b59ab${_scopeId2}>/payments/{paymentId}</code> rules below</a></td></tr></tbody></table>`);
+                } else {
+                  return [
+                    createVNode("table", null, [
+                      createVNode("thead", null, [
+                        createVNode("tr", null, [
+                          createVNode("th", null, "Stage"),
+                          createVNode("th", null, "LFI behaviour"),
+                          createVNode("th", null, "Reference")
+                        ])
+                      ]),
+                      createVNode("tbody", null, [
+                        createVNode("tr", null, [
+                          createVNode("td", null, "Screening"),
+                          createVNode("td", null, [
+                            createTextVNode("Run the LFI's standard fraud / sanctions / AML controls on the payment record. SHOULD complete within 3 seconds. On a screening failure, immediately PATCH the payment to "),
+                            createVNode("code", null, "Rejected"),
+                            createTextVNode(" with an "),
+                            createVNode("code", null, "LFI."),
+                            createTextVNode("-namespaced reject reason")
+                          ]),
+                          createVNode("td", null, [
+                            createVNode("a", { href: "./requirements#screening-checks" }, "Screening Checks")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, "Rail submission"),
+                          createVNode("td", null, "Submit to AANI as primary. Fall back to UAEFTS automatically if AANI is unavailable or the receiving bank cannot receive via AANI — no TPP/customer intervention"),
+                          createVNode("td", null, [
+                            createVNode("a", { href: "./requirements#rail-submission" }, "Rail Submission")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, "Status propagation"),
+                          createVNode("td", null, [
+                            createTextVNode("On every rail status change that maps to an Open Finance status, call "),
+                            createVNode("a", {
+                              href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/consent-manager/open-api/payment-log",
+                              class: "endpoint"
+                            }, [
+                              createVNode("span", { class: "http-method http-method--patch" }, "PATCH"),
+                              createVNode("code", null, "/payment-log/{id}")
+                            ]),
+                            createTextVNode(" on the API Hub Consent Manager. Once AANI/UAEFTS assigns the end-to-end identifier, include it as "),
+                            createVNode("code", null, "paymentTransactionId"),
+                            createTextVNode(" on the next PATCH")
+                          ]),
+                          createVNode("td", null, [
+                            createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/domestic-payments/overview/payment-status" }, "Payment Status")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, "Rail rejection"),
+                          createVNode("td", null, [
+                            createTextVNode("If the rail rejects the payment, PATCH "),
+                            createVNode("code", null, "paymentResponse.status: Rejected"),
+                            createTextVNode(" with "),
+                            createVNode("code", null, "RejectReasonCode.Code"),
+                            createTextVNode(" namespaced as "),
+                            createVNode("code", null, "AANI."),
+                            createTextVNode(" or "),
+                            createVNode("code", null, "FTS."),
+                            createTextVNode(" and a sanitised "),
+                            createVNode("code", null, "Message"),
+                            createTextVNode(" for relay to the TPP")
+                          ]),
+                          createVNode("td", null, [
+                            createVNode("a", { href: "./requirements#rail-submission" }, "Rail Submission")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, "Status retrieval"),
+                          createVNode("td", null, [
+                            createTextVNode("Continue serving "),
+                            createVNode("a", {
+                              href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/open-api/payments-PaymentId",
+                              class: "endpoint"
+                            }, [
+                              createVNode("span", { class: "http-method http-method--get" }, "GET"),
+                              createVNode("code", null, "/payments/{paymentId}")
+                            ]),
+                            createTextVNode(" for at least 1 year, with "),
+                            createVNode("code", null, "Status"),
+                            createTextVNode(" and "),
+                            createVNode("code", null, "paymentTransactionId"),
+                            createTextVNode(" consistent with the most recent PATCH")
+                          ]),
+                          createVNode("td", null, [
+                            createVNode("a", { href: "#get-payments-paymentid" }, [
+                              createTextVNode("GET "),
+                              createVNode("code", null, "/payments/{paymentId}"),
+                              createTextVNode(" rules below")
+                            ])
+                          ])
+                        ])
+                      ])
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` PATCH delivery is durable: retry transient <code data-v-7d0b59ab${_scopeId2}>5xx</code>/timeout failures with exponential backoff; raise <code data-v-7d0b59ab${_scopeId2}>4xx</code> failures for operational investigation rather than retrying. `);
+                } else {
+                  return [
+                    createTextVNode(" PATCH delivery is durable: retry transient "),
+                    createVNode("code", null, "5xx"),
+                    createTextVNode("/timeout failures with exponential backoff; raise "),
+                    createVNode("code", null, "4xx"),
+                    createTextVNode(" failures for operational investigation rather than retrying. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+          } else {
+            return [
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" The "),
+                  createVNode("code", null, "201"),
+                  createTextVNode(" returned to the API Hub means the payment record exists at your LFI; it does "),
+                  createVNode("strong", null, "not"),
+                  createTextVNode(" mean the payment has settled. The lifecycle from here is asynchronous and is the LFI's responsibility: ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdRefTable, null, {
+                default: withCtx(() => [
+                  createVNode("table", null, [
+                    createVNode("thead", null, [
+                      createVNode("tr", null, [
+                        createVNode("th", null, "Stage"),
+                        createVNode("th", null, "LFI behaviour"),
+                        createVNode("th", null, "Reference")
+                      ])
+                    ]),
+                    createVNode("tbody", null, [
+                      createVNode("tr", null, [
+                        createVNode("td", null, "Screening"),
+                        createVNode("td", null, [
+                          createTextVNode("Run the LFI's standard fraud / sanctions / AML controls on the payment record. SHOULD complete within 3 seconds. On a screening failure, immediately PATCH the payment to "),
+                          createVNode("code", null, "Rejected"),
+                          createTextVNode(" with an "),
+                          createVNode("code", null, "LFI."),
+                          createTextVNode("-namespaced reject reason")
+                        ]),
+                        createVNode("td", null, [
+                          createVNode("a", { href: "./requirements#screening-checks" }, "Screening Checks")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, "Rail submission"),
+                        createVNode("td", null, "Submit to AANI as primary. Fall back to UAEFTS automatically if AANI is unavailable or the receiving bank cannot receive via AANI — no TPP/customer intervention"),
+                        createVNode("td", null, [
+                          createVNode("a", { href: "./requirements#rail-submission" }, "Rail Submission")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, "Status propagation"),
+                        createVNode("td", null, [
+                          createTextVNode("On every rail status change that maps to an Open Finance status, call "),
+                          createVNode("a", {
+                            href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/consent-manager/open-api/payment-log",
+                            class: "endpoint"
+                          }, [
+                            createVNode("span", { class: "http-method http-method--patch" }, "PATCH"),
+                            createVNode("code", null, "/payment-log/{id}")
+                          ]),
+                          createTextVNode(" on the API Hub Consent Manager. Once AANI/UAEFTS assigns the end-to-end identifier, include it as "),
+                          createVNode("code", null, "paymentTransactionId"),
+                          createTextVNode(" on the next PATCH")
+                        ]),
+                        createVNode("td", null, [
+                          createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/domestic-payments/overview/payment-status" }, "Payment Status")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, "Rail rejection"),
+                        createVNode("td", null, [
+                          createTextVNode("If the rail rejects the payment, PATCH "),
+                          createVNode("code", null, "paymentResponse.status: Rejected"),
+                          createTextVNode(" with "),
+                          createVNode("code", null, "RejectReasonCode.Code"),
+                          createTextVNode(" namespaced as "),
+                          createVNode("code", null, "AANI."),
+                          createTextVNode(" or "),
+                          createVNode("code", null, "FTS."),
+                          createTextVNode(" and a sanitised "),
+                          createVNode("code", null, "Message"),
+                          createTextVNode(" for relay to the TPP")
+                        ]),
+                        createVNode("td", null, [
+                          createVNode("a", { href: "./requirements#rail-submission" }, "Rail Submission")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, "Status retrieval"),
+                        createVNode("td", null, [
+                          createTextVNode("Continue serving "),
+                          createVNode("a", {
+                            href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/open-api/payments-PaymentId",
+                            class: "endpoint"
+                          }, [
+                            createVNode("span", { class: "http-method http-method--get" }, "GET"),
+                            createVNode("code", null, "/payments/{paymentId}")
+                          ]),
+                          createTextVNode(" for at least 1 year, with "),
+                          createVNode("code", null, "Status"),
+                          createTextVNode(" and "),
+                          createVNode("code", null, "paymentTransactionId"),
+                          createTextVNode(" consistent with the most recent PATCH")
+                        ]),
+                        createVNode("td", null, [
+                          createVNode("a", { href: "#get-payments-paymentid" }, [
+                            createTextVNode("GET "),
+                            createVNode("code", null, "/payments/{paymentId}"),
+                            createTextVNode(" rules below")
+                          ])
+                        ])
+                      ])
+                    ])
+                  ])
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" PATCH delivery is durable: retry transient "),
+                  createVNode("code", null, "5xx"),
+                  createTextVNode("/timeout failures with exponential backoff; raise "),
+                  createVNode("code", null, "4xx"),
+                  createTextVNode(" failures for operational investigation rather than retrying. ")
+                ]),
+                _: 1
+              })
+            ];
+          }
+        }),
+        _: 1
+      }, _parent));
+      _push(ssrRenderComponent(_component_EdSectionBand, {
+        id: "patch-payment-log",
+        num: "07",
+        color: "var(--at-gold)",
+        eyebrow: "Endpoint",
+        title: "PATCH /payment-log/{id}",
+        tone: "cream"
+      }, {
+        default: withCtx((_, _push2, _parent2, _scopeId) => {
+          if (_push2) {
+            _push2(`<div class="ed-doc__endpoint" data-v-7d0b59ab${_scopeId}><span class="http-badge http-patch" data-v-7d0b59ab${_scopeId}>PATCH</span><code class="ed-doc__endpoint-path" data-v-7d0b59ab${_scopeId}>/payment-log/{id}</code></div>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` This endpoint updates the payment status on the API Hub. The Hub uses the update to send asynchronous notifications to TPPs and to maintain accurate state for billing and limit calculations. The LFI calls it for every Open Finance-relevant status transition after the <code data-v-7d0b59ab${_scopeId2}>201</code> has been returned to the Hub on <span class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--post" data-v-7d0b59ab${_scopeId2}>POST</span><code data-v-7d0b59ab${_scopeId2}>/payments</code></span>. `);
+                } else {
+                  return [
+                    createTextVNode(" This endpoint updates the payment status on the API Hub. The Hub uses the update to send asynchronous notifications to TPPs and to maintain accurate state for billing and limit calculations. The LFI calls it for every Open Finance-relevant status transition after the "),
+                    createVNode("code", null, "201"),
+                    createTextVNode(" has been returned to the Hub on "),
+                    createVNode("span", { class: "endpoint" }, [
+                      createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                      createVNode("code", null, "/payments")
+                    ]),
+                    createTextVNode(". ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h3 class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Request headers</h3>`);
+            _push2(ssrRenderComponent(_component_EdRefTable, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<table data-v-7d0b59ab${_scopeId2}><thead data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><th data-v-7d0b59ab${_scopeId2}>Header</th><th data-v-7d0b59ab${_scopeId2}>Required</th><th data-v-7d0b59ab${_scopeId2}>Description</th></tr></thead><tbody data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-provider-id</code></td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>Identifier for your LFI registered in the Hub</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-caller-org-id</code></td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>Organisation ID of the TPP making the underlying request</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-caller-client-id</code></td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>OIDC client ID of the TPP application</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-api-uri</code></td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>The parameterised URL of the API being called by the TPP</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-api-operation</code></td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>The HTTP method of the operation carried out by the TPP (<code data-v-7d0b59ab${_scopeId2}>PATCH</code>)</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-ozone-interaction-id</code></td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>Hub-generated interaction ID. Equals <code data-v-7d0b59ab${_scopeId2}>o3-caller-interaction-id</code> if the TPP provided one</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-consent-id</code></td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>The consent backing this payment</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-psu-identifier</code></td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}>Base64-encoded psuIdentifier JSON object</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>o3-caller-interaction-id</code></td><td data-v-7d0b59ab${_scopeId2}>No</td><td data-v-7d0b59ab${_scopeId2}>Interaction ID passed in by the TPP, if present</td></tr></tbody></table>`);
+                } else {
+                  return [
+                    createVNode("table", null, [
+                      createVNode("thead", null, [
+                        createVNode("tr", null, [
+                          createVNode("th", null, "Header"),
+                          createVNode("th", null, "Required"),
+                          createVNode("th", null, "Description")
+                        ])
+                      ]),
+                      createVNode("tbody", null, [
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-provider-id")
+                          ]),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, "Identifier for your LFI registered in the Hub")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-caller-org-id")
+                          ]),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, "Organisation ID of the TPP making the underlying request")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-caller-client-id")
+                          ]),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, "OIDC client ID of the TPP application")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-api-uri")
+                          ]),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, "The parameterised URL of the API being called by the TPP")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-api-operation")
+                          ]),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, [
+                            createTextVNode("The HTTP method of the operation carried out by the TPP ("),
+                            createVNode("code", null, "PATCH"),
+                            createTextVNode(")")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-ozone-interaction-id")
+                          ]),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, [
+                            createTextVNode("Hub-generated interaction ID. Equals "),
+                            createVNode("code", null, "o3-caller-interaction-id"),
+                            createTextVNode(" if the TPP provided one")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-consent-id")
+                          ]),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, "The consent backing this payment")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-psu-identifier")
+                          ]),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, "Base64-encoded psuIdentifier JSON object")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "o3-caller-interaction-id")
+                          ]),
+                          createVNode("td", null, "No"),
+                          createVNode("td", null, "Interaction ID passed in by the TPP, if present")
+                        ])
+                      ])
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h3 class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Path parameters</h3>`);
+            _push2(ssrRenderComponent(_component_EdRefTable, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<table data-v-7d0b59ab${_scopeId2}><thead data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><th data-v-7d0b59ab${_scopeId2}>Parameter</th><th data-v-7d0b59ab${_scopeId2}>Type</th><th data-v-7d0b59ab${_scopeId2}>Description</th></tr></thead><tbody data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>id</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>Identifier of the payment log entry being updated — the <code data-v-7d0b59ab${_scopeId2}>data.id</code> returned from <span class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--post" data-v-7d0b59ab${_scopeId2}>POST</span><code data-v-7d0b59ab${_scopeId2}>/payments</code></span></td></tr></tbody></table>`);
+                } else {
+                  return [
+                    createVNode("table", null, [
+                      createVNode("thead", null, [
+                        createVNode("tr", null, [
+                          createVNode("th", null, "Parameter"),
+                          createVNode("th", null, "Type"),
+                          createVNode("th", null, "Description")
+                        ])
+                      ]),
+                      createVNode("tbody", null, [
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "id")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, [
+                            createTextVNode("Identifier of the payment log entry being updated — the "),
+                            createVNode("code", null, "data.id"),
+                            createTextVNode(" returned from "),
+                            createVNode("span", { class: "endpoint" }, [
+                              createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                              createVNode("code", null, "/payments")
+                            ])
+                          ])
+                        ])
+                      ])
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h3 class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Request body</h3>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<code data-v-7d0b59ab${_scopeId2}>Content-Type: application/json</code>. The PATCH body uses literal flat-key JSON (the dots are part of the key, not nested objects): `);
+                } else {
+                  return [
+                    createVNode("code", null, "Content-Type: application/json"),
+                    createTextVNode(". The PATCH body uses literal flat-key JSON (the dots are part of the key, not nested objects): ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdRefTable, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<table data-v-7d0b59ab${_scopeId2}><thead data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><th data-v-7d0b59ab${_scopeId2}>Field</th><th data-v-7d0b59ab${_scopeId2}>Type</th><th data-v-7d0b59ab${_scopeId2}>Required</th><th data-v-7d0b59ab${_scopeId2}>Description</th></tr></thead><tbody data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>paymentResponse.status</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>Yes</td><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>Pending</code>, <code data-v-7d0b59ab${_scopeId2}>AcceptedSettlementCompleted</code>, <code data-v-7d0b59ab${_scopeId2}>AcceptedCreditSettlementCompleted</code>, <code data-v-7d0b59ab${_scopeId2}>AcceptedWithoutPosting</code>, or <code data-v-7d0b59ab${_scopeId2}>Rejected</code>. See <a href="/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/domestic-payments/overview/payment-status" data-v-7d0b59ab${_scopeId2}>Payment Status</a></td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>paymentResponse.paymentTransactionId</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>Conditional</td><td data-v-7d0b59ab${_scopeId2}>The end-to-end identifier assigned by the rail (AANI or UAEFTS). Set on the first PATCH that carries it; once set, MUST NOT change</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>paymentResponse.OpenFinanceBilling.numberOfSuccessfulTransactions</code></td><td data-v-7d0b59ab${_scopeId2}>integer</td><td data-v-7d0b59ab${_scopeId2}>No</td><td data-v-7d0b59ab${_scopeId2}>Number of successful transactions (typically <code data-v-7d0b59ab${_scopeId2}>1</code> per periodic payment)</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>paymentResponse.RejectReasonCode[]</code></td><td data-v-7d0b59ab${_scopeId2}>array</td><td data-v-7d0b59ab${_scopeId2}>Conditional</td><td data-v-7d0b59ab${_scopeId2}>Required when <code data-v-7d0b59ab${_scopeId2}>paymentResponse.status</code> is <code data-v-7d0b59ab${_scopeId2}>Rejected</code>. Append new reasons rather than replacing — preserves history</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>paymentResponse.RejectReasonCode[].Code</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>Yes (in array)</td><td data-v-7d0b59ab${_scopeId2}>Namespaced rejection code: <code data-v-7d0b59ab${_scopeId2}>LFI.…</code> for an LFI-side rejection (e.g. screening), <code data-v-7d0b59ab${_scopeId2}>AANI.…</code> or <code data-v-7d0b59ab${_scopeId2}>FTS.…</code> for a rail rejection. Pattern: <code data-v-7d0b59ab${_scopeId2}>^(LFI|AANI|FTS)\\.[A-Za-z0-9]+$</code></td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>paymentResponse.RejectReasonCode[].Message</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>Yes (in array)</td><td data-v-7d0b59ab${_scopeId2}>Sanitised, customer-relayable description. MUST NOT reveal detection logic, sanctions matches, or internal case identifiers</td></tr></tbody></table>`);
+                } else {
+                  return [
+                    createVNode("table", null, [
+                      createVNode("thead", null, [
+                        createVNode("tr", null, [
+                          createVNode("th", null, "Field"),
+                          createVNode("th", null, "Type"),
+                          createVNode("th", null, "Required"),
+                          createVNode("th", null, "Description")
+                        ])
+                      ]),
+                      createVNode("tbody", null, [
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "paymentResponse.status")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "Yes"),
+                          createVNode("td", null, [
+                            createVNode("code", null, "Pending"),
+                            createTextVNode(", "),
+                            createVNode("code", null, "AcceptedSettlementCompleted"),
+                            createTextVNode(", "),
+                            createVNode("code", null, "AcceptedCreditSettlementCompleted"),
+                            createTextVNode(", "),
+                            createVNode("code", null, "AcceptedWithoutPosting"),
+                            createTextVNode(", or "),
+                            createVNode("code", null, "Rejected"),
+                            createTextVNode(". See "),
+                            createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/domestic-payments/overview/payment-status" }, "Payment Status")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "paymentResponse.paymentTransactionId")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "Conditional"),
+                          createVNode("td", null, "The end-to-end identifier assigned by the rail (AANI or UAEFTS). Set on the first PATCH that carries it; once set, MUST NOT change")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "paymentResponse.OpenFinanceBilling.numberOfSuccessfulTransactions")
+                          ]),
+                          createVNode("td", null, "integer"),
+                          createVNode("td", null, "No"),
+                          createVNode("td", null, [
+                            createTextVNode("Number of successful transactions (typically "),
+                            createVNode("code", null, "1"),
+                            createTextVNode(" per periodic payment)")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "paymentResponse.RejectReasonCode[]")
+                          ]),
+                          createVNode("td", null, "array"),
+                          createVNode("td", null, "Conditional"),
+                          createVNode("td", null, [
+                            createTextVNode("Required when "),
+                            createVNode("code", null, "paymentResponse.status"),
+                            createTextVNode(" is "),
+                            createVNode("code", null, "Rejected"),
+                            createTextVNode(". Append new reasons rather than replacing — preserves history")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "paymentResponse.RejectReasonCode[].Code")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "Yes (in array)"),
+                          createVNode("td", null, [
+                            createTextVNode("Namespaced rejection code: "),
+                            createVNode("code", null, "LFI.…"),
+                            createTextVNode(" for an LFI-side rejection (e.g. screening), "),
+                            createVNode("code", null, "AANI.…"),
+                            createTextVNode(" or "),
+                            createVNode("code", null, "FTS.…"),
+                            createTextVNode(" for a rail rejection. Pattern: "),
+                            createVNode("code", null, "^(LFI|AANI|FTS)\\.[A-Za-z0-9]+$")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "paymentResponse.RejectReasonCode[].Message")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, "Yes (in array)"),
+                          createVNode("td", null, "Sanitised, customer-relayable description. MUST NOT reveal detection logic, sanctions matches, or internal case identifiers")
+                        ])
+                      ])
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h4 class="ed-doc__subhead-minor" data-v-7d0b59ab${_scopeId}>Example — successful settlement</h4>`);
+            _push2(ssrRenderComponent(_component_EdCode, {
+              code: patchSettleJson,
+              lang: "json",
+              filename: "PATCH /payment-log/{id} — settled"
+            }, null, _parent2, _scopeId));
+            _push2(`<h4 class="ed-doc__subhead-minor" data-v-7d0b59ab${_scopeId}>Example — rail rejection</h4>`);
+            _push2(ssrRenderComponent(_component_EdCode, {
+              code: patchRailRejectJson,
+              lang: "json",
+              filename: "PATCH /payment-log/{id} — rail rejection"
+            }, null, _parent2, _scopeId));
+            _push2(`<h4 class="ed-doc__subhead-minor" data-v-7d0b59ab${_scopeId}>Example — LFI screening rejection</h4>`);
+            _push2(ssrRenderComponent(_component_EdCode, {
+              code: patchScreeningRejectJson,
+              lang: "json",
+              filename: "PATCH /payment-log/{id} — screening rejection"
+            }, null, _parent2, _scopeId));
+            _push2(`<h3 class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Response</h3>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<code data-v-7d0b59ab${_scopeId2}>Content-Type: application/json</code>. A successful PATCH returns <code data-v-7d0b59ab${_scopeId2}>204 No Content</code> with no body. See the <a href="/tech/lfi-api-hub/v2.2-rc1/api-hub/consent-manager/open-api/payment-log" data-v-7d0b59ab${_scopeId2}>PATCH <code data-v-7d0b59ab${_scopeId2}>/payment-log/:id</code> API Reference</a> for the full schema. `);
+                } else {
+                  return [
+                    createVNode("code", null, "Content-Type: application/json"),
+                    createTextVNode(". A successful PATCH returns "),
+                    createVNode("code", null, "204 No Content"),
+                    createTextVNode(" with no body. See the "),
+                    createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/consent-manager/open-api/payment-log" }, [
+                      createTextVNode("PATCH "),
+                      createVNode("code", null, "/payment-log/:id"),
+                      createTextVNode(" API Reference")
+                    ]),
+                    createTextVNode(" for the full schema. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+          } else {
+            return [
+              createVNode("div", { class: "ed-doc__endpoint" }, [
+                createVNode("span", { class: "http-badge http-patch" }, "PATCH"),
+                createVNode("code", { class: "ed-doc__endpoint-path" }, "/payment-log/{id}")
+              ]),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" This endpoint updates the payment status on the API Hub. The Hub uses the update to send asynchronous notifications to TPPs and to maintain accurate state for billing and limit calculations. The LFI calls it for every Open Finance-relevant status transition after the "),
+                  createVNode("code", null, "201"),
+                  createTextVNode(" has been returned to the Hub on "),
+                  createVNode("span", { class: "endpoint" }, [
+                    createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                    createVNode("code", null, "/payments")
+                  ]),
+                  createTextVNode(". ")
+                ]),
+                _: 1
+              }),
+              createVNode("h3", { class: "ed-doc__subhead" }, "Request headers"),
+              createVNode(_component_EdRefTable, null, {
+                default: withCtx(() => [
+                  createVNode("table", null, [
+                    createVNode("thead", null, [
+                      createVNode("tr", null, [
+                        createVNode("th", null, "Header"),
+                        createVNode("th", null, "Required"),
+                        createVNode("th", null, "Description")
+                      ])
+                    ]),
+                    createVNode("tbody", null, [
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-provider-id")
+                        ]),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, "Identifier for your LFI registered in the Hub")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-caller-org-id")
+                        ]),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, "Organisation ID of the TPP making the underlying request")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-caller-client-id")
+                        ]),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, "OIDC client ID of the TPP application")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-api-uri")
+                        ]),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, "The parameterised URL of the API being called by the TPP")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-api-operation")
+                        ]),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, [
+                          createTextVNode("The HTTP method of the operation carried out by the TPP ("),
+                          createVNode("code", null, "PATCH"),
+                          createTextVNode(")")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-ozone-interaction-id")
+                        ]),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, [
+                          createTextVNode("Hub-generated interaction ID. Equals "),
+                          createVNode("code", null, "o3-caller-interaction-id"),
+                          createTextVNode(" if the TPP provided one")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-consent-id")
+                        ]),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, "The consent backing this payment")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-psu-identifier")
+                        ]),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, "Base64-encoded psuIdentifier JSON object")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "o3-caller-interaction-id")
+                        ]),
+                        createVNode("td", null, "No"),
+                        createVNode("td", null, "Interaction ID passed in by the TPP, if present")
+                      ])
+                    ])
+                  ])
+                ]),
+                _: 1
+              }),
+              createVNode("h3", { class: "ed-doc__subhead" }, "Path parameters"),
+              createVNode(_component_EdRefTable, null, {
+                default: withCtx(() => [
+                  createVNode("table", null, [
+                    createVNode("thead", null, [
+                      createVNode("tr", null, [
+                        createVNode("th", null, "Parameter"),
+                        createVNode("th", null, "Type"),
+                        createVNode("th", null, "Description")
+                      ])
+                    ]),
+                    createVNode("tbody", null, [
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "id")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, [
+                          createTextVNode("Identifier of the payment log entry being updated — the "),
+                          createVNode("code", null, "data.id"),
+                          createTextVNode(" returned from "),
+                          createVNode("span", { class: "endpoint" }, [
+                            createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                            createVNode("code", null, "/payments")
+                          ])
+                        ])
+                      ])
+                    ])
+                  ])
+                ]),
+                _: 1
+              }),
+              createVNode("h3", { class: "ed-doc__subhead" }, "Request body"),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createVNode("code", null, "Content-Type: application/json"),
+                  createTextVNode(". The PATCH body uses literal flat-key JSON (the dots are part of the key, not nested objects): ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdRefTable, null, {
+                default: withCtx(() => [
+                  createVNode("table", null, [
+                    createVNode("thead", null, [
+                      createVNode("tr", null, [
+                        createVNode("th", null, "Field"),
+                        createVNode("th", null, "Type"),
+                        createVNode("th", null, "Required"),
+                        createVNode("th", null, "Description")
+                      ])
+                    ]),
+                    createVNode("tbody", null, [
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "paymentResponse.status")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "Yes"),
+                        createVNode("td", null, [
+                          createVNode("code", null, "Pending"),
+                          createTextVNode(", "),
+                          createVNode("code", null, "AcceptedSettlementCompleted"),
+                          createTextVNode(", "),
+                          createVNode("code", null, "AcceptedCreditSettlementCompleted"),
+                          createTextVNode(", "),
+                          createVNode("code", null, "AcceptedWithoutPosting"),
+                          createTextVNode(", or "),
+                          createVNode("code", null, "Rejected"),
+                          createTextVNode(". See "),
+                          createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/domestic-payments/overview/payment-status" }, "Payment Status")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "paymentResponse.paymentTransactionId")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "Conditional"),
+                        createVNode("td", null, "The end-to-end identifier assigned by the rail (AANI or UAEFTS). Set on the first PATCH that carries it; once set, MUST NOT change")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "paymentResponse.OpenFinanceBilling.numberOfSuccessfulTransactions")
+                        ]),
+                        createVNode("td", null, "integer"),
+                        createVNode("td", null, "No"),
+                        createVNode("td", null, [
+                          createTextVNode("Number of successful transactions (typically "),
+                          createVNode("code", null, "1"),
+                          createTextVNode(" per periodic payment)")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "paymentResponse.RejectReasonCode[]")
+                        ]),
+                        createVNode("td", null, "array"),
+                        createVNode("td", null, "Conditional"),
+                        createVNode("td", null, [
+                          createTextVNode("Required when "),
+                          createVNode("code", null, "paymentResponse.status"),
+                          createTextVNode(" is "),
+                          createVNode("code", null, "Rejected"),
+                          createTextVNode(". Append new reasons rather than replacing — preserves history")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "paymentResponse.RejectReasonCode[].Code")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "Yes (in array)"),
+                        createVNode("td", null, [
+                          createTextVNode("Namespaced rejection code: "),
+                          createVNode("code", null, "LFI.…"),
+                          createTextVNode(" for an LFI-side rejection (e.g. screening), "),
+                          createVNode("code", null, "AANI.…"),
+                          createTextVNode(" or "),
+                          createVNode("code", null, "FTS.…"),
+                          createTextVNode(" for a rail rejection. Pattern: "),
+                          createVNode("code", null, "^(LFI|AANI|FTS)\\.[A-Za-z0-9]+$")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "paymentResponse.RejectReasonCode[].Message")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, "Yes (in array)"),
+                        createVNode("td", null, "Sanitised, customer-relayable description. MUST NOT reveal detection logic, sanctions matches, or internal case identifiers")
+                      ])
+                    ])
+                  ])
+                ]),
+                _: 1
+              }),
+              createVNode("h4", { class: "ed-doc__subhead-minor" }, "Example — successful settlement"),
+              createVNode(_component_EdCode, {
+                code: patchSettleJson,
+                lang: "json",
+                filename: "PATCH /payment-log/{id} — settled"
+              }),
+              createVNode("h4", { class: "ed-doc__subhead-minor" }, "Example — rail rejection"),
+              createVNode(_component_EdCode, {
+                code: patchRailRejectJson,
+                lang: "json",
+                filename: "PATCH /payment-log/{id} — rail rejection"
+              }),
+              createVNode("h4", { class: "ed-doc__subhead-minor" }, "Example — LFI screening rejection"),
+              createVNode(_component_EdCode, {
+                code: patchScreeningRejectJson,
+                lang: "json",
+                filename: "PATCH /payment-log/{id} — screening rejection"
+              }),
+              createVNode("h3", { class: "ed-doc__subhead" }, "Response"),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createVNode("code", null, "Content-Type: application/json"),
+                  createTextVNode(". A successful PATCH returns "),
+                  createVNode("code", null, "204 No Content"),
+                  createTextVNode(" with no body. See the "),
+                  createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/consent-manager/open-api/payment-log" }, [
+                    createTextVNode("PATCH "),
+                    createVNode("code", null, "/payment-log/:id"),
+                    createTextVNode(" API Reference")
+                  ]),
+                  createTextVNode(" for the full schema. ")
+                ]),
+                _: 1
+              })
+            ];
+          }
+        }),
+        _: 1
+      }, _parent));
+      _push(ssrRenderComponent(_component_EdSectionBand, {
+        id: "get-payments-paymentid",
+        num: "08",
+        color: "var(--at-blue-deep, #1d4ed8)",
+        eyebrow: "Endpoint",
+        title: "GET /payments/{paymentId}",
+        tone: "surface"
+      }, {
+        default: withCtx((_, _push2, _parent2, _scopeId) => {
+          if (_push2) {
+            _push2(`<div class="ed-doc__endpoint" data-v-7d0b59ab${_scopeId}><span class="http-badge http-get" data-v-7d0b59ab${_scopeId}>GET</span><code class="ed-doc__endpoint-path" data-v-7d0b59ab${_scopeId}>/payments/{paymentId}</code></div>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` Backs the TPP request <code data-v-7d0b59ab${_scopeId2}>GET https://rs1.LFICODE.apihub.openfinance.ae/open-finance/payment/v2.2/payments/{PaymentId}</code>. `);
+                } else {
+                  return [
+                    createTextVNode(" Backs the TPP request "),
+                    createVNode("code", null, "GET https://rs1.LFICODE.apihub.openfinance.ae/open-finance/payment/v2.2/payments/{PaymentId}"),
+                    createTextVNode(". ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` Returns the current state of a payment your LFI created via <span class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--post" data-v-7d0b59ab${_scopeId2}>POST</span><code data-v-7d0b59ab${_scopeId2}>/payments</code></span>. The TPP polls this to observe screening outcomes, rail settlement, and any subsequent rejection. `);
+                } else {
+                  return [
+                    createTextVNode(" Returns the current state of a payment your LFI created via "),
+                    createVNode("span", { class: "endpoint" }, [
+                      createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                      createVNode("code", null, "/payments")
+                    ]),
+                    createTextVNode(". The TPP polls this to observe screening outcomes, rail settlement, and any subsequent rejection. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h3 class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Request headers</h3>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`See <a href="#common-request-headers" data-v-7d0b59ab${_scopeId2}>Common request headers</a>.`);
+                } else {
+                  return [
+                    createTextVNode("See "),
+                    createVNode("a", { href: "#common-request-headers" }, "Common request headers"),
+                    createTextVNode(".")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h3 class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Path parameters</h3>`);
+            _push2(ssrRenderComponent(_component_EdRefTable, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<table data-v-7d0b59ab${_scopeId2}><thead data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><th data-v-7d0b59ab${_scopeId2}>Parameter</th><th data-v-7d0b59ab${_scopeId2}>Type</th><th data-v-7d0b59ab${_scopeId2}>Description</th></tr></thead><tbody data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>paymentId</code></td><td data-v-7d0b59ab${_scopeId2}>string</td><td data-v-7d0b59ab${_scopeId2}>The <code data-v-7d0b59ab${_scopeId2}>PaymentId</code> your LFI returned from <span class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--post" data-v-7d0b59ab${_scopeId2}>POST</span><code data-v-7d0b59ab${_scopeId2}>/payments</code></span></td></tr></tbody></table>`);
+                } else {
+                  return [
+                    createVNode("table", null, [
+                      createVNode("thead", null, [
+                        createVNode("tr", null, [
+                          createVNode("th", null, "Parameter"),
+                          createVNode("th", null, "Type"),
+                          createVNode("th", null, "Description")
+                        ])
+                      ]),
+                      createVNode("tbody", null, [
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "paymentId")
+                          ]),
+                          createVNode("td", null, "string"),
+                          createVNode("td", null, [
+                            createTextVNode("The "),
+                            createVNode("code", null, "PaymentId"),
+                            createTextVNode(" your LFI returned from "),
+                            createVNode("span", { class: "endpoint" }, [
+                              createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                              createVNode("code", null, "/payments")
+                            ])
+                          ])
+                        ])
+                      ])
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h3 class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Response</h3>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<code data-v-7d0b59ab${_scopeId2}>Content-Type: application/json</code>. The response shape mirrors the <span class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--post" data-v-7d0b59ab${_scopeId2}>POST</span><code data-v-7d0b59ab${_scopeId2}>/payments</code></span><code data-v-7d0b59ab${_scopeId2}>201</code> response — same <code data-v-7d0b59ab${_scopeId2}>data</code> envelope, with the current <code data-v-7d0b59ab${_scopeId2}>Status</code>, <code data-v-7d0b59ab${_scopeId2}>paymentTransactionId</code> (once assigned by the rail), and any rejection details. `);
+                } else {
+                  return [
+                    createVNode("code", null, "Content-Type: application/json"),
+                    createTextVNode(". The response shape mirrors the "),
+                    createVNode("span", { class: "endpoint" }, [
+                      createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                      createVNode("code", null, "/payments")
+                    ]),
+                    createVNode("code", null, "201"),
+                    createTextVNode(" response — same "),
+                    createVNode("code", null, "data"),
+                    createTextVNode(" envelope, with the current "),
+                    createVNode("code", null, "Status"),
+                    createTextVNode(", "),
+                    createVNode("code", null, "paymentTransactionId"),
+                    createTextVNode(" (once assigned by the rail), and any rejection details. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdCode, {
+              code: getPaymentJson,
+              lang: "json",
+              filename: "GET /payments/{paymentId} response"
+            }, null, _parent2, _scopeId));
+            _push2(`<h3 class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Behavioural rules</h3>`);
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` Per <a href="./requirements#get-payments-paymentid-payment-status-retrieval" data-v-7d0b59ab${_scopeId2}>GET <code data-v-7d0b59ab${_scopeId2}>/payments/{paymentId}</code> Requirements</a>: `);
+                } else {
+                  return [
+                    createTextVNode(" Per "),
+                    createVNode("a", { href: "./requirements#get-payments-paymentid-payment-status-retrieval" }, [
+                      createTextVNode("GET "),
+                      createVNode("code", null, "/payments/{paymentId}"),
+                      createTextVNode(" Requirements")
+                    ]),
+                    createTextVNode(": ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdRefTable, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<table data-v-7d0b59ab${_scopeId2}><thead data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><th data-v-7d0b59ab${_scopeId2}>#</th><th data-v-7d0b59ab${_scopeId2}>Rule</th></tr></thead><tbody data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}>1</td><td data-v-7d0b59ab${_scopeId2}><strong data-v-7d0b59ab${_scopeId2}>Sustain period</strong> — Serve <span class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--get" data-v-7d0b59ab${_scopeId2}>GET</span><code data-v-7d0b59ab${_scopeId2}>/payments/{paymentId}</code></span> for at least <strong data-v-7d0b59ab${_scopeId2}>1 year from the payment&#39;s creation date</strong>. Within this window, the response MUST reflect the current status, including any later screening, rail, or reversal outcomes</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}>2</td><td data-v-7d0b59ab${_scopeId2}><strong data-v-7d0b59ab${_scopeId2}>Status consistency with the API Hub</strong> — The <code data-v-7d0b59ab${_scopeId2}>Status</code> returned MUST exactly match the most recent value PATCHed to the API Hub Consent Manager via <a href="/tech/lfi-api-hub/v2.2-rc1/api-hub/consent-manager/open-api/payment-log" class="endpoint" data-v-7d0b59ab${_scopeId2}><span class="http-method http-method--patch" data-v-7d0b59ab${_scopeId2}>PATCH</span><code data-v-7d0b59ab${_scopeId2}>/payment-log/{id}</code></a>. Any change in the LFI&#39;s systems MUST be reflected on both surfaces before it becomes observable to the TPP</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}>3</td><td data-v-7d0b59ab${_scopeId2}><strong data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>paymentTransactionId</code> consistency</strong> — Once the rail has assigned the end-to-end identifier and the LFI has PATCHed it to the Consent Manager, this endpoint MUST return the same value. Before assignment, omit the field entirely — do not return an empty string</td></tr></tbody></table>`);
+                } else {
+                  return [
+                    createVNode("table", null, [
+                      createVNode("thead", null, [
+                        createVNode("tr", null, [
+                          createVNode("th", null, "#"),
+                          createVNode("th", null, "Rule")
+                        ])
+                      ]),
+                      createVNode("tbody", null, [
+                        createVNode("tr", null, [
+                          createVNode("td", null, "1"),
+                          createVNode("td", null, [
+                            createVNode("strong", null, "Sustain period"),
+                            createTextVNode(" — Serve "),
+                            createVNode("span", { class: "endpoint" }, [
+                              createVNode("span", { class: "http-method http-method--get" }, "GET"),
+                              createVNode("code", null, "/payments/{paymentId}")
+                            ]),
+                            createTextVNode(" for at least "),
+                            createVNode("strong", null, "1 year from the payment's creation date"),
+                            createTextVNode(". Within this window, the response MUST reflect the current status, including any later screening, rail, or reversal outcomes")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, "2"),
+                          createVNode("td", null, [
+                            createVNode("strong", null, "Status consistency with the API Hub"),
+                            createTextVNode(" — The "),
+                            createVNode("code", null, "Status"),
+                            createTextVNode(" returned MUST exactly match the most recent value PATCHed to the API Hub Consent Manager via "),
+                            createVNode("a", {
+                              href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/consent-manager/open-api/payment-log",
+                              class: "endpoint"
+                            }, [
+                              createVNode("span", { class: "http-method http-method--patch" }, "PATCH"),
+                              createVNode("code", null, "/payment-log/{id}")
+                            ]),
+                            createTextVNode(". Any change in the LFI's systems MUST be reflected on both surfaces before it becomes observable to the TPP")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, "3"),
+                          createVNode("td", null, [
+                            createVNode("strong", null, [
+                              createVNode("code", null, "paymentTransactionId"),
+                              createTextVNode(" consistency")
+                            ]),
+                            createTextVNode(" — Once the rail has assigned the end-to-end identifier and the LFI has PATCHed it to the Consent Manager, this endpoint MUST return the same value. Before assignment, omit the field entirely — do not return an empty string")
+                          ])
+                        ])
+                      ])
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`<h3 class="ed-doc__subhead" data-v-7d0b59ab${_scopeId}>Errors</h3>`);
+            _push2(ssrRenderComponent(_component_EdRefTable, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<table data-v-7d0b59ab${_scopeId2}><thead data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><th data-v-7d0b59ab${_scopeId2}>Status</th><th data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>errorCode</code></th><th data-v-7d0b59ab${_scopeId2}>When to use</th></tr></thead><tbody data-v-7d0b59ab${_scopeId2}><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>404</code></td><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>Resource.NotFound</code></td><td data-v-7d0b59ab${_scopeId2}>No payment exists for the supplied <code data-v-7d0b59ab${_scopeId2}>paymentId</code> (or the payment exists but belongs to a different consent)</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>403</code></td><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>Consent.AccountTemporarilyBlocked</code> / <code data-v-7d0b59ab${_scopeId2}>Consent.PermanentAccountAccessFailure</code></td><td data-v-7d0b59ab${_scopeId2}>The debtor account has become inaccessible since the payment was created</td></tr><tr data-v-7d0b59ab${_scopeId2}><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>500</code></td><td data-v-7d0b59ab${_scopeId2}><code data-v-7d0b59ab${_scopeId2}>GenericRecoverableError</code> / <code data-v-7d0b59ab${_scopeId2}>GenericError</code></td><td data-v-7d0b59ab${_scopeId2}>Transient or unrecoverable server error</td></tr></tbody></table>`);
+                } else {
+                  return [
+                    createVNode("table", null, [
+                      createVNode("thead", null, [
+                        createVNode("tr", null, [
+                          createVNode("th", null, "Status"),
+                          createVNode("th", null, [
+                            createVNode("code", null, "errorCode")
+                          ]),
+                          createVNode("th", null, "When to use")
+                        ])
+                      ]),
+                      createVNode("tbody", null, [
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "404")
+                          ]),
+                          createVNode("td", null, [
+                            createVNode("code", null, "Resource.NotFound")
+                          ]),
+                          createVNode("td", null, [
+                            createTextVNode("No payment exists for the supplied "),
+                            createVNode("code", null, "paymentId"),
+                            createTextVNode(" (or the payment exists but belongs to a different consent)")
+                          ])
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "403")
+                          ]),
+                          createVNode("td", null, [
+                            createVNode("code", null, "Consent.AccountTemporarilyBlocked"),
+                            createTextVNode(" / "),
+                            createVNode("code", null, "Consent.PermanentAccountAccessFailure")
+                          ]),
+                          createVNode("td", null, "The debtor account has become inaccessible since the payment was created")
+                        ]),
+                        createVNode("tr", null, [
+                          createVNode("td", null, [
+                            createVNode("code", null, "500")
+                          ]),
+                          createVNode("td", null, [
+                            createVNode("code", null, "GenericRecoverableError"),
+                            createTextVNode(" / "),
+                            createVNode("code", null, "GenericError")
+                          ]),
+                          createVNode("td", null, "Transient or unrecoverable server error")
+                        ])
+                      ])
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_component_EdProse, null, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(` See the <a href="/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/open-api/payments-PaymentId" data-v-7d0b59ab${_scopeId2}>GET <code data-v-7d0b59ab${_scopeId2}>/payments/{paymentId}</code> API Reference</a> for the full schema. `);
+                } else {
+                  return [
+                    createTextVNode(" See the "),
+                    createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/open-api/payments-PaymentId" }, [
+                      createTextVNode("GET "),
+                      createVNode("code", null, "/payments/{paymentId}"),
+                      createTextVNode(" API Reference")
+                    ]),
+                    createTextVNode(" for the full schema. ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+          } else {
+            return [
+              createVNode("div", { class: "ed-doc__endpoint" }, [
+                createVNode("span", { class: "http-badge http-get" }, "GET"),
+                createVNode("code", { class: "ed-doc__endpoint-path" }, "/payments/{paymentId}")
+              ]),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" Backs the TPP request "),
+                  createVNode("code", null, "GET https://rs1.LFICODE.apihub.openfinance.ae/open-finance/payment/v2.2/payments/{PaymentId}"),
+                  createTextVNode(". ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" Returns the current state of a payment your LFI created via "),
+                  createVNode("span", { class: "endpoint" }, [
+                    createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                    createVNode("code", null, "/payments")
+                  ]),
+                  createTextVNode(". The TPP polls this to observe screening outcomes, rail settlement, and any subsequent rejection. ")
+                ]),
+                _: 1
+              }),
+              createVNode("h3", { class: "ed-doc__subhead" }, "Request headers"),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode("See "),
+                  createVNode("a", { href: "#common-request-headers" }, "Common request headers"),
+                  createTextVNode(".")
+                ]),
+                _: 1
+              }),
+              createVNode("h3", { class: "ed-doc__subhead" }, "Path parameters"),
+              createVNode(_component_EdRefTable, null, {
+                default: withCtx(() => [
+                  createVNode("table", null, [
+                    createVNode("thead", null, [
+                      createVNode("tr", null, [
+                        createVNode("th", null, "Parameter"),
+                        createVNode("th", null, "Type"),
+                        createVNode("th", null, "Description")
+                      ])
+                    ]),
+                    createVNode("tbody", null, [
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "paymentId")
+                        ]),
+                        createVNode("td", null, "string"),
+                        createVNode("td", null, [
+                          createTextVNode("The "),
+                          createVNode("code", null, "PaymentId"),
+                          createTextVNode(" your LFI returned from "),
+                          createVNode("span", { class: "endpoint" }, [
+                            createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                            createVNode("code", null, "/payments")
+                          ])
+                        ])
+                      ])
+                    ])
+                  ])
+                ]),
+                _: 1
+              }),
+              createVNode("h3", { class: "ed-doc__subhead" }, "Response"),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createVNode("code", null, "Content-Type: application/json"),
+                  createTextVNode(". The response shape mirrors the "),
+                  createVNode("span", { class: "endpoint" }, [
+                    createVNode("span", { class: "http-method http-method--post" }, "POST"),
+                    createVNode("code", null, "/payments")
+                  ]),
+                  createVNode("code", null, "201"),
+                  createTextVNode(" response — same "),
+                  createVNode("code", null, "data"),
+                  createTextVNode(" envelope, with the current "),
+                  createVNode("code", null, "Status"),
+                  createTextVNode(", "),
+                  createVNode("code", null, "paymentTransactionId"),
+                  createTextVNode(" (once assigned by the rail), and any rejection details. ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdCode, {
+                code: getPaymentJson,
+                lang: "json",
+                filename: "GET /payments/{paymentId} response"
+              }),
+              createVNode("h3", { class: "ed-doc__subhead" }, "Behavioural rules"),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" Per "),
+                  createVNode("a", { href: "./requirements#get-payments-paymentid-payment-status-retrieval" }, [
+                    createTextVNode("GET "),
+                    createVNode("code", null, "/payments/{paymentId}"),
+                    createTextVNode(" Requirements")
+                  ]),
+                  createTextVNode(": ")
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdRefTable, null, {
+                default: withCtx(() => [
+                  createVNode("table", null, [
+                    createVNode("thead", null, [
+                      createVNode("tr", null, [
+                        createVNode("th", null, "#"),
+                        createVNode("th", null, "Rule")
+                      ])
+                    ]),
+                    createVNode("tbody", null, [
+                      createVNode("tr", null, [
+                        createVNode("td", null, "1"),
+                        createVNode("td", null, [
+                          createVNode("strong", null, "Sustain period"),
+                          createTextVNode(" — Serve "),
+                          createVNode("span", { class: "endpoint" }, [
+                            createVNode("span", { class: "http-method http-method--get" }, "GET"),
+                            createVNode("code", null, "/payments/{paymentId}")
+                          ]),
+                          createTextVNode(" for at least "),
+                          createVNode("strong", null, "1 year from the payment's creation date"),
+                          createTextVNode(". Within this window, the response MUST reflect the current status, including any later screening, rail, or reversal outcomes")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, "2"),
+                        createVNode("td", null, [
+                          createVNode("strong", null, "Status consistency with the API Hub"),
+                          createTextVNode(" — The "),
+                          createVNode("code", null, "Status"),
+                          createTextVNode(" returned MUST exactly match the most recent value PATCHed to the API Hub Consent Manager via "),
+                          createVNode("a", {
+                            href: "/tech/lfi-api-hub/v2.2-rc1/api-hub/consent-manager/open-api/payment-log",
+                            class: "endpoint"
+                          }, [
+                            createVNode("span", { class: "http-method http-method--patch" }, "PATCH"),
+                            createVNode("code", null, "/payment-log/{id}")
+                          ]),
+                          createTextVNode(". Any change in the LFI's systems MUST be reflected on both surfaces before it becomes observable to the TPP")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, "3"),
+                        createVNode("td", null, [
+                          createVNode("strong", null, [
+                            createVNode("code", null, "paymentTransactionId"),
+                            createTextVNode(" consistency")
+                          ]),
+                          createTextVNode(" — Once the rail has assigned the end-to-end identifier and the LFI has PATCHed it to the Consent Manager, this endpoint MUST return the same value. Before assignment, omit the field entirely — do not return an empty string")
+                        ])
+                      ])
+                    ])
+                  ])
+                ]),
+                _: 1
+              }),
+              createVNode("h3", { class: "ed-doc__subhead" }, "Errors"),
+              createVNode(_component_EdRefTable, null, {
+                default: withCtx(() => [
+                  createVNode("table", null, [
+                    createVNode("thead", null, [
+                      createVNode("tr", null, [
+                        createVNode("th", null, "Status"),
+                        createVNode("th", null, [
+                          createVNode("code", null, "errorCode")
+                        ]),
+                        createVNode("th", null, "When to use")
+                      ])
+                    ]),
+                    createVNode("tbody", null, [
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "404")
+                        ]),
+                        createVNode("td", null, [
+                          createVNode("code", null, "Resource.NotFound")
+                        ]),
+                        createVNode("td", null, [
+                          createTextVNode("No payment exists for the supplied "),
+                          createVNode("code", null, "paymentId"),
+                          createTextVNode(" (or the payment exists but belongs to a different consent)")
+                        ])
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "403")
+                        ]),
+                        createVNode("td", null, [
+                          createVNode("code", null, "Consent.AccountTemporarilyBlocked"),
+                          createTextVNode(" / "),
+                          createVNode("code", null, "Consent.PermanentAccountAccessFailure")
+                        ]),
+                        createVNode("td", null, "The debtor account has become inaccessible since the payment was created")
+                      ]),
+                      createVNode("tr", null, [
+                        createVNode("td", null, [
+                          createVNode("code", null, "500")
+                        ]),
+                        createVNode("td", null, [
+                          createVNode("code", null, "GenericRecoverableError"),
+                          createTextVNode(" / "),
+                          createVNode("code", null, "GenericError")
+                        ]),
+                        createVNode("td", null, "Transient or unrecoverable server error")
+                      ])
+                    ])
+                  ])
+                ]),
+                _: 1
+              }),
+              createVNode(_component_EdProse, null, {
+                default: withCtx(() => [
+                  createTextVNode(" See the "),
+                  createVNode("a", { href: "/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/open-api/payments-PaymentId" }, [
+                    createTextVNode("GET "),
+                    createVNode("code", null, "/payments/{paymentId}"),
+                    createTextVNode(" API Reference")
+                  ]),
+                  createTextVNode(" for the full schema. ")
+                ]),
+                _: 1
+              })
+            ];
+          }
+        }),
+        _: 1
+      }, _parent));
+      _push(`</div>`);
+    };
+  }
+});
+if (typeof block0 === "function") block0(_sfc_main);
+const _sfc_setup = _sfc_main.setup;
+_sfc_main.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("src/pages/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/domestic-payments/multi-payments/fixed-periodic-schedule/api-guide.vue");
+  return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
+};
+const apiGuide = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-7d0b59ab"]]);
+export {
+  apiGuide as default
+};

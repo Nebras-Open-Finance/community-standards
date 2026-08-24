@@ -1,25 +1,35 @@
 <script setup lang="ts">
+import { watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { VERSIONS, isDraftVersion, type Version } from '@/data/versions'
+import { routeHasVersionDropdown } from '@/composables/useSelectedVersion'
+import { useVersionTour } from '@/composables/useVersionTour'
 
 const route = useRoute()
 const router = useRouter()
 
 const { selectedVersion, setSelectedVersion } = useSelectedVersion()
 
-// Release notes, erratas and changelogs cover every version at once, so there is
-// no single "selected version" for the reader to switch between there.
-const RELEASE_NOTES_PREFIX = '/tech/release-notes-and-erratas'
-
-const showVersion = computed<boolean>(
-  () => route.path.startsWith('/tech/') && !route.path.startsWith(RELEASE_NOTES_PREFIX),
-)
+const showVersion = computed<boolean>(() => routeHasVersionDropdown(route.path))
 
 const isOpen = ref<boolean>(false)
 const dropdownEl = ref<HTMLElement | null>(null)
+const btnEl = ref<HTMLButtonElement | null>(null)
+
+// Guided switch, started from the site announcement modal. This component owns
+// the rendering because it is the only one that knows where the dropdown sits.
+const { tourTarget, tourActive, endTour } = useVersionTour()
+
+const inTour = computed<boolean>(() => tourActive.value && showVersion.value)
+
+// Two steps: get the menu open, then get the target version picked.
+const coachText = computed<string>(() =>
+  isOpen.value ? `Now choose ${tourTarget.value}` : 'Open the version menu',
+)
 
 function selectVersion(v: Version): void {
   isOpen.value = false
+  endTour()
   const oldVersion = selectedVersion.value
   setSelectedVersion(v)
   if (!oldVersion || v === oldVersion) return
@@ -37,15 +47,52 @@ function handleOutsideClick(e: MouseEvent): void {
   }
 }
 
-onMounted(() => document.addEventListener('click', handleOutsideClick, true))
-onUnmounted(() => document.removeEventListener('click', handleOutsideClick, true))
+function handleTourKeydown(e: KeyboardEvent): void {
+  if (inTour.value && e.key === 'Escape') endTour()
+}
+
+// Navigating away abandons the tour — the reader has moved on, and the dropdown
+// may not even exist on the new route.
+watch(() => route.path, () => endTour())
+
+// Move focus to the button the tour is pointing at, so "Open the version menu"
+// means something to a keyboard user. nextTick so this lands after the
+// announcement modal has finished restoring focus on its way out.
+watch(inTour, (active) => {
+  if (active) void nextTick(() => btnEl.value?.focus())
+})
+
+onMounted(() => {
+  document.addEventListener('click', handleOutsideClick, true)
+  document.addEventListener('keydown', handleTourKeydown)
+})
+onUnmounted(() => {
+  document.removeEventListener('click', handleOutsideClick, true)
+  document.removeEventListener('keydown', handleTourKeydown)
+})
 </script>
 
 <template>
-  <div v-if="showVersion" ref="dropdownEl" class="vd-wrap" :class="{ open: isOpen }">
+  <div v-if="showVersion" ref="dropdownEl" class="vd-wrap" :class="{ open: isOpen, tour: inTour }">
+    <!-- Tour scrim. Sits below the header's own z-index, so the header stays
+         crisp and clickable while the page behind it dims. Teleported so it is
+         not clipped by the header. -->
+    <Teleport to="body">
+      <Transition name="vd-scrim-fade">
+        <div v-if="inTour" class="vd-scrim" @click="endTour" />
+      </Transition>
+    </Teleport>
+
+    <div v-if="inTour" class="vd-coach" role="status" aria-live="polite">
+      <span class="vd-coach__text">{{ coachText }}</span>
+      <button type="button" class="vd-coach__skip" @click.stop="endTour">Skip</button>
+    </div>
+
     <button
+      ref="btnEl"
       type="button"
       class="vd-btn"
+      :class="{ 'is-pulsing': inTour && !isOpen }"
       :aria-expanded="isOpen ? 'true' : 'false'"
       @click.stop="isOpen = !isOpen"
     >
@@ -64,13 +111,13 @@ onUnmounted(() => document.removeEventListener('click', handleOutsideClick, true
         type="button"
         role="option"
         class="vd-item"
-        :class="{ active: v === selectedVersion }"
+        :class="{ active: v === selectedVersion, 'is-tour-pick': inTour && v === tourTarget }"
         :aria-selected="v === selectedVersion ? 'true' : 'false'"
         @click="selectVersion(v)"
       >
         <span class="vd-label">
           {{ v }}
-          <span v-if="isDraftVersion(v)" class="vd-draft">draft</span>
+          <span v-if="isDraftVersion(v)" class="vd-draft">rc</span>
         </span>
         <svg v-if="v === selectedVersion" class="vd-check" xmlns="http://www.w3.org/2000/svg"
           width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -209,5 +256,105 @@ onUnmounted(() => document.removeEventListener('click', handleOutsideClick, true
   color: #7c2d12;
   background: #fde68a;
   padding: 0.12rem 0.35rem;
+}
+
+/* ── Guided tour ─────────────────────────────────────────────────────────
+   Started from the site announcement modal. See useVersionTour.ts. */
+
+.vd-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 15, 26, 0.5);
+  /* Below .ed-header (99999) so the header — and this dropdown inside it —
+     stays undimmed and takes clicks normally. Clicking the scrim gives up. */
+  z-index: 99990;
+}
+
+.vd-scrim-fade-enter-active,
+.vd-scrim-fade-leave-active { transition: opacity 0.2s ease; }
+.vd-scrim-fade-enter-from,
+.vd-scrim-fade-leave-to { opacity: 0; }
+
+/* The button is only ~90px wide and the menu drops below it, so the callout
+   sits to the left, vertically centred on the button. That position stays
+   valid whether the menu is open or closed. */
+.vd-coach {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 12px);
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: max-content;
+  max-width: 17rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--at-navy-deep);
+  border-left: 3px solid var(--at-teal);
+  box-shadow: 0 10px 30px rgba(0, 23, 56, 0.32);
+  z-index: 100001;
+}
+
+/* Arrow pointing right, at the dropdown button. */
+.vd-coach::after {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+  border-left-color: var(--at-navy-deep);
+  transform: translateY(-50%);
+  content: "";
+}
+
+.vd-coach__text {
+  font-family: var(--at-sans);
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--at-inverse-fg);
+  white-space: nowrap;
+}
+
+.vd-coach__skip {
+  flex-shrink: 0;
+  font-family: var(--at-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(250, 250, 247, 0.6);
+  background: none;
+  border: 0;
+  padding: 0.15rem 0;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.vd-coach__skip:hover { color: var(--at-inverse-fg); }
+.vd-coach__skip:focus-visible { outline: 2px solid var(--at-teal); outline-offset: 2px; }
+
+/* Step 1 — draw the eye to the closed button. */
+.vd-btn.is-pulsing {
+  color: var(--at-teal-deep);
+  animation: vd-pulse 1.6s ease-out infinite;
+}
+
+@keyframes vd-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(0, 194, 169, 0.55); }
+  70%  { box-shadow: 0 0 0 10px rgba(0, 194, 169, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 194, 169, 0); }
+}
+
+/* Step 2 — once the menu is open, mark the option to pick. */
+.vd-item.is-tour-pick {
+  background: rgba(0, 194, 169, 0.14);
+  box-shadow: inset 3px 0 0 var(--at-teal-deep);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vd-btn.is-pulsing { animation: none; box-shadow: 0 0 0 3px rgba(0, 194, 169, 0.45); }
+  .vd-scrim-fade-enter-active,
+  .vd-scrim-fade-leave-active { transition: none; }
 }
 </style>

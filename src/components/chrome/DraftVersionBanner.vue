@@ -19,7 +19,7 @@ const route = useRoute()
 
 // Release notes, erratas and changelogs describe every version from the outside,
 // so a draft segment there is the subject of the page rather than a property of
-// it — the banner would be wrong on e.g. the v2.1 -> v2.2-draft changelog.
+// it — the banner would be wrong on e.g. the v2.1 -> v2.2-rc1 changelog.
 const RELEASE_NOTES_PREFIX = '/tech/release-notes-and-erratas'
 
 const draftVersion = computed<Version | null>(() => {
@@ -40,9 +40,9 @@ const changelogUrl = computed<string>(() =>
 <template>
   <div v-if="draftVersion" class="dvb" role="note">
     <div class="dvb__inner">
-      <span class="dvb__tag">Draft</span>
+      <span class="dvb__tag">Release candidate</span>
       <p class="dvb__text">
-        This is <strong>{{ draftVersion }}</strong> &mdash; a working draft of the
+        This is <strong>{{ draftVersion }}</strong> &mdash; a release candidate for the
         {{ protocolVersion }} standards, published for review and not yet ratified.
         It MUST NOT be used as the basis for a production implementation.
         For the current standards, switch to

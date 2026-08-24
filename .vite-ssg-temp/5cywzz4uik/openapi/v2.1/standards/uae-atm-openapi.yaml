@@ -1,0 +1,733 @@
+openapi: 3.0.0
+info:
+  title: UAE ATM API
+  description: '## UAE Open Finance ATM API Specification'
+  version: v2.1
+  contact:
+    email: openfinance@cbuae.gov.ae
+tags:
+  - name: ATM
+    description: ATM operations and resources
+security:
+  - TPPOAuth2Security:
+      - atm
+paths:
+  /atms:
+    get:
+      tags:
+        - ATM
+      operationId: getAtms
+      summary: Retrieve ATM
+      description: Retrieve all ATM
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/AEReadAtms1'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AEReadAtms1'
+        '400':
+          $ref: '#/components/responses/400Error'
+        '401':
+          $ref: '#/components/responses/401Error'
+        '403':
+          $ref: '#/components/responses/403Error'
+        '405':
+          $ref: '#/components/responses/405Error'
+        '406':
+          $ref: '#/components/responses/406Error'
+        '415':
+          $ref: '#/components/responses/415Error'
+        '429':
+          $ref: '#/components/responses/429Error'
+        '500':
+          $ref: '#/components/responses/500Error'
+components:
+  headers:
+    x-fapi-interaction-id:
+      required: true
+      description: An RFC4122 UID used as a correlation id.
+      schema:
+        type: string
+      example: 49df2c2c-6b80-40ee-96a1-71910a248048
+  schemas:
+    AEError400Response:
+      description: An array of detail error codes, and messages, and URLs to documentation to help remediation.
+      type: object
+      properties:
+        Errors:
+          items:
+            $ref: '#/components/schemas/AEError400'
+          type: array
+          minItems: 1
+      required:
+        - Errors
+      additionalProperties: false
+    AEError403Response:
+      description: An array of detail error codes, and messages, and URLs to documentation to help remediation.
+      type: object
+      properties:
+        Errors:
+          items:
+            $ref: '#/components/schemas/AEError403'
+          type: array
+          minItems: 1
+      required:
+        - Errors
+      additionalProperties: false
+    AEError500Response:
+      description: An array of detail error codes, and messages, and URLs to documentation to help remediation.
+      type: object
+      properties:
+        Errors:
+          items:
+            $ref: '#/components/schemas/AEError500'
+          type: array
+          minItems: 1
+      required:
+        - Errors
+      additionalProperties: false
+    AEMessage:
+      type: string
+      minLength: 1
+      maxLength: 500
+      description: >-
+        A description of the error that occurred. e.g., 'A mandatory field isn't supplied' or
+        'RequestedExecutionDateTime must be in future'
+
+        This field is not standardised
+    AEError400:
+      description: Error
+      type: object
+      required:
+        - Code
+        - Message
+      additionalProperties: false
+      properties:
+        Code:
+          $ref: '#/components/schemas/AEError400Code'
+        Message:
+          $ref: '#/components/schemas/AEMessage'
+        Path:
+          description: >-
+            Recommended but optional reference to the JSON Path of the field with error, e.g.,
+            Data.Initiation.InstructedAmount.Currency
+          type: string
+          minLength: 1
+          maxLength: 500
+        Url:
+          description: URL to help remediate the problem, or provide more information, or to API Reference, or help etc
+          type: string
+    AEError400Code:
+      description: >-
+        Error Code. This may either be one of the prescribed Error Code(s) or a namespaced Error Code where the
+        namespace is the system or organisation that has responded with the error, and the code is the code specific to
+        the system or organisation.
+      anyOf:
+        - type: string
+          enum:
+            - Consent.Invalid
+            - Consent.BusinessRuleViolation
+            - Consent.FailsControlParameters
+            - Consent.InvalidUserIdentifier
+            - JWS.InvalidSignature
+            - JWS.Malformed
+            - JWS.InvalidClaim
+            - JWS.InvalidHeader
+            - JWE.DecryptionError
+            - JWE.InvalidHeader
+            - GenericRecoverableError
+            - GenericError
+            - Event.UnexpectedEvent
+            - Body.InvalidFormat
+            - Resource.InvalidFormat
+        - type: string
+          pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+    AEError403:
+      description: Error
+      type: object
+      required:
+        - Code
+        - Message
+      additionalProperties: false
+      properties:
+        Code:
+          $ref: '#/components/schemas/AEError403Code'
+        Message:
+          $ref: '#/components/schemas/AEMessage'
+        Path:
+          description: >-
+            Recommended but optional reference to the JSON Path of the field with error, e.g.,
+            Data.Initiation.InstructedAmount.Currency
+          type: string
+          minLength: 1
+          maxLength: 500
+        Url:
+          description: URL to help remediate the problem, or provide more information, or to API Reference, or help etc
+          type: string
+    AEError403Code:
+      description: >-
+        Error Code. This may either be one of the prescribed Error Code(s) or a namespaced Error Code where the
+        namespace is the system or organisation that has responded with the error, and the code is the code specific to
+        the system or organisation.
+      anyOf:
+        - type: string
+          enum:
+            - AccessToken.InvalidScope
+            - Consent.TransientAccountAccessFailure
+            - Consent.AccountTemporarilyBlocked
+            - Consent.PermanentAccountAccessFailure
+            - GenericRecoverableError
+            - GenericError
+        - type: string
+          pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+    AEError500:
+      description: Error
+      type: object
+      required:
+        - Code
+        - Message
+      additionalProperties: false
+      properties:
+        Code:
+          $ref: '#/components/schemas/AEError500Code'
+        Message:
+          $ref: '#/components/schemas/AEMessage'
+        Path:
+          description: >-
+            Recommended but optional reference to the JSON Path of the field with error, e.g.,
+            Data.Initiation.InstructedAmount.Currency
+          type: string
+          minLength: 1
+          maxLength: 500
+        Url:
+          description: URL to help remediate the problem, or provide more information, or to API Reference, or help etc
+          type: string
+    AEError500Code:
+      description: >-
+        Error Code. This may either be one of the prescribed Error Code(s) or a namespaced Error Code where the
+        namespace is the system or organisation that has responded with the error, and the code is the code specific to
+        the system or organisation.
+      anyOf:
+        - type: string
+          enum:
+            - GenericRecoverableError
+            - GenericError
+        - type: string
+          pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+    AEReadAtmsData1:
+      description: List of ATMs
+      type: array
+      items:
+        type: object
+        properties:
+          LFIId:
+            description: LFI identification.
+            title: LFIId
+            type: string
+            minLength: 1
+            maxLength: 36
+          LFIBrandId:
+            description: LFI identification for a brand - that an LFI uses to market its products or services to a User
+            title: LFIBrandId
+            type: string
+            minLength: 1
+            maxLength: 140
+          ATMId:
+            description: ATM terminal device identification for the LFI and the issuer.
+            title: ATMId
+            type: string
+            minLength: 1
+            maxLength: 36
+          SupportedLanguages:
+            description: >-
+              Identification of the language name according to the ISO 639-1 codes. The type is validated by the
+              list of values coded with two alphabetic characters, defined in the standard.
+            title: SupportedLanguages
+            type: array
+            items:
+              description: >-
+                Identification of the language name according to the ISO 639-1 codes. The type is validated by the
+                list of values coded with two alphabetic characters, defined in the standard.
+              type: string
+              pattern: '[a-z]{2}'
+          Services:
+            description: Describes the type of transaction available for a customer on an ATM.
+            title: Services
+            type: array
+            items:
+              description: |
+                Describes the type of transaction available for a customer on an ATM.
+                There are standard services defined. LFIs may extend services by namespacing with their LFI name.
+              anyOf:
+                - type: string
+                  enum:
+                    - Balance
+                    - BillPayments
+                    - CashDeposits
+                    - CharityDonation
+                    - ChequeDeposits
+                    - CashWithdrawal
+                    - EnvelopeDeposit
+                    - FastCash
+                    - MobileBankingRegistration
+                    - MobilePaymentRegistration
+                    - MobilePhoneTopUp
+                    - OrderStatement
+                    - Other
+                    - PINActivation
+                    - PINChange
+                    - PINUnblock
+                    - MiniStatement
+                - $ref: '#/components/schemas/AENamespacedPattern'
+          Accessibility:
+            description: Indicates Types of Accessibility
+            title: Accessibility
+            type: array
+            items:
+              description: Indicates Types of Accessibility
+              type: string
+              enum:
+                - AudioCashMachine
+                - AutomaticDoors
+                - ExternalRamp
+                - InductionLoop
+                - InternalRamp
+                - LevelAccess
+                - LowerLevelCounter
+                - Other
+                - WheelchairAccess
+          IsAccess24Hour:
+            description: Indicates that the ATM is available for use by customers 24 hours per day
+            title: IsAccess24Hour
+            type: boolean
+          Availability:
+            description: Indicates the availability status of the ATM
+            type: object
+            title: Availability
+            properties:
+              Status:
+                description: Current operational status of the ATM
+                type: string
+                enum:
+                  - Available
+                  - Unavailable
+                  - UnderMaintenance
+              OperatingHours:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    Days:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - Monday
+                          - Tuesday
+                          - Wednesday
+                          - Thursday
+                          - Friday
+                          - Saturday
+                          - Sunday
+                    OpenTime:
+                      type: string
+                      pattern: ^([0-1][0-9]|2[0-3]):[0-5][0-9]$
+                    CloseTime:
+                      type: string
+                      pattern: ^([0-1][0-9]|2[0-3]):[0-5][0-9]$
+                  required:
+                    - Days
+                    - OpenTime
+                    - CloseTime
+          SupportedCurrencies:
+            description: All ISO 4217 defined currency supported by the ATM.
+            title: SupportedCurrencies
+            type: array
+            items:
+              description: ISO 4217 defined currency
+              type: string
+              pattern: '[A-Z]{3}'
+            minItems: 1
+          MinimumPossibleAmount:
+            $ref: '#/components/schemas/AEActiveOrHistoricCurrencyAndAmount_0'
+          MaximumPossibleAmount:
+            $ref: '#/components/schemas/AEActiveOrHistoricCurrencyAndAmount_0'
+          Notes:
+            description: Summary description of the ATM.
+            title: Note
+            type: array
+            items:
+              description: maxLength 2000 text
+              type: string
+              minLength: 1
+              maxLength: 2000
+          Branch:
+            description: Information that locates and identifies a specific branch of a LFI.
+            type: object
+            title: Branch
+            properties:
+              SchemeName:
+                description: The scheme name that qualifies the identifier for the branch.
+                type: string
+                enum:
+                  - BICFI
+                  - Other
+              Identification:
+                description: Unique and unambiguous identification of a branch of a LFI.
+                title: Identification
+                type: string
+                minLength: 1
+                maxLength: 36
+            additionalProperties: false
+          Location:
+            description: Location of the ATM.
+            type: object
+            title: Location
+            required:
+              - PostalAddress
+              - GeoLocation
+            properties:
+              LocationCategory:
+                description: Indicates the environment of the ATM.
+                title: LocationCategory
+                type: array
+                items:
+                  description: Indicates the environment of the ATM.
+                  type: string
+                  enum:
+                    - BranchExternal
+                    - BranchInternal
+                    - BranchLobby
+                    - Other
+                    - RetailerOutlet
+                    - RemoteUnit
+                    - DriveThru
+              Site:
+                description: Used by the LFI internally to identify the location of an ATM.
+                type: object
+                title: Site
+                properties:
+                  Identification:
+                    description: ATM site identification for the LFI.
+                    title: Identification
+                    type: string
+                    minLength: 1
+                    maxLength: 36
+                  Name:
+                    description: ATM site name as used by LFI.
+                    title: Name
+                    type: string
+                    minLength: 1
+                    maxLength: 140
+                additionalProperties: false
+              PostalAddress:
+                description: >-
+                  Address properties based on ISO 20022 `PostalAddress27` definition, populated based on information
+                  held at the LFIs.
+                type: object
+                properties:
+                  AddressType:
+                    description: The type of address, restricted to `Business` or `Other`. Omitted if type not held.
+                    type: string
+                    enum:
+                      - Business
+                      - Other
+                  AddressLine:
+                    description: >-
+                      Information that locates and identifies a specific address for a transaction entry, that is
+                      presented in free format text.
+                    type: array
+                    minItems: 1
+                    maxItems: 7
+                    items:
+                      type: string
+                      minLength: 1
+                      maxLength: 70
+                  BuildingNumber:
+                    description: The unit, apartment, or villa number within a building or community
+                    type: string
+                    minLength: 1
+                    maxLength: 16
+                  BuildingName:
+                    description: Name of the building or house.
+                    type: string
+                    minLength: 1
+                    maxLength: 140
+                  Floor:
+                    description: Floor or storey within a building.
+                    type: string
+                    minLength: 1
+                    maxLength: 70
+                  StreetName:
+                    description: The name of the street or road where the property is located.
+                    type: string
+                    minLength: 1
+                    maxLength: 140
+                  DistrictName:
+                    description: The district, community, or neighbourhood where the property is located.
+                    type: string
+                    minLength: 1
+                    maxLength: 140
+                  PostBox:
+                    description: The P.O. Box number assigned to the recipient for mail delivery.
+                    type: string
+                    minLength: 1
+                    maxLength: 16
+                  TownName:
+                    description: Name of a built-up area, such as a town or city.
+                    type: string
+                    minLength: 1
+                    maxLength: 140
+                  CountrySubDivision:
+                    description: >-
+                      Country subdivision, such as state or province. Where the address is in the UAE this is the
+                      Emirate where the address is registered.
+                    type: string
+                    enum:
+                      - AbuDhabi
+                      - Ajman
+                      - Dubai
+                      - Fujairah
+                      - RasAlKhaimah
+                      - Sharjah
+                      - UmmAlQuwain
+                  Country:
+                    description: >-
+                      The country associated with the address, represented using the ISO 3166-1 alpha-2 country
+                      code.
+                    type: string
+                    pattern: ^[A-Z]{2}$
+                additionalProperties: false
+              GeoLocation:
+                $ref: '#/components/schemas/GeoLocation'
+            additionalProperties: false
+          Links:
+            description: Additional links to the ATM details
+            type: object
+            properties:
+              FeesUri:
+                description: A link to the Fees ATM.
+                type: string
+                format: uri
+          ATMFee:
+            type: array
+            description: |
+              Details of fees applicable when a cardholder uses the ATM
+            items:
+              type: object
+              required:
+                - Type
+              properties:
+                Type:
+                  type: string
+                  description: The type of cross-bank ATM fee.
+                  enum:
+                    - Withdrawal
+                    - BalanceInquiry
+                    - MiniStatement
+                    - PINChange
+                    - CashDeposit
+                    - CardlessWithdrawal
+                    - InternationalWithdrawal
+                    - CrossBankWithdrawal
+                    - OverLimit
+                    - DeclinedTransaction
+                    - EmergencyCashWithdrawal
+                    - ForeignATMUsage
+                    - ServiceDenial
+                    - FastCashWithdrawal
+                    - NetworkSurcharge
+                    - ForeignExchange
+                    - DomesticCrossBank
+                    - InternationalCrossBank
+                    - Other
+                Amount:
+                  $ref: '#/components/schemas/AEActiveOrHistoricCurrencyAndAmount_0'
+                Percentage:
+                  type: number
+                  description: Percentage-based fee applied to the transaction amount (if applicable).
+                ApplicableNetworks:
+                  type: array
+                  description: List of ATM networks where the cross-bank fee applies.
+                  items:
+                    type: string
+                    enum:
+                      - Visa
+                      - Mastercard
+                      - AmericanExpress
+                      - Diners
+                      - Other
+                Conditions:
+                  type: string
+                  description: |
+                    Conditions under which the fee applies (e.g., number of free transactions allowed, 
+                    withdrawal limits, special partnerships).
+                  example: Fee applies after the first 3 free withdrawals per month.
+        required:
+          - ATMId
+          - LFIId
+          - LFIBrandId
+          - SupportedCurrencies
+          - Location
+    AEReadAtmsMeta1:
+      type: object
+      properties:
+        LastUpdatedDateTime:
+          type: string
+          format: date-time
+        TotalRecords:
+          type: integer
+      required:
+        - LastUpdatedDateTime
+        - TotalRecords
+      additionalProperties: false
+    AEReadAtms1:
+      type: object
+      properties:
+        Data:
+          $ref: '#/components/schemas/AEReadAtmsData1'
+        Meta:
+          $ref: '#/components/schemas/AEReadAtmsMeta1'
+      required:
+        - Meta
+        - Data
+      additionalProperties: false
+    GeoLocation:
+      type: object
+      description: GPS to identify the whereabouts of the ATM.
+      required:
+        - Latitude
+        - Longitude
+      properties:
+        Latitude:
+          type: string
+          description: latitude
+        Longitude:
+          type: string
+          description: longitude
+    AEActiveOrHistoricCurrencyAndAmount_0:
+      type: object
+      required:
+        - Amount
+        - Currency
+      description: This is the value of the amount in the currency
+      properties:
+        Amount:
+          $ref: '#/components/schemas/AEActiveCurrencyAndAmount_SimpleType'
+        Currency:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyCode_0'
+      additionalProperties: false
+    AEActiveCurrencyAndAmount_SimpleType:
+      description: >-
+        A number of monetary units specified in an active currency where the unit of currency is explicit and compliant
+        with ISO 4217.
+      type: string
+      pattern: ^\d{1,13}$|^\d{1,13}\.\d{1,5}$
+    ActiveOrHistoricCurrencyCode_0:
+      description: >-
+        Identification of the currency in which the account is held. A code allocated to a currency under an
+        international currency identification scheme, as described in the latest edition of the international standard
+        ISO 4217 'Codes for the representation of currencies and funds'.
+      type: string
+      pattern: ^[A-Z]{3,3}$
+      example: AED
+    AENamespacedPattern:
+      type: string
+      pattern: ^[A-Za-z]+\.[A-Za-z]+$
+  responses:
+    400Error:
+      description: Bad request
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+      content:
+        application/json; charset=utf-8:
+          schema:
+            $ref: '#/components/schemas/AEError400Response'
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AEError400Response'
+    401Error:
+      description: Unauthorized
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    403Error:
+      description: Forbidden
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+      content:
+        application/json; charset=utf-8:
+          schema:
+            $ref: '#/components/schemas/AEError403Response'
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AEError403Response'
+    405Error:
+      description: Method Not Allowed
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    406Error:
+      description: Not Acceptable
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    415Error:
+      description: Unsupported Media Type
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    429Error:
+      description: Too Many Requests
+      headers:
+        Retry-After:
+          description: Number in seconds to wait
+          schema:
+            type: integer
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    500Error:
+      description: Internal Server Error
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+      content:
+        application/json; charset=utf-8:
+          schema:
+            $ref: '#/components/schemas/AEError500Response'
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AEError500Response'
+  parameters:
+    Authorization:
+      name: authorization
+      in: header
+      required: true
+      description: An authorization Token as per https://tools.ietf.org/html/rfc6750
+      schema:
+        type: string
+  securitySchemes:
+    TPPOAuth2Security:
+      type: oauth2
+      description: >-
+        TPP confidential client authorization with the LFI to stage a consent. **Please refer to [OpenID FAPI Security
+        Profile 1.0 -Part 2
+        Advanced](https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server) - 5.2.2 point 14 -
+        shall authenticate the confidential client using one of the following methods private_key_jwt and [OpenID
+        Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) 9. Client
+        Authentication private_key_jwt**
+      flows:
+        clientCredentials:
+          tokenUrl: https://authserver.example/token
+          scopes:
+            atm: Ability to read ATM data
+servers:
+  - url: /open-finance/atm/v2.1

@@ -30,6 +30,7 @@ const VERSIONS_FILE = resolve(ROOT, 'src', 'data', 'versions.ts')
 const ENDPOINTS_INDEX = resolve(ROOT, 'src', 'data', 'endpoints', 'index.ts')
 const ERRATAS_FILE = resolve(ROOT, 'src', 'data', 'erratas-registry.ts')
 const VERSION_CHANGES_FILE = resolve(ROOT, 'src', 'data', 'version-changes-registry.ts')
+const ANNOUNCEMENT_FILE = resolve(ROOT, 'src', 'data', 'site-announcement.ts')
 const CHROME_FILES = [
   resolve(ROOT, 'src', 'components', 'chrome', 'PageHeader.vue'),
   resolve(ROOT, 'src', 'components', 'chrome', 'PageFooter.vue'),
@@ -49,8 +50,9 @@ before(async () => {
     export { buildApiSpecsSidebar } from ${JSON.stringify(join(SIDEBARS, 'api-specs.ts'))}
     export { VERSIONS } from ${JSON.stringify(VERSIONS_FILE)}
     export { getEndpointBySlug } from ${JSON.stringify(ENDPOINTS_INDEX)}
-    export { ERRATA_SECTIONS } from ${JSON.stringify(ERRATAS_FILE)}
-    export { VERSION_CHANGES, specUrl } from ${JSON.stringify(VERSION_CHANGES_FILE)}
+    export { ERRATA_SECTIONS, errataVersions } from ${JSON.stringify(ERRATAS_FILE)}
+    export { VERSION_CHANGES, specUrl, changelogVersions } from ${JSON.stringify(VERSION_CHANGES_FILE)}
+    export { SITE_ANNOUNCEMENT } from ${JSON.stringify(ANNOUNCEMENT_FILE)}
   `)
   bundle = a.mod
   dispose = a.dispose
@@ -72,6 +74,18 @@ function resolveOrEndpoint(link) {
   if (cleaned.startsWith('/tech/api-specs/')) {
     const tail = cleaned.replace(/^\/tech\/api-specs\//, '').replace(/\/$/, '')
     if (bundle.getEndpointBySlug(tail)) return true
+  }
+
+  // Dynamic /erratas/:version and /changelog/:version — `[version].vue` files,
+  // which resolveSiteLink cannot match. Round-trip through the same registries
+  // that drive SSG path expansion (see src/data/ssg-paths.ts).
+  for (const [prefix, versions] of [
+    ['/tech/release-notes-and-erratas/erratas/', bundle.errataVersions],
+    ['/tech/release-notes-and-erratas/changelog/', bundle.changelogVersions],
+  ]) {
+    if (!cleaned.startsWith(prefix)) continue
+    const tail = cleaned.slice(prefix.length).replace(/\/$/, '')
+    if ((versions || []).includes(tail)) return true
   }
 
   return false
@@ -240,6 +254,25 @@ describe('Link integrity — sidebars, chrome, and errata banners', () => {
       failures,
       [],
       `version-changes specs that do not resolve:\n` +
+      failures.map(l => '  - ' + l).join('\n'),
+    )
+  })
+
+  // The site announcement modal renders on every public page, so a dead path
+  // there is a dead link the whole readership sees on arrival.
+  it('every item path in site-announcement resolves to a real page or endpoint', () => {
+    const ann = bundle.SITE_ANNOUNCEMENT
+    assert.ok(ann && Array.isArray(ann.items),
+      'SITE_ANNOUNCEMENT is not exported, or has no items array')
+
+    const failures = []
+    for (const item of ann.items) {
+      if (!resolveOrEndpoint(item.path)) failures.push(`"${item.title}": ${item.path}`)
+    }
+    assert.deepStrictEqual(
+      failures,
+      [],
+      `site-announcement items pointing at dead routes:\n` +
       failures.map(l => '  - ' + l).join('\n'),
     )
   })

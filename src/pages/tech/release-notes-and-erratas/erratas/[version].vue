@@ -401,7 +401,10 @@ const SPEC_AREA: Record<string, string> = {
   'uae-api-hub-consent-manager-openapi': 'Consent Management',
   'uae-ozone-connect-bank-service-initiation-openapi': 'Service Initiation',
   'uae-ozone-connect-consent-events-actions-openapi': 'Consent Events',
-  'uae-ozone-connect-user-operations-openapi': 'User Operations',
+  // Key is the spec name as published when the errata took effect; the label is the
+  // spec's current name (renamed upstream 2026-05-26) so the facet matches the rest
+  // of the site. See the naming note on v2.1-errata2 §6 in erratas-registry.ts.
+  'uae-ozone-connect-user-operations-openapi': 'CAAP Operations',
   'uae-ozone-connect-health-check-openapi': 'Health Check',
 }
 

@@ -40,6 +40,7 @@ const isHome = computed<boolean>(() => route.path === '/')
 <template>
   <div class="app-shell" :class="{ 'is-tech': isTech, 'is-home': isHome }">
     <PageHeader />
+    <SiteAnnouncementModal />
     <main class="app-shell__main">
       <DraftVersionBanner />
       <EdHoverSidebar

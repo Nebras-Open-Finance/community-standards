@@ -1,0 +1,764 @@
+openapi: 3.0.0
+info:
+  title: UAE TPP Reports API
+  description: '## UAE Open Finance TPP Reports API Specification'
+  version: v2.1-draft1
+tags:
+  - name: TPP Reports
+    description: Retrieve Open Finance Platform TPP reports
+paths:
+  /tpp-reports:
+    get:
+      tags:
+        - TPP Reports
+      operationId: TppReports_read
+      summary: TPP Reports for Open Finance Platform
+      description: >-
+        Allows a TPP to retrieve reports provided through the Open Finance Platform.
+
+
+        TPPs can either retrieve all reports for a given time period or filter by report type.
+
+
+        Scoping of the reports is based on the TPP’s access rights. Only the reports that the TPP has access to will be
+        returned.
+      parameters:
+        - $ref: '#/components/parameters/AETppReportPeriodStartDateParameter'
+        - $ref: '#/components/parameters/AETppReportPeriodEndDateParameter'
+        - $ref: '#/components/parameters/AETppReportTypeParameter'
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/x-fapi-interaction-id'
+      responses:
+        '200':
+          description: The request has succeeded.
+          headers:
+            x-fapi-interaction-id:
+              required: false
+              description: An RFC4122 UID used as a correlation ID.
+              schema:
+                type: string
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/AEReportResponse'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AEReportResponse'
+        '400':
+          $ref: '#/components/responses/400Error'
+        '401':
+          $ref: '#/components/responses/401Error'
+        '403':
+          $ref: '#/components/responses/403Error'
+        '405':
+          $ref: '#/components/responses/405Error'
+        '406':
+          $ref: '#/components/responses/406Error'
+        '415':
+          $ref: '#/components/responses/415Error'
+        '429':
+          $ref: '#/components/responses/429Error'
+        '500':
+          $ref: '#/components/responses/500Error'
+      security:
+        - TPPOAuth2Security:
+            - tpp-reports
+components:
+  parameters:
+    AETppReportPeriodEndDateParameter:
+      name: ReportingPeriodEndDate
+      in: query
+      required: true
+      description: The end date of the reporting period
+      schema:
+        $ref: '#/components/schemas/AEReportingPeriodEndDate'
+    AETppReportPeriodStartDateParameter:
+      name: ReportingPeriodStartDate
+      in: query
+      required: true
+      description: The start date of the reporting period
+      schema:
+        $ref: '#/components/schemas/AEReportingPeriodStartDate'
+    AETppReportTypeParameter:
+      name: ReportType
+      in: query
+      required: false
+      description: The report type as defined by the OpenAPI description. If not provided, all report types are returned.
+      schema:
+        $ref: '#/components/schemas/AETppReportTypeValues'
+    Authorization:
+      name: authorization
+      in: header
+      required: true
+      description: An Access Token as per https://tools.ietf.org/html/rfc6750
+      schema:
+        type: string
+    x-fapi-interaction-id:
+      name: x-fapi-interaction-id
+      in: header
+      required: false
+      description: An RFC4122 UID used as a correlation ID.
+      schema:
+        type: string
+  headers:
+    x-fapi-interaction-id:
+      required: true
+      description: An RFC4122 UID used as a correlation id.
+      schema:
+        type: string
+      example: 49df2c2c-6b80-40ee-96a1-71910a248048
+  schemas:
+    AEError400Response:
+      description: An array of detail error codes, and messages, and URLs to documentation to help remediation.
+      type: object
+      properties:
+        Errors:
+          items:
+            $ref: '#/components/schemas/AEError400'
+          type: array
+          minItems: 1
+      required:
+        - Errors
+      additionalProperties: false
+    AEError403Response:
+      description: An array of detail error codes, and messages, and URLs to documentation to help remediation.
+      type: object
+      properties:
+        Errors:
+          items:
+            $ref: '#/components/schemas/AEError403'
+          type: array
+          minItems: 1
+      required:
+        - Errors
+      additionalProperties: false
+    AEError500Response:
+      description: An array of detail error codes, and messages, and URLs to documentation to help remediation.
+      type: object
+      properties:
+        Errors:
+          items:
+            $ref: '#/components/schemas/AEError500'
+          type: array
+          minItems: 1
+      required:
+        - Errors
+      additionalProperties: false
+    AEMessage:
+      type: string
+      minLength: 1
+      maxLength: 500
+      description: >-
+        A description of the error that occurred. e.g., 'A mandatory field isn't supplied' or
+        'RequestedExecutionDateTime must be in future'
+
+        This field is not standardised
+    AEError400:
+      description: Error
+      type: object
+      required:
+        - Code
+        - Message
+      additionalProperties: false
+      properties:
+        Code:
+          $ref: '#/components/schemas/AEError400Code'
+        Message:
+          $ref: '#/components/schemas/AEMessage'
+        Path:
+          description: >-
+            Recommended but optional reference to the JSON Path of the field with error, e.g.,
+            Data.Initiation.InstructedAmount.Currency
+          type: string
+          minLength: 1
+          maxLength: 500
+        Url:
+          description: URL to help remediate the problem, or provide more information, or to API Reference, or help etc
+          type: string
+    AEError400Code:
+      description: >-
+        Error Code. This may either be one of the prescribed Error Code(s) or a namespaced Error Code where the
+        namespace is the system or organisation that has responded with the error, and the code is the code specific to
+        the system or organisation.
+      type: string
+      anyOf:
+        - enum:
+            - Consent.Invalid
+            - Consent.BusinessRuleViolation
+            - Consent.FailsControlParameters
+            - Consent.InvalidUserIdentifier
+            - JWS.InvalidSignature
+            - JWS.Malformed
+            - JWS.InvalidClaim
+            - JWS.InvalidHeader
+            - JWE.DecryptionError
+            - JWE.InvalidHeader
+            - GenericRecoverableError
+            - GenericError
+            - Event.UnexpectedEvent
+            - Body.InvalidFormat
+            - Resource.InvalidFormat
+        - pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+    AEError403:
+      description: Error
+      type: object
+      required:
+        - Code
+        - Message
+      additionalProperties: false
+      properties:
+        Code:
+          $ref: '#/components/schemas/AEError403Code'
+        Message:
+          $ref: '#/components/schemas/AEMessage'
+        Path:
+          description: >-
+            Recommended but optional reference to the JSON Path of the field with error, e.g.,
+            Data.Initiation.InstructedAmount.Currency
+          type: string
+          minLength: 1
+          maxLength: 500
+        Url:
+          description: URL to help remediate the problem, or provide more information, or to API Reference, or help etc
+          type: string
+    AEError403Code:
+      description: >-
+        Error Code. This may either be one of the prescribed Error Code(s) or a namespaced Error Code where the
+        namespace is the system or organisation that has responded with the error, and the code is the code specific to
+        the system or organisation.
+      type: string
+      anyOf:
+        - enum:
+            - AccessToken.InvalidScope
+            - Consent.TransientAccountAccessFailure
+            - Consent.AccountTemporarilyBlocked
+            - Consent.PermanentAccountAccessFailure
+            - GenericRecoverableError
+            - GenericError
+        - pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+    AEError500:
+      description: Error
+      type: object
+      required:
+        - Code
+        - Message
+      additionalProperties: false
+      properties:
+        Code:
+          $ref: '#/components/schemas/AEError500Code'
+        Message:
+          $ref: '#/components/schemas/AEMessage'
+        Path:
+          description: >-
+            Recommended but optional reference to the JSON Path of the field with error, e.g.,
+            Data.Initiation.InstructedAmount.Currency
+          type: string
+          minLength: 1
+          maxLength: 500
+        Url:
+          description: URL to help remediate the problem, or provide more information, or to API Reference, or help etc
+          type: string
+    AEError500Code:
+      description: >-
+        Error Code. This may either be one of the prescribed Error Code(s) or a namespaced Error Code where the
+        namespace is the system or organisation that has responded with the error, and the code is the code specific to
+        the system or organisation.
+      type: string
+      anyOf:
+        - enum:
+            - GenericRecoverableError
+            - GenericError
+        - pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+    AEApiCallVolume:
+      type: object
+      required:
+        - Type
+        - ReportingPeriodDate
+        - LfiId
+        - LfiName
+        - ApiSet
+        - HttpMethod
+        - Url
+        - HttpResponseCodeGroup
+        - TotalCalls
+      properties:
+        Type:
+          type: string
+          enum:
+            - API Call Volume
+        ReportingPeriodDate:
+          type: string
+          format: date
+        LfiId:
+          type: string
+          description: The LFI Identifier as set in the Trust Framework
+        LfiName:
+          type: string
+          description: The LFI Name
+        ApiSet:
+          $ref: '#/components/schemas/AEApiSetValues'
+        HttpMethod:
+          $ref: '#/components/schemas/AEHttpMethodValues'
+        Url:
+          type: string
+          description: The URL of the reported API operation
+        HttpResponseCodeGroup:
+          $ref: '#/components/schemas/AEHttpResponseCodeGroupValues'
+        TotalCalls:
+          type: integer
+      description: The volume of API calls made per day by LFI
+      additionalProperties: false
+    AEApiSetValues:
+      type: string
+      enum:
+        - BankDataSharing
+        - BankServiceInitation
+        - InsuranceDataSharing
+        - InsuranceServiceInitation
+      description: Group of APIs to which the reported metric belongs
+    AEHttpMethodValues:
+      type: string
+      enum:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - PATCH
+        - HEAD
+        - OPTIONS
+        - TRACE
+      description: HTTP method used in the reported API operation
+    AEHttpResponseCodeGroupValues:
+      type: string
+      enum:
+        - 2xx
+        - 4xx
+        - 5xx
+      description: Group of HTTP response codes to which the reported metric belongs
+    AELfiAvailability:
+      type: object
+      required:
+        - Type
+        - PeriodStartDate
+        - PeriodEndDate
+        - LfiId
+        - LfiName
+        - ApiSet
+        - HttpMethod
+        - Url
+        - TotalTimeMinutes
+        - TotalUptimeMinutes
+        - PlannedDowntimeMinutes
+        - UnplannedDowntimeMinutes
+        - TotalDowntimeMinutes
+        - UptimePercentage
+        - DowntimePercentage
+        - UnplannedDowntimePercentage
+      properties:
+        Type:
+          type: string
+          enum:
+            - LFI Availability
+        PeriodStartDate:
+          $ref: '#/components/schemas/AEReportingPeriodStartDate'
+        PeriodEndDate:
+          $ref: '#/components/schemas/AEReportingPeriodEndDate'
+        LfiId:
+          type: string
+          description: The LFI Identifier as set in the Trust Framework
+        LfiName:
+          type: string
+          description: The LFI Name
+        ApiSet:
+          $ref: '#/components/schemas/AEApiSetValues'
+        HttpMethod:
+          $ref: '#/components/schemas/AEHttpMethodValues'
+        Url:
+          type: string
+          description: The URL of the reported API operation
+        TotalTimeMinutes:
+          $ref: '#/components/schemas/AETotalTimeMinutes'
+        TotalUptimeMinutes:
+          $ref: '#/components/schemas/AETotalUptimeMinute'
+        PlannedDowntimeMinutes:
+          $ref: '#/components/schemas/AEPlannedDowntimeMinutes'
+        UnplannedDowntimeMinutes:
+          type: integer
+          description: >-
+            The total number of minutes that the LFI’s Ozone Connect was unavailable for use or not functioning
+            correctly during a period when downtime was not planned
+        TotalDowntimeMinutes:
+          $ref: '#/components/schemas/TotalDowntimeMinutes'
+        UptimePercentage:
+          type: integer
+          description: The percentage of time that the LFI’s Ozone Connect was available for use and functioning correctly.
+        DowntimePercentage:
+          type: integer
+          description: The percentage of time that the LFI’s Ozone Connect  was unavailable for use or not functioning correctly
+        UnplannedDowntimePercentage:
+          type: integer
+          description: The percentage of time that the LFI’s was unavailable for use in the time period excluding planned downtime
+      additionalProperties: false
+    AELfiPerformance:
+      type: object
+      required:
+        - Type
+        - PeriodStartDate
+        - PeriodEndDate
+        - LfiId
+        - LfiName
+        - ApiSet
+        - HttpMethod
+        - Url
+        - HttpResponseCodeGroup
+        - MaximumResponseTimeMicroseconds
+        - MinimumResponseTimeMicroseconds
+        - AverageResponseTimeMicroseconds
+        - TotalCalls
+        - ErrorRatePercentage
+      properties:
+        Type:
+          type: string
+          enum:
+            - LFI Performance
+        PeriodStartDate:
+          $ref: '#/components/schemas/AEReportingPeriodStartDate'
+        PeriodEndDate:
+          $ref: '#/components/schemas/AEReportingPeriodEndDate'
+        LfiId:
+          type: string
+          description: The LFI Identifier as set in the Trust Framework
+        LfiName:
+          type: string
+          description: The LFI Name
+        ApiSet:
+          $ref: '#/components/schemas/AEApiSetValues'
+        HttpMethod:
+          $ref: '#/components/schemas/AEHttpMethodValues'
+        Url:
+          type: string
+          description: The URL of the reported API operation
+        HttpResponseCodeGroup:
+          $ref: '#/components/schemas/AEHttpResponseCodeGroupValues'
+        MaximumResponseTimeMicroseconds:
+          type: integer
+          description: The maximum response time used to respond to TPP requests for the API
+        MinimumResponseTimeMicroseconds:
+          type: integer
+          description: The minimum response time used to respond to TPP requests for the API
+        AverageResponseTimeMicroseconds:
+          type: integer
+          description: The average response time used to respond to TPP requests for the API
+        TotalCalls:
+          type: integer
+          description: The total number of API calls
+        ErrorRatePercentage:
+          type: integer
+          description: The error rate based on number of `5xx` errors divided by the total number of API calls
+      additionalProperties: false
+    AEOfpAvailability:
+      type: object
+      required:
+        - Type
+        - PeriodStartDate
+        - PeriodEndDate
+        - LfiId
+        - LfiName
+        - ApiSet
+        - HttpMethod
+        - Url
+        - TotalTimeMinutes
+        - TotalUptimeMinutes
+        - PlannedDowntimeMinutes
+        - UnplannedDowntimeMinutes
+        - TotalDowntimeMinutes
+        - UptimePercentage
+        - DowntimePercentage
+        - UnplannedDowntimePercentage
+      properties:
+        Type:
+          type: string
+          enum:
+            - OFP Availability
+        PeriodStartDate:
+          $ref: '#/components/schemas/AEReportingPeriodStartDate'
+        PeriodEndDate:
+          $ref: '#/components/schemas/AEReportingPeriodEndDate'
+        LfiId:
+          type: string
+          description: The LFI Identifier as set in the Trust Framework
+        LfiName:
+          type: string
+          description: The LFI Name
+        ApiSet:
+          $ref: '#/components/schemas/AEApiSetValues'
+        HttpMethod:
+          $ref: '#/components/schemas/AEHttpMethodValues'
+        Url:
+          type: string
+          description: The URL of the reported API operation
+        TotalTimeMinutes:
+          $ref: '#/components/schemas/AETotalTimeMinutes'
+        TotalUptimeMinutes:
+          $ref: '#/components/schemas/AETotalUptimeMinute'
+        PlannedDowntimeMinutes:
+          $ref: '#/components/schemas/AEPlannedDowntimeMinutes'
+        UnplannedDowntimeMinutes:
+          type: integer
+          description: >-
+            The percentage of time that the OFP was unavailable for use or not functioning correctly during a period
+            when downtime was not planned
+        TotalDowntimeMinutes:
+          $ref: '#/components/schemas/TotalDowntimeMinutes'
+        UptimePercentage:
+          type: integer
+          description: The percentage of time that the OFP was available for use and functioning correctly
+        DowntimePercentage:
+          type: integer
+          description: The percentage of time that the OFP was unavailable for use or not functioning correctly
+        UnplannedDowntimePercentage:
+          type: integer
+          description: The percentage of time that the OFP was unavailable for use in the time period excluding planned downtime
+      additionalProperties: false
+    AEOfpPerformance:
+      type: object
+      required:
+        - Type
+        - PeriodStartDate
+        - PeriodEndDate
+        - LfiId
+        - LfiName
+        - ApiSet
+        - HttpMethod
+        - Url
+        - HttpResponseCodeGroup
+        - MaximumResponseTimeMicroseconds
+        - MinimumResponseTimeMicroseconds
+        - AverageResponseTimeMicroseconds
+        - TotalCalls
+        - ErrorRatePercentage
+      properties:
+        Type:
+          type: string
+          enum:
+            - OFP Performance
+        PeriodStartDate:
+          $ref: '#/components/schemas/AEReportingPeriodStartDate'
+        PeriodEndDate:
+          $ref: '#/components/schemas/AEReportingPeriodEndDate'
+        LfiId:
+          type: string
+          description: The LFI Identifier as set in the Trust Framework
+        LfiName:
+          type: string
+          description: The LFI Name
+        ApiSet:
+          $ref: '#/components/schemas/AEApiSetValues'
+        HttpMethod:
+          $ref: '#/components/schemas/AEHttpMethodValues'
+        Url:
+          type: string
+          description: The URL of the reported API operation
+        HttpResponseCodeGroup:
+          $ref: '#/components/schemas/AEHttpResponseCodeGroupValues'
+        MaximumResponseTimeMicroseconds:
+          type: integer
+          description: The maximum response time used to respond to TPP requests for the API
+        MinimumResponseTimeMicroseconds:
+          type: integer
+          description: The minimum response time used to respond to TPP requests for the API
+        AverageResponseTimeMicroseconds:
+          type: integer
+          description: The average response time used to respond to TPP requests for the API
+        TotalCalls:
+          type: integer
+          description: The total number of API calls
+        ErrorRatePercentage:
+          type: integer
+          description: The error rate based on number of `5xx` errors divided by the total number of API calls
+      additionalProperties: false
+    AEPlannedDowntimeMinutes:
+      type: integer
+      description: The total number of minutes that were scheduled as downtime in the time period
+    AEReportResponse:
+      type: object
+      required:
+        - Data
+        - Links
+        - Meta
+      properties:
+        Data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AEReportType'
+        Links:
+          $ref: '#/components/schemas/LinksResource'
+        Meta:
+          $ref: '#/components/schemas/Meta'
+      description: The response to a request for TPP reports
+      additionalProperties: false
+    AEReportType:
+      oneOf:
+        - $ref: '#/components/schemas/AEApiCallVolume'
+        - $ref: '#/components/schemas/AELfiAvailability'
+        - $ref: '#/components/schemas/AEOfpAvailability'
+        - $ref: '#/components/schemas/AELfiPerformance'
+        - $ref: '#/components/schemas/AEOfpPerformance'
+      discriminator:
+        propertyName: Type
+        mapping:
+          API Call Volume: '#/components/schemas/AEApiCallVolume'
+          LFI Availability: '#/components/schemas/AELfiAvailability'
+          OFP Availability: '#/components/schemas/AEOfpAvailability'
+          LFI Performance: '#/components/schemas/AELfiPerformance'
+          OFP Performance: '#/components/schemas/AEOfpPerformance'
+    AEReportingPeriodEndDate:
+      type: string
+      format: date
+      description: End date of the reporting period
+    AEReportingPeriodStartDate:
+      type: string
+      format: date
+      description: Start date of the reporting period
+    AETotalTimeMinutes:
+      type: integer
+      description: The total number of minutes in the given time period of the report
+    AETotalUptimeMinute:
+      type: integer
+      description: The number of minutes of uptime in the given time period.
+    AETppReportTypeValues:
+      type: string
+      enum:
+        - API Call Volume
+        - LFI Availability
+        - OFP Availability
+        - LFI Performance
+        - OFP Performance
+      description: TPP Report Types
+    First:
+      type: string
+      format: uri
+      description: A link to the first page in a paginated result set
+    Last:
+      type: string
+      format: uri
+      description: A link to the last page in a paginated result set
+    LinksResource:
+      type: object
+      required:
+        - Self
+      properties:
+        Self:
+          $ref: '#/components/schemas/Self'
+        First:
+          $ref: '#/components/schemas/First'
+        Prev:
+          $ref: '#/components/schemas/Prev'
+        Next:
+          $ref: '#/components/schemas/Next'
+        Last:
+          $ref: '#/components/schemas/Last'
+      description: Links relevant to the resource
+      additionalProperties: false
+    Meta:
+      type: object
+      description: Metadata relevant to the resource
+      additionalProperties: false
+    Next:
+      type: string
+      format: uri
+      description: A link to the next page in a paginated result set
+    Prev:
+      type: string
+      format: uri
+      description: A link to the previous page in a paginated result set
+    Self:
+      type: string
+      format: uri
+      description: A link to the current resource
+    TotalDowntimeMinutes:
+      type: integer
+      description: Total downtime in minutes
+  responses:
+    400Error:
+      description: Bad request
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+      content:
+        application/json; charset=utf-8:
+          schema:
+            $ref: '#/components/schemas/AEError400Response'
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AEError400Response'
+    401Error:
+      description: Unauthorized
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    403Error:
+      description: Forbidden
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+      content:
+        application/json; charset=utf-8:
+          schema:
+            $ref: '#/components/schemas/AEError403Response'
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AEError403Response'
+    405Error:
+      description: Method Not Allowed
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    406Error:
+      description: Not Acceptable
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    415Error:
+      description: Unsupported Media Type
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    429Error:
+      description: Too Many Requests
+      headers:
+        Retry-After:
+          description: Number in seconds to wait
+          schema:
+            type: integer
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    500Error:
+      description: Internal Server Error
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+      content:
+        application/json; charset=utf-8:
+          schema:
+            $ref: '#/components/schemas/AEError500Response'
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AEError500Response'
+  securitySchemes:
+    TPPOAuth2Security:
+      type: oauth2
+      description: >-
+        TPP confidential client authorization with the LFI to stage a consent. **Please refer to [OpenID FAPI Security
+        Profile 1.0 -Part 2
+        Advanced](https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server) - 5.2.2 point 14 -
+        shall authenticate the confidential client using one of the following methods private_key_jwt and [OpenID
+        Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) 9. Client
+        Authentication private_key_jwt**
+      flows:
+        clientCredentials:
+          tokenUrl: https://authserver.example/token
+          scopes:
+            tpp-reports: Right to read Open Finance Platform reports for a given TPP
+servers:
+  - url: /open-finance/reporting/v2.1

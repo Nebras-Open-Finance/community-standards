@@ -38,7 +38,7 @@ export interface VersionChange {
   /** Version being compared from, e.g. "v2.1". */
   fromVersion: string
   /**
-   * Documentation version this change lands in, e.g. "v2.2-draft". This is the
+   * Documentation version this change lands in, e.g. "v2.2-rc1". This is the
    * route segment, so it is what the changelog page is keyed on.
    */
   toVersion: string
@@ -72,8 +72,8 @@ export interface VersionChange {
   affectedPaths: string[]
 }
 
-const TPP = '/tech/tpp-standards/v2.2-draft'
-const LFI = '/tech/lfi-api-hub/v2.2-draft'
+const TPP = '/tech/tpp-standards/v2.2-rc1'
+const LFI = '/tech/lfi-api-hub/v2.2-rc1'
 const DDC = `${TPP}/consent/data-deletion-confirmation`
 const CM = `${LFI}/api-hub/consent-manager`
 const COP = `${LFI}/banking/confirmation-of-payee`
@@ -85,29 +85,28 @@ export const VERSION_CHANGES: VersionChange[] = [
   {
     changeId: 'v2.1-to-v2.2',
     fromVersion: 'v2.1',
-    toVersion: 'v2.2-draft',
+    toVersion: 'v2.2-rc1',
     number: 1,
     category: 'New capability',
     title: 'Data deletion confirmation — attestations sub-resource',
     summary:
       'A TPP confirms it has deleted (or lawfully retained) the data held under a consent, by posting an Attestation Event once that consent reaches a terminal status.',
     description:
-      'Every consent gains an append-only `attestations` sub-resource. Once a consent reaches a terminal status — `Revoked`, `Expired`, or `Consumed` — the TPP reviews the data it holds under that consent and POSTs an Attestation Event confirming what it did with it. `Rejected` consents are out of scope: no data was ever shared under them.\n\n' +
+      'Every consent gains an append-only `attestations` sub-resource. Once a consent reaches a terminal status — `Revoked` or `Expired` — the TPP reviews the data it holds under that consent and POSTs an Attestation Event confirming what it did with it. `Rejected` consents are out of scope: no data was ever shared under them.\n\n' +
       'The sub-resource is added to all three consent types, each scoped to its own API family:\n\n' +
       '`POST /account-access-consents/{ConsentId}/attestations` (scope `accounts`), `POST /payment-consents/{ConsentId}/attestations` (scope `payments`), and `POST /insurance-consents/{ConsentId}/attestations` (scope `insurance`).\n\n' +
       'A payment consent is not empty for this purpose — it carries debtor and creditor details, amounts, references, and any account data the TPP retrieved to set the payment up, so it falls under the same obligation as a data sharing consent.\n\n' +
-      'The event body carries an envelope — `AttestationType` (today only `DataRetentionDeletion`), `AttestationStatusAppliedDateTime`, `DataAccessCeasedDateTime`, and `ConsentRevocationDateTime` where the customer revoked at the TPP — plus a `DataActions` array with one entry per category of data held. Each entry declares whether that category was `Deleted`, `Retained`, `Anonymised`, or `ArchivedRestricted`; anything kept also requires a retention reason, a retained-until date, and an access restriction.\n\n' +
-      'The event must reach the API Hub within 45 days of the consent becoming terminal. The API Hub returns `201` with a receipt — `AttestationId`, `AttestationReceivedDateTime`, and `RegulatoryDeadlineMetIndicator`, which reports whether that deadline was met. A late event is still recorded, not rejected. A failed technical or rule validation returns `400` with code `Attestation.ValidationError`.\n\n' +
+      'The event body carries an envelope — `AttestationType` (today only `DataRetentionDeletion`), `AttestationStatusAppliedDateTime`, `DataAccessCeasedDateTime`, and `ConsentRevocationDateTime` where the customer revoked at the TPP — plus a `DataActions` array with one entry per category of data held. Each entry declares whether that category was `Deleted`, `Retained`, `Anonymised`, or `ArchivedRestricted`, and carries the date the attestation for that category was made; anything kept also requires a retention reason, a retained-until date, and an access restriction.\n\n' +
+      'The POST is not a JSON body: the request is a signed JWT sent as `application/jwt`, carrying the Attestation in its `message` claim, and the `201` response is a signed JWT in return. The receipt inside it gives `AttestationId`, `AttestationReceivedDateTime` and `RegulatoryDeadlineMetIndicator`, plus a full copy of the Attestation submitted — repeating it puts the complete record inside the signed message. `RegulatoryDeadlineMetIndicator` reports whether the event arrived before the regulatory deadline for the attestation type; for `DataRetentionDeletion` that is 45 days from the consent becoming terminal, a value the API Hub applies rather than one the specification carries. A late event is still recorded, not rejected.\n\n' +
+      'The GET returns every recorded event as unsigned JSON, paginated, each carrying its copy of the submitted Attestation. Where a TPP has posted more than one, only the last successfully recorded event is reported on; `LastSubmitted=true` retrieves just that one.\n\n' +
       'The sub-resource is append-only and stateless. Each POST records a new immutable event, the API Hub applies no de-duplication, and there is no correction endpoint — a restatement is simply another event. `AttestationType` is the extension point: a future obligation to attest to something else against a consent becomes a new type rather than a new API.\n\n' +
       'The full specification — field tables, enum values, validation rules, and worked examples — is on the Data Deletion Confirmation page linked below.',
     docsPaths: [{ label: 'Full specification', path: `${DDC}/` }],
     audience: 'TPP',
     areas: ['Consent', 'Data Deletion', 'Data Sharing', 'Service Initiation', 'Insurance'],
     specs: [
-      // The document that carries these paths today. It is a draft: on
-      // ratification the paths move into the three family specs below, which is
-      // why all four are listed.
-      'uae-consent-attestations-openapi',
+      // The sub-resource is published in each family's own document rather than
+      // one of its own, so all three are listed.
       'uae-account-information-openapi',
       'uae-bank-initiation-openapi',
       'uae-insurance-openapi',
@@ -149,7 +148,7 @@ export const VERSION_CHANGES: VersionChange[] = [
   {
     changeId: 'v2.1-to-v2.2',
     fromVersion: 'v2.1',
-    toVersion: 'v2.2-draft',
+    toVersion: 'v2.2-rc1',
     number: 2,
     category: 'Behaviour change',
     title: 'Consents by end user — the `status` filter accepts multiple statuses',
@@ -161,7 +160,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       'The parameter is also now typed. In v2.1 its schema is a bare `string` with no enum, so the specification places no constraint on what may be sent and an unrecognised value simply returns an empty array. In v2.2 each list item MUST be a member of `AEConsentStatus` — `AwaitingAuthorization`, `Authorized`, `Rejected`, `Revoked`, `Expired`, `Consumed`, or `Suspended` — and a request carrying any other value is rejected with `400`. Values are case-sensitive.\n\n' +
       'The change is scoped to this one operation. The three sibling list endpoints — `GET /consents`, `GET /consent-groups/{consentGroupId}/consents`, and `GET /accounts/{accountId}/consents` — share the v2.1 `status` parameter component and are unchanged in v2.2; they continue to accept a single untyped value.\n\n' +
       'The comma-separated form follows the convention already used for multi-valued query parameters elsewhere in the standards, such as `accountIds` and `insurancePolicyIds` on the Ozone Connect endpoints, so it needs no new parsing on the LFI side. In OpenAPI terms the parameter becomes an array with `style: form` and `explode: false`.\n\n' +
-      'The Consent Manager OpenAPI document is published from the api-specs repository, which has no v2.2 release yet, so this change is shown as a draft specification: the endpoint page below renders the published v2.1 document with this parameter applied to it. Everything else in that document is unchanged from v2.1.',
+      'The change is published in the v2.2 release of the Consent Manager OpenAPI document in the api-specs repository, which is what the endpoint page below renders.',
     docsPaths: [{ label: 'Full specification', path: `${CM}/open-api/psu-userId-consents` }],
     audience: 'LFI',
     areas: ['Consent', 'Consent Manager', 'Consent Management Interface'],
@@ -180,7 +179,7 @@ export const VERSION_CHANGES: VersionChange[] = [
   {
     changeId: 'v2.1-to-v2.2',
     fromVersion: 'v2.1',
-    toVersion: 'v2.2-draft',
+    toVersion: 'v2.2-rc1',
     number: 3,
     category: 'New capability',
     title: 'Payment log records the rail used to settle the payment',
@@ -193,7 +192,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       'The LFI MUST populate the field when patching the status to a terminal success — `AcceptedWithoutPosting`, `AcceptedSettlementCompleted`, or `AcceptedCreditSettlementCompleted`. It MAY be sent alongside `Pending`, and MAY be omitted on `Rejected`, where the payment may have been rejected before any rail was selected.\n\n' +
       'The three values are the namespaces already used by `paymentResponse.rejectReasonCode`, whose v2.1 pattern is `^(AANI|FTS|LFI)\\.[A-Za-z0-9]+$`. The two fields MUST therefore agree: an `AANI.*` reject code is accompanied by `AANI`, and an `FTS.*` code by `FTS`. An `LFI.*` reject code means the payment was rejected at the LFI before rail submission, and carries no such constraint.\n\n' +
       'Because the field is required on a terminal-success patch, an LFI built against v2.1 that patches a completed payment without it is rejected under v2.2. This is the one change in v2.2 that requires action from every LFI, and the API Hub enforcement date is set separately from the version cutover.\n\n' +
-      'The Consent Manager OpenAPI document is published from the api-specs repository, which has no v2.2 release yet, so this change is shown as a draft specification: the endpoint pages below render the published v2.1 document with this field applied to it. Everything else in that document is unchanged from v2.1.',
+      'The change is published in the v2.2 release of the Consent Manager OpenAPI document in the api-specs repository, which is what the endpoint pages below render.',
     docsPaths: [{ label: 'Full specification', path: `${CM}/open-api/payment-log-id` }],
     audience: 'LFI',
     areas: ['Consent Manager', 'Payments', 'Service Initiation', 'Reporting'],
@@ -217,7 +216,7 @@ export const VERSION_CHANGES: VersionChange[] = [
   {
     changeId: 'v2.1-to-v2.2',
     fromVersion: 'v2.1',
-    toVersion: 'v2.2-draft',
+    toVersion: 'v2.2-rc1',
     number: 4,
     category: 'Behaviour change',
     title: 'Payment log is paginated',
@@ -229,7 +228,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       'Nothing here is bespoke. The four consent list operations on this API — `GET /consents`, `GET /consent-groups/{consentGroupId}/consents`, `GET /psu/{userId}/consents`, and `GET /accounts/{accountId}/consents` — are the only other paginated endpoints the API Hub provides to LFIs, and they take the same two parameter components and return the same metadata schema. `/payment-log` was the one list operation in the API that had been left unpaginated; it now behaves like the endpoints beside it, so an LFI already calling those has nothing new to learn.\n\n' +
       '`totalRecords` counts every payment under the consent and `totalPages` is `ceil(totalRecords / pageSize)`, so a caller reads `totalPages` to know when to stop rather than treating a short page as the last one.\n\n' +
       'This is a behaviour change that requires action. An LFI built against v2.1 that calls this endpoint and renders what it receives will, from v2.2, silently show only the first page of payments on any consent that has more — with no error to signal the truncation. Any caller that needs the full set MUST iterate `page` until `pageNumber` reaches `totalPages`. This is the reason to check the endpoint even where the rest of v2.2 needs no work.\n\n' +
-      'The Consent Manager OpenAPI document is published from the api-specs repository, which has no v2.2 release yet, so this change is shown as a draft specification: the endpoint page below renders the published v2.1 document with pagination applied to it. Everything else in that document is unchanged from v2.1.',
+      'The change is published in the v2.2 release of the Consent Manager OpenAPI document in the api-specs repository, which is what the endpoint page below renders.',
     docsPaths: [{ label: 'Full specification', path: `${CM}/open-api/payment-log` }],
     audience: 'LFI',
     areas: ['Consent Manager', 'Payments', 'Consent Management Interface'],
@@ -249,7 +248,7 @@ export const VERSION_CHANGES: VersionChange[] = [
   {
     changeId: 'v2.1-to-v2.2',
     fromVersion: 'v2.1',
-    toVersion: 'v2.2-draft',
+    toVersion: 'v2.2-rc1',
     number: 5,
     category: 'Behaviour change',
     title: 'Transaction narrative is required',
@@ -262,7 +261,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       'Being present is not on its own sufficient. The value MUST be a human-readable description by which the customer can recognise the entry. Where the LFI\'s core banking system holds no stored narrative for a transaction, the LFI MUST derive one from the data it does hold — the merchant name, the counterparty, or the transaction type. Whitespace-only values and non-informative placeholders such as `N/A`, `-`, or `Unknown` do not satisfy the requirement, and an empty string is rejected by the schema in any case.\n\n' +
       'The Ozone Connect field is also bounded to match: it gains `minLength: 1` and `maxLength: 500`, the constraints the TPP-facing schema has carried since v2.1. Without them an LFI could return a 600-character narrative that passes its own contract and then fails the Hub\'s — a failure invisible in the document the LFI builds against.\n\n' +
       'This is a change every LFI must act on. An LFI built against v2.1 that returns transactions without a narrative — or without one for a subset of transaction types, which is the more common case — will have those responses rejected under v2.2. TPPs need take no action, but may stop handling the field as absent once their LFIs are on v2.2.\n\n' +
-      'Neither specification has a v2.2 release in the api-specs repository yet, so this change is shown as a draft specification: the endpoint pages below render the published v2.1 documents with the requirement applied to them. Everything else in those documents is unchanged from v2.1.',
+      'Both specifications carry the requirement in their v2.2 release in the api-specs repository, which is what the endpoint pages below render.',
     docsPaths: [
       {
         label: 'TPP specification',
@@ -300,7 +299,7 @@ export const VERSION_CHANGES: VersionChange[] = [
   {
     changeId: 'v2.1-to-v2.2',
     fromVersion: 'v2.1',
-    toVersion: 'v2.2-draft',
+    toVersion: 'v2.2-rc1',
     number: 6,
     category: 'Behaviour change',
     title: 'Confirmation of Payee — the LFI sees only the IBAN, and answers with a name',
@@ -317,7 +316,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       'Three semantics that were previously implicit are now stated in the specification rather than only in the guide. The LFI performs no matching, and MUST NOT filter, rank or omit holders on any basis — the API Hub owns the rules. A joint account MUST return one entry per holder, and the API Hub evaluates every entry in `data` rather than stopping at the first. Not found is `200` with an empty `data` array, never `204`, `404`, `201` or `202`; account-not-found, account-barred and customer-opted-out are deliberately indistinguishable so a CoP query cannot be used to probe for the existence of an account.\n\n' +
       'Removing the submitted name also resolves a v2.1 limitation. Claim-block selection previously followed the TPP\'s request type rather than the data the LFI holds, so a business name submitted against an account held as a personal name was answered as a protocol error rather than as a no-match. With no name in the request there is nothing to select on: the LFI returns what it holds, and the Hub decides.\n\n' +
       'This is a breaking change and requires action from every LFI. It is confined to the two bodies of this one operation — headers, query parameters, status codes and error codes are unchanged, so the work is a rewrite of the request parser and response builder rather than a new integration. The TPP-facing `/confirmation` and `/discovery` endpoints do not move: the TPP still submits a name, and the API Hub normalises between the two surfaces.\n\n' +
-      'The Ozone Connect Bank Data Sharing specification has no v2.2 release in the api-specs repository yet, so this change is shown as a draft specification: the endpoint page below renders the published v2.1 document with the reshaped CoP schemas applied to it. Everything else in that document is unchanged from v2.1.',
+      'The reshaped schemas are published in the v2.2 release of the Ozone Connect Bank Data Sharing specification in the api-specs repository, which is what the endpoint page below renders.',
     docsPaths: [
       { label: 'Full specification', path: `${COP}/api-guide` },
       { label: 'OpenAPI reference', path: `${COP}/open-api/cop-query` },
@@ -340,7 +339,7 @@ export const VERSION_CHANGES: VersionChange[] = [
   },
 ]
 
-/** `/openapi/v2.2-draft/api-hub/foo-openapi.yaml` → `foo-openapi`. */
+/** `/openapi/v2.2-rc1/api-hub/foo-openapi.yaml` → `foo-openapi`. */
 function specBasename(specPath: string): string {
   const file = specPath.split('/').pop() ?? ''
   return file.replace(/\.ya?ml$/i, '')
@@ -354,7 +353,7 @@ function specBasename(specPath: string): string {
  * which is what a reader recognises, but the route is derived from the endpoint
  * catalogue rather than stored — the catalogue already knows which surface and
  * section each spec belongs to, and it is version-aware, so a change landing in
- * v2.2-draft links to the v2.2-draft reference.
+ * v2.2-rc1 links to the v2.2-rc1 reference.
  *
  * Returns null for a spec with no catalogue entries at that version — today
  * that means any spec whose endpoints have not been authored yet, so the page
