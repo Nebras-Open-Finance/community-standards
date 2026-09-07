@@ -210,6 +210,15 @@ interface PaymentsLogRow {
   count?: number | string
 }
 
+// `/api/trust-framework.json` — the same feed the document repository reads.
+// `tppGoLiveDate` marks an organisation commercially live *as a TPP*; LFIs that
+// also consume APIs carry it alongside their own `lfiGoLiveDate`.
+interface TrustFrameworkOrg {
+  name?: string
+  legalName?: string
+  tppGoLiveDate?: string
+}
+
 // ── Processed UI shapes ───────────────────────────────────────────────────
 // One collapsible group of insurance endpoints, keyed by insurance type (plus a
 // 'general' group for consents). Only populated for the `insurance` family.
@@ -298,6 +307,20 @@ interface TppCard {
   totalPayments: number
   services: TppService[]
   consentTypes: TppConsentType[]
+  // Commercial go-live as a TPP, from `tppGoLiveDate` in the trust framework.
+  // Mirrors the LfiServer fields above: `goLiveScheduled` marks a date still in
+  // the future, `isLive` is the headline flag.
+  goLiveDate: Date | null
+  goLiveScheduled: boolean
+  isLive: boolean
+}
+
+// One rendered group of TPP cards — the TPP counterpart of `ServerGroup`.
+interface TppGroup {
+  key: 'live' | 'testing'
+  title: string
+  note: string
+  tpps: TppCard[]
 }
 
 // ── State ──────────────────────────────────────────────────────────────────
@@ -359,11 +382,14 @@ const error = ref<string | null>(null)
 const processedLfis = ref<LfiServer[]>([])
 const apiLog = ref<ApiLogRow[]>([])
 const paymentsLog = ref<PaymentsLogRow[]>([])
+// TPP go-live lookup, keyed by BOTH uppercased legal name and short name — the
+// API logs identify a TPP by legal name, the trust framework by short name.
+const tppGoLive = ref<Map<string, { date: Date; scheduled: boolean }>>(new Map())
 
 // ── Lifecycle ──────────────────────────────────────────────────────────────
 onMounted(async () => {
   try {
-    const [lfiRes, apiRes, payRes] = await Promise.all([
+    const [lfiRes, apiRes, payRes, trustRes] = await Promise.all([
       fetch('https://data.directory.openfinance.ae/participants').then(
         (r) => r.json() as Promise<unknown>,
       ),
@@ -371,10 +397,14 @@ onMounted(async () => {
       fetch('/api/payments-log.json')
         .then((r) => r.json() as Promise<unknown>)
         .catch(() => [] as unknown),
+      fetch('/api/trust-framework.json')
+        .then((r) => r.json() as Promise<unknown>)
+        .catch(() => [] as unknown),
     ])
     processedLfis.value = processLfis(lfiRes)
     apiLog.value = Array.isArray(apiRes) ? (apiRes as ApiLogRow[]) : []
     paymentsLog.value = Array.isArray(payRes) ? (payRes as PaymentsLogRow[]) : []
+    tppGoLive.value = processTppGoLive(trustRes)
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : String(e)
   } finally {
@@ -489,6 +519,50 @@ function parseDirectoryDate(value: string | undefined): Date | null {
   if (!m) return null
   const d = new Date(Date.UTC(Number(m[3]), Number(m[2]) - 1, Number(m[1])))
   return Number.isNaN(d.getTime()) ? null : d
+}
+
+// The trust framework serves go-live dates as ISO YYYY-MM-DD.
+function parseIsoDate(value: string | undefined): Date | null {
+  const m = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!m) return null
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])))
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+// Builds the TPP go-live lookup from the trust framework. Every organisation
+// carrying a `tppGoLiveDate` is indexed under both its legal name and its short
+// name, so a card matches whichever form the source log used.
+function processTppGoLive(
+  data: unknown,
+): Map<string, { date: Date; scheduled: boolean }> {
+  const out = new Map<string, { date: Date; scheduled: boolean }>()
+  const orgs: TrustFrameworkOrg[] = Array.isArray(data)
+    ? (data as TrustFrameworkOrg[])
+    : []
+  const now = Date.now()
+  for (const org of orgs) {
+    const date = parseIsoDate(org.tppGoLiveDate)
+    if (!date) continue
+    const entry = { date, scheduled: date.getTime() > now }
+    for (const label of [org.legalName, org.name]) {
+      const key = String(label || '').trim().toUpperCase()
+      if (key) out.set(key, entry)
+    }
+  }
+  return out
+}
+
+// Go-live fields for a TPP as named in the API / payments logs. A TPP with no
+// recorded go-live date is in production testing.
+function tppGoLiveFields(
+  name: string,
+): Pick<TppCard, 'goLiveDate' | 'goLiveScheduled' | 'isLive'> {
+  const g = tppGoLive.value.get(String(name).trim().toUpperCase()) || null
+  return {
+    goLiveDate: g?.date || null,
+    goLiveScheduled: g?.scheduled === true,
+    isLive: !!g && !g.scheduled,
+  }
 }
 
 // Earliest certified, unexpired Commercial Go-Live Approval on a server.
@@ -755,7 +829,36 @@ const filteredTpps = computed<TppCard[]>(() =>
     : processApiLog(apiLog.value),
 )
 
-const tppCount = computed<number>(() => filteredTpps.value.length)
+// Headline TPP number counts live TPPs only — the same rule the LFI tabs use.
+const liveTppCount = computed<number>(
+  () => filteredTpps.value.filter((t) => t.isLive).length,
+)
+
+// Live cards sort by go-live date (earliest first); production-testing cards
+// keep the traffic ordering `filteredTpps` already produces.
+const tppGroups = computed<TppGroup[]>(() => {
+  const live = filteredTpps.value
+    .filter((t) => t.isLive)
+    .sort((a, b) => (a.goLiveDate?.getTime() || 0) - (b.goLiveDate?.getTime() || 0))
+  const testing = filteredTpps.value.filter((t) => !t.isLive)
+
+  const groups: TppGroup[] = []
+  if (live.length)
+    groups.push({
+      key: 'live',
+      title: 'Live',
+      note: 'TPPs signed off for go-live — serving all customers across every live LFI.',
+      tpps: live,
+    })
+  if (testing.length)
+    groups.push({
+      key: 'testing',
+      title: 'Production testing',
+      note: 'TPPs calling these APIs in the production environment, working towards go-live sign-off. Not yet open to all customers.',
+      tpps: testing,
+    })
+  return groups
+})
 
 interface TppApiAccumulator {
   name: string
@@ -825,6 +928,7 @@ function processApiLog(data: ApiLogRow[]): TppCard[] {
   return [...tppMap.values()]
     .map<TppCard>((t) => ({
       name: t.name,
+      ...tppGoLiveFields(t.name),
       lfis: [...t.lfis].sort(),
       totalRequests: t.totalRequests,
       totalPayments: 0,
@@ -914,6 +1018,7 @@ function processPayments(data: PaymentsLogRow[]): TppCard[] {
   return [...tppMap.values()]
     .map<TppCard>((t) => ({
       name: t.name,
+      ...tppGoLiveFields(t.name),
       lfis: [...t.lfis].sort(),
       totalRequests: 0,
       totalPayments: t.totalPayments,
@@ -954,7 +1059,7 @@ const updatedLabel = computed<string>(() => {
 
 const summaryCount = computed<number | string>(() => {
   if (loading.value) return '—'
-  return isLfi.value ? lfiServerCount.value : tppCount.value
+  return isLfi.value ? lfiServerCount.value : liveTppCount.value
 })
 
 const summaryUnit = computed<string>(() => {
@@ -966,7 +1071,7 @@ const summaryUnit = computed<string>(() => {
     const n = lfiServerCount.value
     return n === 1 ? 'live insurer' : 'live insurers'
   }
-  const n = tppCount.value
+  const n = liveTppCount.value
   return n === 1 ? 'TPP live' : 'TPPs live'
 })
 
@@ -985,9 +1090,9 @@ const summarySub = computed<string>(() => {
   const familyText =
     family.value === 'all' ? 'Open Finance' : filterLabel(family.value)
   if (paymentOnly.value) {
-    return `Third-party providers who have initiated payments in production through the API Hub in the last ${DAYS_WINDOW} days, broken down by consent type.`
+    return `Third-party providers who have initiated payments in production through the API Hub in the last ${DAYS_WINDOW} days, broken down by consent type. Those signed off for go-live serve all customers; the rest are in production testing.`
   }
-  return `Third-party providers consuming ${familyText} in production through the API Hub in the last ${DAYS_WINDOW} days.`
+  return `Third-party providers consuming ${familyText} in production through the API Hub in the last ${DAYS_WINDOW} days. Those signed off for go-live serve all customers; the rest are in production testing.`
 })
 
 const formatNumber = (n: number): string => Number(n).toLocaleString()
@@ -1064,7 +1169,7 @@ const prettifyConsentType = (s: string): string =>
             @click="setMode('tpp')"
           >
             TPPs
-            <span class="ed-le-mode__count">{{ tppCount }}</span>
+            <span class="ed-le-mode__count">{{ liveTppCount }}</span>
           </button>
         </div>
 
@@ -1285,16 +1390,48 @@ const prettifyConsentType = (s: string): string =>
             <button class="ed-le-clear" @click="setFamily('all')">Show all services &rarr;</button>
           </div>
 
-          <div v-else class="ed-le-grid">
+          <template v-else>
+          <section
+            v-for="group in tppGroups"
+            :key="group.key"
+            class="ed-le-group"
+            :class="`ed-le-group--${group.key}`"
+          >
+            <header class="ed-le-group__head">
+              <h2 class="ed-le-group__title">
+                <span
+                  v-if="group.key === 'live'"
+                  class="ed-le-group__star"
+                  aria-hidden="true"
+                >&#9733;</span>
+                {{ group.title }}
+                <span class="ed-le-group__count">{{ group.tpps.length }}</span>
+              </h2>
+              <p class="ed-le-group__note">{{ group.note }}</p>
+            </header>
+
+            <div class="ed-le-grid">
             <article
-              v-for="tpp in filteredTpps"
+              v-for="tpp in group.tpps"
               :key="tpp.name"
               class="ed-le-card ed-le-card--tpp"
+              :class="{ 'ed-le-card--live': tpp.isLive }"
             >
               <header class="ed-le-card__head ed-le-card__head--tpp">
                 <div class="ed-le-card__title">
                   <div class="ed-le-card__kicker">TPP</div>
                   <h3>{{ tpp.name }}</h3>
+                  <div
+                    v-if="tpp.goLiveDate"
+                    class="ed-le-card__golive"
+                    :class="{ 'is-scheduled': tpp.goLiveScheduled }"
+                  >
+                    <span class="ed-le-card__golive-star" aria-hidden="true">&#9733;</span>
+                    <span>
+                      {{ tpp.goLiveScheduled ? 'Go-live approved for' : 'Live since' }}
+                      {{ formatGoLive(tpp.goLiveDate) }}
+                    </span>
+                  </div>
                 </div>
                 <div class="ed-le-card__total">
                   <div class="ed-le-card__total-num">
@@ -1373,7 +1510,9 @@ const prettifyConsentType = (s: string): string =>
                 </li>
               </ul>
             </article>
-          </div>
+            </div>
+          </section>
+          </template>
         </template>
 
         <!-- Source note -->
@@ -1384,17 +1523,27 @@ const prettifyConsentType = (s: string): string =>
               <path d="M12 7v5l3 2" stroke-linecap="round" />
             </svg>
           </div>
-          <div class="ed-le-source__text">
+          <div v-if="isLfi" class="ed-le-source__text">
             <strong>How live status is determined.</strong>
             Every LFI listed here is deployed in the production environment —
             services and certifications come from the Nebras Open Finance
             production directory. An LFI is marked live once its authorisation
             server holds a certified <em>Commercial Go-Live Approval</em>; the
             approval start date is the go-live date shown on the card.
-            Everything else is in production testing. TPP activity is aggregated
-            from production API Hub access logs over a rolling
-            {{ DAYS_WINDOW }}-day window. All listed institutions are
-            CBUAE-licensed.
+            Everything else is in production testing. All listed institutions
+            are CBUAE-licensed.
+          </div>
+          <div v-else class="ed-le-source__text">
+            <strong>How live status is determined.</strong>
+            Every TPP listed here is calling the APIs in the production
+            environment. A TPP is marked live once it has been signed off for
+            go-live and the trust framework records its go-live date — the same
+            field the
+            <router-link to="/doc-repository/">document repository</router-link>
+            uses; that date is shown on the card. Everything else is in
+            production testing. Activity is aggregated from production API Hub
+            access logs over a rolling {{ DAYS_WINDOW }}-day window. All listed
+            TPPs are CBUAE-licensed.
           </div>
         </aside>
 
@@ -1663,7 +1812,7 @@ const prettifyConsentType = (s: string): string =>
 
 .ed-le-clear:hover { color: var(--at-navy-deep); }
 
-/* ── LFI groups (live vs production testing) ───────────────────────────── */
+/* ── Participant groups (live vs production testing) — LFI and TPP ─────── */
 .ed-le-group + .ed-le-group {
   margin-top: 3rem;
   padding-top: 2.5rem;
@@ -1780,7 +1929,7 @@ const prettifyConsentType = (s: string): string =>
   gap: 0.3rem;
 }
 
-/* Commercial Go-Live Approval badge */
+/* Go-live badge — LFI Commercial Go-Live Approval, TPP tppGoLiveDate */
 .ed-le-card--live {
   border-left: 3px solid var(--at-teal);
 }
