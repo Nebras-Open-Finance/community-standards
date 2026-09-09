@@ -4,7 +4,7 @@
 // full-width underneath once a stance is chosen. The card computes its own
 // tally from the proposal plus the participant's vote and emits intent up to
 // the page (which owns the store mutations).
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { STANCE, STANCE_ORDER, isDecided, type Proposal, type Stance } from '@/data/proposals'
 import { tallyOf, PROPOSALS_CONFIG, type MyVote } from '@/composables/useProposals'
 import PvVoteBar from './PvVoteBar.vue'
@@ -49,6 +49,57 @@ function onButton(stance: Stance): void {
   if (decided.value) return
   emit('vote', props.myVote?.stance === stance ? null : stance)
 }
+
+// ── Voting parties ───────────────────────────────────────────────────────────
+// One row per ORGANISATION, not per vote. Two colleagues from the same org may
+// each vote, so a row carries a ×N count per stance and lists every stance that
+// org's people took when they disagreed. A vote cast on behalf of several orgs
+// is stored with their names comma-joined, so it is split back out and credited
+// to each — meaning the party count can exceed `votes cast`.
+//
+// Entries flagged `mine` are the viewer's own stance picked but NOT yet
+// submitted; they carry a placeholder org rather than a real one, and a vote
+// that has not been cast is not a voting party — so they are skipped. Once
+// submitted, the server returns the vote under the voter's real org and it
+// appears here like any other.
+interface PartyStance { stance: Stance; count: number }
+interface PartyRow { org: string; stances: PartyStance[] }
+
+const partiesOpen = ref(false)
+
+const parties = computed<PartyRow[]>(() => {
+  const byOrg = new Map<string, { org: string; counts: Record<Stance, number> }>()
+
+  for (const stance of STANCE_ORDER) {
+    for (const entry of tally.value.lists[stance]) {
+      if (entry.mine) continue
+      for (const name of entry.org.split(',')) {
+        const org = name.trim()
+        if (!org) continue
+        const key = org.toLowerCase()
+        let row = byOrg.get(key)
+        if (!row) {
+          row = { org, counts: { for: 0, against: 0, abstain: 0 } }
+          byOrg.set(key, row)
+        }
+        row.counts[stance] += 1
+      }
+    }
+  }
+
+  return [...byOrg.values()]
+    .map((row) => ({
+      org: row.org,
+      stances: STANCE_ORDER
+        .filter((s) => row.counts[s] > 0)
+        .map((s) => ({ stance: s, count: row.counts[s] })),
+    }))
+    // For before Against before Abstain (on the org's leading stance), then A–Z.
+    .sort((a, b) => {
+      const rank = (r: PartyRow): number => STANCE_ORDER.indexOf(r.stances[0]?.stance ?? 'abstain')
+      return rank(a) - rank(b) || a.org.localeCompare(b.org)
+    })
+})
 </script>
 
 <template>
@@ -141,6 +192,40 @@ function onButton(stance: Stance): void {
       :questions="proposal.questions ?? []"
       @submit="emit('submit', $event)"
     />
+
+    <!-- Voting parties — who has voted, and which way. Collapsed by default;
+         shown to everyone once at least one vote has been cast. -->
+    <template v-if="reveal && parties.length">
+      <button
+        type="button"
+        class="pv-cast__parties-toggle"
+        :aria-expanded="partiesOpen"
+        aria-controls="pv-cast-parties"
+        @click="partiesOpen = !partiesOpen"
+      >
+        <span class="pv-cast__parties-chev" :class="{ 'pv-cast__parties-chev--open': partiesOpen }">▸</span>
+        Voting parties
+        <span class="pv-cast__parties-hint">{{ partiesOpen ? 'Hide' : 'Show' }}</span>
+      </button>
+
+      <div v-show="partiesOpen" id="pv-cast-parties" class="pv-cast__parties">
+        <div v-for="party in parties" :key="party.org" class="pv-cast__party">
+          <span class="pv-cast__party-org">{{ party.org }}</span>
+          <span class="pv-cast__party-stances">
+            <span
+              v-for="s in party.stances"
+              :key="s.stance"
+              class="pv-cast__party-stance"
+              :style="{ color: STANCE[s.stance].ink }"
+            >
+              <span class="pv-cast__party-glyph">{{ stanceGlyph[s.stance] }}</span>
+              {{ STANCE[s.stance].label }}
+              <span v-if="s.count > 1" class="pv-cast__party-count">&times;{{ s.count }}</span>
+            </span>
+          </span>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -336,6 +421,82 @@ function onButton(stance: Stance): void {
   margin: 0 auto;
 }
 
+/* Voting parties */
+.pv-cast__parties-toggle {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 26px;
+  border: none;
+  border-top: 1px solid var(--at-grid-line);
+  background: var(--at-surface);
+  cursor: pointer;
+  font-family: var(--at-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--at-navy);
+  font-weight: 600;
+  text-align: left;
+}
+
+.pv-cast__parties-toggle:hover { color: var(--at-navy-deep); }
+
+.pv-cast__parties-chev {
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.pv-cast__parties-chev--open { transform: rotate(90deg); }
+
+.pv-cast__parties-hint { margin-left: auto; opacity: 0.55; font-weight: 500; }
+
+.pv-cast__parties {
+  border-top: 1px solid var(--at-grid-line);
+  background: var(--at-bg-cream);
+}
+
+.pv-cast__party {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 26px;
+  border-bottom: 1px solid var(--at-grid-line);
+}
+
+.pv-cast__party:last-child { border-bottom: none; }
+
+.pv-cast__party-org {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--at-navy-deep);
+}
+
+.pv-cast__party-stances {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.pv-cast__party-stance {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--at-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.pv-cast__party-glyph { font-size: 12px; line-height: 1; }
+.pv-cast__party-count { opacity: 0.65; font-weight: 600; }
+
 /* Responsive — stack controls over results, then collapse the bar grids. */
 @media (max-width: 760px) {
   .pv-cast__grid { grid-template-columns: 1fr; }
@@ -344,5 +505,8 @@ function onButton(stance: Stance): void {
 
 @media (max-width: 460px) {
   .pv-cast__buttons { flex-direction: column; }
+  .pv-cast__parties-toggle { padding: 14px 18px; }
+  .pv-cast__party { padding: 12px 18px; flex-wrap: wrap; }
+  .pv-cast__party-stances { gap: 12px; }
 }
 </style>
