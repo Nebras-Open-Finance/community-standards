@@ -39,9 +39,9 @@ const meta = {
   author: 'Thomas Catchpole',
   // Fallbacks shown until the API responds (and during the static build). The
   // live status/priority/dates are sourced from the API — see syncFromApi().
-  opened: '28 Sep 2026',
-  closes: '13 Oct 2026',
-  priority: 'high' as Priority,
+  opened: '16 Sep 2026',
+  closes: '7 Oct 2026',
+  priority: 'medium' as Priority,
   version: 'V2.2',
 }
 
