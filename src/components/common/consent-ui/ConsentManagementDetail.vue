@@ -170,7 +170,28 @@ const confirmButtonLabel = computed(() => {
   return isDataSharing.value ? 'Confirm stop sharing' : 'Confirm cancellation'
 })
 
+const counterparty = computed(() => `[${entityLabel.value} ${props.connection?.lfiDigit}]`)
+
 const confirmImpactText = computed(() => {
+  // LFI perspective: the LFI cannot describe what the TPP's service does, so it
+  // points the customer at the TPP and states only the effect the LFI controls.
+  if (isLfi.value) {
+    if (confirmAction.value === 'pause') {
+      return isDataSharing.value
+        ? `Contact ${counterparty.value} to fully understand what pausing this connection means for the service they provide you. While it is paused we will share no data with them, and you can resume sharing here at any time.`
+        : `Contact ${counterparty.value} to fully understand what pausing this permission means for the service they provide you. While it is paused no payments will be made under this permission, and you can resume it here at any time.`
+    }
+    if (confirmAction.value === 'reactivate') {
+      return isDataSharing.value
+        ? `Contact ${counterparty.value} to fully understand what resuming this connection means for the service they provide you. Once you confirm, we will start sharing your data with them again straight away.`
+        : `Contact ${counterparty.value} to fully understand what resuming this permission means for the service they provide you. Once you confirm, payments can be made under this permission again.`
+    }
+    return isDataSharing.value
+      ? `Contact ${counterparty.value} to fully understand what cancelling this connection means for the service they provide you. Once you confirm, we will stop sharing your data with them immediately.`
+      : `Contact ${counterparty.value} to fully understand what cancelling this permission means for the service they provide you. Once you confirm, no further payments will be made under it. Payments already submitted cannot be cancelled here.`
+  }
+
+  // TPP perspective: this is the TPP's own interface, so the TPP writes the copy.
   if (confirmAction.value === 'pause') {
     return isDataSharing.value
       ? '[Placeholder] This text is set by the TPP and should explain to the customer what pausing this data sharing consent will mean for their experience — for example, which features or services will be temporarily unavailable and how they can resume access.'

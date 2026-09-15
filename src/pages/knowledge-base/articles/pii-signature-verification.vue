@@ -4,7 +4,7 @@ meta:
   description: "The TPP signature on a payment consent's PII is as long-lived as the consent. The key that made it is not — TPPs rotate signing keys freely, and a rotated key leaves the active JWKS. Where you verify decides which key sets you have to look in."
   category: Security
   readTime: "6 min"
-  updated: "2026-09-10"
+  updated: "2026-09-15"
   tags:
     - PII
     - JWS
@@ -26,7 +26,7 @@ const sections: Section[] = [
 const meta: MetaItem[] = [
   { label: 'Category', value: 'Security' },
   { label: 'Read',     value: '6 min' },
-  { label: 'Updated',  value: '10 Sep 2026' },
+  { label: 'Updated',  value: '15 Sep 2026' },
 ]
 
 const tags: readonly string[] = ['PII', 'JWS', 'Trust Framework']
@@ -75,6 +75,13 @@ const { payload } = await jwtVerify(jwsString, jwks)`
           inner JWS is <strong>not required</strong> &mdash; it is a defence-in-depth measure. See
           <a href="/tech/lfi-api-hub/v2.1/banking/service-initiation/personal-identifiable-information/api-guide/verify-tpp-signature">Verifying the TPP JWS Signature</a>
           for when an LFI might choose to. Nothing here makes it mandatory.
+        </p>
+        <p>
+          This article is the signing-key half of
+          <a href="/tech/lfi-api-hub/v2.1/banking/service-initiation/personal-identifiable-information/api-guide/decrypt-pii#two-patterns">Pattern B</a>
+          on the decryption guide &mdash; the pattern you need whenever you handle the PII anywhere
+          other than at consent creation. That guide also covers the other two consequences of the
+          same drift: your own Enc1 key, and the timing claims.
         </p>
       </EdNote>
 
@@ -127,14 +134,14 @@ const { payload } = await jwtVerify(jwsString, jwks)`
       <EdRefTable>
         <table>
           <thead>
-            <tr><th>Where you verify</th><th>Age of the signature</th><th>Key set you need</th></tr>
+            <tr><th>Where you verify</th><th>Age of the signature</th><th>Key set you need</th><th>Pattern</th></tr>
           </thead>
           <tbody>
-            <tr><td><code>POST /consent/action/validate</code></td><td><strong>Seconds</strong></td><td>Active JWKS only</td></tr>
-            <tr><td><code>POST /consent/event/post</code></td><td>Seconds</td><td>Active JWKS only</td></tr>
-            <tr><td>The consent authorisation journey</td><td><strong>Minutes to hours</strong></td><td>Active <strong>and inactive</strong></td></tr>
-            <tr><td><code>POST /consent/event/patch</code></td><td>Minutes to hours</td><td>Active <strong>and inactive</strong></td></tr>
-            <tr><td><code>POST /payments</code></td><td><strong>Up to the consent lifetime</strong></td><td>Active <strong>and inactive</strong></td></tr>
+            <tr><td><code>POST /consent/action/validate</code></td><td><strong>Seconds</strong></td><td>Active JWKS only</td><td><strong>A</strong></td></tr>
+            <tr><td><code>POST /consent/event/post</code></td><td>Seconds</td><td>Active JWKS only</td><td><strong>A</strong></td></tr>
+            <tr><td>The consent authorisation journey</td><td><strong>Minutes to hours</strong></td><td>Active <strong>and inactive</strong></td><td><strong>B</strong></td></tr>
+            <tr><td><code>POST /consent/event/patch</code></td><td>Minutes to hours</td><td>Active <strong>and inactive</strong></td><td><strong>B</strong></td></tr>
+            <tr><td><code>POST /payments</code></td><td><strong>Up to the consent lifetime</strong></td><td>Active <strong>and inactive</strong></td><td><strong>B</strong></td></tr>
           </tbody>
         </table>
       </EdRefTable>
@@ -301,23 +308,31 @@ const { payload } = await jwtVerify(jwsString, jwks)`
       num="05"
       color="var(--at-navy)"
       eyebrow="Timing claims"
-      title="The same default catches exp and nbf"
+      title="The same default catches exp, iat and nbf"
       lede="Key resolution is the subject of this article, but the same libraries carry a second default that fails for the same underlying reason, and it is worth knowing about while you are here."
       tone="cream"
     >
       <EdProse>
+        <code>exp</code>, <code>iat</code> and <code>nbf</code> are set by the TPP at the instant it
+        signs the PII &mdash; the same instant, and for the same reason, that fixes the
+        <code>kid</code>. They bound the <strong>PAR submission window</strong>, not the moment you
+        happen to be verifying. At payment execution on a long-lived consent they will normally have
+        lapsed.
+      </EdProse>
+
+      <EdProse>
         <code>jwtVerify</code> and its equivalents enforce <code>exp</code> and <code>nbf</code>
-        <strong>against the current time</strong> by default. On the PII JWS those claims bound the
-        <strong>PAR submission window</strong> &mdash; the moment the TPP created the consent &mdash;
-        not the moment you happen to be verifying. At payment execution on a long-lived consent
-        they will normally have lapsed.
+        <strong>against the current time</strong> by default, so this fails exactly where the
+        active-JWKS-only lookup fails, and on the same consents.
       </EdProse>
 
       <EdProse>
         If you verify the PII signature at a later point, evaluate its timing claims against the
         consent's <code>CreationDateTime</code> rather than against now, or do not evaluate them at
-        all. Whether the consent is still usable <strong>today</strong> is answered by the API Hub's
-        consent validation on every request, not by a claim inside the PII.
+        all. <code>iat</code> is still worth checking for consistency with
+        <code>CreationDateTime</code>. Whether the consent is still usable <strong>today</strong> is
+        answered by the API Hub's consent validation on every request, not by a claim inside the
+        PII.
       </EdProse>
     </EdSectionBand>
 

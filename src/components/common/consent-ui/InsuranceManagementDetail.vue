@@ -198,7 +198,22 @@ const confirmButtonLabel = computed(() => {
   if (confirmAction.value === 'reactivate') return 'Confirm reactivation'
   return 'Confirm stop sharing'
 })
+const counterparty = computed(() => `[${entityLabel.value} ${props.connection?.lfiDigit}]`)
+
 const confirmImpactText = computed(() => {
+  // LFI perspective: the LFI cannot describe what the TPP's service does, so it
+  // points the customer at the TPP and states only the effect the LFI controls.
+  if (isLfi.value) {
+    if (confirmAction.value === 'pause') {
+      return `Contact ${counterparty.value} to fully understand what pausing this connection means for the service they provide you. While it is paused we will share no policy data with them, and you can resume sharing here at any time.`
+    }
+    if (confirmAction.value === 'reactivate') {
+      return `Contact ${counterparty.value} to fully understand what resuming this connection means for the service they provide you. Once you confirm, we will start sharing your policy data with them again straight away.`
+    }
+    return `Contact ${counterparty.value} to fully understand what cancelling this connection means for the service they provide you. Once you confirm, we will stop sharing your policy data with them immediately.`
+  }
+
+  // TPP perspective: this is the TPP's own interface, so the TPP writes the copy.
   if (confirmAction.value === 'pause') {
     return '[Placeholder] This text is set by the TPP and should explain to the customer what pausing this insurance data sharing consent will mean for their experience — for example, which features or services will be temporarily unavailable and how they can resume access.'
   }

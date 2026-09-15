@@ -175,7 +175,7 @@ const fullExampleTabs = [{ label: 'Node.js (jose + ajv)', lang: 'typescript', co
         </div>
         <h1 class="ed-doc__title">
           How to Decrypt PII
-          <span class="ed-doc__read">3 min read</span>
+          <span class="ed-doc__read">5 min read</span>
         </h1>
         <p class="ed-doc__lede">
           The <code>PersonalIdentifiableInformation</code> field is a compact JWE (JSON Web
@@ -187,6 +187,97 @@ const fullExampleTabs = [{ label: 'Node.js (jose + ajv)', lang: 'typescript', co
     </section>
 
     <EdSectionBand
+      id="two-patterns"
+      color="var(--at-blue)"
+      eyebrow="Before you start"
+      title="Two decryption patterns &mdash; decide which one you are building"
+      lede="The same PII reaches your Ozone Connect endpoints at more than one point in the consent lifecycle. The bytes are identical every time: the TPP signed and encrypted them once, at PAR. What differs is how much time has passed since &mdash; and that decides which keys you need and how the timing claims behave."
+      tone="surface"
+    >
+      <EdRefTable>
+        <table>
+          <thead>
+            <tr><th>Where the PII reaches you</th><th>Age of the PII</th><th>Pattern</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>POST /consent/action/validate</code></td><td>Seconds</td><td><strong>A</strong> &mdash; at creation</td></tr>
+            <tr><td><code>POST /consent/event/post</code></td><td>Seconds</td><td><strong>A</strong> &mdash; at creation</td></tr>
+            <tr><td>The consent authorisation journey</td><td>Minutes to hours</td><td><strong>B</strong> &mdash; later</td></tr>
+            <tr><td><code>POST /consent/event/patch</code></td><td>Minutes to hours</td><td><strong>B</strong> &mdash; later</td></tr>
+            <tr><td><code>POST /payments</code></td><td>Up to the consent lifetime</td><td><strong>B</strong> &mdash; later</td></tr>
+          </tbody>
+        </table>
+      </EdRefTable>
+
+      <h3 class="ed-doc__subhead">Pattern A &mdash; decrypt at consent creation</h3>
+      <EdProse>
+        <code>/consent/action/validate</code> is called by the API Hub synchronously, inside the
+        TPP&rsquo;s PAR request and before the consent exists. The PII is at most seconds old, and
+        the <code>post</code> consent event fires at the same moment in the lifecycle. Nothing can
+        have rotated in between, so:
+      </EdProse>
+      <EdBullets>
+        <li>The <code>kid</code> in the JWE header names an Enc1 key you currently hold.</li>
+        <li>If you verify the TPP&rsquo;s signature, the TPP&rsquo;s <strong>active</strong> JWKS is sufficient.</li>
+        <li>The JWS <code>exp</code>, <code>iat</code> and <code>nbf</code> claims can be evaluated against the current time, because now <em>is</em> the moment of signing. Library defaults are correct here.</li>
+      </EdBullets>
+
+      <h3 class="ed-doc__subhead">Pattern B &mdash; decrypt later</h3>
+      <EdProse>
+        Everywhere else is &ldquo;later&rdquo;. The authorisation journey already is: between the
+        TPP creating the consent and the customer authenticating on your platform there can be a
+        redirect the customer does not follow immediately, an app switch, an abandoned login resumed
+        later. Payment execution is later still &mdash; a multi-payment consent executes against the
+        same PII for as long as the consent lives. Three things follow.
+      </EdProse>
+      <EdBullets>
+        <li>
+          <strong>Your own Enc1 key.</strong> The JWE was encrypted to whichever Enc1 public key you
+          had published when the consent was created. The recommended <strong>Server ENCKEY</strong>
+          certificate type does not expire, so routine rotation is avoided &mdash; but if you do
+          replace Enc1, you MUST retain the retired private key for as long as consents encrypted
+          under it remain in force. Step 1 below exists for exactly this reason: resolve the private
+          key from the <code>kid</code>, never from &ldquo;the current one&rdquo;.
+        </li>
+        <li>
+          <strong>The TPP&rsquo;s signing key</strong> &mdash; only if you verify the signature. TPPs
+          rotate signing keys freely and without notice, and a rotated <code>kid</code> leaves the
+          active JWKS. Resolve the <code>kid</code> against the active set and then against the
+          <code>inactive/</code> set, and pin <code>PS256</code> yourself &mdash; published JWKS
+          entries carry no <code>alg</code>.
+        </li>
+        <li>
+          <strong>The timing claims.</strong> <code>exp</code>, <code>iat</code> and
+          <code>nbf</code> on the PII JWS bound the <strong>PAR submission window</strong> &mdash;
+          the moment the TPP created the consent &mdash; not the moment you are decrypting. On a
+          long-lived consent they will normally have lapsed. Evaluate them against the
+          consent&rsquo;s <code>CreationDateTime</code>, or do not evaluate them at all. Whether the
+          consent is still usable today is answered by the API Hub&rsquo;s consent validation on
+          every request, not by a claim inside the PII.
+        </li>
+      </EdBullets>
+
+      <EdNote type="warning" title="Pattern B is the safe default">
+        <p>
+          Pattern B is also correct at consent creation &mdash; the active JWKS simply hits every
+          time, and the timing claims happen to be current. Pattern A is not correct anywhere else,
+          and it fails in a way that is hard to diagnose: it works for months, then starts rejecting
+          perfectly valid PII on older consents, with no change at either end. If you decrypt at
+          more than one point in the lifecycle, build Pattern B once and use it everywhere.
+        </p>
+      </EdNote>
+
+      <EdNote type="info" title="Key rotation in depth">
+        <p>
+          <a href="/knowledge-base/articles/pii-signature-verification">Verifying the PII Signature
+          &mdash; Rotated Keys and the Inactive JWKS</a> covers the signing-key half of Pattern B in
+          full: the active and <code>inactive/</code> keystore URL pair, the lookup order, and what
+          membership of the inactive set does and does not tell you.
+        </p>
+      </EdNote>
+    </EdSectionBand>
+
+    <EdSectionBand
       id="step-1-read-kid"
       num="01"
       color="var(--at-teal)"
@@ -196,7 +287,9 @@ const fullExampleTabs = [{ label: 'Node.js (jose + ajv)', lang: 'typescript', co
     >
       <EdProse>
         The JWE protected header contains the <code>kid</code> (Key ID) of the encryption key that
-        was used. Decode the first segment of the JWE to identify which private key to use:
+        was used. Decode the first segment of the JWE to identify which private key to use &mdash;
+        under <a href="#two-patterns">Pattern B</a> this may be a retired Enc1 key rather than your
+        current one, so always resolve by <code>kid</code>:
       </EdProse>
       <EdCodeGroup :tabs="step1Tabs" />
     </EdSectionBand>
@@ -239,7 +332,12 @@ const fullExampleTabs = [{ label: 'Node.js (jose + ajv)', lang: 'typescript', co
         </p>
         <p>
           If you choose to implement JWS verification for defence-in-depth, see
-          <a href="./verify-tpp-signature">Verify TPP Signature (Optional)</a>.
+          <a href="./verify-tpp-signature">Verify TPP Signature (Optional)</a>. Under
+          <a href="#two-patterns">Pattern B</a> you must also resolve the signing <code>kid</code>
+          against the TPP&rsquo;s <code>inactive/</code> JWKS, and stop your library checking
+          <code>exp</code>, <code>iat</code> and <code>nbf</code> against the current time &mdash;
+          see <a href="/knowledge-base/articles/pii-signature-verification">Verifying the PII
+          Signature</a>.
         </p>
       </EdNote>
     </EdSectionBand>
@@ -347,6 +445,12 @@ const fullExampleTabs = [{ label: 'Node.js (jose + ajv)', lang: 'typescript', co
       title="Decryption and validation, end-to-end"
       tone="cream"
     >
+      <EdProse>
+        This example resolves the Enc1 private key from the JWE <code>kid</code>, so it is correct
+        under both patterns. It does not verify the TPP&rsquo;s signature; if you add that step,
+        follow <a href="#two-patterns">Pattern B</a> unless you are certain the code path only ever
+        runs at consent creation.
+      </EdProse>
       <EdCodeGroup :tabs="fullExampleTabs" />
     </EdSectionBand>
   </div>

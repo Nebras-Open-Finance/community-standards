@@ -52,7 +52,7 @@ const verifyTabs = [{ label: 'Node.js (jose)', lang: 'typescript', code: verifyN
         </div>
         <h1 class="ed-doc__title">
           Verifying the TPP JWS Signature
-          <span class="ed-doc__read">2 min read</span>
+          <span class="ed-doc__read">3 min read</span>
         </h1>
 
         <EdNote type="info" title="This step is optional">
@@ -107,6 +107,34 @@ const verifyTabs = [{ label: 'Node.js (jose)', lang: 'typescript', code: verifyN
       </EdProse>
       <EdCode :code="jwksUriPlain" lang="text" filename="JWKS URI" />
 
+      <EdNote type="warning" title="This resolves active keys only">
+        <p>
+          The URL above returns the TPP's <strong>currently active</strong> keys. That is sufficient
+          only if you verify at <code>/consent/action/validate</code> or the <code>post</code>
+          consent event, where the signature is seconds old &mdash;
+          <a href="/tech/lfi-api-hub/v2.2-rc1/banking/service-initiation/personal-identifiable-information/api-guide/decrypt-pii#two-patterns">Pattern A</a>
+          on the decryption guide.
+        </p>
+        <p>
+          A TPP may rotate its signing key at any time, and a rotated <code>kid</code> leaves the
+          active set. If you verify during the authorisation journey, on
+          <code>/consent/event/patch</code>, or at <code>POST /payments</code>, you MUST fall back to
+          the parallel <code>inactive/</code> JWKS when the <code>kid</code> is not in the active
+          set. See
+          <a href="/knowledge-base/articles/pii-signature-verification">Verifying the PII Signature
+          &mdash; Rotated Keys and the Inactive JWKS</a>.
+        </p>
+      </EdNote>
+
+      <EdNote type="important" title="Pin PS256 yourself">
+        <p>
+          Published JWKS entries carry <code>kty</code>, <code>use</code>, <code>kid</code> and
+          <code>x5c</code>, but no <code>alg</code>. Pin <strong>PS256</strong> &mdash; the only
+          signing algorithm in the UAE Open Finance FAPI profile &mdash; rather than accepting
+          whatever the JWS header proposes.
+        </p>
+      </EdNote>
+
       <h3 class="ed-doc__subhead">Step 2 &mdash; Verify the JWS</h3>
       <EdCodeGroup :tabs="verifyTabs" />
 
@@ -121,12 +149,31 @@ const verifyTabs = [{ label: 'Node.js (jose)', lang: 'typescript', code: verifyN
             <tr><td><code>iss</code></td><td>Must match the TPP's <code>client_id</code> (available in the <code>o3-caller-client-id</code> request header)</td></tr>
             <tr><td><code>sub</code></td><td>Must match the TPP's <code>client_id</code></td></tr>
             <tr><td><code>aud</code></td><td>Must contain your LFI's issuer identifier</td></tr>
-            <tr><td><code>exp</code></td><td>Must not be expired</td></tr>
-            <tr><td><code>iat</code></td><td>Must be in the past</td></tr>
+            <tr><td><code>exp</code></td><td>Evaluate against the consent's <code>CreationDateTime</code>, not the current time &mdash; see below</td></tr>
+            <tr><td><code>nbf</code></td><td>Evaluate against the consent's <code>CreationDateTime</code>, not the current time &mdash; see below</td></tr>
+            <tr><td><code>iat</code></td><td>Must be in the past, and consistent with the consent's <code>CreationDateTime</code></td></tr>
             <tr><td><code>jti</code></td><td>Record for replay detection if required by your security policy</td></tr>
           </tbody>
         </table>
       </EdRefTable>
+
+      <EdNote type="warning" title="The timing claims are fixed at consent creation">
+        <p>
+          <code>exp</code>, <code>iat</code> and <code>nbf</code> on the PII JWS are set by the TPP
+          when it signs the PII, and they bound the <strong>PAR submission window</strong> &mdash;
+          not the moment you happen to be verifying. The same PII is replayed unchanged on every
+          payment made under the consent, so on a long-lived consent those claims will normally have
+          lapsed long before execution.
+        </p>
+        <p>
+          <code>jwtVerify</code> and its equivalents enforce <code>exp</code> and <code>nbf</code>
+          against the current time <strong>by default</strong>. If you verify anywhere other than
+          consent creation, evaluate them against the consent's <code>CreationDateTime</code> or
+          disable the check &mdash; otherwise valid PII will start failing verification as consents
+          age. Whether the consent is still usable today is answered by the API Hub's consent
+          validation on every request, not by a claim inside the PII.
+        </p>
+      </EdNote>
     </EdSectionBand>
   </div>
 </template>
