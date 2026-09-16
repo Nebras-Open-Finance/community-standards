@@ -96,9 +96,11 @@ const emptyResponse = `{
 
     <EdInPageNav :sections="sections" />
 
-    <EdProse class="ed-page__intro">
-      This article uses <code>GET /accounts/{accountId}/transactions</code> as the worked example. The same behaviour applies to <code>GET /accounts/{accountId}/statements</code> &mdash; and to any other endpoint where the LFI chooses to paginate.
-    </EdProse>
+    <div class="ed-page__intro">
+      <EdProse>
+        This article uses <code>GET /accounts/{accountId}/transactions</code> as the worked example. The same behaviour applies to <code>GET /accounts/{accountId}/statements</code> &mdash; and to any other endpoint where the LFI chooses to paginate.
+      </EdProse>
+    </div>
 
     <EdSectionBand
       id="lfi"

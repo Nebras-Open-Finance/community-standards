@@ -73,14 +73,16 @@ const rejectedResponse = `HTTP/1.1 400 Bad Request
 
     <EdInPageNav :sections="sections" />
 
-    <EdProse class="ed-page__intro">
-      Both list endpoints take an optional, open-ended date range.
-      <code>GET /accounts/{accountId}/transactions</code> uses
-      <code>fromBookingDateTime</code> / <code>toBookingDateTime</code>;
-      <code>GET /accounts/{accountId}/statements</code> uses
-      <code>fromStatementDate</code> / <code>toStatementDate</code>. The behaviour is identical &mdash;
-      the examples below use transactions.
-    </EdProse>
+    <div class="ed-page__intro">
+      <EdProse>
+        Both list endpoints take an optional, open-ended date range.
+        <code>GET /accounts/{accountId}/transactions</code> uses
+        <code>fromBookingDateTime</code> / <code>toBookingDateTime</code>;
+        <code>GET /accounts/{accountId}/statements</code> uses
+        <code>fromStatementDate</code> / <code>toStatementDate</code>. The behaviour is identical &mdash;
+        the examples below use transactions.
+      </EdProse>
+    </div>
 
     <EdSectionBand
       id="accepted"

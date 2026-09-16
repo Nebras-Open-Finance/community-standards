@@ -56,9 +56,11 @@ interaction_id = str(uuid.uuid4())
 
     <EdInPageNav :sections="sections" />
 
-    <EdProse class="ed-page__intro">
-      The <a href="/tech/tpp-standards/security/request-headers">Request Headers reference</a> covers the full rules. This article explains the intent behind each one.
-    </EdProse>
+    <div class="ed-page__intro">
+      <EdProse>
+        The <a href="/tech/tpp-standards/security/request-headers">Request Headers reference</a> covers the full rules. This article explains the intent behind each one.
+      </EdProse>
+    </div>
 
     <EdSectionBand
       id="interaction"

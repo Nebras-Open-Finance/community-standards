@@ -76,12 +76,14 @@ const selfTest = `2027-07-22T00:00:00Z
 
     <EdInPageNav :sections="sections" />
 
-    <EdProse class="ed-page__intro">
-      This article is a <strong>draft attached to OFP-014</strong>. It sets out how to produce and
-      consume date-times across the standard, and publishes to the knowledge base if that proposal is
-      agreed. The date-range <em>query parameters</em> on the transaction and statement list endpoints
-      are specified separately and are not covered here.
-    </EdProse>
+    <div class="ed-page__intro">
+      <EdProse>
+        This article is a <strong>draft attached to OFP-014</strong>. It sets out how to produce and
+        consume date-times across the standard, and publishes to the knowledge base if that proposal is
+        agreed. The date-range <em>query parameters</em> on the transaction and statement list endpoints
+        are specified separately and are not covered here.
+      </EdProse>
+    </div>
 
     <EdSectionBand
       id="model"
