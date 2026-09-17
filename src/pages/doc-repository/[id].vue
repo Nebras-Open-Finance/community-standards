@@ -83,7 +83,7 @@ const maxUploadBytes = ref<number>(5 * 1024 * 1024)
 // Global upload switch. Set to false to hide the upload UI for every org and
 // every document. NOTE: this is a front-end display switch only — it does not
 // block the upload API itself. Flip back to true to re-enable.
-const UPLOADS_ENABLED: boolean = true
+const UPLOADS_ENABLED: boolean = false
 
 type Tab = 'public' | 'private' | 'protected'
 const activeTab = ref<Tab>('public')

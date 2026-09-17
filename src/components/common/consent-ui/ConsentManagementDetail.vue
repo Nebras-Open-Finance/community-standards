@@ -172,6 +172,13 @@ const confirmButtonLabel = computed(() => {
 
 const counterparty = computed(() => `[${entityLabel.value} ${props.connection?.lfiDigit}]`)
 
+// The payer account is always held at an LFI. From the TPP perspective the
+// digit identifies which LFI; from the LFI perspective the payer's bank is the
+// LFI hosting the CMI, and lfiDigit identifies the TPP, so no digit applies.
+const payerBankLabel = computed(() =>
+  isLfi.value ? '[LFI]' : `[LFI ${props.connection?.lfiDigit}]`
+)
+
 const confirmImpactText = computed(() => {
   // LFI perspective: the LFI cannot describe what the TPP's service does, so it
   // points the customer at the TPP and states only the effect the LFI controls.
@@ -361,7 +368,7 @@ provide('detailConnection', computed(() => props.connection))
         <div class="cmd-detail-rows">
           <div class="cmd-detail-row">
             <span class="cmd-meta-row-label">Bank</span>
-            <span class="cmd-meta-row-value">[{{ entityLabel }} {{ connection.lfiDigit }}]</span>
+            <span class="cmd-meta-row-value">{{ payerBankLabel }}</span>
           </div>
           <div class="cmd-detail-row">
             <span class="cmd-meta-row-label">Payer Name</span>

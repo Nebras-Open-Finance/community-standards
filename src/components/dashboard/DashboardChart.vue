@@ -26,7 +26,6 @@ import {
   type TooltipItem,
 } from 'chart.js'
 import type { ChartConfig } from '@/data/dashboard-charts'
-import { state } from '@/stores/dashboard'
 import type { AnyRow, ApiRow, PaymentRow, AuthRow } from '@/stores/dashboard'
 import { chartTokens, onThemeChange } from '@/composables/useChartTheme'
 
@@ -48,7 +47,7 @@ const canvasRef = ref<HTMLCanvasElement | null>(null)
 let chartInstance: Chart | null = null
 
 const INLINE_TYPES: readonly ChartConfig['component'][] = [
-  'error-rate', 'error-codes', 'success-rate', 'pay-status', 'pay-size-dist', 'auth-rate',
+  'error-rate', 'error-codes', 'success-rate', 'pay-status', 'auth-rate',
 ]
 
 const ACCENT = {
@@ -62,13 +61,6 @@ const ACCENT = {
   blueDeep: '#0043A6',
   mute:     'rgba(0,23,56,0.45)',
 } as const
-
-// Categorical palette for per-LFI stacked series — matches DashApiVolumeChart
-// so an LFI reads with the same colour language across the dashboard.
-const PALETTE: readonly string[] = [
-  '#00277F', '#00C2A9', '#008BE4', '#B37819',
-  '#0043A6', '#00A2FB', '#008B78', '#5F6A8F',
-]
 
 // Theme-aware chart styling — values are looked up at chart-build time
 // (and on every theme toggle) so axis ticks / grid / legend pick up the
@@ -175,26 +167,6 @@ const authRateSummary = computed<string>(() => {
               : numeratorType === 'doFail'    ? 'cancellation'
               : 'drop-off'
   return `${rate}% avg ${label} rate`
-})
-
-// Payment size bands (AED), keyed off each aggregate row's mean ticket size
-// (amount / count). Edges are low-inclusive / high-exclusive (a 100 lands in
-// 100 – 1K). The 50K+ band captures anything above 50K but is only drawn when
-// such payments exist, so the axis stays clean when there are none.
-const SIZE_BANDS: readonly { label: string; max: number }[] = [
-  { label: '0 – 100',   max: 100 },
-  { label: '100 – 1K',  max: 1_000 },
-  { label: '1K – 5K',   max: 5_000 },
-  { label: '5K – 10K',  max: 10_000 },
-  { label: '10K – 50K', max: 50_000 },
-  { label: '50K+',      max: Infinity },
-]
-
-const paySizeSummary = computed<string>(() => {
-  if (props.config.component !== 'pay-size-dist') return ''
-  let payments = 0
-  for (const row of props.data) payments += asPaymentRow(row).count
-  return `${payments.toLocaleString()} payments`
 })
 
 // ── Inline chart builders ────────────────────────────────────────────────
@@ -348,92 +320,6 @@ function buildPayStatus(): void {
   chartInstance = new Chart(canvasRef.value!, config)
 }
 
-function buildPaySizeDist(): void {
-  // Each row is an aggregate of `count` payments totalling `amount` AED, so the
-  // true per-payment spread is unknown — we bucket every row by its mean ticket
-  // size (amount / count) and add its count to that band, per LFI. An
-  // approximation of the underlying distribution, weighted by payment count.
-  //
-  // Stacking rule: with exactly one LFI selected (filter 2) a single series is
-  // enough, so we drop the stack. With no LFI selected, or several, we stack one
-  // series per LFI so the size mix per bank is visible.
-  const stackByLfi = state.filters.lfi.length !== 1
-
-  // bandsByLfi[lfi][bandIndex] = payment count
-  const bandsByLfi: Record<string, number[]> = {}
-  for (const row of props.data) {
-    const r = asPaymentRow(row)
-    if (r.count <= 0 || r.amount <= 0) continue
-    if (!r.lfi || r.lfi.toLowerCase() === 'unknown') continue
-    const mean = r.amount / r.count
-    const found = SIZE_BANDS.findIndex(b => mean < b.max)
-    const band = found === -1 ? SIZE_BANDS.length - 1 : found
-    const arr = bandsByLfi[r.lfi] ?? (bandsByLfi[r.lfi] = SIZE_BANDS.map(() => 0))
-    arr[band] = (arr[band] ?? 0) + r.count
-  }
-
-  // Column set: the first five bands always show; the trailing 50K+ band appears
-  // only when a payment lands there, so the axis stays clean when there are none.
-  const bandTotals = SIZE_BANDS.map((_, i) =>
-    Object.values(bandsByLfi).reduce((sum, arr) => sum + (arr[i] ?? 0), 0),
-  )
-  const ALWAYS_SHOWN = SIZE_BANDS.length - 1
-  const shownBands = SIZE_BANDS
-    .map((_, i) => i)
-    .filter(i => i < ALWAYS_SHOWN || (bandTotals[i] ?? 0) > 0)
-  const labels = shownBands.map(i => SIZE_BANDS[i]!.label)
-
-  const lfis = Object.keys(bandsByLfi).sort()
-
-  const datasets = (stackByLfi && lfis.length > 1)
-    ? lfis.map((lfi, i) => ({
-        label: lfi,
-        data: shownBands.map(bi => bandsByLfi[lfi]?.[bi] ?? 0),
-        backgroundColor: PALETTE[i % PALETTE.length],
-        borderColor: PALETTE[i % PALETTE.length],
-        borderWidth: 0,
-        borderRadius: 0,
-        maxBarThickness: 80,
-        stack: 'stack',
-      }))
-    : [{
-        label: 'Payments',
-        data: shownBands.map(i => bandTotals[i] ?? 0),
-        backgroundColor: ACCENT.navy,
-        borderWidth: 0,
-        borderRadius: 0,
-        maxBarThickness: 80,
-      }]
-
-  const stacked = datasets.length > 1
-
-  const s = buildStyle()
-  const config: ChartConfiguration<'bar'> = {
-    type: 'bar',
-    data: { labels, datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: INTERACTION,
-      plugins: {
-        legend: { display: stacked, position: 'bottom', labels: s.LEGEND },
-        tooltip: {
-          ...s.TOOLTIP,
-          callbacks: {
-            label: (ctx) => stacked
-              ? `  ${String(ctx.dataset.label ?? '')}   ${Number(ctx.parsed.y).toLocaleString()}`
-              : `  ${Number(ctx.parsed.y).toLocaleString()} payments`,
-          },
-        },
-      },
-      scales: {
-        y: { stacked, beginAtZero: true, grid: s.GRID, ticks: s.AXIS_TICK, title: { display: true, text: 'Payment Count', ...s.AXIS_TITLE } },
-        x: { stacked, grid: { display: false }, ticks: s.AXIS_LABEL, title: { display: true, text: 'Mean Ticket Size (AED)', ...s.AXIS_TITLE } },
-      },
-    },
-  }
-  chartInstance = new Chart(canvasRef.value!, config)
-}
-
 function buildAuthRate(): void {
   const groupBy = props.config.props?.groupBy ?? 'lfi'
   const numeratorType = props.config.props?.numeratorType ?? 'doConfirm'
@@ -502,7 +388,6 @@ function buildInlineChart(): void {
     case 'error-codes':  buildErrorCodes(); break
     case 'success-rate': buildSuccessRate(); break
     case 'pay-status':   buildPayStatus(); break
-    case 'pay-size-dist': buildPaySizeDist(); break
     case 'auth-rate':    buildAuthRate(); break
     default: /* not an inline type */ break
   }
@@ -571,14 +456,6 @@ onBeforeUnmount(destroyChart)
 
   <div v-else-if="config.component === 'pay-status'" class="chart-card">
     <div class="chart-card__title">{{ config.title }}</div>
-    <div class="chart-card__canvas">
-      <canvas ref="canvasRef" />
-    </div>
-  </div>
-
-  <div v-else-if="config.component === 'pay-size-dist'" class="chart-card">
-    <div class="chart-card__title">{{ config.title }}</div>
-    <div class="chart-card__meta">{{ paySizeSummary }}</div>
     <div class="chart-card__canvas">
       <canvas ref="canvasRef" />
     </div>

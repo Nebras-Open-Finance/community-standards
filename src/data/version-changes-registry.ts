@@ -78,6 +78,12 @@ const DDC = `${TPP}/consent/data-deletion-confirmation`
 const CM = `${LFI}/api-hub/consent-manager`
 const COP = `${LFI}/banking/confirmation-of-payee`
 
+// The products catalogue, which is slugged differently on each surface:
+// `products-leads` on the TPP side, `products-and-leads` on the LFI side. Both
+// are live public routes — this is not an inconsistency to be tidied here.
+const PRODUCTS_TPP = `${TPP}/banking/products-leads`
+const PRODUCTS_LFI = `${LFI}/banking/products-and-leads`
+
 // Version-number uplifts (consent URNs, `/open-finance/{family}/v2.2` base
 // paths) are not recorded here. They follow mechanically from the version
 // change and are visible on every page; listing them adds noise, not signal.
@@ -335,6 +341,236 @@ export const VERSION_CHANGES: VersionChange[] = [
       `${COP}/api-guide`,
       `${COP}/requirements`,
       `${COP}/open-api/cop-query`,
+    ],
+  },
+  {
+    changeId: 'v2.1-to-v2.2',
+    fromVersion: 'v2.1',
+    toVersion: 'v2.2-rc1',
+    number: 7,
+    category: 'New capability',
+    title: 'Sharia-compliant product data — expected profit rates, finance rates, and Takaful',
+    summary:
+      'Product data gains a Sharia-compliant parallel to its interest-based rate structures: `ExpectedProfitRates`, `ShariaFinanceRates`, and two Takaful fields, on the account-scoped product endpoint and the public products catalogue alike.',
+    description:
+      'v2.1 already lets a rate be labelled as a profit rate: `FixedProfit` and `VariableProfit` are valid `RateType` values on the deposit-rate structure, and the finance-rate structures add `HybridProfit`. What neither structure carries is the detail that tells one Sharia product from another — whether a published rate is an expected or merely an indicative profit rate, the ratio by which profit is shared, and the method and frequency by which it is distributed. An LFI publishing an Islamic product could label the rate but not describe it.\n\n' +
+      'v2.2 adds a Sharia-compliant parallel alongside each interest-based structure rather than overloading it. Nothing is replaced, and the conventional fields keep their present meaning and values.\n\n' +
+      '**`ExpectedProfitRates`** is the deposit-rate parallel — one-or-more `AEProductExpectedProfitRate1Properties`, each requiring `RateType` (`FixedProfit` or `VariableProfit`), `DepositRateType`, and `RateDetails`, and optionally carrying `ProfitSharingRatio`, `ProfitDistributionMethod`, `ProfitDistributionFrequency` and a free-text `Description`.\n\n' +
+      '`DepositRateType` is the distinction that matters to a customer: **`ExpectedProfitRate`** is the LFI\'s projected return on a profit-sharing deposit, while `IndicativeProfitRate` is illustrative only. Both are legitimate things to publish and they are not comparable with one another, so a TPP presenting Islamic deposit products side by side has to read this field to know which it is showing.\n\n' +
+      '**`ShariaFinanceRates`** is the finance-rate parallel — `AEProductShariaFinanceRate1Types`, a `oneOf` discriminated on `RateType` across `FixedProfit`, `VariableProfit` and `HybridProfit`. The two new Sharia types compose the existing fixed and variable rate property sets and the existing finance-rate properties with a new `AEProductShariaProfitCalculationMethod1Properties`, whose calculation basis adds `UnusedCreditLine` and `UtilizedLimit` to the three conventional values. `HybridProfit` reuses the existing `AEProductHybridProfitRateProperties` unchanged.\n\n' +
+      'Where the rates are account-scoped, `ShariaFinanceRates` may be sent in cleartext or as a JWE at the LFI\'s discretion — exactly the choice `FinanceRates` already offers, and for the same reason. The public products catalogue is answered without a customer and so has no JWE variant, again matching `FinanceRates`. `ExpectedProfitRates` is cleartext on every surface.\n\n' +
+      '**`TakafulRequired`** (boolean) and **`TakafulDescription`** (up to 500 characters) complete the set. Takaful is the Sharia-compliant alternative to conventional insurance, and where a product requires cover a TPP needs to be able to say both that it is required and what it is for.\n\n' +
+      'Every field added here is optional. An LFI that offers no Islamic products sends nothing new and stays conformant; an LFI that has been approximating profit rates in the interest-based fields can move them across. Nothing is removed, no enum is narrowed, and a v2.1 product payload still validates unchanged — change 8 covers the one place where the *meaning* of an existing field narrows.\n\n' +
+      'One internal refactor is visible in the documents but not on the wire: the inline `RateDetails` definition under `DepositRates` is extracted into a shared `AEProductRateDetails1Properties` so `ExpectedProfitRates` can reuse it. The extracted definition is identical to the inline one it replaces, so `DepositRates` is unchanged.\n\n' +
+      'The change lands on four documents — `AEProduct` in Account Information, `ProductDetails` in Products & Leads, and their Ozone Connect counterparts `CbuaeProduct` in Bank Data Sharing and `ProductDetails` in Bank Products Data — which is what the endpoint pages below render.',
+    docsPaths: [
+      {
+        label: 'TPP specification — account product',
+        path: `${TPP}/banking/data-sharing/open-api/accounts-AccountId-product`,
+      },
+      {
+        label: 'TPP specification — products catalogue',
+        path: `${PRODUCTS_TPP}/open-api/products`,
+      },
+      {
+        label: 'Ozone Connect specification — account product',
+        path: `${LFI}/banking/data-sharing/open-api/accounts-AccountId-products`,
+      },
+      {
+        label: 'Ozone Connect specification — products catalogue',
+        path: `${PRODUCTS_LFI}/open-api/products`,
+      },
+    ],
+    audience: 'Both',
+    areas: ['Data Sharing', 'Products & Leads', 'Islamic Finance', 'Ozone Connect'],
+    specs: [
+      // The same product object is defined in four documents — account-scoped
+      // and catalogue, on each surface — so all four carry the new fields.
+      'uae-account-information-openapi',
+      'uae-product-openapi',
+      'uae-ozone-connect-bank-data-sharing-openapi',
+      'uae-ozone-connect-bank-products-data-openapi',
+    ],
+    endpoints: [
+      {
+        label: 'GET /accounts/{AccountId}/product (TPP)',
+        path: `${TPP}/banking/data-sharing/open-api/accounts-AccountId-product`,
+      },
+      {
+        label: 'GET /products (TPP)',
+        path: `${PRODUCTS_TPP}/open-api/products`,
+      },
+      {
+        label: 'GET /accounts/{accountId}/products (Ozone Connect)',
+        path: `${LFI}/banking/data-sharing/open-api/accounts-AccountId-products`,
+      },
+      {
+        label: 'GET /products (Ozone Connect)',
+        path: `${PRODUCTS_LFI}/open-api/products`,
+      },
+    ],
+    affectedPaths: [
+      `${TPP}/banking/data-sharing/`,
+      `${TPP}/banking/data-sharing/open-api/accounts-AccountId-product`,
+      `${PRODUCTS_TPP}/`,
+      `${PRODUCTS_TPP}/requirements`,
+      `${PRODUCTS_TPP}/open-api/products`,
+      `${LFI}/banking/data-sharing/`,
+      `${LFI}/banking/data-sharing/open-api/accounts-AccountId-products`,
+      `${PRODUCTS_LFI}/`,
+      `${PRODUCTS_LFI}/requirements`,
+      `${PRODUCTS_LFI}/open-api/products`,
+    ],
+  },
+  {
+    changeId: 'v2.1-to-v2.2',
+    fromVersion: 'v2.1',
+    toVersion: 'v2.2-rc1',
+    number: 8,
+    category: 'Behaviour change',
+    title: 'Interest and profit calculation methods are separate fields',
+    summary:
+      'Charge and reward calculation gains a `ProfitCalculationMethod` field. `InterestCalculationMethod` keeps its three values but narrows in meaning to interest alone, so an Islamic calculation basis moves to the new field.',
+    description:
+      '`AEProductFinancialCalculationMeasure` describes how a charge, reward, interest or profit figure is arrived at. In v2.1 it carries a single `InterestCalculationMethod`, documented as the method used to calculate "interest or profit … including Islamic calculation methods" — one field standing for two different things, so nothing in the data says which of them a given value expresses.\n\n' +
+      'v2.2 separates them. `ProfitCalculationMethod` is added alongside, documented as the method used to calculate profit for Islamic calculation methods, and `InterestCalculationMethod`\'s description narrows to interest alone. Both fields carry the same three values — `PrincipalBalance`, `OutstandingBalance` and `InitialDrawdownAmount`.\n\n' +
+      'No enum changes, no field is removed, and neither field is required, so **a v2.1 payload still validates against v2.2 unchanged.** What changes is meaning, not constraint: an LFI that populated `InterestCalculationMethod` to convey the basis of an Islamic profit calculation is, from v2.2, sending a valid value in the wrong field. It should move to `ProfitCalculationMethod`.\n\n' +
+      'Because nothing rejects the old placement, this will not surface as a validation failure on either surface — which is the reason to record it. An LFI that reads the change as cosmetic and leaves the value where it is stays conformant while publishing product data that now says something it does not mean.\n\n' +
+      'The consequence for a TPP is the mirror of that. A TPP reading only `InterestCalculationMethod` will, as LFIs move their Islamic products across, silently lose the calculation basis for exactly those products — no error, just an absent field where a value used to be. Reading both fields and preferring whichever is populated is the safe form for as long as the two placements coexist.\n\n' +
+      'This is distinct from the calculation method on the new Sharia finance-rate types in change 7. That one — `AEProductShariaProfitCalculationMethod1Properties` — carries five values, adding `UnusedCreditLine` and `UtilizedLimit`, and it is a new schema reached only through the new `ShariaFinanceRates` field. The conventional profit-rate structures continue to reference the shared three-value `AEProductInterestCalculationMethod`, which is itself unchanged.\n\n' +
+      'The same four documents that carry the Sharia product fields carry this split, which is what the endpoint pages below render.',
+    docsPaths: [
+      {
+        label: 'TPP specification — account product',
+        path: `${TPP}/banking/data-sharing/open-api/accounts-AccountId-product`,
+      },
+      {
+        label: 'TPP specification — products catalogue',
+        path: `${PRODUCTS_TPP}/open-api/products`,
+      },
+      {
+        label: 'Ozone Connect specification — account product',
+        path: `${LFI}/banking/data-sharing/open-api/accounts-AccountId-products`,
+      },
+      {
+        label: 'Ozone Connect specification — products catalogue',
+        path: `${PRODUCTS_LFI}/open-api/products`,
+      },
+    ],
+    audience: 'Both',
+    areas: ['Data Sharing', 'Products & Leads', 'Islamic Finance', 'Ozone Connect'],
+    specs: [
+      'uae-account-information-openapi',
+      'uae-product-openapi',
+      'uae-ozone-connect-bank-data-sharing-openapi',
+      'uae-ozone-connect-bank-products-data-openapi',
+    ],
+    endpoints: [
+      {
+        label: 'GET /accounts/{AccountId}/product (TPP)',
+        path: `${TPP}/banking/data-sharing/open-api/accounts-AccountId-product`,
+      },
+      {
+        label: 'GET /products (TPP)',
+        path: `${PRODUCTS_TPP}/open-api/products`,
+      },
+      {
+        label: 'GET /accounts/{accountId}/products (Ozone Connect)',
+        path: `${LFI}/banking/data-sharing/open-api/accounts-AccountId-products`,
+      },
+      {
+        label: 'GET /products (Ozone Connect)',
+        path: `${PRODUCTS_LFI}/open-api/products`,
+      },
+    ],
+    affectedPaths: [
+      `${TPP}/banking/data-sharing/open-api/accounts-AccountId-product`,
+      `${PRODUCTS_TPP}/open-api/products`,
+      `${LFI}/banking/data-sharing/open-api/accounts-AccountId-products`,
+      `${PRODUCTS_LFI}/open-api/products`,
+    ],
+  },
+  {
+    changeId: 'v2.1-to-v2.2',
+    fromVersion: 'v2.1',
+    toVersion: 'v2.2-rc1',
+    number: 9,
+    category: 'New capability',
+    title: 'Balance components, transaction allocations and statement balances carry a Shari\'ah description',
+    summary:
+      '`AEAmountWithCategorization` gains `BalanceDescription`, so a categorised balance component, transaction allocation or statement balance can name the specific Shari\'ah-compliant charge, payment or reward it represents.',
+    description:
+      'v2.1 breaks a balance or a transaction down into categorised parts: each one carries a `BalanceCategory` drawn from a closed enum, and an amount. For a conventional product the category is enough to explain the part. For a Shari\'ah-compliant product it is not — several distinct charges, payments and rewards can fall under a single category, and the enum has no member for each of them, so the breakdown shows a figure the customer cannot attribute.\n\n' +
+      'v2.2 adds `BalanceDescription` to `AEAmountWithCategorization` — free text, 1 to 500 characters, naming the specific Shari\'ah-compliant charge, payment or reward that the component represents. It supplements the category rather than replacing it: the enum still classifies the part, and the description says which part it is.\n\n' +
+      'One field addition reaches three endpoints, because the schema is used in three places. On the TPP-facing side, `Components` on `AEBalance` is served by the balances endpoint, `Allocations` on `AETransaction` by the transactions endpoint, and `Components` on `AEBalanceWithCategorization` — the opening and closing balance of a statement — by the statements endpoint. Ozone Connect mirrors all three: `components` on `CbuaeBalance`, `allocations` on `CbuaeTransaction`, and `Components` on `AEBalanceWithCategorization` under `AEStatements`.\n\n' +
+      'Statements are easy to miss here, because the field arrives on them through a schema neither the balances nor the transactions response references. An implementer scoping this change from the balance and transaction payloads alone will not see it.\n\n' +
+      'The field is optional and additive on both surfaces, and is required on neither. An LFI that offers no Islamic products has nothing to do, and a v2.1 payload validates unchanged. It is recorded separately from the Sharia product fields in change 7 because it lands on the balances, transactions and statements endpoints rather than on product data, so it is a different piece of work for whoever implements it.\n\n' +
+      'Both the Account Information and the Ozone Connect Bank Data Sharing documents carry the field in their v2.2 release, which is what the endpoint pages below render.',
+    docsPaths: [
+      {
+        label: 'TPP specification — balances',
+        path: `${TPP}/banking/data-sharing/open-api/accounts-AccountId-balances`,
+      },
+      {
+        label: 'TPP specification — transactions',
+        path: `${TPP}/banking/data-sharing/open-api/accounts-AccountId-transactions`,
+      },
+      {
+        label: 'TPP specification — statements',
+        path: `${TPP}/banking/data-sharing/open-api/accounts-AccountId-statements`,
+      },
+      {
+        label: 'Ozone Connect specification — balances',
+        path: `${LFI}/banking/data-sharing/open-api/accounts-AccountId-balances`,
+      },
+      {
+        label: 'Ozone Connect specification — transactions',
+        path: `${LFI}/banking/data-sharing/open-api/accounts-AccountId-transactions`,
+      },
+      {
+        label: 'Ozone Connect specification — statements',
+        path: `${LFI}/banking/data-sharing/open-api/accounts-AccountId-statements`,
+      },
+    ],
+    audience: 'Both',
+    areas: ['Data Sharing', 'Balances', 'Transactions', 'Statements', 'Islamic Finance', 'Ozone Connect'],
+    specs: [
+      'uae-account-information-openapi',
+      'uae-ozone-connect-bank-data-sharing-openapi',
+    ],
+    endpoints: [
+      {
+        label: 'GET /accounts/{AccountId}/balances (TPP)',
+        path: `${TPP}/banking/data-sharing/open-api/accounts-AccountId-balances`,
+      },
+      {
+        label: 'GET /accounts/{AccountId}/transactions (TPP)',
+        path: `${TPP}/banking/data-sharing/open-api/accounts-AccountId-transactions`,
+      },
+      {
+        label: 'GET /accounts/{AccountId}/statements (TPP)',
+        path: `${TPP}/banking/data-sharing/open-api/accounts-AccountId-statements`,
+      },
+      {
+        label: 'GET /accounts/{accountId}/balances (Ozone Connect)',
+        path: `${LFI}/banking/data-sharing/open-api/accounts-AccountId-balances`,
+      },
+      {
+        label: 'GET /accounts/{accountId}/transactions (Ozone Connect)',
+        path: `${LFI}/banking/data-sharing/open-api/accounts-AccountId-transactions`,
+      },
+      {
+        label: 'GET /accounts/{accountId}/statements (Ozone Connect)',
+        path: `${LFI}/banking/data-sharing/open-api/accounts-AccountId-statements`,
+      },
+    ],
+    affectedPaths: [
+      `${TPP}/banking/data-sharing/open-api/accounts-AccountId-balances`,
+      `${TPP}/banking/data-sharing/open-api/accounts-AccountId-transactions`,
+      `${TPP}/banking/data-sharing/open-api/accounts-AccountId-statements`,
+      `${LFI}/banking/data-sharing/open-api/accounts-AccountId-balances`,
+      `${LFI}/banking/data-sharing/open-api/accounts-AccountId-transactions`,
+      `${LFI}/banking/data-sharing/open-api/accounts-AccountId-statements`,
     ],
   },
 ]
