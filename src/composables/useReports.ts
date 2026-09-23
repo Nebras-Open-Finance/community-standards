@@ -13,6 +13,7 @@
 // redirect to sign-in when the session has expired.
 
 import { ref, computed, type Ref, type ComputedRef } from 'vue'
+import { rememberSignInReturn, clearSignInReturn } from './useSignInReturn'
 
 // Override at build time with VITE_REPORTS_API; otherwise the deployed Worker.
 const API_BASE = (
@@ -76,14 +77,19 @@ function saveBlob(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url)
 }
 
-/** Add a return-to-this-page redirect to a sign-in URL that lacks one. */
+/**
+ * Point a sign-in URL back at the page we are on.
+ *
+ * Always overwrite any redirect the API supplied: the reports API fills in a
+ * default of its own (today, the PII report's path), which is wrong for every
+ * other page that uses this flow. The page starting the bounce is the only
+ * thing that knows where the user should come back to.
+ */
 function withRedirect(raw: string): string {
   if (typeof window === 'undefined') return raw
   try {
     const url = new URL(raw, window.location.origin)
-    if (!url.searchParams.has('redirect')) {
-      url.searchParams.set('redirect', window.location.href)
-    }
+    url.searchParams.set('redirect', window.location.href)
     return url.toString()
   } catch {
     // Not a URL we can parse — hand it to the browser as the API gave it to us.
@@ -160,6 +166,10 @@ function useDownloader(auth?: AuthBounce): UseReport {
       // Private mode — the bounce still works, we just cannot auto-resume.
     }
 
+    // Belt and braces: ?redirect= asks the API to bring us back here, and this
+    // brings us back ourselves if it lands the browser somewhere else.
+    rememberSignInReturn()
+
     redirecting.value = true
     window.location.href = withRedirect(target)
     return true
@@ -168,6 +178,7 @@ function useDownloader(auth?: AuthBounce): UseReport {
   function clearMarker(): void {
     if (!auth || typeof window === 'undefined') return
     try { window.sessionStorage.removeItem(auth.markerKey) } catch { /* ignore */ }
+    clearSignInReturn()
   }
 
   function retrySignIn(run: () => Promise<void>): void {

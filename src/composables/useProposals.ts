@@ -16,6 +16,7 @@
 
 import { ref, computed, watch, type Ref, type ComputedRef } from 'vue'
 import { VOTERS, type Stance, type Comment, type Priority } from '@/data/proposals'
+import { rememberSignInReturn } from './useSignInReturn'
 
 // Base URL of the proposals API. Override at build time with VITE_PROPOSALS_API;
 // otherwise the deployed Worker.
@@ -303,6 +304,9 @@ async function loadProposalVotes(id: string): Promise<VotesResult> {
 // and redirect back to /callback, which lands us back here signed in.
 function signInToVote(): void {
   if (typeof window === 'undefined') return
+  // Also remembered locally, so we come back here even if the API's return hop
+  // lands the browser elsewhere. See useSignInReturn.
+  rememberSignInReturn()
   const redirect = encodeURIComponent(window.location.href)
   window.location.href = `${API_BASE}/login?redirect=${redirect}`
 }

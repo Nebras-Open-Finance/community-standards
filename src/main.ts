@@ -2,6 +2,7 @@ import { ViteSSG } from 'vite-ssg'
 import generatedRoutes from '~pages'
 import { setupLayouts } from 'virtual:generated-layouts'
 import App from './App.vue'
+import { installSignInReturn } from './composables/useSignInReturn'
 
 // Editorial design system styles (Phase 2). Order matters:
 //   fonts  → @import url(...) for the three families used by tokens
@@ -32,6 +33,11 @@ export const createApp = ViteSSG(App, {
   },
 }, ({ router, isClient }) => {
   if (!isClient) return
+
+  // Sign-in return hop. A Trust Framework bounce leaves the site and the API
+  // decides where the browser lands on the way back; when that is not the page
+  // the user started from, put them back on it. See useSignInReturn.
+  installSignInReturn(router)
 
   // Stale-deploy recovery. Each build hashes its chunk filenames, so a client
   // still running the PREVIOUS build 404s when it requests an old chunk that the

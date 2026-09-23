@@ -6,6 +6,7 @@
 // is generated entirely client-side.
 
 import { ref, type Ref } from 'vue'
+import { rememberSignInReturn } from './useSignInReturn'
 
 const API_BASE = (
   (import.meta.env.VITE_PROPOSALS_API as string | undefined) ||
@@ -78,6 +79,9 @@ async function loadMe(): Promise<void> {
 // back signed in.
 function signIn(): void {
   if (typeof window === 'undefined') return
+  // Also remembered locally, so we come back here even if the API's return hop
+  // lands the browser elsewhere. See useSignInReturn.
+  rememberSignInReturn()
   const redirect = encodeURIComponent(window.location.href)
   window.location.href = `${API_BASE}/login?redirect=${redirect}`
 }

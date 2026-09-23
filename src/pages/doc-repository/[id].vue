@@ -8,6 +8,7 @@ meta:
 // `vite.config.ts` `ssgOptions.includedRoutes` from `@/data/doc-repo-orgs`.
 
 import { docRepoOrgs } from '@/data/doc-repo-orgs'
+import { rememberSignInReturn } from '@/composables/useSignInReturn'
 
 const DOCS_API = 'https://docs.nebras-open-finance.com'
 
@@ -140,6 +141,9 @@ async function bootstrap(): Promise<void> {
       }
       window.sessionStorage.setItem(LOGIN_MARKER_KEY, String(Date.now()))
       redirecting.value = true
+      // Also remembered locally, so we come back to this document even if the
+      // API's return hop lands the browser elsewhere. See useSignInReturn.
+      rememberSignInReturn()
       const redirect = encodeURIComponent(window.location.href)
       window.location.href = `${DOCS_API}/login?redirect=${redirect}`
       return
