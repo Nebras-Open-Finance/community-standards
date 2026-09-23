@@ -7,6 +7,7 @@
 export {}
 declare global {
   const DIRECTORY_PARTICIPANTS_URL: typeof import('./composables/liveEcosystem')['DIRECTORY_PARTICIPANTS_URL']
+  const ENV_LABEL: typeof import('./composables/useReports')['ENV_LABEL']
   const EffectScope: typeof import('vue')['EffectScope']
   const FAMILY_KEYS: typeof import('./composables/liveEcosystem')['FAMILY_KEYS']
   const FAMILY_URL_PREFIX: typeof import('./composables/liveEcosystem')['FAMILY_URL_PREFIX']
@@ -17,6 +18,7 @@ declare global {
   const PERMISSION_SOURCE_META: typeof import('./composables/useFieldMap')['PERMISSION_SOURCE_META']
   const PLACEHOLDER_LOGO_URL: typeof import('./composables/liveEcosystem')['PLACEHOLDER_LOGO_URL']
   const PROPOSALS_CONFIG: typeof import('./composables/useProposals')['PROPOSALS_CONFIG']
+  const SHEET_LABEL: typeof import('./composables/useReports')['SHEET_LABEL']
   const TRUST_FRAMEWORK_PROXY_URL: typeof import('./composables/liveEcosystem')['TRUST_FRAMEWORK_PROXY_URL']
   const appPageSlugs: typeof import('./composables/useInternalPages')['appPageSlugs']
   const chartTokens: typeof import('./composables/useChartTheme')['chartTokens']
@@ -102,6 +104,7 @@ declare global {
   const useLiveTpps: typeof import('./composables/useLiveTpps')['useLiveTpps']
   const useMermaidDiagram: typeof import('./composables/useMermaidDiagram')['useMermaidDiagram']
   const useModel: typeof import('vue')['useModel']
+  const usePiiReport: typeof import('./composables/useReports')['usePiiReport']
   const useProposals: typeof import('./composables/useProposals')['useProposals']
   const useRoute: typeof import('vue-router')['useRoute']
   const useRouteVersion: typeof import('./composables/useSelectedVersion')['useRouteVersion']
@@ -111,6 +114,7 @@ declare global {
   const useSelectedVersion: typeof import('./composables/useSelectedVersion')['useSelectedVersion']
   const useSlots: typeof import('vue')['useSlots']
   const useTemplateRef: typeof import('vue')['useTemplateRef']
+  const useTrustFrameworkReport: typeof import('./composables/useReports')['useTrustFrameworkReport']
   const useUrlSearchParam: typeof import('./composables/useUrlSearchParam')['useUrlSearchParam']
   const useVersionTour: typeof import('./composables/useVersionTour')['useVersionTour']
   const wasFetchedButAbsent: typeof import('./composables/useFieldMap')['wasFetchedButAbsent']

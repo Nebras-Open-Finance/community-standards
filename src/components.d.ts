@@ -168,6 +168,7 @@ declare module 'vue' {
     PvVotePanel: typeof import('./components/proposals/PvVotePanel.vue')['default']
     RedirectLaunchGuidance: typeof import('./components/common/RedirectLaunchGuidance.vue')['default']
     RedocWrapper: typeof import('./components/common/RedocWrapper.vue')['default']
+    ReportPanel: typeof import('./components/common/ReportPanel.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SearchModal: typeof import('./components/chrome/SearchModal.vue')['default']
