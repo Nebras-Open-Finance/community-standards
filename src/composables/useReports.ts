@@ -27,15 +27,6 @@ export const ENV_LABEL: Record<ReportEnv, string> = {
   prod: 'Production',
 }
 
-/** Sheets of the trust-framework report. CSV is flat, so one per download. */
-export type ReportSheet = 'organisations' | 'authServers' | 'apiResources'
-
-export const SHEET_LABEL: Record<ReportSheet, string> = {
-  organisations: 'Organisations',
-  authServers: 'Authorisation servers',
-  apiResources: 'API resources',
-}
-
 export interface TrustFrameworkSummary {
   env: ReportEnv
   organisations: number
@@ -127,7 +118,6 @@ function useDownloader(): UseReport {
 /** Generate Report — trust-framework snapshot. */
 export function useTrustFrameworkReport() {
   const base = useDownloader()
-  const sheet = ref<ReportSheet>('organisations')
   const summary = ref<TrustFrameworkSummary | null>(null)
   const summaryBusy = ref(false)
 
@@ -147,14 +137,16 @@ export function useTrustFrameworkReport() {
     }
   }
 
+  // One download, all three sections — the API returns them in a single file
+  // with a leading Sheet column.
   async function downloadCsv(): Promise<void> {
     await base.download(
-      `/reports/trust-framework?env=${base.env.value}&sheet=${sheet.value}`,
-      `trustframework-${base.env.value}-${sheet.value}.csv`,
+      `/reports/trust-framework?env=${base.env.value}`,
+      `trustframework-${base.env.value}.csv`,
     )
   }
 
-  return { ...base, sheet, summary, summaryBusy, loadSummary, downloadCsv }
+  return { ...base, summary, summaryBusy, loadSummary, downloadCsv }
 }
 
 /** PII Report — pooled directory emails. Requires directory sign-in. */

@@ -8,29 +8,36 @@ meta:
 </route>
 
 <script setup lang="ts">
-import { watch, onMounted } from 'vue'
+import { computed, watch, onMounted } from 'vue'
 import { useHead } from '@unhead/vue'
 import ReportPanel from '@/components/common/ReportPanel.vue'
-import { SHEET_LABEL, useTrustFrameworkReport, type ReportSheet } from '@/composables/useReports'
+import { useTrustFrameworkReport } from '@/composables/useReports'
 
 useHead({ title: 'Generate report' })
 
 const {
   env, busy, error, done, loginUrl,
-  sheet, summary, summaryBusy, loadSummary, downloadCsv, reset,
+  summary, summaryBusy, loadSummary, downloadCsv, reset,
 } = useTrustFrameworkReport()
 
-const SHEETS: ReportSheet[] = ['organisations', 'authServers', 'apiResources']
-
-// The report is three sheets and CSV is flat, so the sheet is chosen here. The
-// summary tells you how many rows each will contain before you commit to a
-// download that takes a while.
+// One download contains the whole report — organisations, authorisation servers
+// and API resources, in a single file with a Sheet column marking each section.
+// The summary says how many rows that will be before you start a download that
+// takes a while.
 onMounted(loadSummary)
 watch(env, () => { reset(); loadSummary() })
 
-function countFor(name: ReportSheet): number | null {
-  return summary.value ? summary.value[name] : null
-}
+const totalRows = computed(() =>
+  summary.value
+    ? summary.value.organisations + summary.value.authServers + summary.value.apiResources
+    : null,
+)
+
+const hint = computed(() => {
+  if (summaryBusy.value) return 'Counting rows…'
+  if (totalRows.value === null) return 'Organisations, authorisation servers and API resources'
+  return `${totalRows.value} rows — organisations, authorisation servers and API resources`
+})
 </script>
 
 <template>
@@ -38,7 +45,7 @@ function countFor(name: ReportSheet): number | null {
     title="Generate Report"
     description="Select an environment and download the trust-framework report as CSV."
     file-label="Report file"
-    :file-hint="`CSV — ${SHEET_LABEL[sheet]}`"
+    :file-hint="hint"
     :env="env"
     :busy="busy"
     :error="error"
@@ -47,67 +54,45 @@ function countFor(name: ReportSheet): number | null {
     @update:env="env = $event"
     @download="downloadCsv"
   >
-    <template #options>
-      <div>
-        <div class="gr__label">Sheet</div>
-        <div class="gr__sheets">
-          <button
-            v-for="name in SHEETS"
-            :key="name"
-            type="button"
-            class="gr__sheet"
-            :class="{ 'gr__sheet--on': sheet === name }"
-            :aria-pressed="sheet === name"
-            @click="sheet = name; reset()"
-          >
-            <span>{{ SHEET_LABEL[name] }}</span>
-            <span v-if="countFor(name) !== null" class="gr__count">{{ countFor(name) }}</span>
-            <span v-else-if="summaryBusy" class="gr__count gr__count--wait">…</span>
-          </button>
-        </div>
-      </div>
+    <template v-if="summary" #options>
+      <dl class="gr__counts">
+        <div><dt>Organisations</dt><dd>{{ summary.organisations }}</dd></div>
+        <div><dt>Authorisation servers</dt><dd>{{ summary.authServers }}</dd></div>
+        <div><dt>API resources</dt><dd>{{ summary.apiResources }}</dd></div>
+      </dl>
     </template>
   </ReportPanel>
 </template>
 
 <style scoped>
-.gr__label {
-  font-family: var(--at-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--at-mute);
-  font-weight: 700;
-  margin-bottom: 0.65rem;
+.gr__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0;
 }
 
-.gr__sheets { display: flex; flex-wrap: wrap; gap: 0.6rem; }
-
-.gr__sheet {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 0.9rem;
-  border-radius: 8px;
+.gr__counts > div {
+  flex: 1 1 8rem;
+  padding: 0.6rem 0.8rem;
   border: 1px solid var(--at-grid-line);
-  background: transparent;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--at-mute);
-}
-.gr__sheet:hover { border-color: var(--at-teal); }
-.gr__sheet--on {
-  border-color: var(--at-navy-deep);
-  color: var(--at-navy-deep);
+  border-radius: 8px;
   background: var(--at-bg-paper);
 }
 
-.gr__count {
+.gr__counts dt {
   font-family: var(--at-mono);
-  font-size: 0.72rem;
-  color: var(--at-teal-deep);
+  font-size: 0.64rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--at-mute);
+  font-weight: 700;
 }
-.gr__count--wait { opacity: 0.5; }
+
+.gr__counts dd {
+  margin: 0.2rem 0 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--at-navy-deep);
+}
 </style>
