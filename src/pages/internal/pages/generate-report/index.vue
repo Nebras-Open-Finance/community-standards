@@ -17,13 +17,12 @@ useHead({ title: 'Generate report' })
 
 const {
   env, busy, error, done, loginUrl,
-  summary, summaryBusy, loadSummary, downloadCsv, reset,
+  summary, summaryBusy, loadSummary, downloadWorkbook, reset,
 } = useTrustFrameworkReport()
 
 // One download contains the whole report — organisations, authorisation servers
-// and API resources, in a single file with a Sheet column marking each section.
-// The summary says how many rows that will be before you start a download that
-// takes a while.
+// and API resources, as a workbook with one sheet each. The summary says how
+// many rows that will be before you start a download that takes a while.
 onMounted(loadSummary)
 watch(env, () => { reset(); loadSummary() })
 
@@ -35,16 +34,17 @@ const totalRows = computed(() =>
 
 const hint = computed(() => {
   if (summaryBusy.value) return 'Counting rows…'
-  if (totalRows.value === null) return 'Organisations, authorisation servers and API resources'
-  return `${totalRows.value} rows — organisations, authorisation servers and API resources`
+  if (totalRows.value === null) return 'Three sheets: Organisations, Auth Servers, API Resources'
+  return `${totalRows.value} rows across three sheets — Organisations, Auth Servers, API Resources`
 })
 </script>
 
 <template>
   <ReportPanel
     title="Generate Report"
-    description="Select an environment and download the trust-framework report as CSV."
+    description="Select an environment and download the trust-framework report as an Excel workbook."
     file-label="Report file"
+    format="XLSX"
     :file-hint="hint"
     :env="env"
     :busy="busy"
@@ -52,7 +52,7 @@ const hint = computed(() => {
     :done="done"
     :login-url="loginUrl"
     @update:env="env = $event"
-    @download="downloadCsv"
+    @download="downloadWorkbook"
   >
     <template v-if="summary" #options>
       <dl class="gr__counts">

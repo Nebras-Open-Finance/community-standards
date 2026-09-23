@@ -48,13 +48,26 @@ function hydrate(): void {
 }
 
 // ── Committed pages (build-time discovery) ───────────────────────────────────
-// Keys look like "/src/pages/internal/some-page.md". index.vue / draft/[slug].vue
-// are .vue files and are deliberately excluded by the .md-only glob.
-const committedModules = import.meta.glob('/src/pages/internal/**/*.md')
+// Patterns are relative to THIS file, not root-absolute: on Windows a
+// root-absolute glob is rewritten against a lowercase drive letter ("c:/…") that
+// Vite then fails to resolve. Keys therefore look like
+// "../pages/internal/some-page.md" — slugFrom() takes the part after
+// "pages/internal/" so the derivation does not depend on the prefix.
+// index.vue / draft/[slug].vue are .vue files and are deliberately excluded by
+// the .md-only glob.
+const committedModules = import.meta.glob('../pages/internal/**/*.md')
+
+/** "…/pages/internal/<sub>/some-page.md" → "some-page", relative to `sub`. */
+function slugFrom(path: string, sub: string, ext: RegExp): string {
+  const marker = `pages/internal/${sub}`
+  const idx = path.indexOf(marker)
+  const rest = idx === -1 ? path : path.slice(idx + marker.length)
+  return rest.replace(/^\//, '').replace(ext, '').replace(/\/index$/, '')
+}
 
 /** Slugs of committed internal pages, e.g. "some-page" → route /internal/some-page. */
 export const committedSlugs: string[] = Object.keys(committedModules)
-  .map((p) => p.replace('/src/pages/internal/', '').replace(/\.md$/, '').replace(/\/index$/, ''))
+  .map((p) => slugFrom(p, '', /\.md$/))
   .sort()
 
 // ── App pages (build-time discovery) ─────────────────────────────────────────
@@ -62,24 +75,29 @@ export const committedSlugs: string[] = Object.keys(committedModules)
 // same password gate and share the internal sidebar, but they are applications
 // rather than documents — so the layout renders them directly instead of wrapping
 // them in the Markdown source/preview shell.
-const appPageModules = import.meta.glob('/src/pages/internal/pages/**/*.vue')
+const appPageModules = import.meta.glob('../pages/internal/pages/**/*.vue')
 
 /** Slugs of internal app pages, e.g. "redirect-testing" → /internal/pages/redirect-testing. */
 export const appPageSlugs: string[] = Object.keys(appPageModules)
-  .map((p) => p.replace('/src/pages/internal/pages/', '').replace(/\.vue$/, '').replace(/\/index$/, ''))
+  .map((p) => slugFrom(p, 'pages', /\.vue$/))
   .sort()
 
 // Raw Markdown source for each committed internal page — lets the duplicate
 // widget seed a draft with the exact text the example page is written in.
-const committedSources = import.meta.glob('/src/pages/internal/**/*.md', {
+const committedSources = import.meta.glob('../pages/internal/**/*.md', {
   query: '?raw',
   import: 'default',
   eager: true,
 }) as Record<string, string>
 
+// Re-keyed by slug, so lookups do not have to reconstruct the glob's own paths.
+const sourceBySlug: Record<string, string> = Object.fromEntries(
+  Object.entries(committedSources).map(([p, raw]) => [slugFrom(p, '', /\.md$/), raw]),
+)
+
 /** Raw Markdown source (frontmatter stripped) for a committed internal page. */
 export function getCommittedSource(slug: string): string | undefined {
-  const raw = committedSources[`/src/pages/internal/${slug}.md`]
+  const raw = sourceBySlug[slug]
   if (raw === undefined) return undefined
   return stripFrontmatter(raw).replace(/^\s*\n+/, '')
 }

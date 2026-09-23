@@ -8,16 +8,25 @@ meta:
 </route>
 
 <script setup lang="ts">
-import { watch } from 'vue'
+import { onMounted, watch } from 'vue'
 import { useHead } from '@unhead/vue'
 import ReportPanel from '@/components/common/ReportPanel.vue'
 import { usePiiReport } from '@/composables/useReports'
 
 useHead({ title: 'PII report' })
 
-const { env, busy, error, done, loginUrl, downloadCsv, reset } = usePiiReport()
+const {
+  env, busy, error, done, loginUrl, redirecting, loopDetected,
+  downloadCsv, reset, resume, retry,
+} = usePiiReport()
 
 watch(env, reset)
+
+// The API requires a directory session, so an unauthenticated download bounces
+// straight to Trust Framework SSO (see usePiiReport). We land back here with the
+// session set — pick the download back up rather than making the user press the
+// button a second time.
+onMounted(resume)
 </script>
 
 <template>
@@ -30,9 +39,12 @@ watch(env, reset)
     :error="error"
     :done="done"
     :login-url="loginUrl"
+    :redirecting="redirecting"
+    :loop-detected="loopDetected"
     done-message="PII report generated."
     @update:env="env = $event"
     @download="downloadCsv"
+    @retry="retry"
   >
     <template #options>
       <!--
@@ -44,9 +56,10 @@ watch(env, reset)
       -->
       <p class="pii__warn">
         <strong>Contains personal data.</strong>
-        This export lists directory users' email addresses. You will be asked to
-        sign in at the directory, and the export is recorded against your account.
-        Handle the file accordingly and delete it when you are done.
+        This export lists directory users' email addresses. If you are not
+        already signed in, you will be sent to the Trust Framework to do so, and
+        the export is recorded against your account. Handle the file accordingly
+        and delete it when you are done.
       </p>
     </template>
   </ReportPanel>

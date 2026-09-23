@@ -2,9 +2,10 @@
 // Shared shell for the API Hub report pages.
 //
 // Generate Report and PII Report are the same interaction — pick an environment,
-// download a CSV — so they share this panel rather than each carrying a copy of
-// the layout. Anything genuinely specific to one report goes in the `options`
-// slot.
+// download a file — so they share this panel rather than each carrying a copy of
+// the layout. They differ only in what comes back (a workbook and a CSV
+// respectively), which is what `format` is for. Anything genuinely specific to
+// one report goes in the `options` slot.
 //
 // Layout follows the design mockups; colour and type come from the site's own
 // tokens rather than the mockups' raw hex, so these pages look like the rest of
@@ -19,17 +20,25 @@ const props = defineProps<{
   /** Label for the thing being downloaded, e.g. 'Report file'. */
   fileLabel: string
   fileHint?: string
+  /** File type, shown on the button and in the default hint. */
+  format?: string
   env: ReportEnv
   busy: boolean
   error: string | null
   done: boolean
   loginUrl: string | null
   doneMessage?: string
+  /** Set while the page is navigating to sign-in — see useReports. */
+  redirecting?: boolean
+  /** Set when we came back from sign-in and the API still refused. */
+  loopDetected?: boolean
 }>()
 
 const emit = defineEmits<{
   'update:env': [value: ReportEnv]
   download: []
+  /** Only meaningful for reports that require sign-in. */
+  retry: []
 }>()
 
 const ENVS: ReportEnv[] = ['sandbox', 'prod']
@@ -71,19 +80,40 @@ function select(value: ReportEnv): void {
       <div class="rp__row">
         <div>
           <div class="rp__file">{{ fileLabel }}</div>
-          <div class="rp__hint">{{ fileHint ?? `CSV — ${ENV_LABEL[env]} environment` }}</div>
+          <div class="rp__hint">{{ fileHint ?? `${format ?? 'CSV'} — ${ENV_LABEL[env]} environment` }}</div>
         </div>
-        <button type="button" class="rp__go" :disabled="busy" @click="emit('download')">
+        <button type="button" class="rp__go" :disabled="busy || redirecting" @click="emit('download')">
           <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true">
             <path d="M10 3 V13 M10 13 L6 9 M10 13 L14 9" stroke="currentColor" stroke-width="1.8" fill="none" />
             <path d="M4 15 V16.5 C4 17.3 4.7 18 5.5 18 H14.5 C15.3 18 16 17.3 16 16.5 V15" stroke="currentColor" stroke-width="1.8" fill="none" />
           </svg>
-          {{ busy ? 'Generating…' : 'Download CSV' }}
+          {{ busy ? 'Generating…' : `Download ${format ?? 'CSV'}` }}
         </button>
       </div>
 
+      <!--
+        Sign-in is handled by bouncing to the Trust Framework, not by offering a
+        link — so the only thing to say here is that the page is on its way.
+      -->
+      <p v-if="redirecting" class="rp__note">
+        Taking you to the Trust Framework to sign in. The download continues when
+        you come back.
+      </p>
+
+      <!-- Came back from sign-in and the API still refused: don't bounce again. -->
+      <div v-else-if="loopDetected" class="rp__error">
+        <p class="rp__errline">Sign-in didn't complete.</p>
+        <p class="rp__errline">
+          We sent you to the Trust Framework but the session didn't stick. Try
+          again, and if this keeps happening, check that third-party cookies are
+          allowed for this site and that your directory account has access to
+          this report.
+        </p>
+        <button type="button" class="rp__retry" @click="emit('retry')">Try again</button>
+      </div>
+
       <!-- Generating walks the whole directory, so say so rather than appearing hung. -->
-      <p v-if="busy" class="rp__note">
+      <p v-else-if="busy" class="rp__note">
         Building the report from the {{ ENV_LABEL[env] }} directory. This can take
         up to a minute.
       </p>
@@ -215,6 +245,21 @@ function select(value: ReportEnv): void {
 .rp__done { color: var(--at-teal-deep); }
 .rp__error { color: #B3261E; }
 .rp__signin { margin-left: 0.5rem; }
+.rp__errline { margin: 0 0 0.4rem; }
+
+.rp__retry {
+  margin-top: 0.3rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--at-grid-line);
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--at-navy-deep);
+  cursor: pointer;
+}
+.rp__retry:hover { border-color: var(--at-teal); }
 
 @media (max-width: 30rem) {
   .rp__row { align-items: stretch; }
