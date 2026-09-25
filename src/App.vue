@@ -51,6 +51,7 @@ const NOINDEX_ENTIRE_SITE = false
 const NOINDEX_RE = [
   /^\/_dev(\/|$)/,
   /^\/internal(\/|$)/,
+  /^\/biopay(\/|$)/,
   /(^|\/)_shared(\/|$)/,
 ]
 const robotsDirective = computed(() =>

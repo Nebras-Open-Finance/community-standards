@@ -6,6 +6,7 @@
 // biome-ignore lint: disable
 export {}
 declare global {
+  const BIOPAY_PASSWORD: typeof import('./composables/useBiopayAuth')['BIOPAY_PASSWORD']
   const DIRECTORY_PARTICIPANTS_URL: typeof import('./composables/liveEcosystem')['DIRECTORY_PARTICIPANTS_URL']
   const ENV_LABEL: typeof import('./composables/useReports')['ENV_LABEL']
   const EffectScope: typeof import('vue')['EffectScope']
@@ -27,6 +28,7 @@ declare global {
   const committedSlugs: typeof import('./composables/useInternalPages')['committedSlugs']
   const computed: typeof import('vue')['computed']
   const createApp: typeof import('vue')['createApp']
+  const createSpaceAuth: typeof import('./composables/useSpaceAuth')['createSpaceAuth']
   const currentFullPath: typeof import('./composables/useSignInReturn')['currentFullPath']
   const customRef: typeof import('vue')['customRef']
   const decodeApiLogPayload: typeof import('./composables/apiLog')['decodeApiLogPayload']
@@ -96,6 +98,7 @@ declare global {
   const triggerRef: typeof import('vue')['triggerRef']
   const unref: typeof import('vue')['unref']
   const useAttrs: typeof import('vue')['useAttrs']
+  const useBiopayAuth: typeof import('./composables/useBiopayAuth')['useBiopayAuth']
   const useCssModule: typeof import('vue')['useCssModule']
   const useCssVars: typeof import('vue')['useCssVars']
   const useDarkPreview: typeof import('./composables/useDarkPreview')['useDarkPreview']

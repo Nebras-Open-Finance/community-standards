@@ -214,6 +214,45 @@ UAE Open Finance has two things that can loosely be called a “resource server�
 The site uses `vue-router` with vite-ssg-prerendered HTML. Internal links between pages MUST be expressed as route paths (e.g. `to="/tech/tpp-standards/v2.1/banking/data-sharing/api-guide/"`), matching the file layout under `src/pages/`. A directory `index.vue` corresponds to a trailing-slash route; a sibling `foo.vue` corresponds to `/foo`. Links to assets in `public/` (e.g. an OpenAPI YAML, an image) use the asset path served from the site root (e.g. `/openapi/v2.1/standards/uae-account-information-openapi.yaml`).
 
 
+## 🔓 Gated spaces
+
+Two areas of the site are password-gated. Neither gate is a real security boundary — the
+site is a static prerendered bundle with no backend and the password ships in the client
+code (see `src/composables/useSpaceAuth.ts`). They keep the area out of casual sight only.
+
+| Space | Route | Layout | Password | Sidebar source |
+| --- | --- | --- | --- | --- |
+| Internal | `/internal` | `src/layouts/internal.vue` | `NOF@1234` | `src/layouts/internal.vue` + `src/data/internalPolicies.ts` |
+| BioPay | `/biopay` | `src/layouts/biopay.vue` | `BioPay@1234` | `src/data/biopay.ts` |
+
+Adding a gated space means adding its route prefix to **all six** of these, which are
+deliberately mirrored:
+
+- `NOINDEX_RE` in `src/App.vue`
+- `EXCLUDE` in `scripts/generate-sitemap.mjs`
+- `EXCLUDE_ROUTES` in `scripts/build-search-index.mjs`
+- `NON_PUBLIC_RE` in `src/components/chrome/SiteAnnouncementModal.vue`
+- `NOINDEX` in `supporting/tests/robots-noindex.test.mjs`
+- `FORBIDDEN` + the skip list in `supporting/tests/sitemap.test.mjs`, and
+  `isExemptByPath` in `supporting/tests/orphan-pages.test.mjs`
+
+### ⚠️ BioPay is NOT UAE Open Finance
+
+`/biopay` documents a **separate biometric payment scheme** under design. The
+architectural invariants above do **not** apply to it, and Claude MUST NOT rewrite BioPay
+content to fit the Open Finance model:
+
+- BioPay has its own actors (payer, merchant, Biometric Service Provider, scheme operator,
+  acquirer, LFI). There is no TPP and no API Hub in BioPay.
+- BioPay does not use Open Finance consents, tokens, or the `/par` → `/auth` → `/token`
+  flow, and introduces no endpoints into the Open Finance specs.
+- Every BioPay page is **draft**. Its endpoints, payloads and error codes are proposals
+  with no OpenAPI document behind them — so the "OpenAPI is the source of truth" rule is
+  satisfied by labelling them as proposals, not by inventing a spec.
+- The only overlap is the **LFI**, which appears in BioPay purely as the holder of the
+  payer's funding account and the final authority on a debit.
+
+
 ## 📝 TODOs
 
 - New TODOs go in [supporting/internal_helpers/todo.md](supporting/internal_helpers/todo.md) under the most relevant section.

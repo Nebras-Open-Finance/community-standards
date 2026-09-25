@@ -16,7 +16,7 @@ const ORIGIN = 'https://nebras-open-finance.com'
 
 // Route substrings that must never appear in the sitemap — kept in sync with
 // the EXCLUDE list in scripts/generate-sitemap.mjs.
-const FORBIDDEN = ['/_dev/', '/_shared/', '/internal']
+const FORBIDDEN = ['/_dev/', '/_shared/', '/internal', '/biopay']
 
 function walkHtml(dir, out = []) {
   for (const entry of readdirSync(dir)) {
@@ -72,6 +72,7 @@ describe('Sitemap', {
       if (
         /^_dev(\/|$)/.test(rel) ||
         /^internal(\/|$)/.test(rel) ||
+        /^biopay(\/|$)/.test(rel) ||
         /(^|\/)_shared(\/|$)/.test(rel) ||
         // Draft standards versions are deliberately kept out of the sitemap —
         // they mirror the current version, so indexing them would duplicate

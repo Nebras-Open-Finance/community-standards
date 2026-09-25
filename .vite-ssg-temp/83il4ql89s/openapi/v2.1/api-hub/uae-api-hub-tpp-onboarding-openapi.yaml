@@ -1,0 +1,306 @@
+openapi: 3.1.0
+info:
+  title: UAE Onboarding API
+  description: '## UAE Open Finance Onboarding API Specification'
+  version: v2.1-draft1
+tags:
+  - name: TPP Onboarding
+    description: Onboard a TPP at the OFP for a given LFI
+paths:
+  /tpp-registration:
+    post:
+      tags:
+        - TPP Onboarding
+      operationId: TppOnboarding_create
+      summary: Onboard a TPP with a given LFI
+      description: >-
+        Allows a TPP to onboard with a given LFI. This is a one-off operation that is invoked the first time a TPP
+        accesses the LFI.
+
+
+        An empty request body is submitted to the operation. The OFP will introspect the TPP client certificate to
+        extract the TPP ID, and use this to complete onboarding at the Trust Framework.
+
+
+        Once the operation is complete the TPP will be able to call the LFI APIs.
+      parameters:
+        - $ref: '#/components/parameters/x-fapi-interaction-id'
+      responses:
+        '204':
+          description: The onboarding operation completed successfully
+          headers:
+            x-fapi-interaction-id:
+              required: false
+              description: An RFC4122 UID used as a correlation ID.
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/400Error'
+        '401':
+          $ref: '#/components/responses/401Error'
+        '403':
+          $ref: '#/components/responses/403Error'
+        '405':
+          $ref: '#/components/responses/405Error'
+        '406':
+          $ref: '#/components/responses/406Error'
+        '415':
+          $ref: '#/components/responses/415Error'
+        '429':
+          $ref: '#/components/responses/429Error'
+        '500':
+          $ref: '#/components/responses/500Error'
+      security:
+        - MutualTLS: []
+components:
+  parameters:
+    x-fapi-interaction-id:
+      name: x-fapi-interaction-id
+      in: header
+      required: false
+      description: An RFC4122 UID used as a correlation ID.
+      schema:
+        type: string
+  headers:
+    x-fapi-interaction-id:
+      required: true
+      description: An RFC4122 UID used as a correlation id.
+      schema:
+        type: string
+      example: 49df2c2c-6b80-40ee-96a1-71910a248048
+  schemas:
+    AEError400Response:
+      description: An array of detail error codes, and messages, and URLs to documentation to help remediation.
+      type: object
+      properties:
+        Errors:
+          items:
+            $ref: '#/components/schemas/AEError400'
+          type: array
+          minItems: 1
+      required:
+        - Errors
+      additionalProperties: false
+    AEError403Response:
+      description: An array of detail error codes, and messages, and URLs to documentation to help remediation.
+      type: object
+      properties:
+        Errors:
+          items:
+            $ref: '#/components/schemas/AEError403'
+          type: array
+          minItems: 1
+      required:
+        - Errors
+      additionalProperties: false
+    AEError500Response:
+      description: An array of detail error codes, and messages, and URLs to documentation to help remediation.
+      type: object
+      properties:
+        Errors:
+          items:
+            $ref: '#/components/schemas/AEError500'
+          type: array
+          minItems: 1
+      required:
+        - Errors
+      additionalProperties: false
+    AEMessage:
+      type: string
+      minLength: 1
+      maxLength: 500
+      description: >-
+        A description of the error that occurred. e.g., 'A mandatory field isn't supplied' or
+        'RequestedExecutionDateTime must be in future'
+
+        This field is not standardised
+    AEError400:
+      description: Error
+      type: object
+      required:
+        - Code
+        - Message
+      additionalProperties: false
+      properties:
+        Code:
+          $ref: '#/components/schemas/AEError400Code'
+        Message:
+          $ref: '#/components/schemas/AEMessage'
+        Path:
+          description: >-
+            Recommended but optional reference to the JSON Path of the field with error, e.g.,
+            Data.Initiation.InstructedAmount.Currency
+          type: string
+          minLength: 1
+          maxLength: 500
+        Url:
+          description: URL to help remediate the problem, or provide more information, or to API Reference, or help etc
+          type: string
+    AEError400Code:
+      description: >-
+        Error Code. This may either be one of the prescribed Error Code(s) or a namespaced Error Code where the
+        namespace is the system or organisation that has responded with the error, and the code is the code specific to
+        the system or organisation.
+      type: string
+      anyOf:
+        - enum:
+            - Consent.Invalid
+            - Consent.BusinessRuleViolation
+            - Consent.FailsControlParameters
+            - Consent.InvalidUserIdentifier
+            - JWS.InvalidSignature
+            - JWS.Malformed
+            - JWS.InvalidClaim
+            - JWS.InvalidHeader
+            - JWE.DecryptionError
+            - JWE.InvalidHeader
+            - GenericRecoverableError
+            - GenericError
+            - Event.UnexpectedEvent
+            - Body.InvalidFormat
+            - Resource.InvalidFormat
+        - pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+    AEError403:
+      description: Error
+      type: object
+      required:
+        - Code
+        - Message
+      additionalProperties: false
+      properties:
+        Code:
+          $ref: '#/components/schemas/AEError403Code'
+        Message:
+          $ref: '#/components/schemas/AEMessage'
+        Path:
+          description: >-
+            Recommended but optional reference to the JSON Path of the field with error, e.g.,
+            Data.Initiation.InstructedAmount.Currency
+          type: string
+          minLength: 1
+          maxLength: 500
+        Url:
+          description: URL to help remediate the problem, or provide more information, or to API Reference, or help etc
+          type: string
+    AEError403Code:
+      description: >-
+        Error Code. This may either be one of the prescribed Error Code(s) or a namespaced Error Code where the
+        namespace is the system or organisation that has responded with the error, and the code is the code specific to
+        the system or organisation.
+      type: string
+      anyOf:
+        - enum:
+            - AccessToken.InvalidScope
+            - Consent.TransientAccountAccessFailure
+            - Consent.AccountTemporarilyBlocked
+            - Consent.PermanentAccountAccessFailure
+            - GenericRecoverableError
+            - GenericError
+        - pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+    AEError500:
+      description: Error
+      type: object
+      required:
+        - Code
+        - Message
+      additionalProperties: false
+      properties:
+        Code:
+          $ref: '#/components/schemas/AEError500Code'
+        Message:
+          $ref: '#/components/schemas/AEMessage'
+        Path:
+          description: >-
+            Recommended but optional reference to the JSON Path of the field with error, e.g.,
+            Data.Initiation.InstructedAmount.Currency
+          type: string
+          minLength: 1
+          maxLength: 500
+        Url:
+          description: URL to help remediate the problem, or provide more information, or to API Reference, or help etc
+          type: string
+    AEError500Code:
+      description: >-
+        Error Code. This may either be one of the prescribed Error Code(s) or a namespaced Error Code where the
+        namespace is the system or organisation that has responded with the error, and the code is the code specific to
+        the system or organisation.
+      type: string
+      anyOf:
+        - enum:
+            - GenericRecoverableError
+            - GenericError
+        - pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+  responses:
+    400Error:
+      description: Bad request
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+      content:
+        application/json; charset=utf-8:
+          schema:
+            $ref: '#/components/schemas/AEError400Response'
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AEError400Response'
+    401Error:
+      description: Unauthorized
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    403Error:
+      description: Forbidden
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+      content:
+        application/json; charset=utf-8:
+          schema:
+            $ref: '#/components/schemas/AEError403Response'
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AEError403Response'
+    405Error:
+      description: Method Not Allowed
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    406Error:
+      description: Not Acceptable
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    415Error:
+      description: Unsupported Media Type
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    429Error:
+      description: Too Many Requests
+      headers:
+        Retry-After:
+          description: Number in seconds to wait
+          schema:
+            type: integer
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    500Error:
+      description: Internal Server Error
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+      content:
+        application/json; charset=utf-8:
+          schema:
+            $ref: '#/components/schemas/AEError500Response'
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AEError500Response'
+  securitySchemes:
+    MutualTLS:
+      description: >-
+        Operation requires Mutual TLS for client authentication. Note connecting using MTLS does not preclude other
+        security mechanisms such as certificate-bound access tokens.
+      type: mutualTLS
+servers:
+  - url: /open-finance/onboarding/v2.1

@@ -30,6 +30,7 @@ const { wideViewport, startTour } = useVersionTour()
 const NON_PUBLIC_RE = [
   /^\/_dev(\/|$)/,
   /^\/internal(\/|$)/,
+  /^\/biopay(\/|$)/,
   /(^|\/)_shared(\/|$)/,
 ]
 

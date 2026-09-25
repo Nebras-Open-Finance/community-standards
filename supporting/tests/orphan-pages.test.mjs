@@ -121,6 +121,9 @@ function isExemptByPath(absFile) {
   // index, editor, and user-authored Markdown pages are never expected to be
   // statically linked from the rest of the site.
   if (rel === 'internal' || rel.startsWith('internal/')) return true
+  // Likewise /biopay — a password-gated space for the BioPay solution design,
+  // reached by URL only and linked from nowhere public.
+  if (rel === 'biopay' || rel.startsWith('biopay/')) return true
   return rel.split('/').some(seg => seg.startsWith('_') || seg.startsWith('['))
 }
 

@@ -50,6 +50,7 @@ const DESCRIPTION_CHARS = 180
 // src/App.vue. (`_dev` and `_shared` are skipped during the walk instead.)
 const EXCLUDE_ROUTES = [
   /^\/internal(\/|$)/,
+  /^\/biopay(\/|$)/,
 ]
 
 // ─── Route prefix → category/section ──────────────────────────────────────────

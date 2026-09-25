@@ -23,6 +23,7 @@ const DIST = resolve(ROOT, 'dist')
 const EXCLUDE = [
   /^_dev(\/|$)/, // component viewer / kit
   /^internal(\/|$)/, // internal landing, pages, policies, proposals
+  /^biopay(\/|$)/, // password-gated BioPay space
   /(^|\/)_shared(\/|$)/, // route-less partials (safety net)
   // Draft standards versions — published for review, not ratified. Mirrors of
   // the current version, so indexing them would duplicate every page. Keep in

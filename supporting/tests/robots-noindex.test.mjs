@@ -23,6 +23,7 @@ const NOINDEX_ENTIRE_SITE = false
 const NOINDEX = [
   /^_dev(\/|$)/,
   /^internal(\/|$)/,
+  /^biopay(\/|$)/,
   /(^|\/)_shared(\/|$)/,
 ]
 

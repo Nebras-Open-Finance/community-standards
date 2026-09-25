@@ -66,7 +66,9 @@ export interface SiteAnnouncement {
 
 export const SITE_ANNOUNCEMENT: SiteAnnouncement = {
   id: '2026-08-v2.1-errata-and-v2.2-rc1',
-  enabled: true,
+  // Disabled for now. The copy below is kept intact so the announcement can be
+  // brought back by flipping this to true (bump `id` if the content changes).
+  enabled: false,
   eyebrow: "What's new",
   title: 'v2.1 errata and v2.2-rc1 are now published',
   lede:
