@@ -118,12 +118,19 @@ function fullResolveSchema(schema: Schema | undefined): Schema {
       !!resolved.properties ||
       !!resolved.required?.length ||
       resolved.additionalProperties !== undefined
-    // A single-element `allOf` with no other constraints is equivalent to its
-    // child schema. Important for primitive wrappers like
-    // `IdentifierType: allOf: [$ref: …enum]` — flattening into an object would
-    // mistype the field.
-    if (resolved.allOf.length === 1 && !hasLocalShape) {
-      return fullResolveSchema(resolved.allOf[0])
+    const members = resolved.allOf.map((sub) => fullResolveSchema(sub))
+    const isObjectShaped = (s: Schema) =>
+      s.type === 'object' || !!s.properties || !!s.required?.length
+    // An `allOf` where nothing contributes object shape is refining a single
+    // primitive, not composing objects — flattening it into an object would
+    // mistype the field. Two shapes in the specs rely on this: the enum wrapper
+    // `IdentifierType: allOf: [$ref: …enum]`, and, from v2.2, every date-time
+    // field, which references the shared `AEDateTime` schema and adds only its
+    // own description. The members supply the type and its constraints; keys on
+    // the parent win, so a field keeps its own description.
+    if (!hasLocalShape && !members.some(isObjectShaped)) {
+      const { allOf: _allOf, ...local } = resolved
+      return Object.assign({}, ...members, local) as Schema
     }
     // Otherwise treat `allOf` as composition: union the parent's local
     // properties/required with each child's. Preserve the parent's
@@ -140,8 +147,7 @@ function fullResolveSchema(schema: Schema | undefined): Schema {
     for (const [k, sub] of Object.entries(resolved.properties ?? {})) {
       merged.properties![k] = fullResolveSchema(sub)
     }
-    resolved.allOf.forEach((sub) => {
-      const subMerged = fullResolveSchema(sub)
+    members.forEach((subMerged) => {
       Object.assign(merged.properties!, subMerged.properties)
       if (subMerged.required) merged.required = [...new Set([...(merged.required ?? []), ...subMerged.required])]
     })

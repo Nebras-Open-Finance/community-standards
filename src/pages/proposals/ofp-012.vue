@@ -564,7 +564,7 @@ onMounted(() => {
               Tighten the ordering line in the
               <RouterLink to="/knowledge-base/articles/pagination">Pagination</RouterLink> article and the
               LFI
-              <RouterLink to="/tech/lfi-api-hub/v2.2-rc1/banking/data-sharing/api-guide/pagination">Bank Data Sharing &mdash; Pagination</RouterLink>
+              <RouterLink to="/tech/lfi-api-hub/v2.2-rc2/banking/data-sharing/api-guide/pagination">Bank Data Sharing &mdash; Pagination</RouterLink>
               guide from &ldquo;deterministic&rdquo; to &ldquo;deterministic and descending&rdquo;, with the
               tiebreaker and the duplicate-record failure it prevents spelled out. Add the guarantee to the
               TPP Data Sharing API guide so it is stated where TPPs read, and record the change as an

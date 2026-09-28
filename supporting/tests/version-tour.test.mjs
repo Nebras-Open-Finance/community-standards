@@ -45,7 +45,7 @@ describe('Version tour — guided switch from the site announcement', () => {
     const hides = [
       // Release notes / erratas / changelogs describe every version at once.
       '/tech/release-notes-and-erratas/',
-      '/tech/release-notes-and-erratas/changelog/v2.2-rc1/',
+      '/tech/release-notes-and-erratas/changelog/v2.2-rc2/',
       // Nothing outside the docs trees carries a version.
       '/',
       '/proposals/',

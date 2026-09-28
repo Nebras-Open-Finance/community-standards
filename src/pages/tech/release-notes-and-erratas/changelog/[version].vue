@@ -6,6 +6,7 @@ meta:
 <script setup lang="ts">
 import {
   anchorFor,
+  candidatesFor,
   changesFor,
   changelogVersions,
   specUrl,
@@ -48,6 +49,24 @@ const areaCountTotal = computed(
   () => new Set(versionChanges.value.flatMap((c) => c.areas)).size,
 )
 
+// ─── Release candidates ───────────────────────────────────────────────────
+// A version published as a series of release candidates accumulates changes
+// across them. The reader who matters most here has already built against an
+// earlier candidate and needs to know which entries are new since — so the
+// results are grouped by the candidate that first carried each change, newest
+// first, rather than presented as one undifferentiated list.
+const candidateOptions = computed<string[]>(() => candidatesFor(versionParam.value))
+const newestCandidate = computed<string>(() => candidateOptions.value[0] ?? version.value)
+const newestCandidateCount = computed(
+  () => versionChanges.value.filter((c) => c.introducedIn === newestCandidate.value).length,
+)
+
+function candidateHeading(candidate: string): string {
+  return candidate === newestCandidate.value
+    ? `New in ${candidate}`
+    : `Carried forward from ${candidate}`
+}
+
 // ─── Facets ───────────────────────────────────────────────────────────────
 const AUDIENCE_OPTIONS: readonly ChangeAudience[] = ['TPP', 'LFI', 'Both'] as const
 const CATEGORY_OPTIONS: readonly ChangeCategory[] = [
@@ -60,6 +79,7 @@ const CATEGORY_OPTIONS: readonly ChangeCategory[] = [
 const audienceFilter = ref<ChangeAudience | null>(null)
 const categoryFilter = ref<Set<ChangeCategory>>(new Set())
 const areaFilter = ref<Set<string>>(new Set())
+const candidateFilter = ref<Set<string>>(new Set())
 const query = ref<string>('')
 
 const availableAreas = computed<string[]>(() =>
@@ -81,12 +101,17 @@ function matchesArea(c: VersionChange): boolean {
   return c.areas.some((a) => areaFilter.value.has(a))
 }
 
+function matchesCandidate(c: VersionChange): boolean {
+  return candidateFilter.value.size === 0 || candidateFilter.value.has(c.introducedIn)
+}
+
 function haystack(c: VersionChange): string {
   return [
     c.title,
     c.summary,
     c.description,
     c.category,
+    c.introducedIn,
     ...c.areas,
     ...(c.specs ?? []),
     ...(c.endpoints ?? []).map((e) => e.label),
@@ -101,8 +126,24 @@ function matchesQuery(c: VersionChange): boolean {
 
 const filteredChanges = computed<VersionChange[]>(() =>
   versionChanges.value.filter(
-    (c) => matchesAudience(c) && matchesCategory(c) && matchesArea(c) && matchesQuery(c),
+    (c) =>
+      matchesAudience(c) &&
+      matchesCategory(c) &&
+      matchesArea(c) &&
+      matchesCandidate(c) &&
+      matchesQuery(c),
   ),
+)
+
+// Results split by the candidate that introduced them, newest first. Groups
+// that filter down to nothing are dropped rather than shown empty.
+const changeGroups = computed<{ candidate: string; changes: VersionChange[] }[]>(() =>
+  candidateOptions.value
+    .map((candidate) => ({
+      candidate,
+      changes: filteredChanges.value.filter((c) => c.introducedIn === candidate),
+    }))
+    .filter((g) => g.changes.length > 0),
 )
 
 // Pill counts reflect what each facet would surface on its own, holding the
@@ -114,13 +155,28 @@ function countWith(pred: (c: VersionChange) => boolean): number {
 }
 
 function audienceCount(a: ChangeAudience): number {
-  return countWith((c) => (c.audience === a || c.audience === 'Both') && matchesCategory(c) && matchesArea(c))
+  return countWith(
+    (c) =>
+      (c.audience === a || c.audience === 'Both') &&
+      matchesCategory(c) && matchesArea(c) && matchesCandidate(c),
+  )
 }
 function categoryCount(cat: ChangeCategory): number {
-  return countWith((c) => c.category === cat && matchesAudience(c) && matchesArea(c))
+  return countWith(
+    (c) => c.category === cat && matchesAudience(c) && matchesArea(c) && matchesCandidate(c),
+  )
 }
 function areaCount(area: string): number {
-  return countWith((c) => c.areas.includes(area) && matchesAudience(c) && matchesCategory(c))
+  return countWith(
+    (c) => c.areas.includes(area) && matchesAudience(c) && matchesCategory(c) && matchesCandidate(c),
+  )
+}
+function candidateCount(candidate: string): number {
+  return countWith(
+    (c) =>
+      c.introducedIn === candidate &&
+      matchesAudience(c) && matchesCategory(c) && matchesArea(c),
+  )
 }
 
 function toggleAudience(a: ChangeAudience): void {
@@ -138,12 +194,19 @@ function toggleArea(a: string): void {
   else next.add(a)
   areaFilter.value = next
 }
+function toggleCandidate(candidate: string): void {
+  const next = new Set(candidateFilter.value)
+  if (next.has(candidate)) next.delete(candidate)
+  else next.add(candidate)
+  candidateFilter.value = next
+}
 
 const anyFilterActive = computed(
   () =>
     audienceFilter.value !== null ||
     categoryFilter.value.size > 0 ||
     areaFilter.value.size > 0 ||
+    candidateFilter.value.size > 0 ||
     query.value.trim() !== '',
 )
 
@@ -151,6 +214,7 @@ function resetFilters(): void {
   audienceFilter.value = null
   categoryFilter.value = new Set()
   areaFilter.value = new Set()
+  candidateFilter.value = new Set()
   query.value = ''
 }
 
@@ -254,6 +318,12 @@ function shortLabel(path: string): string {
           Integration Guide, and the OpenAPI specifications. Each entry records what
           changed and who it affects.
         </p>
+        <p v-if="candidateOptions.length > 1" class="ed-cl-hero__sub">
+          {{ version }} is published as a series of release candidates, so the entries
+          below are grouped by the candidate that first carried them &mdash; newest
+          first. If you have already built against an earlier candidate, the
+          <strong>{{ newestCandidate }}</strong> group is what is new to you.
+        </p>
 
         <div class="ed-cl-stats">
           <div class="ed-cl-stat">
@@ -261,6 +331,10 @@ function shortLabel(path: string): string {
             <span class="ed-cl-stat__label">
               {{ versionChanges.length === 1 ? 'change' : 'changes' }}
             </span>
+          </div>
+          <div v-if="candidateOptions.length > 1" class="ed-cl-stat">
+            <span class="ed-cl-stat__num">{{ newestCandidateCount }}</span>
+            <span class="ed-cl-stat__label">new in {{ newestCandidate }}</span>
           </div>
           <div class="ed-cl-stat">
             <span class="ed-cl-stat__num">{{ areaCountTotal }}</span>
@@ -287,6 +361,28 @@ function shortLabel(path: string): string {
             <strong>functional area</strong>. Add a keyword to refine further. Click an
             area chip on a result to open the page the change applies to.
           </p>
+        </div>
+
+        <!-- Release-candidate facet -->
+        <div v-if="candidateOptions.length > 1" class="ed-cl-facet">
+          <div class="ed-cl-facet__label">Release candidate</div>
+          <div class="ed-cl-facet__pills">
+            <button
+              v-for="rc in candidateOptions"
+              :key="rc"
+              type="button"
+              class="ed-cl-pill"
+              :class="{
+                'ed-cl-pill--active': candidateFilter.has(rc),
+                'ed-cl-pill--disabled': candidateCount(rc) === 0,
+              }"
+              :disabled="candidateCount(rc) === 0 && !candidateFilter.has(rc)"
+              @click="toggleCandidate(rc)"
+            >
+              <span class="ed-cl-pill__text">{{ rc }}</span>
+              <span class="ed-cl-pill__count">{{ candidateCount(rc) }}</span>
+            </button>
+          </div>
         </div>
 
         <!-- Audience facet -->
@@ -408,9 +504,26 @@ function shortLabel(path: string): string {
           <button class="ed-cl-empty__btn" @click="resetFilters">Reset filters</button>
         </div>
 
-        <div v-else class="ed-cl-rows">
+        <template v-else>
+        <template v-for="g in changeGroups" :key="g.candidate">
+          <div
+            v-if="candidateOptions.length > 1"
+            :id="`introduced-in-${g.candidate}`"
+            class="ed-cl-group"
+            :class="{ 'ed-cl-group--new': g.candidate === newestCandidate }"
+          >
+            <div class="ed-cl-group__head">
+              <h3 class="ed-cl-group__title">{{ candidateHeading(g.candidate) }}</h3>
+              <span class="ed-cl-group__count">
+                {{ g.changes.length }}
+                {{ g.changes.length === 1 ? 'change' : 'changes' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="ed-cl-rows">
           <article
-            v-for="c in filteredChanges"
+            v-for="c in g.changes"
             :id="anchorFor(c)"
             :key="c.number"
             class="ed-cl-row"
@@ -419,11 +532,18 @@ function shortLabel(path: string): string {
 
             <div class="ed-cl-row__body">
               <div class="ed-cl-row__tags">
+                <span
+                  v-if="candidateOptions.length > 1"
+                  class="ed-cl-tag ed-cl-tag--rc"
+                  :class="{ 'ed-cl-tag--rc-new': c.introducedIn === newestCandidate }"
+                >{{ c.introducedIn }}</span>
                 <span class="ed-cl-tag ed-cl-tag--cat">{{ c.category }}</span>
                 <span class="ed-cl-tag ed-cl-tag--aud">{{ c.audience }}</span>
               </div>
 
-              <h3 class="ed-cl-row__title" v-html="highlight(c.title)" />
+              <!-- h4, not h3: the release-candidate group header above these
+                   rows is the h3 they sit under. -->
+              <h4 class="ed-cl-row__title" v-html="highlight(c.title)" />
               <div class="ed-cl-row__summary" v-html="highlight(c.summary)" />
 
               <div class="ed-cl-row__section">
@@ -484,7 +604,9 @@ function shortLabel(path: string): string {
               </div>
             </div>
           </article>
-        </div>
+          </div>
+        </template>
+        </template>
       </div>
     </section>
 
@@ -819,6 +941,50 @@ function shortLabel(path: string): string {
   cursor: pointer;
 }
 
+/* Group header separating one release candidate's changes from the next. */
+.ed-cl-group {
+  margin: 2rem 0 1rem;
+  padding-left: 0.85rem;
+  border-left: 3px solid var(--at-grid-line-2);
+}
+
+.ed-cl-group:first-child {
+  margin-top: 0;
+}
+
+.ed-cl-group--new {
+  border-left-color: var(--at-teal-deep);
+}
+
+.ed-cl-group__head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.ed-cl-group__title {
+  font-family: var(--at-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--at-navy-deep);
+  margin: 0;
+}
+
+.ed-cl-group--new .ed-cl-group__title {
+  color: var(--at-teal-deep);
+}
+
+.ed-cl-group__count {
+  font-family: var(--at-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--at-mute);
+}
+
 .ed-cl-rows {
   display: flex;
   flex-direction: column;
@@ -872,6 +1038,22 @@ function shortLabel(path: string): string {
 .ed-cl-tag--aud {
   color: var(--at-blue-deep);
   background: rgba(0, 92, 169, 0.09);
+}
+
+/* Which release candidate first carried the change. */
+.ed-cl-tag--rc {
+  color: var(--at-mute-2);
+  background: transparent;
+  border: 1px solid var(--at-grid-line-2);
+  padding: 0.12rem 0.42rem;
+  text-transform: none;
+  letter-spacing: 0.06em;
+}
+
+.ed-cl-tag--rc-new {
+  color: var(--at-teal-deep);
+  border-color: var(--at-teal-deep);
+  background: rgba(0, 139, 120, 0.07);
 }
 
 .ed-cl-row__title {

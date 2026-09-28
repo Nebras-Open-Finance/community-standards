@@ -84,14 +84,14 @@ function entry(input: EntryInput): Endpoint {
 function draftEntry(input: EntryInput): Endpoint {
   return {
     surface: 'standards',
-    version: 'v2.2-rc1',
+    version: 'v2.2-rc2',
     ...input,
   }
 }
 
 // Each consent family carries the attestations sub-resource in its own standards
 // document, so the spec is per family rather than one shared constant. These
-// entries are authored at v2.2-rc1 rather than cloned from v2.1 (see
+// entries are authored at v2.2-rc2 rather than cloned from v2.1 (see
 // draftEntry above), so the spec path is written at that version directly.
 const ATTESTATION_CONSENTS = [
   ['/account-access-consents', 'account-access-consents', 'a Bank Data Sharing', 'uae-account-information-openapi'],
@@ -667,10 +667,10 @@ export const standardsEndpoints: readonly Endpoint[] = [
     },
   }),
 
-  // ── Consent · Data Deletion Confirmation (v2.2-rc1 only) ────────────────
+  // ── Consent · Data Deletion Confirmation (v2.2-rc2 only) ────────────────
   // Introduced by OFP-005. Authored here rather than produced by
   // cloneForVersion (see src/data/endpoints/index.ts), which only mirrors the
-  // endpoints v2.1 and v2.2-rc1 have in common.
+  // endpoints v2.1 and v2.2-rc2 have in common.
   ...ATTESTATION_CONSENTS.flatMap(([path, slug, label, spec]) =>
     (['POST', 'GET'] as const).map((method) => draftEntry({
       section: 'Consent',
@@ -683,7 +683,7 @@ export const standardsEndpoints: readonly Endpoint[] = [
         ? `Append ${label} Attestation Event`
         : `List ${label} Attestation Events`,
       redoc: {
-        spec: `/openapi/v2.2-rc1/standards/${spec}.yaml`,
+        spec: `/openapi/v2.2-rc2/standards/${spec}.yaml`,
         filterPath: `${path}/{ConsentId}/attestations`,
         filterMethod: method,
       },

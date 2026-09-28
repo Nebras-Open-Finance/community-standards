@@ -17,7 +17,7 @@ import type { Version } from './versions'
 export interface AnnouncementSwitchTo {
   /** The version to steer the reader onto. */
   version: Version
-  /** Link text for the guided switch, e.g. "Switch to v2.2-rc1". */
+  /** Link text for the guided switch, e.g. "Switch to v2.2-rc2". */
   label: string
 }
 
@@ -65,36 +65,21 @@ export interface SiteAnnouncement {
 }
 
 export const SITE_ANNOUNCEMENT: SiteAnnouncement = {
-  id: '2026-08-v2.1-errata-and-v2.2-rc1',
-  // Disabled for now. The copy below is kept intact so the announcement can be
-  // brought back by flipping this to true (bump `id` if the content changes).
-  enabled: false,
-  eyebrow: "What's new",
-  title: 'v2.1 errata and v2.2-rc1 are now published',
+  id: '2026-09-mea-finance-payments-award',
+  enabled: true,
+  eyebrow: 'Announcement',
+  title: 'Nebras Open Finance named winner at the MEA Finance Leaders in Payments Awards 2026',
   lede:
-    'Two publications affect implementers on the current standards. Both are worth reading before your next release.',
+    'Nebras Open Finance has won Best Initiative in Payment Technology Implementation at the MEA Finance Leaders in Payments Awards 2026. The award recognises work that no single organisation did alone — thank you to the Central Bank of the UAE, to every LFI and TPP building on AlTareq, and to everyone across this community who has tested, challenged and improved the standards along the way.',
   items: [
     {
-      tag: 'v2.1',
-      title: 'v2.1 errata changes',
+      tag: 'Award',
+      title: 'Best Initiative in Payment Technology Implementation',
       summary:
-        'Corrections to the ratified v2.1 standards. Errata are binding on v2.1 implementations — review the affected endpoints and schemas against what you have built.',
-      // Points at the existing v2.1 errata page until the dedicated
-      // errata-changes page is written.
-      path: '/tech/release-notes-and-erratas/erratas/v2.1/',
-      linkLabel: 'Read the v2.1 errata',
-    },
-    {
-      tag: 'v2.2-rc1',
-      title: 'v2.2-rc1 published for review',
-      summary:
-        'The first release candidate for v2.2, published for community review. It is not ratified and MUST NOT be used as the basis for a production implementation.',
-      // Points at the v2.1 -> v2.2-rc1 changelog until a dedicated v2.2-rc1
-      // landing page is written.
-      path: '/tech/release-notes-and-erratas/changelog/v2.2-rc1/',
-      linkLabel: 'See what changed in v2.2',
-      switchTo: { version: 'v2.2-rc1', label: 'Switch to v2.2-rc1' },
+        'The MEA Finance Leaders in Payments Awards recognise institutions and teams driving payments innovation across the Middle East and Africa. The full list of winners was announced on 23 September 2026.',
+      path: '/news',
+      linkLabel: 'Read the announcement',
     },
   ],
-  dismissLabel: 'Got it',
+  dismissLabel: 'Thank you',
 }

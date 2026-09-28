@@ -199,20 +199,33 @@ const rejectionPatch = `{
       </EdBullets>
 
       <EdProse>
-        When <code>IsSingleAuthorization</code> is <code>false</code>, the TPP SHOULD also set
-        <code>AuthorizationExpirationDateTime</code> inside <code>authorization_details[].consent</code>.
-        This field represents the deadline by which <strong>all</strong> remaining authorizers must have
-        acted &mdash; that is, the consent MUST reach <code>Status=Authorized</code> before this time,
-        otherwise the consent transitions to rejected/expired.
+        The TPP MAY also set <code>AuthorizationExpirationDateTime</code> inside
+        <code>authorization_details[].consent</code>. This field is the deadline by which the consent
+        MUST reach <code>Status=Authorized</code> &mdash; that is, by which all required authorizers
+        must have acted. If the deadline passes while the consent is still
+        <code>AwaitingAuthorization</code>, the consent is set to <code>Rejected</code>.
+      </EdProse>
+
+      <EdProse>
+        The field applies to both authorization modes, and the API Hub validates it identically in
+        each. It is also the only field that bounds the authorization window &mdash;
+        <code>ExpirationDateTime</code> bounds the life of the consent, not the time available to
+        authorize it.
       </EdProse>
 
       <EdBullets>
         <li>
-          <code>AuthorizationExpirationDateTime</code> MUST NOT be after <code>ExpirationDateTime</code>.
+          <code>AuthorizationExpirationDateTime</code> MUST NOT be in the past, and MUST NOT be after
+          <code>ExpirationDateTime</code>.
         </li>
         <li>
-          When <code>IsSingleAuthorization</code> is <code>true</code>, TPPs SHOULD NOT include
-          <code>AuthorizationExpirationDateTime</code>.
+          When <code>IsSingleAuthorization</code> is <code>false</code>, the TPP SHOULD set it. Without
+          it, a consent can sit part-authorized for as long as <code>ExpirationDateTime</code> allows.
+        </li>
+        <li>
+          When <code>IsSingleAuthorization</code> is <code>true</code>, the TPP MAY set it to cap how
+          long the single authorizer has to complete the authorization journey. Earlier guidance on this
+          page said TPPs SHOULD NOT set it in this case; the standard places no such restriction.
         </li>
       </EdBullets>
 

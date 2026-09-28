@@ -38,6 +38,19 @@ interface RawPaymentRow {
   status?: string
 }
 
+// Rows of payment-size-bands.json — one per date + LFI + TPP + status + band,
+// rolled up from the per-payment log by scripts/build-payment-size-bands.mjs.
+interface RawPaymentBandRow {
+  date?: string
+  lfinamekey?: string
+  tppname?: string
+  status?: string
+  band?: string
+  bandmin?: number
+  count?: number
+  amount?: number
+}
+
 interface RawAuthRow {
   date?: string
   lfinamekey?: string
@@ -76,6 +89,25 @@ export interface PaymentRow {
   failCount:    number
   status:       PaymentStatusGroup
   rawStatus:    string
+}
+
+// A count of payments whose individual amounts fell in one AED size band. The
+// banding is done over raw per-payment amounts at build time, so unlike
+// `PaymentRow` — where a row's only size signal is its mean ticket — this is an
+// exact reading of the size distribution.
+export interface PaymentBandRow {
+  month:     string
+  day:       string
+  lfi:       string
+  tpp:       string
+  band:      string
+  /** Lower edge of the band in AED — orders the x-axis without the chart
+   *  restating the band edges the rollup script owns. */
+  bandMin:   number
+  count:     number
+  amount:    number
+  status:    PaymentStatusGroup
+  rawStatus: string
 }
 
 export type AuthEndpointType = 'auth' | 'doConfirm' | 'doFail' | 'other'
@@ -212,6 +244,29 @@ function transformPaymentRow(row: RawPaymentRow): PaymentRow {
   return { month, day, lfi, tpp, consentType, count, amount, successCount, failCount, status: statusGroup, rawStatus }
 }
 
+function transformPaymentBandRow(row: RawPaymentBandRow): PaymentBandRow {
+  const date      = row.date ?? ''
+  const rawStatus = row.status ?? ''
+
+  let statusGroup: PaymentStatusGroup
+  if (SUCCESS_STATUSES.has(rawStatus))     statusGroup = 'Successful'
+  else if (FAILED_STATUSES.has(rawStatus)) statusGroup = 'Failed'
+  else                                     statusGroup = 'Pending'
+
+  return {
+    month:   date.substring(0, 7) || 'unknown',
+    day:     date.substring(0, 10) || 'unknown',
+    lfi:     row.lfinamekey ?? 'Unknown',
+    tpp:     row.tppname ?? 'Unknown',
+    band:    row.band ?? 'Unknown',
+    bandMin: row.bandmin ?? 0,
+    count:   row.count ?? 0,
+    amount:  row.amount ?? 0,
+    status:  statusGroup,
+    rawStatus,
+  }
+}
+
 function transformAuthRow(row: RawAuthRow): AuthRow {
   const date  = row.date ?? ''
   const month = date.substring(0, 7) || 'unknown'
@@ -232,6 +287,7 @@ const rawApiData:     Ref<ApiRow[]>     = ref<ApiRow[]>([])
 const rawRtData:      Ref<ApiRow[]>     = ref<ApiRow[]>([])
 const rawPaymentData: Ref<PaymentRow[]> = ref<PaymentRow[]>([])
 const rawAuthData:    Ref<AuthRow[]>    = ref<AuthRow[]>([])
+const rawPaymentBandData: Ref<PaymentBandRow[]> = ref<PaymentBandRow[]>([])
 
 // LFI → directory sector ('bank' | 'insurer'), loaded at runtime from the
 // build-time map (public/api/lfi-sectors.json, generated from the participants
@@ -302,6 +358,14 @@ function loadDataIfClient(): void {
       rawPaymentData.value = arr.map(transformPaymentRow)
     })
     .catch(err => console.error('[dashboard] Failed to load payments-log.json', err))
+
+  fetch('/api/payment-size-bands.json')
+    .then(r => r.json() as Promise<unknown>)
+    .then(json => {
+      const arr = Array.isArray(json) ? (json as RawPaymentBandRow[]) : []
+      rawPaymentBandData.value = arr.map(transformPaymentBandRow)
+    })
+    .catch(err => console.error('[dashboard] Failed to load payment-size-bands.json', err))
 
   fetch('/api/auth-log.json')
     .then(r => r.json() as Promise<unknown>)
@@ -392,6 +456,32 @@ export const filteredSuccessPaymentData: ComputedRef<PaymentRow[]> = computed(()
 export const filteredAllPaymentData: ComputedRef<PaymentRow[]> = computed(() =>
   filteredPaymentData.value.filter(r => r.lfi !== 'Unknown'),
 )
+
+// Successful payments only, matching the other charts in the Payment Volumes
+// section. Mirrors the `filteredPaymentData` predicates — the band rows carry
+// the same LFI/TPP/month dimensions, so the shared filters apply unchanged.
+export const filteredPaymentBandData: ComputedRef<PaymentBandRow[]> = computed(() =>
+  rawPaymentBandData.value.filter(r =>
+    sectorOf(r.lfi) === state.sector                                &&
+    r.status === 'Successful'                                       &&
+    r.lfi !== 'Unknown'                                             &&
+    (!state.filters.lfi.length || state.filters.lfi.includes(r.lfi)) &&
+    (!state.filters.tpp.length || state.filters.tpp.includes(r.tpp)) &&
+    monthIsAllowed(r.month),
+  ),
+)
+
+// Every band present in the *unfiltered* rollup, ordered by lower edge. The
+// chart draws its x-axis from this so the bands stay put as filters change —
+// a filter that empties a band shows a zero-height bar rather than dropping a
+// column and resizing the axis under the user.
+export const paymentSizeBands: ComputedRef<string[]> = computed(() => {
+  const edges = new Map<string, number>()
+  for (const r of rawPaymentBandData.value) {
+    if (r.band !== 'Unknown') edges.set(r.band, r.bandMin)
+  }
+  return [...edges.entries()].sort((a, b) => a[1] - b[1]).map(([band]) => band)
+})
 
 export const filteredAuthData: ComputedRef<AuthRow[]> = computed(() =>
   rawAuthData.value.filter(r =>
@@ -531,7 +621,7 @@ export function toggleSidebar(): void {
 
 // Wide union — chart components narrow at the call site via the `dataSource`
 // discriminator.
-export type AnyRow = ApiRow | PaymentRow | AuthRow
+export type AnyRow = ApiRow | PaymentRow | PaymentBandRow | AuthRow
 
 export function dataForSource(source: DataSource): AnyRow[] {
   switch (source) {
@@ -540,6 +630,7 @@ export function dataForSource(source: DataSource): AnyRow[] {
     case 'payment':         return filteredPaymentData.value
     case 'payment-success': return filteredSuccessPaymentData.value
     case 'payment-all':     return filteredAllPaymentData.value
+    case 'payment-size':    return filteredPaymentBandData.value
     case 'rt':              return filteredRtData.value
     case 'auth':            return filteredAuthData.value
   }

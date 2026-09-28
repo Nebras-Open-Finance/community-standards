@@ -21,3 +21,15 @@ https://www.nebras-open-finance.com/* https://nebras-open-finance.com/:splat 301
 /proposals/ofp-005/                       /internal/proposals/ofp-005               301
 /proposals/ofp-005/attestation-schema     /internal/proposals/ofp-005/attestation-schema   301
 /proposals/ofp-008                        /internal/proposals/ofp-008               301
+
+# v2.2-rc1 was superseded by v2.2-rc2 (Sep 2026). The documentation route
+# segment moved wholesale, so every rc1 path has an rc2 counterpart at the same
+# sub-path — including the changelog, which now records both candidates on one
+# page and marks which of them introduced each change.
+# DELETE these when v2.2 is ratified and the route becomes /v2.2.
+/tech/tpp-standards/v2.2-rc1/*                    /tech/tpp-standards/v2.2-rc2/:splat                    301
+/tech/lfi-api-hub/v2.2-rc1/*                      /tech/lfi-api-hub/v2.2-rc2/:splat                      301
+/tech/api-specs/v2.2-rc1/*                        /tech/api-specs/v2.2-rc2/:splat                        301
+/openapi/v2.2-rc1/*                               /openapi/v2.2-rc2/:splat                               301
+/tech/release-notes-and-erratas/changelog/v2.2-rc1   /tech/release-notes-and-erratas/changelog/v2.2-rc2  301
+/tech/release-notes-and-erratas/changelog/v2.2-rc1/  /tech/release-notes-and-erratas/changelog/v2.2-rc2  301

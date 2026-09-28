@@ -13,7 +13,7 @@ function isVersion(value: string): value is Version {
 }
 
 // Match on whole path segments against VERSIONS rather than parsing a version
-// shape out of the path. Version identifiers are not all `vN.N` — `v2.2-rc1`
+// shape out of the path. Version identifiers are not all `vN.N` — `v2.2-rc2`
 // is one — so the list is the only reliable source of truth.
 function versionFromPath(path: string): Version | null {
   const segments = path.split('/').filter(Boolean)
@@ -73,7 +73,7 @@ export function useSelectedVersion(): UseSelectedVersion {
 }
 
 export interface UseRouteVersion {
-  /** Version segment of the current route, e.g. `v2.2-rc1`. */
+  /** Version segment of the current route, e.g. `v2.2-rc2`. */
   docsVersion: ComputedRef<Version>
   /** Version as it appears in the standard itself, e.g. `v2.2`. */
   protocolVersion: ComputedRef<string>

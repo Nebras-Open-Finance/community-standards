@@ -12,8 +12,9 @@ const exampleAuthDetails = `"authorization_details": [
       "IsSingleAuthorization": true,
       "ExpirationDateTime": "2027-03-02T00:00:00+00:00",
 
-      // Multi-authorization only: deadline for all authorizers to act.
-      // SHOULD NOT be set when IsSingleAuthorization is true.
+      // Optional: deadline by which the consent must reach Authorized.
+      // Valid whether IsSingleAuthorization is true or false — with true it
+      // caps how long the single authorizer has to complete the journey.
       // "AuthorizationExpirationDateTime": "2026-03-03T10:00:00+00:00",
 
       "Permissions": [
@@ -443,7 +444,7 @@ const step9Tabs = [{ label: 'Node.js', lang: 'typescript', code: step9Node }, { 
             <tr><td><code>ConsentId</code>*</td><td>string (uuid)</td><td>Unique ID assigned by the TPP (1–128 chars)</td><td><code>b8f42378-10ac-46a1-8d20-4e020484216d</code></td></tr>
             <tr><td><code>IsSingleAuthorization</code>*</td><td>boolean</td><td>Whether the payment requires only one authorizing party</td><td><code>true</code></td></tr>
             <tr><td><code>ExpirationDateTime</code>*</td><td>date-time</td><td>Consent expiry (ISO 8601 with timezone, max 1 year). All scheduled dates must fall before this value.</td><td><code>2027-03-02T00:00:00+00:00</code></td></tr>
-            <tr><td><code>AuthorizationExpirationDateTime</code></td><td>date-time</td><td>Deadline by which all authorizers must have acted (multi-authorization only). SHOULD be set when <code>IsSingleAuthorization</code> is <code>false</code>; SHOULD NOT be set when <code>IsSingleAuthorization</code> is <code>true</code>. MUST NOT be after <code>ExpirationDateTime</code>.</td><td><code>2026-03-03T10:00:00+00:00</code></td></tr>
+            <tr><td><code>AuthorizationExpirationDateTime</code></td><td>date-time</td><td>Deadline by which the consent must reach <code>Authorized</code>. Applies whether <code>IsSingleAuthorization</code> is <code>true</code> or <code>false</code>: SHOULD be set when <code>false</code>, so a consent cannot sit part-authorized; MAY be set when <code>true</code> to cap how long the single authorizer has. MUST NOT be in the past or after <code>ExpirationDateTime</code>.</td><td><code>2026-03-03T10:00:00+00:00</code></td></tr>
             <tr><td><code>BaseConsentId</code></td><td>string (uuid)</td><td>Links to prior consent if renewing &mdash; see <a href="/knowledge-base/articles/base-consent-id">Base Consent ID</a></td><td>&mdash;</td></tr>
             <tr><td><code>Permissions</code></td><td>array&lt;enum&gt;</td><td>Optional access permissions granted alongside the payment consent</td><td><code>ReadAccountsBasic</code>, <code>ReadBalances</code></td></tr>
             <tr><td><code>ControlParameters</code>*</td><td>object</td><td>Payment controls &mdash; <strong>see below</strong></td><td>&mdash;</td></tr>

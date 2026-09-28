@@ -650,8 +650,8 @@ const communityDrafts: readonly CommunityItem[] = [
     desc: 'One consent, many payments. Payroll, supplier runs, and recurring disbursements without re-prompting the customer for every transfer.',
   },
   {
-    title: 'International Payments, reimagined',
-    desc: 'A ground-up redesign of the cross-border flow — FX transparency, beneficiary verification, and SWIFT/instant rails treated as first-class citizens.',
+    title: 'Version 2.2 of the standards',
+    desc: 'A community-led refinement pass on the published specs — smoothing the rough edges LFIs hit in implementation, and tightening the wording where practice has outrun the text.',
   },
 ]
 

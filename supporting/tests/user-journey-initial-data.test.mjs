@@ -174,12 +174,21 @@ function fullResolveSchema(schema, spec) {
       !!resolved.properties
       || !!(resolved.required && resolved.required.length)
       || resolved.additionalProperties !== undefined
-    // A single-element `allOf` with no other constraints is equivalent to its
-    // child schema. Important for primitive wrappers like
-    // `IdentifierType: allOf: [$ref: …enum]` — flattening into an object would
-    // mistype the field. Mirrors EditableJson.vue.
-    if (resolved.allOf.length === 1 && !hasLocalShape) {
-      return fullResolveSchema(resolved.allOf[0], spec)
+    const members = resolved.allOf.map(sub => fullResolveSchema(sub, spec))
+    const isObjectShaped = s =>
+      s.type === 'object' || !!s.properties || !!(s.required && s.required.length)
+    // An `allOf` where nothing contributes object shape is refining a single
+    // primitive, not composing objects — flattening it into an object would
+    // mistype the field. Two shapes in the specs rely on this: the enum wrapper
+    // `IdentifierType: allOf: [$ref: …enum]`, and, from v2.2, every date-time
+    // field, which references the shared `AEDateTime` schema and adds only its
+    // own description. The members supply the type and its constraints; keys on
+    // the parent win, so a field keeps its own description. Mirrors
+    // EditableJson.vue.
+    if (!hasLocalShape && !members.some(isObjectShaped)) {
+      const local = { ...resolved }
+      delete local.allOf
+      return Object.assign({}, ...members, local)
     }
     // Otherwise treat `allOf` as composition: union the parent's local
     // properties/required with each child's. Preserve the parent's
@@ -196,8 +205,7 @@ function fullResolveSchema(schema, spec) {
     for (const [k, sub] of Object.entries(resolved.properties || {})) {
       merged.properties[k] = fullResolveSchema(sub, spec)
     }
-    for (const sub of resolved.allOf) {
-      const subMerged = fullResolveSchema(sub, spec)
+    for (const subMerged of members) {
       Object.assign(merged.properties, subMerged.properties || {})
       if (subMerged.required) {
         merged.required = [...new Set([...merged.required, ...subMerged.required])]

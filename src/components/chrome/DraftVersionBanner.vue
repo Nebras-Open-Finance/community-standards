@@ -19,7 +19,7 @@ const route = useRoute()
 
 // Release notes, erratas and changelogs describe every version from the outside,
 // so a draft segment there is the subject of the page rather than a property of
-// it — the banner would be wrong on e.g. the v2.1 -> v2.2-rc1 changelog.
+// it — the banner would be wrong on e.g. the v2.1 -> v2.2-rc2 changelog.
 const RELEASE_NOTES_PREFIX = '/tech/release-notes-and-erratas'
 
 const draftVersion = computed<Version | null>(() => {

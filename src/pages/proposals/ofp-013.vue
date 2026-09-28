@@ -468,7 +468,7 @@ onMounted(() => {
           </p>
           <p>
             <strong>Nothing changes at the LFI.</strong> Ozone Connect keeps the same
-            <RouterLink to="/tech/lfi-api-hub/v2.2-rc1/banking/confirmation-of-payee/open-api/cop-query"><code>POST /customers/action/cop-query</code></RouterLink>
+            <RouterLink to="/tech/lfi-api-hub/v2.2-rc2/banking/confirmation-of-payee/open-api/cop-query"><code>POST /customers/action/cop-query</code></RouterLink>
             contract, and each instance answers for the accounts it holds exactly as it does now. Both
             URLs in every entry are Hub-hosted &mdash; <code>auth1.{lfiCode}</code> and
             <code>rs1.{lfiCode}</code> &mdash; so this is the Hub returning more of what it already
@@ -638,11 +638,11 @@ onMounted(() => {
             <div class="ofp-change__label">03 &middot; Documentation</div>
             <p>
               Rewrite steps 5 to 10 of the
-              <RouterLink to="/tech/tpp-standards/v2.2-rc1/banking/confirmation-of-payee/api-guide">Confirmation of Payee API Guide</RouterLink>
+              <RouterLink to="/tech/tpp-standards/v2.2-rc2/banking/confirmation-of-payee/api-guide">Confirmation of Payee API Guide</RouterLink>
               so discovery yields a list and the token-and-confirm sequence is shown as a loop over it,
               with the stop conditions from section 03 stated as code rather than prose. Update the CoP
               sequence diagram, the capability landing page, and the
-              <RouterLink to="/tech/tpp-standards/v2.2-rc1/banking/confirmation-of-payee/user-journeys">user journeys</RouterLink>
+              <RouterLink to="/tech/tpp-standards/v2.2-rc2/banking/confirmation-of-payee/user-journeys">user journeys</RouterLink>
               so &ldquo;not recognised&rdquo; and &ldquo;could not verify&rdquo; are presented to the
               payer as the different outcomes they are. Record the change in the version changelog.
             </p>

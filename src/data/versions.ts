@@ -1,4 +1,4 @@
-export const VERSIONS = ['v2.1', 'v2.2-rc1'] as const
+export const VERSIONS = ['v2.1', 'v2.2-rc2'] as const
 
 export type Version = (typeof VERSIONS)[number]
 
@@ -8,7 +8,7 @@ export const CURRENT_VERSION: Version = 'v2.1'
 
 // Versions that are published for review but not ratified. Draft versions get
 // a banner and a dropdown chip, and are excluded from search and the sitemap.
-export const DRAFT_VERSIONS: readonly Version[] = ['v2.2-rc1']
+export const DRAFT_VERSIONS: readonly Version[] = ['v2.2-rc2']
 
 export function isDraftVersion(v: string): boolean {
   return (DRAFT_VERSIONS as readonly string[]).includes(v)
@@ -23,7 +23,7 @@ export function isDraftVersion(v: string): boolean {
 // nothing in the specs changes when a draft is ratified.
 export const PROTOCOL_VERSION: Record<Version, string> = {
   'v2.1': 'v2.1',
-  'v2.2-rc1': 'v2.2',
+  'v2.2-rc2': 'v2.2',
 }
 
 // Which folder(s) in the api-specs repo each version's OpenAPI files come from,
@@ -33,17 +33,22 @@ export const PROTOCOL_VERSION: Record<Version, string> = {
 // Resolution is per file, not per version: the first folder in the chain that
 // publishes a given spec wins. A version that has only partly landed upstream
 // therefore falls back to the previous version's latest errata for the specs it
-// has not republished — v2.2-rc1 publishes five of the standards documents and
+// has not republished — v2.2-rc2 publishes five of the standards documents and
 // borrows the rest from v2.1-errata3.
 //
 // A borrowed file still carries the source version's consent URNs and base
 // paths, so the fetch script uplifts those to PROTOCOL_VERSION for this version.
-// Folder naming is not uniform upstream: standards uses `v2.2-rc1`, api-hub and
-// ozone-connect use `v2.2.x`. Both belong to the v2.2 release and the script
-// matches on the release, so one chain entry covers every category.
+// Folder naming is not uniform upstream: standards publishes `v2.2-rc1` and
+// `v2.2-rc2` folders, api-hub and ozone-connect a single `v2.2.x`. All belong
+// to the v2.2 release and the script matches on the release rather than the
+// literal folder name, so one chain entry covers every category — and within
+// the release the higher release candidate wins, so `v2.2-rc2` resolves to the
+// rc2 standards documents and falls back to rc1 for anything rc2 did not
+// republish. The upstream branch the folders are read from is set by the
+// tracked `.specs-branch` file at the repo root.
 export const SPEC_FOLDER: Record<Version, readonly string[]> = {
   'v2.1': ['v2.1'],
-  'v2.2-rc1': ['v2.2-rc1', 'v2.1'],
+  'v2.2-rc2': ['v2.2-rc2', 'v2.1'],
 }
 
 // Which field-map export each version reads, as a directory under public/api/.
@@ -56,7 +61,7 @@ export const SPEC_FOLDER: Record<Version, readonly string[]> = {
 // so adding a real v2.2 export later is a drop-in with no code change.
 export const FIELD_MAP_DIR: Record<Version, string> = {
   'v2.1': 'field-map/v2.1',
-  'v2.2-rc1': 'field-map/v2.1',
+  'v2.2-rc2': 'field-map/v2.1',
 }
 
 // Maps each Ozone Connect version to the TPP Standards versions it supports.
@@ -64,5 +69,5 @@ export const FIELD_MAP_DIR: Record<Version, string> = {
 // dual-runs alongside, e.g. 'v3.0': ['v3.0', 'v2.1'].
 export const VERSION_TPP_COMPATIBILITY: Record<Version, readonly Version[]> = {
   'v2.1': ['v2.1'],
-  'v2.2-rc1': ['v2.2-rc1', 'v2.1'],
+  'v2.2-rc2': ['v2.2-rc2', 'v2.1'],
 }

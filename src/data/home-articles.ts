@@ -31,6 +31,16 @@ export interface HomeArticle extends RawHomeArticle {
 
 const rawArticles: RawHomeArticle[] = [
   {
+    link: 'https://www.linkedin.com/posts/meafinancemagazine_meafinancepaymentsawards2026-meafinance-paymentsawards-ugcPost-7508422792103559168-3ksZ/',
+    source: 'LinkedIn · MEA Finance',
+    kind: 'news',
+    date: '2026-09-23',
+    dateLabel: '23 Sep 2026',
+    imageSrc: '/images/articles/nebras-payments-award.jpg',
+    title: 'Nebras Open Finance wins Best Initiative in Payment Technology Implementation at the MEA Finance Leaders in Payments Awards 2026',
+    text: 'Nebras Open Finance has been named winner of Best Initiative in Payment Technology Implementation at the MEA Finance Leaders in Payments Awards 2026, which recognise the institutions and leaders driving payments innovation across the Middle East and Africa. The award acknowledges the delivery of the API Hub underpinning the UAE Open Finance programme, AlTareq.',
+  },
+  {
     link: 'https://fintechnews.media/2026/06/lean-and-ziina-launch-the-uaes-first-one-tap-pay-by-bank-experience-under-open-finance/',
     source: 'Fintech News',
     kind: 'press-release',

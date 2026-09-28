@@ -18,6 +18,15 @@ export default defineConfig({
       '@components': fileURLToPath(new URL('./src/components', import.meta.url)),
     },
   },
+  server: {
+    watch: {
+      // `vite-ssg build` writes its prerender scratch files here, then deletes
+      // them. A dev server running at the same time tries to watch those files
+      // and dies with EBUSY when they vanish mid-watch (Windows). The dev
+      // server has no reason to watch build output, so exclude it outright.
+      ignored: ['**/.vite-ssg-temp/**'],
+    },
+  },
   plugins: [
     Vue({
       include: [/\.vue$/, /\.md$/],

@@ -84,7 +84,7 @@ function parseVersions() {
  * Parse SPEC_FOLDER — the map from a local version key to the chain of upstream
  * folders its specs resolve from, most-preferred first. The chain diverges from
  * the version key when a release has only partly landed in api-specs:
- * `v2.2-rc1` takes what upstream publishes at v2.2 and falls back to v2.1.
+ * `v2.2-rc2` takes what upstream publishes at v2.2 and falls back to v2.1.
  *
  * Returns a plain object; versions absent from the map resolve to themselves.
  */
@@ -119,29 +119,46 @@ function parseVersionMap(name) {
 }
 
 /**
- * Uplift the version strings inside a borrowed spec.
+ * Uplift the version strings inside a served spec.
  *
- * When a version serves another version's YAML (SPEC_FOLDER), the file still
- * carries the source version in its consent-type URNs and server base paths.
- * Left alone, the served spec contradicts the documentation built around it —
- * e.g. a page that says `urn:openfinanceuae:account-access-consent:v2.2` while
- * the schema enum only permits `:v2.1`.
+ * A spec carries the protocol version in two places: its consent-type URNs and
+ * its server base paths. Where those disagree with the version the spec is
+ * served under, the spec contradicts the documentation built around it — e.g. a
+ * page that says `urn:openfinanceuae:account-access-consent:v2.2` while the
+ * schema enum only permits `:v2.1`.
+ *
+ * Two separate things make them disagree, so the rewrite is applied to every
+ * file rather than only to borrowed ones:
+ *
+ *   Borrowed  A version serving another version's YAML (SPEC_FOLDER) gets the
+ *             source version's strings.
+ *   Unbumped  A release candidate republished upstream for an unrelated reason
+ *             may still carry the previous release's strings. `v2.2-rc2`
+ *             publishes `uae-atm-openapi.yaml` with a `/open-finance/atm/v2.1`
+ *             base path, and `uae-authorization-endpoints-openapi.yaml` with
+ *             `:v2.1` consent URNs in its enums and discriminator mappings.
+ *
+ * The match is therefore on the shape of a version rather than on a known
+ * source version: any version qualifier in one of these two positions is
+ * rewritten to the version this documentation publishes. A file already
+ * carrying the target version is left unchanged, so the rewrite is idempotent.
  *
  * Only version-bearing identifiers are touched. Nothing else in the spec is
  * rewritten; this is not a general-purpose patcher.
  */
-function upliftProtocolVersion(yaml, fromVersion, toVersion) {
-  const from = fromVersion.replace(/\./g, '\\.')
+const VERSION_QUALIFIER = 'v\\d+\\.\\d+(?:-[A-Za-z0-9]+)?'
+
+function upliftProtocolVersion(yaml, toVersion) {
   return yaml
-    .replace(new RegExp(`(urn:openfinanceuae:[a-z-]+):${from}\\b`, 'g'), `$1:${toVersion}`)
-    .replace(new RegExp(`/open-finance/([a-z][a-z-]*)/${from}\\b`, 'g'), `/open-finance/$1/${toVersion}`)
-    .replace(new RegExp(`/open-finance/${from}\\b`, 'g'), `/open-finance/${toVersion}`)
+    .replace(new RegExp(`(urn:openfinanceuae:[a-z-]+):${VERSION_QUALIFIER}\\b`, 'g'), `$1:${toVersion}`)
+    .replace(new RegExp(`/open-finance/([a-z][a-z-]*)/${VERSION_QUALIFIER}\\b`, 'g'), `/open-finance/$1/${toVersion}`)
+    .replace(new RegExp(`/open-finance/${VERSION_QUALIFIER}\\b`, 'g'), `/open-finance/${toVersion}`)
 }
 
 // ─── Categories & version-folder mapping ───────────────────────────────────────
 // Folder naming upstream is not uniform, either between categories or between
 // releases:
-//   standards:      v2.1, v2.1-errata3, v2.2-rc1
+//   standards:      v2.1, v2.1-errata3, v2.2-rc2
 //   api-hub:        v2.1.x, v2.1.x-errata2, v2.2.x
 //   ozone-connect:  v2.1.x, v2.1.x-errata2, v2.2.x
 //
@@ -152,7 +169,7 @@ const CATEGORIES = ['standards', 'api-hub', 'ozone-connect']
 
 /**
  * The release a folder (or a SPEC_FOLDER chain entry) belongs to, with its
- * qualifiers stripped: `v2.2-rc1` and `v2.2.x` are both the v2.2 release.
+ * qualifiers stripped: `v2.2-rc2` and `v2.2.x` are both the v2.2 release.
  */
 function releaseOf(folder) {
   return folder
@@ -269,23 +286,28 @@ async function fetchCategory(version, chain, targetProtocol, category) {
     return
   }
 
-  // 3. Download all resolved files, uplifting only those borrowed from a release
-  //    older than the one this version documents.
+  // 3. Download all resolved files, uplifting the version strings of every one
+  //    to the version this documentation publishes. Borrowed files need it
+  //    because they carry an older release's strings; files from this release
+  //    need it when upstream republished them without bumping their own.
   mkdirSync(outDir, { recursive: true })
 
+  let borrowed = 0
   let uplifted = 0
   const downloads = [...fileMap.entries()].map(async ([filename, { remotePath, sourceRelease }]) => {
-    let content = await ghDownloadFile(remotePath)
-    if (sourceRelease !== targetProtocol) {
-      content = upliftProtocolVersion(content, sourceRelease, targetProtocol)
-      uplifted++
-    }
+    const original = await ghDownloadFile(remotePath)
+    const content = upliftProtocolVersion(original, targetProtocol)
+    if (sourceRelease !== targetProtocol) borrowed++
+    if (content !== original) uplifted++
     writeFileSync(resolve(outDir, filename), content, 'utf-8')
     return filename
   })
 
   const downloaded = await Promise.all(downloads)
-  const note = uplifted === 0 ? '' : ` (${uplifted} borrowed, version strings uplifted to ${targetProtocol})`
+  const parts = []
+  if (borrowed > 0) parts.push(`${borrowed} borrowed`)
+  if (uplifted > 0) parts.push(`${uplifted} uplifted to ${targetProtocol}`)
+  const note = parts.length === 0 ? '' : ` (${parts.join(', ')})`
   console.log(`  ✓ ${category} — ${downloaded.length} file(s)${note}`)
 }
 

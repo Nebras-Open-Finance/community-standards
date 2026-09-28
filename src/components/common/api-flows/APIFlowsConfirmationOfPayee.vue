@@ -2,7 +2,7 @@
 import { useMermaidDiagram } from '@/composables/useMermaidDiagram'
 
 const props = defineProps({
-  /** Documentation version of the page rendering the diagram, e.g. 'v2.2-rc1'. */
+  /** Documentation version of the page rendering the diagram, e.g. 'v2.2-rc2'. */
   version: { type: String, default: 'v2.1' },
 })
 
