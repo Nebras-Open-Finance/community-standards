@@ -17,9 +17,6 @@ public/api/github-stats.json
 public/api/lfi-sectors.json
 # Fetched authorisation-server redirect endpoints (see scripts/fetch-auth-endpoints.mjs)
 public/api/authorization-endpoints.json
-# Local per-payment export, rolled up into payment-size-bands.json by
-# scripts/build-payment-size-bands.mjs — the rollup is what ships.
-public/api/raw-payment-log.json
 # Fetched Postman collections (see scripts/fetch-postman-collections.mjs)
 public/postman/
 # Generated search index (see scripts/build-search-index.mjs)

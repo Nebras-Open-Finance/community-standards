@@ -338,10 +338,20 @@ function buildPayStatus(): void {
 }
 
 function buildPaySizeDist(): void {
-  // Rows arrive pre-banded: scripts/build-payment-size-bands.mjs buckets each
-  // individual payment by its own amount, so a bar is an exact count of
-  // payments in that AED range — not, as an aggregated log would force, a count
-  // of aggregate rows whose mean ticket happened to land there.
+  // Rows arrive pre-banded: the upstream export buckets each individual payment
+  // by its own amount, so a bar is an exact count of payments in that AED range
+  // — not, as an aggregated log would force, a count of aggregate rows whose
+  // mean ticket happened to land there.
+  //
+  // Band edges are upstream's and are upper-inclusive, which the labels spell
+  // out with a leading `>`: an amount of exactly 100 sits in "0 – 100", and
+  // ">100 – 1K" opens above it. The boundaries are the busiest values in the
+  // data — 3,039 payments of exactly 100, 2,405 of exactly 1,000 — so which
+  // side they count on is worth stating rather than leaving to the reader.
+  //
+  // The top band is ">10K – 50K": there is no bar above it, and the 1,015
+  // payments of exactly 50,000 AED — previously drawn as a separate "≥ 50K"
+  // column — now sit at the top of it.
   //
   // Stacking rule: with exactly one LFI selected (filter 2) a single series is
   // enough, so we drop the stack. With no LFI selected, or several, we stack one

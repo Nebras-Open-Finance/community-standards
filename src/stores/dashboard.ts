@@ -38,8 +38,19 @@ interface RawPaymentRow {
   status?: string
 }
 
-// Rows of payment-size-bands.json — one per date + LFI + TPP + status + band,
-// rolled up from the per-payment log by scripts/build-payment-size-bands.mjs.
+// Rows of payment-size-bands.json — one per date + LFI + TPP + status + band.
+// The file is a periodic export of the per-payment log, already banded
+// upstream; it is committed as received apart from two fix-ups applied when a
+// new export lands:
+//
+//   1. TPP names are canonicalised. The export carries both the historical and
+//      the current legal name for several TPPs (e.g. "MASHREQ" alongside
+//      "MASHREQ BANK PSC"), while payments-log.json — which populates the
+//      dashboard's TPP filter — only ever uses one spelling. Left as-is,
+//      selecting the canonical name silently drops the other spelling's rows.
+//   2. `bandmin` is rewritten to the band's lower edge. Upstream it is the
+//      smallest amount observed in the group, which `paymentSizeBands` below
+//      would order the x-axis by.
 interface RawPaymentBandRow {
   date?: string
   lfinamekey?: string

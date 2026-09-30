@@ -24,6 +24,13 @@ const manifestOf = (dir) => readJson(join(dir, 'api-log-index.json'))
 const rowsOf = (dir) =>
   manifestOf(dir).shards.flatMap((f) => readJson(join(dir, f)))
 
+// The day after `date`, as an ISO date string.
+const nextDay = (date) => {
+  const d = new Date(`${date}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + 1)
+  return d.toISOString().slice(0, 10)
+}
+
 // A fresh copy of the shards + manifest for one test to mutate.
 function scratchApiDir() {
   const dir = mkdtempSync(join(tmpdir(), 'api-log-merge-'))
@@ -159,8 +166,19 @@ describe('API log merge', () => {
     const dir = newScratch()
     const baseline = rowsOf(dir)
 
+    // One day past the log's end, so every exported record is genuinely new.
+    // Derived rather than fixed: a hard-coded date stops being "past the end"
+    // as soon as the log grows into it, which silently turns this into the
+    // overlap case it is meant to contrast with.
+    const afterEnd = nextDay(latestDate)
+    assert.equal(
+      quarterOf(afterEnd),
+      quarterOf(latestDate),
+      'the append case must stay inside one quarter — see the rollover test for the other path',
+    )
+
     const exportPath = join(dir, 'export.json')
-    exportFrom(dir, latestShard, latestDate, exportPath, () => '2026-09-15')
+    exportFrom(dir, latestShard, latestDate, exportPath, () => afterEnd)
     mergeApiLog({ apiDir: dir, exportPath })
 
     const merged = rowsOf(dir)
