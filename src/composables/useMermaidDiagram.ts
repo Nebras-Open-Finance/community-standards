@@ -28,6 +28,19 @@ function currentTheme(): 'dark' | 'default' {
   return document.documentElement.classList.contains('dark') ? 'dark' : 'default'
 }
 
+// With mirrorActors off, Mermaid 11 draws every sequence lifeline to a fixed
+// y2 of 2000 and never adjusts it, so on taller diagrams the lines stop short
+// of the last messages. Stretch them to the bottom of the diagram's viewBox.
+function extendLifelines(container: HTMLElement): void {
+  const svg = container.querySelector('svg')
+  const viewBox = svg?.viewBox.baseVal
+  if (!svg || !viewBox || !viewBox.height) return
+  const bottom = viewBox.y + viewBox.height - DEFAULT_SEQUENCE.diagramMarginY
+  svg.querySelectorAll<SVGLineElement>('line.actor-line').forEach((line) => {
+    line.setAttribute('y2', String(bottom))
+  })
+}
+
 export interface UseMermaidDiagram {
   containerRef: Ref<HTMLDivElement | null>
 }
@@ -55,6 +68,7 @@ export function useMermaidDiagram(
     try {
       const { svg } = await mermaid.render(id, definition)
       container.innerHTML = svg
+      extendLifelines(container)
     } catch (err) {
       console.error(err)
       container.innerHTML = `

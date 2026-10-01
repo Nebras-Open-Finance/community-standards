@@ -1,52 +1,51 @@
 <script setup lang="ts">
 import { useMermaidDiagram } from '@/composables/useMermaidDiagram'
 
-// One BioPay payment, end to end. Two properties to read off it: the biometric
-// never crosses into Open Finance (everything left of ICP is outside the
-// boundary), and every call from ICP terminates at the API Hub — nothing reaches
-// the LFI except by the Hub proxying it. Draft — endpoint names are proposed.
+// One BioPay payment, end to end. The BPIP is the merchant's acquirer;
+// ICP resolves the customer. Both BPIP calls — identity resolution to ICP and
+// the payment to the LFI — go through the API Hub under client_credentials and
+// mTLS; nothing reaches ICP or the LFI except by the Hub proxying it.
+// Draft — endpoint names and scopes are proposed.
 const mermaidDefinition = `
 sequenceDiagram
     participant PSU as Customer
-    participant POS as Acceptance point
-    participant ICP as BPIP
+    participant BPIP as BPIP (acquirer)
     participant Hub as API Hub
+    participant ICP as ICP
     participant LFI as LFI (Ozone Connect)
 
-    Note over PSU,ICP: Outside the Open Finance boundary
-    PSU->>POS: Presents thumbprint / face / palm
-    POS->>ICP: Capture + amount + creditor details
-    ICP->>ICP: Match, liveness, resolve to uaeKycId
+    PSU->>BPIP: Presents thumbprint / face / palm
+    BPIP->>BPIP: Capture + amount + creditor details
 
-    Note over ICP,Hub: client_credentials — no consent, no PSU redirect
-    ICP->>Hub: POST /token (BPIP role, biometric-payments scope)
-    Hub-->>ICP: access_token
+    Note over BPIP,Hub: client_credentials · mTLS · scope: biometric-resolution
+    BPIP->>Hub: Resolve customer (biometric capture)
+    Hub->>ICP: Resolve customer
+    ICP->>ICP: Match, liveness, look up uaeKycId → LFI
+    ICP-->>Hub: {uaeKycId, LFI}
+    Hub-->>BPIP: {uaeKycId, LFI}
 
-    ICP->>Hub: POST /biometric-payments-discovery (signed JWT: uaeKycId)
-    Hub->>Hub: Read registration store (not proxied to LFI)
-    Hub-->>ICP: 200 signed JWT {RegistrationStatus, PaymentInstrument,<br/>DiscoveryEndpointUrl, ResourceServerUrl}
-
-    alt Not registered or suspended
-        ICP-->>POS: BioPay unavailable — fall back
-    else Registered
-        ICP->>Hub: POST /biometric-payments at ResourceServerUrl<br/>(payload shaped to instrument)
-        Hub->>Hub: Entitlement, schema, idempotency, resolve LFI
+    alt Not resolved or not registered
+        BPIP-->>PSU: BioPay unavailable — fall back
+    else Resolved
+        Note over BPIP,Hub: client_credentials · mTLS · scope: biometric-payments
+        BPIP->>Hub: POST /biometric-payments at the LFI's ResourceServerUrl<br/>{uaeKycId, Instruction, Creditor}
+        Hub->>Hub: Entitlement, schema, idempotency
         Hub->>LFI: Proxied payment request
-        LFI->>LFI: Fraud, risk, balance checks
+        LFI->>LFI: Resolve uaeKycId → instrument<br/>Fraud, risk, balance checks
         LFI-->>Hub: 201 {PaymentId}
-        Hub-->>ICP: 201 {PaymentId, Status: Pending}
-        ICP-->>POS: Accepted — payment pending
+        Hub-->>BPIP: 201 {PaymentId, Status: Pending}
+        BPIP-->>PSU: Accepted — payment pending
 
         Note over LFI: Executes on the registered payment rail<br/>(AANI, CBDC, Jaywan, ...)
         LFI->>Hub: PATCH /biometrics-payment-log/{id}<br/>{Status, RailReference}
         Hub-->>LFI: 204 No Content
-        Hub->>ICP: Payment status event {PaymentId, Status}
-        ICP-->>Hub: 202 Accepted
+        Hub->>BPIP: Payment status event {PaymentId, Status}
+        BPIP-->>Hub: 202 Accepted
 
         opt Polling, or recovery from a lost 201
-            ICP->>Hub: GET /biometric-payments/{PaymentId}
-            ICP->>Hub: GET /biometric-payments?IdempotencyKey
-            Hub-->>ICP: 200 {Status}
+            BPIP->>Hub: GET /biometric-payments/{PaymentId}
+            BPIP->>Hub: GET /biometric-payments?IdempotencyKey
+            Hub-->>BPIP: 200 {Status}
         end
     end
 `

@@ -52,7 +52,7 @@ export const biopaySections: readonly BiopaySection[] = [
     slug: 'directory',
     title: 'Directory',
     summary:
-      'The BPIP role, how applications, software statements and clients inherit it, the endpoints it entitles them to, and the certificates they need.',
+      'The BPIP and ICP roles, how applications, software statements and clients inherit them, the endpoints each entitles them to, and the certificates they need.',
     outcome: 'Know how an authorised initiator is registered and entitled.',
     status: 'Draft',
     readTime: '4 min',
@@ -111,7 +111,12 @@ export const biopaySidebar: EdSidebarItemData[] = [
     text: 'Payment',
     collapsed: false,
     items: [
-      { text: 'Technical Architecture', link: '/biopay/payment/technical-architecture' },
+      {
+        text: 'Technical Architecture',
+        link: '/biopay/payment/technical-architecture',
+        collapsed: false,
+        items: [{ text: 'Jaywan / Card Flow', link: '/biopay/payment/card-flow' }],
+      },
       { text: 'API Guide', link: '/biopay/payment/api-guide' },
       {
         text: 'API Reference',
