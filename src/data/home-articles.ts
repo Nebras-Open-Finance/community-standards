@@ -31,6 +31,16 @@ export interface HomeArticle extends RawHomeArticle {
 
 const rawArticles: RawHomeArticle[] = [
   {
+    link: 'https://www.fwdstart.me/p/open-finance-ai-agents-and-the-price-of-being-chosen-3661?gift_content=7e40676d-2d63-426b-9697-2f8e9b168092',
+    source: 'FWDstart',
+    kind: 'news',
+    date: '2026-09-30',
+    dateLabel: '30 Sep 2026',
+    imageSrc: '/images/articles/fwdstart-open-finance-ai-agents.jpg',
+    title: 'Open finance, AI agents and the price of being chosen',
+    text: "The UAE's Open Finance payment volumes rose from AED 19.8 million to AED 78.2 million between May and August 2026. Jamie Lane examines what happens when AI agents enter the mix: who wins the customer, who moves the money, and who gets to take a cut.",
+  },
+  {
     link: 'https://www.linkedin.com/posts/meafinancemagazine_meafinancepaymentsawards2026-meafinance-paymentsawards-ugcPost-7508422792103559168-3ksZ/',
     source: 'LinkedIn · MEA Finance',
     kind: 'news',
