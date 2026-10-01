@@ -9,7 +9,6 @@ meta:
 
 <script setup lang="ts">
 import { useHead } from '@unhead/vue'
-import BpRegistrationFlow from '@/components/biopay/BpRegistrationFlow.vue'
 
 useHead({ title: 'Registration — API Guide · BioPay' })
 
@@ -17,7 +16,6 @@ interface Section { id: string; label: string }
 interface MetaItem { label: string; value: string }
 
 const sections: Section[] = [
-  { id: 'sequence', label: 'Sequence Diagram' },
   { id: 'lfi-to-hub', label: 'Posting the registration' },
   { id: 'event', label: 'The registration event' },
   { id: 'discovery', label: 'Discovery' },
@@ -48,39 +46,23 @@ const meta: MetaItem[] = [
 
     <!-- 01 ─────────────────────────────────────────────────────────────── -->
     <EdSectionBand
-      id="sequence"
-      num="01"
-      color="var(--at-teal)"
-      eyebrow="Sequence Diagram"
-      title="The registration flow end to end"
-      tone="surface"
-      lede="Click the diagram to expand it."
-    >
-      <APIFlowViewer
-        title="BioPay — registration"
-        eyebrow="Registration flow"
-      >
-        <BpRegistrationFlow />
-      </APIFlowViewer>
-
-      <EdNote type="info" title="Where this guide starts">
-        <p>
-          The customer&rsquo;s journey in the LFI channel &mdash; identity verification and
-          instrument selection &mdash; is covered on
-          <RouterLink to="/biopay/registration/user-experience">User Experience</RouterLink>.
-          Everything from the LFI&rsquo;s call to the API Hub onwards is described below.
-        </p>
-      </EdNote>
-    </EdSectionBand>
-
-    <!-- 02 ─────────────────────────────────────────────────────────────── -->
-    <EdSectionBand
       id="lfi-to-hub"
-      num="02"
+      num="01"
       color="var(--at-blue-deep)"
       eyebrow="LFI → API Hub"
       title="Posting the completed registration"
     >
+      <EdNote type="info" title="Where this guide starts">
+        <p>
+          The customer&rsquo;s journey in the LFI channel &mdash; identity verification and
+          instrument selection &mdash; is covered on
+          <RouterLink to="/biopay/registration/user-experience">User Experience</RouterLink>,
+          and the end-to-end flow on
+          <RouterLink to="/biopay/registration/technical-architecture">Technical Architecture</RouterLink>.
+          Everything from the LFI&rsquo;s call to the API Hub onwards is described below.
+        </p>
+      </EdNote>
+
       <EdProse>
         The registration itself happens in the LFI&rsquo;s own channel. Once the customer&rsquo;s
         identity has been verified and they have chosen an instrument, the LFI posts the finished
@@ -90,7 +72,7 @@ const meta: MetaItem[] = [
 
       <EdProse>
         The LFI calls with its own LFI-role client over mutual TLS with application-layer
-        authentication, under <code>client_credentials</code>. It sends the ICP user identifier,
+        authentication, under <code>client_credentials</code>. It sends the <code>uaeKycId</code>,
         the instrument or instruments the customer selected and which of them is the default. The
         Hub stores that against the LFI and returns a <code>RegistrationId</code>. It holds no
         biometric, no template, no account number and no card number &mdash; only the identifier,
@@ -106,15 +88,15 @@ const meta: MetaItem[] = [
         <p>
           This call runs LFI &rarr; API Hub, so it sits outside the initiator-facing API
           Reference. It is documented here and on
-          <RouterLink to="/biopay/technical-architecture">Technical Architecture</RouterLink>.
+          <RouterLink to="/biopay/registration/technical-architecture">Technical Architecture</RouterLink>.
         </p>
       </EdNote>
     </EdSectionBand>
 
-    <!-- 03 ─────────────────────────────────────────────────────────────── -->
+    <!-- 02 ─────────────────────────────────────────────────────────────── -->
     <EdSectionBand
       id="event"
-      num="03"
+      num="02"
       color="var(--at-gold)"
       eyebrow="API Hub → BPIP"
       title="The registration event"
@@ -170,16 +152,16 @@ const meta: MetaItem[] = [
       </EdCallout>
     </EdSectionBand>
 
-    <!-- 04 ─────────────────────────────────────────────────────────────── -->
+    <!-- 03 ─────────────────────────────────────────────────────────────── -->
     <EdSectionBand
       id="discovery"
-      num="04"
+      num="03"
       color="var(--at-navy)"
       eyebrow="BPIP → API Hub"
       title="Discovery"
     >
       <EdProse>
-        Discovery resolves an ICP user identifier to the registration the Hub holds for it:
+        Discovery resolves a <code>uaeKycId</code> to the registration the Hub holds for it:
         whether it is live, which instruments the customer selected and which is the default, and
         the endpoints at which the BPIP obtains a token for &mdash; and then calls &mdash; the LFI
         holding it. The Hub answers from its own registration store; this call is not proxied to
@@ -213,10 +195,10 @@ const meta: MetaItem[] = [
       </EdProse>
     </EdSectionBand>
 
-    <!-- 05 ────────────────────────────────────────────────────────────── -->
+    <!-- 04 ────────────────────────────────────────────────────────────── -->
     <EdSectionBand
       id="open"
-      num="05"
+      num="04"
       color="var(--at-gold)"
       eyebrow="Open items"
       title="What this page does not yet answer"

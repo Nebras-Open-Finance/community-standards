@@ -163,6 +163,21 @@ const journeys: Journey[] = [
         </p>
       </EdNote>
     </EdSectionBand>
+
+    <EdSectionBand
+      id="language"
+      num="04"
+      color="var(--at-teal)"
+      eyebrow="Localisation"
+      title="Language"
+      tone="surface"
+    >
+      <EdProse>
+        Where the LFI application supports more than one language (for example, English and
+        Arabic), the CMI must be available in each of those languages. The CMI must be presented
+        in the language the customer has set as their default in the LFI application.
+      </EdProse>
+    </EdSectionBand>
   </div>
 </template>
 

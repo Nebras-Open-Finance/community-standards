@@ -9,7 +9,6 @@ meta:
 
 <script setup lang="ts">
 import { useHead } from '@unhead/vue'
-import BpPaymentFlow from '@/components/biopay/BpPaymentFlow.vue'
 
 useHead({ title: 'Payment — API Guide · BioPay' })
 
@@ -17,7 +16,6 @@ interface Section { id: string; label: string }
 interface MetaItem { label: string; value: string }
 
 const sections: Section[] = [
-  { id: 'sequence', label: 'Sequence Diagram' },
   { id: 'token', label: 'Access token' },
   { id: 'create', label: 'Create payment' },
   { id: 'execution', label: 'The LFI makes the payment' },
@@ -100,40 +98,24 @@ const statuses: PaymentStatus[] = [
 
     <!-- 01 ─────────────────────────────────────────────────────────────── -->
     <EdSectionBand
-      id="sequence"
-      num="01"
-      color="var(--at-teal)"
-      eyebrow="Sequence Diagram"
-      title="The payment flow end to end"
-      tone="surface"
-      lede="Click the diagram to expand it."
-    >
-      <APIFlowViewer
-        title="BioPay — payment"
-        eyebrow="Payment flow"
-      >
-        <BpPaymentFlow />
-      </APIFlowViewer>
-
-      <EdNote type="info" title="Where this guide starts">
-        <p>
-          The capture, the match and the resolution to an ICP user identifier all happen outside
-          the Open Finance boundary and are not API operations. The registration that must
-          already exist, and the discovery call that confirms it is still usable, are covered on
-          the <RouterLink to="/biopay/registration/api-guide">Registration API Guide</RouterLink>.
-          This guide picks up at the token endpoint.
-        </p>
-      </EdNote>
-    </EdSectionBand>
-
-    <!-- 02 ─────────────────────────────────────────────────────────────── -->
-    <EdSectionBand
       id="token"
-      num="02"
+      num="01"
       color="var(--at-blue-deep)"
       eyebrow="Access token"
       title="A token with no PSU in the loop"
     >
+      <EdNote type="info" title="Where this guide starts">
+        <p>
+          The capture, the match and the resolution to a <code>uaeKycId</code> all happen outside
+          the Open Finance boundary and are not API operations. The registration that must
+          already exist, and the discovery call that confirms it is still usable, are covered on
+          the <RouterLink to="/biopay/registration/api-guide">Registration API Guide</RouterLink>,
+          and the end-to-end flow on
+          <RouterLink to="/biopay/payment/technical-architecture">Technical Architecture</RouterLink>.
+          This guide picks up at the token endpoint.
+        </p>
+      </EdNote>
+
       <EdProse>
         The initiator obtains an access token under <code>client_credentials</code>, using its
         BPIP client. There is no PAR, no authorisation request, no redirect and no refresh
@@ -175,10 +157,10 @@ const statuses: PaymentStatus[] = [
       </EdNote>
     </EdSectionBand>
 
-    <!-- 03 ─────────────────────────────────────────────────────────────── -->
+    <!-- 02 ─────────────────────────────────────────────────────────────── -->
     <EdSectionBand
       id="create"
-      num="03"
+      num="02"
       color="var(--at-teal)"
       eyebrow="Create payment"
       title="Create Payment"
@@ -194,7 +176,7 @@ const statuses: PaymentStatus[] = [
       </EdProse>
 
       <EdProse>
-        <code>Data</code> carries the <code>IcpUserId</code>, the <code>PaymentInstrument</code>,
+        <code>Data</code> carries the <code>uaeKycId</code>, the <code>PaymentInstrument</code>,
         the <code>Instruction</code> (identifiers, amount and any remittance information), the
         <code>Creditor</code> shaped to that instrument, and the
         <code>BiometricAssurance</code>. <code>Risk</code> carries the
@@ -251,10 +233,10 @@ const statuses: PaymentStatus[] = [
       </EdRelatedCards>
     </EdSectionBand>
 
-    <!-- 04 ─────────────────────────────────────────────────────────────── -->
+    <!-- 03 ─────────────────────────────────────────────────────────────── -->
     <EdSectionBand
       id="execution"
-      num="04"
+      num="03"
       color="var(--at-navy)"
       eyebrow="LFI"
       title="The LFI makes the payment"
@@ -312,10 +294,10 @@ const statuses: PaymentStatus[] = [
       </EdProse>
     </EdSectionBand>
 
-    <!-- 05 ─────────────────────────────────────────────────────────────── -->
+    <!-- 04 ─────────────────────────────────────────────────────────────── -->
     <EdSectionBand
       id="patch"
-      num="05"
+      num="04"
       color="var(--at-gold)"
       eyebrow="LFI → API Hub"
       title="Patching the Payment Status"
@@ -380,10 +362,10 @@ const statuses: PaymentStatus[] = [
       </EdRelatedCards>
     </EdSectionBand>
 
-    <!-- 06 ─────────────────────────────────────────────────────────────── -->
+    <!-- 05 ─────────────────────────────────────────────────────────────── -->
     <EdSectionBand
       id="status"
-      num="06"
+      num="05"
       color="var(--at-blue-deep)"
       eyebrow="API Hub → BPIP"
       title="Event sent, and polling of payment status"

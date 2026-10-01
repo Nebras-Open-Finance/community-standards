@@ -8,8 +8,22 @@ export const data: RequirementsPageData = {
   preconditions: 'For all authorization failure scenarios, the LFI MUST PATCH the consent to <code>Rejected</code> before calling <code>doFail</code> — the end user has been identified during the authentication step. For the full <code>doFail</code> API specification, see the <a href="/tech/lfi-api-hub/v2.1/api-hub/headless-heimdall/open-api/auth-interactionId-doFail"><code>POST /auth/{interactionId}/doFail</code> API Reference</a>.',
   sections: [
     {
-      id: 'error-scenarios',
+      id: 'language',
       num: '01',
+      title: 'Language',
+      blocks: [
+        { kind: 'table', table: {
+          headers: ['#', 'Rule'],
+          rows: [
+            { cells: ['1', 'Where the LFI application supports more than one language (for example, English and Arabic), the authorization journey MUST be available in each of those languages.'] },
+            { cells: ['2', 'The authorization journey MUST be presented in the language the end user has set as their default in the LFI application.'] },
+          ],
+        } },
+      ],
+    },
+    {
+      id: 'error-scenarios',
+      num: '02',
       title: 'Error scenarios',
       subsections: [
         {
@@ -115,7 +129,7 @@ export const data: RequirementsPageData = {
     },
     {
       id: 'summary',
-      num: '02',
+      num: '03',
       title: 'Summary',
       blocks: [
         { kind: 'table', table: {

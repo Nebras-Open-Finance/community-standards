@@ -8,7 +8,7 @@
 # One call in this journey is LFI → API Hub and deliberately NOT modelled here
 # (see the third-party-facing-only scoping decision):
 #   - the LFI posting a completed registration to the Hub
-# It is described in prose on /biopay/technical-architecture.
+# It is described in prose on /biopay/registration/api-guide.
 #
 # The other LFI → API Hub call, PATCH /biometrics-payment-log/{id}, IS
 # modelled: it is how the payment status the initiator polls and is notified of
@@ -46,7 +46,7 @@ info:
     customer is identified biometrically by ICP, and ICP — as a specifically
     authorised initiator — initiates a payment through the API Hub under a
     `client_credentials` grant. No biometric, template or match score crosses
-    into Open Finance. What crosses is an ICP user identifier and ICP's
+    into Open Finance. What crosses is a `uaeKycId` and ICP's
     assertion that it identified the person.
 
 servers:
@@ -77,7 +77,7 @@ paths:
       operationId: postBiometricPaymentsDiscovery
       summary: Discover a customer's BioPay registration
       description: >-
-        **ICP → API Hub.** Resolves an ICP user identifier to the registration
+        **ICP → API Hub.** Resolves a `uaeKycId` to the registration
         the API Hub holds for it: whether that registration is live, which
         payment instrument(s) the customer selected, and the endpoints at which
         the initiator obtains a token for — and then calls — the LFI holding it.
@@ -97,7 +97,7 @@ paths:
         Signing the request is also what allows the identifier to travel in a
         body rather than a query string, keeping it out of access and proxy
         logs. That is why this operation is a `POST`; the earlier draft modelled
-        it as a `GET` with an `IcpUserId` query parameter and flagged the
+        it as a `GET` with an `uaeKycId` query parameter and flagged the
         logging exposure as an open item.
 
 
@@ -582,7 +582,7 @@ components:
 
   # ── Schemas ──────────────────────────────────────────────────────────────
   schemas:
-    AEIcpUserId:
+    AEUaeKycId:
       type: string
       description: >-
         The identifier ICP issues for a verified identity, and the only
@@ -628,10 +628,10 @@ components:
         Data:
           type: object
           additionalProperties: false
-          required: [IcpUserId]
+          required: [uaeKycId]
           properties:
-            IcpUserId:
-              $ref: '#/components/schemas/AEIcpUserId'
+            uaeKycId:
+              $ref: '#/components/schemas/AEUaeKycId'
 
     AEDiscoveredInstrument:
       type: object
@@ -659,10 +659,10 @@ components:
         discovery answers two questions at once: where to go, and whether to go
         at all.
       additionalProperties: false
-      required: [IcpUserId, RegistrationStatus]
+      required: [uaeKycId, RegistrationStatus]
       properties:
-        IcpUserId:
-          $ref: '#/components/schemas/AEIcpUserId'
+        uaeKycId:
+          $ref: '#/components/schemas/AEUaeKycId'
         RegistrationStatus:
           $ref: '#/components/schemas/AERegistrationStatus'
         DiscoveryEndpointUrl:
@@ -936,10 +936,10 @@ components:
         Data:
           type: object
           additionalProperties: false
-          required: [IcpUserId, PaymentInstrument, Instruction, Creditor, BiometricAssurance]
+          required: [uaeKycId, PaymentInstrument, Instruction, Creditor, BiometricAssurance]
           properties:
-            IcpUserId:
-              $ref: '#/components/schemas/AEIcpUserId'
+            uaeKycId:
+              $ref: '#/components/schemas/AEUaeKycId'
             PaymentInstrument:
               $ref: '#/components/schemas/AEPaymentInstrument'
             Instruction:
@@ -1040,8 +1040,8 @@ components:
         StatusUpdateDateTime:
           type: string
           format: date-time
-        IcpUserId:
-          $ref: '#/components/schemas/AEIcpUserId'
+        uaeKycId:
+          $ref: '#/components/schemas/AEUaeKycId'
         LFIIdentification:
           type: string
           example: altareq1

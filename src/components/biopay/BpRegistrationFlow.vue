@@ -1,38 +1,79 @@
 <script setup lang="ts">
 import { useMermaidDiagram } from '@/composables/useMermaidDiagram'
 
-// BioPay registration, end to end. Steps 1–2 happen in the LFI's own channel
-// and use no Open Finance API; steps 3–5 are what brings the registration into
-// the API Hub and tells ICP where to address that customer's calls. Draft —
-// endpoint names are proposed, not published.
-const mermaidDefinition = `
+// BioPay registration, end to end, in one of two options.
+//   hub    (Option A) — the API Hub sits between the LFI channel and ICP for
+//          identity verification and the completed registration, under C3, and
+//          offers an optional discovery call that it answers by asking the LFI.
+//   direct (Option B) — the LFI channel calls ICP directly for both; the API
+//          Hub is not involved.
+// In both, nothing is stored at the Hub: ICP holds uaeKycId → LFI, the LFI holds
+// uaeKycId → instrument. Draft — endpoint names are proposed, not published.
+const props = withDefaults(defineProps<{ variant?: 'hub' | 'direct' }>(), {
+  variant: 'hub',
+})
+
+const lfiChannel = `
+    Note over PSU,LFI: LFI channel
+    PSU->>LFI: Requests BioPay registration`
+
+const instrumentSelection = `
+    LFI->>PSU: Select payment rail (AANI, CBDC, Jaywan, ...)
+    PSU-->>LFI: Selects instrument + default
+    LFI->>LFI: Store uaeKycId → customer record + instrument(s)`
+
+const viaHub = `
 sequenceDiagram
     participant PSU as Customer
     participant LFI as LFI (channel)
-    participant ICP as BPIP
     participant Hub as API Hub
+    participant ICP as ICP
+${lfiChannel}
 
-    Note over PSU,LFI: Out of band — LFI channel, no Open Finance API
-    PSU->>LFI: Requests BioPay registration
-    LFI->>ICP: Identity verification
-    ICP-->>LFI: Verified identity + ICP user id
-    LFI->>LFI: Bind ICP user id to customer record
-    LFI->>PSU: Select payment rail (AANI, CBDC, Jaywan, ...)
-    PSU-->>LFI: Selects instrument + default
+    Note over LFI,Hub: C3 (mTLS and application_auth)
+    LFI->>Hub: Identity verification
+    Hub->>ICP: Identity verification
+    ICP-->>Hub: Verified identity + uaeKycId
+    Hub-->>LFI: Verified identity + uaeKycId
+${instrumentSelection}
 
-    Note over LFI,Hub: Into Open Finance — C3 (mTLS and application_auth)
+    Note over LFI,Hub: C3 (mTLS and application_auth)
     LFI->>Hub: Post completed registration
-    Hub->>Hub: Store ICP user id → LFI → instrument(s)
+    Hub->>Hub: Validate — no registration binding stored
     Hub-->>LFI: 201 {RegistrationId}
 
     Hub->>ICP: POST registration event (signed + encrypted JWT)<br/>Meta {EventType, RegistrationId} · Data as discovery
+    ICP->>ICP: Store uaeKycId → LFI
     ICP-->>Hub: 202 Accepted
     Note over ICP: Retains DiscoveryEndpointUrl and ResourceServerUrl —<br/>needed to address token, discovery and payment calls
+
+    opt Discovery — is the uaeKycId registered for BioPay at the LFI?
+    ICP->>Hub: POST /biometric-payments-discovery (signed JWT: uaeKycId)
+    Hub->>LFI: Is uaeKycId registered for BioPay?
+    LFI-->>Hub: Registration status
+    Hub-->>ICP: 200 signed JWT {RegistrationStatus}
+    end
+`
+
+const direct = `
+sequenceDiagram
+    participant PSU as Customer
+    participant LFI as LFI (channel)
+    participant ICP as ICP
+${lfiChannel}
+
+    LFI->>ICP: Identity verification
+    ICP-->>LFI: Verified identity + uaeKycId
+${instrumentSelection}
+
+    LFI->>ICP: Post completed registration
+    ICP->>ICP: Store uaeKycId → LFI
+    ICP-->>LFI: Accepted
 `
 
 const { containerRef: mermaidContainer } = useMermaidDiagram(
-  mermaidDefinition,
-  'biopay-registration-flow',
+  props.variant === 'direct' ? direct : viaHub,
+  `biopay-registration-flow-${props.variant}`,
 )
 </script>
 

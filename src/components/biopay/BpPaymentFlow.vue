@@ -16,13 +16,13 @@ sequenceDiagram
     Note over PSU,ICP: Outside the Open Finance boundary
     PSU->>POS: Presents thumbprint / face / palm
     POS->>ICP: Capture + amount + creditor details
-    ICP->>ICP: Match, liveness, resolve to ICP user id
+    ICP->>ICP: Match, liveness, resolve to uaeKycId
 
     Note over ICP,Hub: client_credentials — no consent, no PSU redirect
     ICP->>Hub: POST /token (BPIP role, biometric-payments scope)
     Hub-->>ICP: access_token
 
-    ICP->>Hub: POST /biometric-payments-discovery (signed JWT: IcpUserId)
+    ICP->>Hub: POST /biometric-payments-discovery (signed JWT: uaeKycId)
     Hub->>Hub: Read registration store (not proxied to LFI)
     Hub-->>ICP: 200 signed JWT {RegistrationStatus, PaymentInstrument,<br/>DiscoveryEndpointUrl, ResourceServerUrl}
 

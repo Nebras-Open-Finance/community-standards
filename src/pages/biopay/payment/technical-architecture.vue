@@ -1,7 +1,7 @@
 <route lang="yaml">
 meta:
   layout: biopay
-  title: Technical Architecture
+  title: Payment — Technical Architecture
   next: false
   prev: false
   aside: false
@@ -9,10 +9,10 @@ meta:
 
 <script setup lang="ts">
 import { useHead } from '@unhead/vue'
-import BpRegistrationFlow from '@/components/biopay/BpRegistrationFlow.vue'
 import BpPaymentFlow from '@/components/biopay/BpPaymentFlow.vue'
+import BpActorTable, { type BpActor } from '@/components/biopay/BpActorTable.vue'
 
-useHead({ title: 'Technical Architecture · BioPay' })
+useHead({ title: 'Payment — Technical Architecture · BioPay' })
 
 interface Section { id: string; label: string }
 interface MetaItem { label: string; value: string }
@@ -28,17 +28,9 @@ const meta: MetaItem[] = [
   { label: 'Version', value: '0.1' },
 ]
 
-interface Actor {
-  key: string
-  name: string
-  sub: string
-  color: string
-  responsibilities: string[]
-}
-
 // Responsibilities are kept as data so each actor's list can be argued with on
 // its own terms. Multiple rows per actor; the Actor cell spans them.
-const actors: Actor[] = [
+const actors: BpActor[] = [
   {
     key: 'bpip',
     name: 'BPIP',
@@ -47,10 +39,9 @@ const actors: Actor[] = [
     responsibilities: [
       'Capture the biometric, run liveness detection and match it to a verified identity — all of it outside the Open Finance boundary.',
       'Resolve the customer to an identifier, and assert with each payment that the identification took place.',
-      'Retain the LFI identifier received in the registration event, and reconcile any events it did not receive.',
       'Build the payment request to the creditor schema for the instrument discovery returned.',
       'Generate and retain an idempotency key for every payment, and recover with it rather than initiating again.',
-      'Implement the event endpoint, and acknowledge registration and payment status events.',
+      'Implement the event endpoint, and acknowledge payment status events.',
       'Report the outcome back to the acceptance point.',
     ],
   },
@@ -77,9 +68,6 @@ const actors: Actor[] = [
     sub: 'Licensed Financial Institution — the execution layer',
     color: 'var(--at-navy)',
     responsibilities: [
-      'Run the registration journey in its own channel, and verify the customer’s identity.',
-      'Bind the verified identity to its own customer record, and capture the instrument the customer selects.',
-      'Post the completed registration to the API Hub, and update it when the customer changes or withdraws it.',
       'Implement the biometric payment endpoints on Ozone Connect.',
       'Execute the payment on the registered payment rail (AANI, CBDC, Jaywan, …).',
       'Patch payment status to the API Hub once the payment reaches a terminal state.',
@@ -93,11 +81,11 @@ const actors: Actor[] = [
     <EdBackStrip href="/biopay/" text="BioPay overview" />
 
     <EdHero
-      eyebrow="BioPay · Draft"
-      eyebrow-color="var(--at-teal)"
-      title="Technical Architecture"
+      eyebrow="BioPay · Payment · Draft"
+      eyebrow-color="var(--at-navy)"
+      title="Payment Technical Architecture"
       :meta="meta"
-      lede="How the journey is put together, and which party is accountable for each part of it. <strong>Everything here is draft</strong> &mdash; the flows and the split of responsibilities are proposals for review."
+      lede="How payment is put together, and which party is accountable for each part of it. <strong>Everything here is draft</strong> &mdash; the flow and the split of responsibilities are proposals for review."
     />
 
     <EdInPageNav :sections="sections" />
@@ -108,24 +96,9 @@ const actors: Actor[] = [
       num="01"
       color="var(--at-teal)"
       eyebrow="Architecture diagram"
-      title="The journey in two halves"
-      lede="Registration binds a customer to a payment instrument. Payment spends against that binding. They are separate flows with separate actors, and they are worth reading separately. Click either diagram to expand it."
+      title="The payment flow end to end"
+      lede="Click the diagram to expand it."
     >
-      <h3 class="bp-sub">Registration</h3>
-      <EdProse>
-        The customer registers with their bank, in the bank&rsquo;s own channel, and no Open
-        Finance API is involved in that part. What brings it into Open Finance is the step that
-        follows: the LFI posts the completed registration to the API Hub, the Hub stores the
-        binding, and the Hub drives an event to the initiator.
-      </EdProse>
-      <APIFlowViewer
-        title="BioPay — registration"
-        eyebrow="Registration flow"
-      >
-        <BpRegistrationFlow />
-      </APIFlowViewer>
-
-      <h3 class="bp-sub">Payment</h3>
       <EdProse>
         The initiator identifies the customer, confirms the registration is still usable, and
         initiates a payment shaped to the registered instrument. The API Hub resolves the LFI
@@ -148,69 +121,9 @@ const actors: Actor[] = [
       eyebrow="Who does what"
       title="Three actors, and what each is accountable for"
       tone="surface"
-      lede="One new role and two existing ones. The split matters: the initiator answers <em>who is paying</em>, the API Hub decides <em>whether the request is allowed and where it goes</em>, and the LFI decides <em>whether the money moves</em>."
+      lede="The split matters: the initiator answers <em>who is paying</em>, the API Hub decides <em>whether the request is allowed and where it goes</em>, and the LFI decides <em>whether the money moves</em>."
     >
-      <EdRefTable>
-        <table>
-          <thead>
-            <tr>
-              <th>Actor</th>
-              <th>Responsibility</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-for="a in actors" :key="a.key">
-              <tr v-for="(r, i) in a.responsibilities" :key="a.key + '-' + i">
-                <td
-                  v-if="i === 0"
-                  :rowspan="a.responsibilities.length"
-                  class="bp-actor"
-                  :style="{ '--bp-actor-color': a.color }"
-                >
-                  <strong>{{ a.name }}</strong>
-                  <span class="bp-actor__sub">{{ a.sub }}</span>
-                </td>
-                <td>{{ r }}</td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
-      </EdRefTable>
+      <BpActorTable :actors="actors" />
     </EdSectionBand>
   </div>
 </template>
-
-<style scoped>
-/* Subsection heading inside a section band — used for Registration / Payment. */
-.bp-sub {
-  font-family: var(--at-sans);
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  color: var(--at-navy-deep);
-  margin: 2.25rem 0 0;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--at-grid-line);
-}
-.bp-sub:first-child { margin-top: 0; }
-
-/* Actor cell spans its responsibility rows; the rule keys it to the actor. */
-.bp-actor {
-  min-width: 11rem;
-  border-left: 3px solid var(--bp-actor-color, var(--at-teal));
-  background: var(--at-bg-cream);
-}
-.bp-actor strong {
-  display: block;
-  font-family: var(--at-mono);
-  font-size: 0.86rem;
-  letter-spacing: 0.06em;
-}
-.bp-actor__sub {
-  display: block;
-  margin-top: 0.35rem;
-  font-size: 0.8rem;
-  line-height: 1.45;
-  color: var(--at-mute);
-}
-</style>

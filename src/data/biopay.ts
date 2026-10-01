@@ -4,13 +4,13 @@
 // identified biometrically by ICP (the government identity service), and a
 // specifically authorised third party — ICP itself, holding the BPIP role —
 // initiates a payment through the API Hub using a client_credentials grant.
-// No biometric ever crosses into Open Finance; what crosses is an ICP user
-// identifier plus ICP's assertion that it identified the person.
+// No biometric ever crosses into Open Finance; what crosses is a uaeKycId
+// plus ICP's assertion that it identified the person.
 //
 // The journey has two halves:
 //   Registration — the customer registers with their LFI directly, the LFI
 //     posts the completed registration to the API Hub, the Hub stores the
-//     binding (ICP user id → LFI → payment instrument) and drives an event to
+//     binding (uaeKycId → LFI → payment instrument) and drives an event to
 //     ICP. Discovery is then answered by the Hub from that store.
 //   Payment — ICP discovers the registration, posts a payment shaped to the
 //     registered payment rail (AANI, CBDC, Jaywan, ...), and tracks it by PaymentId
@@ -44,20 +44,10 @@ export interface BiopaySection {
 }
 
 /**
- * The four destinations the overview page cards point at, in reading order.
+ * The three destinations the overview page cards point at, in reading order.
  * Registration and Payment are groups — their card links at their first page.
  */
 export const biopaySections: readonly BiopaySection[] = [
-  {
-    slug: 'technical-architecture',
-    title: 'Technical Architecture',
-    summary:
-      'Components, trust boundaries, and how the journey maps onto the Open Finance architectural invariants — strict mediation, centralised state, and token issuance.',
-    outcome: 'Understand every component and the path a payment takes through them.',
-    status: 'Draft',
-    readTime: '10 min',
-    color: 'var(--at-teal)',
-  },
   {
     slug: 'directory',
     title: 'Directory',
@@ -69,7 +59,7 @@ export const biopaySections: readonly BiopaySection[] = [
     color: 'var(--at-blue-deep)',
   },
   {
-    slug: 'registration/api-guide',
+    slug: 'registration/technical-architecture',
     title: 'Registration',
     summary:
       'The API calls that follow a completed registration: the LFI-to-Hub registration call, the event driven to the BPIP, and the discovery endpoint the BPIP calls thereafter.',
@@ -79,7 +69,7 @@ export const biopaySections: readonly BiopaySection[] = [
     color: 'var(--at-gold)',
   },
   {
-    slug: 'payment/api-guide',
+    slug: 'payment/technical-architecture',
     title: 'Payment',
     summary:
       'Token exchange, rail-agnostic payment initiation across the supported payment rails (AANI, CBDC, Jaywan, …), the LFI’s payment log patch, and status tracking by event or polling.',
@@ -93,12 +83,12 @@ export const biopaySections: readonly BiopaySection[] = [
 /** Everything under /biopay, in reading order. Drives the space sidebar. */
 export const biopaySidebar: EdSidebarItemData[] = [
   { text: 'Overview', link: '/biopay/' },
-  { text: 'Technical Architecture', link: '/biopay/technical-architecture' },
   { text: 'Directory', link: '/biopay/directory' },
   {
     text: 'Registration',
     collapsed: false,
     items: [
+      { text: 'Technical Architecture', link: '/biopay/registration/technical-architecture' },
       { text: 'User Experience', link: '/biopay/registration/user-experience' },
       { text: 'API Guide', link: '/biopay/registration/api-guide' },
       {
@@ -121,6 +111,7 @@ export const biopaySidebar: EdSidebarItemData[] = [
     text: 'Payment',
     collapsed: false,
     items: [
+      { text: 'Technical Architecture', link: '/biopay/payment/technical-architecture' },
       { text: 'API Guide', link: '/biopay/payment/api-guide' },
       {
         text: 'API Reference',

@@ -66,9 +66,8 @@ onMounted(() => {
   <div class="ds">
     <h1 class="ds__title">Dirham symbol</h1>
     <p class="ds__lede">
-      Monitors native rendering of <code>U+20C3</code> UAE DIRHAM SIGN. Until the
-      viewer's operating system ships a font containing the glyph, the amount below
-      shows a missing-glyph box.
+      This page tests whether the browser reads and renders the new Unicode
+      character <code>U+20C3</code> UAE DIRHAM SIGN.
     </p>
 
     <div class="ds__hero">{{ SIGN }} 100.00</div>
