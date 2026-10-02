@@ -29,7 +29,7 @@ const meta: MetaItem[] = [
       eyebrow-color="var(--at-gold)"
       title="User Experience"
       :meta="meta"
-      lede="The customer-facing registration journey in the LFI&rsquo;s own channel: identity verification against ICP, instrument selection, and what the customer is told about how biometric payments will work."
+      lede="The customer-facing registration journey in the LFI&rsquo;s own channel: identity verification against ICP, payment instrument selection, and what the customer is told about how biometric payments will work."
     />
 
     <EdSectionBand
@@ -41,12 +41,13 @@ const meta: MetaItem[] = [
       <EdNote type="info" title="Not yet written">
         <p>
           This page will set out the registration journey as the customer experiences it &mdash;
-          screens, wording, consent language, instrument selection, and the confirmation they
+          screens, wording, consent language, payment instrument selection, and the confirmation they
           receive. It is deliberately empty for now.
         </p>
         <p>
           The technical side of the same journey is on the
-          <RouterLink to="/biopay/registration/api-guide">Registration API Guide</RouterLink>.
+          <RouterLink to="/biopay/registration/technical-architecture">Registration Technical Architecture</RouterLink>
+          page.
         </p>
       </EdNote>
     </EdSectionBand>

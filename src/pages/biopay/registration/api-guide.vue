@@ -15,7 +15,7 @@ useHead({ title: 'Registration — API Guide · BioPay' })
 interface MetaItem { label: string; value: string }
 
 const meta: MetaItem[] = [
-  { label: 'Status', value: 'Draft — content to come' },
+  { label: 'Status', value: 'Content coming soon from ICP SDK' },
   { label: 'Version', value: '0.1' },
 ]
 </script>
@@ -29,22 +29,22 @@ const meta: MetaItem[] = [
       eyebrow-color="var(--at-gold)"
       title="Registration API Guide"
       :meta="meta"
-      lede="The API calls that follow a completed registration: the LFI posting the registration to the API Hub, the registration event, and discovery."
+      lede="The registration API is provided by the ICP SDK."
     />
 
     <EdSectionBand
       id="coming"
       color="var(--at-gold)"
       eyebrow="Placeholder"
-      title="Coming soon"
+      title="Content coming soon from ICP SDK"
     >
       <EdNote type="info" title="Not yet written">
         <p>
-          This API guide will be drafted after the technical sequence flow and the options have
-          been decided.
+          The LFI channel integrates with ICP directly through the ICP SDK. The API guide for
+          registration will come from the ICP SDK documentation.
         </p>
         <p>
-          The flow and the options under consideration are on the
+          The registration flow is on the
           <RouterLink to="/biopay/registration/technical-architecture">Registration Technical Architecture</RouterLink>
           page.
         </p>

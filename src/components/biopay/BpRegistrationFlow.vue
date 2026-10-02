@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { useMermaidDiagram } from '@/composables/useMermaidDiagram'
 
-// BioPay registration, end to end, in one of two options.
-//   hub    (Option A) — the API Hub sits between the LFI channel and ICP for
-//          identity verification and the completed registration, under C3, and
-//          offers an optional discovery call that it answers by asking the LFI.
-//   direct (Option B) — the LFI channel calls ICP directly for both; the API
+// BioPay registration, end to end.
+//   direct (adopted) — the LFI channel calls ICP directly, through the ICP SDK,
+//          for identity verification and the completed registration; the API
 //          Hub is not involved.
+//   hub    (rejected Option A) — the API Hub sits between the LFI channel and
+//          ICP under C3, and offers an optional discovery call that it answers by
+//          asking the LFI. Kept only as the record of the option considered.
 // In both, nothing is stored at the Hub: ICP holds uaeKycId → LFI, the LFI holds
-// uaeKycId → instrument. Draft — endpoint names are proposed, not published.
+// uaeKycId → payment instrument. Draft — endpoint names are proposed, not published.
 const props = withDefaults(defineProps<{ variant?: 'hub' | 'direct' }>(), {
-  variant: 'hub',
+  variant: 'direct',
 })
 
 const lfiChannel = `
@@ -19,8 +20,8 @@ const lfiChannel = `
 
 const instrumentSelection = `
     LFI->>PSU: Select payment rail (AANI, CBDC, Jaywan, ...)
-    PSU-->>LFI: Selects instrument + default
-    LFI->>LFI: Store uaeKycId → customer record + instrument(s)`
+    PSU-->>LFI: Selects payment instrument + default
+    LFI->>LFI: Store uaeKycId → customer record + payment instrument(s)`
 
 const viaHub = `
 sequenceDiagram
@@ -62,10 +63,12 @@ sequenceDiagram
     participant ICP as ICP
 ${lfiChannel}
 
+    Note over LFI,ICP: ICP SDK
     LFI->>ICP: Identity verification
     ICP-->>LFI: Verified identity + uaeKycId
 ${instrumentSelection}
 
+    Note over LFI,ICP: ICP SDK
     LFI->>ICP: Post completed registration
     ICP->>ICP: Store uaeKycId → LFI
     ICP-->>LFI: Accepted

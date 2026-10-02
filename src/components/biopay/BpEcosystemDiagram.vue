@@ -4,10 +4,9 @@ import { computed } from 'vue'
 // Who connects to whom. Two variants drawn on the same grid so they read as a
 // before/after pair:
 //   today  — many TPPs ↔ API Hub ↔ many LFIs.
-//   biopay — TPPs and BPIPs side by side ↔ API Hub ↔ many LFIs, with ICP
-//            above the Hub.
+//   biopay — TPPs and BPIPs side by side ↔ API Hub ↔ many LFIs.
 // Every arrow pair terminates at the Hub: no participant connects to another
-// directly. BioPay is shown with registration through the Hub (Option A).
+// directly.
 const props = withDefaults(defineProps<{ variant?: 'today' | 'biopay' }>(), {
   variant: 'today',
 })
@@ -17,11 +16,10 @@ interface Arrow { x1: number; y1: number; x2: number; y2: number }
 
 const NODE_W = 104
 const NODE_H = 36
-const ROWS = [110, 170, 230, 290]
+const ROWS = [16, 76, 136, 196]
 const LEFT_X = 16
 const RIGHT_X = 360
-const HUB: Box = { x: 188, y: 170, w: 104, h: 90, label: 'API Hub', sub: 'Nebras', accent: 'var(--at-blue-deep)' }
-const ICP: Box = { x: 188, y: 24, w: 104, h: 48, label: 'ICP', sub: 'Identity', accent: 'var(--at-blue)' }
+const HUB: Box = { x: 188, y: 76, w: 104, h: 90, label: 'API Hub', sub: 'Nebras', accent: 'var(--at-blue-deep)' }
 
 type Party = Pick<Box, 'label' | 'sub' | 'accent'>
 const TPP: Party = { label: 'TPP', accent: 'var(--at-teal)' }
@@ -39,7 +37,6 @@ const boxes = computed<Box[]>(() => {
     out.push({ x: LEFT_X, y, w: NODE_W, h: NODE_H, ...left.value[i]! })
     out.push({ x: RIGHT_X, y, w: NODE_W, h: NODE_H, label: 'LFI', accent: 'var(--at-navy)' })
   })
-  if (props.variant === 'biopay') out.push(ICP)
   return out
 })
 
@@ -69,16 +66,13 @@ const arrows = computed<Arrow[]>(() => {
     out.push(...pair(LEFT_X + NODE_W, cy, HUB.x, hubY(i)))
     out.push(...pair(RIGHT_X, cy, HUB.x + HUB.w, hubY(i)))
   })
-  if (props.variant === 'biopay') {
-    out.push(...pair(ICP.x + ICP.w / 2, ICP.y + ICP.h, HUB.x + HUB.w / 2, HUB.y))
-  }
   return out
 })
 
 const markerId = computed(() => `bp-eco-arrow-${props.variant}`)
 const caption = computed(() =>
   props.variant === 'biopay'
-    ? 'With BioPay: TPPs and BPIPs, ICP and LFIs, every one connected only to the API Hub.'
+    ? 'With BioPay: TPPs, BPIPs and LFIs, every one connected only to the API Hub.'
     : 'Open Finance today: TPPs and LFIs, every one connected only to the API Hub.',
 )
 </script>
@@ -86,7 +80,7 @@ const caption = computed(() =>
 <template>
   <svg
     class="bp-eco"
-    viewBox="0 0 480 380"
+    viewBox="0 0 480 272"
     role="img"
     :aria-label="caption"
   >
@@ -132,8 +126,8 @@ const caption = computed(() =>
       >{{ b.sub }}</text>
     </g>
 
-    <text class="bp-eco__more" :x="LEFT_X + NODE_W / 2" y="350">⋮</text>
-    <text class="bp-eco__more" :x="RIGHT_X + NODE_W / 2" y="350">⋮</text>
+    <text class="bp-eco__more" :x="LEFT_X + NODE_W / 2" y="256">⋮</text>
+    <text class="bp-eco__more" :x="RIGHT_X + NODE_W / 2" y="256">⋮</text>
   </svg>
 </template>
 

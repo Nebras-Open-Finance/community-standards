@@ -62,8 +62,8 @@ export const biopaySections: readonly BiopaySection[] = [
     slug: 'registration/technical-architecture',
     title: 'Registration',
     summary:
-      'The API calls that follow a completed registration: the LFI-to-Hub registration call, the event driven to the BPIP, and the discovery endpoint the BPIP calls thereafter.',
-    outcome: 'See how a registration is posted, notified, and queried.',
+      'How the LFI registers a customer for BioPay by integrating with ICP directly through the ICP SDK, and where the result is held.',
+    outcome: 'See how a registration is completed and who holds what.',
     status: 'Draft',
     readTime: '9 min',
     color: 'var(--at-gold)',
@@ -91,20 +91,6 @@ export const biopaySidebar: EdSidebarItemData[] = [
       { text: 'Technical Architecture', link: '/biopay/registration/technical-architecture' },
       { text: 'User Experience', link: '/biopay/registration/user-experience' },
       { text: 'API Guide', link: '/biopay/registration/api-guide' },
-      {
-        text: 'API Reference',
-        collapsed: false,
-        items: [
-          {
-            text: 'POST /biometric-payments-discovery',
-            link: '/biopay/registration/api-reference/biometric-payments-discovery',
-          },
-          {
-            text: 'POST Event',
-            link: '/biopay/registration/api-reference/event-notification',
-          },
-        ],
-      },
     ],
   },
   {
@@ -112,10 +98,28 @@ export const biopaySidebar: EdSidebarItemData[] = [
     collapsed: false,
     items: [
       {
-        text: 'Technical Architecture',
+        text: 'Technical Architecture (Account-to-Account Payments)',
         link: '/biopay/payment/technical-architecture',
         collapsed: false,
-        items: [{ text: 'Jaywan / Card Flow', link: '/biopay/payment/card-flow' }],
+        items: [
+          {
+            text: 'Jaywan / Card Flow',
+            link: '/biopay/payment/card-flow',
+            collapsed: false,
+            items: [
+              {
+                text: 'API Reference',
+                collapsed: false,
+                items: [
+                  {
+                    text: 'Option 1 — POST /instrument-lookup',
+                    link: '/biopay/payment/api-reference/instrument-lookup',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       },
       { text: 'API Guide', link: '/biopay/payment/api-guide' },
       {

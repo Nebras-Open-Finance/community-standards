@@ -4,10 +4,13 @@ import { useMermaidDiagram } from '@/composables/useMermaidDiagram'
 // BioPay payment where the customer's registered instrument may be a card
 // (Jaywan) rather than an account (AANI/IPP). Only the LFI holds uaeKycId →
 // instrument, so each option answers "how does the BPIP learn which rail to use":
+// In every option the BPIP first resolves the customer directly with ICP through
+// the ICP SDK — not through the API Hub — and receives the uaeKycId, the
+// customer's default LFI and a token.
 //   lookup  (Option 1) — the BPIP asks the LFI through the Hub, then branches.
-//   icp     (Option 2) — ICP also holds the instrument type and returns it on
-//           resolution, so the BPIP branches straight away.
-//   lfi     (Option 3) — one payment request carrying both creditor routes; the
+//   icp     (Option 3, rejected) — ICP also holds the instrument type and returns
+//           it on resolution. Rejected: ICP does not store the instrument type.
+//   lfi     (Option 2) — one payment request carrying both creditor routes; the
 //           LFI picks the rail and returns either a PaymentId or a card credential.
 // In every option the card authorisation itself runs on the card rails
 // (BPIP as acquirer → Jaywan → issuer), not through the API Hub. The BPIP is
@@ -21,8 +24,8 @@ const participants = `
 sequenceDiagram
     participant PSU as Customer
     participant BPIP as BPIP (acquirer)
-    participant Hub as API Hub
     participant ICP as ICP
+    participant Hub as API Hub
     participant LFI as LFI (issuer / Ozone Connect)
     participant Jaywan as Jaywan
 
@@ -30,12 +33,10 @@ sequenceDiagram
     BPIP->>BPIP: Capture + amount + merchant details`
 
 const resolve = (returned: string, lookup: string) => `
-    Note over BPIP,Hub: client_credentials · mTLS · scope: biometric-resolution
-    BPIP->>Hub: Resolve customer (biometric capture)
-    Hub->>ICP: Resolve customer
+    Note over ICP,BPIP: ICP SDK
+    BPIP->>ICP: Resolve customer (biometric capture)
     ICP->>ICP: Match, liveness, look up ${lookup}
-    ICP-->>Hub: ${returned}
-    Hub-->>BPIP: ${returned}`
+    ICP-->>BPIP: ${returned}`
 
 // The card authorisation leg, once the BPIP holds a one-time credential.
 const cardAuthorisation = (lfiCheck: string) => `
@@ -77,25 +78,25 @@ ${cardAuthorisation('Validate cryptogram, fraud, balance')}
     end`
 
 const lookup = `${participants}
-${resolve('{uaeKycId, LFI}', 'uaeKycId → LFI')}
+${resolve('{uaeKycId, default LFI, token}', 'uaeKycId → default LFI')}
 
     Note over BPIP,Hub: client_credentials · mTLS · scope: biometric-payments
-    BPIP->>Hub: Instrument lookup {uaeKycId}
+    BPIP->>Hub: POST /instrument-lookup {uaeKycId}
     Hub->>LFI: Proxied instrument lookup
     LFI->>LFI: Look up uaeKycId → instrument
-    LFI-->>Hub: {InstrumentType}
-    Hub-->>BPIP: {InstrumentType}
+    LFI-->>Hub: 200 {PaymentInstrument}
+    Hub-->>BPIP: 200 {PaymentInstrument}
 ${branch}
 `
 
 const icp = `${participants}
     Note over ICP,LFI: At registration, the LFI also gave ICP the instrument type<br/>(account or card — never the account or card number)
-${resolve('{uaeKycId, LFI, InstrumentType}', 'uaeKycId → LFI + instrument type')}
+${resolve('{uaeKycId, default LFI, token, InstrumentType}', 'uaeKycId → default LFI + instrument type')}
 ${branch}
 `
 
 const lfi = `${participants}
-${resolve('{uaeKycId, LFI}', 'uaeKycId → LFI')}
+${resolve('{uaeKycId, default LFI, token}', 'uaeKycId → default LFI')}
 
     Note over BPIP,Hub: client_credentials · mTLS · scope: biometric-payments
     BPIP->>Hub: POST /biometric-payments<br/>{uaeKycId, Instruction, Creditor account, card acceptance details}

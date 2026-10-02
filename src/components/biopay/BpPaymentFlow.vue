@@ -2,27 +2,26 @@
 import { useMermaidDiagram } from '@/composables/useMermaidDiagram'
 
 // One BioPay payment, end to end. The BPIP is the merchant's acquirer;
-// ICP resolves the customer. Both BPIP calls — identity resolution to ICP and
-// the payment to the LFI — go through the API Hub under client_credentials and
-// mTLS; nothing reaches ICP or the LFI except by the Hub proxying it.
+// ICP resolves the customer. Identity resolution is called by the BPIP directly
+// on ICP through the ICP SDK — it does not route through the API Hub. The
+// payment goes through the API Hub under client_credentials and mTLS; nothing
+// reaches the LFI except by the Hub proxying it.
 // Draft — endpoint names and scopes are proposed.
 const mermaidDefinition = `
 sequenceDiagram
     participant PSU as Customer
     participant BPIP as BPIP (acquirer)
-    participant Hub as API Hub
     participant ICP as ICP
+    participant Hub as API Hub
     participant LFI as LFI (Ozone Connect)
 
     PSU->>BPIP: Presents thumbprint / face / palm
     BPIP->>BPIP: Capture + amount + creditor details
 
-    Note over BPIP,Hub: client_credentials · mTLS · scope: biometric-resolution
-    BPIP->>Hub: Resolve customer (biometric capture)
-    Hub->>ICP: Resolve customer
-    ICP->>ICP: Match, liveness, look up uaeKycId → LFI
-    ICP-->>Hub: {uaeKycId, LFI}
-    Hub-->>BPIP: {uaeKycId, LFI}
+    Note over ICP,BPIP: ICP SDK
+    BPIP->>ICP: Resolve customer (biometric capture)
+    ICP->>ICP: Match, liveness, look up uaeKycId → default LFI
+    ICP-->>BPIP: {uaeKycId, default LFI, token}
 
     alt Not resolved or not registered
         BPIP-->>PSU: BioPay unavailable — fall back
@@ -36,7 +35,7 @@ sequenceDiagram
         Hub-->>BPIP: 201 {PaymentId, Status: Pending}
         BPIP-->>PSU: Accepted — payment pending
 
-        Note over LFI: Executes on the registered payment rail<br/>(AANI, CBDC, Jaywan, ...)
+        Note over LFI: Executes the account-to-account payment<br/>via AANI/IPP
         LFI->>Hub: PATCH /biometrics-payment-log/{id}<br/>{Status, RailReference}
         Hub-->>LFI: 204 No Content
         Hub->>BPIP: Payment status event {PaymentId, Status}

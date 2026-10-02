@@ -63,6 +63,7 @@ declare module 'vue' {
     BpCardFlow: typeof import('./components/biopay/BpCardFlow.vue')['default']
     BpEcosystemDiagram: typeof import('./components/biopay/BpEcosystemDiagram.vue')['default']
     BpPaymentFlow: typeof import('./components/biopay/BpPaymentFlow.vue')['default']
+    BpRailCompare: typeof import('./components/biopay/BpRailCompare.vue')['default']
     BpRegistrationFlow: typeof import('./components/biopay/BpRegistrationFlow.vue')['default']
     Carousel: typeof import('./components/common/Carousel.vue')['default']
     CertificateDoc: typeof import('./components/common/certificates/CertificateDoc.vue')['default']

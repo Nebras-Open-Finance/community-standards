@@ -62,6 +62,10 @@ tags:
     description: Querying and being notified about a customer's BioPay registration.
   - name: Payment
     description: Initiating a biometric payment and tracking its status.
+  - name: Instrument lookup
+    description: >-
+      Card flow, Option 1 only. Asking the LFI which payment instrument a
+      registered customer pays with, before the BPIP chooses a rail.
   - name: Payment log
     description: >-
       Reporting the outcome of a biometric payment. Called by the LFI, not by
@@ -372,6 +376,69 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404':
           description: No payment exists with this `PaymentId` for this initiator.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AEErrorResponse'
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # INSTRUMENT LOOKUP — card flow, Option 1
+  # ══════════════════════════════════════════════════════════════════════════
+  /instrument-lookup:
+    post:
+      tags: [Instrument lookup]
+      operationId: postInstrumentLookup
+      summary: Look up a customer's payment instrument
+      description: >-
+        **BPIP → API Hub → LFI.** Card flow, Option 1. After resolving the
+        customer with ICP, the BPIP asks the LFI which payment instrument it
+        holds for the `uaeKycId`, so that it can choose the rail: an
+        account-to-account payment through `POST /biometric-payments`, or a
+        card credential and a card authorisation through Jaywan.
+
+
+        The API Hub validates the request and proxies it to the Ozone Connect
+        endpoint of the LFI ICP returned. The LFI answers from its own
+        registration store of `uaeKycId` → payment instrument. The response
+        carries the instrument type only — never an account number or card
+        number.
+
+
+        A `POST` rather than a `GET`, so that the `uaeKycId` travels in the
+        body and stays out of access and proxy logs. The lookup is read-only
+        and creates no resource.
+
+
+        The instrument can change between the lookup and the payment, so a
+        subsequent payment or credential request can still fail on a mismatch.
+      parameters:
+        - $ref: '#/components/parameters/XJwsSignature'
+        - $ref: '#/components/parameters/XFapiInteractionId'
+        - $ref: '#/components/parameters/XFapiAuthDate'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AEInstrumentLookupRequest'
+      responses:
+        '200':
+          description: The payment instrument the LFI holds for the customer.
+          headers:
+            x-fapi-interaction-id:
+              $ref: '#/components/headers/XFapiInteractionId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AEInstrumentLookupResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: >-
+            The LFI holds no live BioPay registration for this `uaeKycId`.
           content:
             application/json:
               schema:
@@ -1217,6 +1284,42 @@ components:
         message:
           $ref: '#/components/schemas/AEErrorResponse'
 
+
+    AEInstrumentLookupRequest:
+      type: object
+      description: >-
+        Instrument lookup request. Carries only the identifier ICP returned on
+        resolution.
+      additionalProperties: false
+      required: [Data]
+      properties:
+        Data:
+          type: object
+          additionalProperties: false
+          required: [uaeKycId]
+          properties:
+            uaeKycId:
+              $ref: '#/components/schemas/AEUaeKycId'
+
+    AEInstrumentLookupResponse:
+      type: object
+      description: >-
+        Instrument lookup response. Names the instrument type only, never an
+        account or card number.
+      additionalProperties: false
+      required: [Data]
+      properties:
+        Data:
+          type: object
+          additionalProperties: false
+          required: [uaeKycId, PaymentInstrument]
+          properties:
+            uaeKycId:
+              $ref: '#/components/schemas/AEUaeKycId'
+            PaymentInstrument:
+              $ref: '#/components/schemas/AEPaymentInstrument'
+        Meta:
+          $ref: '#/components/schemas/AEMeta'
 
     AELinks:
       type: object
