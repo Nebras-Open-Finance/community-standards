@@ -16,7 +16,7 @@ import { ref, computed, type Ref, type ComputedRef } from 'vue'
 import { rememberSignInReturn, clearSignInReturn } from './useSignInReturn'
 
 // Override at build time with VITE_REPORTS_API; otherwise the deployed Worker.
-const API_BASE = (
+export const API_BASE = (
   (import.meta.env.VITE_REPORTS_API as string | undefined) ||
   'https://reports-api.nebras-open-finance.com'
 ).replace(/\/$/, '')
@@ -85,7 +85,7 @@ function saveBlob(blob: Blob, filename: string): void {
  * other page that uses this flow. The page starting the bounce is the only
  * thing that knows where the user should come back to.
  */
-function withRedirect(raw: string): string {
+export function withRedirect(raw: string): string {
   if (typeof window === 'undefined') return raw
   try {
     const url = new URL(raw, window.location.origin)

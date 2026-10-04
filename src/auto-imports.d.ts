@@ -6,7 +6,10 @@
 // biome-ignore lint: disable
 export {}
 declare global {
+  const API_BASE: typeof import('./composables/useReports')['API_BASE']
   const BIOPAY_PASSWORD: typeof import('./composables/useBiopayAuth')['BIOPAY_PASSWORD']
+  const CERT_TOOLS: typeof import('./composables/useInternalPages')['CERT_TOOLS']
+  const CERT_TYPES: typeof import('./composables/useCertificateRotation')['CERT_TYPES']
   const DIRECTORY_PARTICIPANTS_URL: typeof import('./composables/liveEcosystem')['DIRECTORY_PARTICIPANTS_URL']
   const ENV_LABEL: typeof import('./composables/useReports')['ENV_LABEL']
   const EffectScope: typeof import('vue')['EffectScope']
@@ -15,10 +18,14 @@ declare global {
   const INTERNAL_PASSWORD: typeof import('./composables/useInternalAuth')['INTERNAL_PASSWORD']
   const LIVE_TPP_DAYS_WINDOW: typeof import('./composables/liveEcosystem')['LIVE_TPP_DAYS_WINDOW']
   const MAPPING_LABEL_META: typeof import('./composables/useFieldMap')['MAPPING_LABEL_META']
+  const MAX_CSR_BYTES: typeof import('./composables/useCertificateRotation')['MAX_CSR_BYTES']
   const NOT_OBSERVED_NOTE: typeof import('./composables/useFieldMap')['NOT_OBSERVED_NOTE']
+  const OPERATIONS_TOOLS: typeof import('./composables/useInternalPages')['OPERATIONS_TOOLS']
   const PERMISSION_SOURCE_META: typeof import('./composables/useFieldMap')['PERMISSION_SOURCE_META']
   const PLACEHOLDER_LOGO_URL: typeof import('./composables/liveEcosystem')['PLACEHOLDER_LOGO_URL']
   const PROPOSALS_CONFIG: typeof import('./composables/useProposals')['PROPOSALS_CONFIG']
+  const REDIRECT_TOOLS: typeof import('./composables/useInternalPages')['REDIRECT_TOOLS']
+  const ROTATION_ENVS: typeof import('./composables/useCertificateRotation')['ROTATION_ENVS']
   const SHEET_LABEL: typeof import('./composables/useReports')['SHEET_LABEL']
   const TRUST_FRAMEWORK_PROXY_URL: typeof import('./composables/liveEcosystem')['TRUST_FRAMEWORK_PROXY_URL']
   const appPageSlugs: typeof import('./composables/useInternalPages')['appPageSlugs']
@@ -72,6 +79,7 @@ declare global {
   const onUpdated: typeof import('vue')['onUpdated']
   const onWatcherCleanup: typeof import('vue')['onWatcherCleanup']
   const openSearchModal: typeof import('./composables/useSearchModal')['openSearchModal']
+  const parseCsr: typeof import('./composables/useCertificateRotation')['parseCsr']
   const permissionSourceMeta: typeof import('./composables/useFieldMap')['permissionSourceMeta']
   const prettifySlug: typeof import('./composables/useInternalPages')['prettifySlug']
   const provide: typeof import('vue')['provide']
@@ -95,10 +103,13 @@ declare global {
   const toRef: typeof import('vue')['toRef']
   const toRefs: typeof import('vue')['toRefs']
   const toValue: typeof import('vue')['toValue']
+  const toolsIn: typeof import('./composables/useInternalPages')['toolsIn']
   const triggerRef: typeof import('vue')['triggerRef']
+  const ungroupedToolSlugs: typeof import('./composables/useInternalPages')['ungroupedToolSlugs']
   const unref: typeof import('vue')['unref']
   const useAttrs: typeof import('vue')['useAttrs']
   const useBiopayAuth: typeof import('./composables/useBiopayAuth')['useBiopayAuth']
+  const useCertificateRotation: typeof import('./composables/useCertificateRotation')['useCertificateRotation']
   const useCssModule: typeof import('vue')['useCssModule']
   const useCssVars: typeof import('vue')['useCssVars']
   const useDarkPreview: typeof import('./composables/useDarkPreview')['useDarkPreview']
@@ -130,6 +141,7 @@ declare global {
   const watchEffect: typeof import('vue')['watchEffect']
   const watchPostEffect: typeof import('vue')['watchPostEffect']
   const watchSyncEffect: typeof import('vue')['watchSyncEffect']
+  const withRedirect: typeof import('./composables/useReports')['withRedirect']
 }
 // for type re-export
 declare global {

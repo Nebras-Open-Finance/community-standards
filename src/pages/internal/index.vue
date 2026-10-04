@@ -10,7 +10,10 @@ meta:
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useHead } from '@unhead/vue'
-import { useInternalPages, appPageSlugs, prettifySlug } from '@/composables/useInternalPages'
+import {
+  useInternalPages, prettifySlug,
+  OPERATIONS_TOOLS, CERT_TOOLS, REDIRECT_TOOLS, toolsIn, ungroupedToolSlugs,
+} from '@/composables/useInternalPages'
 
 useHead({ title: 'Internal' })
 
@@ -22,21 +25,13 @@ const { drafts, committedSlugs, deleteDraft } = useInternalPages()
 const PUBLISHED_FILTER = new Set(['example'])
 const publishedContent = computed(() => committedSlugs.filter((s) => !PUBLISHED_FILTER.has(s)))
 
-// Only top-level tools are listed here; nested sub-pages (e.g.
-// "redirect-testing/checker") are reached from within their parent tool.
-const topLevelTools = appPageSlugs.filter((s) => !s.includes('/'))
-
-// The two go-live certificate tools are grouped under their own subsection;
-// every other tool stays flat. Mirrors the internal sidebar (see internal.vue).
-const CERT_LABELS: Record<string, string> = {
-  'lfi-certificate': 'LFI certificate',
-  'tpp-certificate': 'TPP certificate',
-}
-const certTools = computed(() => topLevelTools.filter((s) => s in CERT_LABELS))
-const otherTools = computed(() => topLevelTools.filter((s) => !(s in CERT_LABELS)))
-function toolLabel(s: string): string {
-  return CERT_LABELS[s] ?? prettifySlug(s)
-}
+// Only top-level tools are listed under "Other Tools"; nested sub-pages appear only
+// when a group names them (e.g. "redirect-testing/checker" in REDIRECT_TOOLS).
+// Grouping mirrors the internal sidebar — both read it from useInternalPages.
+const opsTools = toolsIn(OPERATIONS_TOOLS)
+const certTools = toolsIn(CERT_TOOLS)
+const redirectTools = toolsIn(REDIRECT_TOOLS)
+const otherTools = ungroupedToolSlugs
 
 function openDraft(s: string): void {
   router.push('/internal/draft/' + s)
@@ -71,35 +66,93 @@ function formatDate(ts: number): string {
       </p>
     </section>
 
+    <!-- Every card is a <details>; Policies and Start a new draft open by default, the rest collapsed; the summary row carries
+         the heading and a chevron that rotates when the card is open. -->
+
     <!-- Policies -->
-    <section class="int-card int-card--policies">
-      <h2 class="int-card__heading">Policies</h2>
+    <details class="int-card int-card--policies" open>
+      <summary class="int-card__summary">
+        <h2 class="int-card__heading">Policies</h2>
+        <span class="int-card__chevron" aria-hidden="true" />
+      </summary>
       <p class="int-card__hint">
         Nebras&rsquo;s internal corporate governance policies &mdash; governance, risk,
         security, conduct, and people frameworks &mdash; transcribed from the Restricted source
         documents into browsable pages, grouped by theme.
       </p>
       <a class="int-cta" href="/internal/policies/">Open the policies space →</a>
-    </section>
+    </details>
 
-    <!-- Start a new draft -->
-    <section class="int-card int-card--example">
-      <h2 class="int-card__heading">Start a new draft</h2>
+    <!-- Operations -->
+    <details v-if="opsTools.length" class="int-card">
+      <summary class="int-card__summary">
+        <h2 class="int-card__heading">Operations</h2>
+        <span class="int-card__chevron" aria-hidden="true" />
+      </summary>
       <p class="int-card__hint">
-        The example page demonstrates every block element you can use on an internal page. Open it
-        and use the duplicate widget at the top to seed a fresh draft.
+        API Hub operations against the Trust Framework directory: reports, and
+        certificate rotation for LFIs. Some require you to sign in at the directory.
       </p>
-      <a class="int-cta" href="/internal/example">Open the example page →</a>
-    </section>
+      <ul class="int-list">
+        <li v-for="s in opsTools" :key="s" class="int-list__item">
+          <a class="int-list__main" :href="'/internal/pages/' + s">
+            <span class="int-list__name">{{ OPERATIONS_TOOLS[s] }}</span>
+            <span class="int-list__meta"><code>/internal/pages/{{ s }}</code></span>
+          </a>
+        </li>
+      </ul>
+    </details>
 
-    <!-- Tools -->
-    <section v-if="topLevelTools.length" class="int-card">
-      <h2 class="int-card__heading">Tools</h2>
+    <!-- Commercial Go-Live Certificates -->
+    <details v-if="certTools.length" class="int-card">
+      <summary class="int-card__summary">
+        <h2 class="int-card__heading">Commercial Go-Live Certificates</h2>
+        <span class="int-card__chevron" aria-hidden="true" />
+      </summary>
+      <p class="int-card__hint">
+        Generate the commercial go-live certificate for an LFI or a TPP.
+      </p>
+      <ul class="int-list">
+        <li v-for="s in certTools" :key="s" class="int-list__item">
+          <a class="int-list__main" :href="'/internal/pages/' + s">
+            <span class="int-list__name">{{ CERT_TOOLS[s] }}</span>
+            <span class="int-list__meta"><code>/internal/pages/{{ s }}</code></span>
+          </a>
+        </li>
+      </ul>
+    </details>
+
+    <!-- Redirect testing -->
+    <details v-if="redirectTools.length" class="int-card">
+      <summary class="int-card__summary">
+        <h2 class="int-card__heading">Redirect testing</h2>
+        <span class="int-card__chevron" aria-hidden="true" />
+      </summary>
+      <p class="int-card__hint">
+        Test LFI authorisation redirects: launch against the live LFIs, or check an arbitrary
+        redirect link.
+      </p>
+      <ul class="int-list">
+        <li v-for="s in redirectTools" :key="s" class="int-list__item">
+          <a class="int-list__main" :href="'/internal/pages/' + s">
+            <span class="int-list__name">{{ REDIRECT_TOOLS[s] }}</span>
+            <span class="int-list__meta"><code>/internal/pages/{{ s }}</code></span>
+          </a>
+        </li>
+      </ul>
+    </details>
+
+    <!-- Other Tools -->
+    <details v-if="otherTools.length" class="int-card">
+      <summary class="int-card__summary">
+        <h2 class="int-card__heading">Other Tools</h2>
+        <span class="int-card__chevron" aria-hidden="true" />
+      </summary>
       <p class="int-card__hint">
         Interactive pages built as Vue components. They sit behind the same password gate but are
         applications rather than documents, so they have no Markdown/Preview toggle.
       </p>
-      <ul v-if="otherTools.length" class="int-list">
+      <ul class="int-list">
         <li v-for="s in otherTools" :key="s" class="int-list__item">
           <a class="int-list__main" :href="'/internal/pages/' + s">
             <span class="int-list__name">{{ prettifySlug(s) }}</span>
@@ -107,23 +160,27 @@ function formatDate(ts: number): string {
           </a>
         </li>
       </ul>
+    </details>
 
-      <template v-if="certTools.length">
-        <h3 class="int-card__subheading">Commercial Go-Live Certificates</h3>
-        <ul class="int-list">
-          <li v-for="s in certTools" :key="s" class="int-list__item">
-            <a class="int-list__main" :href="'/internal/pages/' + s">
-              <span class="int-list__name">{{ toolLabel(s) }}</span>
-              <span class="int-list__meta"><code>/internal/pages/{{ s }}</code></span>
-            </a>
-          </li>
-        </ul>
-      </template>
-    </section>
+    <!-- Start a new draft -->
+    <details class="int-card int-card--example" open>
+      <summary class="int-card__summary">
+        <h2 class="int-card__heading">Start a new draft</h2>
+        <span class="int-card__chevron" aria-hidden="true" />
+      </summary>
+      <p class="int-card__hint">
+        The example page demonstrates every block element you can use on an internal page. Open it
+        and use the duplicate widget at the top to seed a fresh draft.
+      </p>
+      <a class="int-cta" href="/internal/example">Open the example page →</a>
+    </details>
 
     <!-- Drafts -->
-    <section class="int-card">
-      <h2 class="int-card__heading">Drafts in this browser</h2>
+    <details class="int-card">
+      <summary class="int-card__summary">
+        <h2 class="int-card__heading">Drafts in this browser</h2>
+        <span class="int-card__chevron" aria-hidden="true" />
+      </summary>
       <p class="int-card__hint">
         Work in progress. These are not visible to anyone else and are lost if you clear browser data.
       </p>
@@ -137,11 +194,14 @@ function formatDate(ts: number): string {
         </li>
       </ul>
       <p v-else class="int-empty">No drafts yet — duplicate the example page to get started.</p>
-    </section>
+    </details>
 
     <!-- Published -->
-    <section class="int-card">
-      <h2 class="int-card__heading">Published pages</h2>
+    <details class="int-card">
+      <summary class="int-card__summary">
+        <h2 class="int-card__heading">Published pages</h2>
+        <span class="int-card__chevron" aria-hidden="true" />
+      </summary>
       <p class="int-card__hint">
         Markdown pages that have been committed to the repository and deployed.
       </p>
@@ -154,7 +214,7 @@ function formatDate(ts: number): string {
         </li>
       </ul>
       <p v-else class="int-empty">No pages have been published yet.</p>
-    </section>
+    </details>
   </div>
 </template>
 
@@ -199,9 +259,10 @@ function formatDate(ts: number): string {
 .int-card {
   background: var(--at-surface);
   border: 1px solid var(--at-grid-line);
-  padding: 1.75rem 1.75rem 2rem;
+  padding: 1.25rem 1.75rem;
   margin-bottom: 1.5rem;
 }
+.int-card[open] { padding-bottom: 2rem; }
 .int-card--example { border-left: 3px solid var(--at-teal-deep); }
 .int-card--policies { border-left: 3px solid var(--at-navy); }
 
@@ -211,24 +272,38 @@ function formatDate(ts: number): string {
   font-weight: 600;
   letter-spacing: -0.015em;
   color: var(--at-navy-deep);
-  margin: 0 0 0.4rem;
+  margin: 0;
 }
+
+.int-card__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+.int-card__summary::-webkit-details-marker { display: none; }
+.int-card__summary:hover .int-card__heading { color: var(--at-teal-deep); }
+.int-card[open] > .int-card__summary { margin-bottom: 0.6rem; }
+
+.int-card__chevron {
+  flex-shrink: 0;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-right: 0.2rem;
+  border-right: 2px solid var(--at-mute);
+  border-bottom: 2px solid var(--at-mute);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform 0.16s;
+}
+.int-card[open] .int-card__chevron { transform: rotate(-135deg) translate(-2px, -2px); }
 
 .int-card__hint {
   font-size: 0.9rem;
   line-height: 1.55;
   color: var(--at-mute);
   margin: 0 0 1.25rem;
-}
-
-.int-card__subheading {
-  font-family: var(--at-mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--at-teal-deep);
-  margin: 1.5rem 0 0;
 }
 
 .int-cta {

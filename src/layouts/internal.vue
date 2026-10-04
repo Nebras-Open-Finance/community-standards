@@ -5,9 +5,13 @@ import { useInternalAuth } from '@/composables/useInternalAuth'
 import {
   useInternalPages,
   committedSlugs,
-  appPageSlugs,
   prettifySlug,
   getCommittedSource,
+  OPERATIONS_TOOLS,
+  CERT_TOOLS,
+  REDIRECT_TOOLS,
+  toolsIn,
+  ungroupedToolSlugs,
 } from '@/composables/useInternalPages'
 import type { EdSidebarItemData } from '@/components/editorial/EdSidebarItem.vue'
 import InternalDuplicate from '@/components/common/InternalDuplicate.vue'
@@ -87,37 +91,30 @@ const sidebarItems = computed<EdSidebarItemData[]>(() => {
     text: d.title || prettifySlug(d.slug),
     link: '/internal/draft/' + d.slug,
   }))
-  // The two go-live certificate tools are grouped under their own subsection;
-  // every other tool stays flat under "Tools".
-  const CERT_LABELS: Record<string, string> = {
-    'lfi-certificate': 'LFI certificate',
-    'tpp-certificate': 'TPP certificate',
-  }
-  const certSlugs = appPageSlugs.filter((s) => s in CERT_LABELS)
-  const otherToolSlugs = appPageSlugs.filter((s) => !(s in CERT_LABELS))
-
-  const toolItems: EdSidebarItemData[] = [
-    ...otherToolSlugs.map((s) => ({
-      text: prettifySlug(s),
-      link: '/internal/pages/' + s,
-    })),
-    ...(certSlugs.length
-      ? [{
-          text: 'Commercial Go-Live Certificates',
-          collapsed: false,
-          items: certSlugs.map((s) => ({
-            text: CERT_LABELS[s] ?? prettifySlug(s),
-            link: '/internal/pages/' + s,
-          })),
-        }]
-      : []),
-  ]
+  // The API Hub operations, go-live certificate and redirect-testing tools each
+  // get their own section; every other tool stays flat under "Other Tools".
+  // Groups are defined in useInternalPages and mirrored on the internal home page.
+  const toItems = (slugs: string[], labels: Record<string, string>): EdSidebarItemData[] =>
+    slugs.map((s) => ({ text: labels[s] ?? prettifySlug(s), link: '/internal/pages/' + s }))
+  const certItems = toItems(toolsIn(CERT_TOOLS), CERT_TOOLS)
+  const redirectItems = toItems(toolsIn(REDIRECT_TOOLS), REDIRECT_TOOLS)
+  const toolItems = toItems(ungroupedToolSlugs, {})
+  const opsItems = toItems(toolsIn(OPERATIONS_TOOLS), OPERATIONS_TOOLS)
   return [
     // Proposals under internal review. The list itself is API-driven, so only
     // the listing is linked here — it renders the individual pages.
     { text: 'Internal proposals', link: '/internal/proposals/' },
+    ...(opsItems.length
+      ? [{ text: 'Operations', collapsed: false, items: opsItems }]
+      : []),
+    ...(redirectItems.length
+      ? [{ text: 'Redirect testing', collapsed: false, items: redirectItems }]
+      : []),
+    ...(certItems.length
+      ? [{ text: 'Commercial Go-Live Certificates', collapsed: false, items: certItems }]
+      : []),
     ...(toolItems.length
-      ? [{ text: 'Tools', collapsed: false, items: toolItems }]
+      ? [{ text: 'Other Tools', collapsed: false, items: toolItems }]
       : []),
     {
       text: 'Published pages',

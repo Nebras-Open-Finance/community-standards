@@ -82,6 +82,33 @@ export const appPageSlugs: string[] = Object.keys(appPageModules)
   .map((p) => slugFrom(p, 'pages', /\.vue$/))
   .sort()
 
+// App pages that are grouped rather than listed flat under "Tools". Shared by the
+// internal sidebar (layouts/internal.vue) and the internal home page so the two
+// cannot drift. Labels are the display names; order is the display order.
+export const OPERATIONS_TOOLS: Record<string, string> = {
+  'generate-report': 'Generate report',
+  'pii-report': 'PII report',
+  'certificate-rotation': 'Certificate rotation',
+}
+export const CERT_TOOLS: Record<string, string> = {
+  'lfi-certificate': 'LFI certificate',
+  'tpp-certificate': 'TPP certificate',
+}
+export const REDIRECT_TOOLS: Record<string, string> = {
+  'redirect-testing': 'Live LFIs',
+  'redirect-testing/checker': 'Link checker',
+}
+
+/** Slugs from `group` that exist as app pages, in the group's own order. */
+export function toolsIn(group: Record<string, string>): string[] {
+  return Object.keys(group).filter((s) => appPageSlugs.includes(s))
+}
+
+/** Top-level app pages that belong to no group. */
+export const ungroupedToolSlugs: string[] = appPageSlugs.filter(
+  (s) => !s.includes('/') && !(s in OPERATIONS_TOOLS) && !(s in CERT_TOOLS) && !(s in REDIRECT_TOOLS),
+)
+
 // Raw Markdown source for each committed internal page — lets the duplicate
 // widget seed a draft with the exact text the example page is written in.
 const committedSources = import.meta.glob('../pages/internal/**/*.md', {

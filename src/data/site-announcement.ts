@@ -66,7 +66,7 @@ export interface SiteAnnouncement {
 
 export const SITE_ANNOUNCEMENT: SiteAnnouncement = {
   id: '2026-09-mea-finance-payments-award',
-  enabled: true,
+  enabled: false,
   eyebrow: 'Announcement',
   title: 'Nebras Open Finance named winner at the MEA Finance Leaders in Payments Awards 2026',
   lede:
