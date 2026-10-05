@@ -1,7 +1,7 @@
 <route lang="yaml">
 meta:
   layout: biopay
-  title: Payment — Jaywan / Card Flow
+  title: Payment — Card Scheme (e.g. Jaywan) / Card Flow
   next: false
   prev: false
   aside: false
@@ -12,7 +12,7 @@ import { useHead } from '@unhead/vue'
 import BpCardFlow from '@/components/biopay/BpCardFlow.vue'
 import BpRailCompare from '@/components/biopay/BpRailCompare.vue'
 
-useHead({ title: 'Payment — Jaywan / Card Flow · BioPay' })
+useHead({ title: 'Payment — Card Scheme (e.g. Jaywan) / Card Flow · BioPay' })
 
 interface Section { id: string; label: string }
 interface MetaItem { label: string; value: string }
@@ -22,7 +22,6 @@ const sections: Section[] = [
   { id: 'options', label: 'Architecture options' },
   { id: 'compare', label: 'Comparing the options' },
   { id: 'open', label: 'Open questions' },
-  { id: 'rejected', label: 'Rejected option' },
 ]
 
 const meta: MetaItem[] = [
@@ -39,27 +38,31 @@ interface OptionChecklist { needed: Need[]; questions: string[] }
 const checklists: Record<'lookup' | 'lfi', OptionChecklist> = {
   lookup: {
     needed: [
-      { party: 'API Hub', items: ['An instrument lookup operation, proxied to the LFI.', 'A card credential operation, proxied to the LFI.'] },
-      { party: 'LFI', items: ['A registration store of uaeKycId → instrument(s).', 'Instrument lookup and card credential endpoints on Ozone Connect.', 'A network token for the card, provisioned at registration.', 'A one-time cryptogram for each card payment, in real time.'] },
-      { party: 'BPIP', items: ['Support for both rails, branching on the lookup result.'] },
-      { party: 'Jaywan', items: ['Token provisioning for BioPay, and transaction coding for biometric cardholder verification.'] },
+      { party: 'API Hub', items: ['An instrument lookup operation, proxied to the LFI, returning either the account details or a one-time card credential.'] },
+      { party: 'LFI', items: ['A registration store of uaeKycId → instrument(s).', 'An instrument lookup endpoint on Ozone Connect, returning the IBAN for an account, or a one-time token and cryptogram for a card.', 'A card scheme token for the card, provisioned at registration.', 'A one-time cryptogram for each card payment, in real time, within the lookup.'] },
+      { party: 'BPIP', items: ['Support for both rails, branching on the lookup result.', 'For a card, submission of the authorisation to the card scheme, with no further call through the API Hub.'] },
+      { party: 'Card Scheme (e.g. Jaywan)', items: ['Token provisioning for BioPay, and transaction coding for biometric cardholder verification.'] },
     ],
     questions: [
-      'Can a resolution call to ICP and two round trips through the API Hub, plus the card authorisation, complete within the time budget at the point of sale? What is that budget?',
-      'Who creates the cryptogram: the LFI, Jaywan’s token service at the LFI’s request, or Jaywan’s token service at the BPIP’s request?',
-      'Can Jaywan generate a one-time security code for each payment when the card details are held on a server rather than on a card or phone?',
+      'Can a resolution call to ICP, the lookup through the API Hub and then the payment request or card authorisation complete within the time budget at the point of sale? What is that budget?',
+      'Should the lookup return the customer’s IBAN to the BPIP, and on what basis may the BPIP receive it?',
+      'Who creates the cryptogram: the LFI, the card scheme’s token service at the LFI’s request, or the card scheme’s token service at the BPIP’s request?',
+      'Can the card scheme generate a one-time security code for each payment when the card details are held on a server rather than on a card or phone?',
+      'Does carrying card scheme tokens and cryptograms through the API Hub bring the API Hub into PCI DSS scope? To be confirmed with the card schemes and a QSA.',
+      'For Visa and Mastercard tokens, who is the registered token requestor for each scheme? For a co-badged card, who chooses the scheme — the LFI, from the merchant’s acceptance details, or the customer?',
     ],
   },
   lfi: {
     needed: [
-      { party: 'API Hub', items: ['POST /biometric-payments extended to accept both a creditor account and card acceptance details, and to return either a PaymentId or a card credential.', 'One record per payment, under one PaymentId, on either rail.'] },
-      { party: 'LFI', items: ['A registration store of uaeKycId → instrument(s).', 'Rail selection, based on the customer’s instruments and what the merchant accepts.', 'A card credential bound to the PaymentId and amount, with a short expiry.', 'A link between Ozone Connect and its card authorisation system, to match the authorisation to the PaymentId and patch the outcome.'] },
-      { party: 'BPIP', items: ['Both creditor routes in every request.', 'Handling of two response shapes: a pending payment, or a credential to submit to Jaywan.', 'A report of the card authorisation outcome, if the LFI does not patch it.'] },
-      { party: 'Jaywan', items: ['Token provisioning for BioPay, and transaction coding for biometric cardholder verification.'] },
+      { party: 'API Hub', items: ['POST /biometric-payments extended to accept both a creditor account and card acceptance details.', 'One record per payment, under one PaymentId, on either rail, with the status event to the BPIP on either rail.'] },
+      { party: 'LFI', items: ['A registration store of uaeKycId → instrument(s).', 'Rail selection, based on the customer’s instruments and what the merchant accepts.', 'A one-time token and cryptogram bound to the PaymentId and amount.', 'A link between Ozone Connect and its card system, to submit the authorisation to the card scheme and patch the outcome to the API Hub.'] },
+      { party: 'BPIP', items: ['Both creditor routes in every request.', 'Reliance on the status event (or polling) for the card authorisation outcome at the point of sale.'] },
+      { party: 'Card Scheme (e.g. Jaywan)', items: ['Acceptance of an authorisation submitted by the issuing LFI on the acquirer’s behalf.', 'Token provisioning for BioPay, and transaction coding for biometric cardholder verification.'] },
     ],
     questions: [
-      'Should the card branch return a cryptogram, or only a token reference, with the BPIP — as acquirer and token requestor — obtaining the cryptogram from Jaywan’s token service?',
-      'Can Jaywan generate a one-time security code for each payment when the card details are held on a server rather than on a card or phone?',
+      'Can the card scheme accept an authorisation submitted by the issuing LFI, carrying the BPIP’s acquirer and merchant details, rather than by the acquirer itself?',
+      'Can the PATCH to the API Hub and the status event to the BPIP complete within the time budget at the point of sale?',
+      'Can the card scheme generate a one-time security code for each payment when the card details are held on a server rather than on a card or phone?',
     ],
   },
 }
@@ -72,9 +75,9 @@ const checklists: Record<'lookup' | 'lfi', OptionChecklist> = {
     <EdHero
       eyebrow="BioPay · Payment · Draft"
       eyebrow-color="var(--at-navy)"
-      title="Jaywan / Card Flow"
+      title="Card Scheme (e.g. Jaywan) / Card Flow"
       :meta="meta"
-      lede="How a BioPay payment works when the customer&rsquo;s registered instrument is a card, so that paying with a biometric feels like tapping a card or phone today. <strong>Everything here is draft</strong> &mdash; two options are set out for review, and a third has been rejected."
+      lede="How a BioPay payment works when the customer&rsquo;s registered instrument is a card, so that paying with a biometric feels like tapping a card or phone today. <strong>Everything here is draft</strong> &mdash; two options are set out for review."
     />
 
     <EdInPageNav :sections="sections" />
@@ -92,7 +95,7 @@ const checklists: Record<'lookup' | 'lfi', OptionChecklist> = {
           In an account-to-account payment, the LFI pushes the payment: on the BPIP&rsquo;s request,
           made through the API Hub, it instructs the payment over AANI/IPP. In a card payment, the
           LFI pushes nothing: the BPIP, as the merchant&rsquo;s acquirer, sends an authorisation
-          request through Jaywan, and the LFI, as issuer, approves or declines it.
+          request through the card scheme (e.g. Jaywan), and the LFI, as issuer, approves or declines it.
         </p>
       </EdProse>
       <BpRailCompare />
@@ -118,7 +121,7 @@ const checklists: Record<'lookup' | 'lfi', OptionChecklist> = {
       eyebrow="Architecture options"
       title="Two options for card payment"
       tone="surface"
-      lede="In every option the BPIP first resolves the customer directly with ICP through the ICP SDK &mdash; not through the API Hub &mdash; receiving the uaeKycId, the customer&rsquo;s default LFI and a token. The card authorisation then runs from the BPIP, as acquirer, through Jaywan to the LFI. Click any diagram to expand it."
+      lede="In every option the BPIP first resolves the customer directly with ICP through the ICP SDK &mdash; not through the API Hub &mdash; receiving the uaeKycId, the customer&rsquo;s default LFI and a token. The card authorisation then runs on the card scheme (e.g. Jaywan), not through the API Hub. Click any diagram to expand it."
     >
       <EdNote type="info" title="Who creates the card credential today">
         <p>
@@ -135,9 +138,12 @@ const checklists: Record<'lookup' | 'lfi', OptionChecklist> = {
       <EdProse>
         After resolution, the BPIP asks the LFI through the API Hub which instrument it holds for
         the <code>uaeKycId</code>, using
-        <RouterLink to="/biopay/payment/api-reference/instrument-lookup"><code>POST /instrument-lookup</code></RouterLink>. For an account, the BPIP sends the payment request as in the
-        account flow. For a card, it requests a one-time card credential from the LFI through the
-        Hub, and submits the card authorisation to Jaywan.
+        <RouterLink to="/biopay/payment/api-reference/instrument-lookup"><code>POST /instrument-lookup</code></RouterLink>.
+        The same response carries what the BPIP needs for that rail: for an account, the IBAN,
+        after which the BPIP sends the payment request as in the
+        account flow; for a card, a one-time token and cryptogram, which the BPIP submits to the
+        card scheme. The card payment then runs between the BPIP, as acquirer, and the card
+        scheme, and does not return to the API Hub.
       </EdProse>
       <APIFlowViewer
         title="BioPay — card payment, Option 1"
@@ -166,11 +172,11 @@ const checklists: Record<'lookup' | 'lfi', OptionChecklist> = {
       <EdProse>
         The BPIP sends a single <code>POST /biometric-payments</code> carrying both the
         merchant&rsquo;s creditor account and its card acceptance details. The LFI looks up the
-        instrument and either executes the account payment and returns a
-        <code>PaymentId</code>, or generates a one-time token and cryptogram bound to that
-        <code>PaymentId</code> and amount and returns it as a credential. The BPIP submits the
-        credential to Jaywan, and when the authorisation reaches the LFI through Jaywan, the
-        LFI matches it to the request it has already seen.
+        instrument and returns a <code>PaymentId</code> on either rail. For an account, it
+        executes the payment over AANI/IPP. For a card, it generates a one-time token and
+        cryptogram bound to that <code>PaymentId</code> and amount and submits the authorisation
+        to the card scheme itself. On approval, the LFI patches the payment log at the API Hub,
+        and the API Hub sends the status event to the BPIP &mdash; as in the account flow.
       </EdProse>
       <APIFlowViewer
         title="BioPay — card payment, Option 2"
@@ -215,25 +221,29 @@ const checklists: Record<'lookup' | 'lfi', OptionChecklist> = {
           </ul>
           <h4 class="bp-pc bp-pc--con">Cons</h4>
           <ul>
-            <li>Three round trips before money moves &mdash; resolution with ICP, then a lookup and a payment or credential request through the API Hub &mdash; plus the card authorisation. Hard to fit within a tap-like one to two seconds.</li>
-            <li>A new lookup operation on the API Hub and on every LFI&rsquo;s Ozone Connect.</li>
-            <li>The instrument can change between the lookup and the payment, so the payment or credential request can still fail on a mismatch.</li>
+            <li>No central record of BioPay payments. Card payments never reach the API Hub after the lookup &mdash; no <code>PaymentId</code>, no payment log &mdash; so the API Hub cannot act as the single reporting source for BioPay, and card activity must be gathered from the card scheme or each LFI.</li>
+            <li>For an account, three round trips before money moves &mdash; resolution with ICP, the lookup, and the payment request through the API Hub. Hard to fit within a tap-like one to two seconds.</li>
+            <li>A new lookup operation on the API Hub and on every LFI&rsquo;s Ozone Connect, which must generate a card credential in real time.</li>
+            <li>The lookup returns the customer&rsquo;s IBAN to the BPIP.</li>
+            <li>Card scheme tokens and cryptograms pass through the API Hub, which may bring the API Hub into PCI DSS scope. In Option 2 they never leave the LFI.</li>
+            <li>For an account, the instrument can change between the lookup and the payment, so the payment request can still fail on a mismatch.</li>
           </ul>
         </EdCompareCard>
         <EdCompareCard accent="var(--at-navy)" kicker="Option 2" example="One request, LFI decides">
           <h4 class="bp-pc bp-pc--pro">Pros</h4>
           <ul>
+            <li>A central record of every BioPay payment. Each payment, on either rail, is recorded at the API Hub under one <code>PaymentId</code> with its outcome patched to the payment log, making the API Hub the single reporting source for BioPay.</li>
+            <li>A path for card payments in Open Finance. Once LFIs can generate a card credential and submit the authorisation behind an Ozone Connect payment request, a future version of the Open Finance standards could add card payments with little further change.</li>
             <li>The LFI remains the only party that knows the instrument, matching the registration model.</li>
             <li>The same cost for both rails: one resolution call to ICP and one payment call through the API Hub.</li>
-            <li>The LFI sees a card payment twice &mdash; as the request through the Hub and as the authorisation through Jaywan &mdash; and can match the cryptogram to the <code>PaymentId</code>, a strong fraud control and a consistent decision.</li>
-            <li>Where the customer registered several instruments, the LFI can pick one the merchant accepts rather than fail on a default it cannot use.</li>
-            <li>Every BioPay payment, on either rail, is recorded at the API Hub under one <code>PaymentId</code>.</li>
-          </ul>
+            <li>One response shape and one status mechanism on both rails: a pending <code>PaymentId</code>, then the status event.</li>
+            <li>The card credential never leaves the LFI: it generates the token and cryptogram and submits them to the card scheme itself.</li>
+            <li>Where the customer registered several instruments, the LFI can pick one the merchant accepts rather than fail on a default it cannot use.</li>          </ul>
           <h4 class="bp-pc bp-pc--con">Cons</h4>
           <ul>
-            <li>Potentially a significant build at each LFI. In a Jaywan payment today the issuer only receives an authorisation through the scheme and verifies a cryptogram the card produced. Option 2 adds a different journey before that: an API request through Ozone Connect, issuing a card credential, and linking the later authorisation back to it &mdash; across the LFI&rsquo;s Open Finance and card systems, and often its card processor.</li>
-            <li>Two response shapes: the BPIP must handle either a pending payment or a credential it must still use.</li>
-            <li>A card payment completes in two steps; the authorisation can still decline after the credential is issued, so the credential needs a short expiry and the outcome must be reported back.</li>
+            <li>Potentially a significant build at each LFI. In a card payment today the issuer only receives an authorisation through the scheme and verifies a cryptogram the card produced. Option 2 has the LFI generate the credential and submit the authorisation itself &mdash; across the LFI&rsquo;s Open Finance and card systems, and often its card processor.</li>
+            <li>The LFI submits the authorisation in place of the acquirer, which card schemes do not support today.</li>
+            <li>The BPIP learns the card outcome from the status event rather than directly from the card scheme, adding the PATCH and the event to the time at the point of sale.</li>
             <li>Every request carries creditor details for both rails, and the payment schema must accept both.</li>
           </ul>
         </EdCompareCard>
@@ -252,13 +262,22 @@ const checklists: Record<'lookup' | 'lfi', OptionChecklist> = {
       <EdProse>
         <ul>
           <li>
-            <strong>Scheme rules.</strong> Jaywan &mdash; and Visa and Mastercard, if in scope
-            &mdash; must recognise cardholder verification by a third-party biometric: how the
+            <strong>Scheme rules.</strong> Each card scheme in scope &mdash; Jaywan, and Visa and
+            Mastercard if included &mdash; must recognise cardholder verification by a third-party biometric: how the
             transaction is coded, whether it counts as card-present, who carries fraud liability,
             and the interchange that applies.
           </li>
           <li>
-            <strong>Token provisioning.</strong> Whether the LFI provisions a network token for the
+            <strong>Chargebacks, disputes and refunds.</strong> The customer&rsquo;s protection
+            depends on the payment instrument selected at registration, though the biometric
+            gesture is the same. A card scheme payment carries chargeback rights and is refunded
+            by the BPIP, as acquirer, through the card scheme. An AANI/IPP payment has no
+            chargeback, its disputes are handled by the LFI, and it has no reverse rail for
+            refunds. How customers are told of the difference, and how an account payment is
+            refunded, are to be defined.
+          </li>
+          <li>
+            <strong>Token provisioning.</strong> Whether the LFI provisions a card scheme token for the
             card at registration, as when a card is added to a wallet, and with whom the token
             requestor role sits.
           </li>
@@ -269,44 +288,20 @@ const checklists: Record<'lookup' | 'lfi', OptionChecklist> = {
             through the Trust Framework.
           </li>
           <li>
-            <strong>Status.</strong> The card authorisation is answered at the point of sale, so the
-            payment log patch and status event serve reporting rather than telling the BPIP the
-            outcome.
+            <strong>Status.</strong> The card authorisation is answered at the point of sale. In
+            Option 1 the card payment does not return to the API Hub, so there is no payment log
+            patch. In Option 2 the patch and status event are how the BPIP learns the outcome,
+            so they must arrive within the point-of-sale time budget.
           </li>
           <li>
-            <strong>Specification.</strong> <code>JAYWAN</code> is currently listed as a payment
-            instrument on <code>POST /biometric-payments</code>. Each option changes that operation,
-            or adds a new one, to return a card credential rather than execute a payment.
+            <strong>Specification.</strong> Each card scheme &mdash; <code>JAYWAN</code>,
+            <code>VISA</code>, <code>MASTERCARD</code> &mdash; is listed as a payment instrument in
+            its own right. Option 1 returns the card credential
+            from <code>POST /instrument-lookup</code> instead; Option 2 keeps
+            <code>POST /biometric-payments</code>, extended to carry card acceptance details.
           </li>
         </ul>
       </EdProse>
-    </EdSectionBand>
-    <!-- 05 ─────────────────────────────────────────────────────────────── -->
-    <EdSectionBand
-      id="rejected"
-      num="05"
-      color="var(--at-mute)"
-      eyebrow="Rejected option"
-      title="Option 3 — ICP returns the instrument type"
-      lede="This option was considered and rejected. It is kept here for reference only."
-    >
-      <EdProse>
-        At registration, the LFI would also have given ICP the type of instrument the customer
-        chose &mdash; account or card, never the account or card number. Resolution would then
-        have returned the instrument type alongside the <code>uaeKycId</code>, default LFI and
-        token, and the BPIP would have branched straight away without a lookup.
-      </EdProse>
-      <EdProse>
-        It is rejected because ICP does not store the instrument type. ICP holds identity and
-        the binding of <code>uaeKycId</code> to LFI; the payment instrument is held only by the
-        LFI.
-      </EdProse>
-      <APIFlowViewer
-        title="BioPay — card payment, Option 3 (rejected)"
-        eyebrow="Card flow · Option 3 · Rejected"
-      >
-        <BpCardFlow variant="icp" />
-      </APIFlowViewer>
     </EdSectionBand>
   </div>
 </template>

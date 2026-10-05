@@ -394,25 +394,28 @@ paths:
       description: >-
         **BPIP → API Hub → LFI.** Card flow, Option 1. After resolving the
         customer with ICP, the BPIP asks the LFI which payment instrument it
-        holds for the `uaeKycId`, so that it can choose the rail: an
-        account-to-account payment through `POST /biometric-payments`, or a
-        card credential and a card authorisation through Jaywan.
+        holds for the `uaeKycId`, and receives in the same response what it
+        needs for that rail: for an account, the IBAN, after which it pays through `POST /biometric-payments`; for a
+        card, a one-time card scheme token and cryptogram, which it submits to the
+        card scheme (e.g. Jaywan) as acquirer. A card payment does not return
+        to the API Hub after the lookup.
 
 
         The API Hub validates the request and proxies it to the Ozone Connect
         endpoint of the LFI ICP returned. The LFI answers from its own
-        registration store of `uaeKycId` → payment instrument. The response
-        carries the instrument type only — never an account number or card
-        number.
+        registration store of `uaeKycId` → payment instrument. For a card, the
+        LFI generates the credential for the amount and card acceptor in the
+        request. The response never carries a card number (PAN).
 
 
         A `POST` rather than a `GET`, so that the `uaeKycId` travels in the
-        body and stays out of access and proxy logs. The lookup is read-only
-        and creates no resource.
+        body and stays out of access and proxy logs. The lookup creates no
+        resource.
 
 
-        The instrument can change between the lookup and the payment, so a
-        subsequent payment or credential request can still fail on a mismatch.
+        For an account, the instrument can change between the lookup and the
+        payment, so the subsequent payment request can still fail on a
+        mismatch.
       parameters:
         - $ref: '#/components/parameters/XJwsSignature'
         - $ref: '#/components/parameters/XFapiInteractionId'
@@ -662,10 +665,11 @@ components:
       type: string
       description: >-
         The payment vehicle the customer selected at registration. Determines
-        which creditor schema the payment request MUST use. `JAYWAN` is the
-        domestic card scheme (referred to as J1 elsewhere) — the final code is
-        an open item.
-      enum: [AANI, CBDC, JAYWAN]
+        which creditor schema the payment request MUST use. A card scheme is
+        named directly: `JAYWAN` is the domestic card scheme (referred to as J1
+        elsewhere), and `VISA` and `MASTERCARD` cover the international
+        schemes, including co-badged cards. The final codes are an open item.
+      enum: [AANI, CBDC, JAYWAN, VISA, MASTERCARD]
 
     AERegistrationStatus:
       type: string
@@ -934,18 +938,18 @@ components:
               type: string
               example: BARBAEAAXXX
 
-    AEJaywanCreditor:
+    AECardSchemeCreditor:
       type: object
       description: >-
-        Creditor details for a payment executed over the Jaywan domestic card
-        scheme. Field set is a first cut and needs validating against the
-        scheme's own message definition.
+        Creditor details for a payment executed over a card scheme (e.g.
+        Jaywan, Visa, Mastercard). Field set is a first cut and needs
+        validating against each scheme's own message definition.
       additionalProperties: false
       required: [CreditorType, AcquirerIdentification, MerchantIdentification]
       properties:
         CreditorType:
           type: string
-          enum: [JAYWAN]
+          enum: [JAYWAN, VISA, MASTERCARD]
         AcquirerIdentification:
           type: string
           maxLength: 35
@@ -1039,13 +1043,15 @@ components:
                 whose `RegistrationStatus` is `Registered`.
               oneOf:
                 - $ref: '#/components/schemas/AEAaniCreditor'
-                - $ref: '#/components/schemas/AEJaywanCreditor'
+                - $ref: '#/components/schemas/AECardSchemeCreditor'
                 - $ref: '#/components/schemas/AECbdcCreditor'
               discriminator:
                 propertyName: CreditorType
                 mapping:
                   AANI: '#/components/schemas/AEAaniCreditor'
-                  JAYWAN: '#/components/schemas/AEJaywanCreditor'
+                  JAYWAN: '#/components/schemas/AECardSchemeCreditor'
+                  VISA: '#/components/schemas/AECardSchemeCreditor'
+                  MASTERCARD: '#/components/schemas/AECardSchemeCreditor'
                   CBDC: '#/components/schemas/AECbdcCreditor'
             BiometricAssurance:
               $ref: '#/components/schemas/AEBiometricAssurance'
@@ -1296,16 +1302,41 @@ components:
         Data:
           type: object
           additionalProperties: false
-          required: [uaeKycId]
+          required: [uaeKycId, InstructedAmount]
           properties:
             uaeKycId:
               $ref: '#/components/schemas/AEUaeKycId'
+            InstructedAmount:
+              description: >-
+                The payment amount. Used by the LFI to bind the card scheme token
+                cryptogram to the payment when the payment instrument is a card
+                scheme.
+              $ref: '#/components/schemas/AEAmount'
+            CardAcceptor:
+              type: object
+              description: >-
+                The merchant's card acceptance details. Used only when the
+                payment instrument is a card scheme, including to choose a
+                scheme the merchant accepts for a co-badged card. Field set to
+                be validated against each scheme's message definition.
+              additionalProperties: false
+              properties:
+                AcquirerIdentification:
+                  type: string
+                  maxLength: 35
+                MerchantIdentification:
+                  type: string
+                  maxLength: 35
+                TerminalIdentification:
+                  type: string
+                  maxLength: 35
 
     AEInstrumentLookupResponse:
       type: object
       description: >-
-        Instrument lookup response. Names the instrument type only, never an
-        account or card number.
+        Instrument lookup response. Names the payment instrument and carries
+        either the account details or a card scheme token and one-time cryptogram
+        for that scheme. Never carries a card number (PAN).
       additionalProperties: false
       required: [Data]
       properties:
@@ -1318,6 +1349,37 @@ components:
               $ref: '#/components/schemas/AEUaeKycId'
             PaymentInstrument:
               $ref: '#/components/schemas/AEPaymentInstrument'
+            DebtorAccount:
+              type: object
+              description: Present when the instrument is an account.
+              additionalProperties: false
+              required: [SchemeName, Identification]
+              properties:
+                SchemeName:
+                  type: string
+                  enum: [IBAN]
+                Identification:
+                  type: string
+                  maxLength: 70
+                  example: AE070331234567890123456
+            CardSchemeToken:
+              type: string
+              maxLength: 19
+              description: >-
+                Present when the payment instrument is a card scheme. A network
+                token issued by that scheme's token service — a substitute for
+                the card number that only the scheme can map back to the card.
+                Valid only on the scheme named in `PaymentInstrument`.
+            Cryptogram:
+              type: string
+              description: >-
+                Present with `CardSchemeToken`. A one-time cryptogram bound to the
+                amount and card acceptor in the request, for the BPIP to submit
+                to the card scheme.
+            ExpirationDateTime:
+              type: string
+              format: date-time
+              description: Present with `CardSchemeToken`. When the cryptogram expires.
         Meta:
           $ref: '#/components/schemas/AEMeta'
 

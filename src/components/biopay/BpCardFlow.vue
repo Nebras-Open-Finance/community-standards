@@ -2,21 +2,23 @@
 import { useMermaidDiagram } from '@/composables/useMermaidDiagram'
 
 // BioPay payment where the customer's registered instrument may be a card
-// (Jaywan) rather than an account (AANI/IPP). Only the LFI holds uaeKycId →
+// (card scheme, e.g. Jaywan) rather than an account (AANI/IPP). Only the LFI holds uaeKycId →
 // instrument, so each option answers "how does the BPIP learn which rail to use":
 // In every option the BPIP first resolves the customer directly with ICP through
 // the ICP SDK — not through the API Hub — and receives the uaeKycId, the
 // customer's default LFI and a token.
-//   lookup  (Option 1) — the BPIP asks the LFI through the Hub, then branches.
-//   icp     (Option 3, rejected) — ICP also holds the instrument type and returns
-//           it on resolution. Rejected: ICP does not store the instrument type.
+//   lookup  (Option 1) — the BPIP asks the LFI through the Hub, which returns the
+//           IBAN for an account or a one-time card credential for a card; the
+//           BPIP then branches. A card payment does not return to the Hub.
 //   lfi     (Option 2) — one payment request carrying both creditor routes; the
-//           LFI picks the rail and returns either a PaymentId or a card credential.
-// In every option the card authorisation itself runs on the card rails
-// (BPIP as acquirer → Jaywan → issuer), not through the API Hub. The BPIP is
-// the merchant's acquirer, so it submits the authorisation to Jaywan itself.
+//           LFI picks the rail and returns a PaymentId either way. For a card,
+//           the LFI submits the authorisation to the card scheme itself, then
+//           patches the outcome to the Hub, which sends the event to the BPIP.
+// In both options the card authorisation itself runs on the card rails, not
+// through the API Hub: submitted by the BPIP, as acquirer, in Option 1, and by
+// the LFI on the BPIP's behalf in Option 2.
 // Draft — operations, scopes and fields are proposals.
-const props = withDefaults(defineProps<{ variant?: 'lookup' | 'icp' | 'lfi' }>(), {
+const props = withDefaults(defineProps<{ variant?: 'lookup' | 'lfi' }>(), {
   variant: 'lfi',
 })
 
@@ -27,7 +29,7 @@ sequenceDiagram
     participant ICP as ICP
     participant Hub as API Hub
     participant LFI as LFI (issuer / Ozone Connect)
-    participant Jaywan as Jaywan
+    participant Scheme as Card Scheme (e.g. Jaywan)
 
     PSU->>BPIP: Presents thumbprint / face / palm
     BPIP->>BPIP: Capture + amount + merchant details`
@@ -38,18 +40,16 @@ const resolve = (returned: string, lookup: string) => `
     ICP->>ICP: Match, liveness, look up ${lookup}
     ICP-->>BPIP: ${returned}`
 
-// The card authorisation leg, once the BPIP holds a one-time credential.
-const cardAuthorisation = (lfiCheck: string) => `
-        BPIP->>Jaywan: Authorisation request {token, cryptogram, amount}<br/>CVM: biometric, verified by ICP
-        Jaywan->>Jaywan: Detokenise
-        Jaywan->>LFI: Authorisation request
-        LFI->>LFI: ${lfiCheck}
-        LFI-->>Jaywan: Approved
-        Jaywan-->>BPIP: Approved
+// Option 1's card authorisation leg, once the BPIP holds a one-time credential.
+const cardAuthorisation = `
+        BPIP->>Scheme: Authorisation request {token, cryptogram, amount}<br/>CVM: biometric, verified by ICP
+        Scheme->>Scheme: Detokenise
+        Scheme->>LFI: Authorisation request
+        LFI->>LFI: Validate cryptogram, fraud, balance
+        LFI-->>Scheme: Approved
+        Scheme-->>BPIP: Approved
         BPIP-->>PSU: Payment approved
-        LFI->>Hub: PATCH /biometrics-payment-log/{id}<br/>{Status, authorisation reference}
-        Hub-->>LFI: 204 No Content
-        Note over LFI,Jaywan: Clearing and settlement through Jaywan, as for any card payment<br/>The BPIP, as acquirer, settles with the merchant`
+        Note over LFI,Scheme: Clearing and settlement through the card scheme, as for any card payment<br/>The BPIP, as acquirer, settles with the merchant`
 
 const accountPayment = `
         Note over BPIP,Hub: client_credentials · mTLS · scope: biometric-payments
@@ -61,38 +61,25 @@ const accountPayment = `
         BPIP-->>PSU: Accepted — payment pending
         Note over BPIP,LFI: Status patch and event, as in the account payment flow`
 
-const cardCredential = `
-        Note over BPIP,Hub: client_credentials · mTLS · scope: biometric-payments
-        BPIP->>Hub: Request card credential {uaeKycId, amount, merchant}
-        Hub->>LFI: Proxied credential request
-        LFI->>LFI: Fraud, risk checks<br/>Generate one-time token + cryptogram
-        LFI-->>Hub: 201 {CredentialId, token, cryptogram, expiry}
-        Hub-->>BPIP: 201 {CredentialId, token, cryptogram, expiry}`
-
-const branch = `
-    alt Account (AANI/IPP)
-${accountPayment}
-    else Card (Jaywan)
-${cardCredential}
-${cardAuthorisation('Validate cryptogram, fraud, balance')}
-    end`
-
 const lookup = `${participants}
 ${resolve('{uaeKycId, default LFI, token}', 'uaeKycId → default LFI')}
 
     Note over BPIP,Hub: client_credentials · mTLS · scope: biometric-payments
-    BPIP->>Hub: POST /instrument-lookup {uaeKycId}
+    BPIP->>Hub: POST /instrument-lookup<br/>{uaeKycId, amount, card acceptance details}
     Hub->>LFI: Proxied instrument lookup
-    LFI->>LFI: Look up uaeKycId → instrument
-    LFI-->>Hub: 200 {PaymentInstrument}
-    Hub-->>BPIP: 200 {PaymentInstrument}
-${branch}
-`
+    LFI->>LFI: Look up uaeKycId → instrument<br/>Fraud, risk checks
 
-const icp = `${participants}
-    Note over ICP,LFI: At registration, the LFI also gave ICP the instrument type<br/>(account or card — never the account or card number)
-${resolve('{uaeKycId, default LFI, token, InstrumentType}', 'uaeKycId → default LFI + instrument type')}
-${branch}
+    alt Account (AANI/IPP)
+        LFI-->>Hub: 200 {PaymentInstrument, IBAN}
+        Hub-->>BPIP: 200 {PaymentInstrument, IBAN}
+${accountPayment}
+    else Card (card scheme, e.g. Jaywan)
+        LFI->>LFI: Generate one-time token + cryptogram
+        LFI-->>Hub: 200 {PaymentInstrument, CardSchemeToken, Cryptogram, Expiry}
+        Hub-->>BPIP: 200 {PaymentInstrument, CardSchemeToken, Cryptogram, Expiry}
+        Note over BPIP,Scheme: From here the payment runs between the BPIP, as acquirer,<br/>and the card scheme — not through the API Hub
+${cardAuthorisation}
+    end
 `
 
 const lfi = `${participants}
@@ -110,15 +97,24 @@ ${resolve('{uaeKycId, default LFI, token}', 'uaeKycId → default LFI')}
         Hub-->>BPIP: 201 {PaymentId, Status: Pending}
         BPIP-->>PSU: Accepted — payment pending
         Note over BPIP,LFI: Status patch and event, as in the account payment flow
-    else Card (Jaywan)
+    else Card (card scheme, e.g. Jaywan)
+        LFI-->>Hub: 201 {PaymentId}
+        Hub-->>BPIP: 201 {PaymentId, Status: Pending}
+        BPIP-->>PSU: Accepted — payment pending
         LFI->>LFI: Generate one-time token + cryptogram,<br/>bound to PaymentId and amount
-        LFI-->>Hub: 201 {PaymentId, Credential: token, cryptogram, expiry}
-        Hub-->>BPIP: 201 {PaymentId, Credential: token, cryptogram, expiry}
-${cardAuthorisation('Match cryptogram to PaymentId, check balance')}
+        LFI->>Scheme: Authorisation request {token, cryptogram, amount,<br/>card acceptance details}<br/>CVM: biometric, verified by ICP
+        Scheme->>Scheme: Detokenise, apply scheme rules
+        Scheme-->>LFI: Approved
+        LFI->>Hub: PATCH /biometrics-payment-log/{id}<br/>{Status, authorisation reference}
+        Hub-->>LFI: 204 No Content
+        Hub->>BPIP: Payment status event {PaymentId, Status}
+        BPIP-->>Hub: 202 Accepted
+        BPIP-->>PSU: Payment approved
+        Note over LFI,Scheme: Clearing and settlement through the card scheme, as for any card payment<br/>The BPIP, as acquirer, settles with the merchant
     end
 `
 
-const definitions = { lookup, icp, lfi }
+const definitions = { lookup, lfi }
 
 const { containerRef: mermaidContainer } = useMermaidDiagram(
   definitions[props.variant],

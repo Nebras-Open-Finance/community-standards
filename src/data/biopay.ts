@@ -103,7 +103,7 @@ export const biopaySidebar: EdSidebarItemData[] = [
         collapsed: false,
         items: [
           {
-            text: 'Jaywan / Card Flow',
+            text: 'Card Scheme (e.g. Jaywan) / Card Flow',
             link: '/biopay/payment/card-flow',
             collapsed: false,
             items: [

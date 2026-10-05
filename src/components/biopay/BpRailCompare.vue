@@ -4,7 +4,7 @@ import { useMermaidDiagram } from '@/composables/useMermaidDiagram'
 // The two rails, one above the other. Account-to-account: the BPIP pushes the payment
 // to the LFI, which instructs it over AANI/IPP. The API Hub is left out for
 // simplicity — the payment request still passes through it. Card: the
-// BPIP, as acquirer, pushes an authorisation to Jaywan, which routes it to the
+// BPIP, as acquirer, pushes an authorisation to the card scheme (e.g. Jaywan), which routes it to the
 // LFI as issuer. Draft.
 const mermaidDefinition = `
 flowchart TB
@@ -14,9 +14,9 @@ flowchart TB
         A3 -->|Pushes payment| A4[AANI/IPP]
     end
 
-    subgraph Card["Card (Jaywan)"]
+    subgraph Card["Card (card scheme, e.g. Jaywan)"]
         direction LR
-        C1[BPIP<br/>acquirer] -->|Authorisation request| C2[Jaywan]
+        C1[BPIP<br/>acquirer] -->|Authorisation request| C2[Card Scheme<br/>e.g. Jaywan]
         C2 -->|Routes to issuer| C3[LFI<br/>issuer]
         C3 -.->|Approve / decline| C2
     end

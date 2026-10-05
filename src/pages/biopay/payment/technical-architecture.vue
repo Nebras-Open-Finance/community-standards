@@ -115,7 +115,7 @@ const actors: BpActor[] = [
         <p>
           This page covers account-to-account payments via AANI/IPP. The extension of this flow
           to card payments (Jaywan) is covered on
-          <RouterLink to="/biopay/payment/card-flow">Jaywan / Card Flow</RouterLink>.
+          <RouterLink to="/biopay/payment/card-flow">Card Scheme (e.g. Jaywan) / Card Flow</RouterLink>.
         </p>
       </EdNote>
       <EdProse>
