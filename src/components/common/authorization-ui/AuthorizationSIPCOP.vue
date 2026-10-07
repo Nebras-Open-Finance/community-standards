@@ -155,4 +155,11 @@ const maskedName = computed(() => sharedState.value?.copData?.MaskedName)
 }
 .acop-warn--amber { color: #FDAA35; }
 .acop-warn--red   { color: #C92B25; }
+/* Dark theme (the wrapped page's `dark` prop sets .auth-page-frame--dark on
+   an ancestor). Text sits directly on the page, same layout as light mode;
+   #C92B25 is too dark to read on near-black, so red uses the brand Error red. */
+.auth-page-frame--dark .acop-icon-wrap--red { background: #FD4D52; }
+.auth-page-frame--dark .acop-label--red,
+.auth-page-frame--dark .acop-masked--red,
+.auth-page-frame--dark .acop-warn--red { color: #FD4D52; }
 </style>

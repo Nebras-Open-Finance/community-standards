@@ -5,13 +5,16 @@
     :all-connections="resolvedConnections"
     :perspective="perspective"
     :header-color="headerColor"
+    :dark="dark"
+    :theme-toggle="themeToggle"
+    @update:dark="emit('update:dark', $event)"
     @back="selectConnection(null)"
     @navigate="selectConnection($event)"
   />
   <div
     v-else
     class="consent-management-frame"
-    :class="{ 'consent-management-lfi': isLfi }"
+    :class="{ 'consent-management-lfi': isLfi, 'cmi-dark': dark }"
     :style="headerColor ? { '--cmi-header-color': headerColor } : undefined"
   >
     <div class="consent-management-screen-name">
@@ -22,6 +25,7 @@
           stroke-linejoin="round" />
       </svg>
       <div class="consent-management-screen-title">{{ barTitle }}</div>
+      <AuthThemeToggle v-if="themeToggle" :dark="dark" @toggle="emit('update:dark', !dark)" />
     </div>
 
     <div class="consent-management-card-shell">
@@ -222,6 +226,7 @@ import { computed, reactive, ref } from 'vue'
 import { useSharedState } from '../composables/useSharedState.ts'
 import DirhamAmount from './DirhamAmount.vue'
 import ConsentManagementDetail from './ConsentManagementDetail.vue'
+import AuthThemeToggle from '../authorization-ui/AuthThemeToggle.vue'
 
 const props = defineProps({
   mode: {
@@ -235,8 +240,21 @@ const props = defineProps({
   headerColor: {
     type: String,
     default: ''
+  },
+  // `dark` renders the dark-theme variant (styles in consent-management-dark.css);
+  // `themeToggle` shows the sun/moon button in the top bar, which emits
+  // `update:dark` so callers bind it with `v-model:dark`. Both are passed on to
+  // the detail view so the theme holds while drilling in. Both default off.
+  dark: {
+    type: Boolean,
+    default: false
+  },
+  themeToggle: {
+    type: Boolean,
+    default: false
   }
 })
+const emit = defineEmits(['update:dark'])
 
 const { sharedState } = useSharedState()
 
@@ -684,6 +702,7 @@ function displayStatusClass(connection) {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import './consent-management-dark.css';
 
 .consent-management-frame {
   display: flex;

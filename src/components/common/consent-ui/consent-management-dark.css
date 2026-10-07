@@ -1,0 +1,256 @@
+/*
+ * Dark-theme overrides for the AlTareq Connections (consent management)
+ * wireframes — ConsentManagementConnections (list) and ConsentManagementDetail
+ * (detail / confirm / updates). Same AlTareq brand palette as
+ * consent-page-dark.css. Rules apply only under `.cmi-dark`, which both
+ * components set on their root frame from the `dark` prop, so importing this
+ * file leaves the light theme untouched. The coloured top bar, status badges
+ * and the CTA keep their light-theme colours.
+ *
+ * Also covers the insurance pair (InsuranceManagementConnections /
+ * InsuranceManagementDetail), whose classes mirror the bank ones with
+ * `insurance-management-` / `imd-` prefixes.
+ *
+ * The embedded ConsentDataSharingPermissions / ConsentPaymentPermissions
+ * components carry their own dark rules, since their styles are scoped
+ * separately.
+ */
+
+/* Doubled class so the root rule outweighs the components' own
+   same-specificity frame background. */
+.consent-management-frame.cmi-dark,
+.cmd-frame.cmi-dark,
+.insurance-management-frame.cmi-dark,
+.imd-frame.cmi-dark {
+    background: #0C0C0C;
+    /* Unstyled text otherwise inherits the site's navy body colour. */
+    color: #FFFFFF;
+    /* Keeps the frame edge visible when the surrounding site is also dark. */
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* --- Surfaces --- */
+
+.cmi-dark .consent-management-card,
+.cmi-dark .consent-management-filter-fields,
+.cmi-dark .cmd-meta-card,
+.cmi-dark .cmd-accounts-card,
+.cmi-dark .cmd-confirm-card,
+.cmi-dark .cmd-usage-card,
+.cmi-dark .cmd-updates-card,
+.cmi-dark .cmd-updates-list,
+.cmi-dark .cmd-updates-empty,
+.cmi-dark .insurance-management-card,
+.cmi-dark .insurance-management-filter-fields,
+.cmi-dark .imd-meta-card,
+.cmi-dark .imd-confirm-card,
+.cmi-dark .imd-usage-card,
+.cmi-dark .imd-updates-list,
+.cmi-dark .imd-updates-empty {
+    background: #1A1A1A;
+}.cmi-dark .consent-management-filter-fields,
+.cmi-dark .insurance-management-filter-fields {
+    border-color: #333333;
+}
+
+/* --- Text --- */
+
+.cmi-dark .consent-management-main-title,
+.cmi-dark .consent-management-subtitle,
+.cmi-dark .consent-management-info-message p,
+.cmi-dark .consent-management-filter-toggle,
+.cmi-dark .consent-management-filter-field-label,
+.cmi-dark .consent-management-tab,
+.cmi-dark .consent-management-connection-name,
+.cmi-dark .consent-management-connection-count,
+.cmi-dark .consent-management-connection-meta-value,
+.cmi-dark .cmd-meta-lfi,
+.cmi-dark .cmd-meta-row-value,
+.cmi-dark .cmd-meta-type-label,
+.cmi-dark .cmd-meta-amount-row .dirham-amount-container,
+.cmi-dark .cmd-consent-id-value,
+.cmi-dark .cmd-accounts-header-text,
+.cmi-dark .cmd-benef-name,
+.cmi-dark .cmd-sip-amount,
+.cmi-dark .cmd-account-title-text,
+.cmi-dark .cmd-confirm-title,
+.cmi-dark .cmd-confirm-impact-header,
+.cmi-dark .cmd-confirm-back-btn,
+.cmi-dark .cmd-usage-title,
+.cmi-dark .cmd-usage-date-label,
+.cmi-dark .cmd-updates-title,
+.cmi-dark .cmd-updates-subtitle,
+.cmi-dark .cmd-updates-item-name,
+.cmi-dark .cmd-updates-item-count,
+.cmi-dark .cmd-updates-item-meta-value,
+.cmi-dark .insurance-management-main-title,
+.cmi-dark .insurance-management-subtitle,
+.cmi-dark .insurance-management-info-message p,
+.cmi-dark .insurance-management-filter-toggle,
+.cmi-dark .insurance-management-filter-field-label,
+.cmi-dark .insurance-management-tab,
+.cmi-dark .insurance-management-connection-name,
+.cmi-dark .insurance-management-connection-count,
+.cmi-dark .insurance-management-connection-meta-value,
+.cmi-dark .imd-meta-lfi,
+.cmi-dark .imd-meta-row-value,
+.cmi-dark .imd-consent-id-value,
+.cmi-dark .imd-confirm-title,
+.cmi-dark .imd-confirm-impact-header,
+.cmi-dark .imd-confirm-back-btn,
+.cmi-dark .imd-usage-title,
+.cmi-dark .imd-usage-date-label,
+.cmi-dark .imd-updates-subtitle,
+.cmi-dark .imd-updates-item-name,
+.cmi-dark .imd-updates-item-count,
+.cmi-dark .imd-updates-item-meta-value {
+    color: #FFFFFF;
+}.cmi-dark .consent-management-results,
+.cmi-dark .consent-management-empty-state,
+.cmi-dark .consent-management-connection-meta,
+.cmi-dark .consent-management-connection-meta-label,
+.cmi-dark .cmd-meta-row-label,
+.cmi-dark .cmd-open-benef-text,
+.cmi-dark .cmd-benef-label,
+.cmi-dark .cmd-account-subtext,
+.cmi-dark .cmd-confirm-subtitle,
+.cmi-dark .cmd-confirm-impact-text,
+.cmi-dark .cmd-updates-item-meta,
+.cmi-dark .cmd-updates-item-meta-label,
+.cmi-dark .cmd-updates-empty,
+.cmi-dark .insurance-management-results,
+.cmi-dark .insurance-management-empty-state,
+.cmi-dark .insurance-management-connection-meta,
+.cmi-dark .insurance-management-connection-meta-label,
+.cmi-dark .imd-meta-row-label,
+.cmi-dark .imd-confirm-subtitle,
+.cmi-dark .imd-confirm-impact-text,
+.cmi-dark .imd-updates-item-meta,
+.cmi-dark .imd-updates-item-meta-label,
+.cmi-dark .imd-updates-empty {
+    color: #B2B2B2;
+}.cmi-dark .cmd-usage-subtitle,
+.cmi-dark .cmd-usage-date-value,
+.cmi-dark .imd-usage-subtitle,
+.cmi-dark .imd-usage-date-value {
+    color: #999999;
+}
+
+/* Keep the active tab teal (the white tab rule above would otherwise win). */
+.cmi-dark .consent-management-tab-active,
+.cmi-dark .insurance-management-tab-active {
+    color: #35BFD4;
+}
+
+/* --- Filters --- */
+
+.cmi-dark .consent-management-filter-select,
+.cmi-dark .insurance-management-filter-select {
+    background: #262626;
+    border-color: #333333;
+    color: #FFFFFF;
+}.cmi-dark .consent-management-chip,
+.cmi-dark .insurance-management-chip {
+    background: #333333;
+}.cmi-dark .consent-management-chip-text,
+.cmi-dark .insurance-management-chip-text {
+    color: #FFFFFF;
+}.cmi-dark .consent-management-chip-remove,
+.cmi-dark .insurance-management-chip-remove {
+    stroke: #FFFFFF;
+}.cmi-dark .consent-management-chip-clear,
+.cmi-dark .insurance-management-chip-clear {
+    background: #36BFD4;
+}
+
+/* --- Dividers, rows, chevrons --- */
+
+.cmi-dark .consent-management-divider,
+.cmi-dark .insurance-management-divider {
+    border-top-color: #333333;
+}.cmi-dark .consent-management-connection,
+.cmi-dark .cmd-updates-item,
+.cmi-dark .insurance-management-connection,
+.cmi-dark .imd-updates-item {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+.cmi-dark .cmd-benef-item + .cmd-benef-item {
+    border-top-color: rgba(255, 255, 255, 0.12);
+}.cmi-dark .consent-management-connection:hover,
+.cmi-dark .cmd-updates-item:hover,
+.cmi-dark .insurance-management-connection:hover,
+.cmi-dark .imd-updates-item:hover {
+    background: rgba(54, 191, 212, 0.08);
+}.cmi-dark .consent-management-chevron,
+.cmi-dark .cmd-updates-chevron,
+.cmi-dark .insurance-management-chevron,
+.cmi-dark .imd-updates-chevron {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* --- Action buttons (outlined; keep their hue, tint the hover) --- */
+
+.cmi-dark .cmd-revoke-btn:hover,
+.cmi-dark .cmd-confirm-btn-revoke:hover,
+.cmi-dark .imd-revoke-btn:hover,
+.cmi-dark .imd-confirm-btn-revoke:hover {
+    background: rgba(240, 68, 56, 0.12);
+}.cmi-dark .cmd-pause-btn:hover,
+.cmi-dark .cmd-confirm-btn-pause:hover,
+.cmi-dark .imd-pause-btn:hover,
+.cmi-dark .imd-confirm-btn-pause:hover {
+    background: rgba(217, 119, 6, 0.12);
+}
+
+/* #00897B is too dark to read on near-black; lift to the brand green. */
+.cmi-dark .cmd-reactivate-btn,
+.cmi-dark .cmd-confirm-btn-reactivate,
+.cmi-dark .imd-reactivate-btn,
+.cmi-dark .imd-confirm-btn-reactivate {
+    border-color: #00C8AF;
+    color: #00C8AF;
+}.cmi-dark .cmd-reactivate-btn:hover,
+.cmi-dark .cmd-confirm-btn-reactivate:hover,
+.cmi-dark .imd-reactivate-btn:hover,
+.cmi-dark .imd-confirm-btn-reactivate:hover {
+    background: rgba(0, 200, 175, 0.12);
+}.cmi-dark .cmd-confirm-back-btn,
+.cmi-dark .imd-confirm-back-btn {
+    border-color: #4D4D4D;
+}.cmi-dark .cmd-confirm-back-btn:hover,
+.cmi-dark .imd-confirm-back-btn:hover {
+    background: #262626;
+}
+
+/* --- Inline SVG icons (hard-coded navy strokes) --- */
+
+.cmi-dark svg [stroke="#0C1441"] {
+    stroke: #E9E9E9;
+}
+
+/* --- Insurance detail (InsuranceManagementDetail) --- */
+
+.cmi-dark .imd-section-card {
+    background: #1A1A1A;
+}
+
+.cmi-dark .imd-section-title,
+.cmi-dark .imd-policy-title-text,
+.cmi-dark .imd-policy-row-value,
+.cmi-dark .imd-permission-label,
+.cmi-dark .imd-perm-icon {
+    color: #FFFFFF;
+}
+
+.cmi-dark .imd-policy-subtext,
+.cmi-dark .imd-policy-row,
+.cmi-dark .imd-policy-row-label,
+.cmi-dark .imd-policies-empty,
+.cmi-dark .imd-permission-description {
+    color: #B2B2B2;
+}
+
+.cmi-dark svg [fill="black"] {
+    fill: #FFFFFF;
+}

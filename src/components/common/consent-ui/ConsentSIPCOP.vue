@@ -162,4 +162,13 @@ const maskedName = computed(() => sharedState.value?.copData?.MaskedName)
 }
 .cop-desc--amber, .cop-warn--amber { color: #FDAA35; }
 .cop-desc--red,   .cop-warn--red   { color: #C92B25; }
+
+/* Dark theme (the wrapped page's `dark` prop sets .consent-page-frame--dark on
+   an ancestor). Text sits directly on the page, same layout as light mode;
+   #C92B25 is too dark to read on near-black, so red uses the brand Error red. */
+.consent-page-frame--dark .cop-icon-wrap--red { background: #FD4D52; }
+.consent-page-frame--dark .cop-label--red,
+.consent-page-frame--dark .cop-masked--red,
+.consent-page-frame--dark .cop-desc--red,
+.consent-page-frame--dark .cop-warn--red { color: #FD4D52; }
 </style>

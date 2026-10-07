@@ -1,5 +1,5 @@
 <template>
-    <div class="consent-page-frame">
+    <div class="consent-page-frame" :class="{ 'consent-page-frame--dark': dark }">
 
         <div class="consent-page-header">
             <div class="consent-page-screen-name">
@@ -13,10 +13,11 @@
                 </svg>
                 <div class="consent-page-rectangle">
                 </div>
+                <AuthThemeToggle v-if="themeToggle" :dark="dark" @toggle="emit('update:dark', !dark)" />
 
             </div>
             <div class="consent-page-contents">
-                <img class="consent-page-logo" src="/images/journeys/ConsentPages/AlTareq.png" alt="AlTareq logo" />
+                <img class="consent-page-logo" :src="dark ? '/images/journeys/ConsentPages/AlTareq-white.svg' : '/images/journeys/ConsentPages/AlTareq.png'" alt="AlTareq logo" />
                 <div class="consent-page-progress">
                     <div class="consent-page-progress-1">
                         <div class="consent-page-progress-icon-active">
@@ -100,7 +101,7 @@
 
                                     <div class="consent-page-title-text-2">
                                         <DirhamAmount style="font-weight: 300;"
-                                            iconColor="#0C1441"
+                                            :iconColor="dark ? '#FFFFFF' : '#0C1441'"
                                             :amount="consentData?.ControlParameters?.ConsentSchedule?.SinglePayment?.Amount?.Amount"
                                         />
                                     </div>
@@ -289,10 +290,20 @@
 <script setup>
 import { ref } from 'vue'
 import { useSharedState } from '../composables/useSharedState.ts'
+import AuthThemeToggle from '../authorization-ui/AuthThemeToggle.vue'
 import { getPurposeDescription } from '../composables/aaniPaymentCodes.ts'
 import DirhamAmount from './DirhamAmount.vue'
 
 const { sharedState, consentData } = useSharedState()
+
+// `dark` renders the dark-theme variant (styles in consent-page-dark.css);
+// `themeToggle` shows the sun/moon button in the TPP bar, which emits
+// `update:dark` so callers bind it with `v-model:dark`. Both default off.
+defineProps({
+  dark: { type: Boolean, default: false },
+  themeToggle: { type: Boolean, default: false },
+})
+const emit = defineEmits(['update:dark'])
 
 const show_payee_information = ref(true)
 const show_payer_information = ref(true)
@@ -301,6 +312,7 @@ const show_payer_information = ref(true)
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@100..900&display=swap');
+@import './consent-page-dark.css';
 
 
 .consent-page-frame {

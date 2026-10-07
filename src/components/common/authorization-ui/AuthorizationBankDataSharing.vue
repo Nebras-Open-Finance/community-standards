@@ -1,5 +1,5 @@
 <template>
-    <div class="auth-page-frame">
+    <div class="auth-page-frame" :class="{ 'auth-page-frame--dark': dark }">
 
         <div class="auth-page-header">
             <div class="auth-page-screen-name">
@@ -14,9 +14,13 @@
                 <div class="auth-page-rectangle">
                 </div>
 
+                <AuthThemeToggle v-if="themeToggle" :dark="dark" @toggle="emit('update:dark', !dark)" />
+
             </div>
             <div class="auth-page-contents">
-                <img class="auth-page-logo" src="/images/journeys/ConsentPages/AlTareq.png" alt="AlTareq logo" />
+                <img class="auth-page-logo"
+                    :src="dark ? '/images/journeys/ConsentPages/AlTareq-white.svg' : '/images/journeys/ConsentPages/AlTareq.png'"
+                    alt="AlTareq logo" />
                 <div class="auth-page-progress">
                     <div class="auth-page-progress-1">
                         <div class="auth-page-progress-icon-active">
@@ -740,8 +744,19 @@
 <script setup>
 import { ref, computed, reactive } from 'vue'
 import { useSharedState } from '../composables/useSharedState.ts'
+import AuthThemeToggle from './AuthThemeToggle.vue'
 import { formatDateTime as formatDate } from '../composables/formatDate.ts'
 import DirhamAmount from '../consent-ui/DirhamAmount.vue'
+
+// `dark` renders the dark-theme variant of the LFI authorisation page (styles
+// in authorization-page-dark.css); `themeToggle` shows a sun/moon button in the
+// LFI bar that emits `update:dark`, so callers bind it with `v-model:dark`.
+// Both are off by default so existing usages are unchanged.
+defineProps({
+  dark: { type: Boolean, default: false },
+  themeToggle: { type: Boolean, default: false },
+})
+const emit = defineEmits(['update:dark'])
 
 const { sharedState, consentData } = useSharedState()
 const show_information = ref(true)
@@ -809,4 +824,5 @@ function toggleSelected(id) {
 
 <style scoped>
 @import './authorization-page.css';
+@import './authorization-page-dark.css';
 </style>

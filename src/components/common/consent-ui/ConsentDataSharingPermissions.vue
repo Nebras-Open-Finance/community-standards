@@ -396,4 +396,13 @@ const show_finance_rates = ref(false)
     flex-grow: 1;
 }
 
+/* Dark theme (the parent consent-management frame's `dark` prop sets .cmi-dark
+   on an ancestor). */
+.cmi-dark .consent-page-text-frame-2 { background: #1A1A1A; }
+.cmi-dark .consent-page-text-mini-header-section-header,
+.cmi-dark .consent-page-dropdown-text { color: #FFFFFF; }
+.cmi-dark .consent-page-dropdown-subtext-section { background: #262626; }
+.cmi-dark .consent-page-dropdown-subtext { color: #B2B2B2; }
+.cmi-dark svg [stroke="#0C1441"] { stroke: #E9E9E9; }
+.cmi-dark svg [fill="black"] { fill: #FFFFFF; }
 </style>

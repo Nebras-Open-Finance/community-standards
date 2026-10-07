@@ -1,5 +1,5 @@
 <template>
-    <div class="consent-page-frame">
+    <div class="consent-page-frame" :class="{ 'consent-page-frame--dark': dark }">
 
         <div class="consent-page-header">
             <div class="consent-page-screen-name">
@@ -13,10 +13,11 @@
                 </svg>
                 <div class="consent-page-rectangle">
                 </div>
+                <AuthThemeToggle v-if="themeToggle" :dark="dark" @toggle="emit('update:dark', !dark)" />
 
             </div>
             <div class="consent-page-contents">
-                <img class="consent-page-logo" src="/images/journeys/ConsentPages/AlTareq.png" alt="AlTareq logo" />
+                <img class="consent-page-logo" :src="dark ? '/images/journeys/ConsentPages/AlTareq-white.svg' : '/images/journeys/ConsentPages/AlTareq.png'" alt="AlTareq logo" />
                 <div class="consent-page-progress">
                     <div class="consent-page-progress-1">
                         <div class="consent-page-progress-icon-active">
@@ -258,7 +259,7 @@
 
                                 <template v-else-if="show_to_account && (sharedState?.pii?.Initiation?.Creditor?.length ?? 0) > 1">
                                     <div v-for="(creditor, idx) in sharedState?.pii?.Initiation?.Creditor" :key="idx" class="consent-page-account-subtext-container-2" style="flex-direction: column; align-items: flex-start; gap: 4px; padding-bottom: 8px;">
-                                        <div style="font-size: 12px; color: #1a202c;">
+                                        <div class="consent-page-creditor-name">
                                             {{ creditor?.Creditor?.Name || creditor?.CreditorAccount?.Name?.en || creditor?.CreditorAccount?.Name?.ar }}
                                         </div>
                                         <div class="consent-page-account-subtext-container-2" style="width: 100%; margin-top: 2px;">
@@ -379,11 +380,21 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useSharedState } from '../composables/useSharedState.ts'
+import AuthThemeToggle from '../authorization-ui/AuthThemeToggle.vue'
 import { getPurposeDescription } from '../composables/aaniPaymentCodes.ts'
 import { formatDate } from '../composables/formatDate.ts'
 import DirhamAmount from './DirhamAmount.vue'
 
 const { sharedState, consentData } = useSharedState()
+
+// `dark` renders the dark-theme variant (styles in consent-page-dark.css);
+// `themeToggle` shows the sun/moon button in the TPP bar, which emits
+// `update:dark` so callers bind it with `v-model:dark`. Both default off.
+defineProps({
+  dark: { type: Boolean, default: false },
+  themeToggle: { type: Boolean, default: false },
+})
+const emit = defineEmits(['update:dark'])
 
 const show_payment_setup = ref(true)
 const show_payment_rules = ref(true)
@@ -399,6 +410,7 @@ const primaryAmount = computed(() => periodicSchedule.value?.Controls?.MaximumIn
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@100..900&display=swap');
+@import './consent-page-dark.css';
 
 
 .consent-page-frame {
@@ -1703,5 +1715,11 @@ flex-grow: 0;
     flex: none;
     order: 0;
     flex-grow: 0;
+}
+
+/* Creditor name in the multi-creditor list (dark override in consent-page-dark.css). */
+.consent-page-creditor-name {
+    font-size: 12px;
+    color: #1a202c;
 }
 </style>

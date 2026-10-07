@@ -1,5 +1,5 @@
 <template>
-    <div class="auth-page-frame">
+    <div class="auth-page-frame" :class="{ 'auth-page-frame--dark': dark }">
 
         <div class="auth-page-header">
             <div class="auth-page-screen-name">
@@ -13,10 +13,11 @@
                 </svg>
                 <div class="auth-page-rectangle">
                 </div>
+                <AuthThemeToggle v-if="themeToggle" :dark="dark" @toggle="emit('update:dark', !dark)" />
 
             </div>
             <div class="auth-page-contents">
-                <img class="auth-page-logo" src="/images/journeys/ConsentPages/AlTareq.png" alt="AlTareq logo" />
+                <img class="auth-page-logo" :src="dark ? '/images/journeys/ConsentPages/AlTareq-white.svg' : '/images/journeys/ConsentPages/AlTareq.png'" alt="AlTareq logo" />
                 <div class="auth-page-progress">
                     <div class="auth-page-progress-1">
                         <div class="auth-page-progress-icon-active">
@@ -481,6 +482,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useSharedState } from '../composables/useSharedState.ts'
+import AuthThemeToggle from './AuthThemeToggle.vue'
 import { getPurposeDescription } from '../composables/aaniPaymentCodes.ts'
 import { formatDate } from '../composables/formatDate.ts'
 import { getAuthPaymentPermissionText } from '../composables/serviceInitiationPermissionDescriptions.ts'
@@ -492,7 +494,15 @@ const { sharedState, consentData } = useSharedState()
 // collects for, the customer is told who the payment is really on behalf of.
 const merchantName = computed(() => sharedState.value?.pii?.Risk?.CreditorIndicators?.MerchantDetails?.MerchantName)
 
-const props = defineProps({ scheduleType: { type: String, default: 'variable' } })
+// `dark` renders the dark-theme variant (styles in authorization-page-dark.css);
+// `themeToggle` shows the sun/moon button in the LFI bar, which emits
+// `update:dark` so callers bind it with `v-model:dark`. Both default off.
+const props = defineProps({
+  scheduleType: { type: String, default: 'variable' },
+  dark: { type: Boolean, default: false },
+  themeToggle: { type: Boolean, default: false },
+})
+const emit = defineEmits(['update:dark'])
 const scheduleType = computed(() => props.scheduleType)
 
 const selected = ref(null)
@@ -541,6 +551,7 @@ const authPermissionText = computed(() =>
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@100..900&display=swap');
+@import './authorization-page-dark.css';
 
 
 .auth-page-frame {

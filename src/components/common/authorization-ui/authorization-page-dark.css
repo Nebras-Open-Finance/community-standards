@@ -1,0 +1,164 @@
+/*
+ * Dark-theme overrides for the LFI authorization-page wireframes.
+ * Imported by every Authorization*.vue component; rules apply only under
+ * `.auth-page-frame--dark` (set by the component's `dark` prop), so importing
+ * this file leaves the light theme untouched. Selectors for classes a given
+ * component doesn't use simply match nothing.
+ *
+ * Palette is taken from the AlTareq brand colours (supporting/Colors.svg):
+ * Data Black tints for surfaces, Grey for secondary text, Visionary Green
+ * for accents. The orange LFI top bar keeps its light-theme colour — it
+ * stands in for the LFI's own app chrome.
+ */
+
+/* Doubled class: the payment components declare their own `.auth-page-frame`
+   background after this import, so the dark rule needs the extra weight. */
+.auth-page-frame.auth-page-frame--dark {
+    background: #0C0C0C;
+    /* Unstyled text otherwise inherits the site's navy body colour, which is
+       unreadable on the dark page. */
+    color: #FFFFFF;
+    /* Keeps the frame edge visible when the surrounding site is also dark. */
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* --- Surfaces --- */
+
+.auth-page-frame--dark .auth-page-text-frame,
+.auth-page-frame--dark .auth-page-text-frame-2 {
+    background: #1A1A1A;
+}
+
+.auth-page-frame--dark .auth-page-account-card,
+.auth-page-frame--dark .auth-page-dropdown-subtext-section,
+.auth-page-frame--dark .ins-policy-card {
+    background: #262626;
+}
+
+/* --- Text --- */
+
+.auth-page-frame--dark .auth-page-text-header,
+.auth-page-frame--dark .auth-page-text-header-sub,
+.auth-page-frame--dark .auth-page-text-mini-header,
+.auth-page-frame--dark .auth-page-text,
+.auth-page-frame--dark .auth-page-text-bottom,
+.auth-page-frame--dark .auth-page-why-text,
+.auth-page-frame--dark .auth-page-account-title-text,
+.auth-page-frame--dark .auth-page-account-header-2,
+.auth-page-frame--dark .auth-page-dropdown-text,
+.auth-page-frame--dark .auth-page-button-description,
+.auth-page-frame--dark .auth-page-button-cancel-text,
+.auth-page-frame--dark .ins-auth-type-heading,
+.auth-page-frame--dark .ins-status-group-title,
+.auth-page-frame--dark .ins-policy-card-title,
+.auth-page-frame--dark .ins-policy-card-row-value {
+    color: #FFFFFF;
+}
+
+.auth-page-frame--dark .auth-page-account-subtext,
+.auth-page-frame--dark .auth-page-account-subtext-part,
+.auth-page-frame--dark .auth-page-account-currency-symbol,
+.auth-page-frame--dark .auth-page-account-amount,
+.auth-page-frame--dark .auth-page-account-amount-container,
+.auth-page-frame--dark .auth-page-account-amount-iban,
+.auth-page-frame--dark .auth-page-no-creditor-text,
+.auth-page-frame--dark .auth-page-dropdown-subtext,
+.auth-page-frame--dark .auth-page-progress-text,
+.auth-page-frame--dark .auth-page-progress-icon-text,
+.auth-page-frame--dark .benef-drop-label,
+.auth-page-frame--dark .benef-name,
+.auth-page-frame--dark .benef-iban-label,
+.auth-page-frame--dark .benef-iban,
+.auth-page-frame--dark .schedule-item-date,
+.auth-page-frame--dark .schedule-item-label,
+.auth-page-frame--dark .ins-policy-card-row,
+.auth-page-frame--dark .ins-policy-card-row-label,
+.auth-page-frame--dark .ins-policy-card-row--ref {
+    color: #B2B2B2;
+}
+
+.auth-page-frame--dark .auth-page-date-text {
+    color: #999999;
+}
+
+.auth-page-frame--dark .auth-page-text-min-header-section-header-text,
+.auth-page-frame--dark .schedule-show-more {
+    color: #00C8AF;
+}
+
+/* --- Progress stepper --- */
+
+.auth-page-frame--dark .auth-page-progress-icon {
+    background: #0C0C0C;
+    border-color: #666666;
+}
+
+.auth-page-frame--dark .auth-page-progress-line path[stroke="#D5D7E1"] {
+    stroke: #333333;
+}
+
+/* --- Account / policy checkboxes --- */
+
+.auth-page-frame--dark .auth-page-account-checkbox-inactive,
+.auth-page-frame--dark .ins-policy-checkbox {
+    background: transparent;
+    border-color: #666666;
+}
+
+.auth-page-frame--dark .auth-page-account-checkbox-inactive-2 {
+    border-color: #666666;
+}
+
+/* The white tick is always rendered; in light mode the white box hides it. */
+.auth-page-frame--dark .auth-page-account-checkbox-inactive:not(.is-active) .auth-page-account-checkbox-check {
+    visibility: hidden;
+}
+
+.auth-page-frame--dark .auth-page-account-checkbox-inactive.is-active,
+.auth-page-frame--dark .ins-policy-checkbox.is-active {
+    background: #FD6436;
+    border-color: #FD6436;
+}
+
+.auth-page-frame--dark .auth-page-account-checkbox-inactive-2.is-active {
+    border-color: #FD6436;
+}
+
+/* --- Inline SVG icons (hard-coded navy/black strokes and fills) --- */
+
+.auth-page-frame--dark .ins-perm-icon {
+    color: #E9E9E9;
+}
+
+.auth-page-frame--dark svg [stroke="#0C1441"],
+.auth-page-frame--dark svg [stroke="black"] {
+    stroke: #E9E9E9;
+}
+
+.auth-page-frame--dark svg [fill="black"] {
+    fill: #FFFFFF;
+}
+
+.auth-page-frame--dark svg [fill="#36BFD4"],
+.auth-page-frame--dark .auth-page-mini-header-icon path {
+    fill: #00C8AF;
+}
+
+.auth-page-frame--dark .auth-page-dropdown-arrow path {
+    fill: #FFFFFF;
+    fill-opacity: 0.5;
+}
+
+/* --- Buttons --- */
+
+/* The light gradient fades to black on the right, which disappears into the
+   dark page; in dark mode it ends on Digital Blue instead. */
+.auth-page-frame--dark .auth-page-button {
+    background: linear-gradient(84.64deg, #00C8AF 0%, #005AD7 70%, #0047B0 100%);
+}
+
+.auth-page-frame--dark .auth-page-button-cancel {
+    background:
+        linear-gradient(#0C0C0C, #0C0C0C) padding-box,
+        linear-gradient(90deg, #FFFFFF 0%, #005AD7 50%, #00C8AF 100%) border-box;
+}

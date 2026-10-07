@@ -393,4 +393,18 @@ function paymentStatusClass(status) {
   text-align: center;
   padding: 20px 0;
 }
+
+/* Dark theme (the parent consent-management frame's `dark` prop sets .cmi-dark
+   on an ancestor). */
+.cmi-dark .cpd-frame { background: #1A1A1A; }
+.cmi-dark .cpd-tab,
+.cmi-dark .cpd-section-title,
+.cmi-dark .cpd-value,
+.cmi-dark .cpd-amount,
+.cmi-dark .cpd-delegated-text { color: #FFFFFF; }
+.cmi-dark .cpd-tab-active { color: #35bfd4; }
+.cmi-dark .cpd-label,
+.cmi-dark .cpd-payment-datetime,
+.cmi-dark .cpd-empty { color: #B2B2B2; }
+.cmi-dark .cpd-payment-entry-bordered { border-bottom-color: rgba(255, 255, 255, 0.12); }
 </style>

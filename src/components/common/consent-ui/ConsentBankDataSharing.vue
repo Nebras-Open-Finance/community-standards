@@ -1,5 +1,5 @@
 <template>
-    <div class="consent-page-frame">
+    <div class="consent-page-frame" :class="{ 'consent-page-frame--dark': dark }">
         <div class="consent-page-header">
             <div class="consent-page-screen-name">
                 <div class="consent-page-tpp-text">
@@ -13,9 +13,11 @@
                 <div class="consent-page-rectangle">
                 </div>
 
+                <AuthThemeToggle v-if="themeToggle" :dark="dark" @toggle="emit('update:dark', !dark)" />
+
             </div>
             <div class="consent-page-contents">
-                <img class="consent-page-logo" src="/images/journeys/ConsentPages/AlTareq.png" alt="AlTareq logo" />
+                <img class="consent-page-logo" :src="dark ? '/images/journeys/ConsentPages/AlTareq-white.svg' : '/images/journeys/ConsentPages/AlTareq.png'" alt="AlTareq logo" />
                 <div class="consent-page-progress">
                     <div class="consent-page-progress-1">
                         <div class="consent-page-progress-icon-active">
@@ -560,10 +562,20 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useSharedState } from '../composables/useSharedState.ts'
+import AuthThemeToggle from '../authorization-ui/AuthThemeToggle.vue'
 import { formatDateTime as formatDate } from '../composables/formatDate.ts'
 import { permissionDescriptions } from '../composables/permissionDescriptions.ts'
 
 const { consentData } = useSharedState()
+
+// `dark` renders the dark-theme variant (styles in consent-page-dark.css);
+// `themeToggle` shows the sun/moon button in the TPP bar, which emits
+// `update:dark` so callers bind it with `v-model:dark`. Both default off.
+defineProps({
+  dark: { type: Boolean, default: false },
+  themeToggle: { type: Boolean, default: false },
+})
+const emit = defineEmits(['update:dark'])
 const show_tpp_why = ref(false)
 const show_account_details = ref(false)
 const show_regular_payments = ref(false)
@@ -576,4 +588,5 @@ const show_finance_rates = ref(false)
 
 <style scoped>
 @import './consent-page.css';
+@import './consent-page-dark.css';
 </style>

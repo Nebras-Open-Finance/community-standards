@@ -7,6 +7,11 @@ meta:
 </route>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+
+// Theme of the AlTareq Connections wireframe only — independent of the site theme.
+const cmiDark = ref(false)
+
 interface CmiExample {
   num: number
   title: string
@@ -73,7 +78,7 @@ const examples: CmiExample[] = [
       <ClientOnly>
         <div class="ed-doc__previews">
           <figure class="ed-doc__preview">
-            <ConsentManagementConnections mode="payments" perspective="lfi" />
+            <ConsentManagementConnections v-model:dark="cmiDark" theme-toggle mode="payments" perspective="lfi" />
           </figure>
         </div>
       </ClientOnly>

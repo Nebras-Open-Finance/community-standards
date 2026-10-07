@@ -1,0 +1,98 @@
+/*
+ * Dark-theme overrides for the TPP consent-page wireframes — the TPP-side
+ * counterpart of authorization-ui/authorization-page-dark.css, using the same
+ * AlTareq brand palette. Rules apply only under `.consent-page-frame--dark`
+ * (set by the component's `dark` prop), so importing this file leaves the
+ * light theme untouched. Selectors for classes a given component doesn't use
+ * simply match nothing. The blue TPP top bar keeps its light-theme colour —
+ * it stands in for the TPP's own app chrome.
+ */
+
+/* Doubled class so the root rule outweighs any same-specificity
+   `.consent-page-frame` background a component declares after this import. */
+.consent-page-frame.consent-page-frame--dark {
+    background: #0C0C0C;
+    /* Unstyled text (e.g. payment amounts) otherwise inherits the site's navy
+       body colour, which is unreadable on the dark page. */
+    color: #FFFFFF;
+    /* Keeps the frame edge visible when the surrounding site is also dark. */
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* --- Surfaces --- */
+
+.consent-page-frame--dark .consent-page-text-frame,
+.consent-page-frame--dark .consent-page-text-frame-2 {
+    background: #1A1A1A;
+}
+
+.consent-page-frame--dark .consent-page-dropdown-subtext-section,
+.consent-page-frame--dark .consent-page-account-card {
+    background: #262626;
+}
+
+/* --- Text --- */
+
+.consent-page-frame--dark .consent-page-text-header,
+.consent-page-frame--dark .consent-page-text-sub-header,
+.consent-page-frame--dark .consent-page-text-bottom,
+.consent-page-frame--dark .consent-page-account-title-text,
+.consent-page-frame--dark .consent-page-creditor-name,
+.consent-page-frame--dark .consent-page-text-mini-header,
+.consent-page-frame--dark .consent-page-text-mini-header-section-header,
+.consent-page-frame--dark .consent-page-text,
+.consent-page-frame--dark .consent-page-why-text,
+.consent-page-frame--dark .consent-page-dropdown-text,
+.consent-page-frame--dark .consent-page-button-description {
+    color: #FFFFFF;
+}
+
+.consent-page-frame--dark .consent-page-dropdown-subtext,
+.consent-page-frame--dark .consent-page-account-subtext,
+.consent-page-frame--dark .consent-page-account-subtext-part,
+.consent-page-frame--dark .consent-page-account-amount,
+.consent-page-frame--dark .consent-page-account-amount-iban,
+.consent-page-frame--dark .schedule-item-date,
+.consent-page-frame--dark .schedule-item-label,
+.consent-page-frame--dark .consent-page-progress-text,
+.consent-page-frame--dark .consent-page-progress-icon-text {
+    color: #B2B2B2;
+}
+
+.consent-page-frame--dark .consent-page-date-text {
+    color: #999999;
+}
+
+/* --- Progress stepper --- */
+
+.consent-page-frame--dark .consent-page-progress-icon {
+    background: #0C0C0C;
+    border-color: #666666;
+}
+
+.consent-page-frame--dark .consent-page-progress-line path[stroke="#D5D7E1"] {
+    stroke: #333333;
+}
+
+/* --- Inline SVG icons (hard-coded navy/black strokes and fills) --- */
+
+.consent-page-frame--dark .ins-perm-icon {
+    color: #E9E9E9;
+}
+
+.consent-page-frame--dark svg [stroke="#0C1441"],
+.consent-page-frame--dark svg [stroke="black"] {
+    stroke: #E9E9E9;
+}
+
+.consent-page-frame--dark svg [fill="black"] {
+    fill: #FFFFFF;
+}
+
+/* --- Button --- */
+
+/* Same dark-mode gradient as the LFI "Authorize using AlTareq" button: the
+   light gradient fades to black, which disappears into the dark page. */
+.consent-page-frame--dark .consent-page-button {
+    background: linear-gradient(84.64deg, #00C8AF 0%, #005AD7 70%, #0047B0 100%);
+}

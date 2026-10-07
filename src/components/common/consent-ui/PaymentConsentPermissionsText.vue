@@ -42,4 +42,9 @@ const text = computed(() =>
   align-self: stretch;
   flex-grow: 0;
 }
+
+/* Dark theme (the parent consent page's `dark` prop sets
+   .consent-page-frame--dark on an ancestor). */
+.consent-page-frame--dark .payment-perm-frame { background: #1A1A1A; }
+.consent-page-frame--dark .payment-perm-text { color: #FFFFFF; }
 </style>

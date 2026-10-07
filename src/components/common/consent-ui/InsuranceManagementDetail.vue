@@ -8,6 +8,7 @@ import {
 import { insurancePolicyStatusGroup } from '../composables/insurancePolicyStatus.ts'
 import { generateConsentPolicies } from '../composables/generateConsentPolicies.ts'
 import DirhamAmount from './DirhamAmount.vue'
+import AuthThemeToggle from '../authorization-ui/AuthThemeToggle.vue'
 import { formatDate } from '../composables/formatDate.ts'
 
 const props = defineProps({
@@ -15,9 +16,12 @@ const props = defineProps({
   allConnections: { type: Array, default: () => [] },
   perspective: { type: String, default: 'tpp' },
   headerColor: { type: String, default: '' },
+  // Dark-theme variant and its top-bar toggle; see InsuranceManagementConnections.
+  dark: { type: Boolean, default: false },
+  themeToggle: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['back', 'navigate'])
+const emit = defineEmits(['back', 'navigate', 'update:dark'])
 
 const isLfi = computed(() => props.perspective === 'lfi')
 const barTitle = computed(() => isLfi.value ? 'LFI' : 'TPP')
@@ -105,11 +109,11 @@ const iconBase = (paths) =>
   () =>
     h(
       'svg',
-      { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', xmlns: 'http://www.w3.org/2000/svg' },
+      { class: 'imd-perm-icon', width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', xmlns: 'http://www.w3.org/2000/svg' },
       paths.map((p) =>
         h('path', {
           ...p,
-          stroke: '#0C1441',
+          stroke: 'currentColor',
           'stroke-width': p['stroke-width'] || 1.5,
           'stroke-linecap': 'round',
           'stroke-linejoin': 'round',
@@ -227,7 +231,7 @@ const confirmImpactText = computed(() => {
 <template>
   <div
     class="imd-frame"
-    :class="{ 'imd-lfi': isLfi }"
+    :class="{ 'imd-lfi': isLfi, 'cmi-dark': dark }"
     :style="props.headerColor ? { '--cmi-header-color': props.headerColor } : undefined"
   >
     <div class="imd-screen-name">
@@ -243,6 +247,7 @@ const confirmImpactText = computed(() => {
         </svg>
       </button>
       <div class="imd-screen-title">{{ barTitle }}</div>
+      <AuthThemeToggle v-if="themeToggle" :dark="dark" @toggle="emit('update:dark', !dark)" />
     </div>
 
     <!-- Main detail view -->
@@ -481,6 +486,7 @@ const confirmImpactText = computed(() => {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import './consent-management-dark.css';
 
 .imd-frame {
   display: flex; flex-direction: column; align-items: center;
@@ -818,4 +824,11 @@ const confirmImpactText = computed(() => {
 }
 
 .imd-lfi .imd-screen-bar { background: var(--cmi-header-color, #FD6436); }
+
+/* Permission icons are script-built functional components, so their inner
+   paths don't carry this component's scope; they stroke with currentColor
+   and take their colour from the svg root, which does. */
+.imd-perm-icon {
+  color: #0C1441;
+}
 </style>

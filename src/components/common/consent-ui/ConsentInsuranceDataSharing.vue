@@ -1,5 +1,5 @@
 <template>
-    <div class="consent-page-frame">
+    <div class="consent-page-frame" :class="{ 'consent-page-frame--dark': dark }">
         <div class="consent-page-header">
             <div class="consent-page-screen-name">
                 <div class="consent-page-tpp-text">
@@ -10,9 +10,10 @@
                     <path d="M9.41418 16.7071L1.41418 8.70711L9.41418 0.707108" stroke="white" stroke-width="2" />
                 </svg>
                 <div class="consent-page-rectangle"></div>
+                <AuthThemeToggle v-if="themeToggle" :dark="dark" @toggle="emit('update:dark', !dark)" />
             </div>
             <div class="consent-page-contents">
-                <img class="consent-page-logo" src="/images/journeys/ConsentPages/AlTareq.png" alt="AlTareq logo" />
+                <img class="consent-page-logo" :src="dark ? '/images/journeys/ConsentPages/AlTareq-white.svg' : '/images/journeys/ConsentPages/AlTareq.png'" alt="AlTareq logo" />
                 <div class="consent-page-progress">
                     <div class="consent-page-progress-1">
                         <div class="consent-page-progress-icon-active">
@@ -236,6 +237,7 @@
 <script setup lang="ts">
 import { ref, computed, h } from 'vue'
 import { useSharedState } from '../composables/useSharedState.ts'
+import AuthThemeToggle from '../authorization-ui/AuthThemeToggle.vue'
 import { formatDateTime as formatDate } from '../composables/formatDate.ts'
 import {
     insurancePermissionDescriptions,
@@ -244,6 +246,15 @@ import {
 } from '../composables/insurancePermissionDescriptions.ts'
 
 const { consentData } = useSharedState()
+
+// `dark` renders the dark-theme variant (styles in consent-page-dark.css);
+// `themeToggle` shows the sun/moon button in the TPP bar, which emits
+// `update:dark` so callers bind it with `v-model:dark`. Both default off.
+defineProps({
+  dark: { type: Boolean, default: false },
+  themeToggle: { type: Boolean, default: false },
+})
+const emit = defineEmits(['update:dark'])
 const show_tpp_why = ref(false)
 
 // Open-state tracked per (InsuranceType, Permission) so each accordion is independent.
@@ -273,11 +284,11 @@ const iconBase = (paths: Array<Record<string, any>>) =>
     () =>
         h(
             'svg',
-            { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', xmlns: 'http://www.w3.org/2000/svg' },
+            { class: 'ins-perm-icon', width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', xmlns: 'http://www.w3.org/2000/svg' },
             paths.map((p) =>
                 h('path', {
                     ...p,
-                    stroke: '#0C1441',
+                    stroke: 'currentColor',
                     'stroke-width': p['stroke-width'] || 1.5,
                     'stroke-linecap': 'round',
                     'stroke-linejoin': 'round',
@@ -340,6 +351,7 @@ const permissionIcon = (permission: string) => icons[permission] || icons.ReadIn
 
 <style scoped>
 @import './consent-page.css';
+@import './consent-page-dark.css';
 
 /* Insurance-only: per-type name promoted to the section heading
    (the 'Insurance Type' mini-header is intentionally omitted). */
@@ -397,5 +409,12 @@ const permissionIcon = (permission: string) => icons[permission] || icons.ReadIn
    top/bottom. */
 .consent-page-text-frame-2 .consent-page-date-range {
     height: auto;
+}
+
+/* Permission icons are script-built functional components, so their inner
+   paths don't carry this component's scope; they stroke with currentColor
+   and take their colour from the svg root, which does. */
+.ins-perm-icon {
+    color: #0C1441;
 }
 </style>

@@ -5,16 +5,20 @@ import { CONSENT_EXAMPLE_STATE } from './consentExampleState.ts'
 import ConsentDataSharingPermissions from './ConsentDataSharingPermissions.vue'
 import ConsentPaymentPermissions from './ConsentPaymentPermissions.vue'
 import DirhamAmount from './DirhamAmount.vue'
+import AuthThemeToggle from '../authorization-ui/AuthThemeToggle.vue'
 import { formatDate } from '../composables/formatDate.ts'
 
 const props = defineProps({
   connection: { type: Object, required: true },
   allConnections: { type: Array, default: () => [] },
   perspective: { type: String, default: 'tpp' },
-  headerColor: { type: String, default: '' }
+  headerColor: { type: String, default: '' },
+  // Dark-theme variant and its top-bar toggle; see ConsentManagementConnections.
+  dark: { type: Boolean, default: false },
+  themeToggle: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['back', 'navigate'])
+const emit = defineEmits(['back', 'navigate', 'update:dark'])
 
 const { updateField } = useSharedState()
 
@@ -254,7 +258,7 @@ provide('detailConnection', computed(() => props.connection))
 <template>
   <div
     class="cmd-frame"
-    :class="{ 'cmd-lfi': isLfi }"
+    :class="{ 'cmd-lfi': isLfi, 'cmi-dark': dark }"
     :style="props.headerColor ? { '--cmi-header-color': props.headerColor } : undefined"
   >
     <div class="cmd-screen-name">
@@ -265,6 +269,7 @@ provide('detailConnection', computed(() => props.connection))
         </svg>
       </button>
       <div class="cmd-screen-title">{{ barTitle }}</div>
+      <AuthThemeToggle v-if="themeToggle" :dark="dark" @toggle="emit('update:dark', !dark)" />
     </div>
 
     <!-- ── Main detail view ───────────────────────────────────────────── -->
@@ -647,6 +652,7 @@ provide('detailConnection', computed(() => props.connection))
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import './consent-management-dark.css';
 
 .cmd-frame {
   display: flex;

@@ -1,11 +1,20 @@
+<script setup>
+import { ref } from 'vue'
+
+// Themes of the TPP consent and LFI authorisation wireframes — each toggled
+// on its own, independent of the site theme.
+const consentDark = ref(false)
+const authDark = ref(false)
+</script>
+
 <template>
   <div class="wf-frame">
     <ConsentAuthLayout>
       <template #consent>
-        <ConsentPeriodicSchedule />
+        <ConsentPeriodicSchedule v-model:dark="consentDark" theme-toggle />
       </template>
       <template #auth>
-        <AuthorizationPeriodicSchedule />
+        <AuthorizationPeriodicSchedule v-model:dark="authDark" theme-toggle />
       </template>
     </ConsentAuthLayout>
   </div>

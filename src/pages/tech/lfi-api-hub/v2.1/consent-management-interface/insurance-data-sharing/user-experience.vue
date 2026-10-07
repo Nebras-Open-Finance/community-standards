@@ -7,6 +7,11 @@ meta:
 </route>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+
+// Theme of the AlTareq Connections wireframe only — independent of the site theme.
+const cmiDark = ref(false)
+
 </script>
 
 <template>
@@ -55,7 +60,7 @@ meta:
       <ClientOnly>
         <div class="ed-doc__previews">
           <figure class="ed-doc__preview">
-            <InsuranceManagementConnections perspective="lfi" />
+            <InsuranceManagementConnections v-model:dark="cmiDark" theme-toggle perspective="lfi" />
           </figure>
         </div>
       </ClientOnly>

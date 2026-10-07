@@ -1,5 +1,5 @@
 <template>
-    <div class="auth-page-frame">
+    <div class="auth-page-frame" :class="{ 'auth-page-frame--dark': dark }">
 
         <div class="auth-page-header">
             <div class="auth-page-screen-name">
@@ -9,9 +9,10 @@
                     <path d="M9.41418 16.7071L1.41418 8.70711L9.41418 0.707108" stroke="white" stroke-width="2" />
                 </svg>
                 <div class="auth-page-rectangle"></div>
+                <AuthThemeToggle v-if="themeToggle" :dark="dark" @toggle="emit('update:dark', !dark)" />
             </div>
             <div class="auth-page-contents">
-                <img class="auth-page-logo" src="/images/journeys/ConsentPages/AlTareq.png" alt="AlTareq logo" />
+                <img class="auth-page-logo" :src="dark ? '/images/journeys/ConsentPages/AlTareq-white.svg' : '/images/journeys/ConsentPages/AlTareq.png'" alt="AlTareq logo" />
                 <div class="auth-page-progress">
                     <div class="auth-page-progress-1">
                         <div class="auth-page-progress-icon-active">
@@ -286,6 +287,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, h } from 'vue'
 import { useSharedState } from '../composables/useSharedState.ts'
+import AuthThemeToggle from './AuthThemeToggle.vue'
 import { formatDateTime as formatDate } from '../composables/formatDate.ts'
 import {
     insurancePolicyStatusGroup,
@@ -300,6 +302,15 @@ import {
 import DirhamAmount from '../consent-ui/DirhamAmount.vue'
 
 const { sharedState, consentData } = useSharedState()
+
+// `dark` renders the dark-theme variant (styles in authorization-page-dark.css);
+// `themeToggle` shows the sun/moon button in the LFI bar, which emits
+// `update:dark` so callers bind it with `v-model:dark`. Both default off.
+defineProps({
+  dark: { type: Boolean, default: false },
+  themeToggle: { type: Boolean, default: false },
+})
+const emit = defineEmits(['update:dark'])
 const show_inactive = ref(false)
 const show_information = ref(true)
 
@@ -393,11 +404,11 @@ const iconBase = (paths: Array<Record<string, any>>) =>
     () =>
         h(
             'svg',
-            { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', xmlns: 'http://www.w3.org/2000/svg' },
+            { class: 'ins-perm-icon', width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', xmlns: 'http://www.w3.org/2000/svg' },
             paths.map((p) =>
                 h('path', {
                     ...p,
-                    stroke: '#0C1441',
+                    stroke: 'currentColor',
                     'stroke-width': p['stroke-width'] || 1.5,
                     'stroke-linecap': 'round',
                     'stroke-linejoin': 'round',
@@ -460,6 +471,7 @@ const permissionIcon = (permission: string) => icons[permission] || icons.ReadIn
 
 <style scoped>
 @import './authorization-page.css';
+@import './authorization-page-dark.css';
 
 /* Insurance-only: the LFI auth screen groups visible policies by status
    (Active/Inactive) instead of the bank's flat account list. These rules
@@ -698,5 +710,12 @@ const permissionIcon = (permission: string) => icons[permission] || icons.ReadIn
    default padding and is intentionally tighter. */
 .auth-page-text-frame:has(.auth-page-error-image-container) {
     padding-bottom: 28px;
+}
+
+/* Permission icons are script-built functional components, so their inner
+   paths don't carry this component's scope; they stroke with currentColor
+   and take their colour from the svg root, which does. */
+.ins-perm-icon {
+    color: #0C1441;
 }
 </style>

@@ -58,6 +58,7 @@ declare module 'vue' {
     AuthorizationPeriodicSchedule: typeof import('./components/common/authorization-ui/AuthorizationPeriodicSchedule.vue')['default']
     AuthorizationSingleInstantPayment: typeof import('./components/common/authorization-ui/AuthorizationSingleInstantPayment.vue')['default']
     AuthorizationSIPCOP: typeof import('./components/common/authorization-ui/AuthorizationSIPCOP.vue')['default']
+    AuthThemeToggle: typeof import('./components/common/authorization-ui/AuthThemeToggle.vue')['default']
     BioPayDraftBanner: typeof import('./components/chrome/BioPayDraftBanner.vue')['default']
     BpActorTable: typeof import('./components/biopay/BpActorTable.vue')['default']
     BpCardFlow: typeof import('./components/biopay/BpCardFlow.vue')['default']
