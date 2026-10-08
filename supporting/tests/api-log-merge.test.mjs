@@ -126,21 +126,30 @@ describe('API log merge', () => {
     const baseline = rowsOf(dir)
     const beforeShards = manifestOf(dir).shards
 
-    // Re-date the last two days of the log to straddle 30 Sep / 1 Oct 2026.
+    // Re-date the last two days of the log to straddle the end of its latest
+    // quarter, so the export always rolls over into a quarter with no shard yet.
     const distinct = [...new Set(baseline.map((r) => r.date))].sort()
     const [penultimate, last] = distinct.slice(-2)
-    const remap = { [penultimate]: '2026-09-30', [last]: '2026-10-01' }
+    const quarterEnd = new Date(Date.UTC(
+      Number(last.slice(0, 4)),
+      Math.ceil(Number(last.slice(5, 7)) / 3) * 3,
+      0,
+    )).toISOString().slice(0, 10)
+    const quarterStart = nextDay(quarterEnd)
+    const newShard = `api-log-${quarterOf(quarterStart)}.json`
+    const remap = { [penultimate]: quarterEnd, [last]: quarterStart }
 
     const exportPath = join(dir, 'export.json')
     exportFrom(dir, latestShard, penultimate, exportPath, (d) => remap[d] ?? d)
 
     const { shards } = mergeApiLog({ apiDir: dir, exportPath })
 
-    assert.ok(shards.includes('api-log-q4-26.json'), 'q4-26 shard was not created')
-    assert.ok(existsSync(join(dir, 'api-log-q4-26.json')), 'q4-26 file was not written')
+    assert.ok(!beforeShards.includes(newShard), `${newShard} already existed before the merge`)
+    assert.ok(shards.includes(newShard), `${newShard} was not created`)
+    assert.ok(existsSync(join(dir, newShard)), `${newShard} was not written`)
     assert.deepEqual(
       shards,
-      [...beforeShards.filter((f) => f !== 'api-log-q4-26.json'), 'api-log-q4-26.json'],
+      [...beforeShards, newShard],
       'manifest lost its chronological order after the rollover',
     )
 
@@ -153,8 +162,8 @@ describe('API log merge', () => {
     }
 
     const merged = rowsOf(dir)
-    assert.ok(merged.some((r) => r.date === '2026-09-30'), 'q3 side of the boundary is missing')
-    assert.ok(merged.some((r) => r.date === '2026-10-01'), 'q4 side of the boundary is missing')
+    assert.ok(merged.some((r) => r.date === quarterEnd), 'old-quarter side of the boundary is missing')
+    assert.ok(merged.some((r) => r.date === quarterStart), 'new-quarter side of the boundary is missing')
     assert.deepEqual(
       merged.filter((r) => r.date < penultimate),
       baseline.filter((r) => r.date < penultimate),
