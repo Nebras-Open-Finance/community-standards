@@ -20,6 +20,7 @@ import {
 } from 'chart.js'
 import type { AnyRow } from '@/stores/dashboard'
 import { chartTokens, onThemeChange } from '@/composables/useChartTheme'
+import { METHOD_COLOURS } from '@/data/dashboard-charts'
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
 
@@ -52,6 +53,11 @@ const PALETTE: readonly string[] = [
   '#008B78',
   '#5F6A8F',
 ]
+
+function stackColour(stackBy: string | undefined, sKey: string, i: number): string {
+  if (stackBy === 'method' && METHOD_COLOURS[sKey]) return METHOD_COLOURS[sKey]
+  return PALETTE[i % PALETTE.length] as string
+}
 
 function buildTooltip() {
   const t = chartTokens()
@@ -115,8 +121,8 @@ function aggregate(
   const datasets = stacks.map((sKey, i) => ({
     label: stackBy ? sKey : props.title,
     data: groupLabels.map(g => bucket[g]?.[sKey] ?? 0),
-    backgroundColor: PALETTE[i % PALETTE.length],
-    borderColor: PALETTE[i % PALETTE.length],
+    backgroundColor: stackColour(stackBy, sKey, i),
+    borderColor: stackColour(stackBy, sKey, i),
     borderWidth: 0,
     borderRadius: 0,
     maxBarThickness: 60,

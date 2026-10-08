@@ -27,10 +27,22 @@ export type ChartComponent =
 export interface ChartProps {
   groupBy?: string
   stackBy?: string
+  /** Side-by-side bars per value of this field (unlike `stackBy`, never summed). */
+  splitBy?: string
   valueKey?: string
   mode?: 'avg-line' | 'avg-bar' | 'p-percentiles' | 'histogram'
   grouped?: boolean
   numeratorType?: 'doConfirm' | 'doFail' | 'dropOff'
+}
+
+// HTTP methods keep the same colour on every chart and whichever subset
+// survives the filters, so GET is always the same bar colour.
+export const METHOD_COLOURS: Readonly<Record<string, string>> = {
+  GET:    '#00277F',
+  POST:   '#00C2A9',
+  PATCH:  '#B37819',
+  PUT:    '#008BE4',
+  DELETE: '#5F6A8F',
 }
 
 export interface ChartConfig {
@@ -152,7 +164,7 @@ export const CHART_REGISTRY: Readonly<Record<string, readonly ChartConfig[]>> = 
     { id: 'vol_by_lfi',      title: 'Successful Volume by LFI',            component: 'volume', props: { groupBy: 'lfi' },                       dataSource: 'api-success', hideIfFiltered: 'lfi' },
     { id: 'vol_by_version',  title: 'Successful Volume by API Version',    component: 'volume', props: { groupBy: 'version' },                   dataSource: 'api-success' },
     { id: 'vol_by_tpp',      title: 'Successful Volume by TPP',            component: 'volume', props: { groupBy: 'tpp' },                       dataSource: 'api-success', hideIfFiltered: 'tpp' },
-    { id: 'vol_by_endpoint', title: 'Successful Volume by Endpoint',       component: 'volume', props: { groupBy: 'endpoint' },                  dataSource: 'api-success', showOnlyIfFiltered: true },
+    { id: 'vol_by_endpoint', title: 'Successful Volume by Endpoint',       component: 'volume', props: { groupBy: 'endpoint', stackBy: 'method' }, dataSource: 'api-success', showOnlyIfFiltered: true },
   ],
 
   'api-errors': [
@@ -167,7 +179,7 @@ export const CHART_REGISTRY: Readonly<Record<string, readonly ChartConfig[]>> = 
   'api-response-times': [
     { id: 'rt_avg_month',   title: 'Avg Response Time by Month', component: 'rt',        props: { mode: 'avg-line' },                   dataSource: 'rt' },
     { id: 'rt_by_family',   title: 'Avg Latency by API Family',  component: 'rt',        props: { mode: 'avg-bar', groupBy: 'family' }, dataSource: 'rt', hideIfFiltered: 'apiFamily' },
-    { id: 'rt_by_endpoint', title: 'Avg Latency by Endpoint',    component: 'rt',        props: { mode: 'avg-bar', groupBy: 'endpoint' }, dataSource: 'rt', showOnlyIfFiltered: 'apiFamily' },
+    { id: 'rt_by_endpoint', title: 'Avg Latency by Endpoint',    component: 'rt',        props: { mode: 'avg-bar', groupBy: 'endpoint', splitBy: 'method' }, dataSource: 'rt', showOnlyIfFiltered: 'apiFamily' },
     { id: 'rt_by_lfi',      title: 'Avg Latency by LFI',         component: 'rt',        props: { mode: 'avg-bar', groupBy: 'lfi' },    dataSource: 'rt', hideIfFiltered: 'lfi' },
     { id: 'rt_ranked',      title: 'Slowest Endpoints (Top 8)',  component: 'rt-ranked',                                                dataSource: 'rt' },
   ],

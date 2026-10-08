@@ -23,6 +23,7 @@ import {
   SECTORS,
   sectionInSector,
   firstSectionOfSector,
+  type FilterKey,
   type NavSection,
   type Sector,
 } from '@/data/dashboard-charts'
@@ -65,7 +66,51 @@ if (!sectionInSector(state.activeSection, state.sector)) {
   state.activeSection = firstSectionOfSector(state.sector)
 }
 
+// Bind the filters to repeated search-params so a refresh or a shared link
+// keeps them: `?lfi=a&lfi=b&tpp=…&month=2026-09&family=payment&full=0`. The
+// "Full months only" toggle defaults on, so only its off state is written.
+// Values aren't whitelisted — the option lists load asynchronously — but an
+// unknown value only matches nothing and shows as a removable chip.
+const FILTER_PARAMS: Readonly<Record<FilterKey, string>> = {
+  lfi: 'lfi',
+  tpp: 'tpp',
+  month: 'month',
+  apiFamily: 'family',
+}
+const FILTER_KEYS = Object.keys(FILTER_PARAMS) as FilterKey[]
+
+// Runs after `useUrlSearchParam`'s own mount hook. The sector MUST be applied
+// first: `setSector` clears the filters, so applying it afterwards (as the
+// queued `sectorParam` watcher otherwise would) would discard them.
+function readFiltersFromUrl(): void {
+  const params = new URLSearchParams(window.location.search)
+  const sector = params.get('sector')
+  if (sector && (SECTOR_IDS as readonly string[]).includes(sector)) setSector(sector as Sector)
+  for (const key of FILTER_KEYS) {
+    state.filters[key] = [...new Set(params.getAll(FILTER_PARAMS[key]).filter(Boolean))]
+  }
+  state.excludePartialMonths = params.get('full') !== '0'
+}
+
+function writeFiltersToUrl(): void {
+  const url = new URL(window.location.href)
+  for (const key of FILTER_KEYS) {
+    url.searchParams.delete(FILTER_PARAMS[key])
+    for (const value of state.filters[key]) url.searchParams.append(FILTER_PARAMS[key], value)
+  }
+  if (state.excludePartialMonths) url.searchParams.delete('full')
+  else url.searchParams.set('full', '0')
+  // Keep vue-router's history state so back/forward still work.
+  window.history.replaceState(window.history.state, '', url.toString())
+}
+
 onMounted(() => {
+  readFiltersFromUrl()
+  watch(
+    () => [state.filters, state.excludePartialMonths],
+    writeFiltersToUrl,
+    { deep: true },
+  )
   ensureDashboardData()
   if (typeof window !== 'undefined' && window.innerWidth <= MOBILE_BREAKPOINT) {
     state.sidebarCollapsed = true

@@ -87,7 +87,7 @@ const hasActiveFilters = computed<boolean>(() =>
       <label
         class="db-filters__chip db-filters__chip--toggle"
         :class="{ 'is-off': !state.excludePartialMonths }"
-        title="Hide the current calendar month while it is still in progress."
+        title="Hide any month the data does not yet cover in full."
       >
         <input
           type="checkbox"

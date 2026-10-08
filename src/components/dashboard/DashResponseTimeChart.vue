@@ -18,6 +18,7 @@ import {
 } from 'chart.js'
 import type { AnyRow } from '@/stores/dashboard'
 import { chartTokens, onThemeChange } from '@/composables/useChartTheme'
+import { METHOD_COLOURS } from '@/data/dashboard-charts'
 
 Chart.register(
   BarController, BarElement,
@@ -32,6 +33,7 @@ interface Props {
   data:    readonly AnyRow[]
   mode?:   Mode
   groupBy?: string
+  splitBy?: string
   title?:  string
 }
 
@@ -148,6 +150,7 @@ function buildAvgLine(): Chart {
 }
 
 function buildAvgBar(): Chart {
+  if (props.splitBy) return buildAvgBarSplit(props.splitBy)
   const byGroup: Record<string, { total: number; n: number }> = {}
   for (const r of props.data) {
     const key = String(readField(r, props.groupBy) ?? 'Unknown')
@@ -189,6 +192,65 @@ function buildAvgBar(): Chart {
       plugins: {
         legend: { display: false },
         tooltip: { ...s.TOOLTIP, callbacks: { label: (ctx) => `${ctx.parsed.y}ms` } },
+      },
+      scales: {
+        y: { beginAtZero: true, grid: s.GRID, ticks: { ...s.AXIS_TICK, callback: (v) => `${v}ms` } },
+        x: { grid: { display: false }, ticks: s.AXIS_LABEL },
+      },
+    },
+  }
+  return new Chart(canvasRef.value!, config)
+}
+
+// One bar per `splitBy` value inside each group, side by side. Latency is an
+// average, so the bars are never stacked — summing them would mean nothing.
+// A group with no rows for a split value gets a null, which `skipNull` drops
+// rather than leaving a gap.
+function buildAvgBarSplit(splitBy: string): Chart {
+  const byGroup: Record<string, Record<string, { total: number; n: number }>> = {}
+  const splitKeys = new Set<string>()
+  for (const r of props.data) {
+    const key = String(readField(r, props.groupBy) ?? 'Unknown')
+    if (!key || key.toLowerCase() === 'unknown') continue
+    const split = String(readField(r, splitBy) ?? 'Unknown')
+    const group = byGroup[key] ?? (byGroup[key] = {})
+    const slot = group[split] ?? (group[split] = { total: 0, n: 0 })
+    slot.total += getAvgMs(r)
+    slot.n += 1
+    splitKeys.add(split)
+  }
+  const labels = Object.keys(byGroup).sort()
+  const splits = [...splitKeys].sort()
+  const fallback = [C_TEAL, C_GOLD, C_BLUE_DK, C_SKY, C_BLUE]
+
+  const s = buildStyle()
+  const config: ChartConfiguration<'bar'> = {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: splits.map((split, i) => ({
+        label: split,
+        data: labels.map(k => {
+          const slot = byGroup[k]?.[split]
+          return slot ? Math.round(slot.total / slot.n) : null
+        }),
+        backgroundColor: METHOD_COLOURS[split] ?? fallback[i % fallback.length],
+        borderRadius: 0,
+        maxBarThickness: 40,
+        skipNull: true,
+      })),
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: INTERACTION,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: s.LEGEND },
+        tooltip: {
+          ...s.TOOLTIP,
+          filter: (ctx) => ctx.parsed.y !== null,
+          callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}ms` },
+        },
       },
       scales: {
         y: { beginAtZero: true, grid: s.GRID, ticks: { ...s.AXIS_TICK, callback: (v) => `${v}ms` } },

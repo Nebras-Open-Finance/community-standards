@@ -136,20 +136,24 @@ const avgErrorRate = computed<string>(() => {
   return (vol + err) > 0 ? ((err / (vol + err)) * 100).toFixed(2) : '0.00'
 })
 
-interface RankedEndpoint { endpoint: string; avgMs: number }
+interface RankedEndpoint { key: string; method: string; endpoint: string; avgMs: number }
 
 const slowestEndpoints = computed<RankedEndpoint[]>(() => {
   if (props.config.component !== 'rt-ranked') return []
-  const byEndpoint: Record<string, { total: number; n: number }> = {}
+  // Ranked per method + endpoint: GET and POST on the same path have very
+  // different latency profiles, so averaging them together would mislead.
+  const byEndpoint: Record<string, { method: string; endpoint: string; total: number; n: number }> = {}
   for (const row of props.data) {
     const r = asApiRow(row)
-    const key = r.endpoint || r.family
-    const slot = byEndpoint[key] ?? (byEndpoint[key] = { total: 0, n: 0 })
+    const endpoint = r.endpoint || r.family
+    const method = r.method === 'Unknown' ? '' : r.method
+    const key = `${method} ${endpoint}`
+    const slot = byEndpoint[key] ?? (byEndpoint[key] = { method, endpoint, total: 0, n: 0 })
     slot.total += r.avgMs
     slot.n += 1
   }
   return Object.entries(byEndpoint)
-    .map(([endpoint, { total, n }]) => ({ endpoint, avgMs: Math.round(total / n) }))
+    .map(([key, { method, endpoint, total, n }]) => ({ key, method, endpoint, avgMs: Math.round(total / n) }))
     .sort((a, b) => b.avgMs - a.avgMs)
     .slice(0, 8)
 })
@@ -599,13 +603,15 @@ onBeforeUnmount(destroyChart)
     <div class="ranked-list">
       <div
         v-for="(item, idx) in slowestEndpoints"
-        :key="item.endpoint"
+        :key="item.key"
         class="ranked-row"
       >
         <span class="rank-num">{{ String(idx + 1).padStart(2, '0') }}</span>
         <div class="rank-content">
           <div class="rank-top">
-            <span class="rank-label">{{ item.endpoint }}</span>
+            <span class="rank-label">
+              <span v-if="item.method" class="rank-method">{{ item.method }}</span>{{ item.endpoint }}
+            </span>
             <span class="rank-value">{{ item.avgMs }}ms</span>
           </div>
           <div class="rank-bar-track">
@@ -698,6 +704,14 @@ onBeforeUnmount(destroyChart)
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.rank-method {
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--at-mute);
+  margin-right: 0.4rem;
 }
 
 .rank-value {

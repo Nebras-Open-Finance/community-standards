@@ -2,10 +2,20 @@
 // Phase 5b-iii — sticky navbar (dashboard title + filters), ported from
 // `docs/components/WebPages/DashboardNavbar.vue`. `DashboardFilters` is
 // auto-imported by unplugin-vue-components.
+import { computed } from 'vue'
+import { dataUpTo } from '@/stores/dashboard'
 
 defineEmits<{
   (e: 'toggle-sidebar'): void
 }>()
+
+const dataUpToLabel = computed(() =>
+  dataUpTo.value
+    ? new Date(`${dataUpTo.value}T00:00:00Z`).toLocaleDateString('en-GB', {
+        day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC',
+      })
+    : null,
+)
 </script>
 
 <template>
@@ -24,7 +34,12 @@ defineEmits<{
         </button>
         <div class="db-navbar__title-wrap">
           <span class="db-navbar__eyebrow">§ Metrics</span>
-          <h1 class="db-navbar__title">Open Finance Dashboard</h1>
+          <div class="db-navbar__title-row">
+            <h1 class="db-navbar__title">Open Finance Dashboard</h1>
+            <span v-if="dataUpToLabel" class="db-navbar__asof">
+              Data up until <time :datetime="dataUpTo ?? undefined">{{ dataUpToLabel }}</time>
+            </span>
+          </div>
         </div>
       </div>
 
@@ -97,6 +112,21 @@ defineEmits<{
   letter-spacing: 0.18em;
   color: var(--at-teal);
   line-height: 1.2;
+}
+
+.db-navbar__title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.db-navbar__asof {
+  font-family: var(--at-mono);
+  font-size: 0.68rem;
+  color: var(--at-teal);
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .db-navbar__title {

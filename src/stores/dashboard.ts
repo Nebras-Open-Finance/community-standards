@@ -22,6 +22,7 @@ interface RawApiRow {
   date?: string
   lfinamekey?: string
   tppname?: string
+  httpmethod?: string
   url?: string
   tppresponsecodegroup?: string
   totalapicalls?: number
@@ -77,6 +78,7 @@ export interface ApiRow {
   family:   string
   version:  string
   endpoint: string
+  method:   string
   volume:   number
   errors:   number
   status:   'success' | 'error'
@@ -222,6 +224,7 @@ function transformApiRow(row: RawApiRow): ApiRow {
     family,
     version,
     endpoint,
+    method: row.httpmethod?.toUpperCase() || 'Unknown',
     volume,
     errors: isError ? volume : 0,
     status: isError ? 'error' : 'success',
@@ -427,11 +430,36 @@ watchEffect(() => {
   filterOptions.authMonths = uniqueSorted(auth.map(r => r.month).filter(v => v !== 'unknown'))
 })
 
+// The most recent day in the API log is still being ingested, so the dashboard
+// reports data as complete up to the day before it. ISO `YYYY-MM-DD` strings
+// sort lexically, so a string max is the latest date. Null until the log loads.
+export const dataUpTo: ComputedRef<string | null> = computed(() => {
+  let latest = ''
+  for (const r of rawApiData.value) if (r.day > latest) latest = r.day
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(latest)) return null
+  const d = new Date(`${latest}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() - 1)
+  return d.toISOString().substring(0, 10)
+})
+
+// The earliest month the data does not fully cover. A month only counts as
+// full once `dataUpTo` reaches its last day — so if the log stops short of a
+// month's end, that month stays hidden even after the calendar has moved on.
+// Falls back to the calendar month until the log loads, and never runs later
+// than it, so the in-progress month is always excluded.
+const firstPartialMonth: ComputedRef<string> = computed(() => {
+  if (!dataUpTo.value) return CURRENT_MONTH
+  const d = new Date(`${dataUpTo.value}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + 1)
+  const month = d.toISOString().substring(0, 7)
+  return month < CURRENT_MONTH ? month : CURRENT_MONTH
+})
+
 // Skip when the user has explicitly picked one or more months — their
 // selection wins over the partial-month exclusion.
 function monthIsAllowed(month: string): boolean {
   if (state.filters.month.length) return state.filters.month.includes(month)
-  if (state.excludePartialMonths && month >= CURRENT_MONTH) return false
+  if (state.excludePartialMonths && month >= firstPartialMonth.value) return false
   return true
 }
 
