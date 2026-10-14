@@ -1,32 +1,34 @@
-<route lang="yaml">
-meta:
-  layout: internal
-  title: Jira ticket form
-  next: false
-  prev: false
-  aside: false
-</route>
-
 <script setup lang="ts">
-// A form tied to a Service Desk ticket. The user signs in with Sandbox Trust
-// Framework SSO, gives the ticket (key or link, or ?ticket= in the URL), and the
-// form appears only once the API confirms they can see that ticket. Submitting
-// posts the message to the ticket as a comment. See useJiraTicket.
+// Everything a Jira form page shares: the page header, Sandbox Trust Framework
+// sign-in, the ticket field (key, link, or ?ticket= in the URL), the access
+// check, the ticket card, and the submitted / error states. The form itself goes
+// in the default slot and is shown only once access is granted:
+//
+//   <JiraFormShell form-id="supported-currency-pairs" title="…" description="…">
+//     <template #default="{ submit, submitting }"> …fields… </template>
+//   </JiraFormShell>
+//
+// The slot is keyed on the ticket, so checking another ticket starts the form
+// afresh. Styles are global (all jf__-prefixed) so form components reuse the
+// same inputs, labels and buttons. See useJiraForm and src/data/jiraForms.ts.
 
 import { computed, onMounted, ref, watch } from 'vue'
-import { useHead } from '@unhead/vue'
 import { useSandboxAuth } from '@/composables/useSandboxAuth'
-import { parseTicketKey, useJiraTicket } from '@/composables/useJiraTicket'
+import { parseTicketKey, useJiraForm } from '@/composables/useJiraForm'
 
-useHead({ title: 'Jira ticket form' })
-
-const MAX_MESSAGE_LENGTH = 5000
+const props = defineProps<{
+  /** The form's id in the standards-api registry; also its page slug. */
+  formId: string
+  title: string
+  description: string
+}>()
 
 const { auth, loadMe, signIn } = useSandboxAuth()
-const { state, ticket, message, submitting, submitError, submitted, check, submit } = useJiraTicket()
+const {
+  state, ticket, message, submitting, submitError, submitted, delivered, check, submit,
+} = useJiraForm(props.formId)
 
 const ticketInput = ref('')
-const body = ref('')
 const attempted = ref(false)
 
 const parsedKey = computed(() => parseTicketKey(ticketInput.value))
@@ -58,14 +60,7 @@ function onCheck(): void {
   if (!key) return
   ticketInput.value = key
   syncUrl(key)
-  body.value = ''
   void check(key)
-}
-
-function onSubmit(): void {
-  const text = body.value.trim()
-  if (!text || text.length > MAX_MESSAGE_LENGTH) return
-  void submit(text)
 }
 
 onMounted(async () => {
@@ -84,11 +79,10 @@ watch(
 
 <template>
   <div class="jf">
-    <div class="jf__eyebrow">Service Desk</div>
-    <h1 class="jf__title">Jira Ticket Form</h1>
+    <div class="jf__eyebrow">Jira forms</div>
+    <h1 class="jf__title">{{ title }}</h1>
     <p class="jf__lede">
-      Submit information against a Service Desk ticket. The form is available only for
-      tickets your Sandbox Trust Framework account can see.
+      {{ description }} Available only for tickets your Sandbox Trust Framework account can see.
     </p>
 
     <div class="jf__card">
@@ -137,10 +131,9 @@ watch(
           <p v-else id="jf-ticket-msg" class="jf__hint">The ticket key, or its Service Desk link.</p>
         </form>
 
-        <p v-if="state === 'denied'" class="jf__error">{{ message }}</p>
-        <p v-else-if="state === 'error'" class="jf__error">{{ message }}</p>
+        <p v-if="state === 'denied' || state === 'error'" class="jf__error">{{ message }}</p>
 
-        <!-- Granted: ticket details and the form -->
+        <!-- Granted: ticket details, then the form -->
         <template v-if="state === 'granted' && ticket">
           <div class="jf__rule" />
 
@@ -155,35 +148,24 @@ watch(
           </div>
 
           <p v-if="submitted" class="jf__ok">
-            Submitted. Your message has been added to {{ ticket.key }} as a comment.
+            Submitted to {{ ticket.key }}.
+            <template v-if="delivered === 'comment'">Added as a comment, with the JSON inline.</template>
+            <template v-else>Attached as JSON, with a summary comment.</template>
           </p>
 
-          <form v-else novalidate @submit.prevent="onSubmit">
-            <label class="jf__label" for="jf-body">Message</label>
-            <textarea
-              id="jf-body"
-              v-model="body"
-              class="jf__input jf__textarea"
-              rows="8"
-              :maxlength="MAX_MESSAGE_LENGTH"
-            />
-            <p class="jf__hint">
-              Added to the ticket as a comment, attributed to you. {{ body.length }} / {{ MAX_MESSAGE_LENGTH }}
-            </p>
-            <p v-if="submitError" class="jf__error">{{ submitError }}</p>
-            <div class="jf__row jf__row--end">
-              <button type="submit" class="jf__go" :disabled="submitting || !body.trim()">
-                {{ submitting ? 'Submitting…' : 'Submit to ticket' }}
-              </button>
-            </div>
-          </form>
+          <div v-else :key="ticket.key">
+            <slot :ticket="ticket" :submit="submit" :submitting="submitting" />
+            <p v-if="submitError" class="jf__error jf__error--submit">{{ submitError }}</p>
+          </div>
         </template>
       </template>
     </div>
   </div>
 </template>
 
-<style scoped>
+<style>
+/* Global on purpose: every class is jf__-prefixed, and form components in the
+   shell's slot use the same inputs, labels and buttons. */
 .jf {
   max-width: 40rem;
   margin: 0 auto;
@@ -249,7 +231,6 @@ watch(
 }
 .jf__input:focus { outline: none; border-color: var(--at-teal); }
 .jf__input--bad, .jf__input--bad:focus { border-color: #B3261E; }
-.jf__textarea { font-family: inherit; font-size: 0.95rem; line-height: 1.5; resize: vertical; }
 
 .jf__hint { font-size: 0.82rem; color: var(--at-mute); margin: 0.35rem 0 0; overflow-wrap: anywhere; }
 .jf__ferr { font-size: 0.82rem; color: #B3261E; margin: 0.35rem 0 0; }
@@ -327,6 +308,7 @@ watch(
 .jf__note, .jf__error, .jf__ok { margin: 0; font-size: 0.88rem; }
 .jf__note { color: var(--at-mute); }
 .jf__error { color: #B3261E; }
+.jf__error--submit { margin-top: 0.75rem; }
 .jf__ok { font-weight: 600; color: var(--at-teal-deep); }
 
 @media (max-width: 30rem) {

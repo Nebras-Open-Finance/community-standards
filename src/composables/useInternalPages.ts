@@ -11,6 +11,7 @@
 //     and the draft can be deleted.
 
 import { ref, type Ref } from 'vue'
+import { JIRA_FORMS } from '@/data/jiraForms'
 
 export interface InternalDraft {
   slug: string
@@ -98,6 +99,10 @@ export const REDIRECT_TOOLS: Record<string, string> = {
   'redirect-testing': 'Live LFIs',
   'redirect-testing/checker': 'Link checker',
 }
+// One entry per form in src/data/jiraForms.ts.
+export const JIRA_FORM_TOOLS: Record<string, string> = Object.fromEntries(
+  JIRA_FORMS.map((f) => [`jira-forms/${f.slug}`, f.title]),
+)
 
 /** Slugs from `group` that exist as app pages, in the group's own order. */
 export function toolsIn(group: Record<string, string>): string[] {
@@ -106,7 +111,8 @@ export function toolsIn(group: Record<string, string>): string[] {
 
 /** Top-level app pages that belong to no group. */
 export const ungroupedToolSlugs: string[] = appPageSlugs.filter(
-  (s) => !s.includes('/') && !(s in OPERATIONS_TOOLS) && !(s in CERT_TOOLS) && !(s in REDIRECT_TOOLS),
+  (s) => !s.includes('/') && !(s in OPERATIONS_TOOLS) && !(s in CERT_TOOLS) && !(s in REDIRECT_TOOLS)
+    && !(s in JIRA_FORM_TOOLS),
 )
 
 // Raw Markdown source for each committed internal page — lets the duplicate

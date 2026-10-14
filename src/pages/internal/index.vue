@@ -12,7 +12,7 @@ import { useRouter } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import {
   useInternalPages, prettifySlug,
-  OPERATIONS_TOOLS, CERT_TOOLS, REDIRECT_TOOLS, toolsIn, ungroupedToolSlugs,
+  OPERATIONS_TOOLS, CERT_TOOLS, REDIRECT_TOOLS, JIRA_FORM_TOOLS, toolsIn, ungroupedToolSlugs,
 } from '@/composables/useInternalPages'
 
 useHead({ title: 'Internal' })
@@ -31,6 +31,7 @@ const publishedContent = computed(() => committedSlugs.filter((s) => !PUBLISHED_
 const opsTools = toolsIn(OPERATIONS_TOOLS)
 const certTools = toolsIn(CERT_TOOLS)
 const redirectTools = toolsIn(REDIRECT_TOOLS)
+const jiraFormTools = toolsIn(JIRA_FORM_TOOLS)
 const otherTools = ungroupedToolSlugs
 
 function openDraft(s: string): void {
@@ -136,6 +137,26 @@ function formatDate(ts: number): string {
         <li v-for="s in redirectTools" :key="s" class="int-list__item">
           <a class="int-list__main" :href="'/internal/pages/' + s">
             <span class="int-list__name">{{ REDIRECT_TOOLS[s] }}</span>
+            <span class="int-list__meta"><code>/internal/pages/{{ s }}</code></span>
+          </a>
+        </li>
+      </ul>
+    </details>
+
+    <!-- Jira forms -->
+    <details v-if="jiraFormTools.length" class="int-card">
+      <summary class="int-card__summary">
+        <h2 class="int-card__heading">Jira forms</h2>
+        <span class="int-card__chevron" aria-hidden="true" />
+      </summary>
+      <p class="int-card__hint">
+        Forms submitted against a Service Desk ticket, for anyone who can see that ticket.
+        Sign in with Sandbox Trust Framework SSO; submissions are attached to the ticket as JSON.
+      </p>
+      <ul class="int-list">
+        <li v-for="s in jiraFormTools" :key="s" class="int-list__item">
+          <a class="int-list__main" :href="'/internal/pages/' + s">
+            <span class="int-list__name">{{ JIRA_FORM_TOOLS[s] }}</span>
             <span class="int-list__meta"><code>/internal/pages/{{ s }}</code></span>
           </a>
         </li>

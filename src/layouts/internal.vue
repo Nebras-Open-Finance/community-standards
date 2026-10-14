@@ -10,6 +10,7 @@ import {
   OPERATIONS_TOOLS,
   CERT_TOOLS,
   REDIRECT_TOOLS,
+  JIRA_FORM_TOOLS,
   toolsIn,
   ungroupedToolSlugs,
 } from '@/composables/useInternalPages'
@@ -91,13 +92,14 @@ const sidebarItems = computed<EdSidebarItemData[]>(() => {
     text: d.title || prettifySlug(d.slug),
     link: '/internal/draft/' + d.slug,
   }))
-  // The API Hub operations, go-live certificate and redirect-testing tools each
-  // get their own section; every other tool stays flat under "Other Tools".
+  // The API Hub operations, go-live certificate, redirect-testing and Jira form
+  // tools each get their own section; every other tool stays flat under "Other Tools".
   // Groups are defined in useInternalPages and mirrored on the internal home page.
   const toItems = (slugs: string[], labels: Record<string, string>): EdSidebarItemData[] =>
     slugs.map((s) => ({ text: labels[s] ?? prettifySlug(s), link: '/internal/pages/' + s }))
   const certItems = toItems(toolsIn(CERT_TOOLS), CERT_TOOLS)
   const redirectItems = toItems(toolsIn(REDIRECT_TOOLS), REDIRECT_TOOLS)
+  const jiraFormItems = toItems(toolsIn(JIRA_FORM_TOOLS), JIRA_FORM_TOOLS)
   const toolItems = toItems(ungroupedToolSlugs, {})
   const opsItems = toItems(toolsIn(OPERATIONS_TOOLS), OPERATIONS_TOOLS)
   return [
@@ -112,6 +114,9 @@ const sidebarItems = computed<EdSidebarItemData[]>(() => {
       : []),
     ...(certItems.length
       ? [{ text: 'Commercial Go-Live Certificates', collapsed: false, items: certItems }]
+      : []),
+    ...(jiraFormItems.length
+      ? [{ text: 'Jira forms', collapsed: false, items: jiraFormItems }]
       : []),
     ...(toolItems.length
       ? [{ text: 'Other Tools', collapsed: false, items: toolItems }]

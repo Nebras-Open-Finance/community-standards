@@ -1,12 +1,13 @@
-// Ticket-gated forms: a form is shown only once the API confirms that the
+// Ticket-gated Jira forms: a form is shown only once the API confirms that the
 // signed-in Sandbox Trust Framework user can see the Jira ticket it relates to.
 //
-// The check runs on the proposals API (standards-api, services/jira), which
-// holds the Jira credentials and the same SSO session as useSandboxAuth. Access
-// mirrors the Service Desk portal: reporter, participant, or member of a JSM
-// organisation the request is shared with. The page hiding the form is a
-// courtesy — the API re-checks on submit, and that is the boundary. Proposals
-// admins (Nebras staff, super users, the admin allowlist) get every form.
+// Shared by every form under /internal/pages/jira-forms/ via JiraFormShell. The
+// check runs on the proposals API (standards-api, services/jira), which holds the
+// Jira credentials and the same SSO session as useSandboxAuth. Access mirrors the
+// Service Desk portal: reporter, participant, or member of a JSM organisation the
+// request is shared with; proposals admins get every ticket. The page hiding the
+// form is a courtesy — the API re-checks and re-validates on submit, and that is
+// the boundary.
 
 import { ref, type Ref } from 'vue'
 
@@ -55,15 +56,20 @@ export interface JiraTicket {
  */
 export type TicketState = 'idle' | 'checking' | 'granted' | 'denied' | 'signedOut' | 'error'
 
-export interface UseJiraTicket {
+/** How a submission landed: JSON attachment, or inline comment (fallback). */
+export type Delivery = 'attachment' | 'comment'
+
+export interface UseJiraForm {
   state: Ref<TicketState>
   ticket: Ref<JiraTicket | null>
   message: Ref<string>
   submitting: Ref<boolean>
   submitError: Ref<string>
   submitted: Ref<boolean>
+  delivered: Ref<Delivery | null>
   check: (key: string) => Promise<void>
-  submit: (body: string) => Promise<void>
+  /** Post the form's payload; its shape is the form's own (see standards-api forms/). */
+  submit: (payload: unknown) => Promise<void>
 }
 
 async function errorOf(res: Response): Promise<string> {
@@ -74,13 +80,15 @@ async function errorOf(res: Response): Promise<string> {
   return `Request failed (${res.status}).`
 }
 
-export function useJiraTicket(): UseJiraTicket {
+/** @param formId the form's id in the standards-api registry, e.g. "supported-currency-pairs". */
+export function useJiraForm(formId: string): UseJiraForm {
   const state = ref<TicketState>('idle')
   const ticket = ref<JiraTicket | null>(null)
   const message = ref('')
   const submitting = ref(false)
   const submitError = ref('')
   const submitted = ref(false)
+  const delivered = ref<Delivery | null>(null)
 
   async function check(key: string): Promise<void> {
     state.value = 'checking'
@@ -103,18 +111,23 @@ export function useJiraTicket(): UseJiraTicket {
     }
   }
 
-  async function submit(body: string): Promise<void> {
+  async function submit(payload: unknown): Promise<void> {
     if (!ticket.value) return
     submitting.value = true
     submitError.value = ''
     try {
-      const res = await fetch(`${API_BASE}/jira/tickets/${encodeURIComponent(ticket.value.key)}/form`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: body }),
-      })
+      const res = await fetch(
+        `${API_BASE}/jira/tickets/${encodeURIComponent(ticket.value.key)}/forms/${encodeURIComponent(formId)}`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        },
+      )
       if (res.ok) {
+        const result = (await res.json()) as { delivered?: Delivery }
+        delivered.value = result.delivered ?? null
         submitted.value = true
         return
       }
@@ -124,11 +137,11 @@ export function useJiraTicket(): UseJiraTicket {
       if (res.status === 401) state.value = 'signedOut'
       if (res.status === 404) state.value = 'denied'
     } catch {
-      submitError.value = 'Could not reach the API. Your message was not sent.'
+      submitError.value = 'Could not reach the API. Nothing was submitted.'
     } finally {
       submitting.value = false
     }
   }
 
-  return { state, ticket, message, submitting, submitError, submitted, check, submit }
+  return { state, ticket, message, submitting, submitError, submitted, delivered, check, submit }
 }

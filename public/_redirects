@@ -4,6 +4,11 @@ https://www.nebras-open-finance.com/* https://nebras-open-finance.com/:splat 301
 /policy/ozone-connect-response-time  /policy/api-response-time  301
 /policy/ozone-connect-response-time/ /policy/api-response-time  301
 
+# The single Jira ticket form became the Jira forms section (Oct 2026); the
+# currency pairs form is the one it held.
+/internal/pages/jira-form   /internal/pages/jira-forms/supported-currency-pairs  301
+/internal/pages/jira-form/  /internal/pages/jira-forms/supported-currency-pairs  301
+
 # Proposals still under internal review moved behind the /internal password gate
 # (Aug 2026). The listing moved from /proposals/internal to /internal/proposals,
 # and each proposal's page moved with it. Listed one path at a time rather than
