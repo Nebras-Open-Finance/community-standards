@@ -2,8 +2,8 @@
 // certificate it issues. Client for POST /certificates/rotate on the reports API
 // (standards-api), ported from reports/src/scripts/createOrgCertificate.js.
 //
-// SANDBOX ONLY for now. Production is shown, disabled, so the page already has
-// the shape it will have once the API grows a production path.
+// Sandbox and production. In production this issues a REAL certificate for a
+// live participant.
 //
 // Sign-in is an explicit first step: the directory call acts as the signed-in
 // person, so the page offers "Log in" (a top-level bounce to Trust Framework SSO)
@@ -30,8 +30,8 @@ export const CERT_TYPES: Record<CertType, { usage: string; type: string }> = {
   S3: { usage: 'Transport', type: 'opf_uae_server_transport' },
 }
 
-/** The environments rotation can run in today. Production follows. */
-export const ROTATION_ENVS: ReportEnv[] = ['sandbox']
+/** The environments rotation can run in. */
+export const ROTATION_ENVS: ReportEnv[] = ['sandbox', 'prod']
 
 const ORG_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const UUID_IN_TEXT_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
