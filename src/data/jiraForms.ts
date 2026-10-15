@@ -19,6 +19,6 @@ export const JIRA_FORMS: JiraFormEntry[] = [
   {
     slug: 'supported-currency-pairs',
     title: 'Supported currency pairs',
-    description: 'Up to 50 FromCurrency → ToCurrency pairs, attached to the ticket as JSON.',
+    description: 'Up to 200 From Currency → To Currency pairs, typed or uploaded from Excel/CSV, attached to the ticket as JSON.',
   },
 ]

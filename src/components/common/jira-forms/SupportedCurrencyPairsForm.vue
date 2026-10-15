@@ -1,10 +1,12 @@
 <script setup lang="ts">
-// The supported-currency-pairs form: 1–50 FromCurrency/ToCurrency rows, each
+// The supported-currency-pairs form: 1–200 FromCurrency/ToCurrency rows, each
 // matching ^[A-Z]{3,3}$, no exact duplicates. Mirrors validate() in standards-api
 // services/jira/forms/supported-currency-pairs.js, which re-checks on submit.
+// Rows are typed, or filled from an uploaded spreadsheet (see currencyPairsFile).
 // Rendered inside JiraFormShell, which supplies the session, ticket and submit.
 
 import { computed, ref } from 'vue'
+import { ACCEPTED_FILES, parseCurrencyPairsFile } from './currencyPairsFile'
 
 interface CurrencyPair {
   FromCurrency: string
@@ -14,11 +16,12 @@ interface CurrencyPair {
 defineProps<{ submitting: boolean }>()
 const emit = defineEmits<{ submit: [payload: { SupportedCurrencyPairs: CurrencyPair[] }] }>()
 
-const MAX_PAIRS = 50
+const MAX_PAIRS = 200
 const CURRENCY_RE = /^[A-Z]{3,3}$/
 
 type Field = keyof CurrencyPair
 const FIELDS: Field[] = ['FromCurrency', 'ToCurrency']
+const FIELD_LABEL: Record<Field, string> = { FromCurrency: 'From Currency', ToCurrency: 'To Currency' }
 
 const blankRow = (): CurrencyPair => ({ FromCurrency: '', ToCurrency: '' })
 const rows = ref<CurrencyPair[]>([blankRow()])
@@ -44,6 +47,56 @@ const rowErrors = computed(() => {
 })
 const valid = computed(() => rowErrors.value.every((e) => Object.keys(e).length === 0))
 const canAdd = computed(() => rows.value.length < MAX_PAIRS)
+
+/** Row numbers with a problem, for the summary under a long list. */
+const badRows = computed(() =>
+  rowErrors.value.flatMap((e, i) => (Object.keys(e).length ? [i + 1] : [])))
+const badRowsText = computed(() => {
+  const shown = badRows.value.slice(0, 10).join(', ')
+  return badRows.value.length > 10 ? `${shown} and ${badRows.value.length - 10} more` : shown
+})
+
+const hasContent = computed(() => rows.value.some((r) => r.FromCurrency || r.ToCurrency))
+
+function clearAll(): void {
+  rows.value = [blankRow()]
+  attempted.value = false
+  upload.value = null
+}
+
+// ── Spreadsheet upload ───────────────────────────────────────────────────────
+const fileInput = ref<HTMLInputElement | null>(null)
+const reading = ref(false)
+const upload = ref<{ ok: boolean; text: string } | null>(null)
+
+async function onFile(e: Event): Promise<void> {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  reading.value = true
+  upload.value = null
+  try {
+    const result = await parseCurrencyPairsFile(await file.arrayBuffer(), MAX_PAIRS)
+    if (!result.ok) {
+      upload.value = { ok: false, text: result.error }
+      return
+    }
+    const replaced = hasContent.value
+    rows.value = result.pairs.map((p) => ({ ...p }))
+    // Show problems straight away: a file is finished input, not half-typed.
+    attempted.value = true
+    const n = result.pairs.length
+    upload.value = {
+      ok: true,
+      text: `Loaded ${n} pair${n === 1 ? '' : 's'} from ${file.name}`
+        + `${result.skippedHeader ? ' (header row skipped)' : ''}`
+        + `${replaced ? ', replacing the rows that were there' : ''}.`,
+    }
+  } finally {
+    reading.value = false
+  }
+}
 
 function addRow(): void {
   if (canAdd.value) rows.value.push(blankRow())
@@ -72,14 +125,42 @@ function onSubmit(): void {
 
 <template>
   <form novalidate @submit.prevent="onSubmit">
+    <!-- Upload -->
+    <div class="scp__upload">
+      <div class="jf__row">
+        <div>
+          <div class="scp__uptitle">Upload a spreadsheet</div>
+          <p class="jf__hint scp__uphint">
+            <code>.xlsx</code>, <code>.xls</code> or <code>.csv</code>. Column A is From Currency,
+            column B is To Currency; a header row is skipped. Replaces the rows below.
+          </p>
+        </div>
+        <button type="button" class="jf__pick" :disabled="reading" @click="fileInput?.click()">
+          {{ reading ? 'Reading…' : 'Choose file' }}
+        </button>
+        <input
+          ref="fileInput"
+          type="file"
+          class="scp__file"
+          :accept="ACCEPTED_FILES"
+          aria-label="Upload a spreadsheet of currency pairs"
+          @change="onFile"
+        >
+      </div>
+      <p v-if="upload" :class="upload.ok ? 'scp__upok' : 'jf__ferr'" role="status">{{ upload.text }}</p>
+    </div>
+
     <div class="jf__row">
       <span id="scp-label" class="jf__label scp__flush">Supported currency pairs</span>
-      <span class="scp__count">{{ rows.length }} / {{ MAX_PAIRS }}</span>
+      <span class="scp__count">
+        {{ rows.length }} / {{ MAX_PAIRS }}
+        <button v-if="hasContent" type="button" class="scp__clear" @click="clearAll">Clear all</button>
+      </span>
     </div>
 
     <div class="scp__pairs" role="group" aria-labelledby="scp-label">
       <div class="scp__head" aria-hidden="true">
-        <span>#</span><span>FromCurrency</span><span>ToCurrency</span><span />
+        <span>#</span><span>From Currency</span><span>To Currency</span><span />
       </div>
 
       <div v-for="(row, i) in rows" :key="i" class="scp__pair">
@@ -94,7 +175,7 @@ function onSubmit(): void {
             spellcheck="false"
             maxlength="3"
             :placeholder="field === 'FromCurrency' ? 'USD' : 'AED'"
-            :aria-label="`Row ${i + 1} ${field}`"
+            :aria-label="`Row ${i + 1} ${FIELD_LABEL[field]}`"
             :aria-invalid="attempted && !!rowErrors[i]?.[field]"
             @input="onCurrencyInput(row, field, $event)"
           >
@@ -120,7 +201,9 @@ function onSubmit(): void {
     <p class="jf__hint">
       Three-letter upper-case currency codes. Attached to the ticket as JSON, attributed to you.
     </p>
-    <p v-if="attempted && !valid" class="jf__error">Fix the highlighted rows before submitting.</p>
+    <p v-if="attempted && !valid" class="jf__error">
+      Fix the highlighted row{{ badRows.length === 1 ? '' : 's' }} before submitting: {{ badRowsText }}.
+    </p>
     <div class="jf__row jf__row--end">
       <button type="submit" class="jf__go" :disabled="submitting">
         {{ submitting ? 'Submitting…' : 'Submit to ticket' }}
@@ -132,6 +215,29 @@ function onSubmit(): void {
 <style scoped>
 .scp__flush { margin-bottom: 0; }
 .scp__count { font-family: var(--at-mono); font-size: 0.75rem; color: var(--at-mute); }
+
+.scp__upload {
+  padding: 0.9rem 1rem;
+  margin-bottom: 1.25rem;
+  border: 1px dashed var(--at-grid-line);
+  border-radius: 8px;
+  background: var(--at-bg-paper);
+}
+.scp__uptitle { font-size: 0.92rem; font-weight: 600; color: var(--at-navy-deep); }
+.scp__uphint { margin-top: 0.2rem; }
+.scp__file { display: none; }
+.scp__upok { margin: 0.6rem 0 0; font-size: 0.85rem; font-weight: 600; color: var(--at-teal-deep); }
+
+.scp__clear {
+  margin-left: 0.6rem;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--at-teal-deep);
+  text-decoration: underline;
+  cursor: pointer;
+}
 
 /* #, From, To, remove. */
 .scp__pairs { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem; }
