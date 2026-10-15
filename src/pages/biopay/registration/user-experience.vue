@@ -46,7 +46,7 @@ const meta: MetaItem[] = [
         </p>
         <p>
           The technical side of the same journey is on the
-          <RouterLink to="/biopay/registration/technical-architecture">Registration Technical Architecture</RouterLink>
+          <RouterLink to="/biopay/registration/technical-architecture">Registration API Sequence Flow</RouterLink>
           page.
         </p>
       </EdNote>

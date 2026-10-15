@@ -95,11 +95,13 @@ async function renderRedoc(): Promise<void> {
   const w = window as Win
   const token = ++renderToken
 
+  // Pinned: redoc 3.x's standalone bundle uses `import.meta`, which throws when
+  // loaded as a classic <script>. `latest` started resolving to 3.x.
   if (!w.Redoc) {
-    await loadScript('https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js')
+    await loadScript('https://cdn.jsdelivr.net/npm/redoc@2.5.4/bundles/redoc.standalone.js')
   }
   if (!w.jsyaml) {
-    await loadScript('https://cdn.jsdelivr.net/npm/js-yaml@4/dist/js-yaml.min.js')
+    await loadScript('https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js')
   }
 
   if (!w.Redoc || !w.jsyaml) return

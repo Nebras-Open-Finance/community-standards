@@ -1,7 +1,7 @@
 <route lang="yaml">
 meta:
   layout: biopay
-  title: Registration — Technical Architecture
+  title: Registration — API Sequence Flow
   next: false
   prev: false
   aside: false
@@ -12,7 +12,7 @@ import { useHead } from '@unhead/vue'
 import BpRegistrationFlow from '@/components/biopay/BpRegistrationFlow.vue'
 import BpActorTable, { type BpActor } from '@/components/biopay/BpActorTable.vue'
 
-useHead({ title: 'Registration — Technical Architecture · BioPay' })
+useHead({ title: 'Registration — API Sequence Flow · BioPay' })
 
 interface Section { id: string; label: string }
 interface MetaItem { label: string; value: string }
@@ -21,7 +21,6 @@ const sections: Section[] = [
   { id: 'diagram', label: 'Registration flow' },
   { id: 'data', label: 'Where registration is held' },
   { id: 'who', label: 'Who does what' },
-  { id: 'rejected', label: 'Rejected option' },
 ]
 
 const meta: MetaItem[] = [
@@ -87,7 +86,7 @@ const actors: BpActor[] = [
     <EdHero
       eyebrow="BioPay · Registration · Draft"
       eyebrow-color="var(--at-gold)"
-      title="Registration Technical Architecture"
+      title="Registration API Sequence Flow"
       :meta="meta"
       lede="How registration is put together, where the result is held, and which party is accountable for each part of it. <strong>Everything here is draft</strong> &mdash; the LFI integrates with ICP directly, and the split of responsibilities is a proposal."
     />
@@ -156,33 +155,6 @@ const actors: BpActor[] = [
       lede="The LFI owns the registration journey and the payment instrument. ICP owns the identity, provides the ICP SDK, and knows which LFI holds each customer. The API Hub plays no part in registration."
     >
       <BpActorTable :actors="actors" />
-    </EdSectionBand>
-
-    <!-- 04 ─────────────────────────────────────────────────────────────── -->
-    <EdSectionBand
-      id="rejected"
-      num="04"
-      color="var(--at-mute)"
-      eyebrow="Rejected option"
-      title="Option A — Via the API Hub"
-      tone="surface"
-      lede="This option was considered and rejected. It is kept here for reference only."
-    >
-      <EdProse>
-        The LFI channel would have sent the identity verification request to the API Hub under
-        C3 (mTLS and <code>application_auth</code>). The Hub would have proxied it to ICP and
-        returned the verified identity and <code>uaeKycId</code> to the LFI. The completed
-        registration would have followed the same route: the LFI posting it to the API Hub, and
-        the Hub delivering it to ICP as a registration event. ICP could then optionally have
-        called discovery to check whether a <code>uaeKycId</code> was registered for BioPay at
-        the LFI.
-      </EdProse>
-      <APIFlowViewer
-        title="BioPay — registration, Option A (rejected)"
-        eyebrow="Registration flow · Option A · Rejected"
-      >
-        <BpRegistrationFlow variant="hub" />
-      </APIFlowViewer>
     </EdSectionBand>
   </div>
 </template>

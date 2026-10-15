@@ -8,7 +8,7 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Card flow, Option 1 only: the BPIP asks the LFI, through the API Hub, which
+// The BPIP asks the LFI, through the API Hub, which
 // payment instrument it holds for a uaeKycId before choosing a rail.
 import { BIOPAY_SPEC } from '@/data/biopay-spec'
 
@@ -19,7 +19,7 @@ const servers = [
 
 <template>
   <EndpointPage
-    eyebrow="BioPay · Card Flow · Option 1 · Draft"
+    eyebrow="BioPay · Payment · Draft"
     title="Look up a customer's payment instrument"
     version="Draft · 0.1"
     method="POST"

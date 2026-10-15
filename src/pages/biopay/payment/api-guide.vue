@@ -45,7 +45,7 @@ const meta: MetaItem[] = [
         </p>
         <p>
           The flow and the options under consideration are on the
-          <RouterLink to="/biopay/payment/technical-architecture">Payment Technical Architecture</RouterLink>
+          <RouterLink to="/biopay/payment/technical-architecture">Payment API Sequence Flow</RouterLink>
           page.
         </p>
       </EdNote>

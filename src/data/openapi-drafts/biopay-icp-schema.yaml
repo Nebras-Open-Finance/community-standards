@@ -64,7 +64,7 @@ tags:
     description: Initiating a biometric payment and tracking its status.
   - name: Instrument lookup
     description: >-
-      Card flow, Option 1 only. Asking the LFI which payment instrument a
+      Asking the LFI which payment instrument a
       registered customer pays with, before the BPIP chooses a rail.
   - name: Payment log
     description: >-
@@ -384,7 +384,7 @@ paths:
         '500': { $ref: '#/components/responses/InternalServerError' }
 
   # ══════════════════════════════════════════════════════════════════════════
-  # INSTRUMENT LOOKUP — card flow, Option 1
+  # INSTRUMENT LOOKUP
   # ══════════════════════════════════════════════════════════════════════════
   /instrument-lookup:
     post:
@@ -392,7 +392,7 @@ paths:
       operationId: postInstrumentLookup
       summary: Look up a customer's payment instrument
       description: >-
-        **BPIP → API Hub → LFI.** Card flow, Option 1. After resolving the
+        **BPIP → API Hub → LFI.** Called on every payment. After resolving the
         customer with ICP, the BPIP asks the LFI which payment instrument it
         holds for the `uaeKycId`, and receives in the same response what it
         needs for that rail: for an account, the IBAN, after which it pays through `POST /biometric-payments`; for a
@@ -405,7 +405,9 @@ paths:
         endpoint of the LFI ICP returned. The LFI answers from its own
         registration store of `uaeKycId` → payment instrument. For a card, the
         LFI generates the credential for the amount and card acceptor in the
-        request. The response never carries a card number (PAN).
+        request, and encrypts it as a JWE with the BPIP's public encryption key
+        from the Directory, so the API Hub proxies it without reading it. The
+        response never carries a card number (PAN).
 
 
         A `POST` rather than a `GET`, so that the `uaeKycId` travels in the
@@ -1362,26 +1364,43 @@ components:
                   type: string
                   maxLength: 70
                   example: AE070331234567890123456
-            CardSchemeToken:
-              type: string
-              maxLength: 19
-              description: >-
-                Present when the payment instrument is a card scheme. A network
-                token issued by that scheme's token service — a substitute for
-                the card number that only the scheme can map back to the card.
-                Valid only on the scheme named in `PaymentInstrument`.
-            Cryptogram:
+            EncryptedCardCredential:
               type: string
               description: >-
-                Present with `CardSchemeToken`. A one-time cryptogram bound to the
-                amount and card acceptor in the request, for the BPIP to submit
-                to the card scheme.
-            ExpirationDateTime:
-              type: string
-              format: date-time
-              description: Present with `CardSchemeToken`. When the cryptogram expires.
+                Present when the payment instrument is a card scheme. A JWE,
+                encrypted by the LFI with the BPIP's public encryption key
+                registered in the Directory, whose plaintext is an
+                `AECardCredential`. The API Hub proxies it unread, so card data
+                never passes through the Hub in the clear. Only the BPIP can
+                decrypt it, with its private key.
+              example: eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIiwia2lkIjoiYnBpcC1lbmMifQ...
         Meta:
           $ref: '#/components/schemas/AEMeta'
+
+    AECardCredential:
+      type: object
+      description: >-
+        The plaintext of `EncryptedCardCredential` in the instrument lookup
+        response. Never sent unencrypted.
+      additionalProperties: false
+      required: [CardSchemeToken, Cryptogram, ExpirationDateTime]
+      properties:
+        CardSchemeToken:
+          type: string
+          maxLength: 19
+          description: >-
+            A network token issued by the card scheme's token service — a
+            substitute for the card number that only the scheme can map back to
+            the card. Valid only on the scheme named in `PaymentInstrument`.
+        Cryptogram:
+          type: string
+          description: >-
+            A one-time cryptogram bound to the amount and card acceptor in the
+            request, for the BPIP to submit to the card scheme.
+        ExpirationDateTime:
+          type: string
+          format: date-time
+          description: When the cryptogram expires.
 
     AELinks:
       type: object

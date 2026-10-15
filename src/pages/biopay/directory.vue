@@ -67,7 +67,7 @@ const bpipCalls: Endpoint[] = [
     method: 'POST',
     path: '/instrument-lookup',
     link: '/biopay/payment/api-reference/instrument-lookup',
-    note: 'Look up the payment instrument the LFI holds for a uaeKycId. Card flow, Option 1 only.',
+    note: 'Look up the payment instrument the LFI holds for a uaeKycId, before the BPIP chooses a rail.',
   },
 ]
 </script>
@@ -181,7 +181,7 @@ const bpipCalls: Endpoint[] = [
       num="03"
       color="var(--at-gold)"
       eyebrow="Certificates"
-      title="Transport and signing, plus encryption for events"
+      title="Transport, signing and encryption"
     >
       <EdProse>
         BPIP applications require the same certificates as any other Directory participant,
@@ -200,11 +200,23 @@ const bpipCalls: Endpoint[] = [
           used at the token endpoint, and the signed payloads the BioPay operations expect.
         </li>
         <li>
-          <strong>Encryption certificate &mdash; required only if the BPIP implements
-          webhooks.</strong> Events are delivered as a JWE encrypted with the public encryption
-          certificate registered in the Directory, so only the holder of the corresponding private
-          key can read them. A BPIP without one cannot receive payment status events and must poll
-          instead.
+          <strong>Encryption certificate &mdash; required.</strong> Every BPIP MUST register an
+          encryption certificate, because the card credential in an
+          <RouterLink to="/biopay/payment/api-reference/instrument-lookup"><code>POST /instrument-lookup</code></RouterLink>
+          response is encrypted to it:
+          <ul>
+            <li>
+              <strong>Card credential.</strong> When the instrument is a card, the LFI MUST
+              encrypt the card scheme token, cryptogram and expiry into a JWE using the BPIP&rsquo;s
+              public encryption key, taken from the Directory. The API Hub proxies the JWE
+              unread, so card data never passes through it in the clear &mdash; keeping the API Hub
+              out of PCI DSS scope. Only the BPIP, holding the private key, can decrypt it.
+            </li>
+            <li>
+              <strong>Events.</strong> Payment status events are delivered as a JWE encrypted
+              with the same certificate, so only the BPIP can read them.
+            </li>
+          </ul>
         </li>
       </EdBullets>
     </EdSectionBand>

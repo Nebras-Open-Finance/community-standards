@@ -88,7 +88,7 @@ export const biopaySidebar: EdSidebarItemData[] = [
     text: 'Registration',
     collapsed: false,
     items: [
-      { text: 'Technical Architecture', link: '/biopay/registration/technical-architecture' },
+      { text: 'API Sequence Flow', link: '/biopay/registration/technical-architecture' },
       { text: 'User Experience', link: '/biopay/registration/user-experience' },
       { text: 'API Guide', link: '/biopay/registration/api-guide' },
     ],
@@ -98,28 +98,8 @@ export const biopaySidebar: EdSidebarItemData[] = [
     collapsed: false,
     items: [
       {
-        text: 'Technical Architecture (Account-to-Account Payments)',
+        text: 'API Sequence Flow',
         link: '/biopay/payment/technical-architecture',
-        collapsed: false,
-        items: [
-          {
-            text: 'Card Scheme (e.g. Jaywan) / Card Flow',
-            link: '/biopay/payment/card-flow',
-            collapsed: false,
-            items: [
-              {
-                text: 'API Reference',
-                collapsed: false,
-                items: [
-                  {
-                    text: 'Option 1 — POST /instrument-lookup',
-                    link: '/biopay/payment/api-reference/instrument-lookup',
-                  },
-                ],
-              },
-            ],
-          },
-        ],
       },
       { text: 'API Guide', link: '/biopay/payment/api-guide' },
       {
@@ -141,6 +121,10 @@ export const biopaySidebar: EdSidebarItemData[] = [
           {
             text: 'PATCH /biometrics-payment-log',
             link: '/biopay/payment/api-reference/biometrics-payment-log',
+          },
+          {
+            text: 'POST /instrument-lookup',
+            link: '/biopay/payment/api-reference/instrument-lookup',
           },
         ],
       },
