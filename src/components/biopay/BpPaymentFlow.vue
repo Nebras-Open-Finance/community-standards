@@ -3,16 +3,19 @@ import { useMermaidDiagram } from '@/composables/useMermaidDiagram'
 
 // One BioPay payment, end to end. The BPIP is the merchant's acquirer;
 // ICP resolves the customer. Identity resolution is called by the BPIP directly
-// on ICP through the ICP SDK — it does not route through the API Hub. On every
-// payment the BPIP then looks up the customer's payment instrument at the LFI
-// through the API Hub, and routes on the result: an account payment goes
-// through the Hub to the LFI; a card payment goes to the card scheme, with the
-// BPIP as acquirer, and does not return to the Hub. The card credential in the
-// lookup response is a JWE encrypted by the LFI to the BPIP's Directory
-// encryption key, so the Hub never sees card data in the clear. Calls to the Hub run under
-// client_credentials and mTLS; nothing reaches the LFI except by the Hub
-// proxying it.
-// Draft — endpoint names and scopes are proposed.
+// on ICP through the ICP SDK — it does not route through the API Hub. ICP
+// returns a signed ICP authorisation bound to the transaction (amount and
+// merchant) and to the BPIP's transport certificate; its jti is single-use.
+// On every payment the BPIP then looks up the customer's payment instrument at
+// the LFI through the API Hub, presenting that authorisation, and routes on the
+// result: an account payment goes through the Hub to the LFI with the same
+// authorisation; a card payment goes to the card scheme, with the BPIP as
+// acquirer, and does not return to the Hub. The card credential in the lookup
+// response is a JWS signed by the LFI inside a JWE encrypted to the BPIP's
+// Directory encryption key, so the Hub never sees card data in the clear.
+// Calls to the Hub run under client_credentials and mTLS; nothing reaches the
+// LFI except by the Hub proxying it.
+// Draft — endpoint names, claims and scopes are proposed.
 const mermaidDefinition = `
 sequenceDiagram
     participant PSU as Customer
@@ -23,56 +26,63 @@ sequenceDiagram
     participant Scheme as Card Scheme (e.g. Jaywan)
 
     PSU->>BPIP: Presents thumbprint / face / palm
-    BPIP->>BPIP: Capture + amount + creditor details
+    BPIP->>BPIP: Capture + amount + merchant details<br/>txn = hash(amount, merchant)
 
     Note over ICP,BPIP: ICP SDK
-    BPIP->>ICP: Resolve customer (biometric capture)
+    BPIP->>ICP: Resolve customer<br/>{biometric capture, txn, transport cert thumbprint}
     ICP->>ICP: Match, liveness, look up uaeKycId → default LFI
-    ICP-->>BPIP: {uaeKycId, default LFI, token}
+    ICP-->>BPIP: {uaeKycId, default LFI, IcpAuthorisation}<br/>JWS: sub, azp, aud, txn, cnf, jti, exp
 
     alt Not resolved or not registered
         BPIP-->>PSU: BioPay unavailable — fall back
     else Resolved
         Note over BPIP,Hub: client_credentials · mTLS · scope: biometric-payments
-        BPIP->>Hub: POST /instrument-lookup at the LFI's ResourceServerUrl<br/>{uaeKycId, amount, card acceptance details}
-        Hub->>Hub: Entitlement, schema
-        Hub->>LFI: Proxied instrument lookup
-        LFI->>LFI: Look up uaeKycId → instrument<br/>Fraud, risk checks
+        BPIP->>Hub: POST /instrument-lookup<br/>{uaeKycId, InstructedAmount, CardAcceptor, IcpAuthorisation}
+        Hub->>Hub: Entitlement, schema<br/>Verify IcpAuthorisation: signature, exp,<br/>cnf = mTLS cert, azp = BPIP, sub, txn<br/>jti unused → record jti as looked up
+        Hub->>LFI: Proxied instrument lookup (with IcpAuthorisation)
+        LFI->>LFI: Verify IcpAuthorisation<br/>Look up uaeKycId → instrument<br/>Fraud, risk checks<br/>Retain jti → instrument, amount, merchant
 
         alt Account (AANI/IPP)
-            LFI-->>Hub: 200 {PaymentInstrument, IBAN}
-            Hub-->>BPIP: 200 {PaymentInstrument, IBAN}
-            BPIP->>Hub: POST /biometric-payments<br/>{uaeKycId, PaymentInstrument, Instruction, Creditor}
-            Hub->>Hub: Entitlement, schema, idempotency
+            LFI-->>Hub: 200 {PaymentInstrument, DebtorAccount}
+            Hub-->>BPIP: 200 {PaymentInstrument, DebtorAccount}
+            BPIP->>Hub: POST /biometric-payments<br/>{uaeKycId, PaymentInstrument, Instruction, Creditor, IcpAuthorisation}
+            Hub->>Hub: Entitlement, schema, idempotency<br/>Verify IcpAuthorisation as on the lookup<br/>jti looked up and not yet paid<br/>Derive BiometricAssurance
             Hub->>LFI: Proxied payment request
-            LFI->>LFI: Resolve uaeKycId → instrument<br/>Fraud, risk, balance checks
-            LFI-->>Hub: 201 {PaymentId}
-            Hub-->>BPIP: 201 {PaymentId, Status: Pending}
-            BPIP-->>PSU: Accepted — payment pending
+            LFI->>LFI: Match jti, instrument and amount to the lookup<br/>Account state checks
+            alt Account blocked or closed
+                LFI-->>Hub: 403 {Account.*}
+                Hub-->>BPIP: 403 {Account.*} — no payment, jti still usable
+            else Account usable
+                LFI-->>Hub: 201 {PaymentId}
+                Hub->>Hub: Mark jti used
+                Hub-->>BPIP: 201 {PaymentId, Status: Pending}
+                BPIP-->>PSU: Accepted — payment pending
 
-            Note over LFI: Executes the account-to-account payment<br/>via AANI/IPP
-            LFI->>Hub: PATCH /biometrics-payment-log/{id}<br/>{Status, RailReference}
-            Hub-->>LFI: 204 No Content
-            Hub->>BPIP: Payment status event {PaymentId, Status}
-            BPIP-->>Hub: 202 Accepted
+                LFI->>LFI: Fraud, sanctions, AML screening<br/>Balance check
+                Note over LFI: Executes the account-to-account payment<br/>via AANI/IPP
+                LFI->>Hub: PATCH /biometrics-payment-log/{id}<br/>{Status: AcceptedWithoutPosting or Rejected,<br/>StatusReason e.g. LFI.ScreeningRejected, AANI.AM04}
+                Hub-->>LFI: 204 No Content
+                Hub->>BPIP: Payment status event {PaymentId, Status}
+                BPIP-->>Hub: 202 Accepted
 
-            opt Polling, or recovery from a lost 201
-                BPIP->>Hub: GET /biometric-payments/{PaymentId}
-                BPIP->>Hub: GET /biometric-payments?IdempotencyKey
-                Hub-->>BPIP: 200 {Status}
+                opt Polling, or recovery from a lost 201
+                    BPIP->>Hub: GET /biometric-payments/{PaymentId}
+                    BPIP->>Hub: GET /biometric-payments?IdempotencyKey
+                    Hub-->>BPIP: 200 {Status}
+                end
             end
         else Card (card scheme, e.g. Jaywan)
-            LFI->>LFI: Generate one-time token + cryptogram
-            LFI->>LFI: Encrypt {CardSchemeToken, Cryptogram, Expiry} as JWE<br/>with the BPIP's public key from the Directory
+            LFI->>LFI: Generate one-time token + cryptogram<br/>bound to amount, merchant and jti
+            LFI->>LFI: Sign {CardSchemeToken, Cryptogram, Expiry, IcpTransactionId} as JWS<br/>Encrypt as JWE with the BPIP's public key from the Directory
             LFI-->>Hub: 200 {PaymentInstrument, EncryptedCardCredential (JWE)}
             Note over Hub: Proxies the JWE unread —<br/>no card data in the clear, out of PCI DSS scope
             Hub-->>BPIP: 200 {PaymentInstrument, EncryptedCardCredential (JWE)}
-            BPIP->>BPIP: Decrypt JWE with its private key
+            BPIP->>BPIP: Decrypt JWE with its private key<br/>Verify LFI's JWS · IcpTransactionId = jti
             Note over BPIP,Scheme: From here the payment runs between the BPIP, as acquirer,<br/>and the card scheme — not through the API Hub
-            BPIP->>Scheme: Authorisation request {token, cryptogram, amount}<br/>CVM: biometric, verified by ICP
+            BPIP->>Scheme: Authorisation request {token, cryptogram, amount,<br/>ICP jti as authentication value}<br/>CVM: biometric, verified by ICP
             Scheme->>Scheme: Detokenise
             Scheme->>LFI: Authorisation request
-            LFI->>LFI: Validate cryptogram, fraud, balance
+            LFI->>LFI: Validate cryptogram · jti known and unused<br/>amount and merchant match → mark jti used<br/>Fraud, balance
             LFI-->>Scheme: Approved
             Scheme-->>BPIP: Approved
             BPIP-->>PSU: Payment approved

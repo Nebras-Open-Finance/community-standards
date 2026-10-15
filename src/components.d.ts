@@ -61,7 +61,6 @@ declare module 'vue' {
     AuthThemeToggle: typeof import('./components/common/authorization-ui/AuthThemeToggle.vue')['default']
     BioPayDraftBanner: typeof import('./components/chrome/BioPayDraftBanner.vue')['default']
     BpActorTable: typeof import('./components/biopay/BpActorTable.vue')['default']
-    BpCardFlow: typeof import('./components/biopay/BpCardFlow.vue')['default']
     BpEcosystemDiagram: typeof import('./components/biopay/BpEcosystemDiagram.vue')['default']
     BpPaymentFlow: typeof import('./components/biopay/BpPaymentFlow.vue')['default']
     BpRegistrationFlow: typeof import('./components/biopay/BpRegistrationFlow.vue')['default']

@@ -1,40 +1,36 @@
 # BioPay — DRAFT OpenAPI document for the third-party-facing surface.
 #
-# Every operation here is consumed by the authorised initiator (ICP, holding the
-# BPIP role) against the API Hub, with one exception: the registration event,
-# which the Hub POSTs to an endpoint ICP implements. Direction is stated in each
-# operation description.
+# Every operation here is consumed by the Biometric Payment Initiation Provider
+# (BPIP) — the merchant's acquirer — against the API Hub, with two exceptions:
+#   - the payment status event, which the Hub POSTs to an endpoint the BPIP
+#     implements, and
+#   - PATCH /biometrics-payment-log/{id}, which the LFI calls on the Hub.
+# Direction is stated in each operation description.
 #
-# One call in this journey is LFI → API Hub and deliberately NOT modelled here
-# (see the third-party-facing-only scoping decision):
-#   - the LFI posting a completed registration to the Hub
-# It is described in prose on /biopay/registration/api-guide.
+# Identity resolution is NOT modelled here. The BPIP resolves the customer
+# directly with ICP through the ICP SDK, outside the API Hub, and receives the
+# uaeKycId, the customer's default LFI and an ICP authorisation: a JWS signed by
+# ICP and bound to this transaction. That authorisation is carried on
+# POST /instrument-lookup and POST /biometric-payments, and is what binds the
+# lookup, the account payment and the card authorisation to one biometric
+# identification. See AEIcpAuthorisation.
 #
-# The other LFI → API Hub call, PATCH /biometrics-payment-log/{id}, IS
-# modelled: it is how the payment status the initiator polls and is notified of
-# comes to exist, so the third-party-facing surface cannot be read without it.
-# It is served at the Consent Manager host, not at the rs1.* host the rest of
-# this document uses.
+# PATCH /biometrics-payment-log/{id} is modelled because it is how the payment
+# status the BPIP polls and is notified of comes to exist. It is served at the
+# Consent Manager host, not at the rs1.* host the rest of this document uses.
 #
 # Nothing in this document is published. Field names, enum values, endpoint
 # paths and status vocabulary are all proposals for review. The status values
-# align with the published payments standard (Pending / AcceptedWithoutPosting /
-# Accepted / Rejected) so BioPay does not invent a second vocabulary.
+# and reject-reason namespaces are those of Open Finance domestic payments
+# (see /tech/lfi-api-hub/v2.1/banking/service-initiation/domestic-payments/
+# overview/payment-status) so BioPay does not invent a second vocabulary.
 #
-# Discovery follows the same pattern as the published Confirmation of Payee
-# /discovery operation: a POST whose request and response are both signed JWTs
-# (application/jwt), returning DiscoveryEndpointUrl and ResourceServerUrl for
-# the LFI that holds the registration.
-#
-# The registration event follows the published webhook template: the same signed
-# envelope, the same Data/Meta split under the message claim, the same
+# The payment status event follows the published webhook template: the same
+# signed envelope, the same Data/Meta split under the message claim, the same
 # Resource.Created/Updated/Deleted event types, delivered as application/jwe.
-# Its Data is the discovery Data, so the event and discovery describe a
-# registration identically.
 #
-# The payment operations still use unsigned JSON with a detached
-# x-jws-signature header; whether they should move to the same signed-body
-# pattern is an open item.
+# The request operations use unsigned JSON with a detached x-jws-signature
+# header; whether they should move to a signed-body pattern is an open item.
 
 openapi: 3.0.3
 
@@ -43,11 +39,12 @@ info:
   version: 0.1.0-draft
   description: >-
     Draft third-party-facing API for BioPay: a payment journey in which a
-    customer is identified biometrically by ICP, and ICP — as a specifically
-    authorised initiator — initiates a payment through the API Hub under a
-    `client_credentials` grant. No biometric, template or match score crosses
-    into Open Finance. What crosses is a `uaeKycId` and ICP's
-    assertion that it identified the person.
+    customer is identified biometrically by ICP, and a Biometric Payment
+    Initiation Provider (BPIP) — the merchant's acquirer — looks up the
+    customer's payment instrument and initiates the payment through the API
+    Hub under a `client_credentials` grant. No biometric, template or match
+    score crosses into Open Finance. What crosses is a `uaeKycId` and ICP's
+    signed authorisation that it identified the person for this transaction.
 
 servers:
   - url: https://rs1.[LFICODE].apihub.openfinance.ae/open-finance/biometric-payments/v1
@@ -58,203 +55,22 @@ servers:
     description: Sandbox
 
 tags:
-  - name: Registration
-    description: Querying and being notified about a customer's BioPay registration.
-  - name: Payment
-    description: Initiating a biometric payment and tracking its status.
   - name: Instrument lookup
     description: >-
-      Asking the LFI which payment instrument a
-      registered customer pays with, before the BPIP chooses a rail.
+      Asking the LFI which payment instrument a registered customer pays
+      with, before the BPIP chooses a rail. Called on every payment.
+  - name: Payment
+    description: Initiating an account-to-account biometric payment and tracking its status.
+  - name: Payment status event
+    description: >-
+      Notifying the BPIP of a change in a payment's status. Delivered by the
+      API Hub to an endpoint the BPIP implements.
   - name: Payment log
     description: >-
       Reporting the outcome of a biometric payment. Called by the LFI, not by
-      the initiator.
+      the BPIP.
 
 paths:
-  # ═════════════════════════════════════════════════════════════════════════
-  # REGISTRATION
-  # ═════════════════════════════════════════════════════════════════════════
-  /biometric-payments-discovery:
-    post:
-      tags: [Registration]
-      operationId: postBiometricPaymentsDiscovery
-      summary: Discover a customer's BioPay registration
-      description: >-
-        **ICP → API Hub.** Resolves a `uaeKycId` to the registration
-        the API Hub holds for it: whether that registration is live, which
-        payment instrument(s) the customer selected, and the endpoints at which
-        the initiator obtains a token for — and then calls — the LFI holding it.
-        Answered by the API Hub from its own registration store; this call is
-        **not** proxied to the LFI.
-
-
-        Modelled on the published Confirmation of Payee `/discovery` operation,
-        so that BioPay does not introduce a second discovery pattern. The
-        request is a signed JWT whose `message` carries the identifier to
-        resolve; the response is a signed JWT whose `message` carries the
-        resolved registration and routing. Both directions are
-        `application/jwt`, and the signature **is** the JWT — this operation
-        carries no detached `x-jws-signature` header.
-
-
-        Signing the request is also what allows the identifier to travel in a
-        body rather than a query string, keeping it out of access and proxy
-        logs. That is why this operation is a `POST`; the earlier draft modelled
-        it as a `GET` with an `uaeKycId` query parameter and flagged the
-        logging exposure as an open item.
-
-
-        The initiator MUST call this before initiating a payment: a registration
-        may have been suspended, revoked, or had its default instrument changed
-        since the registration event was received. The initiator MUST address
-        the payment call using the `ResourceServerUrl` returned here rather than
-        a URL it derived itself.
-
-
-        The registration event carries this same `Data`, so an initiator
-        already holds the routing before it calls discovery. That overlap is
-        deliberate and matches CoP: the event is how routing arrives, and
-        discovery is how it is confirmed still current at the moment of
-        payment. Open item: whether discovery should be callable at any
-        LFI-scoped host, as CoP allows, rather than only at the host the
-        registration resolved to.
-      parameters:
-        - $ref: '#/components/parameters/XFapiInteractionId'
-        - $ref: '#/components/parameters/XFapiAuthDate'
-      requestBody:
-        required: true
-        content:
-          application/jwt:
-            schema:
-              $ref: '#/components/schemas/DiscoverBiometricRegistrationRequestBodySigned'
-      responses:
-        '200':
-          description: >-
-            The registration state held by the API Hub, as a signed JWT. A `200`
-            is returned for an unregistered identifier too, with
-            `RegistrationStatus` set to `NotRegistered` and the routing fields
-            absent — absence of a registration is a fact, not an error.
-          headers:
-            x-fapi-interaction-id:
-              $ref: '#/components/headers/XFapiInteractionId'
-          content:
-            application/jwt:
-              schema:
-                $ref: '#/components/schemas/DiscoverBiometricRegistrationResponseBodySigned'
-        '400':
-          description: >-
-            The request was malformed or failed schema validation. A request
-            whose JWT cannot be verified is reported with the signing error
-            codes the Confirmation of Payee standard already defines —
-            `JWS.InvalidSignature`, `JWS.Malformed`, `JWS.InvalidClaim`,
-            `JWS.InvalidHeader` — rather than a BioPay-specific set.
-          headers:
-            x-fapi-interaction-id:
-              $ref: '#/components/headers/XFapiInteractionId'
-          content:
-            application/jwt:
-              schema:
-                $ref: '#/components/schemas/AEErrorResponseBodySigned'
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '403':
-          description: >-
-            The client is authenticated but not entitled — typically a client
-            whose application does not carry the BPIP role, or a token without
-            the `biometric-payments` scope.
-          headers:
-            x-fapi-interaction-id:
-              $ref: '#/components/headers/XFapiInteractionId'
-          content:
-            application/jwt:
-              schema:
-                $ref: '#/components/schemas/AEErrorResponseBodySigned'
-        '429': { $ref: '#/components/responses/TooManyRequests' }
-        '500':
-          description: An unexpected error occurred at the API Hub.
-          headers:
-            x-fapi-interaction-id:
-              $ref: '#/components/headers/XFapiInteractionId'
-          content:
-            application/jwt:
-              schema:
-                $ref: '#/components/schemas/AEErrorResponseBodySigned'
-
-  /biometric-payment-registration-events:
-    post:
-      tags: [Registration]
-      operationId: postBiometricPaymentRegistrationEvent
-      summary: Registration event notification
-      description: >-
-        **API Hub → ICP.** The Hub delivers this event to the endpoint ICP
-        registered in the Directory, after an LFI has posted a completed
-        registration to the Hub. This is the mechanism by which ICP learns that
-        an identity has a payment capability, **and where to address** that
-        identity's subsequent discovery and payment calls.
-
-
-        The path shown is illustrative — the real target is ICP's registered
-        event endpoint.
-
-
-        Structured as an Open Finance webhook, not as a BioPay-specific
-        notification. The envelope, the `message` claim, and the `Data` / `Meta`
-        split are those of the published webhook template used by the payment
-        status, consent status and insurance status events; `EventType` uses the
-        same `Resource.Created` / `Resource.Updated` / `Resource.Deleted`
-        vocabulary rather than a BioPay-specific one. A suspension or revocation
-        is therefore a `Resource.Updated` carrying the new `RegistrationStatus`
-        in `Data`, not a distinct event type.
-
-
-        `Data` carries the same schema the discovery operation returns, per the
-        webhook convention that the `Data` object holds the resource that
-        triggered the event. An initiator that processes this event holds
-        everything discovery would tell it — including
-        `DiscoveryEndpointUrl` and `ResourceServerUrl` — and still MUST call
-        discovery before initiating a payment, to confirm the registration has
-        not changed since.
-
-
-        Open items: the published webhook `Meta` carries no event identifier, so
-        de-duplication of retried deliveries rests on `RegistrationId` and
-        `EventDateTime` — the earlier draft carried an `EventId` for this. And
-        whether a revoked registration is reported as `Resource.Updated` with
-        `RegistrationStatus: Revoked` or as `Resource.Deleted` with `Data`
-        omitted is for review; both are expressible here.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AEBiometricRegistrationEventSigned'
-          application/jwe:
-            schema:
-              type: string
-        description: >-
-          As with every other Open Finance webhook, the `application/json`
-          Content Type is provided so the initiator can understand the payload it
-          must parse; it does not reflect the wire format. The event is delivered
-          as a serialised, signed and encrypted JWT with the Content Type
-          `application/jwe`, signed by the API Hub and encrypted to the
-          initiator's encryption certificate registered in the Trust Framework.
-      responses:
-        '202':
-          description: >-
-            Accepted. The initiator MUST acknowledge on receipt, with an empty
-            body, and process asynchronously. The Hub retries on any non-2xx.
-          headers:
-            x-fapi-interaction-id:
-              $ref: '#/components/headers/XFapiInteractionId'
-        '204':
-          description: No content. Accepted on the same terms as `202`.
-          headers:
-            x-fapi-interaction-id:
-              $ref: '#/components/headers/XFapiInteractionId'
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-
-
   # ═════════════════════════════════════════════════════════════════════════
   # PAYMENT
   # ═════════════════════════════════════════════════════════════════════════
@@ -264,17 +80,43 @@ paths:
       operationId: createBiometricPayment
       summary: Initiate a biometric payment
       description: >-
-        **ICP → API Hub → LFI.** Initiates a payment against a registered
-        customer. There is no consent resource and no access-token subject: the
-        customer's authority was established once, at registration, and is held
-        by the API Hub. The Hub resolves the LFI from the registration record,
-        validates the request against the schema for the named
-        `PaymentInstrument`, and proxies to that LFI's Ozone Connect.
+        **BPIP → API Hub → LFI.** Initiates an account-to-account payment
+        against a registered customer, after `POST /instrument-lookup` has
+        returned an account instrument. There is no consent resource and no
+        access-token subject: the customer's standing authority was
+        established at registration, and their authority for **this** payment
+        is the ICP authorisation in `Data.IcpAuthorisation`.
+
+
+        The API Hub verifies the ICP authorisation exactly as on the lookup,
+        and additionally requires that its `jti` was used on a lookup and has
+        not yet been used on a payment. It then derives `BiometricAssurance`
+        from the verified claims, validates the request against the schema for
+        the named `PaymentInstrument`, and proxies to the LFI's Ozone Connect.
+        The Hub marks the `jti` used when the LFI creates the payment; if the
+        LFI returns an error, no payment exists and the `jti` remains usable
+        until it expires. A retry with the same `x-idempotency-key` and
+        identical body may present the same `jti`; any other reuse is
+        rejected.
+
+
+        Account state is checked before the payment is created, and a blocked
+        or closed account is returned as a `403`. The LFI's fraud, sanctions
+        and AML screening and its balance check run after creation; their
+        outcome is a `Rejected` status with a `StatusReason`, delivered by the
+        payment status event and on the GET operations.
+
+
+        Card payments do not use this operation. For a card, the BPIP submits
+        the authorisation to the card scheme with the credential the lookup
+        returned.
 
 
         The response is always `201` with `Status: Pending`. Execution on the
-        rail is asynchronous; the LFI patches status to the Hub, which notifies
-        the initiator and serves the updated resource on the GET operations.
+        rail is asynchronous; the LFI patches status to the Hub, which serves
+        the updated resource on the GET operations and, where the request
+        carried an active `Data.Subscription.Webhook`, sends a payment status
+        event to its `Url`.
       parameters:
         - $ref: '#/components/parameters/XIdempotencyKey'
         - $ref: '#/components/parameters/XJwsSignature'
@@ -301,7 +143,7 @@ paths:
                 $ref: '#/components/schemas/AEBiometricPaymentResponse'
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+        '403': { $ref: '#/components/responses/BiometricPaymentForbidden' }
         '409':
           description: >-
             The `x-idempotency-key` has already been used with a different
@@ -318,15 +160,16 @@ paths:
       operationId: getBiometricPaymentByIdempotencyKey
       summary: Retrieve a payment by idempotency key
       description: >-
-        **ICP → API Hub.** Retrieves a payment by the `IdempotencyKey` the
-        initiator supplied when creating it. This is the recovery path for a lost
-        `201`: when the initiator does not know whether a payment was created, it
+        **BPIP → API Hub.** Retrieves a payment by the `IdempotencyKey` the
+        BPIP supplied when creating it. This is the recovery path for a lost
+        `201`: when the BPIP does not know whether a payment was created, it
         queries by the key it generated rather than initiating again.
 
 
         Returns the single matching payment. When no payment exists for the key,
-        the response is `200` with an empty `Data` array — the initiator can then
-        safely retry the original request.
+        the response is `200` with an empty `Data` array — the BPIP can then
+        safely retry the original request, provided its ICP authorisation has
+        not expired.
       parameters:
         - $ref: '#/components/parameters/IdempotencyKeyQuery'
         - $ref: '#/components/parameters/XFapiInteractionId'
@@ -353,9 +196,9 @@ paths:
       operationId: getBiometricPayment
       summary: Retrieve a payment by PaymentId
       description: >-
-        **ICP → API Hub.** Returns the current state of a payment. The API Hub
+        **BPIP → API Hub.** Returns the current state of a payment. The API Hub
         serves the status it holds, last set by the LFI. Polling this operation
-        is the pull alternative to the status webhook; an initiator MAY use
+        is the pull alternative to the payment status event; a BPIP MAY use
         either or both.
       parameters:
         - $ref: '#/components/parameters/PaymentIdPath'
@@ -375,7 +218,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404':
-          description: No payment exists with this `PaymentId` for this initiator.
+          description: No payment exists with this `PaymentId` for this BPIP.
           content:
             application/json:
               schema:
@@ -395,19 +238,40 @@ paths:
         **BPIP → API Hub → LFI.** Called on every payment. After resolving the
         customer with ICP, the BPIP asks the LFI which payment instrument it
         holds for the `uaeKycId`, and receives in the same response what it
-        needs for that rail: for an account, the IBAN, after which it pays through `POST /biometric-payments`; for a
-        card, a one-time card scheme token and cryptogram, which it submits to the
-        card scheme (e.g. Jaywan) as acquirer. A card payment does not return
-        to the API Hub after the lookup.
+        needs for that rail: for an account, the IBAN, after which it pays
+        through `POST /biometric-payments`; for a card, a one-time card scheme
+        token and cryptogram, which it submits to the card scheme (e.g. Jaywan)
+        as acquirer. A card payment does not return to the API Hub after the
+        lookup.
 
 
-        The API Hub validates the request and proxies it to the Ozone Connect
-        endpoint of the LFI ICP returned. The LFI answers from its own
-        registration store of `uaeKycId` → payment instrument. For a card, the
-        LFI generates the credential for the amount and card acceptor in the
-        request, and encrypts it as a JWE with the BPIP's public encryption key
-        from the Directory, so the API Hub proxies it without reading it. The
-        response never carries a card number (PAN).
+        The request carries the ICP authorisation in `Data.IcpAuthorisation`.
+        Before proxying, the API Hub MUST verify it: the signature against
+        ICP's published keys; that it has not expired; that `cnf.x5t#S256`
+        matches the BPIP's mTLS client certificate; that `azp` matches the
+        calling BPIP; that `sub` equals `Data.uaeKycId`; that `txn` equals
+        the hash of `Data.InstructedAmount` and `Data.CardAcceptor`; and that
+        its `jti` has not been used on a lookup before. The Hub then records
+        the `jti` as looked up.
+
+
+        The API Hub proxies the request, with the ICP authorisation, to the
+        Ozone Connect endpoint of the default LFI ICP returned. The LFI SHOULD
+        verify the ICP authorisation itself, as it carries the debit risk, and
+        retains `jti` → instrument, amount and card acceptor until the
+        authorisation expires. The LFI answers from its own registration store
+        of `uaeKycId` → payment instrument.
+
+
+        For a card, the LFI generates the credential for the amount and card
+        acceptor in the request, binding the cryptogram to the ICP `jti`. It
+        signs the credential as a JWS and encrypts that JWS as a JWE to the
+        BPIP's public encryption key from the Directory, so the API Hub
+        proxies it without reading it. When the card authorisation reaches the
+        LFI through the card scheme, the LFI checks the cryptogram, that the
+        `jti` is known and unused, and that amount and card acceptor match,
+        then marks the `jti` used. The response never carries a card number
+        (PAN).
 
 
         A `POST` rather than a `GET`, so that the `uaeKycId` travels in the
@@ -440,7 +304,7 @@ paths:
                 $ref: '#/components/schemas/AEInstrumentLookupResponse'
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+        '403': { $ref: '#/components/responses/IcpAuthorisationRejected' }
         '404':
           description: >-
             The LFI holds no live BioPay registration for this `uaeKycId`.
@@ -450,6 +314,54 @@ paths:
                 $ref: '#/components/schemas/AEErrorResponse'
         '429': { $ref: '#/components/responses/TooManyRequests' }
         '500': { $ref: '#/components/responses/InternalServerError' }
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # PAYMENT STATUS EVENT — API Hub → BPIP
+  # ══════════════════════════════════════════════════════════════════════════
+  /biometric-payment-status-events:
+    post:
+      tags: [Payment status event]
+      operationId: postBiometricPaymentStatusEvent
+      summary: Payment status event notification
+      description: >-
+        **API Hub → BPIP.** Delivered to the `Data.Subscription.Webhook.Url`
+        the BPIP gave on `POST /biometric-payments`, each time the LFI patches
+        the status of that payment, provided `IsActive` was `true`. The path
+        shown is illustrative — the real target is that URL.
+
+
+        Structured as an Open Finance webhook. The envelope, the `message`
+        claim and the `Data` / `Meta` split are those of the published payment
+        status event; `Data` is the payment resource as it stands after the
+        change, in the same shape `GET /biometric-payments/{PaymentId}`
+        returns. `Meta` carries `PaymentId` in the position `ConsentId` holds in
+        the published event, because a biometric payment has no consent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AEBiometricPaymentStatusEventSigned'
+          application/jwe:
+            schema:
+              type: string
+        description: >-
+          As with every other Open Finance webhook, the `application/json`
+          Content Type is provided so the BPIP can understand the payload it
+          must parse; it does not reflect the wire format. The event is
+          delivered as a serialised, signed and encrypted JWT with the Content
+          Type `application/jwe`, signed by the API Hub and encrypted to the
+          BPIP's encryption certificate registered in the Directory.
+      responses:
+        '202':
+          description: >-
+            Accepted. The BPIP MUST acknowledge on receipt, with an empty
+            body, and process asynchronously. The Hub retries on any non-2xx.
+          headers:
+            x-fapi-interaction-id:
+              $ref: '#/components/headers/XFapiInteractionId'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
 
   # ══════════════════════════════════════════════════════════════════════════
   # PAYMENT LOG — LFI → API Hub
@@ -467,23 +379,24 @@ paths:
         **LFI → API Hub.** Sets the status the API Hub holds for a biometric
         payment once the LFI knows how the rail responded. The Hub is the
         source of truth for payment state, and this is the only way that state
-        changes after creation: nothing the initiator calls can move a payment
+        changes after creation: nothing the BPIP calls can move a payment
         out of `Pending`.
 
 
         Every biometric payment is created `Pending` and the LFI MUST patch it
         to a terminal status. One patch is the normal case — straight to
-        `Accepted`, `AcceptedWithoutPosting` or `Rejected`. An LFI MAY patch
+        `AcceptedWithoutPosting` or `Rejected`. An LFI MAY patch
+        `AcceptedSettlementCompleted` first, and MAY patch
         more than once where the rail reports progress in stages, but MUST NOT
         patch a payment that has already reached a terminal status.
 
 
-        The patch is what produces everything the initiator sees afterwards:
+        The patch is what produces everything the BPIP sees afterwards:
         the Hub records the new status, delivers the payment status event to
-        the initiator's registered event endpoint, and serves the updated
+        the BPIP's webhook URL for the payment, and serves the updated
         resource on `GET /biometric-payments/{PaymentId}` and
         `GET /biometric-payments`. An LFI that executes the payment but never
-        patches leaves the initiator polling a payment that stays `Pending`
+        patches leaves the BPIP polling a payment that stays `Pending`
         forever.
 
 
@@ -508,7 +421,7 @@ paths:
         description: >-
           The fields to set. Flat rather than `Data`-wrapped, following the
           published Consent Manager patch operations rather than the
-          third-party-facing convention used elsewhere in this document.
+          BPIP-facing convention used elsewhere in this document.
         content:
           application/json:
             schema:
@@ -517,9 +430,9 @@ paths:
         '204':
           description: >-
             The status was recorded. No body. Delivery of the payment status
-            event to the initiator happens asynchronously and its outcome does
+            event to the BPIP happens asynchronously and its outcome does
             not affect this response — a `204` means the Hub holds the new
-            status, not that the initiator has received it.
+            status, not that the BPIP has received it.
           headers:
             x-fapi-interaction-id:
               $ref: '#/components/headers/XFapiInteractionId'
@@ -557,7 +470,7 @@ components:
       in: query
       required: true
       description: >-
-        The value the initiator sent in `x-idempotency-key` when creating the
+        The value the BPIP sent in `x-idempotency-key` when creating the
         payment.
       schema:
         type: string
@@ -576,7 +489,7 @@ components:
       required: true
       description: >-
         The API Hub's identifier for the payment — the `PaymentId` the
-        initiator was returned on creation. Named `id` rather than `PaymentId`
+        BPIP was returned on creation. Named `id` rather than `PaymentId`
         to match the published Consent Manager operation
         `PATCH /payment-log/{id}`, which this one sits alongside.
       schema:
@@ -587,8 +500,8 @@ components:
       in: header
       required: true
       description: >-
-        Initiator-generated key that makes payment creation safely retryable.
-        MUST be unique per payment and retained by the initiator long enough to
+        BPIP-generated key that makes payment creation safely retryable.
+        MUST be unique per payment and retained by the BPIP long enough to
         support recovery via `GET /biometric-payments`.
       schema:
         type: string
@@ -645,8 +558,42 @@ components:
             $ref: '#/components/schemas/AEErrorResponse'
     TooManyRequests:
       description: Rate limit exceeded.
+    IcpAuthorisationRejected:
+      description: >-
+        The client is not entitled, or the ICP authorisation was rejected.
+        Entitlement failures are those of every BioPay operation — a client
+        whose application does not carry the BPIP role, or a token without the
+        `biometric-payments` scope. ICP authorisation failures are reported
+        with one of the following `ErrorCode` values (proposed):
+        `IcpAuthorisation.InvalidSignature`, `IcpAuthorisation.Expired`,
+        `IcpAuthorisation.BindingMismatch` (`cnf`, `azp`, `sub` or `txn` does
+        not match the request), `IcpAuthorisation.AlreadyUsed`, and — on
+        `POST /biometric-payments` only — `IcpAuthorisation.NotLookedUp`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AEErrorResponse'
+    BiometricPaymentForbidden:
+      description: >-
+        The client is not entitled, the ICP authorisation was rejected, or the
+        LFI cannot debit the customer's account. No payment is created. ICP
+        authorisation failures use the `IcpAuthorisation.*` codes of
+        `IcpAuthorisationRejected`. Account failures use one of the following
+        `ErrorCode` values (proposed; the BioPay counterparts of the Open
+        Finance `Consent.*` account codes, renamed because BioPay has no
+        consent): `Account.TemporarilyBlocked` (the account is Inactive,
+        Dormant or Suspended), `Account.PermanentAccessFailure` (Closed,
+        Deceased or Unclaimed), `Account.TransientAccessFailure` (temporarily
+        inaccessible).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AEErrorResponse'
     InternalServerError:
-      description: An unexpected error occurred at the API Hub or the LFI.
+      description: >-
+        An unexpected error occurred at the API Hub or the LFI. `ErrorCode` is
+        `GenericRecoverableError` where a retry may succeed, otherwise
+        `GenericError`.
       content:
         application/json:
           schema:
@@ -673,205 +620,32 @@ components:
         schemes, including co-badged cards. The final codes are an open item.
       enum: [AANI, CBDC, JAYWAN, VISA, MASTERCARD]
 
-    AERegistrationStatus:
-      type: string
-      description: >-
-        `NotRegistered` means the Hub holds no registration for the identifier.
-        `Suspended` means a registration exists but MUST NOT be used to initiate
-        a payment.
-      enum: [Registered, Suspended, Revoked, NotRegistered]
-
     AEPaymentStatus:
       type: string
       description: >-
-        Aligned with the published payments standard rather than a
-        BioPay-specific vocabulary. `Pending` on creation; the LFI moves it as
-        the rail responds.
-      enum: [Pending, AcceptedWithoutPosting, Accepted, Rejected]
-
-    AEBiometricDiscoveryRequest:
-      type: object
-      description: >-
-        The `message` of the signed discovery request. Carries only the
-        identifier to resolve — the counterpart of the creditor account the
-        Confirmation of Payee discovery request carries.
-      additionalProperties: false
-      required: [Data]
-      properties:
-        Data:
-          type: object
-          additionalProperties: false
-          required: [uaeKycId]
-          properties:
-            uaeKycId:
-              $ref: '#/components/schemas/AEUaeKycId'
-
-    AEDiscoveredInstrument:
-      type: object
-      description: >-
-        An instrument the customer registered, as reported by discovery. The
-        discovery answer is deliberately narrower than the registration event:
-        it says what may be used and which is the default, and nothing else.
-      additionalProperties: false
-      required: [PaymentInstrument, Default]
-      properties:
-        PaymentInstrument:
-          $ref: '#/components/schemas/AEPaymentInstrument'
-        Default:
-          type: boolean
-          description: >-
-            Exactly one returned instrument is the default. Whether an initiator
-            may select a non-default instrument is an open item.
-
-    AEBiometricRegistrationSourceProperties:
-      type: object
-      description: >-
-        The resolved registration and the endpoints for acting on it. Mirrors
-        `AEConfirmationSourceProperties` in the Confirmation of Payee standard,
-        with the registration state and instruments added because BioPay
-        discovery answers two questions at once: where to go, and whether to go
-        at all.
-      additionalProperties: false
-      required: [uaeKycId, RegistrationStatus]
-      properties:
-        uaeKycId:
-          $ref: '#/components/schemas/AEUaeKycId'
-        RegistrationStatus:
-          $ref: '#/components/schemas/AERegistrationStatus'
-        DiscoveryEndpointUrl:
-          type: string
-          minLength: 1
-          maxLength: 500
-          description: >-
-            Discovery or .well-known endpoint hosted at the API Hub that
-            provides the information to request an Access Token from the target
-            LFI Authorisation Server. Present when `RegistrationStatus` is
-            `Registered`; absent otherwise.
-        ResourceServerUrl:
-          type: string
-          minLength: 1
-          maxLength: 500
-          description: >-
-            API Hub resource server URL at which the biometric payment
-            operation should be invoked for this registration. Present when
-            `RegistrationStatus` is `Registered`; absent otherwise. This
-            replaces the `LFIIdentification` the earlier draft returned — the
-            initiator is given the address rather than a code to build one from.
-        PaymentInstrument:
-          type: array
-          description: >-
-            The instruments available for this registration. Present when
-            `RegistrationStatus` is `Registered`; absent or empty otherwise.
-          items:
-            $ref: '#/components/schemas/AEDiscoveredInstrument'
-
-    AEBiometricRegistrationDiscoveryResponse:
-      type: object
-      description: The `message` of the signed discovery response.
-      additionalProperties: false
-      required: [Data]
-      properties:
-        Data:
-          $ref: '#/components/schemas/AEBiometricRegistrationSourceProperties'
-        Links:
-          $ref: '#/components/schemas/AELinks'
-        Meta:
-          $ref: '#/components/schemas/AEMeta'
-
-
-    AEBiometricRegistrationEventSigned:
-      type: object
-      description: >-
-        Signed event envelope, copied from `AEWebhookEventSigned` in the
-        published webhook template so that a BioPay event is verified exactly
-        like every other Open Finance webhook. `iss` is the API Hub. Note that
-        `aud` is an array here, where the discovery operation uses the
-        single-audience string form — that difference exists between the
-        published webhook and Confirmation of Payee standards and is carried
-        through rather than resolved by BioPay.
-      additionalProperties: false
-      required: [iss, exp, nbf, message]
-      properties:
-        iss:
-          type: string
-          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1)'
-        exp:
-          type: number
-          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4)'
-        nbf:
-          type: number
-          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5)'
-        aud:
-          type: array
-          items:
-            type: string
-          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3)'
-        iat:
-          type: number
-          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6)'
-        message:
-          $ref: '#/components/schemas/AEBiometricRegistrationEvent'
-
-    AEBiometricRegistrationEvent:
-      type: object
-      description: >-
-        The `message` of the signed registration event. `Data` and `Meta` follow
-        the published webhook template: `Data` replicates the resource that
-        triggered the event — here, the same properties discovery returns — and
-        `Meta` describes the event itself. Only `Meta` is required, because the
-        template omits `Data` when `EventType` is `Resource.Deleted`.
-      additionalProperties: false
-      required: [Meta]
-      properties:
-        Data:
-          allOf:
-            - $ref: '#/components/schemas/AEBiometricRegistrationSourceProperties'
-          description: >-
-            The registration as it stands after the event, in the same shape the
-            discovery operation returns it. Omitted when `EventType` is
-            `Resource.Deleted`.
-        Meta:
-          type: object
-          additionalProperties: false
-          required: [EventDateTime, EventResource, EventType, RegistrationId]
-          properties:
-            EventDateTime:
-              type: string
-              format: date-time
-            EventResource:
-              type: string
-              description: >-
-                The resource that triggered the event. Open item: BioPay does not
-                expose the registration to the initiator as a fetchable resource
-                — discovery is the read path — so what this carries needs
-                deciding before the field is meaningful.
-              example: /biometric-payment-registrations/9f14c0e2-63b7-4a1c-9f2e-58b0d4a6c711
-            EventType:
-              type: string
-              description: >-
-                The webhook template's vocabulary, unchanged. A suspension or
-                revocation is a `Resource.Updated` whose `Data` carries the new
-                `RegistrationStatus`.
-              enum:
-                - Resource.Created
-                - Resource.Updated
-                - Resource.Deleted
-            RegistrationId:
-              type: string
-              minLength: 1
-              maxLength: 40
-              description: >-
-                The API Hub's identifier for the registration the event concerns.
-                Occupies the position `ConsentId` holds in the payment status
-                event, and is the only identifier present when `Data` is omitted.
-
+        A subset of the Open Finance payment status values, mapped as for
+        Open Finance domestic payments. `Pending` (PDNG) on creation.
+        `AcceptedSettlementCompleted` (ACSC) is a temporary,
+        payment-processing state: the debtor account has been settled.
+        Terminal statuses: `AcceptedWithoutPosting` (ACWP) — the receiving
+        bank has accepted the payment but the LFI cannot confirm the creditor
+        account has been credited; and `Rejected` (RJCT) — rejected pre-rail
+        by the LFI or post-rail by AANI / UAEFTS.
+      enum:
+        - Pending
+        - AcceptedSettlementCompleted
+        - AcceptedWithoutPosting
+        - Rejected
 
     AEBiometricAssurance:
       type: object
       description: >-
-        ICP's assertion about the identification it performed. This is the
-        evidence set for non-repudiation and dispute handling. It carries no
-        biometric data, no template and no match score.
+        ICP's assertion about the identification it performed, as recorded on
+        the payment resource. Derived by the API Hub from the verified ICP
+        authorisation — not supplied by the BPIP — so that it is evidence ICP
+        produced. This is the evidence set for non-repudiation and dispute
+        handling. It carries no biometric data, no template and no match
+        score.
       additionalProperties: false
       required: [MatchMethod, MatchDateTime, IcpTransactionId]
       properties:
@@ -883,11 +657,120 @@ components:
           format: date-time
         IcpTransactionId:
           type: string
-          description: ICP's own reference for the identification event.
+          description: >-
+            ICP's own reference for the identification event — the `jti` of the
+            ICP authorisation.
           maxLength: 40
         AssuranceLevel:
           type: string
           description: Identity assurance level asserted by ICP. Vocabulary to be confirmed.
+
+    AEIcpAuthorisation:
+      type: string
+      description: >-
+        A compact JWS signed by ICP, returned to the BPIP through the ICP SDK
+        when ICP identifies the customer. Its claims are `AEIcpAuthorisationClaims`.
+        It binds one biometric identification to one transaction: the API Hub
+        and the LFI verify it on `POST /instrument-lookup`, the API Hub on
+        `POST /biometric-payments`, and the LFI again when a card authorisation
+        arrives through the card scheme. Each check is against the same signed
+        values, and the `jti` is single-use across all of them.
+
+
+        Open items: how ICP's signing keys are distributed to the API Hub and
+        LFIs (ICP is not a Directory participant), and the ICP SDK changes
+        needed for ICP to accept the transaction hash and certificate
+        thumbprint and to return this JWS.
+      example: eyJhbGciOiJQUzI1NiIsImtpZCI6ImljcC1zaWduLTEifQ.eyJpc3MiOiJodHRwczovL2ljcC5nb3YuYWUiLCJzdWIiOiJJQ1AtN2M5ZTFmNGEuLi4ifQ.c2lnbmF0dXJl
+
+    AEIcpAuthorisationClaims:
+      type: object
+      description: >-
+        The claims of `AEIcpAuthorisation`, for reference. Signed with `PS256`.
+        The BPIP does not build these: it supplies the transaction hash and
+        its transport certificate thumbprint to ICP, and ICP signs.
+      required: [iss, sub, azp, aud, txn, cnf, amr, jti, iat, exp]
+      properties:
+        iss:
+          type: string
+          description: ICP's issuer identifier.
+        sub:
+          $ref: '#/components/schemas/AEUaeKycId'
+        azp:
+          type: string
+          description: >-
+            The BPIP the authorisation was issued to — its Directory
+            organisation identifier. MUST match the BPIP calling the API Hub.
+        aud:
+          type: string
+          description: The customer's default LFI, as ICP returned it.
+        txn:
+          type: string
+          description: >-
+            Base64url SHA-256 of the canonical JSON of the transaction: the
+            `InstructedAmount` and `CardAcceptor` the BPIP then sends on
+            `POST /instrument-lookup`. Any change to amount or merchant after
+            the biometric gesture breaks the binding and needs a new gesture.
+        cnf:
+          type: object
+          description: >-
+            Binds the authorisation to the BPIP's transport certificate, so
+            that it cannot be presented by anyone without the BPIP's mTLS
+            private key.
+          required: ['x5t#S256']
+          properties:
+            x5t#S256:
+              type: string
+              description: Base64url SHA-256 thumbprint of the BPIP's transport certificate.
+        amr:
+          type: array
+          items:
+            type: string
+            enum: [Fingerprint, FacialImage, Palm]
+        acr:
+          type: string
+          description: Identity assurance level asserted by ICP. Vocabulary to be confirmed.
+        jti:
+          type: string
+          maxLength: 40
+          description: >-
+            ICP's identifier for the identification event (`IcpTransactionId`).
+            Single-use: one lookup, then exactly one account payment or one
+            card authorisation.
+        iat:
+          type: number
+        exp:
+          type: number
+          description: Short-lived — proposed 120 seconds after `iat`.
+
+    AEEventSubscription:
+      type: object
+      description: >-
+        Where the API Hub delivers payment status events for this payment.
+        Mirrors the Open Finance `subscription.Webhook` object a TPP sends when
+        creating a payment consent, because a biometric payment has no consent
+        to carry it. When omitted, or when `IsActive` is `false`, no events are
+        delivered and the BPIP polls instead.
+      required: [Webhook]
+      additionalProperties: false
+      properties:
+        Webhook:
+          type: object
+          required: [Url, IsActive]
+          additionalProperties: false
+          properties:
+            Url:
+              type: string
+              format: uri
+              maxLength: 500
+              description: >-
+                The BPIP's webhook endpoint for this payment's status events.
+                MUST be `https`.
+              example: https://bpip.example.com/webhooks/biopay
+            IsActive:
+              type: boolean
+              description: Whether the API Hub sends payment status events to `Url`.
+              example: true
 
     AEAmount:
       type: object
@@ -940,39 +823,6 @@ components:
               type: string
               example: BARBAEAAXXX
 
-    AECardSchemeCreditor:
-      type: object
-      description: >-
-        Creditor details for a payment executed over a card scheme (e.g.
-        Jaywan, Visa, Mastercard). Field set is a first cut and needs
-        validating against each scheme's own message definition.
-      additionalProperties: false
-      required: [CreditorType, AcquirerIdentification, MerchantIdentification]
-      properties:
-        CreditorType:
-          type: string
-          enum: [JAYWAN, VISA, MASTERCARD]
-        AcquirerIdentification:
-          type: string
-          maxLength: 35
-        MerchantIdentification:
-          type: string
-          maxLength: 35
-        MerchantName:
-          type: string
-        TerminalIdentification:
-          type: string
-          maxLength: 35
-        SettlementAccount:
-          type: object
-          additionalProperties: false
-          properties:
-            SchemeName:
-              type: string
-              enum: [IBAN]
-            Identification:
-              type: string
-
     AECbdcCreditor:
       type: object
       description: >-
@@ -1009,7 +859,7 @@ components:
         Data:
           type: object
           additionalProperties: false
-          required: [uaeKycId, PaymentInstrument, Instruction, Creditor, BiometricAssurance]
+          required: [uaeKycId, PaymentInstrument, Instruction, Creditor, IcpAuthorisation]
           properties:
             uaeKycId:
               $ref: '#/components/schemas/AEUaeKycId'
@@ -1041,22 +891,26 @@ components:
             Creditor:
               description: >-
                 MUST match the `PaymentInstrument` named above, which in turn
-                MUST be one the discovery response listed for a registration
-                whose `RegistrationStatus` is `Registered`.
+                MUST be the instrument `POST /instrument-lookup` returned for
+                this ICP authorisation. Card schemes are not accepted here:
+                card payments are authorised through the card scheme.
               oneOf:
                 - $ref: '#/components/schemas/AEAaniCreditor'
-                - $ref: '#/components/schemas/AECardSchemeCreditor'
                 - $ref: '#/components/schemas/AECbdcCreditor'
               discriminator:
                 propertyName: CreditorType
                 mapping:
                   AANI: '#/components/schemas/AEAaniCreditor'
-                  JAYWAN: '#/components/schemas/AECardSchemeCreditor'
-                  VISA: '#/components/schemas/AECardSchemeCreditor'
-                  MASTERCARD: '#/components/schemas/AECardSchemeCreditor'
                   CBDC: '#/components/schemas/AECbdcCreditor'
-            BiometricAssurance:
-              $ref: '#/components/schemas/AEBiometricAssurance'
+            IcpAuthorisation:
+              description: >-
+                The same ICP authorisation presented on the lookup. The
+                `InstructedAmount` above MUST equal the amount bound in its
+                `txn` claim.
+              allOf:
+                - $ref: '#/components/schemas/AEIcpAuthorisation'
+            Subscription:
+              $ref: '#/components/schemas/AEEventSubscription'
         Risk:
           type: object
           additionalProperties: false
@@ -1130,18 +984,35 @@ components:
           $ref: '#/components/schemas/AERailReference'
         StatusReason:
           $ref: '#/components/schemas/AEBiometricPaymentStatusReason'
+        BiometricAssurance:
+          $ref: '#/components/schemas/AEBiometricAssurance'
 
     AEBiometricPaymentStatusReason:
       type: object
       description: >-
         Why a payment ended where it did. Set by the LFI on the payment log
-        patch and served back unchanged on the payment resource.
+        patch and served back unchanged on the payment resource and the
+        payment status event.
       additionalProperties: false
       properties:
         Code:
           type: string
+          pattern: '^[A-Za-z]+\.[A-Za-z0-9]+$'
+          description: >-
+            Namespaced by where the payment was rejected: `LFI.` when the LFI
+            rejected it before the rail (fraud, sanctions or AML screening —
+            always `LFI.ScreeningRejected` — or account state, balance or
+            limits); `AANI.` when AANI or the
+            receiving bank rejected it, carrying the AANI reason code
+            unchanged (e.g. `AANI.AM04` insufficient funds). The LFI MUST NOT
+            move a rail code into the `LFI.` namespace, or the reverse.
+          example: AANI.AM04
         Description:
           type: string
+          description: >-
+            A sanitised description that can be shown to the customer. MUST NOT
+            reveal detection logic, a sanctions match or an internal case
+            reference.
 
     AEBiometricPaymentLogPatch:
       type: object
@@ -1166,7 +1037,7 @@ components:
         StatusReason:
           description: >-
             MUST be present when `Status` is `Rejected`, carrying the reason
-            the initiator needs in order to tell the customer whether another
+            the BPIP needs in order to tell the customer whether another
             attempt is worthwhile.
           allOf:
             - $ref: '#/components/schemas/AEBiometricPaymentStatusReason'
@@ -1201,73 +1072,13 @@ components:
         Meta:
           $ref: '#/components/schemas/AEMeta'
 
-    # ── Signed JWT envelopes ───────────────────────────────────────────────
-    # Claim set and required fields are copied from the Confirmation of Payee
-    # standard's *BodySigned schemas so the two discovery operations are signed
-    # and verified the same way. `message` holds the payload; `iss` is the
-    # signer, and the initiator verifies the response against the API Hub's
-    # signing key published at its JWKS endpoint.
-
-    DiscoverBiometricRegistrationRequestBodySigned:
-      type: object
-      description: Signed by the initiator (ICP) and sent as `application/jwt`.
-      additionalProperties: false
-      required: [iss, exp, nbf, message]
-      properties:
-        iss:
-          type: string
-          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1)'
-        exp:
-          type: number
-          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4)'
-        nbf:
-          type: number
-          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5)'
-        aud:
-          type: string
-          description: >-
-            The identifier of the intended recipient of the JWT. A single
-            StringOrURI per RFC 7519 §4.1.3 (single-audience form).
-            [https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3)
-        iat:
-          type: number
-          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6)'
-        message:
-          $ref: '#/components/schemas/AEBiometricDiscoveryRequest'
-
-    DiscoverBiometricRegistrationResponseBodySigned:
-      type: object
-      description: Signed by the API Hub and returned as `application/jwt`.
-      additionalProperties: false
-      required: [iss, exp, nbf, message]
-      properties:
-        iss:
-          type: string
-          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1)'
-        exp:
-          type: number
-          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4)'
-        nbf:
-          type: number
-          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5)'
-        aud:
-          type: string
-          description: >-
-            The identifier of the intended recipient of the JWT. A single
-            StringOrURI per RFC 7519 §4.1.3 (single-audience form).
-            [https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3)
-        iat:
-          type: number
-          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6)'
-        message:
-          $ref: '#/components/schemas/AEBiometricRegistrationDiscoveryResponse'
-
-    AEErrorResponseBodySigned:
+    AEBiometricPaymentStatusEventSigned:
       type: object
       description: >-
-        Signed error body, returned as `application/jwt` by operations whose
-        success responses are signed. Operations with unsigned JSON responses
-        return `AEErrorResponse` directly.
+        Signed event envelope, copied from `AEWebhookEventSigned` in the
+        published webhook template so that a BioPay event is verified exactly
+        like every other Open Finance webhook. `iss` is the API Hub; `aud`
+        holds the BPIP's client identifier.
       additionalProperties: false
       required: [iss, exp, nbf, message]
       properties:
@@ -1281,33 +1092,75 @@ components:
           type: number
           description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5)'
         aud:
-          type: string
-          description: >-
-            The identifier of the intended recipient of the JWT. A single
-            StringOrURI per RFC 7519 §4.1.3 (single-audience form).
-            [https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3)
+          type: array
+          items:
+            type: string
+          description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3)'
         iat:
           type: number
           description: '[https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6)'
+        jti:
+          type: string
+          description: Unique per delivery. The BPIP SHOULD reject a `jti` it has already processed.
         message:
-          $ref: '#/components/schemas/AEErrorResponse'
+          $ref: '#/components/schemas/AEBiometricPaymentStatusEvent'
 
+    AEBiometricPaymentStatusEvent:
+      type: object
+      description: >-
+        The `message` of the signed payment status event. `Data` replicates the
+        payment resource as it stands after the change; `Meta` describes the
+        event itself.
+      additionalProperties: false
+      required: [Data, Meta]
+      properties:
+        Data:
+          $ref: '#/components/schemas/AEBiometricPayment'
+        Meta:
+          type: object
+          additionalProperties: false
+          required: [EventDateTime, EventResource, EventType, PaymentId]
+          properties:
+            EventDateTime:
+              type: string
+              format: date-time
+            EventResource:
+              type: string
+              example: /biometric-payments/7130812d-4d81-4c68-8187-6358cfbce521
+            EventType:
+              type: string
+              enum:
+                - Resource.Updated
+            PaymentId:
+              type: string
+              maxLength: 40
+              description: >-
+                The payment the event concerns. Occupies the position
+                `ConsentId` holds in the published payment status event.
 
     AEInstrumentLookupRequest:
       type: object
       description: >-
-        Instrument lookup request. Carries only the identifier ICP returned on
-        resolution.
+        Instrument lookup request. Carries the identifier and the ICP
+        authorisation ICP returned on resolution, and the transaction details
+        that authorisation is bound to.
       additionalProperties: false
       required: [Data]
       properties:
         Data:
           type: object
           additionalProperties: false
-          required: [uaeKycId, InstructedAmount]
+          required: [uaeKycId, InstructedAmount, CardAcceptor, IcpAuthorisation]
           properties:
             uaeKycId:
               $ref: '#/components/schemas/AEUaeKycId'
+            IcpAuthorisation:
+              description: >-
+                The ICP authorisation for this transaction. Its `sub` MUST equal
+                `uaeKycId`, and its `txn` MUST equal the hash of
+                `InstructedAmount` and `CardAcceptor` below.
+              allOf:
+                - $ref: '#/components/schemas/AEIcpAuthorisation'
             InstructedAmount:
               description: >-
                 The payment amount. Used by the LFI to bind the card scheme token
@@ -1317,10 +1170,12 @@ components:
             CardAcceptor:
               type: object
               description: >-
-                The merchant's card acceptance details. Used only when the
-                payment instrument is a card scheme, including to choose a
-                scheme the merchant accepts for a co-badged card. Field set to
-                be validated against each scheme's message definition.
+                The merchant's acceptance details. Always sent, because they are
+                part of the transaction bound in the ICP authorisation's `txn`.
+                When the payment instrument is a card scheme, the LFI binds the
+                cryptogram to them and uses them to choose a scheme the
+                merchant accepts for a co-badged card. Field set to be
+                validated against each scheme's message definition.
               additionalProperties: false
               properties:
                 AcquirerIdentification:
@@ -1367,12 +1222,15 @@ components:
             EncryptedCardCredential:
               type: string
               description: >-
-                Present when the payment instrument is a card scheme. A JWE,
-                encrypted by the LFI with the BPIP's public encryption key
-                registered in the Directory, whose plaintext is an
+                Present when the payment instrument is a card scheme. A compact
+                JWE (`RSA-OAEP-256`, `A256GCM`), encrypted by the LFI to the
+                BPIP's public encryption key registered in the Directory and
+                identified by `kid` in the JWE header. Its plaintext is a JWS
+                signed by the LFI (`PS256`) whose claims are
                 `AECardCredential`. The API Hub proxies it unread, so card data
                 never passes through the Hub in the clear. Only the BPIP can
-                decrypt it, with its private key.
+                decrypt it, with its private key, and it verifies the inner JWS
+                against the LFI's signing keys from the Directory.
               example: eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIiwia2lkIjoiYnBpcC1lbmMifQ...
         Meta:
           $ref: '#/components/schemas/AEMeta'
@@ -1380,11 +1238,30 @@ components:
     AECardCredential:
       type: object
       description: >-
-        The plaintext of `EncryptedCardCredential` in the instrument lookup
-        response. Never sent unencrypted.
+        The claims of the LFI-signed JWS inside `EncryptedCardCredential` in
+        the instrument lookup response. Never sent unencrypted.
       additionalProperties: false
-      required: [CardSchemeToken, Cryptogram, ExpirationDateTime]
+      required: [iss, aud, iat, exp, IcpTransactionId, CardSchemeToken, Cryptogram, ExpirationDateTime]
       properties:
+        iss:
+          type: string
+          description: The LFI's issuer identifier.
+        aud:
+          type: string
+          description: The BPIP's client identifier.
+        iat:
+          type: number
+        exp:
+          type: number
+          description: No later than `ExpirationDateTime`.
+        IcpTransactionId:
+          type: string
+          maxLength: 40
+          description: >-
+            The `jti` of the ICP authorisation this credential was issued
+            against. The BPIP MUST check it equals the `jti` it presented, and
+            carries it in the card scheme authorisation (field to be defined
+            with the card scheme).
         CardSchemeToken:
           type: string
           maxLength: 19
@@ -1396,7 +1273,8 @@ components:
           type: string
           description: >-
             A one-time cryptogram bound to the amount and card acceptor in the
-            request, for the BPIP to submit to the card scheme.
+            request and to the ICP authorisation's `jti`, for the BPIP to submit
+            to the card scheme.
         ExpirationDateTime:
           type: string
           format: date-time

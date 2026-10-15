@@ -18,7 +18,7 @@ let leaveTimer: ReturnType<typeof setTimeout> | null = null
 
 onMounted(() => {
   if (typeof window !== 'undefined' && window.matchMedia) {
-    supportsHover.value = window.matchMedia('(hover: hover)').matches
+    supportsHover.value = window.matchMedia('(any-hover: hover)').matches
   }
 })
 
@@ -134,7 +134,7 @@ function onClose(): void {
   transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@media (hover: hover) {
+@media (any-hover: hover) {
   .ed-hsb:hover,
   .ed-hsb:focus-within {
     width: 520px;
@@ -159,7 +159,7 @@ function onClose(): void {
   transition: flex-basis 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.16s ease;
 }
 
-@media (hover: hover) {
+@media (any-hover: hover) {
   .ed-hsb:hover .ed-hsb__hit,
   .ed-hsb:focus-within .ed-hsb__hit {
     flex-basis: 0;
@@ -241,7 +241,7 @@ function onClose(): void {
   transition: opacity 0.22s ease 0.04s, transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@media (hover: hover) {
+@media (any-hover: hover) {
   .ed-hsb:hover .ed-hsb__drawer,
   .ed-hsb:focus-within .ed-hsb__drawer {
     opacity: 1;

@@ -111,7 +111,7 @@ const actors: BpActor[] = [
         title="BioPay — registration"
         eyebrow="Registration flow"
       >
-        <BpRegistrationFlow variant="direct" />
+        <BpRegistrationFlow />
       </APIFlowViewer>
     </EdSectionBand>
 

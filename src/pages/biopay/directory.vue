@@ -169,8 +169,10 @@ const bpipCalls: Endpoint[] = [
       </EdBullets>
 
       <EdProse>
-        A BPIP client also <strong>receives</strong> the payment status event from the API Hub at an
-        endpoint it registers in the Directory. The event is delivered to the BPIP; it is not an
+        A BPIP client also <strong>receives</strong> the
+        <RouterLink to="/biopay/payment/api-reference/payment-status-event">payment status event</RouterLink>
+        from the API Hub, at the webhook URL it gives on each
+        <RouterLink to="/biopay/payment/api-reference/biometric-payments"><code>POST /biometric-payments</code></RouterLink>. The event is delivered to the BPIP; it is not an
         endpoint the BPIP calls.
       </EdProse>
     </EdSectionBand>

@@ -2,19 +2,19 @@
 //
 // BioPay is a proposed UAE Open Finance payment journey: a customer is
 // identified biometrically by ICP (the government identity service), and a
-// specifically authorised third party — ICP itself, holding the BPIP role —
+// Biometric Payment Initiation Provider (BPIP) — the merchant's acquirer —
 // initiates a payment through the API Hub using a client_credentials grant.
 // No biometric ever crosses into Open Finance; what crosses is a uaeKycId
-// plus ICP's assertion that it identified the person.
+// plus ICP's signed, transaction-bound authorisation that it identified the
+// person.
 //
 // The journey has two halves:
-//   Registration — the customer registers with their LFI directly, the LFI
-//     posts the completed registration to the API Hub, the Hub stores the
-//     binding (uaeKycId → LFI → payment instrument) and drives an event to
-//     ICP. Discovery is then answered by the Hub from that store.
-//   Payment — ICP discovers the registration, posts a payment shaped to the
-//     registered payment rail (AANI, CBDC, Jaywan, ...), and tracks it by PaymentId
-//     or by idempotency key while the Hub proxies execution to the LFI.
+//   Registration — the LFI registers the customer with ICP directly through
+//     the ICP SDK. The API Hub plays no part.
+//   Payment — the BPIP resolves the customer with ICP through the ICP SDK,
+//     looks up the payment instrument at the LFI through the API Hub, then
+//     either pays account-to-account through the Hub (tracked by PaymentId or
+//     idempotency key) or submits a card authorisation to the card scheme.
 //
 // Everything here is Draft. No endpoint is published and the schemas are
 // proposals, not specifications.
@@ -125,6 +125,10 @@ export const biopaySidebar: EdSidebarItemData[] = [
           {
             text: 'POST /instrument-lookup',
             link: '/biopay/payment/api-reference/instrument-lookup',
+          },
+          {
+            text: 'Payment status event',
+            link: '/biopay/payment/api-reference/payment-status-event',
           },
         ],
       },

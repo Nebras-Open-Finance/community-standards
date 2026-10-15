@@ -8,7 +8,7 @@ meta:
 </route>
 
 <script setup lang="ts">
-// The collection GET, filtered by the idempotency key the initiator generated.
+// The collection GET, filtered by the idempotency key the BPIP generated.
 // Shares its path with payment initiation, so filter-method keeps this page to
 // the GET.
 import { BIOPAY_SPEC } from '@/data/biopay-spec'
@@ -25,7 +25,7 @@ const servers = [
     version="Draft · 0.1"
     method="GET"
     path="/biometric-payments"
-    description="Retrieving a BioPay payment by the idempotency key used to create it: the recovery path when an initiator never received the 201, with request, response and error schemas."
+    description="Retrieving a BioPay payment by the idempotency key used to create it: the recovery path when a BPIP never received the 201, with request, response and error schemas."
   >
     <RedocWrapper
       :spec-text="BIOPAY_SPEC"

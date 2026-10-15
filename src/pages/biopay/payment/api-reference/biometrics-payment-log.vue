@@ -8,10 +8,9 @@ meta:
 </route>
 
 <script setup lang="ts">
-// The payment log patch. Direction is LFI -> API Hub, like the registration
-// event's is Hub -> initiator, so the server shown is the Consent Manager host
-// the LFI already calls rather than the rs1.* host the initiator-facing
-// operations use.
+// The payment log patch. Direction is LFI -> API Hub, so the server shown is
+// the Consent Manager host the LFI already calls rather than the rs1.* host the
+// BPIP-facing operations use.
 import { BIOPAY_SPEC } from '@/data/biopay-spec'
 
 const servers = [
@@ -27,7 +26,7 @@ const servers = [
     version="Draft · 0.1"
     method="PATCH"
     path="/biometrics-payment-log/{id}"
-    description="The call an LFI makes to set the status the API Hub holds for a biometric payment. It is what moves a payment out of Pending, what triggers the payment status event, and what the initiator's polling reads."
+    description="The call an LFI makes to set the status the API Hub holds for a biometric payment. It is what moves a payment out of Pending, what triggers the payment status event, and what the BPIP's polling reads."
   >
     <RedocWrapper
       :spec-text="BIOPAY_SPEC"
