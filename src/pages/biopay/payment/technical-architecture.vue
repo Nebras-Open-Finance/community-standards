@@ -41,10 +41,10 @@ const actors: BpActor[] = [
     responsibilities: [
       'Operate the acceptance point, and capture the biometric together with the amount and creditor details.',
       'Resolve the customer directly with ICP through the ICP SDK, supplying the transaction hash and its transport certificate thumbprint, and receive a uaeKycId, the customer’s default LFI and the ICP authorisation. This call does not route through the API Hub.',
-      'Look up the customer’s payment instrument through the API Hub on every payment, presenting the ICP authorisation, and route the payment on the result.',
-      'For an account, build the payment request carrying the uaeKycId, the payment instrument and the same ICP authorisation, and send it through the API Hub to the default LFI ICP returned.',
+      'Look up the customer’s payment instrument through the API Hub on every payment, presenting the ICP authorisation, and receive a payment token. Route the payment on the result.',
+      'For an account, build the payment request carrying the uaeKycId, the customer’s IBAN from the lookup and the payment token, and send it through the API Hub to the default LFI ICP returned.',
       'Register an encryption certificate in the Directory. Decrypt the card credential JWE in the lookup response with its private key, and verify the LFI’s signature inside it.',
-      'For a card, submit the authorisation to the card scheme as acquirer, with the one-time credential the lookup returned and the ICP jti. No further call goes through the API Hub.',
+      'For a card, submit the authorisation to the card scheme as acquirer, with the one-time credential and the payment token the lookup returned. No further call goes through the API Hub.',
       'Generate and retain an idempotency key for every account payment, and recover with it rather than initiating again.',
       'Implement a webhook endpoint, give its URL on each payment request, and acknowledge payment status events.',
       'Report the outcome back to the customer.',
@@ -71,13 +71,16 @@ const actors: BpActor[] = [
       'Enforce mutual TLS and application-layer authentication on every request, so each call is bound to a participant the Trust Framework has identified by certificate.',
       'Issue access tokens under client_credentials. There is no authorisation journey in this flow, and no LFI issues anything.',
       'Enforce role and scope entitlement before any request is proxied.',
-      'Verify the ICP authorisation on every lookup and payment, and enforce its jti as single-use: one lookup, then at most one payment.',
-      'Validate every request against its schema, and every payment request against the schema for the named payment instrument.',
+      'Verify the ICP authorisation on every lookup, and allow each one to be exchanged for one payment token only.',
+      'Mint the payment token after the LFI answers the lookup: a short-lived, single-use JWS that embeds the ICP authorisation and states whether the payment is by account or card.',
+      'Verify the payment token on every account payment, and mark it used once the LFI creates the payment.',
+      'Validate every request against its schema.',
       'Act as the gateway between the BPIP and the LFI. The BPIP never communicates with the LFI directly — the Hub proxies the instrument lookup and the payment to the Ozone Connect endpoints of the default LFI ICP returned. Identity resolution with ICP does not pass through the Hub.',
       'Enforce idempotency, and serve retrieval by payment identifier or by idempotency key.',
       'Record every transaction that passes through, for reconciliation, dispute handling and supervision.',
       'Normalise status, map LFI errors to the standard, and deliver payment status events to the BPIP.',
-      'Record the biometric assurance on each payment from the verified ICP authorisation, not from anything the BPIP asserts.',
+      'Record the biometric assurance on each payment from the ICP authorisation embedded in the payment token, not from anything the BPIP asserts.',
+      'Publish the signing keys the card scheme uses to verify payment tokens.',
       'Proxy the card credential JWE unread. The Hub never sees card data in the clear, keeping it out of PCI DSS scope.',
       'Store no biometric, no template, no account number and no card credential.',
     ],
@@ -90,10 +93,10 @@ const actors: BpActor[] = [
     responsibilities: [
       'Implement the instrument lookup and biometric payment endpoints on Ozone Connect.',
       'Resolve the uaeKycId to the customer record and the instrument selected at registration.',
-      'Verify the ICP authorisation on the lookup, and retain its jti against the instrument, amount and merchant until it expires.',
+      'Verify the ICP authorisation on the lookup.',
       'On lookup, return the IBAN for an account; for a card, generate a one-time card scheme token and cryptogram bound to the amount, merchant and ICP jti, sign them, and encrypt them as a JWE to the BPIP’s public encryption key from the Directory.',
       'Execute the account-to-account payment via AANI/IPP, and patch payment status to the API Hub once it reaches a terminal state.',
-      'As issuer, when the card authorisation arrives from the card scheme, validate the cryptogram, check the jti is known and unused and that amount and merchant match, mark it used, and approve or decline.',
+      'As issuer, when the card authorisation arrives from the card scheme, validate the cryptogram and approve or decline.',
     ],
   },
   {
@@ -103,6 +106,7 @@ const actors: BpActor[] = [
     color: 'var(--at-mute)',
     responsibilities: [
       'Provision card scheme tokens for BioPay, and code transactions for biometric cardholder verification.',
+      'Verify the payment token in the BPIP’s authorisation against the API Hub’s signing keys — a Card token for this scheme, amount and merchant, not expired and not used — and mark it used.',
       'Detokenise and route the BPIP’s authorisation to the issuing LFI, and return the response.',
       'Clear and settle the card payment, as for any card payment.',
     ],
@@ -145,22 +149,33 @@ const actors: BpActor[] = [
           The BPIP then asks that LFI, through the API Hub, which payment instrument the customer
           pays with, using
           <RouterLink to="/biopay/payment/api-reference/instrument-lookup"><code>POST /instrument-lookup</code></RouterLink>.
-          The BPIP routes the payment on the result:
+          The API Hub exchanges the ICP authorisation for a <strong>payment token</strong>, and
+          the BPIP routes the payment on the result:
         </p>
         <ul>
           <li>
-            <strong>Account (AANI/IPP).</strong> The BPIP sends the payment request through the API
-            Hub, under <code>client_credentials</code> over mTLS, and the Hub proxies it to the LFI.
+            <strong>Account (AANI/IPP).</strong> The BPIP sends the payment request, carrying the
+            payment token, through the API Hub, under <code>client_credentials</code> over mTLS. The
+            Hub verifies the token and proxies the request to the LFI.
             The LFI executes on the rail and patches status back, which the Hub delivers to the BPIP.
           </li>
           <li>
             <strong>Card (card scheme, e.g. Jaywan).</strong> The BPIP, as acquirer, submits the
             authorisation to the card scheme with the one-time credential the lookup returned
-            &mdash; a JWE encrypted to the BPIP, which the API Hub cannot read. The payment does
-            not return to the API Hub.
+            &mdash; a JWE encrypted to the BPIP, which the API Hub cannot read &mdash; and the
+            payment token, which the card scheme verifies. The payment does not return to the API
+            Hub.
           </li>
         </ul>
       </EdProse>
+      <EdNote type="info" title="The BPIP never communicates with the LFI directly">
+        <p>
+          Every BPIP call reaches the LFI through an intermediary. Account payments, and the
+          instrument lookup, go through the API Hub, operated by Nebras. Card payments go through the
+          card scheme (e.g. Jaywan), as they do today. The BPIP has no connection to the LFI&rsquo;s
+          systems.
+        </p>
+      </EdNote>
       <APIFlowViewer
         title="BioPay — payment"
         eyebrow="Payment flow"
@@ -185,16 +200,17 @@ const actors: BpActor[] = [
           <RouterLink to="/biopay/payment/api-reference/instrument-lookup"><code>POST /instrument-lookup</code></RouterLink>
           on every payment, after resolution with ICP and before it builds the payment. The API Hub
           proxies the lookup to the LFI&rsquo;s Ozone Connect, and the LFI answers from its own
-          registration store of <code>uaeKycId</code> &rarr; payment instrument. The same response
-          carries what the BPIP needs for that rail:
+          registration store of <code>uaeKycId</code> &rarr; payment instrument. The API Hub adds a
+          payment token to every successful response, and the response carries what the BPIP needs
+          for that rail:
         </p>
         <ul>
           <li>
-            <strong>Account</strong> &mdash; the <code>PaymentInstrument</code> and the IBAN. The BPIP
-            names the instrument in
+            <strong>Account (AANI)</strong> &mdash; <code>PaymentInstrument: AANI</code> and the
+            customer&rsquo;s IBAN. The BPIP sends the IBAN back as <code>DebtorAccount</code> in
             <RouterLink to="/biopay/payment/api-reference/biometric-payments"><code>POST /biometric-payments</code></RouterLink>.
-            The instrument can change between the lookup and the payment, so the payment request
-            can still fail on a mismatch.
+            The registered account can change between the lookup and the payment, so the payment
+            request can still fail on a mismatch (<code>Account.DebtorAccountMismatch</code>).
           </li>
           <li>
             <strong>Card</strong> &mdash; the <code>PaymentInstrument</code> and a one-time card
@@ -233,7 +249,7 @@ const actors: BpActor[] = [
       color="var(--at-teal)"
       eyebrow="Binding to ICP"
       title="One biometric identification, one payment"
-      lede="The lookup, the account payment and the card authorisation are each bound to the same ICP authorisation, and that authorisation can be used once."
+      lede="The ICP authorisation is exchanged once, at the lookup, for a payment token that embeds it. The payment token replaces it at the point of payment, and can be used once."
     >
       <EdProse>
         <p>
@@ -247,6 +263,15 @@ const actors: BpActor[] = [
           authorises this amount at this merchant, in the way dynamic linking does under PSD2 strong
           customer authentication.
         </p>
+        <p>
+          On the lookup, the API Hub verifies the ICP authorisation and, once the LFI has answered,
+          returns a <strong>payment token</strong>: a short-lived, single-use JWS signed by the API
+          Hub. It embeds the ICP authorisation unchanged, states the <code>PaymentType</code>
+          (<code>Account</code> or <code>Card</code>) and the instrument, and binds the customer, the
+          amount, the merchant, the BPIP&rsquo;s client and certificate and, for an account, the IBAN.
+          The payment token &mdash; not the ICP authorisation &mdash; is what the BPIP presents to
+          make the payment.
+        </p>
       </EdProse>
       <EdRefTable>
         <table>
@@ -257,17 +282,17 @@ const actors: BpActor[] = [
             <tr>
               <td><RouterLink to="/biopay/payment/api-reference/instrument-lookup"><code>POST /instrument-lookup</code></RouterLink></td>
               <td>API Hub, then LFI</td>
-              <td>ICP signature and expiry; <code>cnf</code> matches the mTLS certificate; <code>azp</code> is the calling BPIP; <code>sub</code> and <code>txn</code> match the request; <code>jti</code> not used before. The Hub records the <code>jti</code> as looked up; the LFI retains it against the instrument, amount and merchant.</td>
+              <td>The <strong>ICP authorisation</strong>: ICP signature and expiry; <code>cnf</code> matches the mTLS certificate; <code>azp</code> is the calling BPIP; <code>sub</code> and <code>txn</code> match the request; <code>jti</code> not used before. The Hub marks it used and returns the payment token.</td>
             </tr>
             <tr>
               <td><RouterLink to="/biopay/payment/api-reference/biometric-payments"><code>POST /biometric-payments</code></RouterLink></td>
-              <td>API Hub, then LFI</td>
-              <td>The same checks, plus: the <code>jti</code> was looked up and not yet paid, and the amount matches <code>txn</code>. The Hub marks the <code>jti</code> used and records the biometric assurance from the verified claims.</td>
+              <td>API Hub</td>
+              <td>The <strong>payment token</strong>: API Hub signature and expiry; <code>PaymentType: Account</code>; <code>cnf</code> and <code>azp</code>; the <code>uaeKycId</code>, IBAN and amount match the request; not used before. The Hub marks it used when the LFI creates the payment, and records the biometric assurance from the embedded ICP authorisation.</td>
             </tr>
             <tr>
               <td>Card authorisation through the card scheme</td>
-              <td>LFI, as issuer</td>
-              <td>The cryptogram, which the LFI bound to the amount, merchant and <code>jti</code> at lookup; the <code>jti</code> is known and unused. The LFI marks it used. The BPIP also carries the <code>jti</code> in the authorisation as an authentication value, so the card scheme holds it for disputes.</td>
+              <td>Card scheme, then LFI</td>
+              <td>The card scheme checks the <strong>payment token</strong> against the API Hub&rsquo;s published signing keys: <code>PaymentType: Card</code> for this scheme; the amount and merchant match the authorisation; not expired and not used. It marks it used. The LFI, as issuer, validates the cryptogram, which it bound to the amount, merchant and ICP <code>jti</code> at lookup.</td>
             </tr>
           </tbody>
         </table>
@@ -276,9 +301,10 @@ const actors: BpActor[] = [
         <p>
           The ICP SDK must accept the transaction hash and certificate thumbprint and return a
           signed authorisation. ICP&rsquo;s signing keys must be distributed to the API Hub and the
-          LFIs, although ICP is not a Directory participant. How the <code>jti</code> is carried in
-          the card scheme&rsquo;s authorisation message is to be agreed with each scheme. A change of
-          amount after the gesture &mdash; a tip, a changed basket &mdash; needs a new gesture.
+          LFIs, although ICP is not a Directory participant. Each card scheme must carry the payment
+          token in its authorisation message, and must trust and use the API Hub&rsquo;s signing keys
+          to verify it &mdash; to be agreed with each scheme. A change of amount after the gesture
+          &mdash; a tip, a changed basket &mdash; needs a new gesture.
         </p>
       </EdNote>
     </EdSectionBand>

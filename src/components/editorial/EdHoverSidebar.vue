@@ -14,6 +14,7 @@ withDefaults(defineProps<{
 
 const open = ref(false)
 const supportsHover = ref(false)
+const dismissed = ref(false)
 let leaveTimer: ReturnType<typeof setTimeout> | null = null
 
 onMounted(() => {
@@ -34,18 +35,23 @@ function onHoverEnter(): void {
   if (supportsHover.value) onEnter()
 }
 function onHoverLeave(): void {
+  dismissed.value = false
   if (supportsHover.value) onLeave()
 }
-function onClose(): void {
+// Closing while the cursor is still over the drawer would leave :hover holding
+// it open, so suppress hover/focus-open until the cursor leaves the sidebar.
+function onClose(e: MouseEvent): void {
   if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null }
   open.value = false
+  if (supportsHover.value) dismissed.value = true
+  ;(e.currentTarget as HTMLElement | null)?.blur()
 }
 </script>
 
 <template>
   <aside
     class="ed-hsb"
-    :class="{ 'is-open': open }"
+    :class="{ 'is-open': open, 'is-dismissed': dismissed }"
     :aria-label="title"
     @mouseenter="onHoverEnter"
     @mouseleave="onHoverLeave"
@@ -135,8 +141,8 @@ function onClose(): void {
 }
 
 @media (any-hover: hover) {
-  .ed-hsb:hover,
-  .ed-hsb:focus-within {
+  .ed-hsb:not(.is-dismissed):hover,
+  .ed-hsb:not(.is-dismissed):focus-within {
     width: 520px;
     transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -160,8 +166,8 @@ function onClose(): void {
 }
 
 @media (any-hover: hover) {
-  .ed-hsb:hover .ed-hsb__hit,
-  .ed-hsb:focus-within .ed-hsb__hit {
+  .ed-hsb:not(.is-dismissed):hover .ed-hsb__hit,
+  .ed-hsb:not(.is-dismissed):focus-within .ed-hsb__hit {
     flex-basis: 0;
     opacity: 0;
     pointer-events: none;
@@ -242,8 +248,8 @@ function onClose(): void {
 }
 
 @media (any-hover: hover) {
-  .ed-hsb:hover .ed-hsb__drawer,
-  .ed-hsb:focus-within .ed-hsb__drawer {
+  .ed-hsb:not(.is-dismissed):hover .ed-hsb__drawer,
+  .ed-hsb:not(.is-dismissed):focus-within .ed-hsb__drawer {
     opacity: 1;
     pointer-events: auto;
     transform: translateX(0);
@@ -253,7 +259,7 @@ function onClose(): void {
 
 .ed-hsb__head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
   padding: 1.85rem 2.5rem 1.25rem;
@@ -283,9 +289,34 @@ a.ed-hsb__title:hover { color: var(--at-teal-deep); }
   padding: 0;
 }
 
-/* ── Mobile-only toggle + close (hidden on desktop) ──────────────────── */
+/* ── Mobile-only toggle (hidden on desktop) ──────────────────────────── */
 .ed-hsb__mobile-toggle { display: none; }
-.ed-hsb__close { display: none; }
+
+/* ── Close button (right of the title, all widths) ───────────────────── */
+.ed-hsb__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: transparent;
+  border: 1px solid var(--at-grid-line);
+  color: var(--at-navy-deep);
+  cursor: pointer;
+  touch-action: manipulation;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.ed-hsb__close:hover {
+  color: var(--at-teal-deep);
+  border-color: var(--at-teal-deep);
+}
+
+.ed-hsb__close:focus-visible {
+  outline: 2px solid var(--at-teal);
+  outline-offset: 2px;
+}
 
 /* ── Mobile: replace left rail with a button under the page header ───── */
 @media (max-width: 959px) {
@@ -330,33 +361,7 @@ a.ed-hsb__title:hover { color: var(--at-teal-deep); }
     pointer-events: none;
   }
 
-  .ed-hsb__close {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    background: transparent;
-    border: 1px solid var(--at-grid-line);
-    color: var(--at-navy-deep);
-    cursor: pointer;
-    touch-action: manipulation;
-    flex-shrink: 0;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
-  }
-
-  .ed-hsb__close:hover {
-    color: var(--at-teal-deep);
-    border-color: var(--at-teal-deep);
-  }
-
-  .ed-hsb__close:focus-visible {
-    outline: 2px solid var(--at-teal);
-    outline-offset: 2px;
-  }
-
   .ed-hsb__head {
-    align-items: center;
     padding: 1.25rem 1.5rem 1rem;
   }
 

@@ -7,10 +7,13 @@ import { useMermaidDiagram } from '@/composables/useMermaidDiagram'
 // returns a signed ICP authorisation bound to the transaction (amount and
 // merchant) and to the BPIP's transport certificate; its jti is single-use.
 // On every payment the BPIP then looks up the customer's payment instrument at
-// the LFI through the API Hub, presenting that authorisation, and routes on the
-// result: an account payment goes through the Hub to the LFI with the same
-// authorisation; a card payment goes to the card scheme, with the BPIP as
-// acquirer, and does not return to the Hub. The card credential in the lookup
+// the LFI through the API Hub, presenting that authorisation. The Hub exchanges
+// it for a payment token: a short-lived, single-use JWS signed by the Hub that
+// embeds the ICP authorisation and states whether this is an account or a card
+// payment. The payment token replaces the ICP authorisation at the point of
+// payment: an account payment goes through the Hub to the LFI carrying it, and
+// the Hub verifies it; a card payment goes to the card scheme carrying it, with
+// the BPIP as acquirer, and the card scheme verifies it. The card credential in the lookup
 // response is a JWS signed by the LFI inside a JWE encrypted to the BPIP's
 // Directory encryption key, so the Hub never sees card data in the clear.
 // Calls to the Hub run under client_credentials and mTLS; nothing reaches the
@@ -38,23 +41,24 @@ sequenceDiagram
     else Resolved
         Note over BPIP,Hub: client_credentials · mTLS · scope: biometric-payments
         BPIP->>Hub: POST /instrument-lookup<br/>{uaeKycId, InstructedAmount, CardAcceptor, IcpAuthorisation}
-        Hub->>Hub: Entitlement, schema<br/>Verify IcpAuthorisation: signature, exp,<br/>cnf = mTLS cert, azp = BPIP, sub, txn<br/>jti unused → record jti as looked up
+        Hub->>Hub: Entitlement, schema<br/>Verify IcpAuthorisation: signature, exp,<br/>cnf = mTLS cert, azp = BPIP, sub, txn<br/>ICP jti unused → mark used
         Hub->>LFI: Proxied instrument lookup (with IcpAuthorisation)
-        LFI->>LFI: Verify IcpAuthorisation<br/>Look up uaeKycId → instrument<br/>Fraud, risk checks<br/>Retain jti → instrument, amount, merchant
+        LFI->>LFI: Verify IcpAuthorisation<br/>Look up uaeKycId → instrument<br/>Fraud, risk checks
 
         alt Account (AANI/IPP)
             LFI-->>Hub: 200 {PaymentInstrument, DebtorAccount}
-            Hub-->>BPIP: 200 {PaymentInstrument, DebtorAccount}
-            BPIP->>Hub: POST /biometric-payments<br/>{uaeKycId, PaymentInstrument, Instruction, Creditor, IcpAuthorisation}
-            Hub->>Hub: Entitlement, schema, idempotency<br/>Verify IcpAuthorisation as on the lookup<br/>jti looked up and not yet paid<br/>Derive BiometricAssurance
+            Hub->>Hub: Mint PaymentToken (JWS, single-use, ~120s)<br/>{PaymentType: Account, AANI, amount, merchant,<br/>DebtorAccount, cnf, azp, IcpAuthorisation}
+            Hub-->>BPIP: 200 {PaymentInstrument, DebtorAccount, PaymentToken}
+            BPIP->>Hub: POST /biometric-payments<br/>{uaeKycId, DebtorAccount, Instruction, Creditor, PaymentToken, Subscription}
+            Hub->>Hub: Entitlement, schema, idempotency<br/>Verify PaymentToken: Hub signature, exp, Account,<br/>cnf = mTLS cert, azp, uaeKycId, IBAN, amount<br/>Derive BiometricAssurance
             Hub->>LFI: Proxied payment request
-            LFI->>LFI: Match jti, instrument and amount to the lookup<br/>Account state checks
+            LFI->>LFI: DebtorAccount is the registered account<br/>Account state checks
             alt Account blocked or closed
                 LFI-->>Hub: 403 {Account.*}
-                Hub-->>BPIP: 403 {Account.*} — no payment, jti still usable
+                Hub-->>BPIP: 403 {Account.*} — no payment, token still usable
             else Account usable
                 LFI-->>Hub: 201 {PaymentId}
-                Hub->>Hub: Mark jti used
+                Hub->>Hub: Mark PaymentToken used
                 Hub-->>BPIP: 201 {PaymentId, Status: Pending}
                 BPIP-->>PSU: Accepted — payment pending
 
@@ -72,17 +76,19 @@ sequenceDiagram
                 end
             end
         else Card (card scheme, e.g. Jaywan)
-            LFI->>LFI: Generate one-time token + cryptogram<br/>bound to amount, merchant and jti
+            LFI->>LFI: Generate one-time token + cryptogram<br/>bound to amount, merchant and ICP jti
             LFI->>LFI: Sign {CardSchemeToken, Cryptogram, Expiry, IcpTransactionId} as JWS<br/>Encrypt as JWE with the BPIP's public key from the Directory
             LFI-->>Hub: 200 {PaymentInstrument, EncryptedCardCredential (JWE)}
             Note over Hub: Proxies the JWE unread —<br/>no card data in the clear, out of PCI DSS scope
-            Hub-->>BPIP: 200 {PaymentInstrument, EncryptedCardCredential (JWE)}
-            BPIP->>BPIP: Decrypt JWE with its private key<br/>Verify LFI's JWS · IcpTransactionId = jti
+            Hub->>Hub: Mint PaymentToken (JWS, single-use, ~120s)<br/>{PaymentType: Card, JAYWAN, amount, merchant,<br/>cnf, azp, IcpAuthorisation}
+            Hub-->>BPIP: 200 {PaymentInstrument, EncryptedCardCredential (JWE), PaymentToken}
+            BPIP->>BPIP: Decrypt JWE with its private key<br/>Verify LFI's JWS · IcpTransactionId = ICP jti
             Note over BPIP,Scheme: From here the payment runs between the BPIP, as acquirer,<br/>and the card scheme — not through the API Hub
-            BPIP->>Scheme: Authorisation request {token, cryptogram, amount,<br/>ICP jti as authentication value}<br/>CVM: biometric, verified by ICP
+            BPIP->>Scheme: Authorisation request {card token, cryptogram, amount,<br/>merchant, PaymentToken}<br/>CVM: biometric, verified by ICP
+            Scheme->>Scheme: Verify PaymentToken against the API Hub's keys:<br/>Card, scheme, amount, merchant, exp<br/>jti unused → mark used
             Scheme->>Scheme: Detokenise
             Scheme->>LFI: Authorisation request
-            LFI->>LFI: Validate cryptogram · jti known and unused<br/>amount and merchant match → mark jti used<br/>Fraud, balance
+            LFI->>LFI: Validate cryptogram<br/>Fraud, balance
             LFI-->>Scheme: Approved
             Scheme-->>BPIP: Approved
             BPIP-->>PSU: Payment approved
