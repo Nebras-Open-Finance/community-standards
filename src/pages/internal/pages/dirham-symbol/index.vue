@@ -29,6 +29,22 @@ const fontStacks = [
   { label: 'Monospace', family: 'monospace' },
 ]
 
+// Horizontal stretch factors for the symbol alone. Most fonts ship no wider
+// widths of U+20C3, so `font-stretch` has no effect; scaleX stretches the
+// glyph itself. A transform does not change layout width, so each sample adds
+// side margin (assuming a glyph roughly 0.6em wide) to keep the gap to the
+// amount even.
+const widths = [1, 1.2, 1.4, 1.5, 1.6, 1.8, 2]
+
+function widthStyle(scale: number, weight = 400) {
+  return {
+    display: 'inline-block',
+    fontWeight: weight,
+    transform: `scaleX(${scale})`,
+    marginInline: `${((scale - 1) * 0.3).toFixed(2)}em`,
+  }
+}
+
 type Verdict = 'pending' | 'renders' | 'missing' | 'unknown'
 const verdict = ref<Verdict>('pending')
 const userAgent = ref('')
@@ -100,6 +116,20 @@ onMounted(() => {
       </tbody>
     </table>
 
+    <h2 class="ds__h2 ds__h2--spaced">By width (symbol only)</h2>
+    <table class="ds__table">
+      <thead>
+        <tr><th>Horizontal scale</th><th>Regular</th><th>Bold</th></tr>
+      </thead>
+      <tbody>
+        <tr v-for="w in widths" :key="w">
+          <td>{{ Math.round(w * 100) }}%</td>
+          <td class="ds__sample"><span :style="widthStyle(w)">{{ SIGN }}</span> 100.00</td>
+          <td class="ds__sample"><span :style="widthStyle(w, 700)">{{ SIGN }}</span> 100.00</td>
+        </tr>
+      </tbody>
+    </table>
+
     <p v-if="userAgent" class="ds__ua"><strong>User agent:</strong> {{ userAgent }}</p>
   </div>
 </template>
@@ -138,6 +168,9 @@ onMounted(() => {
 .ds__h2 {
   font-size: 18px;
   margin: 0 0 12px;
+}
+.ds__h2--spaced {
+  margin-top: 32px;
 }
 .ds__table {
   width: 100%;

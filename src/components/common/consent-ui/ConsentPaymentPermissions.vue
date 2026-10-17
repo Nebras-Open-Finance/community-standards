@@ -80,7 +80,7 @@ function getPaymentRulesConfig(type, expiry) {
   )
 
   if (data.firstPaymentDate) {
-    rows.push({ kind: 'scalar', label: 'First Payment Date', value: data.firstPaymentDate })
+    rows.push({ kind: 'scalar', label: isOnD ? 'Payments from' : 'First Payment Date', value: data.firstPaymentDate })
   }
 
   if (isPer && data.frequency) {

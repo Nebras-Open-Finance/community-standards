@@ -1,7 +1,8 @@
 // Ticket-gated Jira forms: a form is shown only once the API confirms that the
 // signed-in Sandbox Trust Framework user can see the Jira ticket it relates to.
 //
-// Shared by every form under /internal/pages/jira-forms/ via JiraFormShell. The
+// Shared by every SSO form under /internal/pages/jira-forms/ via JiraFormShell
+// (all of them except Sandbox onboarding — see src/data/jiraForms.ts). The
 // check runs on the proposals API (standards-api, services/jira), which holds the
 // Jira credentials and the same SSO session as useSandboxAuth. Access mirrors the
 // Service Desk portal: reporter, participant, or member of a JSM organisation the
@@ -11,7 +12,8 @@
 
 import { ref, type Ref } from 'vue'
 
-const API_BASE = (
+/** The proposals API (standards-api), which holds the Jira credentials. */
+export const API_BASE = (
   (import.meta.env.VITE_PROPOSALS_API as string | undefined) ||
   'https://proposals-api.nebras-open-finance.com'
 ).replace(/\/$/, '')

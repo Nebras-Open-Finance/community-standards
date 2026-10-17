@@ -198,7 +198,7 @@ const consentScenarios = paymentConsentScenarios(initialFormDataSIP.value, 'Data
           the customer is authorizing &mdash; that multiple payments of a fixed amount will be made at any
           time of the TPP's choosing. The page must collect the customer's explicit and informed consent, and
           it must accurately reflect the key details of the consent (payee, the fixed amount per payment, the
-          first payment date, etc.)
+          date from which payments may start, etc.)
         </p>
         <p class="ed-doc__lede ed-doc__lede--tight">
           The examples and interactive wireframes provided below define the expected structure, content, and

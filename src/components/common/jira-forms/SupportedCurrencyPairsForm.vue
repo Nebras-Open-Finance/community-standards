@@ -3,9 +3,11 @@
 // matching ^[A-Z]{3,3}$, no exact duplicates. Mirrors validate() in standards-api
 // services/jira/forms/supported-currency-pairs.js, which re-checks on submit.
 // Rows are typed, or filled from an uploaded spreadsheet (see currencyPairsFile).
-// Rendered inside JiraFormShell, which supplies the session, ticket and submit.
+// Rendered inside JiraFormShell, which supplies the session, ticket and submit;
+// the sticky submit bar is JiraFormSubmitBar, shared with the other forms.
 
 import { computed, ref } from 'vue'
+import JiraFormSubmitBar from './JiraFormSubmitBar.vue'
 import { ACCEPTED_FILES, parseCurrencyPairsFile } from './currencyPairsFile'
 
 interface CurrencyPair {
@@ -57,6 +59,10 @@ const badRowsText = computed(() => {
 })
 
 const hasContent = computed(() => rows.value.some((r) => r.FromCurrency || r.ToCurrency))
+
+/** Rows with both codes filled in — what the submit bar counts as pairs to add. */
+const pairCount = computed(() =>
+  rows.value.filter((r) => CURRENCY_RE.test(r.FromCurrency) && CURRENCY_RE.test(r.ToCurrency)).length)
 
 function clearAll(): void {
   rows.value = [blankRow()]
@@ -124,7 +130,7 @@ function onSubmit(): void {
 </script>
 
 <template>
-  <form novalidate @submit.prevent="onSubmit">
+  <form id="scp-form" novalidate @submit.prevent="onSubmit">
     <!-- Upload -->
     <div class="scp__upload">
       <div class="jf__row">
@@ -204,11 +210,12 @@ function onSubmit(): void {
     <p v-if="attempted && !valid" class="jf__error">
       Fix the highlighted row{{ badRows.length === 1 ? '' : 's' }} before submitting: {{ badRowsText }}.
     </p>
-    <div class="jf__row jf__row--end">
-      <button type="submit" class="jf__go" :disabled="submitting">
-        {{ submitting ? 'Submitting…' : 'Submit to ticket' }}
-      </button>
-    </div>
+    <!-- Below JiraFormShell's card, not inside it; `form` keeps it this form's submit. -->
+    <Teleport defer to="#jf-bar">
+      <JiraFormSubmitBar form="scp-form" :progress="pairCount / MAX_PAIRS" :submitting="submitting">
+        <strong>{{ pairCount }}</strong> currency pair{{ pairCount === 1 ? '' : 's' }} to add
+      </JiraFormSubmitBar>
+    </Teleport>
   </form>
 </template>
 

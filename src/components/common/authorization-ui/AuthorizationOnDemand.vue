@@ -172,7 +172,7 @@
                         <div class="auth-page-account-subtext-container">
 
                                                     <div class="auth-page-account-subtext-container-2">
-                                    <div class="auth-page-account-subtext-part">First Payment Date</div>
+                                    <div class="auth-page-account-subtext-part">Payments from</div>
                                         <div class="auth-page-account-amount">
                                             {{formatDate(consentData?.ControlParameters?.ConsentSchedule?.MultiPayment?.PeriodicSchedule?.PeriodStartDate)}}
                                         </div>

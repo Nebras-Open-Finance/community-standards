@@ -1,0 +1,187 @@
+/* Shared styles for the Sandbox onboarding form (SandboxOnboardingForm and its
+   So* children). Global on purpose: every class is so-prefixed, and the inputs,
+   labels, hints and buttons are shared across the child components. Colours
+   come from the site tokens so dark mode follows; the few design values with no
+   token are defined once here. */
+
+.so {
+  --so-ink: var(--at-navy-deep);
+  --so-muted: var(--at-mute-2);
+  --so-hint: rgba(0, 23, 56, 0.68);
+  --so-line: var(--at-grid-line);
+  --so-line-2: rgba(0, 39, 127, 0.12);
+  --so-input-line: var(--at-grid-line-2);
+  --so-zone-line: rgba(0, 39, 127, 0.25);
+  --so-error: #B3261E;
+  --so-error-ring: rgba(179, 38, 30, 0.14);
+  --so-ring: rgba(0, 194, 169, 0.2);
+  --so-selected: rgba(0, 39, 127, 0.04);
+  --so-primary: var(--at-inverse-bg);
+  --so-primary-fg: var(--at-inverse-fg);
+  --so-primary-hover: var(--at-navy);
+
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 44px 24px 0;
+  font-family: var(--at-sans);
+  color: var(--so-ink);
+  -webkit-font-smoothing: antialiased;
+}
+.so *, .so *::before, .so *::after { box-sizing: border-box; }
+
+html.dark .so {
+  --so-hint: rgba(232, 238, 246, 0.68);
+  --so-line-2: rgba(232, 238, 246, 0.14);
+  --so-zone-line: rgba(232, 238, 246, 0.28);
+  --so-error: #F2867E;
+  --so-selected: rgba(232, 238, 246, 0.06);
+  --so-primary-hover: #00277F;
+}
+
+/* ── Labels, hints, errors ─────────────────────────────────────────────── */
+.so-label {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--so-ink);
+}
+.so-req { color: var(--so-error); font-weight: 600; }
+
+.so-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--so-hint);
+}
+.so-hint--spacer { visibility: hidden; }
+
+.so-err {
+  margin: 0;
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 500;
+  color: var(--so-error);
+}
+.so-err__icon {
+  flex: 0 0 16px;
+  height: 16px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: var(--so-error);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Inputs ────────────────────────────────────────────────────────────── */
+.so-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--so-input-line);
+  background: var(--at-surface);
+  font-family: var(--at-sans);
+  font-size: 15px;
+  color: var(--so-ink);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.so-input::placeholder { color: rgba(0, 23, 56, 0.42); }
+html.dark .so-input::placeholder { color: rgba(232, 238, 246, 0.42); }
+.so-input--mono { font-family: var(--at-mono); }
+.so-input:focus, .so-input:focus-within { border-color: var(--at-teal); box-shadow: 0 0 0 3px var(--so-ring); }
+.so-input.is-invalid { border-color: var(--so-error); }
+.so-input.is-invalid:focus, .so-input.is-invalid:focus-within { box-shadow: 0 0 0 3px var(--so-error-ring); }
+
+.so-select-wrap { position: relative; }
+.so-select {
+  padding-right: 40px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+.so-select.is-empty { color: var(--so-hint); }
+.so-chevron {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid var(--so-ink);
+  border-bottom: 1.5px solid var(--so-ink);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
+/* ── Grids ─────────────────────────────────────────────────────────────── */
+.so-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 20px;
+}
+.so-grid--narrow {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  column-gap: 20px;
+  row-gap: 24px;
+  align-items: start;
+}
+.so-full { grid-column: 1 / -1; }
+
+.so-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────────── */
+.so-btn {
+  height: 48px;
+  padding: 0 22px;
+  border-radius: 8px;
+  border: 1px solid var(--so-input-line);
+  background: var(--at-surface);
+  font-family: var(--at-sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--so-ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.so-btn:hover { border-color: var(--so-ink); }
+.so-btn--primary {
+  padding: 0 26px;
+  border: none;
+  background: var(--so-primary);
+  color: var(--so-primary-fg);
+}
+.so-btn--primary:hover { background: var(--so-primary-hover); }
+.so-btn--small { height: auto; padding: 10px 16px; font-size: 14px; }
+.so-btn:focus-visible { outline: 2px solid var(--at-teal); outline-offset: 2px; }
+
+.so-eyebrow {
+  font-family: var(--at-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--at-teal-deep);
+}
+
+.so-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

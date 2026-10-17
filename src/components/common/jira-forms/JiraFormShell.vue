@@ -160,6 +160,9 @@ watch(
         </template>
       </template>
     </div>
+
+    <!-- A form's JiraFormSubmitBar is teleported here, so it sits below the card. -->
+    <div id="jf-bar" class="jf__bar" />
   </div>
 </template>
 
@@ -169,9 +172,15 @@ watch(
 .jf {
   max-width: 40rem;
   margin: 0 auto;
-  padding: 3rem 1.5rem 5rem;
+  padding: 3rem 1.5rem 0;
   font-family: var(--at-sans);
   color: var(--at-mute-2);
+  /* At least a screen tall, so the submit bar (pushed down by margin-top: auto)
+     sits at the bottom of the window even when the form is short. */
+  box-sizing: border-box;
+  min-height: calc(100vh - var(--at-header-height));
+  display: flex;
+  flex-direction: column;
 }
 
 .jf__eyebrow {
@@ -200,10 +209,26 @@ watch(
   border-radius: 10px;
   padding: 1.75rem 1.9rem;
   margin-top: 1.75rem;
+  margin-bottom: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
+
+/* Sticky itself: .jf is its containing block, so it stays in view at the foot
+   of the viewport while the card scrolls. Bleeds out to .jf's side padding. */
+.jf__bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  margin: auto -1.5rem 0;
+}
+/* With a bar, it sits on the footer, as on Sandbox onboarding: cancel base.css's
+   8rem breathing room, which lands on this last child of the page. With no bar
+   (signing in, checking a ticket, submitted) that room stays. Selector out-ranks
+   the base.css rule's specificity. */
+.app-shell:not(.is-home) .app-shell__main > .jf > .jf__bar:not(:empty) { padding-bottom: 0; margin-bottom: 8rem; }
+.jf__bar > .jfsb { padding-left: 1.5rem; padding-right: 1.5rem; }
 
 .jf__label {
   display: block;

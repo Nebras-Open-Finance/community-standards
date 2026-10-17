@@ -152,6 +152,7 @@ function formatDate(ts: number): string {
       <p class="int-card__hint">
         Forms submitted against a Service Desk ticket, for anyone who can see that ticket.
         Sign in with Sandbox Trust Framework SSO; submissions are attached to the ticket as JSON.
+        Sandbox onboarding is the exception: it needs no sign-in, as applicants have no account yet.
       </p>
       <ul class="int-list">
         <li v-for="s in jiraFormTools" :key="s" class="int-list__item">
