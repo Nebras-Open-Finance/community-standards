@@ -26,7 +26,7 @@ flowchart LR
     class RH,SH,OC,RC,SC whitebox
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(
+useMermaidDiagram(
   mermaidDefinition,
   'multi-segment-api-hubs-diagram',
   { flowchart: { curve: 'basis', padding: 20, nodeSpacing: 50, rankSpacing: 80, useMaxWidth: true } },

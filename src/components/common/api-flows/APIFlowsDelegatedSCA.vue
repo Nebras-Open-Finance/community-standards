@@ -50,7 +50,7 @@ sequenceDiagram
     end
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'delegated-sca-diagram')
+useMermaidDiagram(mermaidDefinition, 'delegated-sca-diagram')
 </script>
 
 <template>

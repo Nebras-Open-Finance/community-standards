@@ -48,7 +48,7 @@ sequenceDiagram
     Hub-->>-TPP: 200 {Status: AcceptedWithoutPosting}
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'sip-diagram')
+useMermaidDiagram(mermaidDefinition, 'sip-diagram')
 </script>
 
 <template>

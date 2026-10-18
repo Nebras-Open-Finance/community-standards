@@ -49,7 +49,7 @@ sequenceDiagram
     end
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'defined-schedule-diagram')
+useMermaidDiagram(mermaidDefinition, 'defined-schedule-diagram')
 </script>
 
 <template>

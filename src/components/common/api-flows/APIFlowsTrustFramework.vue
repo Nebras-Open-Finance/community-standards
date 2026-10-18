@@ -21,7 +21,7 @@ sequenceDiagram
     end
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(
+useMermaidDiagram(
   mermaidDefinition,
   'trust-framework-diagram',
   {

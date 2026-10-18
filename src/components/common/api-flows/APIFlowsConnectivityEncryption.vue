@@ -26,7 +26,7 @@ sequenceDiagram
     end
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(
+useMermaidDiagram(
   mermaidDefinition,
   'connectivity-encryption-diagram',
   {

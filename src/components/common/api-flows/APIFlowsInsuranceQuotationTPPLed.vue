@@ -56,7 +56,7 @@ sequenceDiagram
     Note over TPP: TPP verifies document hashes and surfaces them to the customer
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'insurance-quotation-tpp-led-diagram')
+useMermaidDiagram(mermaidDefinition, 'insurance-quotation-tpp-led-diagram')
 </script>
 
 <template>

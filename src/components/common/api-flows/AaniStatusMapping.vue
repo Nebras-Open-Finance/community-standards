@@ -22,7 +22,7 @@ sequenceDiagram
     end
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'aani-status-mapping-diagram')
+useMermaidDiagram(mermaidDefinition, 'aani-status-mapping-diagram')
 </script>
 
 <template>

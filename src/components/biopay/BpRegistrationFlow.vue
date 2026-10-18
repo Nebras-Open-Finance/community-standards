@@ -34,7 +34,7 @@ ${instrumentSelection}
     ICP-->>LFI: Accepted
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(
+useMermaidDiagram(
   direct,
   'biopay-registration-flow-direct',
 )

@@ -18,7 +18,7 @@ sequenceDiagram
     Hub-->>-TPP: 200 { ATM Data }
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'atm-diagram')
+useMermaidDiagram(mermaidDefinition, 'atm-diagram')
 </script>
 
 <template>

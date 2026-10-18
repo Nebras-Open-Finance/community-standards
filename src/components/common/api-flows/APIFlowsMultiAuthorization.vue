@@ -44,7 +44,7 @@ sequenceDiagram
      Hub-->>-TPP: 201 {PaymentId, Status: Pending}
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'multi-auth-diagram')
+useMermaidDiagram(mermaidDefinition, 'multi-auth-diagram')
 </script>
 
 <template>

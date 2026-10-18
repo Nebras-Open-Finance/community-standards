@@ -28,7 +28,7 @@ sequenceDiagram
     Hub-->>TPP: 200 {Status: AcceptedWithoutPosting}
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'tpp-payment-status-diagram')
+useMermaidDiagram(mermaidDefinition, 'tpp-payment-status-diagram')
 </script>
 
 <template>

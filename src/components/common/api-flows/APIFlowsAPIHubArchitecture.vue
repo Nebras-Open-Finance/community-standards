@@ -16,7 +16,7 @@ flowchart LR
     TPP --> HubC --> LFIC
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(
+useMermaidDiagram(
   mermaidDefinition,
   'api-hub-architecture',
   { flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' } },

@@ -97,7 +97,7 @@ sequenceDiagram
     end
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(
+useMermaidDiagram(
   mermaidDefinition,
   'biopay-payment-flow',
 )

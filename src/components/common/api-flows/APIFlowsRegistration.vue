@@ -11,7 +11,7 @@ sequenceDiagram
     Hub-->>-TPP: 204 No Content
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(
+useMermaidDiagram(
   mermaidDefinition,
   'tpp-registration-diagram',
   {

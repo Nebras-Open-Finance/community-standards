@@ -42,7 +42,7 @@ sequenceDiagram
     Hub-->>TPP: Webhook event (Completed)
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'insurance-quotation-lfi-led-diagram')
+useMermaidDiagram(mermaidDefinition, 'insurance-quotation-lfi-led-diagram')
 </script>
 
 <template>

@@ -21,7 +21,7 @@ sequenceDiagram
     end
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'consent-validate-diagram')
+useMermaidDiagram(mermaidDefinition, 'consent-validate-diagram')
 </script>
 
 <template>
