@@ -15,12 +15,24 @@ import UIBehaviour from './_shared/UIBehaviour.vue'
 const expirationDateTime = futureDateTime(330)
 
 const myCustomValidator = (value: any) => {
+  const authExpiryRaw = value?.consent?.AuthorizationExpirationDateTime
+  if (authExpiryRaw) {
+    const authExpiry = new Date(authExpiryRaw)
+    const now = new Date()
+    if (Number.isNaN(authExpiry.getTime()) || authExpiry.getTime() <= now.getTime() + 15 * 60 * 1000) {
+      return 'consent.AuthorizationExpirationDateTime must be more than 15 minutes in the future'
+    }
+    if (value?.consent?.ExpirationDateTime && authExpiry > new Date(value.consent.ExpirationDateTime)) {
+      return 'consent.AuthorizationExpirationDateTime must not be after consent.ExpirationDateTime'
+    }
+  }
+
   const expiration = new Date(value?.consent?.ExpirationDateTime)
   const now = new Date()
   const oneYearFromNow = new Date()
   oneYearFromNow.setFullYear(now.getFullYear() + 1)
-  if (Number.isNaN(expiration.getTime()) || expiration <= now || expiration >= oneYearFromNow) {
-    return 'consent.ExpirationDateTime cannot be in the past and must be less than a year in the future.'
+  if (Number.isNaN(expiration.getTime()) || expiration.getTime() <= now.getTime() + 15 * 60 * 1000 || expiration >= oneYearFromNow) {
+    return 'consent.ExpirationDateTime must be more than 15 minutes in the future and less than a year in the future.'
   }
   const groups = value?.consent?.Permissions
   if (!Array.isArray(groups) || groups.length === 0) {

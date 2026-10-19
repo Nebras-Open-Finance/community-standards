@@ -497,6 +497,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useSharedState } from '../composables/useSharedState.ts'
+import { useOnBehalfOfName } from './useOnBehalfOfName.ts'
 import AuthThemeToggle from './AuthThemeToggle.vue'
 import { getPurposeDescription } from '../composables/aaniPaymentCodes.ts'
 import { formatDate } from '../composables/formatDate.ts'
@@ -516,7 +517,8 @@ const emit = defineEmits(['update:dark'])
 
 // Mirrors AuthorizationSingleInstantPayment: when the TPP names the merchant it
 // collects for, the customer is told who the payment is really on behalf of.
-const merchantName = computed(() => sharedState.value?.pii?.Risk?.CreditorIndicators?.MerchantDetails?.MerchantName)
+// From v2.2 this is consent.OnBehalfOf.TradingName; in v2.1, the PII MerchantName.
+const merchantName = useOnBehalfOfName()
 
 const selected = ref(null)
 const benefListOpen = ref(true)

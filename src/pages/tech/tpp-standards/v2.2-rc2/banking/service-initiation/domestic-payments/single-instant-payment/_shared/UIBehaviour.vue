@@ -7,22 +7,22 @@
     <p>Passing a <code>DebtorAccount</code> reduces friction for users who have already selected their account within the TPP's own interface, but removes the user's ability to choose a different account at the LFI.</p>
   </EdNote>
 
-  <h3>Merchant Details</h3>
+  <h3>On Behalf Of</h3>
 
-  <EdProse>When a TPP processes payments on behalf of a merchant (e.g. a payment aggregator), <code>Risk.CreditorIndicators.MerchantDetails.MerchantName</code> can be passed to identify the merchant to the user on the LFI Authorisation Page.</EdProse>
+  <EdProse>When a TPP processes payments on behalf of a merchant (e.g. a payment aggregator), <code>OnBehalfOf</code> can be passed in the payment consent to identify the merchant to the user on the LFI Authorisation Page. The LFI displays <code>OnBehalfOf.TradingName</code>. From v2.2 this replaces <code>Risk.CreditorIndicators.MerchantDetails.MerchantName</code> as the source of the on-behalf-of name; <code>MerchantName</code> remains a risk field only.</EdProse>
 
   <EdRefTable>
     <table>
       <thead>
         <tr>
-          <th><code>Risk.CreditorIndicators.MerchantDetails.MerchantName</code></th>
+          <th><code>consent.OnBehalfOf</code></th>
           <th>LFI Authorisation Page Behaviour</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td><strong>Passed in</strong></td>
-          <td>The merchant name is displayed on the Authorisation Page alongside the creditor details, indicating that the payment is being made on behalf of that merchant. <em>(See Example 4)</em></td>
+          <td>The page reads &ldquo;[TPP trading name] needs your permission on-behalf of [<code>OnBehalfOf.TradingName</code>] to make the payment below&rdquo;, alongside the creditor details. <em>(See Example 4)</em></td>
         </tr>
         <tr>
           <td><strong>Not passed in</strong></td>

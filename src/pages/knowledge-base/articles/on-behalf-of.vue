@@ -9,6 +9,8 @@ meta:
     - Consents
     - OnBehalfOf
     - Data Sharing
+  versions:
+    - v2.1
 </route>
 
 <script setup lang="ts">
@@ -87,6 +89,7 @@ const paymentExample = `{
         <div class="ed-tags">
           <span v-for="t in tags" :key="t" class="ed-tag">{{ t }}</span>
         </div>
+        <EdArticleVersions />
       </template>
     </EdHero>
 

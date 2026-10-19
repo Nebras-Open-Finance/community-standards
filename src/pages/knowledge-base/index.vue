@@ -5,7 +5,7 @@ meta:
 </route>
 
 <script setup lang="ts">
-import { articles } from '@/data/articles'
+import { articles, formatArticleVersions } from '@/data/articles'
 import type { Article } from '@/types/article'
 
 const CATEGORY_ORDER: readonly string[] = ['Consents', 'Payments', 'Security', 'Integration']
@@ -180,6 +180,9 @@ function formatUpdated(iso: string): string {
               </span>
               <span v-if="article.readTime" class="ed-kb-card__dot">&middot;</span>
               <span v-if="article.readTime" class="ed-kb-card__read">{{ article.readTime }}</span>
+              <span v-if="article.versions.length" class="ed-kb-card__version">
+                {{ formatArticleVersions(article.versions) }}
+              </span>
             </div>
 
             <h3 class="ed-kb-card__title">{{ article.title }}</h3>
@@ -426,6 +429,15 @@ function formatUpdated(iso: string): string {
 .ed-kb-card__cat { font-weight: 600; }
 .ed-kb-card__dot { color: var(--at-mute); opacity: 0.5; }
 .ed-kb-card__read { color: var(--at-mute); }
+
+/* Shown only on articles scoped to particular versions. */
+.ed-kb-card__version {
+  margin-left: auto;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid var(--at-gold);
+  color: var(--at-gold);
+  white-space: nowrap;
+}
 
 .ed-kb-card__title {
   font-family: var(--at-serif);

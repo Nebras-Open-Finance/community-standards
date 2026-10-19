@@ -10,7 +10,7 @@ meta:
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useHead } from '@unhead/vue'
-import DirhamAmount from '@/components/common/consent-ui/DirhamAmount.vue'
+import DirhamAmount from '@/components/common/consent-ui/DirhamAmountSvg.vue'
 
 useHead({ title: 'Dirham symbol' })
 

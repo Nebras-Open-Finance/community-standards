@@ -17,6 +17,18 @@ import ExampleJourneys from './_shared/ExampleJourneys.vue'
 const expirationDateTime = futureDateTime(330)
 
 const myCustomValidator = (value) => {
+  const authExpiryRaw = value?.consent?.AuthorizationExpirationDateTime
+  if (authExpiryRaw) {
+    const authExpiry = new Date(authExpiryRaw)
+    const now = new Date()
+    if (Number.isNaN(authExpiry.getTime()) || authExpiry.getTime() <= now.getTime() + 15 * 60 * 1000) {
+      return 'consent.AuthorizationExpirationDateTime must be more than 15 minutes in the future'
+    }
+    if (value?.consent?.ExpirationDateTime && authExpiry > new Date(value.consent.ExpirationDateTime)) {
+      return 'consent.AuthorizationExpirationDateTime must not be after consent.ExpirationDateTime'
+    }
+  }
+
   if (
     (() => {
       const expiration = new Date(value.consent.ExpirationDateTime)
@@ -24,10 +36,10 @@ const myCustomValidator = (value) => {
       const oneYearFromNow = new Date()
       oneYearFromNow.setFullYear(now.getFullYear() + 1)
 
-      return expiration <= now || expiration >= oneYearFromNow
+      return expiration.getTime() <= now.getTime() + 15 * 60 * 1000 || expiration >= oneYearFromNow
     })()
   ) {
-    return 'consent.ExpirationDateTime cannot be in the past and must be less than a year in the future.'
+    return 'consent.ExpirationDateTime must be more than 15 minutes in the future and less than a year in the future.'
   } else if (
     (() => {
       const perms = value.consent?.Permissions || []

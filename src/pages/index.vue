@@ -263,6 +263,7 @@ const lastUpdatedLabel = computed<string>(() => {
 interface TickerCell {
   label: string
   value: string
+  dirham?: boolean
   delta: string
   color: string
   series: number[]
@@ -296,8 +297,9 @@ const tickerCells = computed<TickerCell[]>(() => {
       series: lastMonths(apiComplete.series),
     },
     {
-      label: 'Payments (AED)',
+      label: 'Payments',
       value: compact(payTotal),
+      dirham: true,
       delta: fmtMomentum(payDelta),
       color: ACCENT.gold,
       series: lastMonths(payComplete.series),
@@ -713,7 +715,10 @@ const communityWays: readonly CommunityItem[] = [
             >
               <div class="ed-ticker__cell">
                 <div class="ed-ticker__label">{{ t.label }}</div>
-                <div class="ed-ticker__value">{{ t.value }}</div>
+                <div class="ed-ticker__value">
+                  <DirhamAmount v-if="t.dirham" :amount="t.value" />
+                  <template v-else>{{ t.value }}</template>
+                </div>
               </div>
               <div class="ed-ticker__delta" :style="{ color: t.color }">{{ t.delta }}</div>
               <div class="ed-ticker__spark">

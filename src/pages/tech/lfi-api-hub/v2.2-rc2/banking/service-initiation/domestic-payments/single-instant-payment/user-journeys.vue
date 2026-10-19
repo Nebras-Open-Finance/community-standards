@@ -10,7 +10,7 @@ meta:
 import { watch } from 'vue'
 import { useSharedState } from '@/components/common/composables/useSharedState.ts'
 import { purposeCodes } from '@/components/common/composables/aaniPaymentCodes.ts'
-import { domesticPaymentPiiScenarios, paymentConsentScenarios } from '@/data/editor-scenarios'
+import { domesticPaymentPiiScenarios, paymentConsentScenarios, PAYMENT_ON_BEHALF_OF } from '@/data/editor-scenarios'
 import { futureDateTime } from '@/components/common/composables/futureDates.ts'
 import WireframePreview from '../../../../../../tpp-standards/v2.2-rc2/banking/service-initiation/domestic-payments/single-instant-payment/_shared/WireframePreview.vue'
 import AccountSetup from '../../../../../../tpp-standards/v2.2-rc2/banking/service-initiation/domestic-payments/single-instant-payment/_shared/AccountSetup.vue'
@@ -56,10 +56,10 @@ const myCustomValidator = (value) => {
       const oneYearFromNow = new Date();
       oneYearFromNow.setFullYear(now.getFullYear() + 1);
 
-      return expiration <= now || expiration >= oneYearFromNow;
+      return expiration.getTime() <= now.getTime() + 15 * 60 * 1000 || expiration >= oneYearFromNow;
     })()
   ) {
-    return "Data.ExpirationDateTime cannot be in the past and must be less than a year in the future.";
+    return "Data.ExpirationDateTime must be more than 15 minutes in the future and less than a year in the future.";
   }
 
   if (value.Data.PaymentPurposeCode && !purposeCodes[value.Data.PaymentPurposeCode]) {
@@ -74,8 +74,8 @@ const myCustomValidator = (value) => {
   if (value.Data.AuthorizationExpirationDateTime) {
     const authExpiry = new Date(value.Data.AuthorizationExpirationDateTime)
     const now = new Date()
-    if (authExpiry < now) {
-      return "Data.AuthorizationExpirationDateTime must not be in the past"
+    if (authExpiry.getTime() <= now.getTime() + 15 * 60 * 1000) {
+      return "Data.AuthorizationExpirationDateTime must be more than 15 minutes in the future"
     }
     if (value.Data.ExpirationDateTime && authExpiry > new Date(value.Data.ExpirationDateTime)) {
       return "Data.AuthorizationExpirationDateTime must not be after Data.ExpirationDateTime"
@@ -106,7 +106,8 @@ const initialFormDataSIP = ref({
     },
     "PaymentPurposeCode": "ACM",
     "DebtorReference": "Test Purchase",
-    "CreditorReference": "Test Purchase"
+    "CreditorReference": "Test Purchase",
+    "OnBehalfOf": { ...PAYMENT_ON_BEHALF_OF }
   }
 })
 
@@ -148,18 +149,11 @@ const initialFormDataPII = ref({
         }
       }
     ]
-  },
-  "Risk": {
-    "CreditorIndicators": {
-      "MerchantDetails": {
-        "MerchantName": "Al Noor General"
-      }
-    }
   }
 })
 
-const piiScenarios = domesticPaymentPiiScenarios(initialFormDataPII.value)
-const consentScenarios = paymentConsentScenarios(initialFormDataSIP.value, 'Data')
+const piiScenarios = domesticPaymentPiiScenarios(initialFormDataPII.value, { merchantDetails: false })
+const consentScenarios = paymentConsentScenarios(initialFormDataSIP.value, 'Data', { onBehalfOf: true })
 </script>
 
 <template>

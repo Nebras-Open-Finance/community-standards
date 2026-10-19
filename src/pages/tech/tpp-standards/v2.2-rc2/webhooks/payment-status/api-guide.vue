@@ -296,7 +296,9 @@ const examplePayload = `{
         A replica of the payment resource at the time of the status change, with <code>Status</code> and
         <code>StatusUpdateDateTime</code> updated to reflect the new state. Where the payment was rejected,
         <code>RejectReasonCode</code> will be populated. Where the payment has been processed by the
-        underlying rails, <code>PaymentTransactionId</code> will be present.
+        underlying rails, <code>PaymentTransactionId</code> will be present. Once the LFI has routed the
+        payment, <code>PaymentRail</code> reports the rail it was settled over (<code>AANI</code>,
+        <code>FTS</code>, or <code>LFI</code>).
       </EdProse>
     </EdSectionBand>
 

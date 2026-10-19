@@ -43,10 +43,10 @@ const myCustomValidator = (value) => {
         const oneYearFromNow = new Date();
         oneYearFromNow.setFullYear(now.getFullYear() + 1);
 
-        return expiration <= now || expiration >= oneYearFromNow;
+        return expiration.getTime() <= now.getTime() + 15 * 60 * 1000 || expiration >= oneYearFromNow;
         })()
     ) {
-        return "Data.ExpirationDateTime cannot be in the past and must be less than a year in the future.";
+        return "Data.ExpirationDateTime must be more than 15 minutes in the future and less than a year in the future.";
     }
 
     if (value.Data.PaymentPurposeCode && !purposeCodes[value.Data.PaymentPurposeCode]) {
@@ -61,8 +61,8 @@ const myCustomValidator = (value) => {
     if (value.Data.AuthorizationExpirationDateTime) {
         const authExpiry = new Date(value.Data.AuthorizationExpirationDateTime)
         const now = new Date()
-        if (authExpiry < now) {
-        return "Data.AuthorizationExpirationDateTime must not be in the past"
+        if (authExpiry.getTime() <= now.getTime() + 15 * 60 * 1000) {
+        return "Data.AuthorizationExpirationDateTime must be more than 15 minutes in the future"
         }
         if (value.Data.ExpirationDateTime && authExpiry > new Date(value.Data.ExpirationDateTime)) {
         return "Data.AuthorizationExpirationDateTime must not be after Data.ExpirationDateTime"
@@ -175,8 +175,8 @@ const initialFormDataPII = ref({
   }
 })
 
-const piiScenarios = domesticPaymentPiiScenarios(initialFormDataPII.value)
-const consentScenarios = paymentConsentScenarios(initialFormDataSIP.value, 'Data')
+const piiScenarios = domesticPaymentPiiScenarios(initialFormDataPII.value, { merchantDetails: false })
+const consentScenarios = paymentConsentScenarios(initialFormDataSIP.value, 'Data', { onBehalfOf: true })
 </script>
 
 <template>

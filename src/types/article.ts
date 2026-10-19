@@ -5,6 +5,9 @@ export interface ArticleMeta {
   readTime: string
   updated: string
   tags: string[]
+  // Site versions the article applies to (keys from VERSIONS). Empty means it
+  // applies to every version — the default for almost all articles.
+  versions: string[]
 }
 
 export interface Article {
@@ -16,6 +19,7 @@ export interface Article {
   readTime: string
   updated: string
   tags: string[]
+  versions: string[]
 }
 
 export type ArticleCategory =

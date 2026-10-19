@@ -85,7 +85,7 @@ function readField(row: AnyRow, key: string): unknown {
 // counts, or AED amounts — so the title MUST follow the key, not assume calls.
 function axisTitle(valueKey: string): string {
   switch (valueKey) {
-    case 'amount': return 'Amount (AED)'
+    case 'amount': return 'Amount (⃃)'
     case 'count':  return 'Count'
     case 'errors': return 'Errors'
     default:       return 'API Calls'
@@ -220,7 +220,11 @@ onBeforeUnmount(() => { chart?.destroy(); chart = null })
 <template>
   <div class="chart-wrap">
     <div class="chart-title">{{ title }}</div>
-    <div v-if="total > 0" class="chart-meta">{{ total.toLocaleString() }} total</div>
+    <div v-if="total > 0" class="chart-meta">
+      <DirhamAmount v-if="valueKey === 'amount'" :amount="total.toLocaleString()" />
+      <template v-else>{{ total.toLocaleString() }}</template>
+      total
+    </div>
     <div class="chart-container">
       <canvas ref="canvasRef" />
     </div>

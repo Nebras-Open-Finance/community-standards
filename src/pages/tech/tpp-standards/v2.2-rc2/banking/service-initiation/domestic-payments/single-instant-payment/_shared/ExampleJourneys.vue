@@ -20,7 +20,7 @@
     alt="single-instant-payment-journey"
   />
 
-  <h3>Example 4 &mdash; User selects account at LFI (merchant details passed in by TPP)</h3>
+  <h3>Example 4 &mdash; User selects account at LFI (<code>OnBehalfOf</code> passed in by TPP)</h3>
 
   <ImageViewer
     src="/images/user-experience/single-instant-payment/4.png"

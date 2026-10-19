@@ -33,10 +33,10 @@ if (
         const oneYearFromNow = new Date();
         oneYearFromNow.setFullYear(now.getFullYear() + 1);
 
-        return expiration <= now || expiration >= oneYearFromNow;
+        return expiration.getTime() <= now.getTime() + 15 * 60 * 1000 || expiration >= oneYearFromNow;
         })()
     ) {
-        return "consent.ExpirationDateTime cannot be in the past and must be less than a year in the future.";
+        return "consent.ExpirationDateTime must be more than 15 minutes in the future and less than a year in the future.";
     }
 
     if (value.consent.PaymentPurposeCode && !purposeCodes[value.consent.PaymentPurposeCode]) {
@@ -51,8 +51,8 @@ if (
     if (value.consent.AuthorizationExpirationDateTime) {
         const authExpiry = new Date(value.consent.AuthorizationExpirationDateTime)
         const now = new Date()
-        if (authExpiry < now) {
-        return "consent.AuthorizationExpirationDateTime must not be in the past"
+        if (authExpiry.getTime() <= now.getTime() + 15 * 60 * 1000) {
+        return "consent.AuthorizationExpirationDateTime must be more than 15 minutes in the future"
         }
         if (value.consent.ExpirationDateTime && authExpiry > new Date(value.consent.ExpirationDateTime)) {
         return "consent.AuthorizationExpirationDateTime must not be after consent.ExpirationDateTime"

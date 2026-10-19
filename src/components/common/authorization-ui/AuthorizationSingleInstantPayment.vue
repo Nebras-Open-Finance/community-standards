@@ -69,8 +69,8 @@
                     Confirm Payment Details
                     <div class="auth-page-text-header-sub">
                         [TPP trading name] needs your permission
-                        <template v-if="sharedState?.pii?.Risk?.CreditorIndicators?.MerchantDetails?.MerchantName">
-                            on-behalf of {{ sharedState.pii.Risk.CreditorIndicators.MerchantDetails.MerchantName }}
+                        <template v-if="merchantName">
+                            on-behalf of {{ merchantName }}
                         </template>
                         to make the payment below:
                     </div>
@@ -465,8 +465,11 @@ import AuthThemeToggle from './AuthThemeToggle.vue'
 import { getPurposeDescription } from '../composables/aaniPaymentCodes.ts'
 import { getAuthPaymentPermissionText } from '../composables/serviceInitiationPermissionDescriptions.ts'
 import DirhamAmount from '../consent-ui/DirhamAmount.vue'
+import { useOnBehalfOfName } from './useOnBehalfOfName.ts'
 
 const { sharedState, consentData } = useSharedState()
+// From v2.2 this is consent.OnBehalfOf.TradingName; in v2.1, the PII MerchantName.
+const merchantName = useOnBehalfOfName()
 
 // `dark` renders the dark-theme variant (styles in authorization-page-dark.css);
 // `themeToggle` shows the sun/moon button in the LFI bar, which emits

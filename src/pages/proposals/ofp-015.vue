@@ -1,6 +1,5 @@
 <route lang="yaml">
 meta:
-  layout: internal
   title: 'OFP-015 · One Confirmation of Payee endpoint per bank, answering for every account'
 </route>
 
@@ -46,7 +45,7 @@ const meta = {
   version: 'V2.2',
 }
 
-// The two questions asked alongside the vote. These are ALSO held in the
+// The three questions asked alongside the vote. These are ALSO held in the
 // proposals API (the `questions` column) — that is where the vote form reads
 // them from, and where the answers are stored. Kept here so they are readable
 // on the page before anyone opens the vote panel; the two MUST stay in step.
@@ -60,6 +59,11 @@ const questions = [
     who: 'LFIs',
     q: 'Which instance would you nominate for each bank code you issue IBANs under — and do you operate more than one brand or bank code that discovery must keep apart?',
     why: 'The nomination is keyed on bank code, not on organisation. Where one organisation runs several brands, each with its own bank code, each needs its own nomination — and today’s resolution by organisation is known to get this wrong.',
+  },
+  {
+    who: 'TPPs and LFIs',
+    q: 'Would you prefer the TPP to supply the payee’s AccountType (Retail, SME or Corporate) in POST /discovery, with the Hub routing to one instance per bank code and account type? TPPs: do you know the payee’s account type at the point of a check? LFIs: could you keep an accurate account-type routing map?',
+    why: 'This is alternative 04 in section 06. It avoids fan-out without asking split LFIs to build a lookup across estates, but it only works if TPPs know the payee’s account type and LFIs can say which instance serves each one. The answers tell us whether it is a workable alternative to a single nominated instance.',
   },
 ]
 
@@ -242,8 +246,8 @@ onMounted(() => {
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ofp-hero">
       <div class="ofp-hero__inner">
-        <RouterLink to="/internal/proposals/" class="ofp__back">
-          <span class="ofp__back-arrow">&larr;</span> Internal proposals
+        <RouterLink to="/proposals/" class="ofp__back">
+          <span class="ofp__back-arrow">&larr;</span> All proposals
         </RouterLink>
 
         <div class="ofp__meta-row">
@@ -309,9 +313,10 @@ onMounted(() => {
           <p v-else class="ofp-band__lede">
             Sign in with the Trust Framework to vote &mdash; For, Against, or Abstain &mdash; recorded in
             the open with your reasoning. Your organisation and name come from your directory profile, and
-            each person may vote once. <strong>Two questions are attached to this vote</strong> &mdash;
-            set out in section 07 below &mdash; both addressed to LFIs: they tell us how much of the
-            ecosystem already conforms, and how much work the rest is facing.
+            each person may vote once. <strong>Three questions are attached to this vote</strong> &mdash;
+            set out in section 07 below. The first two, addressed to LFIs, tell us how much of the
+            ecosystem already conforms and how much work the rest is facing; the third asks TPPs and
+            LFIs whether an account-type alternative would work.
           </p>
         </div>
         <PvVotePanel :proposal="proposal" :my-vote="myVote" @vote="onVote" @submit="onSubmit" />
@@ -348,7 +353,7 @@ onMounted(() => {
           <p>
             <RouterLink to="/proposals/ofp-013">OFP-013</RouterLink> set out a gap in Confirmation of
             Payee: a check against a real, active account can come back &ldquo;IBAN not recognised&rdquo;
-            because it was sent to the wrong part of the bank. Its recommendation was not accepted, but
+            because discovery of the IBAN returned the wrong segment (API Hub) for the bank. Its recommendation was not accepted, but
             the gap remains &mdash; and so does the risk that payers are warned about accounts that would
             have matched.
             This proposal takes a different approach to the same problem.
@@ -682,19 +687,7 @@ onMounted(() => {
             </div>
 
             <div class="ofp-change">
-              <div class="ofp-change__label">02 &middot; An account-type hint from the TPP</div>
-              <p>
-                The TPP passes an account type to <code>/discovery</code> and the Hub returns the
-                matching instance. The <code>/confirmation</code> request does already make the TPP
-                choose between a personal and a business name, which is a usable signal &mdash; but it
-                cannot tell SME from corporate, says nothing about brand or migration splits, and still
-                needs every multi-instance LFI to publish a routing table. When the hint is wrong, the
-                check fails with no retry.
-              </p>
-            </div>
-
-            <div class="ofp-change">
-              <div class="ofp-change__label">03 &middot; The Hub fans out on the TPP&rsquo;s behalf</div>
+              <div class="ofp-change__label">02 &middot; The Hub fans out on the TPP&rsquo;s behalf</div>
               <p>
                 The TPP makes one call; the Hub tries each instance&rsquo;s <code>cop-query</code> in turn
                 and bills once. It fixes the charging and spares TPPs any change, but leaves the load on
@@ -704,13 +697,38 @@ onMounted(() => {
             </div>
 
             <div class="ofp-change">
-              <div class="ofp-change__label">04 &middot; An LFI-hosted CoP discovery endpoint</div>
+              <div class="ofp-change__label">03 &middot; An LFI-hosted CoP discovery endpoint</div>
               <p>
                 The LFI exposes an endpoint that maps its IBANs to the estate holding them, and the Hub
                 calls it before answering <code>/discovery</code>. Accurate, but it adds a new endpoint to
                 every LFI and a new hop to every check. Once an LFI can work out which estate holds an
                 account, it can just as well answer the check itself &mdash; which is what this proposal
                 asks for.
+              </p>
+            </div>
+
+            <div class="ofp-change">
+              <div class="ofp-change__label">04 &middot; The TPP supplies the payee&rsquo;s <code>AccountType</code> to <code>/discovery</code></div>
+              <p>
+                The TPP sends <code>AccountType</code> alongside the payee&rsquo;s IBAN in
+                <code>POST /discovery</code>, using the existing <code>Retail</code>, <code>SME</code>
+                and <code>Corporate</code> values already defined for account information. The Hub uses
+                the bank code, the account type and the supported API version to identify a single
+                eligible Confirmation of Payee instance, and returns its
+                <code>DiscoveryEndpointUrl</code> and <code>ResourceServerUrl</code> &mdash; the existing
+                single-object response.
+              </p>
+              <p>
+                If <code>AccountType</code> is missing or invalid, or the mapping does not resolve to
+                exactly one eligible instance, the Hub returns a discovery error. It does not select a
+                default endpoint or return several endpoints.
+              </p>
+              <p>
+                This avoids routing-related fan-out, and with it unnecessary CoP calls and the
+                transaction costs they carry. However, it requires the TPP to know the payee&rsquo;s
+                account type and the bank to maintain accurate routing mappings. It cannot serve a check
+                where the account type is unknown, or where more than one instance serves the same
+                account type. The <code>/confirmation</code> contract is unchanged.
               </p>
             </div>
           </div>
@@ -725,10 +743,11 @@ onMounted(() => {
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
           <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 07 &middot; Questions</div>
-          <h2 class="ofp-band__title">Two questions, asked with the vote</h2>
+          <h2 class="ofp-band__title">Three questions, asked with the vote</h2>
           <p class="ofp-band__lede">
-            These appear as optional boxes when you confirm your vote. Both are addressed to LFIs: the
-            answers tell us how much of the ecosystem already conforms, and what the rest have to build.
+            These appear as optional boxes when you confirm your vote. The first two are addressed to
+            LFIs: the answers tell us how much of the ecosystem already conforms, and what the rest have
+            to build. The third asks TPPs and LFIs whether the account-type alternative is workable.
           </p>
         </div>
         <div class="ofp-prose">
@@ -1040,6 +1059,8 @@ onMounted(() => {
   margin: 0;
   text-wrap: pretty;
 }
+
+.ofp-change p + p { margin-top: 12px; }
 
 .ofp-change strong { color: var(--at-navy-deep); font-weight: 600; }
 .ofp-change em { font-style: italic; }

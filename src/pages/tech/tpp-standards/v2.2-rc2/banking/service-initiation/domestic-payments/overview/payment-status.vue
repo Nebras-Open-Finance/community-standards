@@ -206,6 +206,14 @@ meta:
         submitting it. The status set your TPP should expect depends on which mode the LFI chose:
       </EdProse>
 
+      <EdProse>
+        You can see which mode was chosen from <code>Data.PaymentRail</code>, returned on the payment
+        record and on the payment status event: <code>LFI</code> (intra-bank), <code>AANI</code>, or
+        <code>FTS</code>. It reports the rail the payment was actually settled over, not the one requested,
+        and is absent until the LFI has routed the payment. The rail also sets the namespace of any
+        <code>RejectReasonCode</code> (<code>LFI.*</code>, <code>AANI.*</code>, or <code>FTS.*</code>).
+      </EdProse>
+
       <h3>Intra-bank</h3>
 
       <EdProse>

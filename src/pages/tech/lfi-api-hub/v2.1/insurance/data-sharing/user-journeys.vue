@@ -19,8 +19,8 @@ const myCustomValidator = (value: any) => {
   const now = new Date()
   const oneYearFromNow = new Date()
   oneYearFromNow.setFullYear(now.getFullYear() + 1)
-  if (Number.isNaN(expiration.getTime()) || expiration <= now || expiration >= oneYearFromNow) {
-    return 'Data.ExpirationDateTime cannot be in the past and must be less than a year in the future.'
+  if (Number.isNaN(expiration.getTime()) || expiration.getTime() <= now.getTime() + 15 * 60 * 1000 || expiration >= oneYearFromNow) {
+    return 'Data.ExpirationDateTime must be more than 15 minutes in the future and less than a year in the future.'
   }
   const groups = value?.Data?.Permissions
   if (!Array.isArray(groups) || groups.length === 0) {

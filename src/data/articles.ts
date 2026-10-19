@@ -1,6 +1,25 @@
 import generatedRoutes from '~pages'
 import type { RouteRecordRaw } from 'vue-router'
 import type { Article, ArticleMeta } from '@/types/article'
+import { VERSIONS } from '@/data/versions'
+
+// Reads the optional `versions` list from an article's route meta. Unknown
+// keys are dropped, so a typo makes the article apply to every version rather
+// than to none.
+export function readArticleVersions(meta: unknown): string[] {
+  if (!meta || typeof meta !== 'object') return []
+  const raw = (meta as Record<string, unknown>)['versions']
+  if (!Array.isArray(raw)) return []
+  return raw.filter((v): v is string => typeof v === 'string' && (VERSIONS as readonly string[]).includes(v))
+}
+
+// "v2.1 only", "v2.1 and v2.2-rc2". Empty string when the article applies to
+// every version.
+export function formatArticleVersions(versions: readonly string[]): string {
+  if (versions.length === 0) return ''
+  if (versions.length === 1) return `${versions[0]} only`
+  return `${versions.slice(0, -1).join(', ')} and ${versions[versions.length - 1]}`
+}
 
 function readArticleMeta(meta: unknown): ArticleMeta | null {
   if (!meta || typeof meta !== 'object') return null
@@ -18,7 +37,7 @@ function readArticleMeta(meta: unknown): ArticleMeta | null {
     : []
 
   if (!title) return null
-  return { title, description, category, readTime, updated, tags }
+  return { title, description, category, readTime, updated, tags, versions: readArticleVersions(m) }
 }
 
 function slugFromPath(path: string): string {
@@ -38,6 +57,7 @@ function buildArticle(route: RouteRecordRaw, meta: ArticleMeta): Article {
     readTime: meta.readTime,
     updated: meta.updated,
     tags: meta.tags,
+    versions: meta.versions,
   }
 }
 

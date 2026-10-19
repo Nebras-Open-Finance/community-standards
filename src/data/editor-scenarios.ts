@@ -19,6 +19,18 @@ export interface JsonScenario {
 const MERCHANT_NAME = 'Al Noor General'
 
 /**
+ * The same merchant as a v2.2 payment consent `OnBehalfOf` (changelog §11). From
+ * v2.2 this, not the PII `MerchantName`, drives the "on-behalf of" text on the
+ * Authorisation Page.
+ */
+export const PAYMENT_ON_BEHALF_OF = {
+  TradingName: MERCHANT_NAME,
+  LegalName: 'Al Noor General Trading LLC',
+  IdentifierType: 'Other',
+  Identifier: 'AN-12345',
+}
+
+/**
  * Payees added on top of a page's own creditor to make a multiple-beneficiary
  * consent. Mirrors the reference list the Consent Management wireframe shows for
  * the Multiple Beneficiaries model.
@@ -122,7 +134,9 @@ export function bankDataSharingScenarios(
  */
 export function domesticPaymentPiiScenarios(
   base: Record<string, unknown>,
-  options: { beneficiaries?: 'single' | 'flexible' } = {},
+  // `merchantDetails: false` drops the merchant scenario — from v2.2 the merchant
+  // is named by the consent's `OnBehalfOf`, not by PII risk data.
+  options: { beneficiaries?: 'single' | 'flexible'; merchantDetails?: boolean } = {},
 ): JsonScenario[] {
   const derive = (
     mutate: (body: Record<string, any>) => void,
@@ -175,7 +189,9 @@ export function domesticPaymentPiiScenarios(
     )
   }
 
-  if ((base as any).Risk?.CreditorIndicators?.MerchantDetails) {
+  if (options.merchantDetails === false) {
+    // No merchant scenario.
+  } else if ((base as any).Risk?.CreditorIndicators?.MerchantDetails) {
     scenarios.push({
       id: 'no-merchant-details',
       label: 'No merchant details',
@@ -219,6 +235,9 @@ export function domesticPaymentPiiScenarios(
 export function paymentConsentScenarios(
   base: Record<string, unknown>,
   consentKey: 'consent' | 'Data' = 'consent',
+  // `onBehalfOf: true` (v2.2 onwards) adds a scenario that flips whether the
+  // consent names a merchant in `OnBehalfOf`.
+  options: { onBehalfOf?: boolean } = {},
 ): JsonScenario[] {
   const derive = (
     mutate: (consent: Record<string, any>) => void,
@@ -275,6 +294,30 @@ export function paymentConsentScenarios(
         stripOptionalControls(consent.ControlParameters.ConsentSchedule.MultiPayment)
       }),
     })
+  }
+
+  // Flips whichever way the page's base body sits, as the merchant scenario in
+  // domesticPaymentPiiScenarios does.
+  if (options.onBehalfOf) {
+    if ((base as any)[consentKey]?.OnBehalfOf) {
+      scenarios.push({
+        id: 'no-on-behalf-of',
+        label: 'No OnBehalfOf',
+        description: 'OnBehalfOf omitted — no on-behalf-of merchant shown',
+        data: derive((consent) => {
+          delete consent.OnBehalfOf
+        }),
+      })
+    } else {
+      scenarios.push({
+        id: 'with-on-behalf-of',
+        label: 'OnBehalfOf provided',
+        description: 'OnBehalfOf names the merchant the TPP collects for',
+        data: derive((consent) => {
+          consent.OnBehalfOf = { ...PAYMENT_ON_BEHALF_OF }
+        }),
+      })
+    }
   }
 
   return scenarios

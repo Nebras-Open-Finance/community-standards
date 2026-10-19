@@ -85,6 +85,13 @@ meta:
         service. A consent must not be issued with an unnecessarily long expiry when the underlying
         service covers a shorter, defined period.
       </EdProse>
+      <EdProse>
+        Separately, a consent may carry an <code>AuthorizationExpirationDateTime</code>: the date and
+        time by which a consent in <code>AwaitingAuthorization</code> status must be authorized by the
+        User. It is available on Bank Data Sharing, Insurance Data Sharing and Bank Service Initiation
+        consents. If the TPP wishes to cap how long the User has to authorize the consent, it must do
+        so with this field.
+      </EdProse>
     </EdSectionBand>
 
     <EdSectionBand

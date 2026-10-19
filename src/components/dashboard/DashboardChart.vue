@@ -433,7 +433,7 @@ function buildPaySizeDist(): void {
       },
       scales: {
         y: { stacked, beginAtZero: true, grid: s.GRID, ticks: s.AXIS_TICK, title: { display: true, text: 'Payment Count', ...s.AXIS_TITLE } },
-        x: { stacked, grid: { display: false }, ticks: s.AXIS_LABEL, title: { display: true, text: 'Payment Size (AED)', ...s.AXIS_TITLE } },
+        x: { stacked, grid: { display: false }, ticks: s.AXIS_LABEL, title: { display: true, text: 'Payment Size (⃃)', ...s.AXIS_TITLE } },
       },
     },
   }
