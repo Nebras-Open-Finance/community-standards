@@ -6,7 +6,7 @@ meta:
 <script setup lang="ts">
 // Bespoke detail page for OFP-016. Hand-authored (not rendered from the
 // proposals data array) so the content can be laid out in named sections —
-// Background, Recommendation, Scope, Technical changes, Rollout, Alternatives,
+// Background, Recommendation, Scope, Technical changes, Rollout,
 // Questions, Pros, and Cons. Mirrors the layout of OFP-015.
 import { ref, computed, onMounted, watch, type Component } from 'vue'
 import { useHead } from '@unhead/vue'
@@ -315,7 +315,7 @@ onMounted(() => {
             Sign in with the Trust Framework to vote &mdash; For, Against, or Abstain &mdash; recorded in
             the open with your reasoning. Your organisation and name come from your directory profile, and
             each person may vote once. <strong>Three questions are attached to this vote</strong> &mdash;
-            set out in section 07 below. The first asks LFIs how large their ATM estates are and whether
+            set out in section 06 below. The first asks LFIs how large their ATM estates are and whether
             they can paginate by V2.2; the second asks TPPs how they consume ATM data today; the third
             asks both whether TPP-controlled page sizes or filters are wanted later.
           </p>
@@ -650,70 +650,12 @@ onMounted(() => {
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         06 · ALTERNATIVES CONSIDERED
+         06 · QUESTIONS ATTACHED TO THIS VOTE
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ofp-band ofp-band--white">
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 06 &middot; Alternatives considered</div>
-          <h2 class="ofp-band__title">Other ways to bound the response</h2>
-        </div>
-        <div class="ofp-prose">
-          <div class="ofp-changes">
-            <div class="ofp-change">
-              <div class="ofp-change__label">01 &middot; Optional pagination, as for most Data Sharing lists</div>
-              <p>
-                The Hub always sends <code>page</code> and <code>page-size</code>, and each LFI decides
-                whether to honour them, signalling its choice with <code>meta.paginated</code>. This avoids
-                work for LFIs with small estates, but it leaves the response unbounded at exactly the banks
-                where it matters. It also means a TPP cannot know in advance whether a given bank pages.
-                For a public-data endpoint that every TPP reads in full, one predictable behaviour is worth
-                more than the saved effort.
-              </p>
-            </div>
-
-            <div class="ofp-change">
-              <div class="ofp-change__label">02 &middot; The API Hub paginates on the LFI&rsquo;s behalf</div>
-              <p>
-                The LFI keeps returning the full estate, and the Hub fetches it, holds it and serves it to the
-                TPP in pages. TPPs get bounded responses and LFIs build nothing. But the largest payload in
-                the chain, the one from Ozone Connect to the Hub, stays unbounded. The Hub would also have
-                to hold a copy of each LFI&rsquo;s estate between page requests and decide when that copy is
-                stale.
-              </p>
-            </div>
-
-            <div class="ofp-change">
-              <div class="ofp-change__label">03 &middot; Cursor-based pagination</div>
-              <p>
-                The LFI returns an opaque continuation token instead of page numbers. That is more robust
-                to records changing during a walk, but no other API in the standard uses it. It would mean
-                a second pagination model for LFIs to implement and for the Hub to translate, and would
-                remove <code>Last</code> and <code>TotalPages</code>, which TPPs use to size a sync.
-              </p>
-            </div>
-
-            <div class="ofp-change">
-              <div class="ofp-change__label">04 &middot; A <code>LastUpdatedDateTime</code> filter instead of pages</div>
-              <p>
-                TPPs request only ATMs changed since their last sync. This reduces repeat traffic, but the
-                first sync, and any full refresh, still returns the whole estate in one response. It
-                complements pagination rather than replacing it, which is why question 03 asks about it as
-                a possible follow-up.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══════════════════════════════════════════════════════════════════
-         07 · QUESTIONS ATTACHED TO THIS VOTE
-    ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ofp-band ofp-band--cream">
-      <div class="ofp-band__inner">
-        <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 07 &middot; Questions</div>
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 06 &middot; Questions</div>
           <h2 class="ofp-band__title">Three questions, asked with the vote</h2>
           <p class="ofp-band__lede">
             These appear as optional boxes when you confirm your vote. The first sizes the work for LFIs,
@@ -734,12 +676,12 @@ onMounted(() => {
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         08 · PROS
+         07 · PROS
     ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ofp-band ofp-band--white">
+    <section class="ofp-band ofp-band--cream">
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 08 &middot; Pros</div>
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 07 &middot; Pros</div>
           <h2 class="ofp-band__title">What pagination buys</h2>
         </div>
         <ul class="ofp-pros">
@@ -752,12 +694,12 @@ onMounted(() => {
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         09 · CONS
+         08 · CONS
     ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ofp-band ofp-band--cream">
+    <section class="ofp-band ofp-band--white">
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 09 &middot; Cons</div>
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 08 &middot; Cons</div>
           <h2 class="ofp-band__title">What it costs</h2>
         </div>
         <ul class="ofp-cons">
