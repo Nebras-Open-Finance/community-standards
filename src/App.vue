@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useHead } from '@unhead/vue'
 
-// Root component — the layout system (vite-plugin-vue-layouts) wraps each
+// Root component — the layout system (vite-plugin-vue-layouts-next) wraps each
 // page route's component in its declared layout, so the only thing this
 // component needs is <router-view />.
 

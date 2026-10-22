@@ -54,7 +54,6 @@ const releases = computed<ReleaseGroupHead[]>(() => {
 // ─── Facet state ─────────────────────────────────────────────────────────
 const query = ref<string>('')
 const categoryFilter = reactive(new Set<TrustFrameworkCategory>())
-const searchInput = ref<HTMLInputElement | null>(null)
 
 function haystack(entry: TrustFrameworkEntry): string {
   const parts: string[] = [entry.title, entry.description ?? '', entry.release, entry.category]
@@ -341,7 +340,6 @@ watch([query, () => [...categoryFilter]], writeToUrl)
               <path d="m20 20-3.5-3.5" />
             </svg>
             <input
-              ref="searchInput"
               v-model="query"
               type="search"
               class="ed-tfr-input__field"

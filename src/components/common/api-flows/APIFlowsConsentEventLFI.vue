@@ -29,7 +29,7 @@ sequenceDiagram
     end
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'consent-event-lfi-diagram')
+useMermaidDiagram(mermaidDefinition, 'consent-event-lfi-diagram')
 </script>
 
 <template>

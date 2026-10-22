@@ -57,7 +57,7 @@ sequenceDiagram
     CAAP-->>TPP: Redirect end user to TPP callback with code + state
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'caap-consent-diagram')
+useMermaidDiagram(mermaidDefinition, 'caap-consent-diagram')
 </script>
 
 <template>

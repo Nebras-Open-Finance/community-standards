@@ -24,7 +24,7 @@ sequenceDiagram
     Note over TPP: Initiate refund payment using<br/>RefundAccount as creditor
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'refunds-diagram')
+useMermaidDiagram(mermaidDefinition, 'refunds-diagram')
 </script>
 
 <template>

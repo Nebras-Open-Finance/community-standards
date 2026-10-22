@@ -1,10 +1,11 @@
 // Shared Mermaid setup for the sequence/flowchart diagram components.
 // Each caller passes the diagram source, an id prefix, and (optionally)
-// an init config override. The composable handles theme detection,
+// an init config override, and binds `ref="mermaidContainer"` on the
+// element the diagram renders into. The composable handles theme detection,
 // re-render on toggle, and the standard error fallback.
 
 import mermaid from 'mermaid'
-import { ref, onMounted, type Ref } from 'vue'
+import { onMounted, useTemplateRef } from 'vue'
 import { onThemeChange } from './useChartTheme'
 
 const DEFAULT_SEQUENCE = {
@@ -41,16 +42,12 @@ function extendLifelines(container: HTMLElement): void {
   })
 }
 
-export interface UseMermaidDiagram {
-  containerRef: Ref<HTMLDivElement | null>
-}
-
 export function useMermaidDiagram(
   definition: string,
   idPrefix: string,
   config: MermaidConfigOverride = { sequence: DEFAULT_SEQUENCE },
-): UseMermaidDiagram {
-  const containerRef = ref<HTMLDivElement | null>(null)
+): void {
+  const containerRef = useTemplateRef<HTMLDivElement>('mermaidContainer')
   let renderCount = 0
 
   async function render(): Promise<void> {
@@ -80,6 +77,4 @@ export function useMermaidDiagram(
 
   onMounted(render)
   onThemeChange(() => { void render() })
-
-  return { containerRef }
 }

@@ -50,7 +50,7 @@ ${confirmationLegs}
 // collide; dots are stripped because the prefix ends up in an SVG element id.
 const idPrefix = `cop-diagram-${props.version.replace(/[^a-z0-9]+/gi, '-')}`
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, idPrefix)
+useMermaidDiagram(mermaidDefinition, idPrefix)
 </script>
 
 <template>

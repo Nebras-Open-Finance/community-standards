@@ -40,7 +40,7 @@ sequenceDiagram
     end
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'consent-diagram')
+useMermaidDiagram(mermaidDefinition, 'consent-diagram')
 </script>
 
 <template>

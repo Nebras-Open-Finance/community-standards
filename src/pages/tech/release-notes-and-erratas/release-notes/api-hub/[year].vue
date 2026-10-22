@@ -65,7 +65,6 @@ const query = ref<string>('')
 const audienceFilter = ref<AudienceFilter | null>(null)
 const areaFilter = reactive(new Set<string>())
 const sectionFilter = reactive(new Set<string>())
-const searchInput = ref<HTMLInputElement | null>(null)
 
 function sectionsOf(entry: ReleaseEntry): string[] {
   return (entry.sections ?? []).map((s) => s.label)
@@ -433,7 +432,6 @@ watch([query, audienceFilter, () => [...areaFilter], () => [...sectionFilter]], 
               <path d="m20 20-3.5-3.5" />
             </svg>
             <input
-              ref="searchInput"
               v-model="query"
               type="search"
               class="ed-ahr-input__field"

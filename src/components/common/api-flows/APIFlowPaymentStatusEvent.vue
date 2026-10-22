@@ -18,7 +18,7 @@ sequenceDiagram
     Hub-->>-TPP: POST (Event - Payment Initiation Request) {Status: AcceptedWithoutPosting}
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'payment-status-event-diagram')
+useMermaidDiagram(mermaidDefinition, 'payment-status-event-diagram')
 </script>
 
 <template>

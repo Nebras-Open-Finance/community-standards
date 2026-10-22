@@ -23,7 +23,7 @@ sequenceDiagram
     end
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'fts-status-mapping-diagram')
+useMermaidDiagram(mermaidDefinition, 'fts-status-mapping-diagram')
 </script>
 
 <template>

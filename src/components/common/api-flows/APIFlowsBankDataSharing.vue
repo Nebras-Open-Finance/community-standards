@@ -48,7 +48,7 @@ sequenceDiagram
     Hub-->>-TPP: 200 {...}
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'bank-data-sharing-diagram')
+useMermaidDiagram(mermaidDefinition, 'bank-data-sharing-diagram')
 </script>
 
 <template>

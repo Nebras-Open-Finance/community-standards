@@ -15,7 +15,7 @@ sequenceDiagram
     TPP->>-Hub: 202 Accepted
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'consent-event-diagram')
+useMermaidDiagram(mermaidDefinition, 'consent-event-diagram')
 </script>
 
 <template>

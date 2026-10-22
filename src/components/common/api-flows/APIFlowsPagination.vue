@@ -31,7 +31,7 @@ sequenceDiagram
     Note over TPP: Links.Next absent — loop terminates
 `
 
-const { containerRef: mermaidContainer } = useMermaidDiagram(mermaidDefinition, 'pagination-diagram')
+useMermaidDiagram(mermaidDefinition, 'pagination-diagram')
 </script>
 
 <template>
