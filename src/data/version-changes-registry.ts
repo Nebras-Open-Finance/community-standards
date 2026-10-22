@@ -502,8 +502,6 @@ export const VERSION_CHANGES: VersionChange[] = [
       },
     ],
     affectedPaths: [
-      `${PRODUCTS_TPP}/api-guide`,
-      `${PRODUCTS_TPP}/requirements`,
       `${PRODUCTS_TPP}/open-api/leads`,
       `${PRODUCTS_LFI}/open-api/leads`,
     ],
@@ -547,7 +545,6 @@ export const VERSION_CHANGES: VersionChange[] = [
       'uae-ozone-connect-insurance-openapi',
     ],
     affectedPaths: [
-      `${CONSENT_TPP}/`,
       `${CONSENT_TPP}/open-api/par`,
     ],
   },
@@ -596,7 +593,6 @@ export const VERSION_CHANGES: VersionChange[] = [
       { label: 'GET /consents/{consentId}', path: `${CM}/open-api/consents-consentId` },
     ],
     affectedPaths: [
-      `${CONSENT_TPP}/`,
       `${CONSENT_TPP}/open-api/par`,
       `${CONSENT_TPP}/open-api/payment-consents-ConsentId`,
       `${CM}/open-api/consents-consentId`,
@@ -737,7 +733,6 @@ export const VERSION_CHANGES: VersionChange[] = [
       { label: 'GET /consents/{consentId}', path: `${CM}/open-api/consents-consentId` },
     ],
     affectedPaths: [
-      `${CONSENT_TPP}/`,
       `${CONSENT_TPP}/open-api/par`,
       `${CONSENT_TPP}/open-api/account-access-consents-ConsentId`,
       `${CONSENT_TPP}/open-api/insurance-consents-ConsentId`,
@@ -969,7 +964,6 @@ export const VERSION_CHANGES: VersionChange[] = [
       },
     ],
     affectedPaths: [
-      `${TPP}/consent/`,
       `${TPP}/consent/requirements`,
     ],
   },
@@ -1046,7 +1040,6 @@ export const VERSION_CHANGES: VersionChange[] = [
     ],
     affectedPaths: [
       `${TPP}/banking/data-sharing/open-api/accounts-AccountId-product`,
-      `${PRODUCTS_TPP}/requirements`,
       `${PRODUCTS_TPP}/open-api/products`,
       `${LFI}/banking/data-sharing/open-api/accounts-AccountId-products`,
       `${LFI}/banking/data-sharing/api-guide/finance-rates`,
