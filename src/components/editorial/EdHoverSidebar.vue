@@ -122,7 +122,8 @@ function onClose(e: MouseEvent): void {
 <style scoped>
 .ed-hsb {
   position: fixed;
-  top: var(--at-header-height);
+  /* Below the release-candidate banner too, when one is pinned there. */
+  top: calc(var(--at-header-height) + var(--at-draft-banner-height, 0px));
   left: 0;
   bottom: 0;
   width: 36px;            /* invisible hit zone width when collapsed */

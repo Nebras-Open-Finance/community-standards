@@ -99,6 +99,12 @@ const sectionEndpoints = computed(() =>
             A <code>Partial</code> or <code>No</code> result must be disclosed to the user &mdash; see
             <a href="/tech/tpp-standards/v2.2-rc2/banking/confirmation-of-payee/user-journeys">User Journeys</a> for the required consent and authorisation page behaviour.
           </p>
+          <p class="ed-landing__contents-sub">
+            Every result also carries <code>AccountStatus</code> &mdash; <code>Active</code>,
+            <code>Inactive</code>, <code>Dormant</code>, <code>Unclaimed</code>, <code>Deceased</code>,
+            <code>Suspended</code> or <code>Closed</code> &mdash; the status of the account at the LFI,
+            alongside the <code>NameMatchIndicator</code> below.
+          </p>
         </div>
         <div class="ed-cov" role="table" style="grid-template-columns: minmax(15rem, 20rem) minmax(10rem, 14rem) 1fr;">
           <div class="ed-cov__row ed-cov__row--head" role="row">

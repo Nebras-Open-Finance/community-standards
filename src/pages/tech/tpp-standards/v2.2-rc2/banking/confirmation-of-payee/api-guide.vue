@@ -354,6 +354,7 @@ const decodedPayload = `{
   "message": {
     "Data": {
       "NameMatchIndicator": "ConfirmationOfPayee.Partial",
+      "AccountStatus": "Active",
       "MaskedName": "Ibrahim Al S*****"
     },
     "Links": {
@@ -761,6 +762,11 @@ const decodeJwsTabs = [{ label: 'Node.js', lang: 'typescript', code: decodeJwsNo
               <td><code>Data.NameMatchIndicator</code></td>
               <td>string</td>
               <td>The result of the name match check &mdash; see enum below</td>
+            </tr>
+            <tr>
+              <td><code>Data.AccountStatus</code></td>
+              <td>string</td>
+              <td>Always present. The status of the account held at the LFI, using the same code set as <code>Status</code> on the account resource: <code>Active</code>, <code>Inactive</code>, <code>Dormant</code>, <code>Unclaimed</code>, <code>Deceased</code>, <code>Suspended</code> or <code>Closed</code></td>
             </tr>
             <tr>
               <td><code>Data.MaskedName</code></td>

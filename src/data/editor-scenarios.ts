@@ -357,9 +357,15 @@ function stripOptionalControls(multiPayment: Record<string, any>) {
  * `MaskedName` is returned on `Partial` and `No` only: on those outcomes the TPP
  * MUST surface the name the LFI actually holds so the payer can decide whether
  * to proceed. On `Yes` there is nothing to disclose, so the field is omitted.
+ *
+ * `accountStatus: true` adds the `AccountStatus` the response requires from
+ * v2.2. Every scenario reports an `Active` account, since the name-match outcome
+ * is what the scenarios vary.
  */
-export function confirmationOfPayeeScenarios(): JsonScenario[] {
-  return [
+export function confirmationOfPayeeScenarios(
+  options: { accountStatus?: boolean } = {},
+): JsonScenario[] {
+  const scenarios: JsonScenario[] = [
     {
       id: 'match-yes',
       label: 'Yes — full match',
@@ -387,4 +393,8 @@ export function confirmationOfPayeeScenarios(): JsonScenario[] {
       },
     },
   ]
+  if (options.accountStatus) {
+    for (const s of scenarios) s.data.AccountStatus = 'Active'
+  }
+  return scenarios
 }

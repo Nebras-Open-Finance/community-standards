@@ -28,7 +28,8 @@ withDefaults(defineProps<{
 <style scoped>
 .ed-inpage {
   position: sticky;
-  top: var(--at-header-height);
+  /* Below the release-candidate banner too, when one is pinned there. */
+  top: calc(var(--at-header-height) + var(--at-draft-banner-height, 0px));
   z-index: 30;
   background: var(--at-bg-cream);
   border-bottom: 1px solid var(--at-grid-line);

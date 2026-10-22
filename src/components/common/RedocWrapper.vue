@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { CURRENT_VERSION } from '@/data/versions'
 import { onThemeChange } from '@/composables/useChartTheme'
+import { registerPageSpec } from '@/composables/usePageSpecs'
 
 const SPECS_REPO = 'https://github.com/Nebras-Open-Finance/api-specs/tree/main/dist'
 
@@ -271,6 +272,18 @@ function buildRedocTheme(): Record<string, unknown> {
 onMounted(() => {
   void renderRedoc()
 })
+
+// Tell page chrome which spec this page shows (see usePageSpecs).
+let unregisterSpec: (() => void) | null = null
+watch(
+  () => props.spec,
+  (spec) => {
+    unregisterSpec?.()
+    unregisterSpec = spec && !import.meta.env.SSR ? registerPageSpec(spec) : null
+  },
+  { immediate: true },
+)
+onBeforeUnmount(() => unregisterSpec?.())
 
 // Re-init Redoc when the theme toggles so it picks up the new palette.
 onThemeChange(() => { void renderRedoc() })

@@ -960,6 +960,29 @@ const step10Tabs = [{ label: 'Node.js', lang: 'typescript', code: step10Node }, 
         </table>
       </EdRefTable>
 
+      <EdNote type="info" title="Balance types you can rely on">
+        <p>
+          Every <code>/balances</code> response for a <code>CurrentAccount</code> or
+          <code>Savings</code> account includes <code>InterimAvailable</code>. For credit cards, finance
+          and mortgages the LFI MUST also return:
+        </p>
+        <ul>
+          <li>
+            <code>PreviouslyClosedBooked</code> &mdash; the booked balance at the close of the most recent
+            statement or accounting period (on a credit card, the statement balance).
+          </li>
+          <li>
+            <code>InterimBooked</code> &mdash; the total outstanding balance, with
+            <code>Components</code> giving <code>Principal</code>, <code>Profit</code> or
+            <code>Interest</code>, <code>FeesAndCharges</code> and <code>PastDue</code>.
+          </li>
+          <li>
+            <code>InterimAvailable</code> &mdash; on <code>CreditCard</code> only: the available credit,
+            with a <code>CreditLine</code> entry of <code>Type: Credit</code> carrying the limit.
+          </li>
+        </ul>
+      </EdNote>
+
       <EdNote type="warning" title="An empty result does not mean no activity">
         <p>
           For <code>/transactions</code> and <code>/statements</code>, an LFI MUST make at least

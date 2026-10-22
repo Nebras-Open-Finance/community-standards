@@ -22,10 +22,10 @@ const examplePersonalResponse = `{
       "id": "cust-001",
       "name": {
         "fullName": "Ahmed Al Mansouri",
-        "firstName": "Ahmed",
-        "lastName": "Al Mansouri",
-        "fullNameAr": "أحمد المنصوري"
-      }
+        "givenName": "Ahmed",
+        "familyName": "Al Mansouri"
+      },
+      "accountStatus": "Active"
     }
   ],
   "meta": {
@@ -35,7 +35,8 @@ const examplePersonalResponse = `{
 }
 `
 
-// The minimum a conformant response can be: fullName and nothing else. Shown
+// The minimum a conformant response can be: fullName and accountStatus, and
+// nothing else. Shown
 // because the optional fields read as expected unless it is stated that they
 // are not.
 const exampleMinimalResponse = `{
@@ -44,7 +45,8 @@ const exampleMinimalResponse = `{
       "id": "cust-001",
       "name": {
         "fullName": "Ahmed Al Mansouri"
-      }
+      },
+      "accountStatus": "Active"
     }
   ],
   "meta": {
@@ -60,17 +62,19 @@ const exampleJointResponse = `{
       "id": "cust-001",
       "name": {
         "fullName": "Ahmed Al Mansouri",
-        "firstName": "Ahmed",
-        "lastName": "Al Mansouri"
-      }
+        "givenName": "Ahmed",
+        "familyName": "Al Mansouri"
+      },
+      "accountStatus": "Active"
     },
     {
       "id": "cust-002",
       "name": {
         "fullName": "Fatima Al Mansouri",
-        "firstName": "Fatima",
-        "lastName": "Al Mansouri"
-      }
+        "givenName": "Fatima",
+        "familyName": "Al Mansouri"
+      },
+      "accountStatus": "Active"
     }
   ],
   "meta": {
@@ -87,7 +91,8 @@ const exampleBusinessResponse = `{
       "name": {
         "businessName": "Al Mansouri Trading LLC",
         "alsoKnownAs": ["Al Mansouri Trading"]
-      }
+      },
+      "accountStatus": "Active"
     }
   ],
   "meta": {
@@ -161,9 +166,10 @@ const exampleNotFoundResponse = `{
           <code>data[].verifiedClaims[].verification</code> and
           <code>data[].verifiedClaims[].claims</code> with a single
           <code>data[].name</code>, mapping <code>claims.fullName</code> to <code>name.fullName</code>,
-          <code>givenName</code> to <code>firstName</code>, <code>familyName</code> to
-          <code>lastName</code>, and <code>organisationClaims.name</code> to
-          <code>name.businessName</code>. Everything else the envelope carried &mdash; trust framework,
+          <code>claims.givenName</code> to <code>name.givenName</code>, <code>claims.familyName</code>
+          to <code>name.familyName</code>, and <code>organisationClaims.name</code> to
+          <code>name.businessName</code>. Add the account&rsquo;s status to every entry as
+          <code>data[].accountStatus</code>. Everything else the envelope carried &mdash; trust framework,
           assurance evidence, and the wider customer fields such as <code>emiratesId</code>,
           <code>birthDate</code> and <code>salary</code> &mdash; is removed and MUST NOT be sent.
         </p>
@@ -236,17 +242,26 @@ const exampleNotFoundResponse = `{
       <h4 class="ed-doc__subhead ed-doc__subhead--small"><code>200</code> &mdash; Account found</h4>
       <EdProse>
         Return a <code>data</code> array containing <strong>one entry per account holder</strong>.
-        <code>id</code> and <code>name</code> are the only required members of an entry.
+        <code>id</code>, <code>name</code> and <code>accountStatus</code> are the only required
+        members of an entry.
+      </EdProse>
+      <EdProse>
+        <code>accountStatus</code> uses the same code set as <code>status</code> on the account
+        resource returned by <code>GET /accounts/{accountId}</code>: <code>Active</code>,
+        <code>Inactive</code>, <code>Dormant</code>, <code>Unclaimed</code>, <code>Deceased</code>,
+        <code>Suspended</code> or <code>Closed</code>. A joint account MUST return the same value on
+        every entry. The Hub returns it to the TPP as <code>AccountStatus</code>.
       </EdProse>
 
       <h5 class="ed-doc__subhead ed-doc__subhead--xs">Personal account</h5>
       <EdProse>
         <code>name.fullName</code> is mandatory and is the value the Hub matches on today. Every other
-        field is <strong>optional</strong> &mdash; supply <code>firstName</code>,
-        <code>middleName</code>, <code>lastName</code>, <code>fullNameAr</code> and
-        <code>alsoKnownAs</code> where your systems hold them separately, so that improvements to the
-        matching algorithm can use them without a further change to this contract. A response carrying
-        only <code>fullName</code> is fully conformant.
+        name field is <strong>optional</strong> &mdash; supply <code>givenName</code>,
+        <code>middleName</code>, <code>familyName</code> and <code>alsoKnownAs</code> where your
+        systems hold them separately, so that improvements to the matching algorithm can use them
+        without a further change to this contract. These are the names <code>CustomerPersonClaims</code>
+        uses on <code>GET /customer</code>. A response carrying only <code>fullName</code> and
+        <code>accountStatus</code> is fully conformant.
       </EdProse>
       <EdCode :code="examplePersonalResponse" lang="json" filename="personal account response" />
 
@@ -264,7 +279,7 @@ const exampleNotFoundResponse = `{
       <h5 class="ed-doc__subhead ed-doc__subhead--xs">Business account</h5>
       <EdProse>
         Populate <code>name.businessName</code> with the registered business name on the account.
-        <code>businessNameAr</code> and <code>alsoKnownAs</code> are optional.
+        <code>alsoKnownAs</code> is optional.
       </EdProse>
       <EdCode :code="exampleBusinessResponse" lang="json" filename="business account response" />
 

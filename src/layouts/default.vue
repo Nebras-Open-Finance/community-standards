@@ -49,6 +49,7 @@ const isHome = computed<boolean>(() => route.path === '/')
         :title="chromeSidebar.title"
         :root-href="chromeSidebar.rootHref"
       />
+      <VersionDiff />
       <router-view />
     </main>
     <PageFooter />

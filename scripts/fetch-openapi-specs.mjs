@@ -11,6 +11,8 @@
  *   3. Downloads each YAML file to public/openapi/{version}/{category}/,
  *      uplifting the version strings of any file borrowed from an older
  *      release.
+ *   4. Writes public/openapi/{version}/sources.json, recording the upstream
+ *      file each spec was resolved from, so pages can link to it on GitHub.
  *
  * Usage:  node scripts/fetch-openapi-specs.mjs [--skip-existing] [--branch <name>]
  *   --skip-existing  Skip download if the target directory already has files.
@@ -235,6 +237,43 @@ async function ghDownloadFile(remotePath) {
 
 // ─── Main ──────────────────────────────────────────────────────────────────────
 
+// ─── Sources manifest ──────────────────────────────────────────────────────────
+// public/openapi/{version}/sources.json maps each served spec to the upstream
+// file it was resolved from:
+//
+//   { repo, branch, files: { "{category}/{filename}": { path, folder } } }
+//
+// `path` is the repo-relative path (e.g. dist/standards/v2.1-errata3/x.yaml)
+// and `folder` the upstream version folder it sits in. The release-candidate
+// banner uses it to link a spec page to the exact files on GitHub.
+
+function sourcesPath(version) {
+  return resolve(ROOT, 'public', 'openapi', version, 'sources.json')
+}
+
+/** The existing manifest's entries, kept for categories skipped by --skip-existing. */
+function readSources(version) {
+  const p = sourcesPath(version)
+  if (!existsSync(p)) return {}
+  try {
+    return JSON.parse(readFileSync(p, 'utf-8')).files ?? {}
+  } catch {
+    return {}
+  }
+}
+
+function writeSources(version, files) {
+  mkdirSync(dirname(sourcesPath(version)), { recursive: true })
+  const sorted = Object.fromEntries(Object.entries(files).sort(([a], [b]) => a.localeCompare(b)))
+  const manifest = { repo: `${REPO_OWNER}/${REPO_NAME}`, branch: BRANCH, files: sorted }
+  writeFileSync(sourcesPath(version), JSON.stringify(manifest, null, 2) + '\n', 'utf-8')
+}
+
+/**
+ * Fetches one category's specs for a version. Returns the upstream source of
+ * each file written, keyed by `{category}/{filename}`, or null when the
+ * category was skipped and its existing manifest entries should be kept.
+ */
 async function fetchCategory(version, chain, targetProtocol, category) {
   // Output is keyed by the LOCAL version; the upstream folders it resolves from
   // may differ (see SPEC_FOLDER in src/data/versions.ts).
@@ -243,7 +282,7 @@ async function fetchCategory(version, chain, targetProtocol, category) {
   // Skip if already populated (only when --skip-existing is set)
   if (SKIP_EXISTING && existsSync(outDir) && readdirSync(outDir).some(f => f.endsWith('.yaml'))) {
     console.log(`  ✓ ${category} — already present (omit --skip-existing to re-fetch)`)
-    return
+    return null
   }
 
   // 1. List version folders for this category
@@ -278,12 +317,12 @@ async function fetchCategory(version, chain, targetProtocol, category) {
 
   if (releasesUsed.length === 0) {
     console.warn(`  ⚠ ${category} — no matching folders found for ${chain.join(' → ')}`)
-    return
+    return {}
   }
 
   if (fileMap.size === 0) {
     console.warn(`  ⚠ ${category} — no YAML files found`)
-    return
+    return {}
   }
 
   // 3. Download all resolved files, uplifting the version strings of every one
@@ -309,6 +348,15 @@ async function fetchCategory(version, chain, targetProtocol, category) {
   if (uplifted > 0) parts.push(`${uplifted} uplifted to ${targetProtocol}`)
   const note = parts.length === 0 ? '' : ` (${parts.join(', ')})`
   console.log(`  ✓ ${category} — ${downloaded.length} file(s)${note}`)
+
+  const sources = {}
+  for (const [filename, { remotePath }] of fileMap) {
+    sources[`${category}/${filename}`] = {
+      path: remotePath,
+      folder: remotePath.split('/').slice(-2, -1)[0],
+    }
+  }
+  return sources
 }
 
 async function main() {
@@ -327,9 +375,16 @@ async function main() {
       ? ''
       : `  (upstream ${chain.join(', falling back to ')})`
     console.log(`${version}:${note}`)
+    const sources = readSources(version)
     for (const category of CATEGORIES) {
-      await fetchCategory(version, chain, targetProtocol, category)
+      const fetched = await fetchCategory(version, chain, targetProtocol, category)
+      if (fetched === null) continue
+      for (const key of Object.keys(sources)) {
+        if (key.startsWith(`${category}/`)) delete sources[key]
+      }
+      Object.assign(sources, fetched)
     }
+    writeSources(version, sources)
     console.log()
   }
 

@@ -22,7 +22,7 @@ const myCustomValidator = (value) => {
   return null
 }
 
-const scenarios = confirmationOfPayeeScenarios()
+const scenarios = confirmationOfPayeeScenarios({ accountStatus: true })
 
 const initialFormData = ref(scenarios.find(s => s.id === 'match-partial').data)
 </script>

@@ -83,7 +83,12 @@ export interface VersionChange {
   /** OpenAPI spec names touched, e.g. "uae-account-information-openapi". */
   specs?: string[]
   endpoints?: VersionChangeEndpoint[]
-  /** Pages that document the change. */
+  /**
+   * Pages whose content changes because of this change. Each one gets the
+   * release-candidate banner's "What's changed" comparison, so list only pages
+   * that visibly differ from `fromVersion` — not a section overview whose only
+   * difference is the version in its links.
+   */
   affectedPaths: string[]
 }
 
@@ -119,6 +124,10 @@ const LFI_PAYMENT_GUIDES = [
   `${SI_LFI}/domestic-payments/multi-payments/variable-on-demand/api-guide`,
   `${SI_LFI}/domestic-payments/multi-payments/variable-periodic-schedule/api-guide`,
 ]
+
+// The TPP-side counterparts. Every domestic payment type submits to the same
+// `POST /payments` request schema, so a change to that request lands on each.
+const TPP_PAYMENT_GUIDES = LFI_PAYMENT_GUIDES.map((p) => p.replace(SI_LFI, SI_TPP))
 
 // The products catalogue, which is slugged differently on each surface:
 // `products-leads` on the TPP side, `products-and-leads` on the LFI side. Both
@@ -158,7 +167,6 @@ export const VERSION_CHANGES: VersionChange[] = [
       },
     ],
     affectedPaths: [
-      `${CM}/`,
       `${CM}/open-api/psu-userId-consents`,
     ],
   },
@@ -181,7 +189,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       'On `LFI` the statuses are `AcceptedCreditSettlementCompleted` and `Rejected`, and both are terminal. Settlement is internal to the LFI, so there is no hand-off to an external rail to report as an intermediate step.\n\n' +
       'Two things are withdrawn from the operation on every rail. `Pending` is no longer a patchable status: a payment is `Pending` precisely because the LFI has not yet routed it, so there is no rail to name. And `paymentResponse.OpenFinanceBilling` is no longer patchable through this operation on any rail.\n\n' +
       '**Reject reason codes are namespaced to the rail.** In v2.1 a single pattern, `^(AANI|FTS|LFI)\\.[A-Za-z0-9]+$`, admits any namespace on any payment. In v2.2 each rail member references its own schema — `CbuaePaymentLogRejectReasonCodeAani`, `…Fts`, `…Lfi` — so an `FTS.*` code sent against a payment routed to AANI no longer validates. A payment rejected at the LFI before it reached AANI or UAEFTS is still reported against the rail it was routed to, and carries that rail\'s reason codes.\n\n' +
-      '**`paymentTransactionId` follows the rail that issues it.** It is present on `AANI` and `FTS`, carrying the identifier that rail issued to the Originating LFI, and the LFI MUST populate it once the rail has issued it — that is, alongside either of that rail\'s success statuses. It is absent from the `LFI` member entirely, since nothing outside the LFI issues an identifier for a payment booked on its own ledger. It is omitted where the payment was rejected before the rail issued one. It is not the same value as `transactionId` in the Bank Data Sharing API.\n\n' +
+      '**`paymentTransactionId` follows the rail.** It is present on `AANI` and `FTS`, carrying the payment\'s end to end transaction identifier on that rail. It is absent from the `LFI` member entirely, since a payment booked on the LFI\'s own ledger has no such identifier. It is not the same value as `transactionId` in the Bank Data Sharing API.\n\n' +
       '**`GET /payment-log` reads the payment back in the shape it was patched in.** The previously inline `paymentResponse` object becomes `CbuaePaymentLogPaymentResponse`, a `oneOf` with one member per rail plus `CbuaePaymentLogPaymentResponseUnrouted` — a payment the LFI has not routed, which carries no `paymentRail` and is `Pending` or `Rejected`. The unrouted member is the only one that still accepts a reject code from any of the three namespaces, since a payment rejected before routing has no rail to scope it to. `paymentTransactionId` is also now returned on the `AANI` and `FTS` members, having been absent from this operation\'s response since v2.1 even though the patch operation set it.\n\n' +
       'The rail records how the payment was **executed**, not how it was requested: where an LFI\'s routing rules settle an instant payment on another rail, the field reports the rail actually used. A payment settles over exactly one rail — this holds for file payments as well as single payments, so one value describes the whole record.\n\n' +
       'This is a breaking change and it requires action from every LFI. An LFI built against v2.1 that patches a payment without naming a rail is rejected under v2.2, as is one that patches `Pending`, sends `OpenFinanceBilling`, or sends a reject code from the wrong namespace. LFIs settling over AANI or UAEFTS must also emit the second patch that carries the payment to its terminal status, which v2.1 did not require. The API Hub enforcement date is set separately from the version cutover.\n\n' +
@@ -201,7 +209,6 @@ export const VERSION_CHANGES: VersionChange[] = [
       },
     ],
     affectedPaths: [
-      `${CM}/`,
       `${CM}/open-api/payment-log-id`,
       `${CM}/open-api/payment-log`,
       `${SI_LFI}/domestic-payments/overview/payment-status`,
@@ -219,12 +226,12 @@ export const VERSION_CHANGES: VersionChange[] = [
     summary:
       'The payment and file payment records return `Data.PaymentRail`, and the payment status event carries the same field, so a TPP learns which rail settled a payment instead of inferring it from a reject reason code.',
     description:
-      'The rail an LFI settles on is what makes the rest of a payment record readable. It determines whether `PaymentTransactionId` is present and what issued it, which `RejectReasonCode` namespace applies, and — on AANI and UAEFTS — whether a success status is terminal or an intermediate hand-off. In v2.1 none of that is stated to the TPP: the rail can only be inferred from the prefix of a reject reason code, which exists only when the payment failed.\n\n' +
+      'The rail an LFI settles on is what makes the rest of a payment record readable. It determines whether `PaymentTransactionId` is present, which `RejectReasonCode` namespace applies, and — on AANI and UAEFTS — whether a success status is terminal or an intermediate hand-off. In v2.1 none of that is stated to the TPP: the rail can only be inferred from the prefix of a reject reason code, which exists only when the payment failed.\n\n' +
       'v2.2 adds `AEPaymentRail` to the Bank Service Initiation API description and returns it as `Data.PaymentRail` on the payment record (`POST /payments`, `GET /payments/{PaymentId}`) and the file payment record (`POST /file-payments`, `GET /file-payments/{PaymentId}`). The Webhook Template API description gains the matching `UAEPaymentAPI.AEPaymentRail`, carried as `Data.PaymentRail` on the payment status event, so a TPP consuming events sees the same value it would read from the resource.\n\n' +
       'The values are `AANI` (the UAE instant payment platform), `FTS` (UAEFTS, the CBUAE funds transfer system), and `LFI` (settled internally by the LFI — the debtor and creditor accounts are both held there, so the payment was booked on the LFI\'s own ledger and did not reach an external rail).\n\n' +
       '**The field is absent until the LFI has routed the payment.** A payment still `Pending` at the LFI may carry no rail, as may one rejected before a rail was selected. A TPP MUST treat the field as optional, and MUST NOT make the rendering of a payment conditional on its presence.\n\n' +
       'The value records how the payment was **executed**, not how it was requested: where an LFI\'s routing rules settle an instant payment on another rail, the field reports the rail actually used. A payment settles over exactly one rail, and a file payment is settled in its entirety over one rail, so a single value describes the whole record.\n\n' +
-      'Where the field is present it constrains the record around it. Every `RejectReasonCode` entry is namespaced to the rail named — `AANI.*` with `AANI`, `FTS.*` with `FTS`, `LFI.*` with `LFI` — and a payment rejected at the LFI before it reached AANI or UAEFTS is still reported against the rail it was routed to. Where the rail issues an end to end transaction identifier, `PaymentTransactionId` carries it; a payment booked on the LFI\'s own ledger has no such identifier.\n\n' +
+      'Where the field is present it constrains the record around it. Every `RejectReasonCode` entry is namespaced to the rail named — `AANI.*` with `AANI`, `FTS.*` with `FTS`, `LFI.*` with `LFI` — and a payment rejected at the LFI before it reached AANI or UAEFTS is still reported against the rail it was routed to. Where the payment has an end to end transaction identifier on its rail, `PaymentTransactionId` carries it; a payment booked on the LFI\'s own ledger has no such identifier.\n\n' +
       'This is additive on the TPP-facing surface and requires no action from a TPP that ignores it. It is the TPP-facing half of the payment log change recorded in §2 — the API Hub returns here what the LFI patched there — so it asks nothing of an LFI beyond that patch.\n\n' +
       'The field is published in the v2.2-rc2 release of the Bank Service Initiation and Webhook Template OpenAPI documents in the api-specs repository, which is what the endpoint pages below render.',
     docsPaths: [
@@ -255,7 +262,6 @@ export const VERSION_CHANGES: VersionChange[] = [
       },
     ],
     affectedPaths: [
-      `${SI_TPP}/`,
       `${SI_TPP}/open-api/payments`,
       `${SI_TPP}/open-api/payments-PaymentId`,
       `${SI_TPP}/domestic-payments/overview/payment-status`,
@@ -291,7 +297,6 @@ export const VERSION_CHANGES: VersionChange[] = [
       },
     ],
     affectedPaths: [
-      `${CM}/`,
       `${CM}/open-api/payment-log`,
       `${LFI}/consent-management-interface/api-guide`,
     ],
@@ -341,9 +346,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       },
     ],
     affectedPaths: [
-      `${TPP}/banking/data-sharing/`,
       `${TPP}/banking/data-sharing/open-api/accounts-AccountId-transactions`,
-      `${LFI}/banking/data-sharing/`,
       `${LFI}/banking/data-sharing/requirements`,
       `${LFI}/banking/data-sharing/open-api/accounts-AccountId-transactions`,
     ],
@@ -357,19 +360,20 @@ export const VERSION_CHANGES: VersionChange[] = [
     category: 'Behaviour change',
     title: 'Confirmation of Payee — the LFI sees only the IBAN, and answers with a name',
     summary:
-      'The Ozone Connect CoP request carries the IBAN alone, and the response carries the account holder\'s name directly. The submitted name, the `verifiedClaims` / `verification` identity-assurance envelope, and the wider customer data it wrapped are all removed from the operation.',
+      'The Ozone Connect CoP request carries the IBAN alone, and the response carries the account holder\'s name and the account status directly. The submitted name, the `verifiedClaims` / `verification` identity-assurance envelope, and the wider customer data it wrapped are all removed from the operation.',
     description:
       'Confirmation of Payee asks one question: does this name belong to this IBAN? The API Hub answers it. The LFI\'s only job is to say who holds the account — so in v2.2 the operation is reduced to that on both sides.\n\n' +
       '**The request loses the name.** `data.account` now carries `schemeName` and `identification` only. The name the TPP submitted was never the LFI\'s to act on: the LFI looks the account up by IBAN and returns the holders it has, and the API Hub compares. Sending it invited exactly the matching this operation forbids, and it disclosed a payee\'s name to an institution that has no use for it on a call made without a consent. The `PersonName` and `BusinessName` schemas are removed with it.\n\n' +
       '**The response loses the envelope.** In v2.1 the LFI answers through a four-level structure borrowed from OpenID Connect for Identity Assurance — `data[]` → `verifiedClaims[]` → `verification{…}` → `claims{…}` — of which only the innermost name is read. The two middle levels are removed: each entry in `data` carries `name` directly, either a `CbuaeCopPersonName` (`fullName` required) or a `CbuaeCopBusinessName` (`businessName` required).\n\n' +
       'The `verification` subtree goes with it — trust framework, assurance level, assurance process and evidence metadata are no longer part of this operation. Every LFI builds that structure today and the API Hub does not read it.\n\n' +
       'So does the wider customer data. The v2.1 `ConfirmationOfPayeePersonClaims` schema carries 23 fields, among them `salary`, `employerName`, `maritalStatus`, `residentialAddress`, `emiratesId`, `birthDate` and `nationality`. None of it is needed to compare two names, and Confirmation of Payee runs **without a consent**. The optional `number` field is dropped for the same reason. `id` is retained: it is pseudonymous by definition and is the only handle for investigating a disputed result.\n\n' +
-      'Structured name fields are retained as **optional** members, so the Hub\'s matching algorithm can be improved without a second breaking change to this contract. A person name may carry `firstName`, `middleName`, `lastName`, `fullNameAr` (the name in Arabic script) and `alsoKnownAs`; a business name may carry `businessNameAr` and `alsoKnownAs`. Only `fullName` and `businessName` are matched today, and a response carrying nothing but `fullName` is fully conformant.\n\n' +
-      'The response also settles a naming inconsistency: v2.1 used `fullName`/`givenName`/`familyName` here and `fullName`/`firstName`/`lastName` on the request. v2.2 settles on `firstName`/`lastName`. `givenName` and `familyName` were in any case already documented as withdrawn — the v2.1 schema records that implementing them was "removed as of v1.2.1".\n\n' +
+      'Structured name fields are retained as **optional** members, so the Hub\'s matching algorithm can be improved without a second breaking change to this contract. A person name may carry `givenName`, `middleName`, `familyName` and `alsoKnownAs`; a business name may carry `alsoKnownAs`. Only `fullName` and `businessName` are matched today, and a response carrying nothing but `fullName` is fully conformant.\n\n' +
+      'The structured fields take the names `CustomerPersonClaims` uses on `GET /customer` — `givenName` and `familyName` — so an LFI describes the same holder with the same field names on both operations. v2.1 used `givenName`/`familyName` in this response and `firstName`/`lastName` on the request; with the name gone from the request, the response names are the ones kept. The v2.1 schema had recorded `givenName` and `familyName` as withdrawn ("removed as of v1.2.1"); v2.2 reinstates them as optional members. Neither schema carries an Arabic-script name field.\n\n' +
+      '**The response gains the account status.** Each entry in `data` carries a required `accountStatus`, drawn from the same code set as `status` on the account resource returned by `GET /accounts/{accountId}`: `Active`, `Inactive`, `Dormant`, `Unclaimed`, `Deceased`, `Suspended` or `Closed`. A joint account MUST return the same value on every entry. The API Hub returns it to the TPP as `AccountStatus` — see §13. It is the one item beyond the name that the operation carries, and the specification\'s data-minimisation rule now reads accordingly: the response MUST carry only the name data and account status the question requires.\n\n' +
       'Three semantics that were previously implicit are now stated in the specification rather than only in the guide. The LFI performs no matching, and MUST NOT filter, rank or omit holders on any basis — the API Hub owns the rules. A joint account MUST return one entry per holder, and the API Hub evaluates every entry in `data` rather than stopping at the first. Not found is `200` with an empty `data` array, never `204`, `404`, `201` or `202`; account-not-found, account-barred and customer-opted-out are deliberately indistinguishable so a CoP query cannot be used to probe for the existence of an account.\n\n' +
       'Removing the submitted name also resolves a v2.1 limitation. Claim-block selection previously followed the TPP\'s request type rather than the data the LFI holds, so a business name submitted against an account held as a personal name was answered as a protocol error rather than as a no-match. With no name in the request there is nothing to select on: the LFI returns what it holds, and the Hub decides.\n\n' +
-      'This is a breaking change and requires action from every LFI. It is confined to the two bodies of this one operation — headers, query parameters, status codes and error codes are unchanged, so the work is a rewrite of the request parser and response builder rather than a new integration. The TPP-facing `/confirmation` and `/discovery` endpoints do not move: the TPP still submits a name, and the API Hub normalises between the two surfaces.\n\n' +
-      'The reshaped schemas are published in the v2.2 release of the Ozone Connect Bank Data Sharing specification in the api-specs repository, which is what the endpoint page below renders.',
+      'This is a breaking change and requires action from every LFI. It is confined to the two bodies of this one operation — headers, query parameters, status codes and error codes are unchanged, so the work is a rewrite of the request parser and response builder rather than a new integration. The response builder now also needs the account\'s status, which an LFI already serving `GET /accounts/{accountId}` holds. On the TPP-facing side the TPP still submits a name to `/confirmation`, and the API Hub normalises between the two surfaces; the one consequence a TPP sees is `AccountStatus` on the confirmation response (§13).\n\n' +
+      'The reshaped schemas are published in the v2.2.4 release of the Ozone Connect Bank Data Sharing specification in the api-specs repository, which is what the endpoint page below renders.',
     docsPaths: [
       { label: 'Full specification', path: `${COP}/api-guide` },
       { label: 'OpenAPI reference', path: `${COP}/open-api/cop-query` },
@@ -384,7 +388,6 @@ export const VERSION_CHANGES: VersionChange[] = [
       },
     ],
     affectedPaths: [
-      `${COP}/`,
       `${COP}/api-guide`,
       `${COP}/requirements`,
       `${COP}/open-api/cop-query`,
@@ -396,45 +399,6 @@ export const VERSION_CHANGES: VersionChange[] = [
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc2',
     number: 7,
-    category: 'Behaviour change',
-    title: 'Confirmation of Payee — discovery returns every confirmation source for an IBAN, not one',
-    summary:
-      '`POST /discovery` returns `Data.ConfirmationSource` as an array. An LFI exposes a separate API Hub resource server per account segment, and an IBAN identifies the bank but not the segment, so more than one source may service a single account.',
-    description:
-      'Before a Confirmation of Payee query, a TPP calls `POST /discovery` with the creditor account IBAN to resolve where the query should be sent. In v2.1 `Data` is a single `AEConfirmationSourceProperties` object, which assumes the IBAN resolves to exactly one endpoint.\n\n' +
-      'It does not. An LFI exposes a separate API Hub resource server per account segment — retail, corporate and SME are distinct `rs1.*` hosts — and an IBAN identifies the bank but not the segment the account sits in. A single object forces the Hub to guess which segment a payee belongs to before the query has been made.\n\n' +
-      'In v2.2 `Data` becomes an object carrying a required `ConfirmationSource` array, each entry an `AEConfirmationSourceProperties` — the same schema as before, now repeated. Each entry identifies one endpoint pair at which the Confirmation of Payee operation can be invoked.\n\n' +
-      '**The TPP invokes the CoP operation against each entry in the order returned, until a match is obtained.** The order is meaningful: it is the order the Hub considers most likely to resolve, and a TPP that reorders or parallelises loses that. A TPP stops at the first entry that returns a match.\n\n' +
-      '`minItems` is `0`, and an empty array is the defined answer for an account not serviced by any participating LFI. It is not an error, and a TPP MUST handle it as a normal outcome rather than treating an empty response as a failed lookup.\n\n' +
-      'This is a breaking change to the shape of the discovery response and requires action from every TPP that calls it. A client written against v2.1 reads `Data` as the source object itself; under v2.2 it must read `Data.ConfirmationSource` and iterate. Nothing about `POST /confirmation` changes — the query, its headers and its response are unaffected — so the work is confined to the discovery client and the loop around it.\n\n' +
-      'There is no LFI-side counterpart. Discovery is answered by the API Hub from the participant directory, and the LFI is not called during it.\n\n' +
-      'v2.2-rc2 is the first v2.2 release of the Confirmation of Payee OpenAPI document; rc1 did not republish it. The change is published there, which is what the endpoint page below renders.',
-    docsPaths: [
-      { label: 'Full specification', path: `${COP_TPP}/api-guide` },
-      { label: 'OpenAPI reference', path: `${COP_TPP}/open-api/discovery` },
-    ],
-    audience: 'TPP',
-    areas: ['Confirmation of Payee', 'Payments'],
-    specs: ['uae-confirmation-of-payee-openapi'],
-    endpoints: [
-      {
-        label: 'POST /discovery',
-        path: `${COP_TPP}/open-api/discovery`,
-      },
-    ],
-    affectedPaths: [
-      `${COP_TPP}/`,
-      `${COP_TPP}/api-guide`,
-      `${COP_TPP}/requirements`,
-      `${COP_TPP}/open-api/discovery`,
-    ],
-  },
-  {
-    changeId: 'v2.1-to-v2.2',
-    fromVersion: 'v2.1',
-    toVersion: 'v2.2-rc2',
-    introducedIn: 'v2.2-rc2',
-    number: 8,
     category: 'Behaviour change',
     title: 'Party and customer identity data is constrained by pattern',
     summary:
@@ -484,10 +448,8 @@ export const VERSION_CHANGES: VersionChange[] = [
       },
     ],
     affectedPaths: [
-      `${DS_TPP}/`,
       `${DS_TPP}/open-api/parties`,
       `${DS_TPP}/open-api/accounts-AccountId-parties`,
-      `${DS_LFI}/`,
       `${DS_LFI}/requirements`,
       `${DS_LFI}/open-api/customer`,
       `${DS_LFI}/open-api/accounts-AccountId-customer`,
@@ -498,7 +460,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc2',
-    number: 9,
+    number: 8,
     category: 'Behaviour change',
     title: 'Lead submission is constrained by pattern',
     summary:
@@ -506,7 +468,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     description:
       '`POST /leads` is the one Open Finance operation through which a TPP submits a customer\'s personal data to an LFI rather than reading it. In v2.1 the fields carrying that data are bounded by length alone, so the LFI receives values it must sanitise before passing them into onboarding, and a TPP has no contract telling it what will be accepted.\n\n' +
       'v2.2 applies the same character sets used elsewhere in the standard, on both the request and the response, on both surfaces.\n\n' +
-      '**Emirates ID.** `Data.EmiratesId` takes `^784-?[0-9]{4}-?[0-9]{7}-?[0-9]{1}$` on both the request and the response. The pattern requires the `784` issuer prefix and the 4-7-1 digit grouping, and accepts the number with or without its hyphens. It is the pattern the Insurance API descriptions already use, and the one the party and customer claims adopt in the same release — see §8.\n\n' +
+      '**Emirates ID.** `Data.EmiratesId` takes `^784-?[0-9]{4}-?[0-9]{7}-?[0-9]{1}$` on both the request and the response. The pattern requires the `784` issuer prefix and the 4-7-1 digit grouping, and accepts the number with or without its hyphens. It is the pattern the Insurance API descriptions already use, and the one the party and customer claims adopt in the same release — see §7.\n\n' +
       '**Names.** `AEUserName` is a `oneOf` over three shapes, and all of them are constrained. `GivenName` and `LastName` on `AEPersonalAccountName`, and `FullName` on `AEPersonalAccountFullName`, take `^[A-Za-z \'.-]+$` — Latin letters, space, apostrophe, period and hyphen. `BusinessName` on `AEBusinessAccountName` takes `^[A-Za-z0-9 &\'.,()\\/-]+$`, which adds digits, ampersand, comma, parentheses and forward slash for registered trade names.\n\n' +
       '**Address lines.** Each item of `AddressLine` on `AEResidentialAddress` takes `^[A-Za-z0-9 \\/?:().,\'+-]+$`, the ISO 20022 `PostalAddress27` `x` character set. That set is already applied to the reference fields in the Bank Service Initiation API description, so an address that survives a payment instruction survives a lead. The array still holds 1 to 7 items of 1 to 70 characters, and the other address components are unchanged.\n\n' +
       'The patterns admit Latin script only, so a name or address held in Arabic script must be submitted as the Latin transliteration.\n\n' +
@@ -540,11 +502,9 @@ export const VERSION_CHANGES: VersionChange[] = [
       },
     ],
     affectedPaths: [
-      `${PRODUCTS_TPP}/`,
       `${PRODUCTS_TPP}/api-guide`,
       `${PRODUCTS_TPP}/requirements`,
       `${PRODUCTS_TPP}/open-api/leads`,
-      `${PRODUCTS_LFI}/`,
       `${PRODUCTS_LFI}/open-api/leads`,
     ],
   },
@@ -553,7 +513,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc2',
-    number: 10,
+    number: 9,
     category: 'Behaviour change',
     title: 'Date-time semantics are stated once, in a shared `AEDateTime` component',
     summary:
@@ -596,7 +556,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc2',
-    number: 11,
+    number: 10,
     category: 'New capability',
     title: 'Payment consents carry `OnBehalfOf`',
     summary:
@@ -639,7 +599,6 @@ export const VERSION_CHANGES: VersionChange[] = [
       `${CONSENT_TPP}/`,
       `${CONSENT_TPP}/open-api/par`,
       `${CONSENT_TPP}/open-api/payment-consents-ConsentId`,
-      `${CM}/`,
       `${CM}/open-api/consents-consentId`,
       `${WEBHOOKS}/consent-status/open-api`,
     ],
@@ -649,7 +608,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc2',
-    number: 12,
+    number: 11,
     category: 'Behaviour change',
     title: 'Transactions and statements are returned newest first',
     summary:
@@ -714,11 +673,9 @@ export const VERSION_CHANGES: VersionChange[] = [
       },
     ],
     affectedPaths: [
-      `${DS_TPP}/`,
       `${DS_TPP}/api-guide/pagination`,
       `${DS_TPP}/open-api/accounts-AccountId-transactions`,
       `${DS_TPP}/open-api/accounts-AccountId-statements`,
-      `${DS_LFI}/`,
       `${DS_LFI}/requirements`,
       `${DS_LFI}/api-guide/pagination`,
       `${DS_LFI}/open-api/accounts-AccountId-transactions`,
@@ -730,7 +687,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc2',
-    number: 13,
+    number: 12,
     category: 'New capability',
     title: 'Data sharing consents carry `AuthorizationExpirationDateTime`',
     summary:
@@ -786,7 +743,6 @@ export const VERSION_CHANGES: VersionChange[] = [
       `${CONSENT_TPP}/open-api/insurance-consents-ConsentId`,
       `${DS_TPP}/requirements`,
       `${INS_DS_TPP}/requirements`,
-      `${CM}/`,
       `${CM}/open-api/consents-consentId`,
       `${WEBHOOKS}/consent-status/open-api`,
     ],
@@ -795,8 +751,173 @@ export const VERSION_CHANGES: VersionChange[] = [
     changeId: 'v2.1-to-v2.2',
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
-    introducedIn: 'v2.2-rc1',
+    introducedIn: 'v2.2-rc2',
+    number: 13,
+    category: 'New capability',
+    title: 'Confirmation of Payee — the confirmation response carries the account status',
+    summary:
+      '`POST /confirmation` returns a required `AccountStatus` alongside `NameMatchIndicator`, using the code set the account resource already uses — so a TPP learns that a matched account is closed, dormant or suspended before a payment is initiated to it.',
+    description:
+      'In v2.1 `POST /confirmation` answers one question — does the name match — through `NameMatchIndicator` and, where there is a match to show, `MaskedName`. It says nothing about the state of the account. A TPP can confirm that a payee name belongs to an IBAN and go on to initiate a payment to an account that is closed, dormant or suspended, learning so only when the payment is rejected.\n\n' +
+      'v2.2 adds `AccountStatus` to `Data` in the confirmation response. It is **required**, and takes its values from the new `AEAccountStatusCode` schema — the same code set as `Status` on the account resource in the Account Information API description: `Active`, `Inactive`, `Dormant`, `Unclaimed`, `Deceased`, `Suspended` and `Closed`. `Inactive`, `Dormant` and `Unclaimed` are defined by reference to the CBUAE Dormant Accounts Regulation.\n\n' +
+      'The value is supplied by the LFI. The Ozone Connect `cop-query` response carries `accountStatus` on each holder entry, and the API Hub returns it to the TPP as `AccountStatus` — see §6. The LFI MUST return the same value on every entry of a joint account, so a single value describes the account the TPP asked about.\n\n' +
+      'The specification defines the value; it does not prescribe how a TPP acts on it.\n\n' +
+      'For a TPP whose client tolerates unrecognised members this is additive. `Data` is `additionalProperties: false`, however, so a client that validates the response strictly against the v2.1 schema will reject a v2.2 response until it is regenerated.\n\n' +
+      'The field is published in the v2.2-rc2 release of the Confirmation of Payee OpenAPI document in the api-specs repository, which is what the endpoint page below renders.',
+    docsPaths: [
+      { label: 'Full specification', path: `${COP_TPP}/api-guide` },
+      { label: 'OpenAPI reference', path: `${COP_TPP}/open-api/confirmation` },
+    ],
+    audience: 'TPP',
+    areas: ['Confirmation of Payee', 'Payments'],
+    specs: ['uae-confirmation-of-payee-openapi'],
+    endpoints: [
+      {
+        label: 'POST /confirmation',
+        path: `${COP_TPP}/open-api/confirmation`,
+      },
+    ],
+    affectedPaths: [
+      `${COP_TPP}/`,
+      `${COP_TPP}/api-guide`,
+      `${COP_TPP}/requirements`,
+      `${COP_TPP}/open-api/confirmation`,
+    ],
+  },
+  {
+    changeId: 'v2.1-to-v2.2',
+    fromVersion: 'v2.1',
+    toVersion: 'v2.2-rc2',
+    introducedIn: 'v2.2-rc2',
     number: 14,
+    category: 'New capability',
+    title: 'A single payment can require settlement over UAEFTS — `UseFTS`',
+    summary:
+      'An optional `UseFTS` flag on the `POST /payments` request, passed through by the API Hub to the LFI. When `true` on a domestic payment, the LFI MUST settle it over UAEFTS and MUST reject it rather than fall back to AANI.',
+    description:
+      'In v2.1 the rail a domestic payment settles over is the LFI\'s decision alone: the LFI routes it to AANI and falls back to UAEFTS where its routing rules require. The TPP has no field in which to ask for one rail over the other.\n\n' +
+      'v2.2 adds an optional boolean, `UseFTS`, to `Data` on the single payment request (`AEPaymentRequest`) in the Bank Service Initiation API description. It defaults to `false`. The same field is added to the Ozone Connect `POST /payments` request body, and the API Hub passes the TPP\'s value through to the LFI.\n\n' +
+      '**`false` or absent.** The LFI applies its default routing: the payment is settled over AANI, with UAEFTS as the fallback where the LFI\'s routing rules require it. This is the v2.1 behaviour.\n\n' +
+      '**`true`.** The LFI MUST route the payment to UAEFTS and MUST NOT settle it over AANI. Where the LFI cannot settle the payment over UAEFTS, it MUST reject the payment rather than fall back to AANI. The payment is reported with rail `FTS` — `Data.PaymentRail` on the payment record (§3), `paymentResponse.paymentRail` on the payment log (§2) — and any rejection carries `FTS.*` reason codes.\n\n' +
+      '**Scope.** The field applies to domestic payments only. Where the debtor and creditor accounts are both held at the LFI it has no effect: the LFI books the payment on its own ledger and reports rail `LFI`. Where the request carries `CurrencyRequest` it has no effect, and the LFI routes the payment as it would otherwise. The field is defined on the single payment request only; `POST /file-payments` does not carry it.\n\n' +
+      'The `AEPaymentRail` description is amended to match: where the TPP set `UseFTS` to `true` on a domestic payment that leaves the LFI, `PaymentRail` is always `FTS`.\n\n' +
+      'This is additive for a TPP, and a TPP that does not send the field is unaffected. It requires action from every LFI: the field must be accepted on the Ozone Connect `POST /payments` request, and honoured when `true` — including rejecting the payment where UAEFTS cannot be used. An LFI that receives `UseFTS: true` and settles the payment over AANI is non-conformant.\n\n' +
+      'The field is published in the v2.2-rc2 release of the Bank Service Initiation API description and the v2.2.2 release of the Ozone Connect Bank Service Initiation API description in the api-specs repository, which is what the endpoint pages below render.',
+    docsPaths: [
+      { label: 'TPP specification', path: `${SI_TPP}/open-api/payments` },
+      { label: 'Ozone Connect specification', path: `${SI_LFI}/open-api/payments` },
+      {
+        label: 'TPP guide — Single Instant Payment',
+        path: `${SI_TPP}/domestic-payments/single-instant-payment/api-guide`,
+      },
+      {
+        label: 'LFI guide — Single Instant Payment',
+        path: `${SI_LFI}/domestic-payments/single-instant-payment/api-guide`,
+      },
+    ],
+    audience: 'Both',
+    areas: ['Service Initiation', 'Payments', 'Ozone Connect'],
+    specs: [
+      'uae-bank-initiation-openapi',
+      'uae-ozone-connect-bank-service-initiation-openapi',
+    ],
+    endpoints: [
+      {
+        label: 'POST /payments (TPP)',
+        path: `${SI_TPP}/open-api/payments`,
+      },
+      {
+        label: 'POST /payments (Ozone Connect)',
+        path: `${SI_LFI}/open-api/payments`,
+      },
+    ],
+    affectedPaths: [
+      `${SI_TPP}/open-api/payments`,
+      `${SI_TPP}/domestic-payments/overview/payment-status`,
+      `${SI_LFI}/open-api/payments`,
+      `${SI_LFI}/domestic-payments/overview/payment-status`,
+      `${CM}/open-api/payment-log`,
+      ...TPP_PAYMENT_GUIDES,
+      ...LFI_PAYMENT_GUIDES,
+    ],
+  },
+  {
+    changeId: 'v2.1-to-v2.2',
+    fromVersion: 'v2.1',
+    toVersion: 'v2.2-rc2',
+    introducedIn: 'v2.2-rc2',
+    number: 15,
+    category: 'Behaviour change',
+    title: 'Credit cards, finance and mortgages MUST return defined balance types',
+    summary:
+      'Credit card, finance and mortgage accounts MUST return `PreviouslyClosedBooked` and `InterimBooked`, and credit cards MUST also return `InterimAvailable` — the lending counterpart of the `InterimAvailable` rule that already applies to current and savings accounts.',
+    description:
+      'v2.1 requires one balance type on one family of accounts: a current or savings account MUST always return `InterimAvailable`. Lending accounts have no equivalent. A credit card, finance or mortgage account may return any of the thirteen `AEBalanceTypeCode` values, or only one of them, so two conformant LFIs can describe the same card with different balance types — and a TPP cannot tell whether a missing statement balance means there is none or that the LFI chose not to send it.\n\n' +
+      'The balance types that would carry this information already exist, but `InterimBooked` and `InterimAvailable` are defined in terms of a deposit account — the amount available "to withdraw or use" — with no guidance on what they mean on a liability.\n\n' +
+      'v2.2 reuses the existing values and states what each one carries on a lending account. No balance type is added, and the enum is unchanged.\n\n' +
+      '**`PreviouslyClosedBooked`** — the booked balance at the close of the most recent statement or accounting period. It MUST always be returned for `CreditCard`, `Finance` and `Mortgage` accounts. On a credit card it is the statement balance; on a finance or mortgage account, the balance at the last statement.\n\n' +
+      '**`InterimBooked`** — the total outstanding balance at the time of the request. It MUST always be returned for `CreditCard`, `Finance` and `Mortgage` accounts, and MUST carry `Components` breaking the balance down by `BalanceCategory`: `Principal`; `Profit` for a Sharia-compliant product or `Interest` otherwise; `FeesAndCharges`; and `PastDue`. A category the account holds no amount for may be omitted. On a finance or mortgage account the outstanding principal is reported as the `Principal` component, and the record carries the total. `ClosingBooked` MAY also be returned for the end-of-day position, carrying `Components` on the same basis.\n\n' +
+      '**`InterimAvailable`** — the amount available to spend. It MUST always be returned for `CreditCard` accounts, and MUST carry a `CreditLine` entry with `Type` `Credit` whose amount is the agreed credit limit, with `Included` `true`. It is not required on finance or mortgage accounts.\n\n' +
+      'This requires action from every LFI that offers credit cards, finance or mortgages through Open Finance. An LFI built against v2.1 that returns, say, only a `ClosingAvailable` record for a card, or an outstanding loan balance without `Components`, does not meet the v2.2 requirement. TPPs need take no action, but may rely on the three balance types being present on these accounts once their LFIs are on v2.2.\n\n' +
+      'The requirement is set out on the LFI Bank Data Sharing requirements page and the Ozone Connect `GET /accounts/{accountId}/balances` guide below.',
+    docsPaths: [
+      { label: 'LFI requirements', path: `${DS_LFI}/requirements` },
+      { label: 'LFI guide — List Balances', path: `${DS_LFI}/api-guide` },
+      { label: 'TPP guide — balances', path: `${DS_TPP}/api-guide` },
+    ],
+    audience: 'Both',
+    areas: ['Data Sharing', 'Balances', 'Ozone Connect'],
+    specs: [
+      'uae-account-information-openapi',
+      'uae-ozone-connect-bank-data-sharing-openapi',
+    ],
+    endpoints: [
+      {
+        label: 'GET /accounts/{AccountId}/balances (TPP)',
+        path: `${DS_TPP}/open-api/accounts-AccountId-balances`,
+      },
+      {
+        label: 'GET /accounts/{accountId}/balances (Ozone Connect)',
+        path: `${DS_LFI}/open-api/accounts-AccountId-balances`,
+      },
+    ],
+    affectedPaths: [
+      `${DS_TPP}/api-guide`,
+      `${DS_TPP}/open-api/accounts-AccountId-balances`,
+      `${DS_LFI}/requirements`,
+      `${DS_LFI}/api-guide`,
+      `${DS_LFI}/open-api/accounts-AccountId-balances`,
+    ],
+  },
+  {
+    changeId: 'v2.1-to-v2.2',
+    fromVersion: 'v2.1',
+    toVersion: 'v2.2-rc2',
+    introducedIn: 'v2.2-rc2',
+    number: 16,
+    category: 'No change',
+    title: 'Consents in a consent group — return order is documented',
+    summary:
+      '`GET /consent-groups/{consentGroupId}/consents` returns consents newest first by `CreationDateTime`, with the base consent last. Documentation only; behaviour is unchanged.',
+    description:
+      'The order applies across pages, so the first page holds the most recent consents. A `consentGroupId` that is not a base consent returns an empty array rather than an error.',
+    audience: 'LFI',
+    areas: ['Consent Manager'],
+    specs: ['uae-api-hub-consent-manager-openapi'],
+    endpoints: [
+      {
+        label: 'GET /consent-groups/{consentGroupId}/consents',
+        path: `${CM}/open-api/consent-groups-consentGroupId-consents`,
+      },
+    ],
+    affectedPaths: [`${CM}/open-api/consent-groups-consentGroupId-consents`],
+  },
+  {
+    changeId: 'v2.1-to-v2.2',
+    fromVersion: 'v2.1',
+    toVersion: 'v2.2-rc2',
+    introducedIn: 'v2.2-rc1',
+    number: 17,
     category: 'New capability',
     title: 'Data deletion confirmation — attestations sub-resource',
     summary:
@@ -850,9 +971,6 @@ export const VERSION_CHANGES: VersionChange[] = [
     affectedPaths: [
       `${TPP}/consent/`,
       `${TPP}/consent/requirements`,
-      `${TPP}/banking/data-sharing/`,
-      `${TPP}/banking/service-initiation/`,
-      `${TPP}/insurance/data-sharing/`,
     ],
   },
   {
@@ -860,7 +978,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc1',
-    number: 15,
+    number: 18,
     category: 'New capability',
     title: 'Sharia-compliant product data — expected profit rates, finance rates, and Takaful',
     summary:
@@ -873,7 +991,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       '**`ShariaFinanceRates`** is the finance-rate parallel — `AEProductShariaFinanceRate1Types`, a `oneOf` discriminated on `RateType` across `FixedProfit`, `VariableProfit` and `HybridProfit`. The two new Sharia types compose the existing fixed and variable rate property sets and the existing finance-rate properties with a new `AEProductShariaProfitCalculationMethod1Properties`, whose calculation basis adds `UnusedCreditLine` and `UtilizedLimit` to the three conventional values. `HybridProfit` reuses the existing `AEProductHybridProfitRateProperties` unchanged.\n\n' +
       'Where the rates are account-scoped, `ShariaFinanceRates` may be sent in cleartext or as a JWE at the LFI\'s discretion — exactly the choice `FinanceRates` already offers, and for the same reason. The public products catalogue is answered without a customer and so has no JWE variant, again matching `FinanceRates`. `ExpectedProfitRates` is cleartext on every surface.\n\n' +
       '**`TakafulRequired`** (boolean) and **`TakafulDescription`** (up to 500 characters) complete the set. Takaful is the Sharia-compliant alternative to conventional insurance, and where a product requires cover a TPP needs to be able to say both that it is required and what it is for.\n\n' +
-      'Every field added here is optional. An LFI that offers no Islamic products sends nothing new and stays conformant; an LFI that has been approximating profit rates in the interest-based fields can move them across. Nothing is removed, no enum is narrowed, and a v2.1 product payload still validates unchanged — §16 covers the one place where the *meaning* of an existing field narrows.\n\n' +
+      'Every field added here is optional. An LFI that offers no Islamic products sends nothing new and stays conformant; an LFI that has been approximating profit rates in the interest-based fields can move them across. Nothing is removed, no enum is narrowed, and a v2.1 product payload still validates unchanged — §19 covers the one place where the *meaning* of an existing field narrows.\n\n' +
       'One internal refactor is visible in the documents but not on the wire: the inline `RateDetails` definition under `DepositRates` is extracted into a shared `AEProductRateDetails1Properties` so `ExpectedProfitRates` can reuse it. The extracted definition is identical to the inline one it replaces, so `DepositRates` is unchanged.\n\n' +
       'The change lands on four documents — `AEProduct` in Account Information, `ProductDetails` in Products & Leads, and their Ozone Connect counterparts `CbuaeProduct` in Bank Data Sharing and `ProductDetails` in Bank Products Data — which is what the endpoint pages below render.',
     docsPaths: [
@@ -892,6 +1010,10 @@ export const VERSION_CHANGES: VersionChange[] = [
       {
         label: 'Ozone Connect specification — products catalogue',
         path: `${PRODUCTS_LFI}/open-api/products`,
+      },
+      {
+        label: 'LFI guide — Encrypted FinanceRates and ShariaFinanceRates',
+        path: `${LFI}/banking/data-sharing/api-guide/finance-rates`,
       },
     ],
     audience: 'Both',
@@ -923,14 +1045,11 @@ export const VERSION_CHANGES: VersionChange[] = [
       },
     ],
     affectedPaths: [
-      `${TPP}/banking/data-sharing/`,
       `${TPP}/banking/data-sharing/open-api/accounts-AccountId-product`,
-      `${PRODUCTS_TPP}/`,
       `${PRODUCTS_TPP}/requirements`,
       `${PRODUCTS_TPP}/open-api/products`,
-      `${LFI}/banking/data-sharing/`,
       `${LFI}/banking/data-sharing/open-api/accounts-AccountId-products`,
-      `${PRODUCTS_LFI}/`,
+      `${LFI}/banking/data-sharing/api-guide/finance-rates`,
       `${PRODUCTS_LFI}/requirements`,
       `${PRODUCTS_LFI}/open-api/products`,
     ],
@@ -940,7 +1059,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc1',
-    number: 16,
+    number: 19,
     category: 'Behaviour change',
     title: 'Interest and profit calculation methods are separate fields',
     summary:
@@ -951,7 +1070,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       'No enum changes, no field is removed, and neither field is required, so **a v2.1 payload still validates against v2.2 unchanged.** What changes is meaning, not constraint: an LFI that populated `InterestCalculationMethod` to convey the basis of an Islamic profit calculation is, from v2.2, sending a valid value in the wrong field. It should move to `ProfitCalculationMethod`.\n\n' +
       'Because nothing rejects the old placement, this will not surface as a validation failure on either surface — which is the reason to record it. An LFI that reads the change as cosmetic and leaves the value where it is stays conformant while publishing product data that now says something it does not mean.\n\n' +
       'The consequence for a TPP is the mirror of that. A TPP reading only `InterestCalculationMethod` will, as LFIs move their Islamic products across, silently lose the calculation basis for exactly those products — no error, just an absent field where a value used to be. Reading both fields and preferring whichever is populated is the safe form for as long as the two placements coexist.\n\n' +
-      'This is distinct from the calculation method on the new Sharia finance-rate types in §15. That one — `AEProductShariaProfitCalculationMethod1Properties` — carries five values, adding `UnusedCreditLine` and `UtilizedLimit`, and it is a new schema reached only through the new `ShariaFinanceRates` field. The conventional profit-rate structures continue to reference the shared three-value `AEProductInterestCalculationMethod`, which is itself unchanged.\n\n' +
+      'This is distinct from the calculation method on the new Sharia finance-rate types in §18. That one — `AEProductShariaProfitCalculationMethod1Properties` — carries five values, adding `UnusedCreditLine` and `UtilizedLimit`, and it is a new schema reached only through the new `ShariaFinanceRates` field. The conventional profit-rate structures continue to reference the shared three-value `AEProductInterestCalculationMethod`, which is itself unchanged.\n\n' +
       'The same four documents that carry the Sharia product fields carry this split, which is what the endpoint pages below render.',
     docsPaths: [
       {
@@ -1009,7 +1128,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc1',
-    number: 17,
+    number: 20,
     category: 'New capability',
     title: 'Balance components, transaction allocations and statement balances carry a Shari\'ah description',
     summary:
@@ -1019,7 +1138,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       'v2.2 adds `BalanceDescription` to `AEAmountWithCategorization` — free text, 1 to 500 characters, naming the specific Shari\'ah-compliant charge, payment or reward that the component represents. It supplements the category rather than replacing it: the enum still classifies the part, and the description says which part it is.\n\n' +
       'One field addition reaches three endpoints, because the schema is used in three places. On the TPP-facing side, `Components` on `AEBalance` is served by the balances endpoint, `Allocations` on `AETransaction` by the transactions endpoint, and `Components` on `AEBalanceWithCategorization` — the opening and closing balance of a statement — by the statements endpoint. Ozone Connect mirrors all three: `components` on `CbuaeBalance`, `allocations` on `CbuaeTransaction`, and `Components` on `AEBalanceWithCategorization` under `AEStatements`.\n\n' +
       'Statements are easy to miss here, because the field arrives on them through a schema neither the balances nor the transactions response references. An implementer scoping this change from the balance and transaction payloads alone will not see it.\n\n' +
-      'The field is optional and additive on both surfaces, and is required on neither. An LFI that offers no Islamic products has nothing to do, and a v2.1 payload validates unchanged. It is recorded separately from the Sharia product fields in §15 because it lands on the balances, transactions and statements endpoints rather than on product data, so it is a different piece of work for whoever implements it.\n\n' +
+      'The field is optional and additive on both surfaces, and is required on neither. An LFI that offers no Islamic products has nothing to do, and a v2.1 payload validates unchanged. It is recorded separately from the Sharia product fields in §18 because it lands on the balances, transactions and statements endpoints rather than on product data, so it is a different piece of work for whoever implements it.\n\n' +
       'Both the Account Information and the Ozone Connect Bank Data Sharing documents carry the field in their v2.2 release, which is what the endpoint pages below render.',
     docsPaths: [
       {

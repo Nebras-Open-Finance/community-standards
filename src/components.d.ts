@@ -199,6 +199,7 @@ declare module 'vue' {
     SupportedCurrencyPairsForm: typeof import('./components/common/jira-forms/SupportedCurrencyPairsForm.vue')['default']
     TPPPaymentStatus: typeof import('./components/common/api-flows/TPPPaymentStatus.vue')['default']
     TPPPostmanScriptBuilder: typeof import('./components/common/forms/TPPPostmanScriptBuilder.vue')['default']
+    VersionDiff: typeof import('./components/chrome/VersionDiff.vue')['default']
     VersionDropdown: typeof import('./components/chrome/VersionDropdown.vue')['default']
     WordDocDownload: typeof import('./components/common/WordDocDownload.vue')['default']
   }

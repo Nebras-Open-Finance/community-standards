@@ -392,21 +392,21 @@ const errorResponseExample = `{
 const patchSettlementExample = `{
   "paymentResponse.paymentRail": "AANI",
   "paymentResponse.status": "AcceptedSettlementCompleted",
-  "paymentResponse.paymentTransactionId": "de857816-3016-4567-86b6-8f418e36fb27"
+  "paymentResponse.paymentTransactionId": "OFP7d2c1e9a4b6f4c0e8a1b"
 }
 `
 
 const patchConfirmationExample = `{
   "paymentResponse.paymentRail": "AANI",
   "paymentResponse.status": "AcceptedWithoutPosting",
-  "paymentResponse.paymentTransactionId": "de857816-3016-4567-86b6-8f418e36fb27"
+  "paymentResponse.paymentTransactionId": "OFP7d2c1e9a4b6f4c0e8a1b"
 }
 `
 
 const patchRailRejectionExample = `{
   "paymentResponse.paymentRail": "AANI",
   "paymentResponse.status": "Rejected",
-  "paymentResponse.paymentTransactionId": "de857816-3016-4567-86b6-8f418e36fb27",
+  "paymentResponse.paymentTransactionId": "OFP7d2c1e9a4b6f4c0e8a1b",
   "paymentResponse.RejectReasonCode": [
     {
       "Code": "AANI.AM04",
@@ -432,7 +432,7 @@ const getPaymentResponseExample = `{
   "data": {
     "id": "5ff155ea-853f-480c-ac74-1eaed7c1201f",
     "consentId": "cac2381a-7111-4c5f-bc2f-4319a93da7c5",
-    "paymentTransactionId": "de857816-3016-4567-86b6-8f418e36fb27",
+    "paymentTransactionId": "OFP7d2c1e9a4b6f4c0e8a1b",
     "status": "AcceptedSettlementCompleted",
     "statusUpdateDateTime": "2026-04-18T10:14:31Z",
     "creationDateTime": "2026-04-18T10:14:23Z",
@@ -829,6 +829,7 @@ const fapiHeaderTabs = [
             <tr><td><code>CreditorReference</code></td><td>string</td><td>No</td><td>Reference shown on the creditor's statement</td></tr>
             <tr><td><code>OpenFinanceBilling.Type</code></td><td>string</td><td>Yes</td><td>Billing type, e.g. <code>Collection</code>, <code>PushP2P</code>, <code>PullP2P</code>, <code>Me2Me</code></td></tr>
             <tr><td><code>OpenFinanceBilling.MerchantId</code></td><td>string</td><td>No</td><td>Optional merchant identifier</td></tr>
+            <tr><td><code>UseFTS</code></td><td>boolean</td><td>No</td><td>Passed through from the TPP. When <code>true</code>, the payment MUST be settled over UAEFTS &mdash; see <a href="#routing-with-usefts">Routing with <code>UseFTS</code></a>. Defaults to <code>false</code></td></tr>
           </tbody>
         </table>
       </EdRefTable>
@@ -937,7 +938,7 @@ const fapiHeaderTabs = [
           <tbody>
             <tr><td><code>data.id</code></td><td>string</td><td>Yes</td><td>The LFI-assigned <code>PaymentId</code>. MUST be unique within your payment system, MUST NOT be reassigned, and MUST resolve to the same payment for the full 1-year <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/payments/{paymentId}</code></span> sustain window &mdash; see <a href="./requirements#post-payments-payment-execution">Rule 7 of POST <code>/payments</code> Requirements</a></td></tr>
             <tr><td><code>data.consentId</code></td><td>string</td><td>No</td><td>The consent under which the payment was created</td></tr>
-            <tr><td><code>data.paymentTransactionId</code></td><td>string</td><td>No</td><td>End-to-end identifier from the rail. Omit until AANI/UAEFTS has assigned one &mdash; do not return an empty string</td></tr>
+            <tr><td><code>data.paymentTransactionId</code></td><td>string</td><td>No</td><td>End-to-end identifier for the payment on its rail. Omit until set &mdash; do not return an empty string</td></tr>
             <tr><td><code>data.status</code></td><td>string</td><td>Yes</td><td>One of <code>Pending</code>, <code>AcceptedSettlementCompleted</code>, <code>AcceptedCreditSettlementCompleted</code>, <code>AcceptedWithoutPosting</code>, <code>Rejected</code>, <code>Received</code></td></tr>
             <tr><td><code>data.statusUpdateDateTime</code></td><td>string</td><td>Yes</td><td>ISO 8601 timestamp of the last status update</td></tr>
             <tr><td><code>data.creationDateTime</code></td><td>string</td><td>Yes</td><td>ISO 8601 timestamp the payment record was created</td></tr>
@@ -1017,10 +1018,28 @@ const fapiHeaderTabs = [
           <thead><tr><th>Stage</th><th>LFI behaviour</th><th>Reference</th></tr></thead>
           <tbody>
             <tr><td>Screening</td><td>Run the LFI's standard fraud / sanctions / AML controls on the payment record. SHOULD complete within 3 seconds. On a screening failure, immediately PATCH the payment to <code>Rejected</code> with an <code>LFI.</code>-namespaced reject reason</td><td><a href="./requirements#screening-checks">Screening Checks</a></td></tr>
-            <tr><td>Rail submission</td><td>Submit to AANI as primary. Fall back to UAEFTS automatically if AANI is unavailable or the receiving bank cannot receive via AANI &mdash; no TPP/customer intervention</td><td><a href="./requirements#rail-submission">Rail Submission</a></td></tr>
-            <tr><td>Status propagation</td><td>On every rail status change that maps to an Open Finance status, call <a href="/tech/lfi-api-hub/v2.2-rc2/api-hub/consent-manager/open-api/payment-log" class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/payment-log/{id}</code></a> on the API Hub Consent Manager. Every PATCH MUST carry <code>paymentResponse.paymentRail</code>. Once AANI/UAEFTS assigns the end-to-end identifier, include it as <code>paymentTransactionId</code> on the next PATCH</td><td><a href="/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation/domestic-payments/overview/payment-status">Payment Status</a></td></tr>
+            <tr><td>Rail submission</td><td>Route as set by <code>UseFTS</code> &mdash; see <a href="#routing-with-usefts">Routing with <code>UseFTS</code></a>. By default, submit to AANI as primary. Fall back to UAEFTS automatically if AANI is unavailable or the receiving bank cannot receive via AANI &mdash; no TPP/customer intervention</td><td><a href="./requirements#rail-submission">Rail Submission</a></td></tr>
+            <tr><td>Status propagation</td><td>On every rail status change that maps to an Open Finance status, call <a href="/tech/lfi-api-hub/v2.2-rc2/api-hub/consent-manager/open-api/payment-log" class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/payment-log/{id}</code></a> on the API Hub Consent Manager. Every PATCH MUST carry <code>paymentResponse.paymentRail</code>. On <code>AANI</code> and <code>FTS</code>, include the end-to-end identifier as <code>paymentTransactionId</code> on each PATCH</td><td><a href="/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation/domestic-payments/overview/payment-status">Payment Status</a></td></tr>
             <tr><td>Rail rejection</td><td>If the rail rejects the payment, PATCH <code>paymentResponse.status: Rejected</code> with <code>RejectReasonCode.Code</code> namespaced to the rail named in <code>paymentResponse.paymentRail</code> (<code>AANI.</code>, <code>FTS.</code> or <code>LFI.</code>) and a sanitised <code>Message</code> for relay to the TPP</td><td><a href="./requirements#rail-submission">Rail Submission</a></td></tr>
             <tr><td>Status retrieval</td><td>Continue serving <a href="/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation/open-api/payments-PaymentId" class="endpoint"><span class="http-method http-method--get">GET</span><code>/payments/{paymentId}</code></a> for at least 1 year, with <code>Status</code> and <code>paymentTransactionId</code> consistent with the most recent PATCH</td><td><a href="#behavioural-rules">GET <code>/payments/{paymentId}</code> rules below</a></td></tr>
+          </tbody>
+        </table>
+      </EdRefTable>
+
+      <h3 id="routing-with-usefts" class="ed-doc__subhead">Routing with <code>UseFTS</code></h3>
+      <EdProse>
+        The TPP may set <code>UseFTS</code> on the payment request to require settlement over UAEFTS. The
+        API Hub passes the value through as <code>request.Data.UseFTS</code>. Route the payment as
+        follows:
+      </EdProse>
+
+      <EdRefTable>
+        <table>
+          <thead><tr><th>Payment</th><th>LFI behaviour</th></tr></thead>
+          <tbody>
+            <tr><td><code>UseFTS</code> is <code>true</code></td><td>MUST settle the payment over UAEFTS and MUST NOT settle it over AANI. If UAEFTS is not available, MUST reject the payment rather than fall back to AANI: PATCH <code>paymentResponse.status: Rejected</code> with <code>paymentResponse.paymentRail: FTS</code> and an <code>FTS.</code>-namespaced reject reason</td></tr>
+            <tr><td><code>UseFTS</code> is <code>false</code> or absent</td><td>Apply the default routing: submit to AANI as primary, and fall back to UAEFTS where your routing rules require it</td></tr>
+            <tr><td>Debtor and creditor accounts both held at your LFI</td><td>Ignore <code>UseFTS</code>. Book the payment on your own ledger and report <code>paymentResponse.paymentRail: LFI</code></td></tr>
           </tbody>
         </table>
       </EdRefTable>
@@ -1110,7 +1129,7 @@ const fapiHeaderTabs = [
           <tbody>
             <tr><td><code>paymentResponse.paymentRail</code></td><td>string</td><td>Yes</td><td><code>AANI</code>, <code>FTS</code>, or <code>LFI</code> for a payment settled on the LFI&rsquo;s own ledger. REQUIRED on every PATCH from v2.2, and selects the request body: the rail determines the permitted statuses, whether <code>paymentTransactionId</code> applies, and which reject reason code namespace is accepted. Records how the payment was <em>executed</em>, not how it was requested</td></tr>
             <tr><td><code>paymentResponse.status</code></td><td>string</td><td>Yes</td><td>Constrained by the rail. <code>AANI</code>: <code>AcceptedSettlementCompleted</code> (not terminal), <code>AcceptedWithoutPosting</code>, <code>Rejected</code>. <code>FTS</code>: <code>AcceptedSettlementCompleted</code> (not terminal), <code>AcceptedCreditSettlementCompleted</code>, <code>Rejected</code>. <code>LFI</code>: <code>AcceptedCreditSettlementCompleted</code>, <code>Rejected</code>. <code>Pending</code> is NOT patchable from v2.2. See <a href="/tech/lfi-api-hub/v2.2-rc2/api-hub/consent-manager/open-api/payment-log-id">PATCH <code>/payment-log/{id}</code></a></td></tr>
-            <tr><td><code>paymentResponse.paymentTransactionId</code></td><td>string</td><td>Conditional</td><td>The end-to-end identifier issued by the rail. Applies on <code>AANI</code> and <code>FTS</code> only &mdash; it is not accepted on <code>LFI</code>, where nothing outside the LFI issues one. MUST be populated once the rail has issued it; once set, MUST NOT change</td></tr>
+            <tr><td><code>paymentResponse.paymentTransactionId</code></td><td>string</td><td>Conditional</td><td>The payment&rsquo;s end-to-end identifier on its rail. Applies on <code>AANI</code> and <code>FTS</code> only &mdash; it is not accepted on <code>LFI</code>, where the payment has no such identifier. Once set, MUST NOT change</td></tr>
             <tr><td><code>paymentResponse.RejectReasonCode[]</code></td><td>array</td><td>Conditional</td><td>Required when <code>paymentResponse.status</code> is <code>Rejected</code>. Append new reasons rather than replacing &mdash; preserves history</td></tr>
             <tr><td><code>paymentResponse.RejectReasonCode[].Code</code></td><td>string</td><td>Yes (in array)</td><td>Namespaced to the rail named on this PATCH, and to that rail only: <code>^AANI\.[A-Za-z0-9]+$</code>, <code>^FTS\.[A-Za-z0-9]+$</code>, or <code>^LFI\.[A-Za-z0-9]+$</code>. A rejection raised at the LFI before submission &mdash; screening, for example &mdash; still carries the namespace of the rail the payment was routed to</td></tr>
             <tr><td><code>paymentResponse.RejectReasonCode[].Message</code></td><td>string</td><td>Yes (in array)</td><td>Sanitised, customer-relayable description. MUST NOT reveal detection logic, sanctions matches, or internal case identifiers</td></tr>
@@ -1180,7 +1199,7 @@ const fapiHeaderTabs = [
       <EdProse>
         The response shape mirrors the <span class="endpoint"><span class="http-method http-method--post">POST</span><code>/payments</code></span> <code>201</code> response &mdash;
         same <code>data</code> envelope, with the current <code>Status</code>,
-        <code>paymentTransactionId</code> (once assigned by the rail), and any rejection details.
+        <code>paymentTransactionId</code> (once set), and any rejection details.
       </EdProse>
       <EdCode :code="getPaymentResponseExample" lang="json" filename="GET response" />
 
@@ -1195,7 +1214,7 @@ const fapiHeaderTabs = [
           <tbody>
             <tr><td>1</td><td><strong>Sustain period</strong> &mdash; Serve <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/payments/{paymentId}</code></span> for at least <strong>1 year from the payment's creation date</strong>. Within this window, the response MUST reflect the current status, including any later screening, rail, or reversal outcomes</td></tr>
             <tr><td>2</td><td><strong>Status consistency with the API Hub</strong> &mdash; The <code>Status</code> returned MUST exactly match the most recent value PATCHed to the API Hub Consent Manager via <a href="/tech/lfi-api-hub/v2.2-rc2/api-hub/consent-manager/open-api/payment-log" class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/payment-log/{id}</code></a>. Any change in the LFI's systems MUST be reflected on both surfaces before it becomes observable to the TPP</td></tr>
-            <tr><td>3</td><td><strong><code>paymentTransactionId</code> consistency</strong> &mdash; Once the rail has assigned the end-to-end identifier and the LFI has PATCHed it to the Consent Manager, this endpoint MUST return the same value. Before assignment, omit the field entirely &mdash; do not return an empty string</td></tr>
+            <tr><td>3</td><td><strong><code>paymentTransactionId</code> consistency</strong> &mdash; Once the LFI has PATCHed it to the Consent Manager, this endpoint MUST return the same value. Before then, omit the field entirely &mdash; do not return an empty string</td></tr>
           </tbody>
         </table>
       </EdRefTable>

@@ -1,6 +1,6 @@
 <route lang="yaml">
 meta:
-  title: Bank Data Sharing — Encrypted FinanceRates
+  title: Bank Data Sharing — Encrypted FinanceRates and ShariaFinanceRates
 </route>
 
 <script setup lang="ts">
@@ -294,14 +294,14 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
           LFI &middot; Banking &middot; Bank Data Sharing &middot; API Guide
         </div>
         <h1 class="ed-doc__title">
-          Encrypted FinanceRates
+          Encrypted FinanceRates and ShariaFinanceRates
           <span class="ed-doc__read">7 min read</span>
         </h1>
         <p class="ed-doc__lede">
           When a TPP holds the <code>ReadProductFinanceRates</code> permission and calls
           <code>GET /accounts/{AccountId}/product</code> for a credit card, finance, or mortgage
-          product, the LFI MAY return the <code>FinanceRates</code> field as a JWE rather than a
-          cleartext object. This guide covers how to generate the one-time code, deliver it to the
+          product, the LFI MAY return the <code>FinanceRates</code> field &mdash; or, for a Sharia-compliant
+          product, the <code>ShariaFinanceRates</code> field &mdash; as a JWE rather than in cleartext. This guide covers how to generate the one-time code, deliver it to the
           customer, build the JWE, and rate-limit the endpoint so the customer's encrypted rates
           remain protected end-to-end.
         </p>
@@ -317,11 +317,13 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
       tone="cream"
     >
       <EdProse>
-        The <code>FinanceRates</code> field on
+        The <code>FinanceRates</code> and <code>ShariaFinanceRates</code> fields on
         <a href="/tech/lfi-api-hub/v2.2-rc2/banking/data-sharing/open-api/accounts-AccountId-products">
-        <code>GET /accounts/{AccountId}/product</code></a> is defined as <code>anyOf</code> a
-        structured <code>AEProductFinanceRates</code> object or an <code>AEJwe</code> compact
-        string. LFIs MAY decide, per product, whether to return the rate in cleartext or as a JWE.
+        <code>GET /accounts/{AccountId}/product</code></a> are each defined as <code>anyOf</code> the
+        cleartext rates or an <code>AEJwe</code> compact string: <code>FinanceRates</code> as a structured
+        <code>AEProductFinanceRates</code> object, and <code>ShariaFinanceRates</code> as an array of
+        <code>AEProductShariaFinanceRate1Types</code>. LFIs MAY decide, per product, whether to
+        return the rate in cleartext or as a JWE.
         Encryption is typically applied to credit cards, finance accounts, and mortgages where the
         finance rate is commercially sensitive; deposit account interest rates are returned in
         cleartext.
@@ -329,19 +331,24 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
 
       <EdBullets>
         <li>
-          The LFI MUST NOT encrypt any field other than <code>FinanceRates</code> on this endpoint.
+          The LFI MUST NOT encrypt any field other than <code>FinanceRates</code> or <code>ShariaFinanceRates</code> on
+          this endpoint.
           <code>Charges</code>, <code>DepositRates</code>, <code>ProductName</code>,
           <code>Tenor</code>, and every other property stay cleartext on both the encrypted and
           unencrypted shapes.
         </li>
         <li>
           The LFI MUST NOT encrypt any data from any other Open Finance endpoint &mdash; this
-          mechanism exists solely for <code>FinanceRates</code> on
+          mechanism exists solely for <code>FinanceRates</code> and <code>ShariaFinanceRates</code> on
           <code>GET /accounts/{AccountId}/product</code>.
         </li>
         <li>
+          A product carries either <code>FinanceRates</code> or <code>ShariaFinanceRates</code>, not both. A call
+          therefore encrypts at most one field, under one OTP.
+        </li>
+        <li>
           A single LFI MAY choose to encrypt for some product types and not others. The TPP detects
-          the shape at runtime by checking whether <code>FinanceRates</code> is an object or a
+          the shape at runtime by checking whether the field holds the cleartext rates or a
           string &mdash; the LFI does not need to advertise its choice ahead of time.
         </li>
       </EdBullets>
@@ -367,9 +374,9 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
           and retrieve it.
         </li>
         <li>
-          <strong>Encrypt the cleartext <code>FinanceRates</code> as a JWE with the OTP as the
-          password</strong> and substitute the JWE string for the cleartext object in the response
-          body. The cleartext rates never leave the LFI.
+          <strong>Encrypt the cleartext <code>FinanceRates</code> or <code>ShariaFinanceRates</code> as a JWE with the
+          OTP as the password</strong> and substitute the JWE string for the cleartext rates in the
+          response body. The cleartext rates never leave the LFI.
         </li>
       </EdBullets>
 
@@ -393,8 +400,8 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
         Before doing anything else &mdash; before deciding to encrypt, before generating an OTP,
         before delivering the code, before building a JWE &mdash; the LFI MUST check that the consent
         underlying this request includes <code>ReadProductFinanceRates</code>. If the permission
-        is absent, the LFI MUST omit the <code>FinanceRates</code> field from the response
-        entirely. The rest of the product payload (<code>Charges</code>, <code>DepositRates</code>,
+        is absent, the LFI MUST omit the <code>FinanceRates</code> or <code>ShariaFinanceRates</code> field from the
+        response entirely. The rest of the product payload (<code>Charges</code>, <code>DepositRates</code>,
         <code>ProductName</code>, etc.) is returned as usual.
       </EdProse>
 
@@ -444,7 +451,7 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
       <EdProse>
         Whichever option you use, the check itself is the same:
         <code>permissions.includes('ReadProductFinanceRates')</code>. If false &mdash; omit
-        <code>FinanceRates</code>. If true &mdash; proceed to the cleartext or encrypted path
+        <code>FinanceRates</code> or <code>ShariaFinanceRates</code>. If true &mdash; proceed to the cleartext or encrypted path
         based on LFI policy for the product type.
       </EdProse>
 
@@ -467,7 +474,7 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
         </li>
         <li>
           When the field is omitted, do not substitute <code>null</code>, an empty object, or a
-          placeholder JWE. The <code>FinanceRates</code> key simply does not appear on the
+          placeholder JWE. The <code>FinanceRates</code> or <code>ShariaFinanceRates</code> key simply does not appear on the
           <code>Product</code> object.
         </li>
         <li>
@@ -481,8 +488,8 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
 
       <EdNote type="warning" title="Delivering a code is costly and customer-visible">
         <p>
-          Delivering an OTP for a request that should not have received <code>FinanceRates</code>
-          in the first place is both wasteful and confusing for the customer (they receive a code
+          Delivering an OTP for a request that should not have received finance rates in the
+          first place is both wasteful and confusing for the customer (they receive a code
           for a value the TPP cannot legitimately show). Putting the permission check first
           eliminates this class of bug entirely.
         </p>
@@ -499,7 +506,7 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
     >
       <EdProse>
         Each call to <code>GET /accounts/{AccountId}/product</code> that returns encrypted
-        <code>FinanceRates</code> MUST mint a new OTP. The OTP is bound to a single JWE for the
+        <code>FinanceRates</code> or <code>ShariaFinanceRates</code> MUST mint a new OTP. The OTP is bound to a single JWE for the
         full 30-minute display window &mdash; the TPP MAY re-decrypt the same JWE multiple times
         with the same OTP within that window, but a new call to the endpoint MUST produce a fresh
         OTP and a fresh JWE.
@@ -613,7 +620,8 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
       tone="surface"
     >
       <EdProse>
-        The cleartext <code>FinanceRates</code> object is encrypted as a JOSE compact JWE using
+        The cleartext <code>FinanceRates</code> object or <code>ShariaFinanceRates</code> array is encrypted as a JOSE
+        compact JWE using
         <strong>PBES2-HS512+A256KW</strong> for key wrapping and <strong>A256GCM</strong> for
         content encryption. PBES2 takes the OTP as a password and derives the content-encryption
         key inside the JWE library; the LFI never needs to handle key material directly.
@@ -645,14 +653,15 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
         enforced by the <code>exp</code> claim the LFI embeds in the plaintext, which the TPP MUST
         honour, backed by the TPP's <em>Access Encrypted Resource Data</em> certification
         obligations. The LFI embeds <code>iat</code> and <code>exp</code> inside the JSON plaintext
-        alongside the <code>FinanceRates</code> object &mdash; so the TPP can stop displaying the
+        alongside the rates, keyed by the field being encrypted (<code>FinanceRates</code> or
+        <code>ShariaFinanceRates</code>) &mdash; so the TPP can stop displaying the
         rate and show a "this code has expired" message once the window closes &mdash; and MUST set
         <code>exp = iat + 1800</code> seconds exactly; longer windows are not permitted.
       </EdProse>
 
       <EdCodeGroup :tabs="jweTabs" />
 
-      <EdNote type="warning" title="Never log the cleartext FinanceRates or the OTP">
+      <EdNote type="warning" title="Never log the cleartext rates or the OTP">
         <p>
           The cleartext rate is the very thing this scheme exists to protect from accidental
           disclosure. Encryption MUST happen in process memory; the cleartext rate, the OTP, and
@@ -666,14 +675,15 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
       id="step-5-substitute"
       num="07"
       color="var(--at-gold)"
-      eyebrow="Step 5 — Substitute FinanceRates in the response"
-      title="Swap the structured object for the JWE string"
+      eyebrow="Step 5 — Substitute the rates in the response"
+      title="Swap the cleartext rates for the JWE string"
       tone="cream"
     >
       <EdProse>
         The OpenAPI schema makes the response trivial to assemble: <code>FinanceRates</code> is
-        either an <code>AEProductFinanceRates</code> object or an <code>AEJwe</code> string.
-        Replace the cleartext object with the compact JWE produced in
+        either an <code>AEProductFinanceRates</code> object or an <code>AEJwe</code> string, and
+        <code>ShariaFinanceRates</code> is either an array of <code>AEProductShariaFinanceRate1Types</code> or an
+        <code>AEJwe</code> string. Replace the cleartext rates with the compact JWE produced in
         <a href="#step-4-build-jwe">Step 4</a> and leave every other field untouched.
       </EdProse>
 
@@ -697,7 +707,7 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
     >
       <EdProse>
         Every call to <code>GET /accounts/{AccountId}/product</code> that produces an encrypted
-        <code>FinanceRates</code> mints a fresh OTP and triggers a customer-facing message. The LFI
+        <code>FinanceRates</code> or <code>ShariaFinanceRates</code> mints a fresh OTP and triggers a customer-facing message. The LFI
         MUST rate-limit these calls per consent per account so an abusive or buggy TPP cannot spam
         the customer.
       </EdProse>
@@ -729,8 +739,7 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
       </EdRefTable>
 
       <EdProse>
-        These limits are LFI-enforced and apply only to the <code>FinanceRates</code>-encryption
-        path. Cleartext calls to <code>GET /accounts/{AccountId}/product</code> (for product types
+        These limits are LFI-enforced and apply only to the finance-rate encryption path. Cleartext calls to <code>GET /accounts/{AccountId}/product</code> (for product types
         where the LFI does not encrypt) follow the standard rate limits documented elsewhere.
       </EdProse>
 
@@ -757,7 +766,7 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
       <h3 class="ed-doc__subhead">The 429 response</h3>
       <EdProse>
         When either limit would be breached, the LFI MUST <strong>reject the entire request</strong>
-        rather than returning a partial response with <code>FinanceRates</code> omitted. The
+        rather than returning a partial response with the rates omitted. The
         customer is on the TPP's screen expecting a complete product view; the 429 is the signal
         the TPP needs to render a clear, actionable error rather than a silently degraded payload.
       </EdProse>
@@ -804,7 +813,7 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
       <EdNote type="warning" title="Do not silently degrade">
         <p>
           When the limit is breached, the LFI MUST NOT return <code>200</code> with the
-          <code>FinanceRates</code> field omitted, an empty object, or a stale JWE. The 429 is
+          <code>FinanceRates</code> or <code>ShariaFinanceRates</code> field omitted, an empty object, or a stale JWE. The 429 is
           the contract that lets the TPP distinguish "you don't have this permission" from
           "you've called too often" &mdash; collapsing the two would mislead the TPP about why
           the customer can't see the rate.
@@ -823,7 +832,7 @@ const responseTabs        = [{ label: 'Node.js', lang: 'typescript', code: respo
       <EdBullets>
         <li>
           <strong>No cleartext in logs</strong> &mdash; OTP, derived key material, and cleartext
-          <code>FinanceRates</code> MUST be excluded from application logs, request traces, audit
+          <code>FinanceRates</code> or <code>ShariaFinanceRates</code> MUST be excluded from application logs, request traces, audit
           trails, monitoring dashboards, and crash dumps.
         </li>
         <li>

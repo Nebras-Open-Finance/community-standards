@@ -848,6 +848,51 @@ const customerPsuJson = `{
         <code>creditLines</code> where applicable.
       </EdProse>
 
+      <h3 class="ed-doc__subhead">Balance types that MUST be returned</h3>
+      <EdProse>
+        Credit cards, finance and mortgages carry their own mandatory balance types. Return one
+        record of each type marked below, in addition to any other balance types the account holds.
+      </EdProse>
+      <EdRefTable>
+        <table>
+          <thead>
+            <tr><th><code>balanceType</code></th><th>Meaning</th><th><code>CreditCard</code></th><th><code>Finance</code></th><th><code>Mortgage</code></th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>PreviouslyClosedBooked</code></td>
+              <td>The booked balance at the close of the most recent statement or accounting period</td>
+              <td>MUST &mdash; the statement balance</td>
+              <td>MUST &mdash; the balance at the last statement</td>
+              <td>MUST &mdash; the balance at the last statement</td>
+            </tr>
+            <tr>
+              <td><code>InterimBooked</code></td>
+              <td>The total outstanding balance, with <code>components</code> giving <code>Principal</code>, <code>Profit</code> or <code>Interest</code>, <code>FeesAndCharges</code> and <code>PastDue</code></td>
+              <td>MUST &mdash; the current outstanding balance</td>
+              <td>MUST &mdash; the outstanding balance; principal goes in <code>components</code></td>
+              <td>MUST &mdash; as for <code>Finance</code></td>
+            </tr>
+            <tr>
+              <td><code>InterimAvailable</code></td>
+              <td>The amount available to spend, with <code>creditLines</code> showing the limit</td>
+              <td>MUST &mdash; the available credit</td>
+              <td>Not required</td>
+              <td>Not required</td>
+            </tr>
+          </tbody>
+        </table>
+      </EdRefTable>
+      <EdProse>
+        On the <code>InterimBooked</code> record, use <code>Profit</code> for a Sharia-compliant
+        product and <code>Interest</code> otherwise. A <code>BalanceCategory</code> the account holds
+        no amount for may be omitted from <code>components</code>. <code>ClosingBooked</code> MAY also be
+        returned for the end-of-day outstanding balance, and carries <code>components</code> on the same
+        basis where it is. On a credit card&rsquo;s <code>InterimAvailable</code> record, the
+        <code>creditLines</code> entry has <code>creditType: Credit</code>, the agreed credit limit as its
+        <code>amount</code>, and <code>included: true</code>.
+      </EdProse>
+
       <h3 class="ed-doc__subhead">Request headers</h3>
       <EdProse>See <a href="#common-request-headers">Common request headers</a>.</EdProse>
 

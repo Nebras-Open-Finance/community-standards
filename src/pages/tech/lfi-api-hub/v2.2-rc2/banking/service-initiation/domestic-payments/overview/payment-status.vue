@@ -8,7 +8,7 @@ const patchBodyExample = `{
   "data": {
     "paymentId": "pmt-20260418-00023",
     "consentId": "cns-20260418-00011",
-    "paymentTransactionId": "AANI-TX-7F4D0C1E",
+    "paymentTransactionId": "OFP7d2c1e9a4b6f4c0e8a1b",
     "status": "AcceptedWithoutPosting",
     "statusUpdateDateTime": "2026-04-18T10:14:22.845Z"
   }
@@ -175,9 +175,7 @@ const patchRejectedExample = `{
       </EdRefTable>
 
       <EdProse>
-        Intra-bank payments have no <code>paymentTransactionId</code> assigned by a rail. If your
-        internal core assigns an end-to-end reference, you MAY include it as
-        <code>paymentTransactionId</code>; otherwise omit the field.
+        Intra-bank payments have no <code>paymentTransactionId</code>. Omit the field.
       </EdProse>
     </EdSectionBand>
 
@@ -226,8 +224,8 @@ const patchRejectedExample = `{
       </EdNote>
 
       <EdProse>
-        Once AANI assigns an end-to-end transaction identifier, include it as
-        <code>paymentTransactionId</code> on the next
+        Include the end-to-end transaction identifier as
+        <code>paymentTransactionId</code> on each
         <span class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/payment-log/{paymentId}</code></span>.
         Once set, <code>paymentTransactionId</code> MUST NOT change.
       </EdProse>
@@ -403,8 +401,8 @@ const patchRejectedExample = `{
           Call
           <a href="/tech/lfi-api-hub/v2.2-rc2/api-hub/consent-manager/open-api/payment-log" class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/payment-log/{paymentId}</code></a>
           on the API Hub Consent Manager with the new <code>status</code>, a current
-          <code>statusUpdateDateTime</code>, <code>paymentTransactionId</code> (once assigned by the
-          rail, if applicable), and any <code>rejectReasonCode</code>.
+          <code>statusUpdateDateTime</code>, <code>paymentTransactionId</code> (on
+          <code>AANI</code> and <code>FTS</code>), and any <code>rejectReasonCode</code>.
         </li>
         <li>
           Update the response your Ozone Connect

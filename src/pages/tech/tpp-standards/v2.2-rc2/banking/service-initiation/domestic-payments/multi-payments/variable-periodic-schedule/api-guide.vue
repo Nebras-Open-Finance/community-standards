@@ -661,6 +661,30 @@ const step9Tabs = [{ label: 'Node.js', lang: 'typescript', code: step9Node }, { 
           period, or if any lifetime cumulative cap has been reached.
         </p>
       </EdNote>
+
+      <h3 id="requesting-settlement-over-uaefts" class="ed-doc__subhead">Requesting settlement over UAEFTS</h3>
+      <EdProse>
+        By default, the LFI settles a domestic payment over AANI, the UAE instant payment platform. To
+        require settlement over UAEFTS, the CBUAE funds transfer system, set the optional
+        <code>UseFTS</code> field in <code>Data</code> to <code>true</code>. The field is set on the
+        payment request, not on the consent.
+      </EdProse>
+
+      <EdRefTable>
+        <table>
+          <thead><tr><th><code>UseFTS</code></th><th>LFI behaviour</th></tr></thead>
+          <tbody>
+            <tr><td><code>true</code></td><td>The LFI MUST settle the payment over UAEFTS and MUST NOT settle it over AANI. If UAEFTS is not available, the LFI MUST reject the payment rather than fall back to AANI, and the rejection carries an <code>FTS.</code>-namespaced <code>RejectReasonCode</code>. <code>PaymentRail</code> is reported as <code>FTS</code></td></tr>
+            <tr><td><code>false</code> or absent</td><td>The LFI applies its default routing: AANI, with UAEFTS as the fallback where its routing rules require it</td></tr>
+          </tbody>
+        </table>
+      </EdRefTable>
+
+      <EdProse>
+        <code>UseFTS</code> is ignored for a transfer within the same LFI, where the debtor and creditor
+        accounts are both held at that LFI: the LFI books the payment on its own ledger and reports
+        <code>PaymentRail</code> as <code>LFI</code>.
+      </EdProse>
     </EdSectionBand>
 
     <EdSectionBand
