@@ -1,27 +1,21 @@
 <script setup lang="ts">
 // The supported-currency-pairs form: 1–200 FromCurrency/ToCurrency rows, each
-// matching ^[A-Z]{3,3}$, no exact duplicates. Mirrors validate() in standards-api
-// services/jira/forms/supported-currency-pairs.js, which re-checks on submit.
-// Rows are typed, or filled from an uploaded spreadsheet (see currencyPairsFile).
+// code an ISO 4217 currency, the two sides different, no exact duplicates.
+// The rules live in currencyPairs.ts. Rows are typed, or filled from an
+// uploaded spreadsheet (see currencyPairsFile).
 // Rendered inside JiraFormShell, which supplies the session, ticket and submit;
 // the sticky submit bar is JiraFormSubmitBar, shared with the other forms.
 
 import { computed, ref } from 'vue'
 import JiraFormSubmitBar from './JiraFormSubmitBar.vue'
 import { ACCEPTED_FILES, parseCurrencyPairsFile } from './currencyPairsFile'
-
-interface CurrencyPair {
-  FromCurrency: string
-  ToCurrency: string
-}
+import { type CurrencyPair, type PairField as Field, currencyCodeError, pairErrors } from './currencyPairs'
 
 defineProps<{ submitting: boolean }>()
 const emit = defineEmits<{ submit: [payload: { SupportedCurrencyPairs: CurrencyPair[] }] }>()
 
 const MAX_PAIRS = 200
-const CURRENCY_RE = /^[A-Z]{3,3}$/
 
-type Field = keyof CurrencyPair
 const FIELDS: Field[] = ['FromCurrency', 'ToCurrency']
 const FIELD_LABEL: Record<Field, string> = { FromCurrency: 'From Currency', ToCurrency: 'To Currency' }
 
@@ -30,23 +24,8 @@ const rows = ref<CurrencyPair[]>([blankRow()])
 // Errors show once submit has been tried, not while the first row is typed.
 const attempted = ref(false)
 
-/** Per-row problems, keyed by field, plus a duplicate flag. */
-const rowErrors = computed(() => {
-  const seen = new Map<string, number>()
-  return rows.value.map((r, i) => {
-    const e: Partial<Record<Field | 'duplicate', string>> = {}
-    for (const f of FIELDS) {
-      if (!CURRENCY_RE.test(r[f])) e[f] = r[f] ? 'Three letters, A–Z' : 'Required'
-    }
-    const key = `${r.FromCurrency}/${r.ToCurrency}`
-    if (!e.FromCurrency && !e.ToCurrency) {
-      const first = seen.get(key)
-      if (first !== undefined) e.duplicate = `Same as row ${first + 1}`
-      else seen.set(key, i)
-    }
-    return e
-  })
-})
+/** Per-row problems, keyed by field, plus `pair` for same-currency or duplicate rows. */
+const rowErrors = computed(() => pairErrors(rows.value))
 const valid = computed(() => rowErrors.value.every((e) => Object.keys(e).length === 0))
 const canAdd = computed(() => rows.value.length < MAX_PAIRS)
 
@@ -60,9 +39,9 @@ const badRowsText = computed(() => {
 
 const hasContent = computed(() => rows.value.some((r) => r.FromCurrency || r.ToCurrency))
 
-/** Rows with both codes filled in — what the submit bar counts as pairs to add. */
+/** Rows with two accepted codes — what the submit bar counts as pairs to add. */
 const pairCount = computed(() =>
-  rows.value.filter((r) => CURRENCY_RE.test(r.FromCurrency) && CURRENCY_RE.test(r.ToCurrency)).length)
+  rows.value.filter((r) => !currencyCodeError(r.FromCurrency) && !currencyCodeError(r.ToCurrency)).length)
 
 function clearAll(): void {
   rows.value = [blankRow()]
@@ -175,7 +154,7 @@ function onSubmit(): void {
           <input
             :value="row[field]"
             class="jf__input scp__ccy"
-            :class="{ 'jf__input--bad': attempted && (rowErrors[i]?.[field] || rowErrors[i]?.duplicate) }"
+            :class="{ 'jf__input--bad': attempted && (rowErrors[i]?.[field] || rowErrors[i]?.pair) }"
             type="text"
             autocomplete="off"
             spellcheck="false"
@@ -194,8 +173,8 @@ function onSubmit(): void {
           :disabled="rows.length === 1 && !row.FromCurrency && !row.ToCurrency"
           @click="removeRow(i)"
         >×</button>
-        <p v-if="attempted && rowErrors[i]?.duplicate" class="jf__ferr scp__dup">
-          {{ rowErrors[i]?.duplicate }}
+        <p v-if="attempted && rowErrors[i]?.pair" class="jf__ferr scp__dup">
+          {{ rowErrors[i]?.pair }}
         </p>
       </div>
     </div>
@@ -205,7 +184,8 @@ function onSubmit(): void {
     </button>
 
     <p class="jf__hint">
-      Three-letter upper-case currency codes. Attached to the ticket as JSON, attributed to you.
+      ISO 4217 currency codes; fund codes, precious metals and test codes are not accepted.
+      Attached to the ticket as JSON, attributed to you.
     </p>
     <p v-if="attempted && !valid" class="jf__error">
       Fix the highlighted row{{ badRows.length === 1 ? '' : 's' }} before submitting: {{ badRowsText }}.

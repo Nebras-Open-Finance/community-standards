@@ -22,7 +22,7 @@ import PvProposalTabs from '@/components/proposals/PvProposalTabs.vue'
 // of the same property/name wins under Unhead's dedupe.
 const OG_TITLE = 'OFP-016 · Paginate the ATM API'
 const OG_DESCRIPTION =
-  'GET /atms returns an LFI’s entire ATM estate in one response, with no way to request a slice. From V2.2, LFIs paginate Ozone Connect GET /atm on page and page-size, and the API Hub returns the standard Links envelope and Meta.TotalPages to the TPP — the same model as Bank Data Sharing and Products.'
+  'GET /atms returns an LFI’s entire ATM estate in one response, with no way to request a slice. From V3.0, LFIs paginate Ozone Connect GET /atm on page and page-size, and the API Hub returns the standard Links envelope and Meta.TotalPages to the TPP — the same model as Bank Data Sharing and Products.'
 useHead({
   title: OG_TITLE,
   meta: [
@@ -41,7 +41,7 @@ const meta = {
   opened: '21 Oct 2026',
   closes: '4 Nov 2026',
   priority: 'medium' as Priority,
-  version: 'V2.2',
+  version: 'V3.0',
 }
 
 // The three questions asked alongside the vote. These are ALSO held in the
@@ -51,8 +51,8 @@ const meta = {
 const questions = [
   {
     who: 'LFIs',
-    q: 'How many ATM records does your Ozone Connect GET /atm return today, and how large and how slow is that response? Can you honour page and page-size, in a stable order, by V2.2?',
-    why: 'This sizes the problem and the build. The case for pagination rests on how large ATM estates are and how quickly they are growing; the answers also tell us whether a mandatory requirement at V2.2 is realistic for every LFI, or whether some need longer.',
+    q: 'How many ATM records does your Ozone Connect GET /atm return today, and how large and how slow is that response? Can you honour page and page-size, in a stable order, by V3.0?',
+    why: 'This sizes the problem and the build. The case for pagination rests on how large ATM estates are and how quickly they are growing; the answers also tell us whether a mandatory requirement at V3.0 is realistic for every LFI, or whether some need longer.',
   },
   {
     who: 'TPPs',
@@ -77,7 +77,7 @@ const pros = [
 
 const cons = [
   'Every LFI has to build it. Ozone Connect GET /atm takes no query parameters today, so each LFI must add page and page-size handling, a stable order, and TotalPages.',
-  'It is breaking for TPPs at V2.2. A TPP that reads Data from the first response and stops will silently hold only the first page of ATMs. Nothing in the response fails; the data is just incomplete.',
+  'It is breaking for TPPs at V3.0. A TPP that reads Data from the first response and stops will silently hold only the first page of ATMs. Nothing in the response fails; the data is just incomplete.',
   'More calls for the same data. A full sync of a large estate becomes several requests instead of one, each with its own token check, its own latency, and its own entry in reporting.',
   'Pages can drift during a walk. If an LFI adds or removes an ATM between page requests, a TPP walking the estate can miss or repeat a record. A stable order narrows this, but does not remove it.',
   'It does not help a TPP that only wants what has changed. A full sync still fetches every page; delta retrieval is left for a later proposal.',
@@ -101,7 +101,7 @@ GET /open-finance/atm/v2.2/atms
 
 // The proposed behaviour — rendered in the Recommendation section.
 const proposedExample = `# Proposed — same first request, a bounded page, and a link to the next one
-GET /open-finance/atm/v2.2/atms
+GET /open-finance/atm/v3.0/atms
 
   API Hub -> Ozone Connect   GET /atm?page=1&page-size=100
   Ozone Connect -> API Hub   200 { "data": [ ...ATMs 1-100... ],
@@ -112,10 +112,10 @@ GET /open-finance/atm/v2.2/atms
 {
   "Data": [ { "ATMId": "ATM-0001", ... }, ... { "ATMId": "ATM-0100", ... } ],
   "Links": {
-    "Self":  "https://rs1.bank.apihub.openfinance.ae/open-finance/atm/v2.2/atms?page=1",
-    "First": "https://rs1.bank.apihub.openfinance.ae/open-finance/atm/v2.2/atms?page=1",
-    "Next":  "https://rs1.bank.apihub.openfinance.ae/open-finance/atm/v2.2/atms?page=2",
-    "Last":  "https://rs1.bank.apihub.openfinance.ae/open-finance/atm/v2.2/atms?page=13"
+    "Self":  "https://rs1.bank.apihub.openfinance.ae/open-finance/atm/v3.0/atms?page=1",
+    "First": "https://rs1.bank.apihub.openfinance.ae/open-finance/atm/v3.0/atms?page=1",
+    "Next":  "https://rs1.bank.apihub.openfinance.ae/open-finance/atm/v3.0/atms?page=2",
+    "Last":  "https://rs1.bank.apihub.openfinance.ae/open-finance/atm/v3.0/atms?page=13"
   },
   "Meta": { "LastUpdatedDateTime": "2026-10-20T00:00:00Z", "TotalRecords": 1240, "TotalPages": 13 }
 }
@@ -262,7 +262,7 @@ onMounted(() => {
         <p class="ofp__summary">
           <code>GET /atms</code> returns an LFI&rsquo;s <strong>entire ATM estate in one response</strong>,
           with no <code>Links</code> and no way to ask for a slice. This proposal brings ATMs into line
-          with Bank Data Sharing and Products: from <strong>V2.2</strong>, every LFI <strong>MUST</strong>
+          with Bank Data Sharing and Products: from <strong>V3.0</strong>, every LFI <strong>MUST</strong>
           paginate its Ozone Connect <code>GET /atm</code> on <code>page</code> and
           <code>page-size</code>, and the API Hub returns the standard <code>Links</code> envelope and
           <code>Meta.TotalPages</code> to the TPP. The TPP&rsquo;s first request does not change.
@@ -316,7 +316,7 @@ onMounted(() => {
             the open with your reasoning. Your organisation and name come from your directory profile, and
             each person may vote once. <strong>Three questions are attached to this vote</strong> &mdash;
             set out in section 06 below. The first asks LFIs how large their ATM estates are and whether
-            they can paginate by V2.2; the second asks TPPs how they consume ATM data today; the third
+            they can paginate by V3.0; the second asks TPPs how they consume ATM data today; the third
             asks both whether TPP-controlled page sizes or filters are wanted later.
           </p>
         </div>
@@ -396,7 +396,7 @@ onMounted(() => {
                 <code>Meta.TotalPages</code> on <code>GET /products</code>. ATMs are the exception.
               </li>
               <li>
-                <strong>V2.2 is the point to fix it.</strong> Adding <code>Links</code> to a response
+                <strong>V3.0 is the point to fix it.</strong> Adding <code>Links</code> to a response
                 defined with <code>additionalProperties: false</code> changes its shape, so it belongs in
                 a new version rather than an errata.
               </li>
@@ -561,7 +561,7 @@ onMounted(() => {
               <code>LastUpdatedDateTime</code> and <code>TotalRecords</code>. Update the
               <code>GET /atms</code> description to state that results are paginated and the TPP follows
               <code>Links.Next</code>. The per-ATM <code>Links.FeesUri</code> object inside each
-              <code>Data</code> item is unrelated and does not change. Targets <strong>V2.2</strong>.
+              <code>Data</code> item is unrelated and does not change. Targets <strong>V3.0</strong>.
             </p>
           </div>
 
@@ -581,8 +581,8 @@ onMounted(() => {
             <div class="ofp-change__label">03 &middot; API Hub</div>
             <p>
               Send <code>page</code> and <code>page-size</code> on every <code>GET /atm</code> call, and apply
-              the <code>meta</code>-to-<code>Links</code> conversion used for Bank Data Sharing to the V2.2
-              ATM response. Calls to the V2.1 base path keep the V2.1 contract.
+              the <code>meta</code>-to-<code>Links</code> conversion used for Bank Data Sharing to the V3.0
+              ATM response. Calls to the V2.1 and V2.2 base paths keep their existing contracts.
             </p>
           </div>
 
@@ -618,10 +618,10 @@ onMounted(() => {
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
           <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 05 &middot; Rollout</div>
-          <h2 class="ofp-band__title">A V2.2 change, with V2.1 left as it is</h2>
+          <h2 class="ofp-band__title">A V3.0 change, with V2.1 and V2.2 left as they are</h2>
           <p class="ofp-band__lede">
             The response shape changes, so the change lands with the version. TPPs opt in by moving to
-            V2.2.
+            V3.0.
           </p>
         </div>
         <div class="ofp-prose">
@@ -629,16 +629,17 @@ onMounted(() => {
             <div class="ofp-rules__label">How it lands</div>
             <ul class="ofp-rules__list">
               <li>
-                <strong>V2.1 is unchanged.</strong> A TPP calling <code>/open-finance/atm/v2.1/atms</code>
-                keeps receiving the full estate in one response, without <code>Links</code>, for as long as
-                V2.1 is supported.
+                <strong>V2.1 and V2.2 are unchanged.</strong> A TPP calling
+                <code>/open-finance/atm/v2.1/atms</code> or <code>/open-finance/atm/v2.2/atms</code> keeps
+                receiving the full estate in one response, without <code>Links</code>, for as long as that
+                version is supported.
               </li>
               <li>
-                <strong>LFIs conform by V2.2.</strong> Pagination is a V2.2 conformance requirement for every
+                <strong>LFIs conform by V3.0.</strong> Pagination is a V3.0 conformance requirement for every
                 LFI that offers the ATM API, and is tested in functional certification.
               </li>
               <li>
-                <strong>TPPs move when they move to V2.2.</strong> The migration is a loop on
+                <strong>TPPs move when they move to V3.0.</strong> The migration is a loop on
                 <code>Links.Next</code>. The TPP ATM API Guide will state plainly that the first page is not
                 the whole estate, because that is the one way this change can go wrong without anything
                 failing.

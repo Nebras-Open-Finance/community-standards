@@ -2,26 +2,21 @@
 //
 // .xlsx, .xls or .csv; the first sheet only. Column A is From Currency, column B
 // To Currency. Values are trimmed and upper-cased; rows empty in both columns are
-// skipped. A first row with no valid currency code in either column is taken to
-// be a header and skipped. Anything else invalid is KEPT, so the form can
-// highlight it for the customer to fix rather than silently dropping a pair.
+// skipped. A first row with no ISO 4217 code in either column is taken to be a
+// header and skipped. Anything else invalid is KEPT, so the form can highlight
+// it for the customer to fix rather than silently dropping a pair.
 //
 // SheetJS is imported on demand, so the page does not carry it until a file is
 // actually uploaded.
 
-export interface ParsedPair {
-  FromCurrency: string
-  ToCurrency: string
-}
+import { type CurrencyPair, isIso4217Code } from './currencyPairs'
 
 export type ParseResult =
-  | { ok: true; pairs: ParsedPair[]; skippedHeader: boolean }
+  | { ok: true; pairs: CurrencyPair[]; skippedHeader: boolean }
   | { ok: false; error: string }
 
 export const MAX_FILE_BYTES = 2 * 1024 * 1024
 export const ACCEPTED_FILES = '.xlsx,.xls,.csv'
-
-const CURRENCY_RE = /^[A-Z]{3,3}$/
 
 const cell = (v: unknown): string => String(v ?? '').trim().toUpperCase()
 
@@ -49,7 +44,7 @@ export async function parseCurrencyPairsFile(data: ArrayBuffer, maxPairs: number
     .filter((p) => p.FromCurrency || p.ToCurrency)
 
   const head = pairs[0]
-  const skippedHeader = !!head && !CURRENCY_RE.test(head.FromCurrency) && !CURRENCY_RE.test(head.ToCurrency)
+  const skippedHeader = !!head && !isIso4217Code(head.FromCurrency) && !isIso4217Code(head.ToCurrency)
   if (skippedHeader) pairs = pairs.slice(1)
 
   if (pairs.length === 0) {
