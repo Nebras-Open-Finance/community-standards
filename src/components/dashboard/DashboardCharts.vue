@@ -14,6 +14,7 @@ import {
   filteredRtData,
   dataForSource,
   type AnyRow,
+  type ApiRow,
 } from '@/stores/dashboard'
 import {
   CHART_REGISTRY,
@@ -102,12 +103,18 @@ const visibleCharts = computed<ChartConfig[]>(() => {
     })
 })
 
+// API rows are build-time roll-ups, so their record count is the number of
+// raw log rows they absorbed (`rtN`), not the number of summary rows.
+function rawRecordCount(rows: readonly ApiRow[]): number {
+  return rows.reduce((s, r) => s + r.rtN, 0)
+}
+
 const recordCount = computed<number>(() => {
   const section = state.activeSection
-  if (section === 'api-volumes')     return filteredSuccessApiData.value.length
-  if (section.startsWith('api'))     return filteredApiData.value.length
+  if (section === 'api-volumes')     return rawRecordCount(filteredSuccessApiData.value)
+  if (section.startsWith('api'))     return rawRecordCount(filteredApiData.value)
   if (section.startsWith('payment')) return filteredPaymentData.value.length
-  return filteredRtData.value.length
+  return rawRecordCount(filteredRtData.value)
 })
 
 // ── CSV export config (active section drives shape) ──────────────────────

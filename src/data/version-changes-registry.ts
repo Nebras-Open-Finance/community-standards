@@ -891,21 +891,54 @@ export const VERSION_CHANGES: VersionChange[] = [
     introducedIn: 'v2.2-rc2',
     number: 16,
     category: 'No change',
-    title: 'Consents in a consent group — return order is documented',
+    title: 'Specification tidy-up',
     summary:
-      '`GET /consent-groups/{consentGroupId}/consents` returns consents newest first by `CreationDateTime`, with the base consent last. Documentation only; behaviour is unchanged.',
+      'Four documentation corrections across the v2.2-rc2 specifications. None changes how the API Hub behaves.',
     description:
-      'The order applies across pages, so the first page holds the most recent consents. A `consentGroupId` that is not a base consent returns an empty array rather than an error.',
-    audience: 'LFI',
-    areas: ['Consent Manager'],
-    specs: ['uae-api-hub-consent-manager-openapi'],
+      '1. `GET /consent-groups/{consentGroupId}/consents` now documents its return order: newest first by `CreationDateTime` across all pages, with the base consent last. A `consentGroupId` that is not a base consent returns an empty array.\n\n' +
+      '2. Every signed message in the v2.2-rc2 Standards now defines `aud` as a single string, not an array, matching what the API Hub already sends: the API Hub authorisation server issuer identifier on requests, and the TPP `client_id` on responses and Event Notifications.\n\n' +
+      '3. Confirmation of Payee `POST /discovery` now documents a `204` with no body for when the Creditor Account IBAN cannot be matched to an LFI that offers Confirmation of Payee.\n\n' +
+      '4. Ozone Connect Bank Data Sharing v2.2.6 changes `salary` and `exchangeRate` from string to number to match the Standards Account Information API, and restricts `BillerID`, `merchantId` and `TerminalId` to digits while keeping them strings so leading zeros are kept.',
+    audience: 'Both',
+    areas: ['Consent Manager', 'Conventions', 'Confirmation of Payee', 'Data Sharing', 'Ozone Connect'],
+    specs: [
+      'uae-api-hub-consent-manager-openapi',
+      'uae-account-information-openapi',
+      'uae-bank-initiation-openapi',
+      'uae-insurance-openapi',
+      'uae-webhook-template-openapi',
+      'uae-confirmation-of-payee-openapi',
+      'uae-ozone-connect-bank-data-sharing-openapi',
+    ],
     endpoints: [
       {
         label: 'GET /consent-groups/{consentGroupId}/consents',
         path: `${CM}/open-api/consent-groups-consentGroupId-consents`,
       },
+      {
+        label: 'POST /discovery',
+        path: `${COP_TPP}/open-api/discovery`,
+      },
+      {
+        label: 'GET /customer (Ozone Connect)',
+        path: `${DS_LFI}/open-api/customer`,
+      },
+      {
+        label: 'GET /accounts/{accountId}/customer (Ozone Connect)',
+        path: `${DS_LFI}/open-api/accounts-AccountId-customer`,
+      },
+      {
+        label: 'GET /accounts/{accountId}/transactions (Ozone Connect)',
+        path: `${DS_LFI}/open-api/accounts-AccountId-transactions`,
+      },
     ],
-    affectedPaths: [`${CM}/open-api/consent-groups-consentGroupId-consents`],
+    affectedPaths: [
+      `${CM}/open-api/consent-groups-consentGroupId-consents`,
+      `${COP_TPP}/open-api/discovery`,
+      `${DS_LFI}/open-api/customer`,
+      `${DS_LFI}/open-api/accounts-AccountId-customer`,
+      `${DS_LFI}/open-api/accounts-AccountId-transactions`,
+    ],
   },
   {
     changeId: 'v2.1-to-v2.2',

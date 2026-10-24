@@ -149,8 +149,9 @@ const slowestEndpoints = computed<RankedEndpoint[]>(() => {
     const method = r.method === 'Unknown' ? '' : r.method
     const key = `${method} ${endpoint}`
     const slot = byEndpoint[key] ?? (byEndpoint[key] = { method, endpoint, total: 0, n: 0 })
-    slot.total += r.avgMs
-    slot.n += 1
+    // Weighted by raw rows — see `meanResponseMs` in the store.
+    slot.total += r.rtSum
+    slot.n += r.rtN
   }
   return Object.entries(byEndpoint)
     .map(([key, { method, endpoint, total, n }]) => ({ key, method, endpoint, avgMs: Math.round(total / n) }))

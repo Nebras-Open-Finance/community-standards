@@ -5,10 +5,11 @@ meta:
 </route>
 
 <script setup lang="ts">
-// Live data fetches all soft-fail; missing files render as em-dashes.
+// Usage figures are pre-aggregated at build time (see "Build-time stats"
+// below); the community stats fetch soft-fails. Missing data renders as
+// em-dashes.
 
 import { ref, computed, onMounted } from 'vue'
-import axios from 'axios'
 
 import { articles, ARTICLE_KIND_LABELS } from '@/data/home-articles'
 import type { ArticleKind, HomeArticle } from '@/data/home-articles'
@@ -29,105 +30,39 @@ const ACCENT = {
   sky:      '#00A2FB',
 } as const
 
-// ── Auth-log "is this consent authorised / auth-started?" helpers ─────────
-const SUCCESS_PAYMENT_STATUSES = new Set<string>([
-  'AcceptedSettlementCompleted',
-  'AcceptedCreditSettlementCompleted',
-  'AcceptedWithoutPosting',
-])
-
-// doConfirm's success response is a 3xx redirect back to the Hub; 2xx is
-// kept for resilience.
-const CONSENT_AUTH_URL = '/auth/:interactionId/doConfirm'
-const CONSENT_SUCCESS_CODES = new Set<string>(['2xx', '3xx'])
-const AUTH_START_URL = '/auth'
-
-// ── Log-row shapes (loose by design — these JSON files are external) ─────
-interface TrustFrameworkOrg {
-  id?: string
-  type?: string
-  name?: string
-  legalName?: string
-  isProduction?: boolean
-  lfiGoLiveDate?: string
-  tppGoLiveDate?: string
+// ── Build-time stats ──────────────────────────────────────────────────────
+// scripts/build-metrics.mjs rolls the usage logs and the trust framework up
+// into the handful of monthly totals and counts this page shows. The file is
+// imported eagerly, so the figures are in the prerendered HTML with no fetch.
+// A glob rather than a plain import lets typecheck and tests run before the
+// file has been generated; the page then renders dashes.
+interface ParticipantCounts {
+  live: number
+  production: number
+  onboarded: number
 }
 
-interface ApiLogRow {
-  date?: string
-  totalapicalls?: number
-  tppresponsecodegroup?: string
-  lfinamekey?: string
-  tppname?: string
+type MonthlyTotals = Record<string, number>
+
+interface HomeStats {
+  /** The in-progress month at build time — dropped from charts and growth. */
+  partialMonth: string
+  lastDate: string
+  apiCallsByMonth: MonthlyTotals
+  successfulPaymentAmountByMonth: MonthlyTotals
+  consentsAuthorisedByMonth: MonthlyTotals
+  authStartsByMonth: MonthlyTotals
+  participants: { lfi: ParticipantCounts, tpp: ParticipantCounts } | null
+  active30d: { lfis: number, tpps: number | null }
 }
 
-interface PaymentLogRow {
-  date?: string
-  amount?: number
-  status?: string
-  lfinamekey?: string
-}
-
-interface AuthLogRow {
-  date?: string
-  totalapicalls?: number
-  url?: string
-  tppresponsecodegroup?: string
-}
-
-const tfData      = ref<TrustFrameworkOrg[]>([])
-const apiData     = ref<ApiLogRow[]>([])
-const paymentData = ref<PaymentLogRow[]>([])
-const authData    = ref<AuthLogRow[]>([])
-
-onMounted(async () => {
-  const [tf, api, payments, auth] = await Promise.all([
-    axios.get<unknown>('/api/trust-framework.json').catch(() => ({ data: [] as unknown })),
-    loadApiLog().catch(() => [] as unknown),
-    fetch('/api/payments-log.json').then(r => r.json() as Promise<unknown>).catch(() => [] as unknown),
-    fetch('/api/auth-log.json').then(r => r.json() as Promise<unknown>).catch(() => [] as unknown),
-  ])
-  tfData.value = Array.isArray(tf.data) ? (tf.data as TrustFrameworkOrg[]) : []
-  apiData.value = Array.isArray(api) ? (api as ApiLogRow[]) : []
-  paymentData.value = Array.isArray(payments) ? (payments as PaymentLogRow[]) : []
-  authData.value = Array.isArray(auth) ? (auth as AuthLogRow[]) : []
-})
-
-function isConsentAuthorised(r: AuthLogRow): boolean {
-  return r.url === CONSENT_AUTH_URL
-    && typeof r.tppresponsecodegroup === 'string'
-    && CONSENT_SUCCESS_CODES.has(r.tppresponsecodegroup)
-}
-
-function isAuthStart(r: AuthLogRow): boolean {
-  return r.url === AUTH_START_URL && r.tppresponsecodegroup === '2xx'
-}
+const stats: HomeStats | null = Object.values(
+  import.meta.glob<HomeStats>('../data/generated/home-stats.json', { eager: true, import: 'default' }),
+)[0] ?? null
 
 // ── Monthly aggregation helpers ──────────────────────────────────────────
-function monthlyTotals<T>(
-  rows: readonly T[],
-  valueFn: (r: T) => number | undefined,
-  dateFn: (r: T) => string | undefined,
-): Record<string, number> {
-  const byMonth: Record<string, number> = {}
-  for (const r of rows) {
-    const date = dateFn(r) ?? ''
-    const m = date.substring(0, 7)
-    if (!m) continue
-    byMonth[m] = (byMonth[m] ?? 0) + (valueFn(r) ?? 0)
-  }
-  return byMonth
-}
-
-function monthlySeries<T>(
-  rows: readonly T[],
-  valueFn: (r: T) => number | undefined,
-  dateFn: (r: T) => string | undefined,
-): number[] {
-  const byMonth = monthlyTotals(rows, valueFn, dateFn)
-  return Object.keys(byMonth)
-    .sort()
-    .map(k => byMonth[k] ?? 0)
+function sumMonths(byMonth: MonthlyTotals | undefined): number {
+  return Object.values(byMonth ?? {}).reduce((s, v) => s + v, 0)
 }
 
 interface MonthlyWithLabels {
@@ -161,23 +96,12 @@ function thinLabels(labels: readonly string[], max = 6): string[] {
 const CHART_MONTHS = 4
 
 // The in-progress calendar month (e.g. a few days into June) has partial
-// totals that would make a chart line dive at the end. Exclude it from charts
-// and growth maths.
-function partialMonth(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-}
-
-// Monthly {labels, series} with the in-progress current month dropped.
-function completeMonthly<T>(
-  rows: readonly T[],
-  valueFn: (r: T) => number | undefined,
-  dateFn: (r: T) => string | undefined,
-): MonthlyWithLabels {
-  const byMonth = monthlyTotals(rows, valueFn, dateFn)
-  const partial = partialMonth()
-  const keys = Object.keys(byMonth).sort().filter(k => k !== partial)
-  return { labels: keys, series: keys.map(k => byMonth[k] ?? 0) }
+// totals that would make a chart line dive at the end, so it is excluded from
+// charts and growth maths. Monthly {labels, series} without it.
+function completeMonthly(byMonth: MonthlyTotals | undefined): MonthlyWithLabels {
+  const months = byMonth ?? {}
+  const keys = Object.keys(months).sort().filter(k => k !== stats?.partialMonth)
+  return { labels: keys, series: keys.map(k => months[k] ?? 0) }
 }
 
 // Trailing N entries — the window the chart line plots.
@@ -210,46 +134,13 @@ function compact(n: number | null | undefined): string {
   return String(n)
 }
 
-// Orgs are pre-filtered (active only) and pre-deduped (one entry per id) by
-// the upstream pull. An LFI with a tppGoLiveDate is counted as *both* an LFI
-// and a TPP.
-function lfiOrgs(orgs: readonly TrustFrameworkOrg[]): TrustFrameworkOrg[] {
-  return orgs.filter(o => o.type === 'LFI')
-}
-
-function tppOrgs(orgs: readonly TrustFrameworkOrg[]): TrustFrameworkOrg[] {
-  return orgs.filter(o => o.type === 'TPP' || !!o.tppGoLiveDate)
-}
-
-function pad2(n: number): string {
-  return String(n).padStart(2, '0')
-}
-
-// The API log's `tppname` is a free-text caller name — it also carries LFIs
-// that call APIs without holding a TPP registration. Map it back to the
-// directory (by legal name or short name, case-insensitively) so "active
-// TPPs" can never exceed the number of registered TPPs, and so an org logged
-// under both of its names is still counted once.
-function tppIdsByName(orgs: readonly TrustFrameworkOrg[]): Map<string, string> {
-  const byName = new Map<string, string>()
-  for (const o of tppOrgs(orgs)) {
-    const id = o.id ?? o.legalName ?? o.name ?? ''
-    if (!id) continue
-    if (o.legalName) byName.set(o.legalName.toUpperCase(), id)
-    if (o.name) byName.set(o.name.toUpperCase(), id)
-  }
-  return byName
+function pad2(n: number | null | undefined): string {
+  return n == null ? '—' : String(n).padStart(2, '0')
 }
 
 // ── Last-updated label (max date across the ticker's data sources) ───────
 const lastUpdatedLabel = computed<string>(() => {
-  let max = ''
-  const sources: readonly { date?: string }[][] = [apiData.value, paymentData.value, authData.value]
-  for (const rows of sources) {
-    for (const r of rows) {
-      if (r.date && r.date > max) max = r.date
-    }
-  }
+  const max = stats?.lastDate ?? ''
   if (!max) return '—'
   const parts = max.split('-')
   const y = parts[0] ?? ''
@@ -277,15 +168,13 @@ function fmtMomentum(d: Momentum | null): string {
 const tickerCells = computed<TickerCell[]>(() => {
   // Totals keep the full amount (incl. the in-progress month); the sparkline
   // and growth % use only complete months.
-  const apiTotal      = monthlySeries(apiData.value, r => r.totalapicalls, r => r.date).reduce((s, v) => s + v, 0)
-  const apiComplete   = completeMonthly(apiData.value, r => r.totalapicalls, r => r.date)
+  const apiTotal      = stats ? sumMonths(stats.apiCallsByMonth) : null
+  const apiComplete   = completeMonthly(stats?.apiCallsByMonth)
   const apiDelta      = vsRecentAvg(apiComplete.series)
 
-  const paySuccess = paymentData.value.filter(r =>
-    typeof r.status === 'string' && SUCCESS_PAYMENT_STATUSES.has(r.status) && !!r.lfinamekey,
-  )
-  const payTotal      = monthlySeries(paySuccess, r => r.amount, r => r.date).reduce((s, v) => s + v, 0)
-  const payComplete   = completeMonthly(paySuccess, r => r.amount, r => r.date)
+  // Successful payments only, with a known LFI.
+  const payTotal      = stats ? sumMonths(stats.successfulPaymentAmountByMonth) : null
+  const payComplete   = completeMonthly(stats?.successfulPaymentAmountByMonth)
   const payDelta      = vsRecentAvg(payComplete.series)
 
   return [
@@ -316,26 +205,26 @@ interface ParticipantRow {
 }
 
 const participantRows = computed<ParticipantRow[]>(() => {
-  const lfis = lfiOrgs(tfData.value)
-  const tpps = tppOrgs(tfData.value)
+  const lfis = stats?.participants?.lfi
+  const tpps = stats?.participants?.tpp
 
   return [
     {
       label: 'LFIs',
       color: ACCENT.navy,
       stats: [
-        { label: 'Live',       value: pad2(lfis.filter(o => !!o.lfiGoLiveDate).length) },
-        { label: 'Production', value: pad2(lfis.filter(o => o.isProduction === true).length) },
-        { label: 'Onboarded',  value: pad2(lfis.length) },
+        { label: 'Live',       value: pad2(lfis?.live) },
+        { label: 'Production', value: pad2(lfis?.production) },
+        { label: 'Onboarded',  value: pad2(lfis?.onboarded) },
       ],
     },
     {
       label: 'TPPs',
       color: ACCENT.blueDeep,
       stats: [
-        { label: 'Live',       value: pad2(tpps.filter(o => !!o.tppGoLiveDate).length) },
-        { label: 'Production', value: pad2(tpps.filter(o => o.isProduction === true).length) },
-        { label: 'Onboarded',  value: pad2(tpps.length) },
+        { label: 'Live',       value: pad2(tpps?.live) },
+        { label: 'Production', value: pad2(tpps?.production) },
+        { label: 'Onboarded',  value: pad2(tpps?.onboarded) },
       ],
     },
   ]
@@ -351,30 +240,27 @@ interface StoryChart {
 }
 
 const storyCharts = computed<StoryChart[]>(() => {
-  const consentSuccess = authData.value.filter(isConsentAuthorised)
+  const confByMonth  = stats?.consentsAuthorisedByMonth ?? {}
+  const startByMonth = stats?.authStartsByMonth ?? {}
   // Headline total keeps the full amount; the chart line and growth % use
   // only complete months.
-  const consentsTotal    = monthlySeries(consentSuccess, r => r.totalapicalls, r => r.date).reduce((s, v) => s + v, 0)
-  const consentsComplete = completeMonthly(consentSuccess, r => r.totalapicalls, r => r.date)
+  const consentsTotal    = sumMonths(confByMonth)
+  const consentsComplete = completeMonthly(confByMonth)
 
-  const confByMonth  = monthlyTotals(authData.value.filter(isConsentAuthorised), r => r.totalapicalls, r => r.date)
-  const startByMonth = monthlyTotals(authData.value.filter(isAuthStart),         r => r.totalapicalls, r => r.date)
-  const partial      = partialMonth()
   // Complete months only for the rate line + growth; full months for the
   // headline overall rate.
-  const rateMonths   = Object.keys(startByMonth).sort().filter(m => m !== partial)
+  const rateMonths   = completeMonthly(startByMonth).labels
   const rateSeries   = rateMonths.map(m => {
     const s = startByMonth[m] ?? 0
     return s > 0 ? ((confByMonth[m] ?? 0) / s) * 100 : 0
   })
-  const totalStarts = Object.values(startByMonth).reduce((s, v) => s + v, 0)
-  const totalConf   = Object.values(confByMonth).reduce((s, v) => s + v, 0)
-  const overallRate = totalStarts > 0 ? (totalConf / totalStarts) * 100 : null
+  const totalStarts = sumMonths(startByMonth)
+  const overallRate = totalStarts > 0 ? (consentsTotal / totalStarts) * 100 : null
 
   return [
     {
       label: 'Consents Authorised · by Month',
-      value: consentsTotal.toLocaleString(),
+      value: stats ? consentsTotal.toLocaleString('en-US') : '—',
       color: ACCENT.teal,
       series: lastMonths(consentsComplete.series),
       labels: thinLabels(lastMonths(consentsComplete.labels)),
@@ -398,50 +284,20 @@ interface HeroKpi {
 }
 
 const heroKpis = computed<HeroKpi[]>(() => {
-  const consentsAuthorised = authData.value
-    .filter(isConsentAuthorised)
-    .reduce((s, r) => s + (r.totalapicalls ?? 0), 0)
-
-  const authStarts = authData.value
-    .filter(isAuthStart)
-    .reduce((s, r) => s + (r.totalapicalls ?? 0), 0)
+  const consentsAuthorised = sumMonths(stats?.consentsAuthorisedByMonth)
+  const authStarts = sumMonths(stats?.authStartsByMonth)
   const successRate = authStarts > 0 ? (consentsAuthorised / authStarts) * 100 : null
 
-  // Unique LFIs/TPPs that sent or received *any* API call in the trailing
-  // 30 days, anchored to the latest date in the log (data may lag real
-  // time). Callers are restricted to registered TPPs — see tppNameKeys().
-  let activeLfis = 0
-  let activeTpps = 0
-  const registeredTpps = tppIdsByName(tfData.value)
-  if (apiData.value.length > 0) {
-    const first = apiData.value[0]
-    const initial = first?.date ?? ''
-    const maxDate = apiData.value.reduce(
-      (m, r) => (r.date && r.date > m ? r.date : m),
-      initial,
-    )
-    if (maxDate) {
-      const d = new Date(maxDate + 'T00:00:00Z')
-      d.setUTCDate(d.getUTCDate() - 30)
-      const windowStart = d.toISOString().substring(0, 10)
-      const lfiSet = new Set<string>()
-      const tppSet = new Set<string>()
-      for (const r of apiData.value) {
-        if (r.date && r.date >= windowStart) {
-          if (r.lfinamekey) lfiSet.add(r.lfinamekey)
-          const tppId = r.tppname ? registeredTpps.get(r.tppname.toUpperCase()) : undefined
-          if (tppId) tppSet.add(tppId)
-        }
-      }
-      activeLfis = lfiSet.size
-      activeTpps = tppSet.size
-    }
-  }
+  // Unique LFIs/TPPs with any API traffic in the trailing 30 days of the log,
+  // TPPs matched back to the directory — see activeParticipants() in
+  // scripts/build-metrics.mjs.
+  const activeLfis = stats?.active30d.lfis
+  const activeTpps = stats?.active30d.tpps
 
   return [
     {
       label: 'Consents Authorised',
-      value: consentsAuthorised.toLocaleString(),
+      value: stats ? consentsAuthorised.toLocaleString('en-US') : '—',
       desc:  'Successful customer authorisations',
       color: ACCENT.teal,
     },
@@ -453,13 +309,13 @@ const heroKpis = computed<HeroKpi[]>(() => {
     },
     {
       label: 'LFIs Serving Traffic · 30d',
-      value: String(activeLfis).padStart(2, '0'),
+      value: pad2(activeLfis),
       desc:  'Received API traffic in the last 30 days',
       color: ACCENT.navy,
     },
     {
       label: 'TPPs Making Requests · 30d',
-      value: String(activeTpps).padStart(2, '0'),
+      value: pad2(activeTpps),
       desc:  'Sent API requests in the last 30 days',
       color: ACCENT.blueDeep,
     },

@@ -5,9 +5,15 @@
 // The log downloads are NOT started on import — the page calls
 // `ensureDashboardData()` on mount, so importing the store from a prerender
 // pass costs nothing. Every consumer of this store lives on `/metrics`.
+//
+// API usage comes from summaries rolled up at build time by
+// scripts/build-metrics.mjs, not from the raw log: a per-month summary for the
+// default view, and a per-day summary of one month, loaded only when the
+// filters narrow to that single month (the charts then group by day). Both are
+// imported through import.meta.glob, so Vite ships them as content-hashed
+// chunks; the glob also tolerates the files not having been generated.
 
-import { reactive, computed, ref, watchEffect, type ComputedRef, type Ref } from 'vue'
-import { loadApiLog } from '@/composables/apiLog'
+import { reactive, computed, shallowRef, watch, watchEffect, type ComputedRef, type ShallowRef } from 'vue'
 import {
   sectionInSector,
   firstSectionOfSector,
@@ -16,19 +22,39 @@ import {
   type Sector,
 } from '@/data/dashboard-charts'
 
-// Loose raw shapes — external JSON may have missing keys. The transform
-// functions normalise to safe defaults before anything reactive sees them.
-interface RawApiRow {
-  date?: string
-  lfinamekey?: string
-  tppname?: string
-  httpmethod?: string
-  url?: string
-  tppresponsecodegroup?: string
-  totalapicalls?: number
-  executiontime?: number
+// Dictionary-coded table written by scripts/build-metrics.mjs. `period` is a
+// YYYY-MM month in the monthly summary and a YYYY-MM-DD day in a daily one.
+interface SummaryTable {
+  fields: string[]
+  dicts:  Record<string, unknown[]>
+  rows:   unknown[][]
 }
 
+interface SummaryRow {
+  period:   string
+  lfi:      string
+  tpp:      string
+  family:   string
+  version:  string
+  endpoint: string
+  method:   string
+  ok:       number
+  volume:   number
+  rtSum:    number
+  rtN:      number
+}
+
+interface MonthlySummary {
+  latestDay: string
+  table:     SummaryTable
+}
+
+interface DailySummary {
+  table: SummaryTable
+}
+
+// Loose raw shapes — external JSON may have missing keys. The transform
+// functions normalise to safe defaults before anything reactive sees them.
 interface RawPaymentRow {
   date?: string
   lfinamekey?: string
@@ -70,6 +96,8 @@ interface RawAuthRow {
   totalapicalls?: number
 }
 
+// One summary row: the raw log rows sharing a period, LFI, TPP, endpoint,
+// method and success/error outcome. `day` is '' in the monthly summary.
 export interface ApiRow {
   month:    string
   day:      string
@@ -86,6 +114,11 @@ export interface ApiRow {
   p50:      number
   p95:      number
   p99:      number
+  /** Sum of the per-raw-row average response times this row absorbed. */
+  rtSum:    number
+  /** Number of raw log rows this row absorbed. Response-time averages are
+   *  `Σ rtSum / Σ rtN` — see `meanResponseMs`. */
+  rtN:      number
 }
 
 export type PaymentStatusGroup = 'Successful' | 'Failed' | 'Pending'
@@ -196,43 +229,56 @@ const RT_EXCLUDED_ENDPOINTS: readonly string[] = [
   '/auth',
 ]
 
-function transformApiRow(row: RawApiRow): ApiRow {
-  const date = row.date ?? ''
-  const month = date.substring(0, 7)
-  const lfi = row.lfinamekey ?? 'Unknown'
-  const tpp = row.tppname ?? 'Unknown'
-  const url = row.url ?? ''
+function decodeSummary(table: SummaryTable | undefined): SummaryRow[] {
+  if (!table || !Array.isArray(table.rows) || !Array.isArray(table.fields)) return []
+  const { fields, dicts, rows } = table
+  return rows.map((tuple) => {
+    const row: Record<string, unknown> = {}
+    for (let i = 0; i < fields.length; i++) {
+      const field = fields[i] as string
+      const dict = dicts?.[field]
+      row[field] = dict ? dict[tuple[i] as number] : tuple[i]
+    }
+    return row as unknown as SummaryRow
+  })
+}
 
-  const familyMatch = url.match(/open-finance\/([^/]+)(?:\/|$)/)
-  const family = familyMatch?.[1] ?? 'other'
-
-  const versionMatch = url.match(/\/(v\d+\.\d+)(\/.*)?$/)
-  const version  = versionMatch?.[1] ?? 'unknown'
-  const endpoint = versionMatch?.[2] ?? (family !== 'other' ? `/${family}` : (url || '/other'))
-
-  const codeGroup = row.tppresponsecodegroup ?? '2xx'
-  const isError = codeGroup !== '2xx'
-  const volume  = row.totalapicalls ?? 0
-  const ttlb    = row.executiontime ?? 0
-  const avgMs   = volume > 0 ? Math.round(ttlb / volume) : 0
+function transformApiRow(row: SummaryRow): ApiRow {
+  const isDaily = row.period.length > 7
+  const isError = row.ok !== 1
+  const avgMs   = row.rtN > 0 ? Math.round(row.rtSum / row.rtN) : 0
 
   return {
-    month,
-    day: date.substring(0, 10),
-    lfi,
-    tpp,
-    family,
-    version,
-    endpoint,
-    method: row.httpmethod?.toUpperCase() || 'Unknown',
-    volume,
-    errors: isError ? volume : 0,
-    status: isError ? 'error' : 'success',
+    month:    row.period.substring(0, 7),
+    day:      isDaily ? row.period : '',
+    lfi:      row.lfi,
+    tpp:      row.tpp,
+    family:   row.family,
+    version:  row.version,
+    endpoint: row.endpoint,
+    method:   row.method,
+    volume:   row.volume,
+    errors:   isError ? row.volume : 0,
+    status:   isError ? 'error' : 'success',
     avgMs,
     p50: Math.round(avgMs * 0.85),
     p95: Math.round(avgMs * 1.5),
     p99: Math.round(avgMs * 2.2),
+    rtSum:    row.rtSum,
+    rtN:      row.rtN,
   }
+}
+
+// Average response time over summary rows, weighted so the result equals the
+// unweighted mean over the raw log rows they absorbed.
+export function meanResponseMs(rows: readonly ApiRow[]): number {
+  let sum = 0
+  let n = 0
+  for (const r of rows) {
+    sum += r.rtSum
+    n += r.rtN
+  }
+  return n > 0 ? Math.round(sum / n) : 0
 }
 
 function transformPaymentRow(row: RawPaymentRow): PaymentRow {
@@ -297,11 +343,27 @@ function transformAuthRow(row: RawAuthRow): AuthRow {
   return { month, day, lfi, url, type, count }
 }
 
-const rawApiData:     Ref<ApiRow[]>     = ref<ApiRow[]>([])
-const rawRtData:      Ref<ApiRow[]>     = ref<ApiRow[]>([])
-const rawPaymentData: Ref<PaymentRow[]> = ref<PaymentRow[]>([])
-const rawAuthData:    Ref<AuthRow[]>    = ref<AuthRow[]>([])
-const rawPaymentBandData: Ref<PaymentBandRow[]> = ref<PaymentBandRow[]>([])
+// Shallow: the rows are replaced wholesale and never mutated, so deep
+// reactive proxies over thousands of rows would be pure overhead.
+//
+// The monthly API summary covers the whole log, so it alone drives the filter
+// options and sector detection. `rawApiData` (defined after `state`) swaps in
+// a month's daily summary when that month is the only one selected.
+const monthlyApiData:  ShallowRef<ApiRow[]> = shallowRef<ApiRow[]>([])
+const dailyApiData:    ShallowRef<Record<string, ApiRow[]>> = shallowRef<Record<string, ApiRow[]>>({})
+const latestApiDay:    ShallowRef<string> = shallowRef<string>('')
+const rawPaymentData:  ShallowRef<PaymentRow[]> = shallowRef<PaymentRow[]>([])
+const rawAuthData:     ShallowRef<AuthRow[]>    = shallowRef<AuthRow[]>([])
+const rawPaymentBandData: ShallowRef<PaymentBandRow[]> = shallowRef<PaymentBandRow[]>([])
+
+const monthlySummaryModules = import.meta.glob<MonthlySummary>(
+  '../data/generated/metrics/api-monthly.json',
+  { import: 'default' },
+)
+const dailySummaryModules = import.meta.glob<DailySummary>(
+  '../data/generated/metrics/api-daily-*.json',
+  { import: 'default' },
+)
 
 // LFI → directory sector ('bank' | 'insurer'), loaded at runtime from the
 // build-time map (public/api/lfi-sectors.json, generated from the participants
@@ -313,7 +375,7 @@ const lfiSectorMap = reactive<Record<string, string>>({})
 // insurers and catches new entrants not yet reflected in the directory map.
 const observedInsurerLfis = computed<Set<string>>(() => {
   const s = new Set<string>()
-  for (const r of rawApiData.value) if (r.family === 'insurance') s.add(r.lfi)
+  for (const r of monthlyApiData.value) if (r.family === 'insurance') s.add(r.lfi)
   return s
 })
 
@@ -351,19 +413,44 @@ export function ensureDashboardData(): void {
   loadDataIfClient()
 }
 
+// Months whose daily summary has been requested. Cleared on failure so a
+// transient error doesn't stop a later retry.
+const dailyRequested = new Set<string>()
+
+function loadDailyApiData(month: string): void {
+  if (typeof window === 'undefined' || dailyRequested.has(month)) return
+  const load = dailySummaryModules[`../data/generated/metrics/api-daily-${month}.json`]
+  if (!load) return
+  dailyRequested.add(month)
+  load()
+    .then(summary => {
+      dailyApiData.value = {
+        ...dailyApiData.value,
+        [month]: decodeSummary(summary?.table).map(transformApiRow),
+      }
+    })
+    .catch(err => {
+      dailyRequested.delete(month)
+      console.error(`[dashboard] Failed to load the daily API summary for ${month}`, err)
+    })
+}
+
 function loadDataIfClient(): void {
   if (typeof window === 'undefined') return
 
-  loadApiLog()
-    .then(json => {
-      const arr = Array.isArray(json) ? (json as RawApiRow[]) : []
-      const rows = arr.map(transformApiRow)
-      rawApiData.value = rows
-      rawRtData.value = rows.filter(r =>
-        r.status === 'success' && !RT_EXCLUDED_ENDPOINTS.includes(r.endpoint),
-      )
-    })
-    .catch(err => console.error('[dashboard] Failed to load the API log', err))
+  const loadMonthly = Object.values(monthlySummaryModules)[0]
+  if (loadMonthly) {
+    loadMonthly()
+      .then(summary => {
+        latestApiDay.value = summary?.latestDay ?? ''
+        monthlyApiData.value = decodeSummary(summary?.table).map(transformApiRow)
+      })
+      .catch(err => console.error('[dashboard] Failed to load the monthly API summary', err))
+  } else {
+    console.error('[dashboard] The API summaries were not generated — run `npm run build:metrics`')
+  }
+
+  watch(singleSelectedMonth, month => { if (month) loadDailyApiData(month) }, { immediate: true })
 
   fetch('/api/payments-log.json')
     .then(r => r.json() as Promise<unknown>)
@@ -409,12 +496,31 @@ export const state: DashboardState = reactive({
   excludePartialMonths: true,
 })
 
+// The month the filters narrow to, when exactly one is selected. The charts
+// then group by day, so the API data switches to that month's daily summary.
+const singleSelectedMonth: ComputedRef<string | null> = computed(() =>
+  state.filters.month.length === 1 ? (state.filters.month[0] ?? null) : null,
+)
+
+// Until the daily summary arrives this falls back to the monthly rows, so the
+// totals stay put and only the by-day charts wait.
+const rawApiData: ComputedRef<ApiRow[]> = computed(() => {
+  const month = singleSelectedMonth.value
+  return (month && dailyApiData.value[month]) || monthlyApiData.value
+})
+
+const rawRtData: ComputedRef<ApiRow[]> = computed(() =>
+  rawApiData.value.filter(r =>
+    r.status === 'success' && !RT_EXCLUDED_ENDPOINTS.includes(r.endpoint),
+  ),
+)
+
 // Filter option lists are scoped to the active sector so the dropdowns only
 // offer LFIs/TPPs/months/families that exist within it. Recomputed whenever the
 // source data, the sector map, or the selected sector changes.
 watchEffect(() => {
   const sec = state.sector
-  const api = rawApiData.value.filter(r => sectorOf(r.lfi) === sec)
+  const api = monthlyApiData.value.filter(r => sectorOf(r.lfi) === sec)
   filterOptions.lfis        = uniqueSorted(api.map(r => r.lfi))
   filterOptions.tpps        = uniqueSorted(api.map(r => r.tpp))
   filterOptions.months      = uniqueSorted(api.map(r => r.month))
@@ -431,11 +537,9 @@ watchEffect(() => {
 })
 
 // The most recent day in the API log is still being ingested, so the dashboard
-// reports data as complete up to the day before it. ISO `YYYY-MM-DD` strings
-// sort lexically, so a string max is the latest date. Null until the log loads.
+// reports data as complete up to the day before it. Null until the log loads.
 export const dataUpTo: ComputedRef<string | null> = computed(() => {
-  let latest = ''
-  for (const r of rawApiData.value) if (r.day > latest) latest = r.day
+  const latest = latestApiDay.value
   if (!/^\d{4}-\d{2}-\d{2}$/.test(latest)) return null
   const d = new Date(`${latest}T00:00:00Z`)
   d.setUTCDate(d.getUTCDate() - 1)
@@ -546,10 +650,7 @@ export const kpis: ComputedRef<DashboardKpis> = computed(() => {
   const totalVol    = successRows.reduce((s, r) => s + r.volume, 0)
   const totalErr    = errorRows.reduce((s, r) => s + r.volume, 0)
 
-  const rtRows  = filteredRtData.value
-  const avgRtMs = rtRows.length
-    ? Math.round(rtRows.reduce((s, r) => s + r.avgMs, 0) / rtRows.length)
-    : 0
+  const avgRtMs = meanResponseMs(filteredRtData.value)
 
   // Payment metrics: successful only, excluding unknown LFI.
   const successData    = filteredSuccessPaymentData.value

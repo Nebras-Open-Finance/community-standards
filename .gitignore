@@ -21,6 +21,8 @@ public/api/authorization-endpoints.json
 public/postman/
 # Generated search index (see scripts/build-search-index.mjs)
 src/components/chrome/search-data.ts
+# Generated usage-log summaries for the homepage and /metrics (see scripts/build-metrics.mjs)
+src/data/generated/
 CLAUDE.md
 
 # Logs

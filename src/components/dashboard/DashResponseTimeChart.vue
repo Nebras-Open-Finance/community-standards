@@ -86,6 +86,19 @@ function getAvgMs(row: AnyRow): number {
   return typeof v === 'number' ? v : 0
 }
 
+// Each row rolls up `rtN` raw log rows whose average response times sum to
+// `rtSum`. Averages are taken as Σ rtSum / Σ rtN, so they equal the mean over
+// the raw rows however coarsely the data was rolled up.
+function getRtSum(row: AnyRow): number {
+  const v = (row as { rtSum?: unknown }).rtSum
+  return typeof v === 'number' ? v : 0
+}
+
+function getRtN(row: AnyRow): number {
+  const v = (row as { rtN?: unknown }).rtN
+  return typeof v === 'number' ? v : 0
+}
+
 function getPercentile(row: AnyRow, key: 'p50' | 'p95' | 'p99'): number {
   const v = (row as unknown as Record<string, unknown>)[key]
   return typeof v === 'number' ? v : 0
@@ -93,9 +106,10 @@ function getPercentile(row: AnyRow, key: 'p50' | 'p95' | 'p99'): number {
 
 const metaValue = computed<string>(() => {
   if (!props.data.length) return ''
-  if (props.mode === 'histogram') return `${props.data.length.toLocaleString()} samples`
-  const sum = props.data.reduce((s, r) => s + getAvgMs(r), 0)
-  return `${Math.round(sum / props.data.length)}ms avg`
+  const n = props.data.reduce((s, r) => s + getRtN(r), 0)
+  if (props.mode === 'histogram') return `${n.toLocaleString()} samples`
+  const sum = props.data.reduce((s, r) => s + getRtSum(r), 0)
+  return n > 0 ? `${Math.round(sum / n)}ms avg` : ''
 })
 
 function buildAvgLine(): Chart {
@@ -104,8 +118,8 @@ function buildAvgLine(): Chart {
   for (const r of props.data) {
     const key = String(readField(r, field) ?? 'unknown')
     const slot = byGroup[key] ?? (byGroup[key] = { total: 0, n: 0 })
-    slot.total += getAvgMs(r)
-    slot.n += 1
+    slot.total += getRtSum(r)
+    slot.n += getRtN(r)
   }
   const labels = Object.keys(byGroup).sort()
   const values = labels.map(m => {
@@ -156,8 +170,8 @@ function buildAvgBar(): Chart {
     const key = String(readField(r, props.groupBy) ?? 'Unknown')
     if (!key || key.toLowerCase() === 'unknown') continue
     const slot = byGroup[key] ?? (byGroup[key] = { total: 0, n: 0 })
-    slot.total += getAvgMs(r)
-    slot.n += 1
+    slot.total += getRtSum(r)
+    slot.n += getRtN(r)
   }
   const labels = Object.keys(byGroup).sort()
   const values = labels.map(k => {
@@ -215,8 +229,8 @@ function buildAvgBarSplit(splitBy: string): Chart {
     const split = String(readField(r, splitBy) ?? 'Unknown')
     const group = byGroup[key] ?? (byGroup[key] = {})
     const slot = group[split] ?? (group[split] = { total: 0, n: 0 })
-    slot.total += getAvgMs(r)
-    slot.n += 1
+    slot.total += getRtSum(r)
+    slot.n += getRtN(r)
     splitKeys.add(split)
   }
   const labels = Object.keys(byGroup).sort()
@@ -267,10 +281,10 @@ function buildPercentiles(): Chart {
   for (const r of props.data) {
     const key = String(readField(r, field) ?? 'unknown')
     const slot = byGroup[key] ?? (byGroup[key] = { p50: 0, p95: 0, p99: 0, n: 0 })
-    slot.p50 += getPercentile(r, 'p50')
-    slot.p95 += getPercentile(r, 'p95')
-    slot.p99 += getPercentile(r, 'p99')
-    slot.n += 1
+    slot.p50 += getPercentile(r, 'p50') * getRtN(r)
+    slot.p95 += getPercentile(r, 'p95') * getRtN(r)
+    slot.p99 += getPercentile(r, 'p99') * getRtN(r)
+    slot.n += getRtN(r)
   }
   const labels = Object.keys(byGroup).sort()
 
@@ -340,7 +354,7 @@ function buildHistogram(): Chart {
     const v = getAvgMs(r)
     const found = BUCKETS.findIndex(b => v < b.max)
     const idx = found >= 0 ? found : BUCKETS.length - 1
-    counts[idx] = (counts[idx] ?? 0) + 1
+    counts[idx] = (counts[idx] ?? 0) + getRtN(r)
   }
 
   const s = buildStyle()

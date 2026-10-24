@@ -5,8 +5,13 @@
 // public/ keeps the readable row-object shards — that is the shape fresh exports
 // arrive in and the shape `npm run dev` serves. Only the deployed copy is coded,
 // and src/composables/apiLog.ts decodes it back to identical row objects, so no
-// figure on /metrics, the homepage or /program/whats-live can shift.
+// figure on /program/whats-live or the other log readers can shift.
+//
+// The deployed manifest then lists each shard as `<file>?v=<content hash>`, so
+// public/_headers can let browsers cache the shards indefinitely: a shard that
+// changes gets a new URL, and the manifest itself is always revalidated.
 
+import { createHash } from 'node:crypto'
 import { readFile, writeFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { encodeApiLog, decodeApiLog } from './api-log-codec.mjs'
@@ -23,6 +28,7 @@ if (!Array.isArray(manifest.shards) || manifest.shards.length === 0) {
 const mib = (n) => (n / 1024 / 1024).toFixed(2)
 let before = 0
 let after = 0
+const versioned = []
 
 for (const file of manifest.shards) {
   const path = join(DIR, file)
@@ -37,10 +43,14 @@ for (const file of manifest.shards) {
   }
 
   before += (await stat(path)).size
-  await writeFile(path, JSON.stringify(encoded))
+  const body = JSON.stringify(encoded)
+  await writeFile(path, body)
   const size = (await stat(path)).size
   after += size
+  versioned.push(`${file}?v=${createHash('sha256').update(body).digest('hex').slice(0, 12)}`)
   console.log(`[encode-api-log] ${file}: ${rows.length} rows -> ${mib(size)} MiB`)
 }
+
+await writeFile(MANIFEST, JSON.stringify({ ...manifest, shards: versioned }))
 
 console.log(`[encode-api-log] total ${mib(before)} MiB -> ${mib(after)} MiB`)
