@@ -1,16 +1,31 @@
 <script setup lang="ts">
-const props = defineProps<{
+import { computed } from 'vue'
+
+const props = withDefaults(defineProps<{
   certType?: string
-}>()
+  audience?: 'TPP' | 'LFI'
+}>(), {
+  audience: 'TPP',
+})
 
 const ticketUrl = 'https://servicedesk.nebrasopenfinance.ae/servicedesk/customer/portal/2/create/37'
 
-const allCertTypes = [
-  'TPP Functional Certification Evidence',
-  'TPP FAPI Certification Evidence',
-  'TPP CX Certification Evidence',
-  'Penetration Test Results',
-] as const
+const certTypesByAudience = {
+  TPP: [
+    'TPP Functional Certification Evidence',
+    'TPP FAPI Certification Evidence',
+    'TPP CX Certification Evidence',
+    'Penetration Test Results',
+  ],
+  LFI: [
+    'LFI Functional Certification Evidence',
+    'LFI CX Certification Evidence',
+    'LFI Performance Test Results',
+    'Penetration Test Results',
+  ],
+} as const
+
+const allCertTypes = computed(() => certTypesByAudience[props.audience])
 </script>
 
 <template>

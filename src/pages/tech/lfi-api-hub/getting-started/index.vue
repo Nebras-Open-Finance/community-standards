@@ -23,7 +23,8 @@ meta:
         </p>
         <p class="ed-doc__lede ed-doc__lede--tight">
           The journey is organised into three phases. Each step builds on the previous one, and each phase
-          should be completed before progressing to the next.
+          should be completed before progressing to the next &mdash; with one exception: performance and
+          security certification need only be accepted before live proving with TPPs (Step 9).
         </p>
       </div>
     </section>
@@ -61,8 +62,8 @@ meta:
             </div>
             <h3 class="ed-doc__phase-card-title">Certification</h3>
             <p class="ed-doc__phase-card-desc">
-              Evidence that your implementation meets the functional, user experience, performance, and
-              security standards.
+              Functional and CX certification to unlock production onboarding; performance and security
+              certification to unlock live proving with TPPs.
             </p>
             <div class="ed-doc__phase-card-foot">
               <span class="ed-doc__phase-card-cta">Jump to phase</span>
@@ -340,9 +341,43 @@ meta:
       tone="surface"
     >
       <h3>Step 4. Test and Certify Your Open Finance Capabilities</h3>
-      <EdNote type="info" title="To be added">
-        <p>Detailed certification content is being finalised and will appear here.</p>
-      </EdNote>
+      <EdProse>
+        Certification is staged across two gates. Gate 1 unlocks production onboarding (Steps 5 and 6);
+        Gate 2 unlocks live proving with TPPs (Step 9). See the
+        <a href="/tech/lfi-api-hub/production/testing-certification/overview">Testing &amp; Certification Overview</a>
+        for the full requirements.
+      </EdProse>
+
+      <h4>Prerequisites</h4>
+      <EdBullets>
+        <li>Step 3 complete for the capability being certified.</li>
+        <li>Access to the Service Desk (Sandbox Trust Framework SSO).</li>
+      </EdBullets>
+
+      <h4>What to do</h4>
+      <EdBullets>
+        <li>
+          <strong>Gate 1</strong> &mdash; submit
+          <a href="/tech/lfi-api-hub/production/testing-certification/functional/">Functional Certification</a>
+          evidence for each capability and
+          <a href="/tech/lfi-api-hub/production/testing-certification/user-experience">CX Certification</a>
+          evidence for your consent journey and consent management interface.
+        </li>
+        <li>
+          <strong>Gate 2</strong> &mdash; submit
+          <a href="/tech/lfi-api-hub/production/testing-certification/performance">performance test</a>
+          results and the results of an independent
+          <a href="/tech/lfi-api-hub/production/testing-certification/security-validation">penetration test</a>
+          covering your consent journey, consent management interface, and every Ozone Connect endpoint
+          you have delivered. Gate 2 also requires the production spot checks in Step 7.
+        </li>
+      </EdBullets>
+
+      <h4>Done when</h4>
+      <EdBullets>
+        <li>Gate 1: Nebras has accepted your Functional and CX certification evidence.</li>
+        <li>Gate 2: Nebras has accepted your performance test and penetration test results.</li>
+      </EdBullets>
     </EdSectionBand>
 
     <EdSectionBand
@@ -362,7 +397,7 @@ meta:
 
       <h4>Prerequisites</h4>
       <EdBullets>
-        <li>Step 4 complete; certification evidence accepted.</li>
+        <li>Step 4 Gate 1 complete; Functional and CX certification evidence accepted.</li>
         <li>Production-grade transport and signing certificates issued.</li>
       </EdBullets>
 
@@ -456,6 +491,7 @@ meta:
       <h4>Done when</h4>
       <EdBullets>
         <li>All critical flows succeed in production with controlled accounts.</li>
+        <li>Spot-check results have been attested to Nebras.</li>
         <li>Monitoring and alerting are confirmed live.</li>
         <li>No real customer traffic has been processed.</li>
       </EdBullets>
@@ -505,6 +541,10 @@ meta:
       <h4>Prerequisites</h4>
       <EdBullets>
         <li>Step 8 complete.</li>
+        <li>
+          Step 4 Gate 2 complete; performance test and penetration test results accepted, and
+          production spot checks (Step 7) attested.
+        </li>
         <li>One or more TPP partners identified for buddying.</li>
         <li>Incident response and on-call processes in place.</li>
       </EdBullets>
