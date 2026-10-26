@@ -42,7 +42,7 @@ meta:
       tone="cream"
     >
       <APIFlowViewer title="Payment status retrieval">
-        <TPPPaymentStatus />
+        <PaymentTimingTpp />
       </APIFlowViewer>
 
       <h3>Event notifications (recommended)</h3>
@@ -77,11 +77,14 @@ meta:
       </EdBullets>
 
       <EdProse>
-        When polling, start shortly after
-        <span class="endpoint"><span class="http-method http-method--post">POST</span><code>/payments</code></span>
-        to catch immediate pre-rail rejections, back off as time passes, and stop polling once the payment
-        reaches a terminal status (<code>AcceptedWithoutPosting</code>,
-        <code>AcceptedCreditSettlementCompleted</code>, or <code>Rejected</code>).
+        When polling, make the first poll about 3 seconds after the <code>201</code> on
+        <span class="endpoint"><span class="http-method http-method--post">POST</span><code>/payments</code></span>.
+        By then the LFI is required to have handed the payment to the rail. Back off as time passes, and
+        stop polling once the payment reaches a terminal status (<code>AcceptedWithoutPosting</code>,
+        <code>AcceptedCreditSettlementCompleted</code>, or <code>Rejected</code>). When to expect each
+        status is set out in
+        <a href="/tech/tpp-standards/v2.2-rc2/banking/service-initiation/domestic-payments/overview/payment-timing">Payment
+        Timing</a>.
       </EdProse>
     </EdSectionBand>
 
@@ -124,8 +127,9 @@ meta:
               <td><code>AcceptedSettlementCompleted</code></td>
               <td><code>ACSC</code></td>
               <td>
-                Settlement of the debtor account has been completed. Indicates progression but does not
-                guarantee the creditor side is complete
+                The LFI has completed its checks and handed the payment to AANI or UAEFTS. Set within 3
+                seconds of the LFI&rsquo;s <code>201</code>, and always followed by a terminal status.
+                Does not apply to intra-bank payments
               </td>
               <td>No</td>
             </tr>
@@ -148,7 +152,7 @@ meta:
               <td><code>Rejected</code></td>
               <td><code>RJCT</code></td>
               <td>
-                The payment was rejected, either pre-rail by the LFI or post-rail by AANI or UAEFTS
+                The payment was rejected, either by the LFI before submission or by AANI or UAEFTS
               </td>
               <td>Yes</td>
             </tr>
@@ -232,6 +236,12 @@ meta:
         </li>
       </EdBullets>
 
+      <EdProse>
+        On AANI and UAEFTS, the LFI reports <code>AcceptedSettlementCompleted</code> as soon as it
+        submits the payment to the rail, within 3 seconds of its <code>201</code>. The terminal status
+        follows when the rail responds.
+      </EdProse>
+
       <h3>AANI</h3>
 
       <EdProse>
@@ -243,11 +253,14 @@ meta:
 
       <EdBullets>
         <li>
-          <strong>Success path:</strong> <code>Pending</code> &rarr; <code>AcceptedWithoutPosting</code>
+          <strong>Success path:</strong> <code>Pending</code> &rarr;
+          <code>AcceptedSettlementCompleted</code> &rarr; <code>AcceptedWithoutPosting</code>
         </li>
         <li>
-          <strong>Rejection path:</strong> <code>Pending</code> &rarr; <code>Rejected</code> (with
-          <code>AANI.&lt;reasonCode&gt;</code>)
+          <strong>Rejection path:</strong> <code>Pending</code> &rarr;
+          <code>AcceptedSettlementCompleted</code> &rarr; <code>Rejected</code> when AANI rejects the
+          payment, or <code>Pending</code> &rarr; <code>Rejected</code> when the LFI rejects it before
+          submission &mdash; either way with <code>AANI.&lt;reasonCode&gt;</code>
         </li>
       </EdBullets>
 
@@ -263,12 +276,14 @@ meta:
 
       <EdBullets>
         <li>
-          <strong>Success path:</strong> <code>Pending</code> &rarr; (optionally
-          <code>AcceptedSettlementCompleted</code>) &rarr; <code>AcceptedCreditSettlementCompleted</code>
+          <strong>Success path:</strong> <code>Pending</code> &rarr;
+          <code>AcceptedSettlementCompleted</code> &rarr; <code>AcceptedCreditSettlementCompleted</code>
         </li>
         <li>
-          <strong>Rejection path:</strong> <code>Pending</code> &rarr; <code>Rejected</code> (with
-          <code>FTS.&lt;reasonCode&gt;</code>)
+          <strong>Rejection path:</strong> <code>Pending</code> &rarr;
+          <code>AcceptedSettlementCompleted</code> &rarr; <code>Rejected</code> when UAEFTS rejects the
+          payment, or <code>Pending</code> &rarr; <code>Rejected</code> when the LFI rejects it before
+          submission &mdash; either way with <code>FTS.&lt;reasonCode&gt;</code>
         </li>
       </EdBullets>
     </EdSectionBand>
@@ -283,8 +298,8 @@ meta:
     >
       <EdProse>
         When a payment is rejected, the <code>RejectReasonCode[]</code> array on the payment resource
-        carries a namespaced <code>Code</code>. The first segment identifies where the rejection
-        originated:
+        carries a namespaced <code>Code</code>. Where <code>PaymentRail</code> is present, the namespace
+        matches it &mdash; including when the LFI rejected the payment before submitting it to the rail:
       </EdProse>
 
       <EdRefTable>
@@ -300,19 +315,18 @@ meta:
             <tr>
               <td><code>LFI.</code></td>
               <td>
-                The LFI rejected the payment pre-rail (fraud, sanctions, account state, insufficient
-                funds) or rejected an intra-bank payment that never reached a rail
+                An intra-bank payment (<code>PaymentRail: LFI</code>) rejected by the LFI
               </td>
               <td><code>LFI.InsufficientFunds</code></td>
             </tr>
             <tr>
               <td><code>AANI.</code></td>
-              <td>AANI rejected the payment on-rail</td>
+              <td>A payment routed to AANI, rejected by AANI or by the LFI before submission</td>
               <td><code>AANI.AC06</code></td>
             </tr>
             <tr>
               <td><code>FTS.</code></td>
-              <td>UAEFTS rejected the payment on-rail</td>
+              <td>A payment routed to UAEFTS, rejected by UAEFTS or by the LFI before submission</td>
               <td><code>FTS.AC06</code></td>
             </tr>
           </tbody>
@@ -352,9 +366,9 @@ meta:
       </EdRefTable>
 
       <EdProse>
-        Where Open Finance defines a Prescriptive Error Code for the underlying condition (for example,
-        <code>Consent.TransientAccountAccessFailure</code>), the LFI MAY substitute the prescriptive
-        code in place of the raw rail code. Your TPP SHOULD be prepared to handle either form.
+        The TPP-facing schema admits any namespaced code matching
+        <code>^[A-Za-z]+\.[A-Za-z0-9]+$</code>, so your TPP SHOULD handle a code from an unfamiliar
+        namespace gracefully rather than failing on it.
       </EdProse>
     </EdSectionBand>
   </div>

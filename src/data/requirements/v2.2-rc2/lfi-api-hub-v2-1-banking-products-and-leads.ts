@@ -33,7 +33,7 @@ export const data: RequirementsPageData = {
             { cells: ['11', 'Date and time format', '<code>EffectiveFromDateTime</code>, <code>EffectiveToDateTime</code>, and <code>LastUpdatedDateTime</code> MUST carry an explicit offset (e.g. <code>2027-07-22T00:00:00Z</code>). You SHOULD emit UTC; the offset <code>-00:00</code> MUST NOT be used. Apply the offset on the <code>LastUpdatedDateTime</code> query parameter — two encodings of the same instant MUST filter identically.'] },
           ],
         } },
-        { kind: 'prose', html: '<strong>Sharia-compliant product data.</strong> v2.2 adds a Sharia-compliant counterpart to each interest-based rate structure. Every field below is optional: an LFI with no Islamic products sends nothing new. Where you offer Islamic products, describe them with these fields rather than approximating them in the interest-based ones. See <a href="/tech/release-notes-and-erratas/changelog/v2.2-rc2/#v2.1-to-v2.2-change-17">changelog §17</a>.' },
+        { kind: 'prose', html: '<strong>Sharia-compliant product data.</strong> v2.2 adds a Sharia-compliant counterpart to each interest-based rate structure. Every field below is optional: an LFI with no Islamic products sends nothing new. Where you offer Islamic products, describe them with these fields rather than approximating them in the interest-based ones. See <a href="/tech/release-notes-and-erratas/changelog/v2.2-rc2/#v2.1-to-v2.2-change-19">changelog §19</a>.' },
         { kind: 'table', table: {
           headers: ['#', 'Field', 'Rule'],
           rows: [

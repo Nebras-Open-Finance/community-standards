@@ -407,10 +407,10 @@ const patchRailRejectionExample = `{
   "paymentResponse.paymentRail": "AANI",
   "paymentResponse.status": "Rejected",
   "paymentResponse.paymentTransactionId": "OFP7d2c1e9a4b6f4c0e8a1b",
-  "paymentResponse.RejectReasonCode": [
+  "paymentResponse.rejectReasonCode": [
     {
-      "Code": "AANI.AM04",
-      "Message": "Payment request cannot be executed as insufficient funds at debtor account."
+      "code": "AANI.AM04",
+      "message": "Payment request cannot be executed as insufficient funds at debtor account."
     }
   ]
 }
@@ -419,10 +419,11 @@ const patchRailRejectionExample = `{
 const patchScreeningRejectionExample = `{
   "paymentResponse.paymentRail": "AANI",
   "paymentResponse.status": "Rejected",
-  "paymentResponse.RejectReasonCode": [
+  "paymentResponse.paymentTransactionId": "OFP7d2c1e9a4b6f4c0e8a1b",
+  "paymentResponse.rejectReasonCode": [
     {
-      "Code": "AANI.ScreeningRejected",
-      "Message": "Payment rejected by LFI screening controls."
+      "code": "AANI.ScreeningRejected",
+      "message": "Payment rejected by LFI screening controls."
     }
   ]
 }
@@ -434,7 +435,7 @@ const getPaymentResponseExample = `{
     "consentId": "cac2381a-7111-4c5f-bc2f-4319a93da7c5",
     "paymentTransactionId": "OFP7d2c1e9a4b6f4c0e8a1b",
     "status": "AcceptedSettlementCompleted",
-    "statusUpdateDateTime": "2026-04-18T10:14:31Z",
+    "statusUpdateDateTime": "2026-04-18T10:14:25Z",
     "creationDateTime": "2026-04-18T10:14:23Z",
     "instruction": {
       "Amount": { "amount": "100.00", "currency": "AED" }
@@ -759,6 +760,8 @@ const fapiHeaderTabs = [
         Screening, rail submission, and status propagation happen <strong>after</strong> the
         <code>201</code> response &mdash; see
         <a href="#after-returning-201">After returning 201</a>.
+        The payment MUST be submitted to the rail within 3 seconds of returning the
+        <code>201</code> &mdash; see <a href="/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation/domestic-payments/overview/payment-timing">Payment Timing</a>.
       </EdProse>
 
       <h3 class="ed-doc__subhead">Common request headers</h3>
@@ -1017,10 +1020,10 @@ const fapiHeaderTabs = [
         <table>
           <thead><tr><th>Stage</th><th>LFI behaviour</th><th>Reference</th></tr></thead>
           <tbody>
-            <tr><td>Screening</td><td>Run the LFI's standard fraud / sanctions / AML controls on the payment record. SHOULD complete within 3 seconds. On a screening failure, immediately PATCH the payment to <code>Rejected</code> with an <code>LFI.</code>-namespaced reject reason</td><td><a href="./requirements#screening-checks">Screening Checks</a></td></tr>
-            <tr><td>Rail submission</td><td>Route as set by <code>UseFTS</code> &mdash; see <a href="#routing-with-usefts">Routing with <code>UseFTS</code></a>. By default, submit to AANI as primary. Fall back to UAEFTS automatically if AANI is unavailable or the receiving bank cannot receive via AANI &mdash; no TPP/customer intervention</td><td><a href="./requirements#rail-submission">Rail Submission</a></td></tr>
-            <tr><td>Status propagation</td><td>On every rail status change that maps to an Open Finance status, call <a href="/tech/lfi-api-hub/v2.2-rc2/api-hub/consent-manager/open-api/payment-log" class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/payment-log/{id}</code></a> on the API Hub Consent Manager. Every PATCH MUST carry <code>paymentResponse.paymentRail</code>. On <code>AANI</code> and <code>FTS</code>, include the end-to-end identifier as <code>paymentTransactionId</code> on each PATCH</td><td><a href="/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation/domestic-payments/overview/payment-status">Payment Status</a></td></tr>
-            <tr><td>Rail rejection</td><td>If the rail rejects the payment, PATCH <code>paymentResponse.status: Rejected</code> with <code>RejectReasonCode.Code</code> namespaced to the rail named in <code>paymentResponse.paymentRail</code> (<code>AANI.</code>, <code>FTS.</code> or <code>LFI.</code>) and a sanitised <code>Message</code> for relay to the TPP</td><td><a href="./requirements#rail-submission">Rail Submission</a></td></tr>
+            <tr><td>Screening</td><td>Run the LFI's fraud screening, transaction monitoring and AML checks on the payment record. These MUST complete in time for the payment to be submitted to the rail within <strong>3 seconds</strong> of returning the <code>201</code></td><td><a href="./requirements#screening-checks">Screening Checks</a></td></tr>
+            <tr><td>Rail submission</td><td>Route as set by <code>UseFTS</code> &mdash; see <a href="#routing-with-usefts">Routing with <code>UseFTS</code></a>. By default, submit to AANI as primary. Fall back to UAEFTS automatically if AANI is unavailable or the receiving bank cannot receive via AANI &mdash; no TPP/customer intervention. MUST submit the payment to the rail within <strong>3 seconds</strong> of returning the <code>201</code></td><td><a href="./requirements#rail-submission">Rail Submission</a></td></tr>
+            <tr><td>Status propagation</td><td>Call <a href="/tech/lfi-api-hub/v2.2-rc2/api-hub/consent-manager/open-api/payment-log" class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/payment-log/{id}</code></a> on the API Hub Consent Manager immediately on each of: <strong>submission</strong> to <code>AANI</code> or <code>FTS</code> &mdash; PATCH <code>AcceptedSettlementCompleted</code>, without waiting for any response from the rail; and the <strong>rail&rsquo;s response</strong> &mdash; PATCH the terminal status. Every PATCH MUST carry <code>paymentResponse.paymentRail</code>, and on <code>AANI</code> and <code>FTS</code> also <code>paymentResponse.paymentTransactionId</code></td><td><a href="/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation/domestic-payments/overview/payment-timing">Payment Timing</a>, <a href="/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation/domestic-payments/overview/payment-status">Payment Status</a></td></tr>
+            <tr><td>Rail rejection</td><td>If the rail rejects the payment, PATCH <code>paymentResponse.status: Rejected</code> with <code>rejectReasonCode[].code</code> namespaced to the rail named in <code>paymentResponse.paymentRail</code> (<code>AANI.</code>, <code>FTS.</code> or <code>LFI.</code>) and a sanitised <code>message</code> for relay to the TPP</td><td><a href="./requirements#rail-submission">Rail Submission</a></td></tr>
             <tr><td>Status retrieval</td><td>Continue serving <a href="/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation/open-api/payments-PaymentId" class="endpoint"><span class="http-method http-method--get">GET</span><code>/payments/{paymentId}</code></a> for at least 1 year, with <code>Status</code> and <code>paymentTransactionId</code> consistent with the most recent PATCH</td><td><a href="#behavioural-rules">GET <code>/payments/{paymentId}</code> rules below</a></td></tr>
           </tbody>
         </table>
@@ -1112,16 +1115,21 @@ const fapiHeaderTabs = [
         <code>Pending</code> is no longer patchable &mdash; a payment is <code>Pending</code> precisely
         because no rail has been selected yet &mdash; and
         <code>paymentResponse.OpenFinanceBilling</code> is no longer patchable through this operation.
-        See <a href="/tech/release-notes-and-erratas/changelog/v2.2-rc2/#v2.1-to-v2.2-change-2">changelog &sect;2</a>.
+        See <a href="/tech/release-notes-and-erratas/changelog/v2.2-rc2/#v2.1-to-v2.2-change-3">changelog &sect;3</a>.
       </EdProse>
       <EdProse>
-        On <code>AANI</code> and <code>FTS</code>, <code>AcceptedSettlementCompleted</code> is
-        <strong>not terminal</strong>: it records the payment having been handed to the rail. The LFI
-        MUST PATCH a second time once the rail confirms &mdash; to <code>AcceptedWithoutPosting</code> on
-        <code>AANI</code>, and to <code>AcceptedCreditSettlementCompleted</code> on <code>FTS</code>. On
-        <code>LFI</code>, where both accounts are held at this LFI and the payment is booked on its own
-        ledger, <code>AcceptedCreditSettlementCompleted</code> and <code>Rejected</code> are both
-        terminal and no second PATCH follows.
+        On <code>AANI</code> and <code>FTS</code>, the LFI MUST PATCH
+        <code>AcceptedSettlementCompleted</code> immediately on submitting the payment to the rail, and
+        MUST have submitted it within 3 seconds of returning the <code>201</code> on
+        <span class="endpoint"><span class="http-method http-method--post">POST</span><code>/payments</code></span>.
+        <code>AcceptedSettlementCompleted</code> is <strong>not terminal</strong>: it records the payment
+        having been handed to the rail. The LFI MUST PATCH a second time immediately on receiving the
+        rail&rsquo;s response &mdash; to <code>AcceptedWithoutPosting</code> on <code>AANI</code>, to
+        <code>AcceptedCreditSettlementCompleted</code> on <code>FTS</code>, or to <code>Rejected</code>
+        on either. On <code>LFI</code>, where both accounts are held at this LFI and the payment is
+        booked on its own ledger, <code>AcceptedCreditSettlementCompleted</code> and
+        <code>Rejected</code> are both terminal and no second PATCH follows. See
+        <a href="/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation/domestic-payments/overview/payment-timing">Payment Timing</a> for the full sequence.
       </EdProse>
       <EdRefTable>
         <table>
@@ -1129,10 +1137,10 @@ const fapiHeaderTabs = [
           <tbody>
             <tr><td><code>paymentResponse.paymentRail</code></td><td>string</td><td>Yes</td><td><code>AANI</code>, <code>FTS</code>, or <code>LFI</code> for a payment settled on the LFI&rsquo;s own ledger. REQUIRED on every PATCH from v2.2, and selects the request body: the rail determines the permitted statuses, whether <code>paymentTransactionId</code> applies, and which reject reason code namespace is accepted. Records how the payment was <em>executed</em>, not how it was requested</td></tr>
             <tr><td><code>paymentResponse.status</code></td><td>string</td><td>Yes</td><td>Constrained by the rail. <code>AANI</code>: <code>AcceptedSettlementCompleted</code> (not terminal), <code>AcceptedWithoutPosting</code>, <code>Rejected</code>. <code>FTS</code>: <code>AcceptedSettlementCompleted</code> (not terminal), <code>AcceptedCreditSettlementCompleted</code>, <code>Rejected</code>. <code>LFI</code>: <code>AcceptedCreditSettlementCompleted</code>, <code>Rejected</code>. <code>Pending</code> is NOT patchable from v2.2. See <a href="/tech/lfi-api-hub/v2.2-rc2/api-hub/consent-manager/open-api/payment-log-id">PATCH <code>/payment-log/{id}</code></a></td></tr>
-            <tr><td><code>paymentResponse.paymentTransactionId</code></td><td>string</td><td>Conditional</td><td>The payment&rsquo;s end-to-end identifier on its rail. Applies on <code>AANI</code> and <code>FTS</code> only &mdash; it is not accepted on <code>LFI</code>, where the payment has no such identifier. Once set, MUST NOT change</td></tr>
-            <tr><td><code>paymentResponse.RejectReasonCode[]</code></td><td>array</td><td>Conditional</td><td>Required when <code>paymentResponse.status</code> is <code>Rejected</code>. Append new reasons rather than replacing &mdash; preserves history</td></tr>
-            <tr><td><code>paymentResponse.RejectReasonCode[].Code</code></td><td>string</td><td>Yes (in array)</td><td>Namespaced to the rail named on this PATCH, and to that rail only: <code>^AANI\.[A-Za-z0-9]+$</code>, <code>^FTS\.[A-Za-z0-9]+$</code>, or <code>^LFI\.[A-Za-z0-9]+$</code>. A rejection raised at the LFI before submission &mdash; screening, for example &mdash; still carries the namespace of the rail the payment was routed to</td></tr>
-            <tr><td><code>paymentResponse.RejectReasonCode[].Message</code></td><td>string</td><td>Yes (in array)</td><td>Sanitised, customer-relayable description. MUST NOT reveal detection logic, sanctions matches, or internal case identifiers</td></tr>
+            <tr><td><code>paymentResponse.paymentTransactionId</code></td><td>string</td><td>Conditional</td><td>Required on every PATCH on <code>AANI</code> and <code>FTS</code> &mdash; including <code>AcceptedSettlementCompleted</code> and <code>Rejected</code> &mdash; and not accepted on <code>LFI</code>, where the payment has no such identifier. On <code>AANI</code> it is the pacs.008 <code>TxId</code> your LFI assigned to the payment, which MUST start with <code>OFP</code>; on <code>FTS</code> it is the payment&rsquo;s UAEFTS transaction identifier. Once set, MUST NOT change</td></tr>
+            <tr><td><code>paymentResponse.rejectReasonCode[]</code></td><td>array</td><td>Conditional</td><td>Required when <code>paymentResponse.status</code> is <code>Rejected</code>, and MUST NOT be sent with any other status. Append new reasons rather than replacing &mdash; preserves history</td></tr>
+            <tr><td><code>paymentResponse.rejectReasonCode[].code</code></td><td>string</td><td>Yes (in array)</td><td>Namespaced to the rail named on this PATCH, and to that rail only: <code>^AANI\.[A-Za-z0-9]+$</code>, <code>^FTS\.[A-Za-z0-9]+$</code>, or <code>^LFI\.[A-Za-z0-9]+$</code>. A rejection raised at the LFI before submission &mdash; screening, for example &mdash; still carries the namespace of the rail the payment was routed to</td></tr>
+            <tr><td><code>paymentResponse.rejectReasonCode[].message</code></td><td>string</td><td>Yes (in array)</td><td>Sanitised, customer-relayable description. MUST NOT reveal detection logic, sanctions matches, or internal case identifiers</td></tr>
           </tbody>
         </table>
       </EdRefTable>

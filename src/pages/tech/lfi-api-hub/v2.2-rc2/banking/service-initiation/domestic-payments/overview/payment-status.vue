@@ -4,30 +4,30 @@ meta:
 </route>
 
 <script setup lang="ts">
+const patchSubmittedExample = `{
+  "paymentResponse.paymentRail": "AANI",
+  "paymentResponse.status": "AcceptedSettlementCompleted",
+  "paymentResponse.paymentTransactionId": "OFP7d2c1e9a4b6f4c0e8a1b"
+}
+`
+
 const patchBodyExample = `{
-  "data": {
-    "paymentId": "pmt-20260418-00023",
-    "consentId": "cns-20260418-00011",
-    "paymentTransactionId": "OFP7d2c1e9a4b6f4c0e8a1b",
-    "status": "AcceptedWithoutPosting",
-    "statusUpdateDateTime": "2026-04-18T10:14:22.845Z"
-  }
+  "paymentResponse.paymentRail": "AANI",
+  "paymentResponse.status": "AcceptedWithoutPosting",
+  "paymentResponse.paymentTransactionId": "OFP7d2c1e9a4b6f4c0e8a1b"
 }
 `
 
 const patchRejectedExample = `{
-  "data": {
-    "paymentId": "pmt-20260418-00023",
-    "consentId": "cns-20260418-00011",
-    "status": "Rejected",
-    "statusUpdateDateTime": "2026-04-18T10:14:22.845Z",
-    "rejectReasonCode": [
-      {
-        "code": "AANI.AM04",
-        "message": "Insufficient funds at the receiving bank"
-      }
-    ]
-  }
+  "paymentResponse.paymentRail": "AANI",
+  "paymentResponse.status": "Rejected",
+  "paymentResponse.paymentTransactionId": "OFP7d2c1e9a4b6f4c0e8a1b",
+  "paymentResponse.rejectReasonCode": [
+    {
+      "code": "AANI.AM04",
+      "message": "Payment request cannot be executed as insufficient funds at debtor account."
+    }
+  ]
 }
 `
 </script>
@@ -42,7 +42,7 @@ const patchRejectedExample = `{
         </div>
         <h1 class="ed-doc__title">
           Payment Status
-          <span class="ed-doc__read">7 min read</span>
+          <span class="ed-doc__read">8 min read</span>
         </h1>
         <p class="ed-doc__lede">
           Every domestic payment initiated through the API Hub is executed in one of three modes:
@@ -81,10 +81,10 @@ const patchRejectedExample = `{
           <thead><tr><th>Open Finance status</th><th>ISO 20022</th><th>Meaning</th></tr></thead>
           <tbody>
             <tr><td><code>Pending</code></td><td><code>PDNG</code></td><td>Payment accepted for processing; further checks or rail submission outstanding</td></tr>
-            <tr><td><code>AcceptedSettlementCompleted</code></td><td><code>ACSC</code></td><td>Settlement of the debtor account has been completed &mdash; a payment-processing state</td></tr>
+            <tr><td><code>AcceptedSettlementCompleted</code></td><td><code>ACSC</code></td><td>Your LFI has submitted the payment to AANI or UAEFTS and is awaiting the rail&rsquo;s response &mdash; not terminal</td></tr>
             <tr><td><code>AcceptedWithoutPosting</code></td><td><code>ACWP</code></td><td>The receiving bank has accepted the payment but your LFI cannot confirm the creditor account has been credited &mdash; a settlement state</td></tr>
             <tr><td><code>AcceptedCreditSettlementCompleted</code></td><td><code>ACCC</code></td><td>The creditor account has been credited with the funds of the payment</td></tr>
-            <tr><td><code>Rejected</code></td><td><code>RJCT</code></td><td>The payment was rejected, either pre-rail by your LFI or post-rail by AANI / UAEFTS</td></tr>
+            <tr><td><code>Rejected</code></td><td><code>RJCT</code></td><td>The payment was rejected, either by your LFI before submission or by AANI / UAEFTS</td></tr>
           </tbody>
         </table>
       </EdRefTable>
@@ -93,12 +93,15 @@ const patchRejectedExample = `{
         <code>Pending</code> is the initial status your Ozone Connect
         <a href="/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation/open-api/payments" class="endpoint"><span class="http-method http-method--post">POST</span><code>/payments</code></a>
         response returns &mdash; your LFI does <strong>not</strong> PATCH a payment to
-        <code>Pending</code>. PATCH is only used to transition away from <code>Pending</code> to a
-        terminal status. The statuses your LFI PATCHes for a domestic payment are therefore
-        <code>AcceptedWithoutPosting</code>, <code>AcceptedCreditSettlementCompleted</code>, and
-        <code>Rejected</code>. <code>AcceptedSettlementCompleted</code> is available in the enum but
-        is rarely written in isolation on AANI or UAEFTS, where debtor settlement and the
-        receiving-side outcome resolve in a single rail response.
+        <code>Pending</code>. On AANI and UAEFTS your LFI PATCHes twice:
+        <code>AcceptedSettlementCompleted</code> immediately on submitting the payment to the rail,
+        within 3 seconds of returning the <code>201</code>, and then the terminal status &mdash;
+        <code>AcceptedWithoutPosting</code>, <code>AcceptedCreditSettlementCompleted</code>, or
+        <code>Rejected</code> &mdash; immediately on the rail&rsquo;s response. Both PATCHes are
+        mandatory. For an intra-bank payment there is no hand-off, and your LFI PATCHes the terminal
+        status once. The sequence and timing are set out in
+        <a href="/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation/domestic-payments/overview/payment-timing">Payment
+        Timing</a>.
       </EdProse>
 
       <EdNote type="info" title="Received status">
@@ -140,10 +143,20 @@ const patchRejectedExample = `{
       </EdBullets>
 
       <EdProse>
-        Your LFI MUST only reject a payment pre-rail for reachability reasons once both rails have
-        been ruled out &mdash; that is, when the receiving bank is reachable on neither AANI nor
-        UAEFTS. Set <code>RejectReasonCode.Code = LFI.&lt;reasonCode&gt;</code> (for example,
-        <code>LFI.CreditorBankNotReachable</code>).
+        Your LFI MUST only reject a payment for reachability reasons once both rails have been ruled
+        out &mdash; that is, when the receiving bank is reachable on neither AANI nor UAEFTS. As with
+        any rejection raised before submission, it is reported against the rail the payment was routed
+        to and carries that rail&rsquo;s namespace &mdash; see
+        <a href="#rejection-code-prefixes">Rejection code prefixes</a>.
+      </EdProse>
+
+      <EdProse>
+        Routing comes first in the post-<code>201</code> sequence. Every PATCH on AANI and UAEFTS
+        carries <code>paymentRail</code> and <code>paymentTransactionId</code>, so your LFI selects the
+        rail and assigns the identifier before it screens the payment. Screening and submission then
+        complete within 3 seconds of the <code>201</code> &mdash; see
+        <a href="/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation/domestic-payments/overview/payment-timing">Payment
+        Timing</a>.
       </EdProse>
     </EdSectionBand>
 
@@ -169,13 +182,17 @@ const patchRejectedExample = `{
           <thead><tr><th>Intra-bank outcome</th><th>New Open Finance status</th><th>Notes</th></tr></thead>
           <tbody>
             <tr><td>Debtor debit and creditor credit both posted</td><td><code>AcceptedCreditSettlementCompleted</code></td><td>Terminal for intra-bank &mdash; your LFI knows the funds have definitely landed in the creditor account</td></tr>
-            <tr><td>Internal rejection (screening, insufficient funds, account state, etc.)</td><td><code>Rejected</code></td><td>Set <code>RejectReasonCode.Code</code> to <code>LFI.&lt;reasonCode&gt;</code> &mdash; there is no rail namespace to fall back to</td></tr>
+            <tr><td>Internal rejection (screening, insufficient funds, account state, etc.)</td><td><code>Rejected</code></td><td>Set <code>rejectReasonCode[].code</code> to <code>LFI.&lt;reasonCode&gt;</code> &mdash; the only namespace accepted with <code>paymentRail: LFI</code></td></tr>
           </tbody>
         </table>
       </EdRefTable>
 
       <EdProse>
-        Intra-bank payments have no <code>paymentTransactionId</code>. Omit the field.
+        Every PATCH for an intra-bank payment carries <code>paymentRail: LFI</code>. There is no
+        hand-off to a rail, so <code>AcceptedSettlementCompleted</code> does not apply. Within 3 seconds
+        of returning the <code>201</code>, your LFI MUST complete its screening, book the payment, and
+        immediately PATCH <code>AcceptedCreditSettlementCompleted</code>. Intra-bank payments have no
+        <code>paymentTransactionId</code>, and the field is not accepted on <code>LFI</code>, so omit it.
       </EdProse>
     </EdSectionBand>
 
@@ -188,7 +205,7 @@ const patchRejectedExample = `{
       tone="surface"
     >
       <APIFlowViewer title="AANI status mapping">
-        <AaniStatusMapping />
+        <AaniPatchSequence />
       </APIFlowViewer>
 
       <EdProse>
@@ -199,17 +216,20 @@ const patchRejectedExample = `{
       </EdProse>
 
       <EdProse>
-        While the payment is in flight to AANI and awaiting a response, the status remains
-        <code>Pending</code> &mdash; your LFI does not need to PATCH anything until the AANI response
-        arrives. The events that trigger a PATCH are:
+        Immediately on submitting the payment to AANI &mdash; within 3 seconds of returning the
+        <code>201</code> &mdash; your LFI MUST PATCH <code>AcceptedSettlementCompleted</code>. It does
+        not wait for the AANI response. The payment then remains at
+        <code>AcceptedSettlementCompleted</code> until AANI responds, and your LFI MUST PATCH the
+        terminal status immediately when it does. The events that trigger a PATCH are:
       </EdProse>
 
       <EdRefTable>
         <table>
-          <thead><tr><th>AANI response</th><th>New Open Finance status</th><th>Notes</th></tr></thead>
+          <thead><tr><th>Event</th><th>New Open Finance status</th><th>Notes</th></tr></thead>
           <tbody>
+            <tr><td>Payment submitted to AANI (<code>pacs.008</code> sent)</td><td><code>AcceptedSettlementCompleted</code></td><td>Mandatory. Not terminal</td></tr>
             <tr><td>Positive Account Verification Response (<code>pacs.002</code> accepted)</td><td><code>AcceptedWithoutPosting</code></td><td>Terminal for AANI</td></tr>
-            <tr><td><code>pacs.002</code> rejection</td><td><code>Rejected</code></td><td>Set <code>RejectReasonCode.Code</code> to <code>AANI.&lt;reasonCode&gt;</code> (for example <code>AANI.AM04</code>)</td></tr>
+            <tr><td><code>pacs.002</code> rejection</td><td><code>Rejected</code></td><td>Terminal. Set <code>rejectReasonCode[].code</code> to <code>AANI.&lt;reasonCode&gt;</code> (for example <code>AANI.AM04</code>)</td></tr>
           </tbody>
         </table>
       </EdRefTable>
@@ -224,10 +244,11 @@ const patchRejectedExample = `{
       </EdNote>
 
       <EdProse>
-        Include the end-to-end transaction identifier as
-        <code>paymentTransactionId</code> on each
-        <span class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/payment-log/{paymentId}</code></span>.
-        Once set, <code>paymentTransactionId</code> MUST NOT change.
+        Include <code>paymentTransactionId</code> on every
+        <span class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/payment-log/{id}</code></span>,
+        including the first. On AANI it is the pacs.008 <code>TxId</code> your LFI assigned to the
+        payment, not an identifier issued by AANI, and it MUST start with <code>OFP</code>. Once set,
+        <code>paymentTransactionId</code> MUST NOT change.
       </EdProse>
 
       <h3 class="ed-doc__subhead">Illustrative AANI Reject Reason Codes</h3>
@@ -251,9 +272,8 @@ const patchRejectedExample = `{
 
       <EdProse>
         Your LFI MUST relay the code in the <code>AANI.</code> namespace &mdash; <code>AANI.AM04</code>
-        &mdash; without transposing it to a different namespace. Where Open Finance defines a
-        Prescriptive Error Code for the underlying condition (e.g.
-        <code>Consent.TransientAccountAccessFailure</code>), prefer the prescriptive code.
+        &mdash; without transposing it to a different namespace. A PATCH with
+        <code>paymentRail: AANI</code> accepts only codes matching <code>^AANI\.[A-Za-z0-9]+$</code>.
       </EdProse>
     </EdSectionBand>
 
@@ -266,7 +286,7 @@ const patchRejectedExample = `{
       tone="cream"
     >
       <APIFlowViewer title="UAEFTS status mapping">
-        <FtsStatusMapping />
+        <FtsPatchSequence />
       </APIFlowViewer>
 
       <EdProse>
@@ -289,17 +309,21 @@ const patchRejectedExample = `{
       </EdProse>
 
       <EdProse>
-        ACK on its own is technical acceptance within the <code>Pending</code> state &mdash; it does
-        <strong>not</strong> trigger a PATCH, and the payment remains <code>Pending</code> until CB900
-        or NAK arrives. The events that trigger a PATCH are:
+        Immediately on submitting the payment to UAEFTS &mdash; within 3 seconds of returning the
+        <code>201</code> &mdash; your LFI MUST PATCH <code>AcceptedSettlementCompleted</code>, carrying
+        the payment&rsquo;s UAEFTS transaction identifier as <code>paymentTransactionId</code>. ACK is
+        technical acceptance only: it does <strong>not</strong> trigger a PATCH, and the payment remains
+        at <code>AcceptedSettlementCompleted</code> until CB900 or NAK arrives. Your LFI MUST then PATCH
+        the terminal status immediately. The events that trigger a PATCH are:
       </EdProse>
 
       <EdRefTable>
         <table>
-          <thead><tr><th>UAEFTS response</th><th>New Open Finance status</th><th>Notes</th></tr></thead>
+          <thead><tr><th>Event</th><th>New Open Finance status</th><th>Notes</th></tr></thead>
           <tbody>
+            <tr><td>Payment submitted to UAEFTS (<code>pacs.008</code> sent)</td><td><code>AcceptedSettlementCompleted</code></td><td>Mandatory. Not terminal</td></tr>
             <tr><td>CB900 Debit Confirmation</td><td><code>AcceptedCreditSettlementCompleted</code></td><td>Terminal for UAEFTS</td></tr>
-            <tr><td>NAK received</td><td><code>Rejected</code></td><td>Set <code>RejectReasonCode.Code</code> to <code>FTS.&lt;reasonCode&gt;</code></td></tr>
+            <tr><td>NAK received</td><td><code>Rejected</code></td><td>Terminal. Set <code>rejectReasonCode[].code</code> to <code>FTS.&lt;reasonCode&gt;</code></td></tr>
           </tbody>
         </table>
       </EdRefTable>
@@ -314,44 +338,35 @@ const patchRejectedExample = `{
       tone="surface"
     >
       <EdProse>
-        Every <code>Rejected</code> status carries a <code>RejectReasonCode[]</code> array. The first
-        segment of each <code>Code</code> is a namespace that identifies <strong>where</strong> the
-        rejection originated:
+        Every <code>Rejected</code> PATCH carries a <code>rejectReasonCode[]</code> array. The first
+        segment of each <code>code</code> is a namespace, and from v2.2 the namespace follows the
+        <code>paymentRail</code> named on the PATCH &mdash; not the system in which the check failed:
       </EdProse>
 
       <EdRefTable>
         <table>
-          <thead><tr><th>Rejected by</th><th><code>RejectReasonCode.Code</code> prefix</th><th>Example</th></tr></thead>
+          <thead><tr><th><code>paymentRail</code></th><th>Covers</th><th><code>code</code> pattern</th><th>Example</th></tr></thead>
           <tbody>
-            <tr><td>LFI &mdash; pre-rail screening (fraud, sanctions, account state, insufficient funds) or an intra-bank payment that never reaches a rail</td><td><code>LFI.</code></td><td><code>LFI.InsufficientFunds</code></td></tr>
-            <tr><td>AANI</td><td><code>AANI.</code></td><td><code>AANI.AC06</code></td></tr>
-            <tr><td>UAEFTS</td><td><code>FTS.</code></td><td><code>FTS.AC06</code></td></tr>
+            <tr><td><code>AANI</code></td><td>A payment routed to AANI, whether AANI rejected it or your LFI rejected it before submission (screening, for example)</td><td><code>^AANI\.[A-Za-z0-9]+$</code></td><td><code>AANI.AC06</code></td></tr>
+            <tr><td><code>FTS</code></td><td>A payment routed to UAEFTS, whether UAEFTS rejected it or your LFI rejected it before submission</td><td><code>^FTS\.[A-Za-z0-9]+$</code></td><td><code>FTS.AC06</code></td></tr>
+            <tr><td><code>LFI</code></td><td>A payment booked on your LFI&rsquo;s own ledger &mdash; every rejection is your LFI&rsquo;s own</td><td><code>^LFI\.[A-Za-z0-9]+$</code></td><td><code>LFI.InsufficientFunds</code></td></tr>
           </tbody>
         </table>
       </EdRefTable>
 
       <EdNote type="danger">
         <p>
-          Your LFI MUST NOT transpose a rail-originated reason code into the <code>LFI.</code>
-          namespace, and MUST NOT transpose an LFI-originated rejection into an <code>AANI.</code> or
-          <code>FTS.</code> namespace. The prefix is critical for TPP diagnostics and downstream
-          reconciliation.
+          A <code>code</code> from any other namespace does not validate against the PATCH body for the
+          rail named. In particular, a rejection your LFI raises before submitting a payment routed to
+          AANI or UAEFTS MUST carry the <code>AANI.</code> or <code>FTS.</code> prefix, not
+          <code>LFI.</code>. The prefix is relayed to the TPP verbatim and is critical for TPP
+          diagnostics and downstream reconciliation.
         </p>
       </EdNote>
 
       <EdProse>
-        The <code>LFI.</code> namespace is correct in two cases: when your LFI has rejected an
-        interbank payment <strong>before</strong> it reaches AANI or UAEFTS, and when an intra-bank
-        payment is rejected internally (since no rail is ever involved). Once a payment has been
-        submitted to AANI or UAEFTS, any subsequent rejection MUST carry the <code>AANI.</code> or
-        <code>FTS.</code> prefix respectively, even if your LFI observed the failure first.
-      </EdProse>
-
-      <EdProse>
-        Where a Prescriptive Error Code is defined (e.g.
-        <code>Consent.TransientAccountAccessFailure</code>), prefer the prescriptive code over a raw
-        rail code. The OpenAPI <code>RejectReasonCode.Code</code> pattern
-        <code>^[A-Za-z]+\.[A-Za-z0-9]+$</code> allows either.
+        On <code>AANI</code> and <code>FTS</code>, a <code>Rejected</code> PATCH also carries
+        <code>paymentTransactionId</code>, as every PATCH on those rails does.
       </EdProse>
     </EdSectionBand>
 
@@ -370,27 +385,23 @@ const patchRejectedExample = `{
       </EdProse>
 
       <h3 class="ed-doc__subhead">What your LFI MUST PATCH</h3>
-      <EdProse>
-        Your LFI MUST PATCH the <strong>terminal</strong> Open Finance status for the payment &mdash;
-        <code>AcceptedWithoutPosting</code>, <code>AcceptedCreditSettlementCompleted</code>, or
-        <code>Rejected</code> as appropriate for the execution mode. This is the only mandatory PATCH
-        in the lifecycle.
-      </EdProse>
-
-      <h3 class="ed-doc__subhead">What your LFI MAY PATCH</h3>
-      <EdProse>
-        If your LFI observes an intermediate execution event that cleanly maps to an Open Finance
-        status other than the terminal one &mdash; for example, debtor-account settlement
-        (<code>AcceptedSettlementCompleted</code>) on a rail or internal path that exposes it &mdash;
-        your LFI MAY PATCH that intermediate status. It is not a requirement, and the Hub will relay
-        whichever statuses it receives to the TPP.
-      </EdProse>
+      <EdRefTable>
+        <table>
+          <thead><tr><th><code>paymentRail</code></th><th>On submission to the rail (within 3 s of the <code>201</code>)</th><th>On the rail&rsquo;s response</th></tr></thead>
+          <tbody>
+            <tr><td><code>AANI</code></td><td><code>AcceptedSettlementCompleted</code></td><td><code>AcceptedWithoutPosting</code> or <code>Rejected</code></td></tr>
+            <tr><td><code>FTS</code></td><td><code>AcceptedSettlementCompleted</code></td><td><code>AcceptedCreditSettlementCompleted</code> or <code>Rejected</code></td></tr>
+            <tr><td><code>LFI</code></td><td colspan="2"><code>AcceptedCreditSettlementCompleted</code> on booking, within 3 s of the <code>201</code> &mdash; terminal, no rail</td></tr>
+          </tbody>
+        </table>
+      </EdRefTable>
 
       <EdProse>
-        Tables in the AANI, UAEFTS, and intra-bank sections above list the events you SHOULD PATCH.
-        Additional intermediate PATCHes are permitted provided every status you PATCH is a valid Open
-        Finance status value and the ordering respects the lifecycle (you cannot PATCH back from a
-        terminal status).
+        Every PATCH in this table is mandatory. Your LFI MUST NOT PATCH any status other than those
+        listed for the rail, and MUST NOT PATCH anything after a terminal status. The full sequence,
+        including what happens between the <code>201</code> and submission, is in
+        <a href="/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation/domestic-payments/overview/payment-timing">Payment
+        Timing</a>.
       </EdProse>
 
       <h3 class="ed-doc__subhead">How to PATCH</h3>
@@ -399,10 +410,11 @@ const patchRejectedExample = `{
         <li>Map the outcome to the new Open Finance status.</li>
         <li>
           Call
-          <a href="/tech/lfi-api-hub/v2.2-rc2/api-hub/consent-manager/open-api/payment-log" class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/payment-log/{paymentId}</code></a>
-          on the API Hub Consent Manager with the new <code>status</code>, a current
-          <code>statusUpdateDateTime</code>, <code>paymentTransactionId</code> (on
-          <code>AANI</code> and <code>FTS</code>), and any <code>rejectReasonCode</code>.
+          <a href="/tech/lfi-api-hub/v2.2-rc2/api-hub/consent-manager/open-api/payment-log-id" class="endpoint"><span class="http-method http-method--patch">PATCH</span><code>/payment-log/{id}</code></a>
+          on the API Hub Consent Manager with <code>paymentResponse.paymentRail</code>, the new
+          <code>paymentResponse.status</code>, <code>paymentResponse.paymentTransactionId</code> (on
+          <code>AANI</code> and <code>FTS</code>), and, for <code>Rejected</code> only,
+          <code>paymentResponse.rejectReasonCode</code>.
         </li>
         <li>
           Update the response your Ozone Connect
@@ -416,11 +428,10 @@ const patchRejectedExample = `{
         the new status to the TPP via webhook events as soon as it receives the PATCH.
       </EdProse>
 
-      <h3 class="ed-doc__subhead">Example PATCH body</h3>
-      <EdCode :code="patchBodyExample" lang="json" filename="PATCH /payment-log/{paymentId}" />
-
-      <h3 class="ed-doc__subhead">Example rejected PATCH body</h3>
-      <EdCode :code="patchRejectedExample" lang="json" filename="rejected PATCH body" />
+      <h3 class="ed-doc__subhead">Example PATCH bodies</h3>
+      <EdCode :code="patchSubmittedExample" lang="json" filename="PATCH /payment-log/{id} — submitted to AANI" />
+      <EdCode :code="patchBodyExample" lang="json" filename="PATCH /payment-log/{id} — AANI accepted" />
+      <EdCode :code="patchRejectedExample" lang="json" filename="PATCH /payment-log/{id} — AANI rejected" />
     </EdSectionBand>
   </div>
 </template>

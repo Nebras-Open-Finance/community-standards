@@ -7,6 +7,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AaniPatchSequence: typeof import('./components/common/api-flows/AaniPatchSequence.vue')['default']
     AaniStatusMapping: typeof import('./components/common/api-flows/AaniStatusMapping.vue')['default']
     AccountEditor: typeof import('./components/common/editors/AccountEditor.vue')['default']
     APIFlowConsentEvent: typeof import('./components/common/api-flows/APIFlowConsentEvent.vue')['default']
@@ -147,6 +148,7 @@ declare module 'vue' {
     FieldMapTable: typeof import('./components/common/field-map/FieldMapTable.vue')['default']
     FormInput: typeof import('./components/common/forms/FormInput.vue')['default']
     FormInputPhoneNumber: typeof import('./components/common/forms/FormInputPhoneNumber.vue')['default']
+    FtsPatchSequence: typeof import('./components/common/api-flows/FtsPatchSequence.vue')['default']
     FtsStatusMapping: typeof import('./components/common/api-flows/FtsStatusMapping.vue')['default']
     ImageViewer: typeof import('./components/common/ImageViewer.vue')['default']
     InfoTooltip: typeof import('./components/common/forms/InfoTooltip.vue')['default']
@@ -164,6 +166,8 @@ declare module 'vue' {
     PageFooter: typeof import('./components/chrome/PageFooter.vue')['default']
     PageHeader: typeof import('./components/chrome/PageHeader.vue')['default']
     PaymentConsentPermissionsText: typeof import('./components/common/consent-ui/PaymentConsentPermissionsText.vue')['default']
+    PaymentTimingLfi: typeof import('./components/common/api-flows/PaymentTimingLfi.vue')['default']
+    PaymentTimingTpp: typeof import('./components/common/api-flows/PaymentTimingTpp.vue')['default']
     PermissionsReference: typeof import('./components/common/permissions/PermissionsReference.vue')['default']
     PolicyEditor: typeof import('./components/common/editors/PolicyEditor.vue')['default']
     PvCategoryTag: typeof import('./components/proposals/PvCategoryTag.vue')['default']

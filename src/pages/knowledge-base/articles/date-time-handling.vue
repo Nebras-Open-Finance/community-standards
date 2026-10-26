@@ -70,7 +70,7 @@ const selfTest = `2027-07-22T00:00:00Z
         This article sets out how to produce and consume date-times across the standard. From v2.2,
         every date-time field references the shared <code>AEDateTime</code> schema, which states these
         rules normatively &mdash; see the
-        <RouterLink to="/tech/release-notes-and-erratas/changelog/v2.2-rc2/#v2.1-to-v2.2-change-9">v2.1 &rarr; v2.2 changelog, &sect;9</RouterLink>.
+        <RouterLink to="/tech/release-notes-and-erratas/changelog/v2.2-rc2/#v2.1-to-v2.2-change-10">v2.1 &rarr; v2.2 changelog, &sect;10</RouterLink>.
         The date-range <em>query parameters</em> on the transaction and statement list endpoints are
         covered separately, in
         <RouterLink to="/knowledge-base/articles/transaction-date-filters">Date Filters</RouterLink>.

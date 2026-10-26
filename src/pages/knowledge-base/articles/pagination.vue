@@ -131,7 +131,7 @@ const emptyResponse = `{
       </EdRefTable>
 
       <EdProse>The LFI <strong>MUST</strong> return records in a deterministic order so pagination is stable across successive page requests.</EdProse>
-      <EdProse>From v2.2, the order is specified for <code>/transactions</code> (descending <code>bookingDateTime</code>, tiebreak on <code>transactionId</code>) and <code>/statements</code> (descending <code>openingDate</code>, tiebreak on <code>statementId</code>). The LFI <strong>MUST</strong> apply that ordering to the filtered result set <strong>before</strong> cutting the page, so page 1 always holds the newest matching records. See the <RouterLink to="/tech/release-notes-and-erratas/changelog/v2.2-rc2/#v2.1-to-v2.2-change-12">v2.1 &rarr; v2.2 changelog, &sect;12</RouterLink>.</EdProse>
+      <EdProse>From v2.2, the order is specified for <code>/transactions</code> (descending <code>bookingDateTime</code>, tiebreak on <code>transactionId</code>) and <code>/statements</code> (descending <code>openingDate</code>, tiebreak on <code>statementId</code>). The LFI <strong>MUST</strong> apply that ordering to the filtered result set <strong>before</strong> cutting the page, so page 1 always holds the newest matching records. See the <RouterLink to="/tech/release-notes-and-erratas/changelog/v2.2-rc2/#v2.1-to-v2.2-change-1">v2.1 &rarr; v2.2 changelog, &sect;1</RouterLink>.</EdProse>
     </EdSectionBand>
 
     <EdSectionBand
