@@ -284,8 +284,9 @@ const { payload } = await jwtVerify(jwsString, jwks)`
       <EdNote type="tip" title="Order the lookup active-first">
         <p>
           Most consents you verify will be recent, so the active set will almost always hit. Treat
-          the inactive lookup as the fallback, and cache both sets as you would any JWKS rather
-          than fetching per request.
+          the inactive lookup as the fallback, and cache both sets as you would
+          <a href="/tech/lfi-api-hub/trust-framework/#keystore-caching">any JWKS</a> rather than
+          fetching per request.
         </p>
       </EdNote>
 

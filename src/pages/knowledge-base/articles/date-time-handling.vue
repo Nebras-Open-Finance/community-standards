@@ -1,28 +1,17 @@
 <route lang="yaml">
 meta:
-  title: 'OFP-014 · Date & Time Handling Across the Standard (draft article)'
+  title: "Date & Time Handling Across the Standard"
+  description: "Every date-time in the standard is an instant, not a wall clock. What TPPs must send, what LFIs must accept, and how to verify your normalisation."
+  category: Integration
+  readTime: "5 min"
+  updated: "2026-10-26"
+  tags:
+    - Data Sharing
+    - Consents
+    - Ozone Connect
 </route>
 
 <script setup lang="ts">
-// The knowledge base article proposed for publication alongside OFP-014, drafted
-// here so the ecosystem can review the guidance and the specification change
-// together. Authored with the same editorial components as the published
-// knowledge base so it can move to /knowledge-base/articles/date-time-handling
-// unchanged once the proposal is agreed.
-import { useHead } from '@unhead/vue'
-
-const OG_TITLE = 'Date & Time Handling Across the Standard'
-const OG_DESCRIPTION =
-  'Every date-time in the standard is an instant, not a wall clock. What TPPs must send, what LFIs must accept, and how to verify your normalisation. Draft article attached to OFP-014.'
-useHead({
-  title: 'OFP-014 · Date & Time Handling Across the Standard (draft article)',
-  meta: [
-    { property: 'og:title', content: `${OG_TITLE} | UAE Open Finance` },
-    { property: 'og:description', content: OG_DESCRIPTION },
-    { name: 'twitter:description', content: OG_DESCRIPTION },
-  ],
-})
-
 interface Section { id: string; label: string }
 interface MetaItem { label: string; value: string }
 
@@ -36,7 +25,7 @@ const sections: Section[] = [
 const meta: MetaItem[] = [
   { label: 'Category', value: 'Integration' },
   { label: 'Read',     value: '5 min' },
-  { label: 'Status',   value: 'Draft · OFP-014' },
+  { label: 'Updated',  value: '26 Oct 2026' },
 ]
 
 const tags: readonly string[] = ['Data Sharing', 'Consents', 'Ozone Connect']
@@ -59,10 +48,10 @@ const selfTest = `2027-07-22T00:00:00Z
 
 <template>
   <div class="ed-page">
-    <EdBackStrip href="/proposals/ofp-014" text="Back to OFP-014" />
+    <EdBackStrip href="/knowledge-base/" text="All knowledge base articles" />
 
     <EdHero
-      eyebrow="Draft · Proposed for publication with OFP-014"
+      eyebrow="Learn · Understand · Build"
       title="Date &amp; Time Handling Across the Standard"
       :meta="meta"
       lede="Every date-time field in the standard identifies <strong>an instant in time</strong>, not a wall-clock reading. The same instant has many valid spellings, and all of them must behave identically. Getting this wrong produces errors that are invisible at long time horizons and severe at short ones."
@@ -78,10 +67,13 @@ const selfTest = `2027-07-22T00:00:00Z
 
     <div class="ed-page__intro">
       <EdProse>
-        This article is a <strong>draft attached to OFP-014</strong>. It sets out how to produce and
-        consume date-times across the standard, and publishes to the knowledge base if that proposal is
-        agreed. The date-range <em>query parameters</em> on the transaction and statement list endpoints
-        are specified separately and are not covered here.
+        This article sets out how to produce and consume date-times across the standard. From v2.2,
+        every date-time field references the shared <code>AEDateTime</code> schema, which states these
+        rules normatively &mdash; see the
+        <RouterLink to="/tech/release-notes-and-erratas/changelog/v2.2-rc2/#v2.1-to-v2.2-change-9">v2.1 &rarr; v2.2 changelog, &sect;9</RouterLink>.
+        The date-range <em>query parameters</em> on the transaction and statement list endpoints are
+        covered separately, in
+        <RouterLink to="/knowledge-base/articles/transaction-date-filters">Date Filters</RouterLink>.
       </EdProse>
     </div>
 
