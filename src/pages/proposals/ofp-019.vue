@@ -493,7 +493,6 @@ onMounted(() => {
                 </div>
             </div>
         </div>
-        </div>
           <div class="auth-page-text-frame">
             <div class="auth-page-text-inner-frame">
               <div class="auth-page-text-header">
@@ -551,13 +550,112 @@ onMounted(() => {
                     <div class="auth-page-text-min-header-section-header-text">
                       Review the information you will share
                     </div>
-                            <svg class="auth-page-mini-header-icon" width="15"
-                                height="8" viewBox="0 0 15 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M1.28033 0.21967C0.987438 -0.0732232 0.512563 -0.0732232 0.21967 0.21967C-0.0732235 0.512563 -0.0732235 0.987437 0.21967 1.28033L1.28033 0.21967ZM14.4803 1.28033C14.7732 0.987437 14.7732 0.512563 14.4803 0.21967C14.1874 -0.0732226 13.7126 -0.0732226 13.4197 0.21967L14.4803 1.28033ZM0.21967 1.28033L5.653 6.71366L6.71366 5.653L1.28033 0.21967L0.21967 1.28033ZM5.653 6.71366C6.58756 7.64822 8.11244 7.64822 9.047 6.71366L7.98634 5.653C7.63756 6.00178 7.06244 6.00178 6.71366 5.653L5.653 6.71366ZM9.047 6.71366L14.4803 1.28033L13.4197 0.21967L7.98634 5.653L9.047 6.71366Z"
-                                    fill="#36BFD4" />
-                            </svg>
-
+                    <svg class="auth-page-mini-header-icon is-open" width="15"
+                      height="8" viewBox="0 0 15 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M1.28033 0.21967C0.987438 -0.0732232 0.512563 -0.0732232 0.21967 0.21967C-0.0732235 0.512563 -0.0732235 0.987437 0.21967 1.28033L1.28033 0.21967ZM14.4803 1.28033C14.7732 0.987437 14.7732 0.512563 14.4803 0.21967C14.1874 -0.0732226 13.7126 -0.0732226 13.4197 0.21967L14.4803 1.28033ZM0.21967 1.28033L5.653 6.71366L6.71366 5.653L1.28033 0.21967L0.21967 1.28033ZM5.653 6.71366C6.58756 7.64822 8.11244 7.64822 9.047 6.71366L7.98634 5.653C7.63756 6.00178 7.06244 6.00178 6.71366 5.653L5.653 6.71366ZM9.047 6.71366L14.4803 1.28033L13.4197 0.21967L7.98634 5.653L9.047 6.71366Z"
+                        fill="#36BFD4" />
+                    </svg>
+                  </div>
+                </div>
+                <!-- Expanded for the example: one group per permission in the
+                     consent (ReadAccountsDetail, ReadBalances, ReadTransactionsDetail),
+                     worded as in AuthorizationBankDataSharing.vue. -->
+                <div class="auth-page-text-section">
+                  <div class="auth-page-dropdown-container">
+                    <div class="auth-page-dropdown">
+                      <div class="auth-page-dropdown-text-section">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path
+                            d="M9 9C11.0711 9 12.75 7.32107 12.75 5.25C12.75 3.17893 11.0711 1.5 9 1.5C6.92893 1.5 5.25 3.17893 5.25 5.25C5.25 7.32107 6.92893 9 9 9Z"
+                            stroke="#0C1441" stroke-linecap="round" stroke-linejoin="round" />
+                          <path
+                            d="M15.4426 16.5C15.4426 13.5975 12.5551 11.25 9.00011 11.25C5.44511 11.25 2.55762 13.5975 2.55762 16.5"
+                            stroke="#0C1441" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <div class="auth-page-dropdown-text">Your Account Details</div>
+                      </div>
+                      <svg class="auth-page-dropdown-arrow is-open" width="5" height="10" viewBox="0 0 5 10" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M0.148134 9.12903C-0.0493779 9.32827 -0.0493779 9.65132 0.148134 9.85056C0.345645 10.0498 0.665875 10.0498 0.863386 9.85056L0.148134 9.12903ZM0.863386 0.149435C0.665875 -0.0498123 0.345645 -0.0498123 0.148134 0.149435C-0.0493779 0.348681 -0.0493779 0.671725 0.148134 0.870972L0.863386 0.149435ZM0.863386 9.85056L4.52734 6.15442L3.81208 5.43288L0.148134 9.12903L0.863386 9.85056ZM4.52734 6.15442C5.15755 5.51866 5.15755 4.48133 4.52734 3.84558L3.81208 4.56712C4.04728 4.80438 4.04728 5.19562 3.81208 5.43288L4.52734 6.15442ZM4.52734 3.84558L0.863386 0.149435L0.148134 0.870972L3.81208 4.56712L4.52734 3.84558Z"
+                          fill="black" fill-opacity="0.4" />
+                      </svg>
+                    </div>
+                    <div class="auth-page-dropdown-subtext-section">
+                      <div class="auth-page-dropdown-subtext">
+                        <div>
+                          Full account information (account number/ID, type and description of account, currency,
+                          nickname you gave it, and account holder name, opening date)
+                        </div>
+                        <div>
+                          Your current account balances (available balance, booked balance, credit limit/
+                          overdraft if any, and when the balance was last updated)
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="auth-page-dropdown-container">
+                    <div class="auth-page-dropdown">
+                      <div class="auth-page-dropdown-text-section">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M9.75 6.75H5.25" stroke="#0C1441" stroke-linecap="round" stroke-linejoin="round" />
+                          <path
+                            d="M16.5 8.22749V9.77254C16.5 10.185 16.17 10.5225 15.75 10.5375H14.28C13.47 10.5375 12.7275 9.94501 12.66 9.13501C12.615 8.66251 12.795 8.22001 13.11 7.91251C13.3875 7.62751 13.77 7.46252 14.19 7.46252H15.75C16.17 7.47752 16.5 7.81499 16.5 8.22749Z"
+                            stroke="#0C1441" stroke-linecap="round" stroke-linejoin="round" />
+                          <path
+                            d="M13.11 7.91249C12.795 8.21999 12.615 8.66249 12.66 9.13499C12.7275 9.94499 13.47 10.5375 14.28 10.5375H15.75V11.625C15.75 13.875 14.25 15.375 12 15.375H5.25C3 15.375 1.5 13.875 1.5 11.625V6.375C1.5 4.335 2.73 2.91 4.6425 2.67C4.8375 2.64 5.04 2.625 5.25 2.625H12C12.195 2.625 12.3825 2.63249 12.5625 2.66249C14.4975 2.88749 15.75 4.32 15.75 6.375V7.46251H14.19C13.77 7.46251 13.3875 7.62749 13.11 7.91249Z"
+                            stroke="#0C1441" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <div class="auth-page-dropdown-text">Your Account Transactions</div>
+                      </div>
+                      <svg class="auth-page-dropdown-arrow is-open" width="5" height="10" viewBox="0 0 5 10" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M0.148134 9.12903C-0.0493779 9.32827 -0.0493779 9.65132 0.148134 9.85056C0.345645 10.0498 0.665875 10.0498 0.863386 9.85056L0.148134 9.12903ZM0.863386 0.149435C0.665875 -0.0498123 0.345645 -0.0498123 0.148134 0.149435C-0.0493779 0.348681 -0.0493779 0.671725 0.148134 0.870972L0.863386 0.149435ZM0.863386 9.85056L4.52734 6.15442L3.81208 5.43288L0.148134 9.12903L0.863386 9.85056ZM4.52734 6.15442C5.15755 5.51866 5.15755 4.48133 4.52734 3.84558L3.81208 4.56712C4.04728 4.80438 4.04728 5.19562 3.81208 5.43288L4.52734 6.15442ZM4.52734 3.84558L0.863386 0.149435L0.148134 0.870972L3.81208 4.56712L4.52734 3.84558Z"
+                          fill="black" fill-opacity="0.4" />
+                      </svg>
+                    </div>
+                    <div class="auth-page-dropdown-subtext-section">
+                      <div class="auth-page-dropdown-subtext">
+                        Full transactions information (date/time, amount, type, description/narrative,
+                        payee/merchant name and details, category, status, reference, currency exchange if
+                        applicable)
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="auth-page-date-range">
+              <svg class="auth-page-divider" width="292" height="2" viewBox="0 0 292 2" fill="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <rect width="292" height="2" fill="#D9D9D9" fill-opacity="0.1" />
+              </svg>
+              <div class="auth-page-dropdown">
+                <div class="auth-page-date">
+                  <div class="auth-page-date-text">We will share your data until</div>
+                  <div class="auth-page-date-2">
+                    <div class="auth-page-date-3">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5.33301 1.33203V3.33203" stroke="#0C1441" stroke-miterlimit="10"
+                          stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M10.667 1.33203V3.33203" stroke="#0C1441" stroke-miterlimit="10"
+                          stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M2.33301 6.05859H13.6663" stroke="#0C1441" stroke-miterlimit="10"
+                          stroke-linecap="round" stroke-linejoin="round" />
+                        <path
+                          d="M14 5.66536V11.332C14 13.332 13 14.6654 10.6667 14.6654H5.33333C3 14.6654 2 13.332 2 11.332V5.66536C2 3.66536 3 2.33203 5.33333 2.33203H10.6667C13 2.33203 14 3.66536 14 5.66536Z"
+                          stroke="#0C1441" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M10.4635 9.13411H10.4694" stroke="#0C1441" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M10.4635 11.1341H10.4694" stroke="#0C1441" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M7.99666 9.13411H8.00265" stroke="#0C1441" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M7.99666 11.1341H8.00265" stroke="#0C1441" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M5.52987 9.13411H5.53585" stroke="#0C1441" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M5.52987 11.1341H5.53585" stroke="#0C1441" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                      <div class="auth-page-date-text">22/04/2027, 4:00 am</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -624,6 +722,7 @@ onMounted(() => {
                     Cancel
                 </div>
             </div>
+        </div>
         </div>
         </div>
       </div>
@@ -1264,5 +1363,14 @@ onMounted(() => {
 .ofp-cx {
   max-width: 420px;
   margin: 0 auto;
+}
+
+/* The example is static: nothing in it is clickable. */
+.ofp-cx .auth-page-account-card,
+.ofp-cx .auth-page-dropdown,
+.ofp-cx .auth-page-text-mini-header-section-header,
+.ofp-cx .auth-page-button,
+.ofp-cx .auth-page-button-cancel {
+  cursor: default;
 }
 </style>
