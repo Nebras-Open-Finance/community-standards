@@ -651,7 +651,9 @@ const customerPsuJson = `{
         before returning data &mdash; if the account is not <code>Active</code>, the endpoint MUST
         respond with <code>403</code> instead of returning the resource.
         <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/accounts</code></span>
-        is the only exception: it lists every consented account regardless of status, with the
+        and
+        <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/accounts/{accountId}</code></span>
+        are the exceptions: they return consented accounts regardless of status, with the
         <code>Status</code> field populated so the TPP can observe the current state.
       </EdProse>
       <EdProse>All error bodies MUST include <code>errorCode</code> and <code>errorMessage</code>.</EdProse>
@@ -659,6 +661,8 @@ const customerPsuJson = `{
       <h4 class="ed-doc__subhead-minor"><code>403</code> &mdash; Forbidden</h4>
       <EdProse>
         Return <code>403</code> using the
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/requirements#account-access-validation">Account Access Validation</a>
+        check and the
         <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/requirements#account-status-handling">Account Status Handling</a> mapping:
       </EdProse>
       <EdRefTable>
@@ -667,9 +671,8 @@ const customerPsuJson = `{
             <tr><th><code>errorCode</code></th><th><code>errorMessage</code></th><th>When to use</th></tr>
           </thead>
           <tbody>
-            <tr><td><code>Consent.AccountTemporarilyBlocked</code></td><td><code>The account is temporarily blocked.</code></td><td>Account status is <code>Suspended</code></td></tr>
-            <tr><td><code>Consent.PermanentAccountAccessFailure</code></td><td><code>The account is permanently inaccessible.</code></td><td>Account status is <code>Closed</code>, <code>Deceased</code>, or <code>Unclaimed</code></td></tr>
-            <tr><td><code>GenericError</code></td><td><code>The account is inaccessible.</code></td><td><code>{accountId}</code> does not belong to the customer identified by <code>o3-psu-identifier</code></td></tr>
+            <tr><td><code>Consent.AccountTemporarilyBlocked</code></td><td><code>The account is temporarily blocked.</code></td><td>Account status is <code>Inactive</code>, <code>Dormant</code>, or <code>Suspended</code></td></tr>
+            <tr><td><code>Consent.PermanentAccountAccessFailure</code></td><td><code>The account is permanently inaccessible.</code></td><td>Account status is <code>Closed</code>, <code>Deceased</code>, or <code>Unclaimed</code>; or <code>{accountId}</code> is not held by the customer identified by <code>o3-psu-identifier</code></td></tr>
           </tbody>
         </table>
       </EdRefTable>
@@ -815,7 +818,13 @@ const customerPsuJson = `{
       <h3 class="ed-doc__subhead">Response</h3>
       <EdProse><code>Content-Type: application/json</code></EdProse>
       <EdCode :code="accountByIdJson" lang="json" filename="GET /accounts/{accountId} response" />
-      <EdProse>Errors: see <a href="#common-error-responses">Common error responses</a>.</EdProse>
+      <EdProse>
+        <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/accounts/{accountId}</code></span>
+        is exempt from the <a href="#common-error-responses">Common error responses</a> status mapping
+        &mdash; return the account regardless of status. The
+        <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/requirements#account-access-validation">Account Access Validation</a>
+        check still applies.
+      </EdProse>
       <EdProse>
         See the
         <a href="/tech/lfi-api-hub/v2.1/banking/data-sharing/open-api/accounts-AccountId">GET <code>/accounts/{accountId}</code> API Reference</a>

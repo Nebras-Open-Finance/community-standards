@@ -390,6 +390,12 @@ const eyebrow = computed<string>(() => data.eyebrow ?? 'Validate · Enforce · T
 }
 .ed-req-cell--rule :deep(a:hover), .ed-req-cell--generic :deep(a:hover) { color: var(--at-teal-deep); }
 .ed-req-cell--rule :deep(strong), .ed-req-cell--generic :deep(strong) { font-weight: 600; }
+.ed-req-cell--generic :deep(.ed-req-tag) {
+  display: inline-block; margin-left: 0.4rem; font-family: var(--at-mono);
+  font-size: 0.7rem; letter-spacing: 0.06em; font-weight: 700;
+  text-transform: uppercase; color: var(--at-teal-deep);
+  border: 1px solid currentColor; padding: 0.15rem 0.45rem; vertical-align: middle;
+}
 
 .ed-req-cell--validator { padding-left: 0.6rem; }
 .ed-req-cell--generic { border-right: 1px solid var(--at-grid-line); }

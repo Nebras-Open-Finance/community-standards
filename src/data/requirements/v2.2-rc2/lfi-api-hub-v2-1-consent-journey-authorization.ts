@@ -128,6 +128,7 @@ export const data: RequirementsPageData = {
             { cells: ['5', 'LFI internal technical error', '<code>server_error</code>', '<code>lfi_internal_error</code>'] },
             { cells: ['6', 'LFI fails to communicate with API Hub', '<code>server_error</code>', '<code>api_hub_communication_error</code>'] },
             { cells: ['7', 'LFI temporarily unavailable', '<code>temporarily_unavailable</code>', '<code>lfi_temporarily_unavailable</code>'] },
+            { cells: ['8', 'Debtor account specified on the consent is not held by the end user <span class="ed-req-tag">Payments only</span>', '<code>invalid_request</code>', '<code>user_does_not_own_debtor_account</code>'] },
           ],
         } },
         { kind: 'prose', html: 'For all scenarios above, the LFI MUST PATCH the consent to <code>Rejected</code> before calling <code>doFail</code>, except scenario 6 where the API Hub may be unreachable — in which case the LFI MUST make a best-effort attempt.' },
