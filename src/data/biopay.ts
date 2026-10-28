@@ -5,16 +5,15 @@
 // Biometric Payment Initiation Provider (BPIP) — the merchant's acquirer —
 // initiates a payment through the API Hub using a client_credentials grant.
 // No biometric ever crosses into Open Finance; what crosses is a uaeKycId
-// plus ICP's signed, transaction-bound authorisation that it identified the
-// person.
+// plus ICP's signed, transaction-bound token that it identified the person.
 //
 // The journey has two halves:
 //   Registration — the LFI registers the customer with ICP directly through
 //     the ICP SDK. The API Hub plays no part.
 //   Payment — the BPIP resolves the customer with ICP through the ICP SDK,
 //     looks up the payment instrument at the LFI through the API Hub, then
-//     either pays account-to-account through the Hub (tracked by PaymentId or
-//     idempotency key) or submits a card authorisation to the card scheme.
+//     either pays account-to-account through the Hub (tracked by PaymentId)
+//     or submits a card authorisation to the card scheme.
 //
 // Everything here is Draft. No endpoint is published and the schemas are
 // proposals, not specifications.
@@ -113,10 +112,6 @@ export const biopaySidebar: EdSidebarItemData[] = [
           {
             text: 'GET /biometric-payments/{PaymentId}',
             link: '/biopay/payment/api-reference/biometric-payments-payment-id',
-          },
-          {
-            text: 'GET /biometric-payments',
-            link: '/biopay/payment/api-reference/biometric-payments-by-idempotency-key',
           },
           {
             text: 'PATCH /biometrics-payment-log',

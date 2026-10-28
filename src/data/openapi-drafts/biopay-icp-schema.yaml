@@ -9,14 +9,17 @@
 #
 # Identity resolution is NOT modelled here. The BPIP resolves the customer
 # directly with ICP through the ICP SDK, outside the API Hub, and receives the
-# uaeKycId, the customer's default LFI and an ICP authorisation: a JWS signed by
-# ICP and bound to this transaction. The ICP authorisation is presented once, on
-# POST /instrument-lookup. In exchange, the API Hub returns a payment token: a
-# short-lived, single-use JWS signed by the API Hub that embeds the ICP
-# authorisation and states whether this is an account or a card payment. The
-# payment token — not the ICP authorisation — is what the BPIP presents to make
-# the payment: on POST /biometric-payments for an account, or to the card scheme
-# (e.g. Jaywan) for a card. See AEIcpAuthorisation and AEPaymentToken.
+# uaeKycId, the customer's default LFI and an ICP token: a JWS signed by ICP and
+# bound to this transaction. The ICP token is presented once, on
+# POST /instrument-lookup. The API Hub proxies it to the LFI, which validates it
+# with an online call to ICP. The LFI always answers with a payment token: a
+# short-lived, single-use JWS signed by the LFI that embeds the ICP token and
+# carries the amount and the payment instrument, encrypted as a JWE to the
+# BPIP. The payment token — not the ICP token — is what the BPIP passes back
+# to the LFI to make the payment: on POST /biometric-payments for an account,
+# with only the creditor account alongside it, or in the card authorisation
+# through the card scheme (e.g. Jaywan) for a card. The LFI verifies its own
+# token in both cases. See AEIcpToken and AEPaymentToken.
 #
 # PATCH /biometrics-payment-log/{id} is modelled because it is how the payment
 # status the BPIP polls and is notified of comes to exist. It is served at the
@@ -47,8 +50,9 @@ info:
     customer's payment instrument and initiates the payment through the API
     Hub under a `client_credentials` grant. No biometric, template or match
     score crosses into Open Finance. What crosses is a `uaeKycId` and ICP's
-    signed authorisation that it identified the person for this transaction,
-    which the API Hub exchanges for a single-use payment token.
+    signed token that it identified the person for this transaction, which
+    the LFI validates with ICP and embeds in a single-use payment token it
+    signs.
 
 servers:
   - url: https://rs1.[LFICODE].apihub.openfinance.ae/open-finance/biometric-payments/v1
@@ -86,49 +90,60 @@ paths:
       description: >-
         **BPIP → API Hub → LFI.** Initiates an account-to-account payment over
         AANI against a registered customer, after `POST /instrument-lookup` has
-        returned `PaymentInstrument: AANI`. AANI is the only rail this
-        operation accepts. `Data.DebtorAccount` carries the customer's IBAN
-        exactly as the lookup returned it; the LFI MUST reject the payment if
-        it is not the account registered for BioPay against the `uaeKycId`.
-        There is no consent resource and no access-token subject: the
-        customer's standing authority was established at registration, and
-        their authority for **this** payment is the payment token the lookup
-        returned, carried in `Data.PaymentToken`.
+        returned a payment token with `InstrumentType: ACCOUNT`. Only an
+        `ACCOUNT` token is accepted. There is no consent resource and no access-token
+        subject: the customer's standing authority was established at
+        registration, and their authority for **this** payment is the payment
+        token the LFI issued on the lookup, carried in `Data.PaymentToken`.
 
 
-        The API Hub verifies the payment token: its own signature; that it has
-        not expired; that `PaymentType` is `Account`; that `cnf.x5t#S256`
-        matches the BPIP's mTLS client certificate and `azp` the calling BPIP;
-        that `sub`, `DebtorAccount` and `InstructedAmount` equal those in the
-        request; and that its `jti` has not been used. It then derives
-        `BiometricAssurance` from the ICP authorisation embedded in the token,
-        validates the request against its schema, and proxies to the LFI's
-        Ozone Connect. The LFI relies on the Hub's verification and does not
-        verify the token itself.
+        The request carries only the payment token and the creditor. The
+        payment token already carries the `uaeKycId`, the `DebtorAccount` and
+        the `InstructedAmount` as the LFI signed them, and the request does not
+        repeat them. `Data.CreditorAccount` is the IBAN to credit. It is not in
+        the payment token: the BPIP supplies it, and is accountable for it, as
+        an acquirer is for settling with its merchant in a card payment.
 
 
-        The Hub marks the payment token's `jti` used when the LFI creates the
+        The API Hub checks entitlement, validates the request against its
+        schema, enforces idempotency, and proxies to the LFI's Ozone Connect.
+        It does not verify the payment token. The LFI verifies the token it
+        issued: its own signature; that it has not expired; that
+        `InstrumentType` is `ACCOUNT`; that `azp` is the calling BPIP, as identified by the Hub in
+        `o3-caller-org-id`; and that its `jti` has not been used. The LFI MUST
+        reject the payment if the token's `DebtorAccount` is no longer the
+        account registered for BioPay against its `uaeKycId`. The LFI debits
+        `DebtorAccount` for `InstructedAmount`, both from the token, and
+        credits `Data.CreditorAccount`. Once the LFI has created the payment,
+        the Hub records the biometric assurance — ICP's match method, time and
+        identification reference — from the ICP token embedded in the payment
+        token, for dispute handling and supervision. It is not returned on the
+        payment resource.
+
+
+        The LFI marks the payment token's `jti` used when it creates the
         payment; if the LFI returns an error, no payment exists and the token
         remains usable until it expires. A retry with the same
-        `x-idempotency-key` and identical body may present the same token; any
-        other reuse is rejected.
+        `x-idempotency-key` and identical body is answered by the Hub with the
+        original payment; any other reuse is rejected. This is the recovery
+        path for a lost `201`: the BPIP retries rather than initiating again.
 
 
         Account state is checked before the payment is created, and a blocked
         or closed account is returned as a `403`. The LFI's fraud, sanctions
         and AML screening and its balance check run after creation; their
-        outcome is a `Rejected` status with a `StatusReason`, delivered by the
-        payment status event and on the GET operations.
+        outcome is a `Rejected` status with a `RejectReasonCode`, delivered by
+        the payment status event and on `GET /biometric-payments/{PaymentId}`.
 
 
         Card payments do not use this operation. For a card, the BPIP submits
-        the authorisation to the card scheme with the card credential and the
-        payment token the lookup returned.
+        the authorisation to the card scheme with the card details from the
+        payment token, and the payment token itself.
 
 
         The response is always `201` with `Status: Pending`. Execution on the
         rail is asynchronous; the LFI patches status to the Hub, which serves
-        the updated resource on the GET operations and, where the request
+        the updated resource on `GET /biometric-payments/{PaymentId}` and, where the request
         carried an active `Data.Subscription.Webhook`, sends a payment status
         event to its `Url`.
       parameters:
@@ -145,16 +160,19 @@ paths:
       responses:
         '201':
           description: >-
-            Payment accepted for execution. A replay of the same
-            `x-idempotency-key` with an identical body returns the original
-            resource and this same `201`, not a duplicate payment.
+            Payment accepted for execution. Always `Status: Pending`: the
+            payment has not been submitted to a rail yet, so it carries no
+            `PaymentRail`, `PaymentTransactionId` or `RejectReasonCode`. A
+            replay of the same `x-idempotency-key` with an identical body
+            returns the original `201`, not a duplicate payment; the current
+            status is on `GET /biometric-payments/{PaymentId}`.
           headers:
             x-fapi-interaction-id:
               $ref: '#/components/headers/XFapiInteractionId'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AEBiometricPaymentResponse'
+                $ref: '#/components/schemas/AEBiometricPaymentCreatedResponse'
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/BiometricPaymentForbidden' }
@@ -169,41 +187,6 @@ paths:
         '429': { $ref: '#/components/responses/TooManyRequests' }
         '500': { $ref: '#/components/responses/InternalServerError' }
 
-    get:
-      tags: [Payment]
-      operationId: getBiometricPaymentByIdempotencyKey
-      summary: Retrieve a payment by idempotency key
-      description: >-
-        **BPIP → API Hub.** Retrieves a payment by the `IdempotencyKey` the
-        BPIP supplied when creating it. This is the recovery path for a lost
-        `201`: when the BPIP does not know whether a payment was created, it
-        queries by the key it generated rather than initiating again.
-
-
-        Returns the single matching payment. When no payment exists for the key,
-        the response is `200` with an empty `Data` array — the BPIP can then
-        safely retry the original request, provided its ICP authorisation has
-        not expired.
-      parameters:
-        - $ref: '#/components/parameters/IdempotencyKeyQuery'
-        - $ref: '#/components/parameters/XFapiInteractionId'
-        - $ref: '#/components/parameters/XFapiAuthDate'
-      responses:
-        '200':
-          description: Zero or one matching payment.
-          headers:
-            x-fapi-interaction-id:
-              $ref: '#/components/headers/XFapiInteractionId'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AEBiometricPaymentQueryResponse'
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
-        '500': { $ref: '#/components/responses/InternalServerError' }
-
   /biometric-payments/{PaymentId}:
     get:
       tags: [Payment]
@@ -214,6 +197,17 @@ paths:
         serves the status it holds, last set by the LFI. Polling this operation
         is the pull alternative to the payment status event; a BPIP MAY use
         either or both.
+
+
+        The resource mirrors `Data` of the `POST /biometric-payments` request —
+        `PaymentToken`, `CreditorAccount`, `PaymentPurposeCode`,
+        `DebtorReference`, `CreditorReference` and `Subscription`, as the BPIP
+        sent them — with `PaymentId`, `Status`, `CreationDateTime` and
+        `StatusUpdateDateTime`. It is `Pending` until the LFI patches it; from
+        then on `PaymentRail` and `Status` select its shape, exactly as they
+        select the `PATCH /biometrics-payment-log/{id}` body — with
+        `PaymentTransactionId` on `AANI`, and `RejectReasonCode` only when
+        `Rejected`.
       parameters:
         - $ref: '#/components/parameters/PaymentIdPath'
         - $ref: '#/components/parameters/XFapiInteractionId'
@@ -252,48 +246,40 @@ paths:
         **BPIP → API Hub → LFI.** Called on every payment. After resolving the
         customer with ICP, the BPIP asks the LFI which payment instrument it
         holds for the `uaeKycId`, and receives in the same response what it
-        needs for that rail: for an account, the IBAN, which it sends back on
-        `POST /biometric-payments`; for a card, a one-time card scheme
-        token and cryptogram, which it submits to the card scheme (e.g. Jaywan)
-        as acquirer. A card payment does not return to the API Hub after the
-        lookup.
+        needs for that instrument: for an `ACCOUNT`, the IBAN, which the LFI
+        debits when the BPIP sends the payment token on
+        `POST /biometric-payments`; for a `CARD`, the card details, which it
+        submits to the card scheme as acquirer. A card payment does not return
+        to the API Hub after the lookup.
 
 
-        Every successful lookup also returns a **payment token**
-        (`Data.PaymentToken`), minted by the API Hub once the LFI has answered.
-        It embeds the ICP authorisation and states the `PaymentType`
-        (`Account` or `Card`), the `PaymentInstrument`, the amount, the
-        merchant and, for an account, the IBAN. The payment token replaces the
-        ICP authorisation at the point of payment: the BPIP presents it once,
-        on `POST /biometric-payments` for an account or to the card scheme for
-        a card. See `AEPaymentToken`.
-
-
-        The request carries the ICP authorisation in `Data.IcpAuthorisation`.
-        Before proxying, the API Hub MUST verify it: the signature against
-        ICP's published keys; that it has not expired; that `cnf.x5t#S256`
-        matches the BPIP's mTLS client certificate; that `azp` matches the
-        calling BPIP; that `sub` equals `Data.uaeKycId`; that `txn` equals
-        the hash of `Data.InstructedAmount` and `Data.CardAcceptor`; and that
-        its `jti` has not been used before. The Hub then marks the ICP
-        authorisation used: it can be exchanged for one payment token only.
-
-
-        The API Hub proxies the request, with the ICP authorisation, to the
-        Ozone Connect endpoint of the default LFI ICP returned. The LFI SHOULD
-        verify the ICP authorisation itself, as it carries the debit risk. The
-        LFI answers from its own registration store of `uaeKycId` → payment
+        The request carries the ICP token in `Data.IcpToken`, with the
+        `uaeKycId` and the amount it is bound to. The API Hub checks entitlement and
+        the request schema, and proxies the request to the Ozone Connect
+        endpoint of the default LFI ICP returned. It does not verify the ICP
+        token. The LFI MUST validate it by calling ICP's token validation
+        endpoint, at which ICP confirms that it issued the token, that it has
+        not expired and that its `jti` has not been used, and marks it used.
+        The LFI MUST also check that `azp` is the calling BPIP, as identified
+        by the Hub in `o3-caller-org-id`; that `sub` equals `Data.uaeKycId`;
+        and that `txn` equals the hash of `Data.TransactionAmount`. The LFI
+        answers from its own registration store of `uaeKycId` → payment
         instrument.
 
 
-        For a card, the LFI generates the credential for the amount and card
-        acceptor in the request, binding the cryptogram to the ICP `jti`. It
-        signs the credential as a JWS and encrypts that JWS as a JWE to the
-        BPIP's public encryption key from the Directory, so the API Hub
-        proxies it without reading it. The card scheme verifies the payment
-        token when the BPIP submits the authorisation; the LFI, as issuer,
-        validates the cryptogram when the authorisation reaches it. The
-        response never carries a card number (PAN).
+        The response to a successful lookup is always a **payment token**, in
+        `Data`: a short-lived, single-use JWS signed by the LFI, whose claims
+        are `AEPaymentToken`. It carries the `uaeKycId`, the ICP token
+        unchanged, the amount from the request as `InstructedAmount`, and —
+        selected by `InstrumentType` — the
+        `DebtorAccount` for an `ACCOUNT` or the `CardDetails` for a `CARD`. The LFI
+        encrypts the JWS as a JWE to the BPIP's public encryption key from the
+        Directory (`AEJWEPaymentToken`), so the API Hub proxies the response
+        without reading it and card data never passes through the Hub in the
+        clear. The BPIP decrypts it and passes the JWS back to the LFI at the
+        point of payment — on `POST /biometric-payments` for an `ACCOUNT`, or
+        in the card authorisation through the card scheme for a `CARD` — and the LFI
+        relies on its own signature to make the payment.
 
 
         A `POST` rather than a `GET`, so that the `uaeKycId` travels in the
@@ -301,9 +287,9 @@ paths:
         resource.
 
 
-        For an account, the instrument can change between the lookup and the
-        payment, so the subsequent payment request can still fail on a
-        mismatch.
+        For an `ACCOUNT`, the registered account can change between the lookup and
+        the payment, so the subsequent payment request can still fail with
+        `Account.DebtorAccountMismatch`.
       parameters:
         - $ref: '#/components/parameters/XJwsSignature'
         - $ref: '#/components/parameters/XFapiInteractionId'
@@ -316,7 +302,9 @@ paths:
               $ref: '#/components/schemas/AEInstrumentLookupRequest'
       responses:
         '200':
-          description: The payment instrument the LFI holds for the customer.
+          description: >-
+            The payment token for the payment instrument the LFI holds for the
+            customer, encrypted to the BPIP.
           headers:
             x-fapi-interaction-id:
               $ref: '#/components/headers/XFapiInteractionId'
@@ -326,7 +314,7 @@ paths:
                 $ref: '#/components/schemas/AEInstrumentLookupResponse'
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { $ref: '#/components/responses/IcpAuthorisationRejected' }
+        '403': { $ref: '#/components/responses/IcpTokenRejected' }
         '404':
           description: >-
             The LFI holds no live BioPay registration for this `uaeKycId`.
@@ -405,45 +393,46 @@ paths:
         out of `Pending`.
 
 
+        Aligned with the v2.2 Consent Manager operation
+        `PATCH /payment-log/{id}` — the same body, field names and rules —
+        limited to the `AANI` and `LFI` rails, and served at the same Consent
+        Manager host, so an LFI already integrated with Open Finance is
+        patching biometric payments the same way and from the same place as
+        every other payment.
+
+
         Every biometric payment is created `Pending` and the LFI MUST patch it
-        to a terminal status. One patch is the normal case — straight to
-        `AcceptedWithoutPosting` or `Rejected`. An LFI MAY patch
-        `AcceptedSettlementCompleted` first, and MAY patch
-        more than once where the rail reports progress in stages, but MUST NOT
-        patch a payment that has already reached a terminal status.
+        to a terminal status. `paymentResponse.paymentRail` (`AANI` or `LFI`)
+        and `paymentResponse.status` select the body — see the request body
+        schema for what each allows. `Pending` is not a patchable status, and
+        the LFI MUST NOT patch a payment that has already reached a terminal
+        status.
 
 
         The patch is what produces everything the BPIP sees afterwards:
         the Hub records the new status, delivers the payment status event to
         the BPIP's webhook URL for the payment, and serves the updated
-        resource on `GET /biometric-payments/{PaymentId}` and
-        `GET /biometric-payments`. An LFI that executes the payment but never
-        patches leaves the BPIP polling a payment that stays `Pending`
-        forever.
+        resource on `GET /biometric-payments/{PaymentId}`, where
+        `paymentResponse.paymentRail`, `paymentResponse.paymentTransactionId`
+        and `paymentResponse.rejectReasonCode` appear as `PaymentRail`,
+        `PaymentTransactionId` and `RejectReasonCode`. An LFI that executes
+        the payment but never patches leaves the BPIP polling a payment that
+        stays `Pending` forever.
 
 
-        Modelled on the published Consent Manager operation
-        `PATCH /payment-log/{id}`, and served at the same Consent Manager host,
-        so an LFI already integrated with Open Finance is patching biometric
-        payments the same way and from the same place as every other payment.
-
-
-        Open items: the published operation names its fields in the dotted,
-        lower-camel form `paymentResponse.status`, whereas this draft uses the
-        flat PascalCase names the rest of the BioPay document uses — which
-        convention wins is for review. And whether BioPay should reuse
-        `PATCH /payment-log/{id}` outright rather than introduce a second
-        payment log is open; it is modelled separately here because a biometric
-        payment has no consent, and the published payment log is keyed to one.
+        Open item: whether BioPay should reuse `PATCH /payment-log/{id}`
+        outright rather than introduce a second payment log. It is modelled
+        separately here because a biometric payment has no consent, and the
+        published payment log is keyed to one.
       parameters:
         - $ref: '#/components/parameters/PaymentIdLogPath'
         - $ref: '#/components/parameters/XFapiInteractionId'
       requestBody:
         required: true
         description: >-
-          The fields to set. Flat rather than `Data`-wrapped, following the
-          published Consent Manager patch operations rather than the
-          BPIP-facing convention used elsewhere in this document.
+          The fields to set. Flat rather than `Data`-wrapped, with the dotted
+          field names of the published Consent Manager operation, rather than
+          the BPIP-facing convention used elsewhere in this document.
         content:
           application/json:
             schema:
@@ -487,16 +476,6 @@ paths:
 components:
   # ── Parameters ───────────────────────────────────────────────────────────
   parameters:
-    IdempotencyKeyQuery:
-      name: IdempotencyKey
-      in: query
-      required: true
-      description: >-
-        The value the BPIP sent in `x-idempotency-key` when creating the
-        payment.
-      schema:
-        type: string
-        maxLength: 40
     PaymentIdPath:
       name: PaymentId
       in: path
@@ -523,8 +502,9 @@ components:
       required: true
       description: >-
         BPIP-generated key that makes payment creation safely retryable.
-        MUST be unique per payment and retained by the BPIP long enough to
-        support recovery via `GET /biometric-payments`.
+        MUST be unique per payment and retained by the BPIP until the payment
+        reaches a final status, so that a lost response is recovered by
+        retrying with the same key and an identical body.
       schema:
         type: string
         maxLength: 40
@@ -580,39 +560,41 @@ components:
             $ref: '#/components/schemas/AEErrorResponse'
     TooManyRequests:
       description: Rate limit exceeded.
-    IcpAuthorisationRejected:
+    IcpTokenRejected:
       description: >-
-        The client is not entitled, or the ICP authorisation was rejected.
-        Entitlement failures are those of every BioPay operation — a client
-        whose application does not carry the BPIP role, or a token without the
-        `biometric-payments` scope. ICP authorisation failures are reported
-        with one of the following `ErrorCode` values (proposed):
-        `IcpAuthorisation.InvalidSignature`, `IcpAuthorisation.Expired`,
-        `IcpAuthorisation.BindingMismatch` (`cnf`, `azp`, `sub` or `txn` does
-        not match the request), `IcpAuthorisation.AlreadyUsed` (already
-        exchanged for a payment token).
+        The client is not entitled, or the LFI rejected the ICP token.
+        Entitlement failures are those of every BioPay operation, checked by
+        the API Hub — a client whose application does not carry the BPIP role,
+        or a token without the `biometric-payments` scope. ICP token failures
+        are found by the LFI's online validation with ICP and its own binding
+        checks, and are reported with one of the following `ErrorCode` values
+        (proposed): `IcpToken.Invalid` (ICP did not confirm it issued the
+        token, or the token was altered), `IcpToken.Expired`,
+        `IcpToken.BindingMismatch` (`azp`, `sub` or `txn` does not match the
+        request), `IcpToken.AlreadyUsed` (already used on a lookup).
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/AEErrorResponse'
     BiometricPaymentForbidden:
       description: >-
-        The client is not entitled, the payment token was rejected, or the LFI
-        cannot debit the customer's account. No payment is created. Payment
-        token failures use one of the following `ErrorCode` values (proposed):
-        `PaymentToken.InvalidSignature`, `PaymentToken.Expired`,
-        `PaymentToken.WrongPaymentType` (a `Card` token was presented),
-        `PaymentToken.BindingMismatch` (`cnf`, `azp`, `sub`, `DebtorAccount`
-        or `InstructedAmount` does not match the request),
+        The client is not entitled, the LFI rejected the payment token, or the
+        LFI cannot debit the customer's account. No payment is created.
+        Payment token failures use one of the following `ErrorCode` values
+        (proposed): `PaymentToken.InvalidSignature` (not signed by the LFI, or
+        altered), `PaymentToken.Expired`,
+        `PaymentToken.WrongInstrumentType` (a `CARD` token was presented),
+        `PaymentToken.BindingMismatch` (`azp` is not the calling BPIP),
         `PaymentToken.AlreadyUsed`. Account failures use one of the following
         `ErrorCode` values (proposed; the BioPay counterparts of the Open
         Finance `Consent.*` account codes, renamed because BioPay has no
         consent): `Account.TemporarilyBlocked` (the account is Inactive,
         Dormant or Suspended), `Account.PermanentAccessFailure` (Closed,
         Deceased or Unclaimed), `Account.TransientAccessFailure` (temporarily
-        inaccessible), `Account.DebtorAccountMismatch` (`DebtorAccount` is not
-        the account registered for BioPay against the `uaeKycId` — for
-        example, the customer changed it after the lookup).
+        inaccessible), `Account.DebtorAccountMismatch` (the payment token's
+        `DebtorAccount` is no longer the account registered for BioPay against
+        its `uaeKycId` — for example, the customer changed it after the
+        lookup).
       content:
         application/json:
           schema:
@@ -638,85 +620,31 @@ components:
       maxLength: 70
       example: ICP-7c9e1f4a-2b60-4d3e-9a15-0f8c2d1b7e43
 
-    AEPaymentInstrument:
-      type: string
-      description: >-
-        The payment vehicle the customer selected at registration. Determines
-        which creditor schema the payment request MUST use. A card scheme is
-        named directly: `JAYWAN` is the domestic card scheme (referred to as J1
-        elsewhere), and `VISA` and `MASTERCARD` cover the international
-        schemes, including co-badged cards. The final codes are an open item.
-      enum: [AANI, CBDC, JAYWAN, VISA, MASTERCARD]
-
-    AEPaymentStatus:
-      type: string
-      description: >-
-        A subset of the Open Finance payment status values, mapped as for
-        Open Finance domestic payments. `Pending` (PDNG) on creation.
-        `AcceptedSettlementCompleted` (ACSC) is a temporary,
-        payment-processing state: the debtor account has been settled.
-        Terminal statuses: `AcceptedWithoutPosting` (ACWP) — the receiving
-        bank has accepted the payment but the LFI cannot confirm the creditor
-        account has been credited; and `Rejected` (RJCT) — rejected pre-rail
-        by the LFI or post-rail by AANI / UAEFTS.
-      enum:
-        - Pending
-        - AcceptedSettlementCompleted
-        - AcceptedWithoutPosting
-        - Rejected
-
-    AEBiometricAssurance:
-      type: object
-      description: >-
-        ICP's assertion about the identification it performed, as recorded on
-        the payment resource. Derived by the API Hub from the ICP
-        authorisation embedded in the payment token — not supplied by the
-        BPIP — so that it is evidence ICP produced. This is the evidence set for non-repudiation and dispute
-        handling. It carries no biometric data, no template and no match
-        score.
-      additionalProperties: false
-      required: [MatchMethod, MatchDateTime, IcpTransactionId]
-      properties:
-        MatchMethod:
-          type: string
-          enum: [Fingerprint, FacialImage, Palm]
-        MatchDateTime:
-          type: string
-          format: date-time
-        IcpTransactionId:
-          type: string
-          description: >-
-            ICP's own reference for the identification event — the `jti` of the
-            ICP authorisation.
-          maxLength: 40
-        AssuranceLevel:
-          type: string
-          description: Identity assurance level asserted by ICP. Vocabulary to be confirmed.
-
-    AEIcpAuthorisation:
+    AEIcpToken:
       type: string
       description: >-
         A compact JWS signed by ICP, returned to the BPIP through the ICP SDK
-        when ICP identifies the customer. Its claims are `AEIcpAuthorisationClaims`.
+        when ICP identifies the customer. Its claims are `AEIcpTokenClaims`.
         It binds one biometric identification to one transaction. It is
-        presented once, on `POST /instrument-lookup`, where the API Hub and the
-        LFI verify it and the Hub exchanges it for a payment token
-        (`AEPaymentToken`) that embeds it. It is not presented again: the
-        payment token replaces it at the point of payment.
+        presented once, on `POST /instrument-lookup`, where the API Hub proxies
+        it to the LFI unverified and the LFI validates it by calling ICP's
+        token validation endpoint. The LFI embeds it unchanged in the payment
+        token (`AEPaymentToken`). It is not presented again: the payment token
+        replaces it at the point of payment.
 
 
-        Open items: how ICP's signing keys are distributed to the API Hub and
-        LFIs (ICP is not a Directory participant), and the ICP SDK changes
-        needed for ICP to accept the transaction hash and certificate
-        thumbprint and to return this JWS.
+        Open items: the ICP SDK changes needed for ICP to accept the
+        transaction hash and certificate thumbprint and to return this JWS;
+        and how `cnf` is checked, since the API Hub terminates mTLS and no
+        longer verifies the token.
       example: eyJhbGciOiJQUzI1NiIsImtpZCI6ImljcC1zaWduLTEifQ.eyJpc3MiOiJodHRwczovL2ljcC5nb3YuYWUiLCJzdWIiOiJJQ1AtN2M5ZTFmNGEuLi4ifQ.c2lnbmF0dXJl
 
-    AEIcpAuthorisationClaims:
+    AEIcpTokenClaims:
       type: object
       description: >-
-        The claims of `AEIcpAuthorisation`, for reference. Signed with `PS256`.
-        The BPIP does not build these: it supplies the transaction hash and
-        its transport certificate thumbprint to ICP, and ICP signs.
+        The claims of `AEIcpToken`, for reference. Signed with `PS256`. The
+        BPIP does not build these: it supplies the transaction hash and its
+        transport certificate thumbprint to ICP, and ICP signs.
       required: [iss, sub, azp, aud, txn, cnf, amr, jti, iat, exp]
       properties:
         iss:
@@ -727,24 +655,26 @@ components:
         azp:
           type: string
           description: >-
-            The BPIP the authorisation was issued to — its Directory
-            organisation identifier. MUST match the BPIP calling the API Hub.
+            The BPIP the token was issued to — its Directory organisation
+            identifier. The LFI checks it against the `o3-caller-org-id` the
+            API Hub sends with the proxied lookup.
         aud:
           type: string
           description: The customer's default LFI, as ICP returned it.
         txn:
           type: string
           description: >-
-            Base64url SHA-256 of the canonical JSON of the transaction: the
-            `InstructedAmount` and `CardAcceptor` the BPIP then sends on
-            `POST /instrument-lookup`. Any change to amount or merchant after
-            the biometric gesture breaks the binding and needs a new gesture.
+            Base64url SHA-256 of the canonical JSON of the amount: the
+            `TransactionAmount` the BPIP then sends on
+            `POST /instrument-lookup`. Any change to the amount after the
+            biometric gesture breaks the binding and needs a new gesture. The
+            merchant is not bound: `azp` binds the BPIP, which also supplies
+            the creditor account at payment.
         cnf:
           type: object
           description: >-
-            Binds the authorisation to the BPIP's transport certificate, so
-            that it cannot be presented by anyone without the BPIP's mTLS
-            private key.
+            Binds the token to the BPIP's transport certificate, so that it
+            cannot be presented by anyone without the BPIP's mTLS private key.
           required: ['x5t#S256']
           properties:
             x5t#S256:
@@ -763,94 +693,146 @@ components:
           maxLength: 40
           description: >-
             ICP's identifier for the identification event (`IcpTransactionId`).
-            Single-use: exchanged for one payment token, on one lookup.
+            Single-use: ICP marks it used when the LFI validates the token on
+            one lookup.
         iat:
           type: number
         exp:
           type: number
           description: Short-lived — proposed 120 seconds after `iat`.
 
-    AEPaymentToken:
+    AEJWEPaymentToken:
       type: string
+      title: Encrypted payment token
       description: >-
-        A compact JWS signed by the API Hub (`PS256`), returned in
-        `Data.PaymentToken` by `POST /instrument-lookup`. Its claims are
-        `AEPaymentTokenClaims`. It embeds the ICP authorisation and replaces it
-        at the point of payment. Short-lived and single-use: presented once,
-        either on `POST /biometric-payments` (`PaymentType: Account`), where
-        the API Hub verifies it, or to the card scheme in the card
-        authorisation (`PaymentType: Card`), where the card scheme verifies it
-        against the API Hub's published signing keys.
+        A JSON Web Encryption (JWE) object, which encapsulates a JWS. The value
+        is a compact serialization of a JWE, which is a string consisting of
+        five base64url-encoded parts joined by dots. It encapsulates encrypted
+        content using JSON data structures.
 
 
-        Open items: how the card scheme carries the token in its
-        authorisation message, and the card scheme's access to the API Hub's
-        signing keys.
-      example: eyJhbGciOiJQUzI1NiIsImtpZCI6Imh1Yi1zaWduLTEifQ.eyJpc3MiOiJodHRwczovL2F1dGgxLmFsdGFyZXExLmFwaWh1Yi5vcGVuZmluYW5jZS5hZSJ9.c2lnbmF0dXJl
+        The LFI encrypts it (`RSA-OAEP-256`, `A256GCM`) to the BPIP's public
+        encryption key registered in the Directory, identified by `kid` in the
+        JWE header, so the API Hub proxies it unread. The decrypted JWS is
+        signed by the LFI (`PS256`) and has the structure of the
+        `AEPaymentToken` schema. The BPIP verifies the JWS against the LFI's
+        signing keys from the Directory, and passes the JWS — not the JWE —
+        back to the LFI at the point of payment.
+      example: eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIiwia2lkIjoiYnBpcC1lbmMtMSIsImN0eSI6IkpXVCJ9....
 
-    AEPaymentTokenClaims:
+    AEPaymentToken:
+      title: Payment token (decoded)
+      description: >-
+        The claims of the JWS the LFI signs in answer to
+        `POST /instrument-lookup`. Short-lived and single-use. It carries the
+        amount from the lookup request, the ICP token unchanged, and the
+        details of the payment instrument the customer registered, selected by
+        `InstrumentType`. The BPIP passes the JWS back to the LFI once, at the
+        point of payment: in `Data.PaymentToken` on `POST /biometric-payments`
+        for an `ACCOUNT`, or in the card authorisation through the card scheme
+        for a `CARD`. The LFI verifies its own signature and relies on the
+        token to make the payment.
+      oneOf:
+        - $ref: '#/components/schemas/AEPaymentTokenAccount'
+        - $ref: '#/components/schemas/AEPaymentTokenCard'
+      discriminator:
+        propertyName: InstrumentType
+        mapping:
+          ACCOUNT: '#/components/schemas/AEPaymentTokenAccount'
+          CARD: '#/components/schemas/AEPaymentTokenCard'
+
+    AEPaymentTokenCommon:
       type: object
-      description: >-
-        The claims of `AEPaymentToken`, for reference. The BPIP does not build
-        these; the API Hub signs them. The BPIP MAY read them, for example to
-        confirm `PaymentType`.
-      required: [iss, sub, azp, aud, jti, iat, exp, cnf, PaymentType, PaymentInstrument, InstructedAmount, CardAcceptor, IcpAuthorisation]
+      description: The claims every payment token carries, whatever the instrument type.
+      required: [iss, azp, iat, exp, jti, uaeKycId, IcpToken, InstructedAmount, InstrumentType]
       properties:
         iss:
           type: string
-          description: The API Hub's issuer identifier.
-        sub:
-          $ref: '#/components/schemas/AEUaeKycId'
+          description: The LFI's Directory organisation identifier.
         azp:
           type: string
-          description: The BPIP the token was issued to — its Directory organisation identifier.
-        aud:
-          type: string
           description: >-
-            Who accepts the token: the API Hub resource server of the
-            customer's LFI when `PaymentType` is `Account`; the card scheme
-            named in `PaymentInstrument` when it is `Card`.
-        jti:
-          type: string
-          maxLength: 40
-          description: Single-use. Marked used by whoever accepts the token.
+            The BPIP the token was issued to — its Directory organisation
+            identifier, from the `o3-caller-org-id` of the lookup. The LFI
+            checks it against the BPIP presenting the token.
         iat:
           type: number
         exp:
           type: number
           description: Short-lived — proposed 120 seconds after `iat`.
-        cnf:
-          type: object
-          description: Copied from the ICP authorisation. Binds the token to the BPIP's transport certificate.
-          required: ['x5t#S256']
-          properties:
-            x5t#S256:
-              type: string
-        PaymentType:
+        jti:
           type: string
-          enum: [Account, Card]
-        PaymentInstrument:
-          $ref: '#/components/schemas/AEPaymentInstrument'
+          maxLength: 40
+          description: Single-use. The LFI marks it used when it accepts the payment.
+        uaeKycId:
+          $ref: '#/components/schemas/AEUaeKycId'
+        IcpToken:
+          description: The ICP token presented on the lookup, embedded unchanged.
+          allOf:
+            - $ref: '#/components/schemas/AEIcpToken'
         InstructedAmount:
-          $ref: '#/components/schemas/AEAmount'
-        CardAcceptor:
-          type: object
-          description: The merchant details from the lookup request.
+          description: >-
+            The `TransactionAmount` from the lookup request. On an `ACCOUNT`
+            payment, the amount the LFI debits: `POST /biometric-payments`
+            does not repeat it.
+          allOf:
+            - $ref: '#/components/schemas/AEAmount'
+        InstrumentType:
+          type: string
+          description: >-
+            The type of payment instrument the customer registered for BioPay.
+            Determines which details the token carries and how the BPIP makes
+            the payment: `ACCOUNT` with `POST /biometric-payments`, `CARD`
+            through the card scheme (e.g. Jaywan).
+          enum: [ACCOUNT, CARD]
+
+    AEPaymentTokenAccount:
+      title: ACCOUNT
+      description: >-
+        Payment token for an account-to-account payment. The BPIP makes the
+        payment with `POST /biometric-payments`.
+      allOf:
+        - $ref: '#/components/schemas/AEPaymentTokenCommon'
+        - type: object
+          required: [DebtorAccount]
           properties:
-            AcquirerIdentification:
-              type: string
-            MerchantIdentification:
-              type: string
-            TerminalIdentification:
-              type: string
-        DebtorAccount:
-          description: Present when `PaymentType` is `Account`. The IBAN the LFI returned.
-          allOf:
-            - $ref: '#/components/schemas/AEDebtorAccount'
-        IcpAuthorisation:
-          description: The ICP authorisation presented on the lookup, embedded unchanged.
-          allOf:
-            - $ref: '#/components/schemas/AEIcpAuthorisation'
+            DebtorAccount:
+              description: >-
+                The customer's account registered for BioPay, which the LFI
+                debits on `POST /biometric-payments`. The request does not
+                repeat it.
+              allOf:
+                - $ref: '#/components/schemas/AEDebtorAccount'
+
+    AEPaymentTokenCard:
+      title: CARD
+      description: >-
+        Payment token for a card payment. The BPIP submits the authorisation
+        to the card scheme (e.g. Jaywan) as acquirer, with the card details
+        and the payment token.
+      allOf:
+        - $ref: '#/components/schemas/AEPaymentTokenCommon'
+        - type: object
+          required: [CardDetails]
+          properties:
+            CardDetails:
+              type: object
+              description: >-
+                The card the customer registered for BioPay. Whether
+                `CardNumber` is the card number (PAN) or a card scheme token
+                is an open item.
+              additionalProperties: false
+              required: [CardNumber, ExpiryDate]
+              properties:
+                CardNumber:
+                  type: string
+                  pattern: '^\d{12,19}$'
+                  example: '4895370012003478'
+                ExpiryDate:
+                  type: string
+                  description: '`MM/YY`. Format to be confirmed.'
+                  pattern: '^(0[1-9]|1[0-2])\/\d{2}$'
+                  example: 08/29
 
     AEEventSubscription:
       type: object
@@ -909,39 +891,53 @@ components:
           maxLength: 70
           example: AE070331234567890123456
 
-    AEAaniCreditor:
+    AECreditorAccount:
       type: object
-      description: The merchant's account, credited over AANI.
+      description: >-
+        The account credited over AANI, identified by IBAN only. Supplied by
+        the BPIP at payment; not carried in the payment token.
       additionalProperties: false
-      required: [CreditorAccount]
+      required: [SchemeName, Identification]
       properties:
-        CreditorAccount:
-          type: object
-          additionalProperties: false
-          required: [SchemeName, Identification]
-          properties:
-            SchemeName:
-              type: string
-              enum: [IBAN, AANI.Alias, MobileNumber, EmiratesID]
-            Identification:
-              type: string
-              maxLength: 70
-              example: AE220331234567890876543
-            Name:
-              type: object
-              properties:
-                en: { type: string }
-                ar: { type: string }
-        CreditorAgent:
-          type: object
-          additionalProperties: false
-          properties:
-            SchemeName:
-              type: string
-              enum: [BICFI]
-            Identification:
-              type: string
-              example: BARBAEAAXXX
+        SchemeName:
+          type: string
+          enum: [IBAN]
+        Identification:
+          type: string
+          maxLength: 70
+          example: AE220331234567890876543
+
+    AEPaymentPurposeCode:
+      description: >-
+        A category code that relates to the type of services or goods that
+        corresponds to the underlying purpose of the payment. The code must
+        conform to the published Aani payment purpose code list.
+      type: string
+      minLength: 1
+      maxLength: 3
+      pattern: ^[A-Z]{3}$
+      example: ACM
+
+    AEDebtorReference:
+      description: >-
+        A Debtor Reference is a note is for the reference of a given User that
+        may be available as additional information in relation to a given
+        payment instruction.
+      type: string
+      minLength: 1
+      maxLength: 35
+      pattern: ^[A-Za-z0-9 \/?:().,'+-]+$
+      example: Example Grocers 000731
+
+    AECreditorReference:
+      description: >-
+        A Creditor Reference is a note for a given Creditor or Creditor LFI that
+        supports reconciliation of a given payment instruction.
+      type: string
+      minLength: 1
+      maxLength: 35
+      pattern: ^[A-Za-z0-9 \/?:().,'+-]+$
+      example: POS T-0042 RRN 628810000731
 
     AEBiometricPaymentRequest:
       type: object
@@ -951,182 +947,580 @@ components:
         Data:
           type: object
           additionalProperties: false
-          required: [uaeKycId, DebtorAccount, Instruction, Creditor, PaymentToken]
+          required: [PaymentToken, CreditorAccount, PaymentPurposeCode]
           properties:
-            uaeKycId:
-              $ref: '#/components/schemas/AEUaeKycId'
-            DebtorAccount:
-              description: >-
-                The customer's account, exactly as `POST /instrument-lookup`
-                returned it in `Data.DebtorAccount`. MUST equal the
-                `DebtorAccount` bound in the payment token.
-              allOf:
-                - $ref: '#/components/schemas/AEDebtorAccount'
-            Instruction:
-              type: object
-              additionalProperties: false
-              required: [InstructionIdentification, EndToEndIdentification, InstructedAmount]
-              properties:
-                InstructionIdentification:
-                  type: string
-                  maxLength: 35
-                EndToEndIdentification:
-                  type: string
-                  maxLength: 35
-                InstructedAmount:
-                  $ref: '#/components/schemas/AEAmount'
-                RemittanceInformation:
-                  type: object
-                  additionalProperties: false
-                  properties:
-                    Reference:
-                      type: string
-                      maxLength: 35
-                    Unstructured:
-                      type: string
-                      maxLength: 140
-            Creditor:
-              $ref: '#/components/schemas/AEAaniCreditor'
             PaymentToken:
               description: >-
-                The payment token the lookup returned, with `PaymentType:
-                Account`. `uaeKycId`, `DebtorAccount` and
-                `Instruction.InstructedAmount` MUST equal the values bound in
-                it.
-              allOf:
-                - $ref: '#/components/schemas/AEPaymentToken'
+                The payment token: the compact JWS signed by the LFI, taken
+                unchanged from inside the lookup response's JWE
+                (`AEJWEPaymentToken`) — not the JWE itself. Its claims are
+                `AEPaymentToken` with `InstrumentType: ACCOUNT`, and carry the
+                `uaeKycId`, `DebtorAccount` and `InstructedAmount` of the
+                payment.
+              type: string
+              example: eyJhbGciOiJQUzI1NiIsImtpZCI6ImxmaS1zaWduLTEifQ.eyJpc3MiOiJbTEZJX09SR0FOSVNBVElPTl9JRF0ifQ.c2lnbmF0dXJl
+            CreditorAccount:
+              $ref: '#/components/schemas/AECreditorAccount'
+            PaymentPurposeCode:
+              $ref: '#/components/schemas/AEPaymentPurposeCode'
+            DebtorReference:
+              $ref: '#/components/schemas/AEDebtorReference'
+            CreditorReference:
+              $ref: '#/components/schemas/AECreditorReference'
             Subscription:
               $ref: '#/components/schemas/AEEventSubscription'
         Risk:
           type: object
-          additionalProperties: false
-          required: [PaymentContextCode]
-          properties:
-            PaymentContextCode:
-              type: string
-              enum: [BiometricPointOfSale, BiometricUnattendedTerminal]
-            MerchantCategoryCode:
-              type: string
-              pattern: '^\d{4}$'
-              example: '5411'
-            MerchantIdentification:
-              type: string
-              maxLength: 35
-            MerchantName:
-              type: string
-            TerminalIdentification:
-              type: string
-              maxLength: 35
-
-    AERailReference:
-      type: object
-      description: >-
-        How the payment was represented on the rail that executed it. Populated
-        by the LFI once the rail has responded.
-      additionalProperties: false
-      properties:
-        Scheme:
-          type: string
-          description: The rail that executed the payment.
-          example: AANI
-        SchemeTransactionId:
-          type: string
-          maxLength: 70
-        SchemeStatus:
-          type: string
+          title: Risk (to be defined)
           description: >-
-            The rail's own status value, carried through unmapped for
-            reconciliation. The normalised value is `Status`.
+            **Not yet specified.** A placeholder for risk information the BPIP
+            may pass to the LFI for its fraud checks. Its contents are an open
+            item; until they are defined, send an empty object.
+          example: {}
 
-    AEBiometricPayment:
-      type: object
-      additionalProperties: false
-      required: [PaymentId, Status, CreationDateTime, StatusUpdateDateTime]
-      properties:
-        PaymentId:
-          type: string
-          maxLength: 40
-        IdempotencyKey:
-          type: string
-          maxLength: 40
-        Status:
-          $ref: '#/components/schemas/AEPaymentStatus'
-        CreationDateTime:
-          type: string
-          format: date-time
-        StatusUpdateDateTime:
-          type: string
-          format: date-time
-        uaeKycId:
-          $ref: '#/components/schemas/AEUaeKycId'
-        LFIIdentification:
-          type: string
-          example: altareq1
-        Instruction:
-          type: object
-          description: Echo of the submitted instruction.
-          additionalProperties: true
-        RailReference:
-          $ref: '#/components/schemas/AERailReference'
-        StatusReason:
-          $ref: '#/components/schemas/AEBiometricPaymentStatusReason'
-        BiometricAssurance:
-          $ref: '#/components/schemas/AEBiometricAssurance'
+    AEPaymentId:
+      type: string
+      maxLength: 40
+      description: The API Hub's identifier for the payment.
 
-    AEBiometricPaymentStatusReason:
-      type: object
+    AECreationDateTime:
+      type: string
+      format: date-time
+      description: When the API Hub created the payment.
+
+    AEStatusUpdateDateTime:
+      type: string
+      format: date-time
+      description: When `Status` last changed.
+
+    AEBiometricPaymentToken:
+      type: string
       description: >-
-        Why a payment ended where it did. Set by the LFI on the payment log
-        patch and served back unchanged on the payment resource and the
-        payment status event.
+        The payment token the BPIP sent: the compact JWS signed by the LFI,
+        unchanged. Its claims are `AEPaymentToken` with
+        `InstrumentType: ACCOUNT`, and carry the `uaeKycId`, `DebtorAccount`
+        and `InstructedAmount` of the payment.
+      example: eyJhbGciOiJQUzI1NiIsImtpZCI6ImxmaS1zaWduLTEifQ.eyJpc3MiOiJbTEZJX09SR0FOSVNBVElPTl9JRF0ifQ.c2lnbmF0dXJl
+
+    AEPaymentTransactionId:
+      type: string
+      description: >-
+        This is an end to end TransactionId that identifies the payment on the
+        underlying payment rail as it is sent from an Originating LFI to a
+        Receiving LFI.
+
+
+        For payments settled over AANI, this is the Transaction Identification
+        (`TxId`) the Originating LFI assigned in the pacs.008 credit transfer.
+        It is not issued by AANI, and starts with `OFP`.
+
+
+        This is not the same as the TransactionID in the Account Information
+        Transactions API.
+
+
+        The PaymentTransactionId must be populated if the payment is processed
+        by the LFI.
+      minLength: 1
+      maxLength: 40
+      example: OFP7d2c1e9a4b6f4c0e8a1b
+
+    AEMessage:
+      type: string
+      minLength: 1
+      maxLength: 500
+      description: >-
+        A description of the error that occurred. e.g., 'A mandatory field
+        isn't supplied' or 'RequestedExecutionDateTime must be in future'
+
+
+        This field is not standardised
+
+    AERejectReason:
+      description: Rejection Reason
+      type: object
+      required: [Code, Message]
       additionalProperties: false
       properties:
         Code:
-          type: string
-          pattern: '^[A-Za-z]+\.[A-Za-z0-9]+$'
           description: >-
-            Namespaced by where the payment was rejected: `LFI.` when the LFI
-            rejected it before the rail (fraud, sanctions or AML screening —
-            always `LFI.ScreeningRejected` — or account state, balance or
-            limits); `AANI.` when AANI or the
-            receiving bank rejected it, carrying the AANI reason code
-            unchanged (e.g. `AANI.AM04` insufficient funds). The LFI MUST NOT
-            move a rail code into the `LFI.` namespace, or the reverse.
+            Rejected Reason Code is a namespaced rejection reason code. The
+            first part of the code is the namespace, which is the name of the
+            organisation or system (e.g., AANI) that is rejecting the payment,
+            and the second part is the specific rejection reason code for the
+            originating organisation or system.
+
+
+            Payments that are rejected by AANI will have the AANI prefix,
+            followed by the specific ANNI reason code.
+
+
+            The Payment resouce is updated with the rejection reason code if a
+            Rejected payment is initially created in a Pending state.
+
+
+            If the Payment resource is rejected, and no Payment resource is
+            created - a 4xx HTTP status code is returned to the TPP with the
+            appropriate Error Response.
+          type: string
+          pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
           example: AANI.AM04
-        Description:
+        Message:
+          $ref: '#/components/schemas/AEMessage'
+
+    AEBiometricPayment:
+      description: >-
+        The payment resource. It mirrors `Data` of the
+        `POST /biometric-payments` request, with the `PaymentId` and the
+        status the API Hub holds. A payment is `Pending` until the LFI patches
+        it with `PATCH /biometrics-payment-log/{id}`; from then on
+        `PaymentRail` and `Status` select its shape, as they select the patch
+        body.
+      oneOf:
+        - $ref: '#/components/schemas/AEBiometricPaymentPending'
+        - $ref: '#/components/schemas/AEBiometricPaymentAani'
+        - $ref: '#/components/schemas/AEBiometricPaymentLfi'
+
+    AEBiometricPaymentAani:
+      title: AANI
+      description: >-
+        A payment the LFI has routed to AANI. `PaymentTransactionId` is always
+        present.
+      oneOf:
+        - $ref: '#/components/schemas/AEBiometricPaymentAaniAccepted'
+        - $ref: '#/components/schemas/AEBiometricPaymentAaniRejected'
+
+    AEBiometricPaymentLfi:
+      title: LFI
+      description: >-
+        A payment the LFI booked on its own ledger. Both statuses are terminal,
+        and there is no `PaymentTransactionId`.
+      oneOf:
+        - $ref: '#/components/schemas/AEBiometricPaymentLfiAccepted'
+        - $ref: '#/components/schemas/AEBiometricPaymentLfiRejected'
+
+    AEBiometricPaymentPending:
+      title: Pending
+      description: As created by `POST /biometric-payments`, before the LFI has patched it.
+      type: object
+      additionalProperties: false
+      required: [PaymentId, Status, CreationDateTime, StatusUpdateDateTime, PaymentToken, CreditorAccount, PaymentPurposeCode]
+      properties:
+        PaymentId:
+          $ref: '#/components/schemas/AEPaymentId'
+        Status:
+          description: The LFI has not yet reported the outcome.
           type: string
+          enum: [Pending]
+        CreationDateTime:
+          $ref: '#/components/schemas/AECreationDateTime'
+        StatusUpdateDateTime:
+          $ref: '#/components/schemas/AEStatusUpdateDateTime'
+        PaymentToken:
+          $ref: '#/components/schemas/AEBiometricPaymentToken'
+        CreditorAccount:
+          $ref: '#/components/schemas/AECreditorAccount'
+        PaymentPurposeCode:
+          $ref: '#/components/schemas/AEPaymentPurposeCode'
+        DebtorReference:
+          $ref: '#/components/schemas/AEDebtorReference'
+        CreditorReference:
+          $ref: '#/components/schemas/AECreditorReference'
+        Subscription:
+          $ref: '#/components/schemas/AEEventSubscription'
+
+    AEBiometricPaymentAaniAccepted:
+      title: AANI — accepted
+      description: A payment AANI has accepted or is processing.
+      type: object
+      additionalProperties: false
+      required: [PaymentId, Status, CreationDateTime, StatusUpdateDateTime, PaymentToken, CreditorAccount, PaymentPurposeCode, PaymentRail, PaymentTransactionId]
+      properties:
+        PaymentId:
+          $ref: '#/components/schemas/AEPaymentId'
+        Status:
           description: >-
-            A sanitised description that can be shown to the customer. MUST NOT
-            reveal detection logic, a sanctions match or an internal case
-            reference.
+            * `AcceptedSettlementCompleted`: **not terminal.** The LFI has
+            passed the payment to AANI and is awaiting confirmation.
+
+
+            * `AcceptedWithoutPosting`: terminal. AANI has confirmed the
+            payment.
+          type: string
+          enum: [AcceptedSettlementCompleted, AcceptedWithoutPosting]
+        CreationDateTime:
+          $ref: '#/components/schemas/AECreationDateTime'
+        StatusUpdateDateTime:
+          $ref: '#/components/schemas/AEStatusUpdateDateTime'
+        PaymentToken:
+          $ref: '#/components/schemas/AEBiometricPaymentToken'
+        CreditorAccount:
+          $ref: '#/components/schemas/AECreditorAccount'
+        PaymentPurposeCode:
+          $ref: '#/components/schemas/AEPaymentPurposeCode'
+        DebtorReference:
+          $ref: '#/components/schemas/AEDebtorReference'
+        CreditorReference:
+          $ref: '#/components/schemas/AECreditorReference'
+        PaymentRail:
+          description: Settled over AANI, the UAE instant payment platform.
+          type: string
+          enum: [AANI]
+          example: AANI
+        PaymentTransactionId:
+          $ref: '#/components/schemas/AEPaymentTransactionId'
+        Subscription:
+          $ref: '#/components/schemas/AEEventSubscription'
+
+    AEBiometricPaymentAaniRejected:
+      title: AANI — rejected
+      description: A payment routed to AANI that will not be settled. Terminal.
+      type: object
+      additionalProperties: false
+      required: [PaymentId, Status, CreationDateTime, StatusUpdateDateTime, PaymentToken, CreditorAccount, PaymentPurposeCode, PaymentRail, PaymentTransactionId, RejectReasonCode]
+      properties:
+        PaymentId:
+          $ref: '#/components/schemas/AEPaymentId'
+        Status:
+          type: string
+          enum: [Rejected]
+        CreationDateTime:
+          $ref: '#/components/schemas/AECreationDateTime'
+        StatusUpdateDateTime:
+          $ref: '#/components/schemas/AEStatusUpdateDateTime'
+        PaymentToken:
+          $ref: '#/components/schemas/AEBiometricPaymentToken'
+        CreditorAccount:
+          $ref: '#/components/schemas/AECreditorAccount'
+        PaymentPurposeCode:
+          $ref: '#/components/schemas/AEPaymentPurposeCode'
+        DebtorReference:
+          $ref: '#/components/schemas/AEDebtorReference'
+        CreditorReference:
+          $ref: '#/components/schemas/AECreditorReference'
+        PaymentRail:
+          description: Settled over AANI, the UAE instant payment platform.
+          type: string
+          enum: [AANI]
+          example: AANI
+        PaymentTransactionId:
+          $ref: '#/components/schemas/AEPaymentTransactionId'
+        RejectReasonCode:
+          description: Why the payment was rejected. Codes are `AANI.*` only.
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/AERejectReason'
+        Subscription:
+          $ref: '#/components/schemas/AEEventSubscription'
+
+    AEBiometricPaymentLfiAccepted:
+      title: LFI — accepted
+      description: The LFI has booked the payment on its own ledger and the funds are available to the creditor. Terminal.
+      type: object
+      additionalProperties: false
+      required: [PaymentId, Status, CreationDateTime, StatusUpdateDateTime, PaymentToken, CreditorAccount, PaymentPurposeCode, PaymentRail]
+      properties:
+        PaymentId:
+          $ref: '#/components/schemas/AEPaymentId'
+        Status:
+          type: string
+          enum: [AcceptedCreditSettlementCompleted]
+        CreationDateTime:
+          $ref: '#/components/schemas/AECreationDateTime'
+        StatusUpdateDateTime:
+          $ref: '#/components/schemas/AEStatusUpdateDateTime'
+        PaymentToken:
+          $ref: '#/components/schemas/AEBiometricPaymentToken'
+        CreditorAccount:
+          $ref: '#/components/schemas/AECreditorAccount'
+        PaymentPurposeCode:
+          $ref: '#/components/schemas/AEPaymentPurposeCode'
+        DebtorReference:
+          $ref: '#/components/schemas/AEDebtorReference'
+        CreditorReference:
+          $ref: '#/components/schemas/AECreditorReference'
+        PaymentRail:
+          description: Booked on the LFI's own ledger, because it also holds the creditor account.
+          type: string
+          enum: [LFI]
+          example: LFI
+        Subscription:
+          $ref: '#/components/schemas/AEEventSubscription'
+
+    AEBiometricPaymentLfiRejected:
+      title: LFI — rejected
+      description: A payment the LFI will not settle. Terminal.
+      type: object
+      additionalProperties: false
+      required: [PaymentId, Status, CreationDateTime, StatusUpdateDateTime, PaymentToken, CreditorAccount, PaymentPurposeCode, PaymentRail, RejectReasonCode]
+      properties:
+        PaymentId:
+          $ref: '#/components/schemas/AEPaymentId'
+        Status:
+          type: string
+          enum: [Rejected]
+        CreationDateTime:
+          $ref: '#/components/schemas/AECreationDateTime'
+        StatusUpdateDateTime:
+          $ref: '#/components/schemas/AEStatusUpdateDateTime'
+        PaymentToken:
+          $ref: '#/components/schemas/AEBiometricPaymentToken'
+        CreditorAccount:
+          $ref: '#/components/schemas/AECreditorAccount'
+        PaymentPurposeCode:
+          $ref: '#/components/schemas/AEPaymentPurposeCode'
+        DebtorReference:
+          $ref: '#/components/schemas/AEDebtorReference'
+        CreditorReference:
+          $ref: '#/components/schemas/AECreditorReference'
+        PaymentRail:
+          description: Booked on the LFI's own ledger, because it also holds the creditor account.
+          type: string
+          enum: [LFI]
+          example: LFI
+        RejectReasonCode:
+          description: Why the payment was rejected. Codes are `LFI.*` only.
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/AERejectReason'
+        Subscription:
+          $ref: '#/components/schemas/AEEventSubscription'
 
     AEBiometricPaymentLogPatch:
+      description: >-
+        The fields to be patched. Aligned with `CbuaePatchPaymentRecordBody` on
+        the v2.2 Consent Manager operation `PATCH /payment-log/{id}`, limited
+        to the `AANI` and `LFI` rails: a biometric payment is never settled
+        over UAEFTS.
+
+
+        `paymentResponse.paymentRail` selects the rail, and
+        `paymentResponse.status` the body within it. Reject reason codes are
+        namespaced to the rail — `AANI.*` or `LFI.*` — including for a payment
+        the LFI rejected before submitting it to AANI.
+      oneOf:
+        - $ref: '#/components/schemas/AEBiometricPaymentLogPatchAani'
+        - $ref: '#/components/schemas/AEBiometricPaymentLogPatchLfi'
+
+    AEBiometricPaymentLogPatchAani:
+      title: AANI
+      description: >-
+        A patch to a payment the LFI has routed to AANI, the UAE instant
+        payment platform. `paymentResponse.paymentTransactionId` is required on
+        every patch.
+      oneOf:
+        - $ref: '#/components/schemas/AEBiometricPaymentLogPatchAaniAccepted'
+        - $ref: '#/components/schemas/AEBiometricPaymentLogPatchAaniRejected'
+
+    AEBiometricPaymentLogPatchAaniAccepted:
+      title: AANI — accepted
+      description: A payment AANI has accepted or is processing.
+      type: object
+      required:
+        - paymentResponse.paymentRail
+        - paymentResponse.status
+        - paymentResponse.paymentTransactionId
+      additionalProperties: false
+      properties:
+        paymentResponse.paymentRail:
+          description: Identifies AANI as the rail the payment was routed to.
+          type: string
+          enum: [AANI]
+          example: AANI
+        paymentResponse.status:
+          description: >-
+            * `AcceptedSettlementCompleted`: **not terminal.** The LFI has
+            passed the payment to AANI and is awaiting confirmation. Once AANI
+            confirms the payment the LFI MUST patch the record again, to
+            `AcceptedWithoutPosting`.
+
+
+            * `AcceptedWithoutPosting`: terminal. AANI has confirmed the
+            payment.
+          type: string
+          enum: [AcceptedSettlementCompleted, AcceptedWithoutPosting]
+        paymentResponse.paymentTransactionId:
+          $ref: '#/components/schemas/AEPaymentLogPaymentTransactionIdAani'
+
+    AEBiometricPaymentLogPatchAaniRejected:
+      title: AANI — rejected
+      description: A payment routed to AANI that will not be settled. Terminal.
+      type: object
+      required:
+        - paymentResponse.paymentRail
+        - paymentResponse.status
+        - paymentResponse.paymentTransactionId
+        - paymentResponse.rejectReasonCode
+      additionalProperties: false
+      properties:
+        paymentResponse.paymentRail:
+          description: Identifies AANI as the rail the payment was routed to.
+          type: string
+          enum: [AANI]
+          example: AANI
+        paymentResponse.status:
+          type: string
+          enum: [Rejected]
+        paymentResponse.paymentTransactionId:
+          $ref: '#/components/schemas/AEPaymentLogPaymentTransactionIdAani'
+        paymentResponse.rejectReasonCode:
+          $ref: '#/components/schemas/AEPaymentLogRejectReasonCodeAani'
+
+    AEBiometricPaymentLogPatchLfi:
+      title: LFI
+      description: >-
+        A patch to a payment the LFI booked on its own ledger, because it also
+        holds the creditor account. Both statuses are terminal, and there is no
+        `paymentResponse.paymentTransactionId`.
+      oneOf:
+        - $ref: '#/components/schemas/AEBiometricPaymentLogPatchLfiAccepted'
+        - $ref: '#/components/schemas/AEBiometricPaymentLogPatchLfiRejected'
+
+    AEBiometricPaymentLogPatchLfiAccepted:
+      title: LFI — accepted
+      description: >-
+        The LFI has booked the payment on its own ledger and the funds are
+        available to the creditor. Terminal.
+      type: object
+      required:
+        - paymentResponse.paymentRail
+        - paymentResponse.status
+      additionalProperties: false
+      properties:
+        paymentResponse.paymentRail:
+          description: Identifies the LFI's own ledger as where the payment was settled.
+          type: string
+          enum: [LFI]
+          example: LFI
+        paymentResponse.status:
+          type: string
+          enum: [AcceptedCreditSettlementCompleted]
+
+    AEBiometricPaymentLogPatchLfiRejected:
+      title: LFI — rejected
+      description: A payment the LFI will not settle. Terminal.
+      type: object
+      required:
+        - paymentResponse.paymentRail
+        - paymentResponse.status
+        - paymentResponse.rejectReasonCode
+      additionalProperties: false
+      properties:
+        paymentResponse.paymentRail:
+          description: Identifies the LFI's own ledger as where the payment was settled.
+          type: string
+          enum: [LFI]
+          example: LFI
+        paymentResponse.status:
+          type: string
+          enum: [Rejected]
+        paymentResponse.rejectReasonCode:
+          $ref: '#/components/schemas/AEPaymentLogRejectReasonCodeLfi'
+
+    AEPaymentLogPaymentTransactionIdAani:
+      description: >-
+        The Transaction Identification (`TxId`) the LFI assigned to the payment
+        in the AANI pacs.008 credit transfer. It is assigned by the Originating
+        LFI, not issued by AANI, and passes unchanged through AANI to the
+        Receiving LFI. This is not the same value as the `transactionId` in the
+        Bank Data Sharing API. The value MUST start with `OFP`. Returned to the
+        BPIP as `PaymentTransactionId`.
+      type: string
+      minLength: 1
+      maxLength: 35
+      pattern: ^OFP
+      example: OFP7d2c1e9a4b6f4c0e8a1b
+
+    AEPaymentLogRejectReasonCodeAani:
+      description: >-
+        A list of reject reason codes provided by the LFI for a payment routed
+        to AANI. Returned to the BPIP as `RejectReasonCode`.
+
+
+        Where this list is patched repeatedly the LFI **MUST** append to the
+        existing list **BEFORE** calling the patch operation, to ensure all
+        values are maintained, unless the reject reason was patched in error
+        and the existing value is being replaced.
+      type: array
+      minItems: 1
+      items:
+        description: >-
+          The reason for rejection of a given payment request as detected by
+          the LFI. The `code` and `message` properties are transposed EXACTLY
+          in event notifications sent to the BPIP, so the `message` value MUST
+          be sanitized accordingly.
+        type: object
+        required: [code, message]
+        additionalProperties: false
+        properties:
+          code:
+            description: >-
+              AANI reason code, namespaced to the rail. AANI reason codes are
+              the standard set for this rail and carry every rejection reported
+              against it, including a rejection raised at the LFI before the
+              payment was submitted to AANI.
+            type: string
+            pattern: ^AANI\.[A-Za-z0-9]+$
+            example: AANI.AM04
+          message:
+            description: Error message describing the rejection reason
+            type: string
+            minLength: 1
+            maxLength: 500
+            example: Payment request cannot be executed as insufficient funds at debtor account.
+
+    AEPaymentLogRejectReasonCodeLfi:
+      description: >-
+        A list of reject reason codes provided by the LFI for a payment settled
+        on the LFI's own ledger. Returned to the BPIP as `RejectReasonCode`.
+
+
+        Where this list is patched repeatedly the LFI **MUST** append to the
+        existing list **BEFORE** calling the patch operation, to ensure all
+        values are maintained, unless the reject reason was patched in error
+        and the existing value is being replaced.
+      type: array
+      minItems: 1
+      items:
+        description: >-
+          The reason for rejection of a given payment request as detected by
+          the LFI. The `code` and `message` properties are transposed EXACTLY
+          in event notifications sent to the BPIP, so the `message` value MUST
+          be sanitized accordingly.
+        type: object
+        required: [code, message]
+        additionalProperties: false
+        properties:
+          code:
+            description: >-
+              LFI reason code, namespaced to the rail. The payment never left
+              the LFI, so every rejection reported against it is the LFI's own.
+            type: string
+            pattern: ^LFI\.[A-Za-z0-9]+$
+            example: LFI.AM04
+          message:
+            description: Error message describing the rejection reason
+            type: string
+            minLength: 1
+            maxLength: 500
+            example: Payment request cannot be executed as insufficient funds at debtor account.
+
+    AEBiometricPaymentCreatedResponse:
       type: object
       description: >-
-        The fields an LFI may set on a biometric payment after creation. Only
-        the status and what qualifies it: the instruction, the creditor and the
-        biometric assurance were fixed when the payment was created and cannot
-        be patched.
+        The response to `POST /biometric-payments`. The payment is always
+        `Pending`.
       additionalProperties: false
-      required: [Status]
+      required: [Data]
       properties:
-        Status:
-          $ref: '#/components/schemas/AEPaymentStatus'
-        StatusUpdateDateTime:
-          type: string
-          format: date-time
-          description: >-
-            When the LFI observed this status. The Hub records its own receipt
-            time where this is omitted.
-        RailReference:
-          $ref: '#/components/schemas/AERailReference'
-        StatusReason:
-          description: >-
-            MUST be present when `Status` is `Rejected`, carrying the reason
-            the BPIP needs in order to tell the customer whether another
-            attempt is worthwhile.
-          allOf:
-            - $ref: '#/components/schemas/AEBiometricPaymentStatusReason'
+        Data:
+          $ref: '#/components/schemas/AEBiometricPaymentPending'
+        Links:
+          $ref: '#/components/schemas/AELinks'
+        Meta:
+          $ref: '#/components/schemas/AEMeta'
 
     AEBiometricPaymentResponse:
       type: object
@@ -1135,24 +1529,6 @@ components:
       properties:
         Data:
           $ref: '#/components/schemas/AEBiometricPayment'
-        Links:
-          $ref: '#/components/schemas/AELinks'
-        Meta:
-          $ref: '#/components/schemas/AEMeta'
-
-    AEBiometricPaymentQueryResponse:
-      type: object
-      description: >-
-        Query result shape. `Data` holds zero or one payment — an empty array
-        means no payment was created for that idempotency key.
-      additionalProperties: false
-      required: [Data]
-      properties:
-        Data:
-          type: array
-          maxItems: 1
-          items:
-            $ref: '#/components/schemas/AEBiometricPayment'
         Links:
           $ref: '#/components/schemas/AELinks'
         Meta:
@@ -1201,7 +1577,12 @@ components:
       required: [Data, Meta]
       properties:
         Data:
-          $ref: '#/components/schemas/AEBiometricPayment'
+          description: >-
+            The payment as it stands after the LFI's patch. Never `Pending`:
+            the event is only sent when the LFI patches the payment.
+          oneOf:
+            - $ref: '#/components/schemas/AEBiometricPaymentAani'
+            - $ref: '#/components/schemas/AEBiometricPaymentLfi'
         Meta:
           type: object
           additionalProperties: false
@@ -1227,146 +1608,58 @@ components:
     AEInstrumentLookupRequest:
       type: object
       description: >-
-        Instrument lookup request. Carries the identifier and the ICP
-        authorisation ICP returned on resolution, and the transaction details
-        that authorisation is bound to.
+        Instrument lookup request. Carries the identifier and the ICP token ICP
+        returned on resolution, and the amount that token is bound to.
       additionalProperties: false
       required: [Data]
       properties:
         Data:
           type: object
           additionalProperties: false
-          required: [uaeKycId, InstructedAmount, CardAcceptor, IcpAuthorisation]
+          required: [uaeKycId, IcpToken, TransactionAmount]
           properties:
             uaeKycId:
-              $ref: '#/components/schemas/AEUaeKycId'
-            IcpAuthorisation:
               description: >-
-                The ICP authorisation for this transaction. Its `sub` MUST equal
-                `uaeKycId`, and its `txn` MUST equal the hash of
-                `InstructedAmount` and `CardAcceptor` below.
+                Know Your Customer identification reference, as ICP returned
+                it. MUST equal the ICP token's `sub`.
               allOf:
-                - $ref: '#/components/schemas/AEIcpAuthorisation'
-            InstructedAmount:
+                - $ref: '#/components/schemas/AEUaeKycId'
+            IcpToken:
               description: >-
-                The payment amount. Bound into the payment token, and used by
-                the LFI to bind the card scheme cryptogram to the payment when
-                the payment instrument is a card scheme.
+                The ICP token for this transaction, unchanged. Its `txn` MUST
+                equal the hash of `TransactionAmount`.
+              allOf:
+                - $ref: '#/components/schemas/AEIcpToken'
+            TransactionAmount:
+              description: >-
+                The amount processed for the transaction (DE04). Returned as
+                `InstructedAmount` in the payment token.
               allOf:
                 - $ref: '#/components/schemas/AEAmount'
-            CardAcceptor:
-              type: object
-              description: >-
-                The merchant's acceptance details. Always sent, because they are
-                part of the transaction bound in the ICP authorisation's `txn`.
-                When the payment instrument is a card scheme, the LFI binds the
-                cryptogram to them and uses them to choose a scheme the
-                merchant accepts for a co-badged card. Field set to be
-                validated against each scheme's message definition.
-              additionalProperties: false
-              properties:
-                AcquirerIdentification:
-                  type: string
-                  maxLength: 35
-                MerchantIdentification:
-                  type: string
-                  maxLength: 35
-                TerminalIdentification:
-                  type: string
-                  maxLength: 35
 
     AEInstrumentLookupResponse:
       type: object
       description: >-
-        Instrument lookup response. Names the payment instrument, carries
-        either the account details or a card scheme token and one-time
-        cryptogram for that scheme, and the payment token the BPIP presents to
-        make the payment. Never carries a card number (PAN).
+        Instrument lookup response. `Data` is the payment token: there is no
+        other content.
       additionalProperties: false
       required: [Data]
       properties:
         Data:
-          type: object
-          additionalProperties: false
-          required: [uaeKycId, PaymentInstrument, PaymentToken]
-          properties:
-            uaeKycId:
-              $ref: '#/components/schemas/AEUaeKycId'
-            PaymentInstrument:
-              $ref: '#/components/schemas/AEPaymentInstrument'
-            PaymentToken:
-              description: >-
-                Minted by the API Hub once the LFI has answered, and added to
-                the LFI's response. Present it once: on
-                `POST /biometric-payments` when `PaymentType` is `Account`, or
-                to the card scheme when it is `Card`.
-              allOf:
-                - $ref: '#/components/schemas/AEPaymentToken'
-            DebtorAccount:
-              description: >-
-                Present when the instrument is an account. The BPIP sends it
-                back unchanged on `POST /biometric-payments`.
-              allOf:
-                - $ref: '#/components/schemas/AEDebtorAccount'
-            EncryptedCardCredential:
-              type: string
-              description: >-
-                Present when the payment instrument is a card scheme. A compact
-                JWE (`RSA-OAEP-256`, `A256GCM`), encrypted by the LFI to the
-                BPIP's public encryption key registered in the Directory and
-                identified by `kid` in the JWE header. Its plaintext is a JWS
-                signed by the LFI (`PS256`) whose claims are
-                `AECardCredential`. The API Hub proxies it unread, so card data
-                never passes through the Hub in the clear. Only the BPIP can
-                decrypt it, with its private key, and it verifies the inner JWS
-                against the LFI's signing keys from the Directory.
-              example: eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIiwia2lkIjoiYnBpcC1lbmMifQ...
-        Meta:
-          $ref: '#/components/schemas/AEMeta'
+          description: >-
+            The payment token, represented in both encoded and decoded form
+            using an `anyOf`, to help implementers readily understand both the
+            structure and serialized form of the property.
 
-    AECardCredential:
-      type: object
-      description: >-
-        The claims of the LFI-signed JWS inside `EncryptedCardCredential` in
-        the instrument lookup response. Never sent unencrypted.
-      additionalProperties: false
-      required: [iss, aud, iat, exp, IcpTransactionId, CardSchemeToken, Cryptogram, ExpirationDateTime]
-      properties:
-        iss:
-          type: string
-          description: The LFI's issuer identifier.
-        aud:
-          type: string
-          description: The BPIP's client identifier.
-        iat:
-          type: number
-        exp:
-          type: number
-          description: No later than `ExpirationDateTime`.
-        IcpTransactionId:
-          type: string
-          maxLength: 40
-          description: >-
-            The `jti` of the ICP authorisation this credential was issued
-            against. The BPIP MUST check it equals the `jti` of the ICP
-            authorisation it presented on the lookup.
-        CardSchemeToken:
-          type: string
-          maxLength: 19
-          description: >-
-            A network token issued by the card scheme's token service — a
-            substitute for the card number that only the scheme can map back to
-            the card. Valid only on the scheme named in `PaymentInstrument`.
-        Cryptogram:
-          type: string
-          description: >-
-            A one-time cryptogram bound to the amount and card acceptor in the
-            request and to the ICP authorisation's `jti`, for the BPIP to submit
-            to the card scheme.
-        ExpirationDateTime:
-          type: string
-          format: date-time
-          description: When the cryptogram expires.
+
+            **Implementations MUST reflect the AEJWEPaymentToken Schema Object
+            structure and the notes provided on implementing a JWS and JWE.**
+
+
+            **The decoded form AEPaymentToken is for guidance on content only.**
+          anyOf:
+            - $ref: '#/components/schemas/AEPaymentToken'
+            - $ref: '#/components/schemas/AEJWEPaymentToken'
 
     AELinks:
       type: object

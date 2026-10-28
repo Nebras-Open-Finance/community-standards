@@ -58,12 +58,6 @@ const bpipCalls: Endpoint[] = [
     note: 'Retrieve a payment by PaymentId.',
   },
   {
-    method: 'GET',
-    path: '/biometric-payments',
-    link: '/biopay/payment/api-reference/biometric-payments-by-idempotency-key',
-    note: 'Retrieve a payment by idempotency key.',
-  },
-  {
     method: 'POST',
     path: '/instrument-lookup',
     link: '/biopay/payment/api-reference/instrument-lookup',
@@ -81,7 +75,7 @@ const bpipCalls: Endpoint[] = [
       eyebrow-color="var(--at-blue-deep)"
       title="Directory"
       :meta="meta"
-      lede="BioPay introduces one new participant role: the <strong>Biometric Payment Initiation Provider (BPIP)</strong>. This page sets out what the role entitles its holder to, the endpoints it can reach, and the certificates it requires. ICP is not a Directory participant &mdash; BPIPs and LFIs reach it through the ICP SDK, outside the API Hub."
+      lede="BioPay introduces one new participant role: the <strong>Biometric Payment Initiation Provider (BPIP)</strong>. This page sets out what the role entitles its holder to, the endpoints it can reach, and the certificates it requires. ICP is not a Directory participant &mdash; BPIPs and LFIs reach it outside the API Hub, through the ICP SDK and, for LFIs validating an ICP token, ICP&rsquo;s token validation endpoint."
     />
 
     <EdInPageNav :sections="sections" />
@@ -128,7 +122,7 @@ const bpipCalls: Endpoint[] = [
         <p>
           ICP has no role in the Directory. It is not a client of the API Hub and the Hub does not
           call it: registration and customer resolution both run directly against ICP through the
-          ICP SDK.
+          ICP SDK, and the LFI validates the ICP token at ICP&rsquo;s token validation endpoint.
         </p>
       </EdProse>
 
@@ -203,16 +197,16 @@ const bpipCalls: Endpoint[] = [
         </li>
         <li>
           <strong>Encryption certificate &mdash; required.</strong> Every BPIP MUST register an
-          encryption certificate, because the card credential in an
+          encryption certificate, because the payment token in every
           <RouterLink to="/biopay/payment/api-reference/instrument-lookup"><code>POST /instrument-lookup</code></RouterLink>
           response is encrypted to it:
           <ul>
             <li>
-              <strong>Card credential.</strong> When the instrument is a card, the LFI MUST
-              encrypt the card scheme token, cryptogram and expiry into a JWE using the BPIP&rsquo;s
-              public encryption key, taken from the Directory. The API Hub proxies the JWE
-              unread, so card data never passes through it in the clear &mdash; keeping the API Hub
-              out of PCI DSS scope. Only the BPIP, holding the private key, can decrypt it.
+              <strong>Payment token.</strong> The LFI MUST sign the payment token &mdash; carrying
+              the customer&rsquo;s IBAN or card details &mdash; and encrypt it into a JWE using the
+              BPIP&rsquo;s public encryption key, taken from the Directory. The API Hub proxies the
+              JWE unread, so card data never passes through it in the clear &mdash; keeping the API
+              Hub out of PCI DSS scope. Only the BPIP, holding the private key, can decrypt it.
             </li>
             <li>
               <strong>Events.</strong> Payment status events are delivered as a JWE encrypted
@@ -244,9 +238,10 @@ const bpipCalls: Endpoint[] = [
           &mdash; a BPIP reaches an LFI only through it.
         </p>
         <p>
-          ICP sits outside this picture. LFIs call it through the ICP SDK at registration, and BPIPs
-          call it through the ICP SDK to resolve the customer at payment; neither call passes
-          through the API Hub.
+          ICP sits outside this picture. LFIs call it through the ICP SDK at registration, BPIPs
+          call it through the ICP SDK to resolve the customer at payment, and LFIs call its token
+          validation endpoint on every instrument lookup; none of these calls passes through the
+          API Hub.
         </p>
       </EdProse>
 
