@@ -67,180 +67,7 @@ x-fapi-interaction-id: 93bac548-d2de-4546-b106-880a5018460d
   "Data": "eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIiwia2lkIjoiYnBpcC1lbmMtMSIsImN0eSI6IkpXVCJ9..."
 }`
 
-// ── Payment token decryption ───────────────────────────────────────────────
-const readKidTabs = [
-  {
-    label: 'Node.js',
-    lang: 'typescript',
-    code: `function getJweKid(jweString: string): string {
-  const [headerB64] = jweString.split('.')
-  const header = JSON.parse(Buffer.from(headerB64, 'base64url').toString())
-  return header.kid
-}
-
-const encryptedToken = lookupResponse.Data
-const kid = getJweKid(encryptedToken)
-const privateKeyPem = myKeyStore.getPrivateKeyPem(kid)`,
-  },
-  {
-    label: 'Python',
-    lang: 'python',
-    code: `import base64, json
-
-def get_jwe_kid(jwe_string: str) -> str:
-    header_b64 = jwe_string.split(".")[0]
-    return json.loads(base64.urlsafe_b64decode(header_b64 + "=="))["kid"]
-
-encrypted_token = lookup_response["Data"]
-kid = get_jwe_kid(encrypted_token)
-private_key = my_key_store.get_private_key(kid)`,
-  },
-] as const
-
-const decryptTabs = [
-  {
-    label: 'Node.js (jose)',
-    lang: 'typescript',
-    code: `import { compactDecrypt, importPKCS8 } from 'jose'
-
-const privateKey = await importPKCS8(privateKeyPem, 'RSA-OAEP-256')
-
-const { plaintext } = await compactDecrypt(encryptedToken, privateKey)
-const paymentToken = new TextDecoder().decode(plaintext) // the LFI's JWS`,
-  },
-  {
-    label: 'Python (jwcrypto)',
-    lang: 'python',
-    code: `from jwcrypto import jwe
-
-token = jwe.JWE()
-token.deserialize(encrypted_token, key=private_key)
-payment_token = token.payload.decode()  # the LFI's JWS`,
-  },
-] as const
-
-const verifyTabs = [
-  {
-    label: 'Node.js (jose)',
-    lang: 'typescript',
-    code: `import { createRemoteJWKSet, jwtVerify } from 'jose'
-
-// The LFI's signing keys, from its JWKS in the Directory
-const lfiJwks = createRemoteJWKSet(new URL(lfiJwksUri))
-
-const { payload } = await jwtVerify(paymentToken, lfiJwks, {
-  issuer: expectedLfiIssuer,
-  algorithms: ['PS256'],
-})
-
-// Check it was issued to you, for the ICP token you sent on the lookup
-if (payload.azp !== myOrganisationId) {
-  throw new Error('Payment token was not issued to this BPIP')
-}
-if (payload.IcpToken !== icpToken) {
-  throw new Error('Payment token was not issued for this ICP token')
-}`,
-  },
-  {
-    label: 'Python (jwcrypto)',
-    lang: 'python',
-    code: `import json
-from jwcrypto import jwk, jwt
-
-# The LFI's signing keys, from its JWKS in the Directory
-lfi_keys = jwk.JWKSet.from_json(fetch_lfi_jwks())
-
-verified = jwt.JWT(
-    key=lfi_keys,
-    jwt=payment_token,
-    algs=["PS256"],
-    check_claims={"iss": expected_lfi_issuer, "exp": None},
-)
-claims = json.loads(verified.claims)
-
-# Check it was issued to you, for the ICP token you sent on the lookup
-if claims["azp"] != my_organisation_id:
-    raise ValueError("Payment token was not issued to this BPIP")
-if claims["IcpToken"] != icp_token:
-    raise ValueError("Payment token was not issued for this ICP token")`,
-  },
-] as const
-
-const fullDecryptTabs = [
-  {
-    label: 'Node.js',
-    lang: 'typescript',
-    code: `import { compactDecrypt, createRemoteJWKSet, importPKCS8, jwtVerify } from 'jose'
-
-async function openPaymentToken(encryptedToken: string, icpToken: string) {
-  // 1. Select your private key by the kid in the JWE header
-  const [headerB64] = encryptedToken.split('.')
-  const { kid } = JSON.parse(Buffer.from(headerB64, 'base64url').toString())
-  const privateKey = await importPKCS8(myKeyStore.getPrivateKeyPem(kid), 'RSA-OAEP-256')
-
-  // 2. Decrypt the JWE → the payment token, a JWS signed by the LFI
-  const { plaintext } = await compactDecrypt(encryptedToken, privateKey)
-  const paymentToken = new TextDecoder().decode(plaintext)
-
-  // 3. Verify the LFI's signature and standard claims
-  const lfiJwks = createRemoteJWKSet(new URL(lfiJwksUri))
-  const { payload } = await jwtVerify(paymentToken, lfiJwks, {
-    issuer: expectedLfiIssuer,
-    algorithms: ['PS256'],
-  })
-
-  // 4. Check it was issued to you, for this ICP token
-  if (payload.azp !== myOrganisationId) {
-    throw new Error('Payment token was not issued to this BPIP')
-  }
-  if (payload.IcpToken !== icpToken) {
-    throw new Error('Payment token was not issued for this ICP token')
-  }
-
-  // Keep the JWS to send back at the point of payment. Hold card details in
-  // memory only. Never log or persist them.
-  return { paymentToken, claims: payload }
-}`,
-  },
-  {
-    label: 'Python',
-    lang: 'python',
-    code: `import base64, json
-from jwcrypto import jwe, jwk, jwt
-
-def open_payment_token(encrypted_token: str, icp_token: str) -> tuple[str, dict]:
-    # 1. Select your private key by the kid in the JWE header
-    header_b64 = encrypted_token.split(".")[0]
-    kid = json.loads(base64.urlsafe_b64decode(header_b64 + "=="))["kid"]
-    private_key = my_key_store.get_private_key(kid)
-
-    # 2. Decrypt the JWE → the payment token, a JWS signed by the LFI
-    token = jwe.JWE()
-    token.deserialize(encrypted_token, key=private_key)
-    payment_token = token.payload.decode()
-
-    # 3. Verify the LFI's signature and standard claims
-    lfi_keys = jwk.JWKSet.from_json(fetch_lfi_jwks())
-    verified = jwt.JWT(
-        key=lfi_keys,
-        jwt=payment_token,
-        algs=["PS256"],
-        check_claims={"iss": expected_lfi_issuer, "exp": None},
-    )
-    claims = json.loads(verified.claims)
-
-    # 4. Check it was issued to you, for this ICP token
-    if claims["azp"] != my_organisation_id:
-        raise ValueError("Payment token was not issued to this BPIP")
-    if claims["IcpToken"] != icp_token:
-        raise ValueError("Payment token was not issued for this ICP token")
-
-    # Keep the JWS to send back at the point of payment. Hold card details in
-    # memory only. Never log or persist them.
-    return payment_token, claims`,
-  },
-] as const
-
+// ── Payment token ──────────────────────────────────────────────────────────
 const accountTokenClaims = `{
   "iss": "[LFI_ORGANISATION_ID]",
   "azp": "[BPIP_ORGANISATION_ID]",
@@ -635,38 +462,24 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
           <code>Data</code> is a compact JWE (<code>RSA-OAEP-256</code>, <code>A256GCM</code>)
           encrypted by the LFI to your public encryption key from the Directory. Inside is the
           <strong>payment token</strong>: a JWS signed by the LFI (<code>PS256</code>). The API Hub
-          passes the JWE on without reading it, so neither the IBAN nor the card details pass
-          through the Hub in the clear. This is the same sign-then-encrypt pattern as Open Finance
-          PII and events &mdash; here the BPIP is the recipient.
+          passes the JWE on without reading it, so the IBAN or card details in the lookup response
+          do not pass through the Hub in the clear. This is the same sign-then-encrypt pattern as
+          Open Finance PII and events &mdash; here the BPIP is the recipient.
         </p>
       </EdProse>
-
-      <h3 class="bp-sub">1. Read the <code>kid</code> and select your private key</h3>
-      <EdProse>
+      <EdBullets accent="var(--at-teal-deep)">
+        <li><strong>Decrypt</strong> the JWE with the private key named by the <code>kid</code> in its header.</li>
+        <li><strong>Verify</strong> the LFI&rsquo;s signature against the JWKS of the LFI you called &mdash; never one taken from the token&rsquo;s <code>iss</code> &mdash; and pin <code>PS256</code>.</li>
+        <li><strong>Check</strong> that <code>iss</code> is that LFI, <code>azp</code> is your organisation, <code>exp</code> has not passed, and <code>IcpToken</code> and <code>InstructedAmount</code> are the ICP token and amount you sent on the lookup.</li>
+      </EdBullets>
+      <EdNote type="info" title="Step by step, with code">
         <p>
-          The JWE protected header names the encryption key the LFI used. Resolve your private key by
-          <code>kid</code>, not by assuming your current key &mdash; after a rotation the LFI may
-          still be using the previous one.
+          How to decrypt the JWE and verify the payment token, with Node.js and Python examples, is
+          on <RouterLink to="/biopay/payment/api-guide/signing-and-encryption#decrypt">Signing and
+          Encryption</RouterLink>. That page also shows how the LFI signs and encrypts the token,
+          and how it validates the token when you send it back.
         </p>
-      </EdProse>
-      <EdCodeGroup :tabs="readKidTabs" />
-
-      <h3 class="bp-sub">2. Decrypt the JWE</h3>
-      <EdCodeGroup :tabs="decryptTabs" />
-
-      <h3 class="bp-sub">3. Verify the LFI&rsquo;s signature and the ICP binding</h3>
-      <EdProse>
-        <p>
-          Verify the payment token against the LFI&rsquo;s signing keys from its JWKS in the
-          Directory. Check that <code>iss</code> is the LFI you called, that <code>azp</code> is your
-          organisation, and that <code>exp</code> has not passed. Then check that
-          <code>IcpToken</code> equals the ICP token you sent on the lookup.
-        </p>
-      </EdProse>
-      <EdCodeGroup :tabs="verifyTabs" />
-
-      <h3 class="bp-sub">End to end</h3>
-      <EdCodeGroup :tabs="fullDecryptTabs" />
+      </EdNote>
 
       <h3 id="payment-token" class="bp-sub">Route on the instrument type</h3>
       <EdProse>

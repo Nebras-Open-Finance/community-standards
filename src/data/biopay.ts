@@ -100,7 +100,17 @@ export const biopaySidebar: EdSidebarItemData[] = [
         text: 'API Sequence Flow',
         link: '/biopay/payment/technical-architecture',
       },
-      { text: 'API Guide', link: '/biopay/payment/api-guide' },
+      {
+        text: 'API Guide',
+        link: '/biopay/payment/api-guide/',
+        collapsed: false,
+        items: [
+          {
+            text: 'Signing and Encryption',
+            link: '/biopay/payment/api-guide/signing-and-encryption',
+          },
+        ],
+      },
       {
         text: 'API Reference',
         collapsed: false,
