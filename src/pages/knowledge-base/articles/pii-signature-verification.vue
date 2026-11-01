@@ -4,7 +4,7 @@ meta:
   description: "The TPP signature on a payment consent's PII is as long-lived as the consent. The key that made it is not — TPPs rotate signing keys freely, and a rotated key leaves the active JWKS. Where you verify decides which key sets you have to look in."
   category: Security
   readTime: "6 min"
-  updated: "2026-09-15"
+  updated: "2026-11-01"
   tags:
     - PII
     - JWS
@@ -26,16 +26,16 @@ const sections: Section[] = [
 const meta: MetaItem[] = [
   { label: 'Category', value: 'Security' },
   { label: 'Read',     value: '6 min' },
-  { label: 'Updated',  value: '15 Sep 2026' },
+  { label: 'Updated',  value: '1 Nov 2026' },
 ]
 
 const tags: readonly string[] = ['PII', 'JWS', 'Trust Framework']
 
-const jwksProduction = `Active     https://keystore.directory.openfinance.ae/{id}/application.jwks
-Inactive   https://keystore.directory.openfinance.ae/{id}/inactive/application.jwks`
+const jwksProduction = `Active     https://keystore.directory.openfinance.ae/{org-id}/{software-statement-id}/application.jwks
+Inactive   https://keystore.directory.openfinance.ae/{org-id}/{software-statement-id}/inactive/application.jwks`
 
-const jwksSandbox = `Active     https://keystore.sandbox.directory.openfinance.ae/{id}/application.jwks
-Inactive   https://keystore.sandbox.directory.openfinance.ae/{id}/inactive/application.jwks`
+const jwksSandbox = `Active     https://keystore.sandbox.directory.openfinance.ae/{org-id}/{software-statement-id}/application.jwks
+Inactive   https://keystore.sandbox.directory.openfinance.ae/{org-id}/{software-statement-id}/inactive/application.jwks`
 
 const activeOnlySnippet = `const jwks = createRemoteJWKSet(new URL(jwksUri))   // active keys only
 const { payload } = await jwtVerify(jwsString, jwks)`
@@ -201,15 +201,18 @@ const { payload } = await jwtVerify(jwsString, jwks)`
       <EdCode :code="jwksSandbox" lang="text" filename="Sandbox" />
 
       <EdProse>
-        The <code>inactive/</code> segment sits <strong>between the identifier and the
+        The <code>inactive/</code> segment sits <strong>between the software statement ID and the
         filename</strong> &mdash; not appended to the filename, and not prefixed to the path.
       </EdProse>
 
       <EdProse>
-        For the PII signature, <code>{id}</code> is the <strong>TPP's software statement ID</strong>,
-        which arrives on every relevant call in the <code>o3-caller-software-statement-id</code>
-        header &mdash; including <code>/consent/action/validate</code> and
-        <code>POST /payments</code>. You do not need to look it up.
+        For the PII signature, <code>{org-id}</code> and <code>{software-statement-id}</code> are the
+        <strong>TPP's organisation ID and software statement ID</strong>. They arrive on every
+        relevant call in the <code>o3-caller-org-id</code> and
+        <code>o3-caller-software-statement-id</code> headers &mdash; including
+        <code>/consent/action/validate</code> and <code>POST /payments</code>. You do not need to
+        look them up. Both segments are required: the software statement ID on its own is not a
+        keystore path and returns <code>404</code>.
       </EdProse>
 
       <EdProse>
