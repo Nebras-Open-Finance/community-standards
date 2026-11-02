@@ -125,6 +125,19 @@ export const data: RequirementsPageData = {
             { kind: 'prose', html: 'The LFI MUST PATCH the consent to <code>Rejected</code> before calling <code>doFail</code> — the end user has been identified during the authentication step.' },
           ],
         },
+        {
+          heading: '8. End user not eligible for Open Finance',
+          blocks: [
+            { kind: 'prose', html: 'The end user has been authenticated by the LFI, but is not enabled or eligible to use Open Finance through that LFI. For example: <ul><li>The customer exists in the LFI\'s system but is not eligible for Open Finance (for example, a non-resident customer, or a customer type or channel that is not supported)</li></ul>' },
+            { kind: 'table', table: {
+              headers: ['Field', 'Value'],
+              rows: [
+                { cells: ['<code>error</code>', '<code>access_denied</code>'] },
+                { cells: ['<code>error_description</code>', '<code>user_not_eligible_for_open_finance</code>'] },
+              ],
+            } },
+          ],
+        },
       ],
     },
     {
@@ -142,7 +155,8 @@ export const data: RequirementsPageData = {
             { cells: ['5', 'LFI internal technical error', '<code>server_error</code>', '<code>lfi_internal_error</code>'] },
             { cells: ['6', 'LFI fails to communicate with API Hub', '<code>server_error</code>', '<code>api_hub_communication_error</code>'] },
             { cells: ['7', 'LFI temporarily unavailable', '<code>temporarily_unavailable</code>', '<code>lfi_temporarily_unavailable</code>'] },
-            { cells: ['8', 'Debtor account specified on the consent is not held by the end user <span class="ed-req-tag">Payments only</span>', '<code>invalid_request</code>', '<code>user_does_not_own_debtor_account</code>'] },
+            { cells: ['8', 'End user not eligible for Open Finance', '<code>access_denied</code>', '<code>user_not_eligible_for_open_finance</code>'] },
+            { cells: ['9', 'Debtor account specified on the consent is not held by the end user <span class="ed-req-tag">Payments only</span>', '<code>invalid_request</code>', '<code>user_does_not_own_debtor_account</code>'] },
           ],
         } },
         { kind: 'prose', html: 'For all scenarios above, the LFI MUST PATCH the consent to <code>Rejected</code> before calling <code>doFail</code>, except scenario 6 where the API Hub may be unreachable — in which case the LFI MUST make a best-effort attempt.' },

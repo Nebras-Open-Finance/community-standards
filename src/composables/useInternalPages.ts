@@ -90,6 +90,8 @@ export const OPERATIONS_TOOLS: Record<string, string> = {
   'generate-report': 'Generate report',
   'pii-report': 'PII report',
   'certificate-rotation': 'Certificate rotation',
+  'lfi-testing': 'LFI functional testing',
+  'lfi-test-results': 'LFI test results',
 }
 export const CERT_TOOLS: Record<string, string> = {
   'lfi-certificate': 'LFI certificate',
