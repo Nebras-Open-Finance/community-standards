@@ -55,7 +55,11 @@ x-jws-signature: eyJhbGciOiJQUzI1NiIsImtpZCI6...
   "Data": {
     "uaeKycId": "ICP-7c9e1f4a-2b60-4d3e-9a15-0f8c2d1b7e43",
     "IcpToken": "eyJhbGciOiJQUzI1NiIsImtpZCI6ImljcC1zaWduLTEifQ...",
-    "TransactionAmount": { "Amount": "149.50", "Currency": "AED" }
+    "TransactionAmount": { "Amount": "149.50", "Currency": "AED" },
+    "MerchantId": "100000000000731",
+    "TerminalId": "T0000042",
+    "AcquirerId": "123456",
+    "MerchantName": "Example Grocers"
   }
 }`
 
@@ -77,6 +81,10 @@ const accountTokenClaims = `{
   "uaeKycId": "ICP-7c9e1f4a-2b60-4d3e-9a15-0f8c2d1b7e43",
   "IcpToken": "eyJhbGciOiJQUzI1NiIsImtpZCI6ImljcC1zaWduLTEifQ...",
   "InstructedAmount": { "Amount": "149.50", "Currency": "AED" },
+  "MerchantId": "100000000000731",
+  "TerminalId": "T0000042",
+  "AcquirerId": "123456",
+  "MerchantName": "Example Grocers",
   "InstrumentType": "ACCOUNT",
   "DebtorAccount": { "SchemeName": "IBAN", "Identification": "AE070331234567890123456" }
 }`
@@ -90,6 +98,10 @@ const cardTokenClaims = `{
   "uaeKycId": "ICP-7c9e1f4a-2b60-4d3e-9a15-0f8c2d1b7e43",
   "IcpToken": "eyJhbGciOiJQUzI1NiIsImtpZCI6ImljcC1zaWduLTEifQ...",
   "InstructedAmount": { "Amount": "149.50", "Currency": "AED" },
+  "MerchantId": "100000000000731",
+  "TerminalId": "T0000042",
+  "AcquirerId": "123456",
+  "MerchantName": "Example Grocers",
   "InstrumentType": "CARD",
   "CardDetails": { "CardNumber": "4895370012003478", "ExpiryDate": "08/29" }
 }`
@@ -410,6 +422,10 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
             <tr><td><code>Data.uaeKycId</code></td><td>Yes</td><td>Know Your Customer identification reference, as ICP returned it. MUST equal the ICP token&rsquo;s <code>sub</code>.</td></tr>
             <tr><td><code>Data.IcpToken</code></td><td>Yes</td><td>The ICP token, unchanged.</td></tr>
             <tr><td><code>Data.TransactionAmount</code></td><td>Yes</td><td>The amount processed for the transaction (DE04), exactly as given to ICP. Returned as <code>InstructedAmount</code> in the payment token, and the amount the LFI debits.</td></tr>
+            <tr><td><code>Data.MerchantId</code></td><td>Yes</td><td>Unique identification code assigned to the merchant (DE42), up to 15 characters. Returned unchanged in the payment token.</td></tr>
+            <tr><td><code>Data.TerminalId</code></td><td>Yes</td><td>Unique identification code assigned to the terminal (DE41), up to 8 characters. Returned unchanged in the payment token.</td></tr>
+            <tr><td><code>Data.AcquirerId</code></td><td>Yes</td><td>Unique identification code assigned to the acquiring bank (DE32), up to 11 digits. Returned unchanged in the payment token.</td></tr>
+            <tr><td><code>Data.MerchantName</code></td><td>Yes</td><td>Name of the merchant (DE43), up to 40 characters. Returned unchanged in the payment token.</td></tr>
           </tbody>
         </table>
       </EdRefTable>
@@ -418,6 +434,13 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
           The ICP token&rsquo;s <code>txn</code> is a hash of <code>TransactionAmount</code>. Send
           it exactly as you gave it to ICP, or the lookup fails with
           <code>IcpToken.BindingMismatch</code>.
+        </p>
+        <p>
+          The merchant, terminal and acquirer are not in the ICP token, which is issued at the point
+          of customer identity verification. The LFI carries them in the payment token it signs. For
+          a card payment, send the same <code>MerchantId</code>, <code>TerminalId</code> and
+          <code>AcquirerId</code> in the card authorisation: the LFI declines it if they do not match
+          the payment token.
         </p>
       </EdProse>
 
@@ -485,8 +508,9 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
       <EdProse>
         <p>
           The payment token carries the <code>uaeKycId</code>, the ICP token, the amount from your
-          lookup as <code>InstructedAmount</code>, and what the customer&rsquo;s payment
-          instrument needs. Route on
+          lookup as <code>InstructedAmount</code>, the <code>MerchantId</code>,
+          <code>TerminalId</code>, <code>AcquirerId</code> and <code>MerchantName</code> you sent,
+          and what the customer&rsquo;s payment instrument needs. Route on
           <code>InstrumentType</code>:
         </p>
       </EdProse>
@@ -794,14 +818,15 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
         </p>
       </EdProse>
       <EdBullets accent="var(--at-navy)">
-        <li><code>CardNumber</code> and <code>ExpiryDate</code> from the payment token, the same amount you sent on the lookup, and your merchant and terminal details as for any card authorisation.</li>
+        <li><code>CardNumber</code> and <code>ExpiryDate</code> from the payment token, and the same amount, <code>MerchantId</code>, <code>TerminalId</code>, <code>AcquirerId</code> and <code>MerchantName</code> you sent on the lookup.</li>
         <li>The payment token, with cardholder verification coded as biometric, verified by ICP. Field mapping to be agreed with the scheme.</li>
       </EdBullets>
       <EdProse>
         <p>
           The card scheme carries the payment token to the LFI as issuer. The LFI verifies the token
           it issued &mdash; its own signature and expiry, that it is a <code>CARD</code> token, that
-          the card and amount match the authorisation, and that it has not been used
+          the card, amount, merchant, terminal and acquirer match the authorisation, and that it has
+          not been used
           &mdash; marks it used, and approves or declines. The outcome comes back to you from the
           card scheme; there is no <code>PaymentId</code>, payment status event or polling for a card
           payment.

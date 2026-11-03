@@ -42,6 +42,7 @@ const nestedStructure = `JWE  — Data in the POST /instrument-lookup response, 
    JWS  — the payment token, signed by the LFI
    ├─ protected header   { "alg": "PS256", "kid": "lfi-sign-1" }
    ├─ payload            iss, azp, iat, exp, jti, uaeKycId, IcpToken, InstructedAmount,
+   │                     MerchantId, TerminalId, AcquirerId, MerchantName,
    │                     InstrumentType, and DebtorAccount or CardDetails
    └─ signature          PS256, with the LFI's payment token signing key`
 
@@ -61,7 +62,15 @@ const signTabs = [
 import { randomUUID } from 'node:crypto'
 
 type Amount = { Amount: string; Currency: string }
-type LookupData = { uaeKycId: string; IcpToken: string; TransactionAmount: Amount }
+type LookupData = {
+  uaeKycId: string
+  IcpToken: string
+  TransactionAmount: Amount
+  MerchantId: string
+  TerminalId: string
+  AcquirerId: string
+  MerchantName: string
+}
 type Instrument =
   | { InstrumentType: 'ACCOUNT'; DebtorAccount: { SchemeName: 'IBAN'; Identification: string } }
   | { InstrumentType: 'CARD'; CardDetails: { CardNumber: string; ExpiryDate: string } }
@@ -82,6 +91,10 @@ async function signPaymentToken(
     uaeKycId: data.uaeKycId,
     IcpToken: data.IcpToken,                  // unchanged
     InstructedAmount: data.TransactionAmount, // unchanged
+    MerchantId: data.MerchantId,              // unchanged
+    TerminalId: data.TerminalId,              // unchanged
+    AcquirerId: data.AcquirerId,              // unchanged
+    MerchantName: data.MerchantName,          // unchanged
     ...instrument,
   })
     .setProtectedHeader({ alg: 'PS256', kid: paymentTokenKid })
@@ -119,6 +132,10 @@ def sign_payment_token(data: dict, caller_org_id: str, instrument: dict) -> str:
         "uaeKycId": data["uaeKycId"],
         "IcpToken": data["IcpToken"],                   # unchanged
         "InstructedAmount": data["TransactionAmount"],  # unchanged
+        "MerchantId": data["MerchantId"],               # unchanged
+        "TerminalId": data["TerminalId"],               # unchanged
+        "AcquirerId": data["AcquirerId"],               # unchanged
+        "MerchantName": data["MerchantName"],           # unchanged
         **instrument,
     }
     token = jwt.JWT(header={"alg": "PS256", "kid": payment_token_kid}, claims=claims)
@@ -136,6 +153,10 @@ const accountTokenClaims = `{
   "uaeKycId": "ICP-7c9e1f4a-2b60-4d3e-9a15-0f8c2d1b7e43",
   "IcpToken": "eyJhbGciOiJQUzI1NiIsImtpZCI6ImljcC1zaWduLTEifQ...",
   "InstructedAmount": { "Amount": "149.50", "Currency": "AED" },
+  "MerchantId": "100000000000731",
+  "TerminalId": "T0000042",
+  "AcquirerId": "123456",
+  "MerchantName": "Example Grocers",
   "InstrumentType": "ACCOUNT",
   "DebtorAccount": { "SchemeName": "IBAN", "Identification": "AE070331234567890123456" }
 }`
@@ -831,6 +852,10 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
             <tr><td><code>uaeKycId</code></td><td>The customer&rsquo;s identifier</td><td><code>Data.uaeKycId</code></td></tr>
             <tr><td><code>IcpToken</code></td><td>The ICP token, unchanged</td><td><code>Data.IcpToken</code></td></tr>
             <tr><td><code>InstructedAmount</code></td><td>The amount, unchanged</td><td><code>Data.TransactionAmount</code></td></tr>
+            <tr><td><code>MerchantId</code></td><td>The merchant&rsquo;s identification code (DE42), unchanged</td><td><code>Data.MerchantId</code></td></tr>
+            <tr><td><code>TerminalId</code></td><td>The terminal&rsquo;s identification code (DE41), unchanged</td><td><code>Data.TerminalId</code></td></tr>
+            <tr><td><code>AcquirerId</code></td><td>The acquiring bank&rsquo;s identification code (DE32), unchanged</td><td><code>Data.AcquirerId</code></td></tr>
+            <tr><td><code>MerchantName</code></td><td>The merchant&rsquo;s name (DE43), unchanged</td><td><code>Data.MerchantName</code></td></tr>
             <tr><td><code>InstrumentType</code></td><td><code>ACCOUNT</code> or <code>CARD</code></td><td>Your BioPay registration for the <code>uaeKycId</code></td></tr>
             <tr><td><code>DebtorAccount</code></td><td><code>ACCOUNT</code> only. The registered IBAN.</td><td>Your BioPay registration</td></tr>
             <tr><td><code>CardDetails</code></td><td><code>CARD</code> only. <code>CardNumber</code> and <code>ExpiryDate</code>.</td><td>Your BioPay registration</td></tr>
@@ -1191,9 +1216,12 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
         <p>
           As issuer, run the same signature, <code>iss</code> and <code>exp</code> checks (1&ndash;3)
           and the single-use check (6). In place of checks 4, 5 and 7, check that
-          <code>InstrumentType</code> is <code>CARD</code> and that the card and amount in the
-          authorisation match <code>CardDetails</code> and <code>InstructedAmount</code>. Mark the
-          <code>jti</code> used when you approve.
+          <code>InstrumentType</code> is <code>CARD</code>; that the card and amount in the
+          authorisation match <code>CardDetails</code> and <code>InstructedAmount</code>; and that
+          the card acceptor identification code (DE42), card acceptor terminal identification (DE41)
+          and acquiring institution identification code (DE32) in the authorisation match
+          <code>MerchantId</code>, <code>TerminalId</code> and <code>AcquirerId</code>. Decline the
+          authorisation if any check fails. Mark the <code>jti</code> used when you approve.
         </p>
       </EdProse>
     </EdSectionBand>

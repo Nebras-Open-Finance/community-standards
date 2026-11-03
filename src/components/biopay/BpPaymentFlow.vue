@@ -7,11 +7,12 @@ import { useMermaidDiagram } from '@/composables/useMermaidDiagram'
 // returns a signed ICP token bound to the amount and to the BPIP; its jti is
 // single-use.
 // On every payment the BPIP then looks up the customer's payment instrument at
-// the LFI through the API Hub, sending the uaeKycId, the ICP token and the
-// amount. The Hub proxies the lookup; the LFI, as issuer, validates the ICP
-// token by calling ICP's token validation endpoint — an online call, not
-// through the ICP SDK. The LFI always answers with a payment
-// token: a short-lived, single-use JWS it signs, carrying the amount, the ICP
+// the LFI through the API Hub, sending the uaeKycId, the ICP token, the
+// amount and the merchant, terminal and acquirer identifiers. The Hub proxies
+// the lookup; the LFI, as issuer, validates the ICP token by calling ICP's
+// token validation endpoint — an online call, not through the ICP SDK. The LFI
+// always answers with a payment token: a short-lived, single-use JWS it signs,
+// carrying the amount, the merchant, terminal and acquirer identifiers, the ICP
 // token and — by instrument type — the IBAN (ACCOUNT) or the card details (CARD),
 // encrypted as a JWE to the BPIP's Directory encryption key — so the Hub never
 // sees card data in the clear. The BPIP decrypts it and passes the JWS back to
@@ -42,7 +43,7 @@ sequenceDiagram
         BPIP-->>PSU: BioPay unavailable — fall back
     else Resolved
         Note over BPIP,Hub: client_credentials · mTLS · scope: biometric-payments
-        BPIP->>Hub: POST /instrument-lookup<br/>{uaeKycId, IcpToken, TransactionAmount}
+        BPIP->>Hub: POST /instrument-lookup<br/>{uaeKycId, IcpToken, TransactionAmount,<br/>MerchantId, TerminalId, AcquirerId, MerchantName}
         Hub->>Hub: Entitlement, schema
         Hub->>LFI: Proxied instrument lookup
         LFI->>ICP: Token validation endpoint {IcpToken}
@@ -50,7 +51,7 @@ sequenceDiagram
         ICP-->>LFI: Valid
         LFI->>LFI: azp = calling BPIP, sub = uaeKycId, txn<br/>Look up uaeKycId → instrument<br/>Fraud, risk checks
 
-        LFI->>LFI: Sign PaymentToken (JWS, single-use, ~120s)<br/>{uaeKycId, IcpToken, InstructedAmount,<br/>InstrumentType: ACCOUNT + DebtorAccount | CARD + CardDetails}<br/>Encrypt as JWE with the BPIP's public key from the Directory
+        LFI->>LFI: Sign PaymentToken (JWS, single-use, ~120s)<br/>{uaeKycId, IcpToken, InstructedAmount,<br/>MerchantId, TerminalId, AcquirerId, MerchantName,<br/>InstrumentType: ACCOUNT + DebtorAccount | CARD + CardDetails}<br/>Encrypt as JWE with the BPIP's public key from the Directory
         LFI-->>Hub: 200 {Data: JWE}
         Note over Hub: Proxies the JWE unread —<br/>no card data in the clear, out of PCI DSS scope
         Hub-->>BPIP: 200 {Data: JWE}
@@ -85,9 +86,9 @@ sequenceDiagram
             end
         else InstrumentType: CARD
             Note over BPIP,Scheme: From here the payment runs between the BPIP, as acquirer,<br/>and the card scheme — not through the API Hub
-            BPIP->>Scheme: Authorisation request {CardNumber, ExpiryDate, amount,<br/>merchant, PaymentToken}<br/>CVM: biometric, verified by ICP
+            BPIP->>Scheme: Authorisation request {CardNumber, ExpiryDate, amount,<br/>MerchantId, TerminalId, AcquirerId, PaymentToken}<br/>CVM: biometric, verified by ICP
             Scheme->>LFI: Authorisation request {…, PaymentToken}
-            LFI->>LFI: Verify PaymentToken: own signature, exp, CARD,<br/>card, amount, jti unused → mark used<br/>Fraud, balance
+            LFI->>LFI: Verify PaymentToken: own signature, exp, CARD,<br/>card, amount, MerchantId, TerminalId, AcquirerId,<br/>jti unused → mark used<br/>Fraud, balance
             LFI-->>Scheme: Approved
             Scheme-->>BPIP: Approved
             BPIP-->>PSU: Payment approved

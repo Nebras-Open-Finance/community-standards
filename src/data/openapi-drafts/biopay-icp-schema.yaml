@@ -14,12 +14,13 @@
 # POST /instrument-lookup. The API Hub proxies it to the LFI, which validates it
 # with an online call to ICP. The LFI always answers with a payment token: a
 # short-lived, single-use JWS signed by the LFI that embeds the ICP token and
-# carries the amount and the payment instrument, encrypted as a JWE to the
-# BPIP. The payment token — not the ICP token — is what the BPIP passes back
-# to the LFI to make the payment: on POST /biometric-payments for an account,
-# with only the creditor account alongside it, or in the card authorisation
-# through the card scheme (e.g. Jaywan) for a card. The LFI verifies its own
-# token in both cases. See AEIcpToken and AEPaymentToken.
+# carries the amount, the merchant, terminal and acquirer identifiers and the
+# payment instrument, encrypted as a JWE to the BPIP. The payment token — not
+# the ICP token — is what the BPIP passes back to the LFI to make the payment:
+# on POST /biometric-payments for an account, with only the creditor account
+# alongside it, or in the card authorisation through the card scheme (e.g.
+# Jaywan) for a card. The LFI verifies its own token in both cases. See
+# AEIcpToken and AEPaymentToken.
 #
 # PATCH /biometrics-payment-log/{id} is modelled because it is how the payment
 # status the BPIP polls and is notified of comes to exist. It is served at the
@@ -254,7 +255,9 @@ paths:
 
 
         The request carries the ICP token in `Data.IcpToken`, with the
-        `uaeKycId` and the amount it is bound to. The API Hub checks entitlement and
+        `uaeKycId` and the amount it is bound to, and the `MerchantId`,
+        `TerminalId`, `AcquirerId` and `MerchantName` of the acceptance point
+        the payment is made at. The API Hub checks entitlement and
         the request schema, and proxies the request to the Ozone Connect
         endpoint of the default LFI ICP returned. It does not verify the ICP
         token. The LFI MUST validate it by calling ICP's token validation
@@ -270,8 +273,9 @@ paths:
         The response to a successful lookup is always a **payment token**, in
         `Data`: a short-lived, single-use JWS signed by the LFI, whose claims
         are `AEPaymentToken`. It carries the `uaeKycId`, the ICP token
-        unchanged, the amount from the request as `InstructedAmount`, and —
-        selected by `InstrumentType` — the
+        unchanged, the amount from the request as `InstructedAmount`, the
+        `MerchantId`, `TerminalId`, `AcquirerId` and `MerchantName` from the
+        request unchanged, and — selected by `InstrumentType` — the
         `DebtorAccount` for an `ACCOUNT` or the `CardDetails` for a `CARD`. The LFI
         encrypts the JWS as a JWE to the BPIP's public encryption key from the
         Directory (`AEJWEPaymentToken`), so the API Hub proxies the response
@@ -668,8 +672,12 @@ components:
             `TransactionAmount` the BPIP then sends on
             `POST /instrument-lookup`. Any change to the amount after the
             biometric gesture breaks the binding and needs a new gesture. The
-            merchant is not bound: `azp` binds the BPIP, which also supplies
-            the creditor account at payment.
+            ICP token is issued at the point of customer identity
+            verification, and binds that verification to the BPIP (`azp`) and
+            the amount only. The `MerchantId`, `TerminalId`, `AcquirerId` and
+            `MerchantName` are not in it: the BPIP sends them on
+            `POST /instrument-lookup`, and the LFI carries them in the payment
+            token it signs.
         cnf:
           type: object
           description: >-
@@ -725,9 +733,9 @@ components:
       description: >-
         The claims of the JWS the LFI signs in answer to
         `POST /instrument-lookup`. Short-lived and single-use. It carries the
-        amount from the lookup request, the ICP token unchanged, and the
-        details of the payment instrument the customer registered, selected by
-        `InstrumentType`. The BPIP passes the JWS back to the LFI once, at the
+        amount and the merchant, terminal and acquirer identifiers from the
+        lookup request, the ICP token unchanged, and the details of the payment
+        instrument the customer registered, selected by `InstrumentType`. The BPIP passes the JWS back to the LFI once, at the
         point of payment: in `Data.PaymentToken` on `POST /biometric-payments`
         for an `ACCOUNT`, or in the card authorisation through the card scheme
         for a `CARD`. The LFI verifies its own signature and relies on the
@@ -744,7 +752,7 @@ components:
     AEPaymentTokenCommon:
       type: object
       description: The claims every payment token carries, whatever the instrument type.
-      required: [iss, azp, iat, exp, jti, uaeKycId, IcpToken, InstructedAmount, InstrumentType]
+      required: [iss, azp, iat, exp, jti, uaeKycId, IcpToken, InstructedAmount, MerchantId, TerminalId, AcquirerId, MerchantName, InstrumentType]
       properties:
         iss:
           type: string
@@ -777,6 +785,33 @@ components:
             does not repeat it.
           allOf:
             - $ref: '#/components/schemas/AEAmount'
+        MerchantId:
+          description: >-
+            The `MerchantId` from the lookup request, unchanged. For a `CARD`,
+            the LFI checks that the card acceptor identification code (DE42)
+            in the authorisation matches it.
+          allOf:
+            - $ref: '#/components/schemas/AEMerchantId'
+        TerminalId:
+          description: >-
+            The `TerminalId` from the lookup request, unchanged. For a `CARD`,
+            the LFI checks that the card acceptor terminal identification
+            (DE41) in the authorisation matches it.
+          allOf:
+            - $ref: '#/components/schemas/AETerminalId'
+        AcquirerId:
+          description: >-
+            The `AcquirerId` from the lookup request, unchanged. For a `CARD`,
+            the LFI checks that the acquiring institution identification code
+            (DE32) in the authorisation matches it.
+          allOf:
+            - $ref: '#/components/schemas/AEAcquirerId'
+        MerchantName:
+          description: >-
+            The `MerchantName` from the lookup request, unchanged. Not
+            matched at the point of payment.
+          allOf:
+            - $ref: '#/components/schemas/AEMerchantName'
         InstrumentType:
           type: string
           description: >-
@@ -809,7 +844,9 @@ components:
       description: >-
         Payment token for a card payment. The BPIP submits the authorisation
         to the card scheme (e.g. Jaywan) as acquirer, with the card details
-        and the payment token.
+        and the payment token. The LFI, as issuer, checks that the card,
+        amount, `MerchantId`, `TerminalId` and `AcquirerId` in the
+        authorisation match the token.
       allOf:
         - $ref: '#/components/schemas/AEPaymentTokenCommon'
         - type: object
@@ -876,6 +913,33 @@ components:
           type: string
           pattern: '^[A-Z]{3}$'
           example: AED
+
+    AEMerchantId:
+      type: string
+      description: Unique identification code assigned to the merchant (DE42).
+      minLength: 1
+      maxLength: 15
+      example: '100000000000731'
+
+    AETerminalId:
+      type: string
+      description: Unique identification code assigned to the terminal (DE41).
+      minLength: 1
+      maxLength: 8
+      example: T0000042
+
+    AEAcquirerId:
+      type: string
+      description: Unique identification code assigned to the acquiring bank (DE32).
+      pattern: '^\d{1,11}$'
+      example: '123456'
+
+    AEMerchantName:
+      type: string
+      description: Name of the merchant (DE43).
+      minLength: 1
+      maxLength: 40
+      example: Example Grocers
 
     AEDebtorAccount:
       type: object
@@ -1609,14 +1673,15 @@ components:
       type: object
       description: >-
         Instrument lookup request. Carries the identifier and the ICP token ICP
-        returned on resolution, and the amount that token is bound to.
+        returned on resolution, the amount that token is bound to, and the
+        merchant, terminal and acquirer the payment is made at.
       additionalProperties: false
       required: [Data]
       properties:
         Data:
           type: object
           additionalProperties: false
-          required: [uaeKycId, IcpToken, TransactionAmount]
+          required: [uaeKycId, IcpToken, TransactionAmount, MerchantId, TerminalId, AcquirerId, MerchantName]
           properties:
             uaeKycId:
               description: >-
@@ -1636,6 +1701,30 @@ components:
                 `InstructedAmount` in the payment token.
               allOf:
                 - $ref: '#/components/schemas/AEAmount'
+            MerchantId:
+              description: >-
+                Unique identification code assigned to the merchant (DE42).
+                Returned unchanged in the payment token.
+              allOf:
+                - $ref: '#/components/schemas/AEMerchantId'
+            TerminalId:
+              description: >-
+                Unique identification code assigned to the terminal (DE41).
+                Returned unchanged in the payment token.
+              allOf:
+                - $ref: '#/components/schemas/AETerminalId'
+            AcquirerId:
+              description: >-
+                Unique identification code assigned to the acquiring bank
+                (DE32). Returned unchanged in the payment token.
+              allOf:
+                - $ref: '#/components/schemas/AEAcquirerId'
+            MerchantName:
+              description: >-
+                Name of the merchant (DE43). Returned unchanged in the payment
+                token.
+              allOf:
+                - $ref: '#/components/schemas/AEMerchantName'
 
     AEInstrumentLookupResponse:
       type: object

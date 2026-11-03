@@ -228,11 +228,28 @@ async function ghListDir(path) {
   return items.filter(i => i.type === 'dir' || i.type === 'file')
 }
 
+// raw.githubusercontent.com intermittently answers 404 (or 5xx) for a file
+// that exists — the API listing named it moments earlier — and one bad
+// response would otherwise abort the whole run. Retry with backoff first.
+const DOWNLOAD_ATTEMPTS = 4
+
 async function ghDownloadFile(remotePath) {
   const url = `${GITHUB_RAW}/${remotePath}`
-  const res = await fetch(url, { headers })
-  if (!res.ok) throw new Error(`Download failed ${res.status}: ${url}`)
-  return res.text()
+  let failure
+  for (let attempt = 1; attempt <= DOWNLOAD_ATTEMPTS; attempt++) {
+    if (attempt > 1) {
+      console.warn(`  ↻ retrying ${remotePath} (${failure})`)
+      await new Promise(r => setTimeout(r, 1000 * 2 ** (attempt - 2)))
+    }
+    try {
+      const res = await fetch(url, { headers })
+      if (res.ok) return res.text()
+      failure = res.status
+    } catch (err) {
+      failure = err.message
+    }
+  }
+  throw new Error(`Download failed ${failure} after ${DOWNLOAD_ATTEMPTS} attempts: ${url}`)
 }
 
 // ─── Main ──────────────────────────────────────────────────────────────────────
