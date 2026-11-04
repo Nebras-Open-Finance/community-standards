@@ -18,6 +18,6 @@ meta:
       spec="/openapi/v2.1/api-hub/uae-api-hub-consent-manager-openapi.yaml"
       filterPath="/payment-log/{id}"
       filterMethod="patch"
-      :overrideServers="[ { url: 'https://cm.[LFICODE].apihub.openfinance.ae' }, { url: 'https://cm.[LFICODE].preprod.apihub.openfinance.ae' }]" />
+      :overrideServers="[ { url: 'https://cm.[LFICODE].apihub.openfinance.ae/v2025.47' }, { url: 'https://cm.[LFICODE].preprod.apihub.openfinance.ae/v2025.47' }]" />
   </EndpointPage>
 </template>

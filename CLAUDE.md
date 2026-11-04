@@ -131,6 +131,9 @@ TPP → API Hub → LFI → API Hub → TPP
 - ✅ Versions are defined in `src/data/versions.ts` — adding a new version there
   causes the script to fetch its specs automatically
 - ❌ OpenAPI YAML files MUST NOT be committed to this repo — they are fetched and gitignored
+- ❌ Fetched specs MUST NOT be modified — the fetch script writes each file byte-for-byte
+  as published upstream, so readers can compare it with api-specs. A spec borrowed from an
+  earlier release keeps that release's version strings; fix mismatches in api-specs, not here
 
 
 ## 🔐 Standards Alignment

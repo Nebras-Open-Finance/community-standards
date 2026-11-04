@@ -320,9 +320,10 @@ const customerCorporateJson = `{
         {
           "verification": { "trustFramework": "UAE.FI" },
           "claims": {
-            "identityType": "Organisation",
+            "identityType": "Business",
             "businessName": "Al Mansouri Trading LLC",
             "tradeLicenceNumber": "DED-123456",
+            "tradeLicenceExpiryDate": "2027-02-09",
             "taxIdentificationNumber": "100123456700003",
             "dateOfIncorporation": "2015-02-10",
             "countryOfIncorporation": "AE",
@@ -694,6 +695,15 @@ const customerPsuJson = `{
           </tbody>
         </table>
       </EdRefTable>
+
+      <h4 class="ed-doc__subhead-minor"><code>504</code> &mdash; Gateway Timeout</h4>
+      <EdProse>
+        Every Ozone Connect Data Sharing endpoint MAY return <code>504</code> when your LFI cannot
+        complete processing within its internal time limit. The API Hub treats it as a timeout. The
+        body for this status is not standardised and no schema is defined for it. A <code>504</code>
+        is a <code>5xx</code> response, so it counts as a failed request under the
+        <a href="/policy/ozone-connect-availability">Ozone Connect Availability Policy</a>.
+      </EdProse>
 
       <h3 id="pagination" class="ed-doc__subhead">Pagination</h3>
       <EdProse>

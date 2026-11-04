@@ -109,6 +109,7 @@ const initialFormData = ref({
       'ReadPartyUser',
       'ReadPartyUserIdentity',
       'ReadParty',
+      'ReadPartyIdentity',
       'ReadProductFinanceRates',
     ],
     FromDate: '2025-03-01',

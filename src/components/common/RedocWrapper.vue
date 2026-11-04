@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { CURRENT_VERSION } from '@/data/versions'
+import { CURRENT_VERSION, PROTOCOL_VERSION } from '@/data/versions'
 import { onThemeChange } from '@/composables/useChartTheme'
 import { registerPageSpec } from '@/composables/usePageSpecs'
+import { versionFromPath } from '@/composables/useSelectedVersion'
 
 const SPECS_REPO = 'https://github.com/Nebras-Open-Finance/api-specs/tree/main/dist'
 
@@ -30,18 +31,25 @@ interface RedocWrapperProps {
 }
 
 const props = withDefaults(defineProps<RedocWrapperProps>(), {
-  // The default-server fallback can't reference module-level bindings here —
-  // `defineProps` is hoisted out of the setup scope at compile time. Build
-  // the array inline so the literal expression travels with the macro.
-  overrideServers: () => [
-    { url: `https://rs1.[LFICODE].apihub.openfinance.ae/open-finance/account-information/${CURRENT_VERSION}` },
-    { url: `https://rs1.[LFICODE].preprod.apihub.openfinance.ae/open-finance/account-information/${CURRENT_VERSION}` },
-    { url: `https://rs1.altareq1.sandbox.apihub.openfinance.ae/open-finance/account-information/${CURRENT_VERSION}` },
-  ],
   hideSecurity: false,
   containerId: 'redoc-container',
   height: '90vh',
 })
+
+// Servers shown when the page passes none of its own. The base-path version is
+// the protocol version of the spec being rendered — `v2.2` for a spec under
+// /openapi/v2.2-rc2/ — so it follows the version dropdown. Built per render
+// rather than as a prop default: Vue caches prop defaults, and the dropdown can
+// swap `spec` without remounting this component.
+function defaultServers(): OverrideServer[] {
+  const version = versionFromPath(props.spec ?? '') ?? CURRENT_VERSION
+  const basePath = `/open-finance/account-information/${PROTOCOL_VERSION[version]}`
+  return [
+    { url: `https://rs1.[LFICODE].apihub.openfinance.ae${basePath}` },
+    { url: `https://rs1.[LFICODE].preprod.apihub.openfinance.ae${basePath}` },
+    { url: `https://rs1.altareq1.sandbox.apihub.openfinance.ae${basePath}` },
+  ]
+}
 
 // Minimal shape of the OpenAPI documents we care about. The real spec is
 // far richer — we treat it as `unknown`-ish via narrow indexed types so the
@@ -112,6 +120,7 @@ async function renderRedoc(): Promise<void> {
   if (!yamlText) return
   if (token !== renderToken) return
   const fullSpec = w.jsyaml.load(yamlText) as OpenApiDoc
+  const servers = props.overrideServers ?? defaultServers()
 
   let finalSpec: OpenApiDoc = fullSpec
 
@@ -144,7 +153,7 @@ async function renderRedoc(): Promise<void> {
     finalSpec = {
       openapi: fullSpec.openapi,
       info: fullSpec.info,
-      servers: props.overrideServers ?? fullSpec.servers,
+      servers,
       components: fullSpec.components,
       paths: {
         [displayKey]: { post: syntheticOp },
@@ -180,7 +189,7 @@ async function renderRedoc(): Promise<void> {
     finalSpec = {
       openapi: fullSpec.openapi,
       info: fullSpec.info,
-      servers: props.overrideServers ?? fullSpec.servers,
+      servers,
       components: props.hideSecurity && fullSpec.components
         ? { ...fullSpec.components, securitySchemes: undefined }
         : fullSpec.components,

@@ -913,6 +913,15 @@ const matchPiiTabs         = [{ label: 'Node.js', lang: 'typescript', code: matc
         otherwise.
       </EdProse>
 
+      <h4 class="ed-doc__subhead-minor"><code>504</code> &mdash; Gateway Timeout</h4>
+      <EdProse>
+        You MAY return <code>504</code> when you cannot complete processing within your internal time
+        limit. The API Hub treats it as a timeout. The body for this status is not standardised and no
+        schema is defined for it. A <code>504</code> is a <code>5xx</code> response, so it counts as a
+        failed request under the
+        <a href="/policy/ozone-connect-availability">Ozone Connect Availability Policy</a>.
+      </EdProse>
+
       <h4 class="ed-doc__subhead-minor">Example error response</h4>
       <EdCode :code="paymentErrorJson" lang="json" filename="error response" />
     </EdSectionBand>
@@ -1166,6 +1175,7 @@ const matchPiiTabs         = [{ label: 'Node.js', lang: 'typescript', code: matc
             <tr><td><code>404</code></td><td><code>Resource.NotFound</code></td><td>No payment exists for the supplied <code>paymentId</code> (or the payment exists but belongs to a different consent)</td></tr>
             <tr><td><code>403</code></td><td><code>Consent.AccountTemporarilyBlocked</code> / <code>Consent.PermanentAccountAccessFailure</code></td><td>The debtor account has become inaccessible since the payment was created</td></tr>
             <tr><td><code>500</code></td><td><code>GenericRecoverableError</code> / <code>GenericError</code></td><td>Transient or unrecoverable server error</td></tr>
+            <tr><td><code>504</code></td><td><em>No body defined</em></td><td>You cannot complete processing within your internal time limit. The API Hub treats it as a timeout; the body for this status is not standardised</td></tr>
           </tbody>
         </table>
       </EdRefTable>

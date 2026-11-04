@@ -1,7 +1,7 @@
 // Module-level singletons: every component on the page shares the same ref,
 // and the route is read once on first call.
 
-import { computed, ref, type ComputedRef, type Ref } from 'vue'
+import { computed, inject, ref, type ComputedRef, type InjectionKey, type Ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { VERSIONS, CURRENT_VERSION, PROTOCOL_VERSION, type Version } from '@/data/versions'
 
@@ -15,7 +15,7 @@ function isVersion(value: string): value is Version {
 // Match on whole path segments against VERSIONS rather than parsing a version
 // shape out of the path. Version identifiers are not all `vN.N` — `v2.2-rc2`
 // is one — so the list is the only reliable source of truth.
-function versionFromPath(path: string): Version | null {
+export function versionFromPath(path: string): Version | null {
   const segments = path.split('/').filter(Boolean)
   for (const segment of segments) {
     if (isVersion(segment)) return segment
@@ -72,6 +72,13 @@ export function useSelectedVersion(): UseSelectedVersion {
   return { selectedVersion, setSelectedVersion }
 }
 
+/**
+ * The version of a page rendered somewhere other than its own route. <VersionDiff>
+ * renders the earlier version of a page off-screen while the route is still the
+ * live page's, so components inside it read their version from here instead.
+ */
+export const docsVersionOverrideKey: InjectionKey<Version> = Symbol('docsVersionOverride')
+
 export interface UseRouteVersion {
   /** Version segment of the current route, e.g. `v2.2-rc2`. */
   docsVersion: ComputedRef<Version>
@@ -89,8 +96,9 @@ export interface UseRouteVersion {
  */
 export function useRouteVersion(): UseRouteVersion {
   const route = useRoute()
+  const override = inject(docsVersionOverrideKey, null)
   const docsVersion = computed<Version>(
-    () => versionFromPath(route.path) ?? CURRENT_VERSION,
+    () => override ?? versionFromPath(route.path) ?? CURRENT_VERSION,
   )
   return {
     docsVersion,

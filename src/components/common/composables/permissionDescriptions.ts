@@ -43,6 +43,8 @@ export const permissionDescriptions: Record<string, string> = {
     'Detailed personal details (name, date of birth, contact information, residential address)',
   ReadParty:
     'Your legal or registered name as the account holder',
+  ReadPartyIdentity:
+    'Your name and Emirates ID (or, for a business, its registered name and trade licence)',
 
   ReadProductFinanceRates:
     "Details of the interest or profit rate on your mortgage, finance, or credit card. In some cases, your bank may protect this information by sending it in a locked format and issue you a code (via SMS or email). You'll need to enter this code within the service so that it can show you the rate.",
@@ -79,10 +81,31 @@ export const permissionGroups: Array<{ label: string; permissions: string[] }> =
   },
   {
     label: 'Contact and Party Details',
-    permissions: ['ReadPartyUser', 'ReadPartyUserIdentity', 'ReadParty'],
+    permissions: ['ReadPartyUser', 'ReadPartyUserIdentity', 'ReadParty', 'ReadPartyIdentity'],
   },
   {
     label: 'Your Finance Rates',
     permissions: ['ReadProductFinanceRates'],
   },
 ]
+
+/** Permissions introduced in v2.2. Reference tables omit them on v2.1 pages. */
+export const permissionsSinceV22: readonly string[] = ['ReadPartyIdentity']
+
+export const partyPermissions = ['ReadPartyUser', 'ReadPartyUserIdentity', 'ReadParty', 'ReadPartyIdentity']
+
+/**
+ * The lines shown under "Contact and Party Details" for a consent's permissions.
+ *
+ * `ReadPartyUserIdentity` already includes the name and Emirates ID, so it covers
+ * `ReadPartyIdentity`. `ReadPartyUser` (contact details, no Emirates ID) and
+ * `ReadPartyIdentity` (name and Emirates ID, no contact details) each show their
+ * own line. `ReadParty` (the account holder's name) is covered by either.
+ */
+export function partyPermissionLines(permissions: string[] | undefined): string[] {
+  const perms = permissions ?? []
+  if (perms.includes('ReadPartyUserIdentity')) return ['ReadPartyUserIdentity']
+  const lines = ['ReadPartyUser', 'ReadPartyIdentity'].filter((p) => perms.includes(p))
+  if (lines.length > 0) return lines
+  return perms.includes('ReadParty') ? ['ReadParty'] : []
+}

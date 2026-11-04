@@ -320,7 +320,7 @@ const customerCorporateJson = `{
         {
           "verification": { "trustFramework": "UAE.FI" },
           "claims": {
-            "identityType": "Organisation",
+            "identityType": "Business",
             "businessName": "Al Mansouri Trading LLC",
             "tradeLicenceNumber": "DED-123456",
             "taxIdentificationNumber": "100123456700003",

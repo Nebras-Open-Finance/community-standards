@@ -241,7 +241,7 @@ export const data: RequirementsPageData = {
       rules: [
         { field: '<code>Authorization</code>', rule: 'Must contain a valid Bearer access token bound to an <code>Authorized</code> consent.', validatedBy: 'API Hub' },
         { field: 'URL version', rule: 'Must match the consent version.', validatedBy: 'API Hub' },
-        { field: '<code>consent.Permissions</code>', rule: 'The consent must include <code>ReadParty</code>, <code>ReadPartyUser</code>, or <code>ReadPartyUserIdentity</code>.', validatedBy: 'API Hub' },
+        { field: '<code>consent.Permissions</code>', rule: 'The consent must include <code>ReadParty</code>, <code>ReadPartyUser</code>, <code>ReadPartyUserIdentity</code>, or <code>ReadPartyIdentity</code>.', validatedBy: 'API Hub' },
         { field: '<code>AccountId</code>', rule: 'Must be a valid account ID shared by the customer — i.e. returned by <code>GET /accounts</code> under the same consent. See <a href="#account-access">Account Access Validation</a> for the response when the customer does not hold the account.', validatedBy: 'LFI' },
         { field: '<code>x-fapi-interaction-id</code>', rule: 'Should be a valid UUID (RFC 4122).', validatedBy: 'N/A' },
         { field: '<code>x-fapi-auth-date</code>', rule: 'Must be sent when the customer is authenticated at the time of the call.', validatedBy: 'TPP' },
@@ -259,7 +259,7 @@ export const data: RequirementsPageData = {
       rules: [
         { field: '<code>Authorization</code>', rule: 'Must contain a valid Bearer access token bound to an <code>Authorized</code> consent.', validatedBy: 'API Hub' },
         { field: 'URL version', rule: 'Must match the consent version.', validatedBy: 'API Hub' },
-        { field: '<code>consent.Permissions</code>', rule: 'The consent must include <code>ReadParty</code>, <code>ReadPartyUser</code>, or <code>ReadPartyUserIdentity</code>.', validatedBy: 'API Hub' },
+        { field: '<code>consent.Permissions</code>', rule: 'The consent must include <code>ReadParty</code>, <code>ReadPartyUser</code>, <code>ReadPartyUserIdentity</code>, or <code>ReadPartyIdentity</code>.', validatedBy: 'API Hub' },
         { field: '<code>x-fapi-interaction-id</code>', rule: 'Should be a valid UUID (RFC 4122).', validatedBy: 'N/A' },
         { field: '<code>x-fapi-auth-date</code>', rule: 'Must be sent when the customer is authenticated at the time of the call.', validatedBy: 'TPP' },
         { field: '<code>x-fapi-customer-ip-address</code>', rule: 'Must be sent when the customer is actively present at the time of the call.', validatedBy: 'TPP' },

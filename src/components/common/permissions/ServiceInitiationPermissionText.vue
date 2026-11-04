@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useRouteVersion } from '@/composables/useSelectedVersion'
 import {
   paymentPermissionCombinations,
+  paymentPermissionCombinationsV22,
   getPaymentPermissionText,
   getAuthPaymentPermissionText,
 } from '../composables/serviceInitiationPermissionDescriptions'
@@ -15,8 +17,14 @@ const isLfi = computed(() => route.path.includes('/lfi-api-hub/'))
 
 const pageLabel = computed(() => (isLfi.value ? 'Authorization Page' : 'Consent Page'))
 
+// v2.2 adds ReadPartyIdentity, so its pages list the combinations that include it.
+const { docsVersion } = useRouteVersion()
+const combinations = computed(() =>
+  docsVersion.value === 'v2.1' ? paymentPermissionCombinations : paymentPermissionCombinationsV22,
+)
+
 const rows = computed(() =>
-  paymentPermissionCombinations.map((permissions) => ({
+  combinations.value.map((permissions) => ({
     permissions,
     text: isLfi.value
       ? getAuthPaymentPermissionText(permissions)

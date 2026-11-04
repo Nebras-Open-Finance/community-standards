@@ -33,11 +33,12 @@ export const PROTOCOL_VERSION: Record<Version, string> = {
 // Resolution is per file, not per version: the first folder in the chain that
 // publishes a given spec wins. A version that has only partly landed upstream
 // therefore falls back to the previous version's latest errata for the specs it
-// has not republished — v2.2-rc2 publishes five of the standards documents and
-// borrows the rest from v2.1-errata3.
+// has not republished.
 //
-// A borrowed file still carries the source version's consent URNs and base
-// paths, so the fetch script uplifts those to PROTOCOL_VERSION for this version.
+// A borrowed file is served exactly as the earlier release published it,
+// version strings included — e.g. a `/open-finance/onboarding/v2.1` server URL
+// under v2.2-rc2. The fetch script never rewrites spec content: readers compare
+// these files with api-specs, and any difference would mislead them.
 // Folder naming is not uniform upstream: standards publishes `v2.2-rc1` and
 // `v2.2-rc2` folders, api-hub and ozone-connect a single `v2.2.x`. All belong
 // to the v2.2 release and the script matches on the release rather than the

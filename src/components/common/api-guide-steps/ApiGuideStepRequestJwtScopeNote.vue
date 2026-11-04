@@ -1,3 +1,23 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useRouteVersion } from '@/composables/useSelectedVersion'
+
+// The permissions that need the `accounts` scope on a payment consent. v2.2 adds
+// ReadPartyIdentity, which is served by GET /parties under the same scope.
+const { docsVersion } = useRouteVersion()
+const scopePermissions = computed(() =>
+  docsVersion.value === 'v2.1'
+    ? ['ReadAccountsBasic', 'ReadAccountsDetail', 'ReadBalances']
+    : ['ReadAccountsBasic', 'ReadAccountsDetail', 'ReadBalances', 'ReadPartyIdentity'],
+)
+
+function separator(i: number): string {
+  const last = scopePermissions.value.length - 1
+  if (i === last) return ''
+  return i === last - 1 ? ', or ' : ', '
+}
+</script>
+
 <template>
   <div class="ag-step">
     <EdProse>
@@ -8,8 +28,9 @@
 
     <EdNote type="warning" title="Scope change required when using Permissions">
       <p>
-        If your consent includes <code>ReadAccountsBasic</code>, <code>ReadAccountsDetail</code>, or
-        <code>ReadBalances</code>, you must change the scope to
+        If your consent includes
+        <template v-for="(perm, i) in scopePermissions" :key="perm"><code>{{ perm }}</code>{{ separator(i) }}</template>,
+        you must change the scope to
         <code>accounts payments openid</code>. Without the <code>accounts</code> scope the issued token
         will not grant access to the account endpoints. You will also need the <strong>BDSP</strong>
         role. See

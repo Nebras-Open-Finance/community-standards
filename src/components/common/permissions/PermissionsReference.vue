@@ -1,10 +1,20 @@
 <script setup lang="ts">
-import { permissionDescriptions, permissionGroups } from '../composables/permissionDescriptions'
+import { computed } from 'vue'
+import { useRouteVersion } from '@/composables/useSelectedVersion'
+import { permissionDescriptions, permissionGroups, permissionsSinceV22 } from '../composables/permissionDescriptions'
+
+// Rows for permissions a v2.1 consent cannot carry are left off v2.1 pages.
+const { docsVersion } = useRouteVersion()
+const groups = computed(() =>
+  docsVersion.value === 'v2.1'
+    ? permissionGroups.map((g) => ({ ...g, permissions: g.permissions.filter((p) => !permissionsSinceV22.includes(p)) }))
+    : permissionGroups,
+)
 </script>
 
 <template>
   <div class="pr">
-    <section v-for="group in permissionGroups" :key="group.label" class="pr__group">
+    <section v-for="group in groups" :key="group.label" class="pr__group">
       <header class="pr__group-head">
         <span class="pr__eyebrow">
           <span class="pr__eyebrow-dash" />

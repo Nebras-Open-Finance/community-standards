@@ -8,9 +8,9 @@
  *   2. Resolves per-file across the version chain in SPEC_FOLDER: the most
  *      preferred release that publishes the file wins, and within a release the
  *      highest errata wins over the base, which wins over a release candidate.
- *   3. Downloads each YAML file to public/openapi/{version}/{category}/,
- *      uplifting the version strings of any file borrowed from an older
- *      release.
+ *   3. Downloads each YAML file to public/openapi/{version}/{category}/
+ *      byte-for-byte as published upstream. Spec content is never modified,
+ *      so a served spec can be compared directly with its source.
  *   4. Writes public/openapi/{version}/sources.json, recording the upstream
  *      file each spec was resolved from, so pages can link to it on GitHub.
  *
@@ -104,59 +104,6 @@ function parseSpecFolders() {
   return map
 }
 
-function parseProtocolVersions() {
-  return parseVersionMap('PROTOCOL_VERSION')
-}
-
-function parseVersionMap(name) {
-  const src = readVersionsSource()
-  const block = src.match(new RegExp(`${name}[^=]*=\\s*\\{([^}]+)\\}`))
-  if (!block) throw new Error(`Could not parse ${name} from versions.ts`)
-  const map = {}
-  for (const line of block[1].split('\n')) {
-    const entry = line.match(/['"]([^'"]+)['"]\s*:\s*['"]([^'"]+)['"]/)
-    if (entry) map[entry[1]] = entry[2]
-  }
-  return map
-}
-
-/**
- * Uplift the version strings inside a served spec.
- *
- * A spec carries the protocol version in two places: its consent-type URNs and
- * its server base paths. Where those disagree with the version the spec is
- * served under, the spec contradicts the documentation built around it — e.g. a
- * page that says `urn:openfinanceuae:account-access-consent:v2.2` while the
- * schema enum only permits `:v2.1`.
- *
- * Two separate things make them disagree, so the rewrite is applied to every
- * file rather than only to borrowed ones:
- *
- *   Borrowed  A version serving another version's YAML (SPEC_FOLDER) gets the
- *             source version's strings.
- *   Unbumped  A release candidate republished upstream for an unrelated reason
- *             may still carry the previous release's strings. `v2.2-rc2`
- *             publishes `uae-atm-openapi.yaml` with a `/open-finance/atm/v2.1`
- *             base path, and `uae-authorization-endpoints-openapi.yaml` with
- *             `:v2.1` consent URNs in its enums and discriminator mappings.
- *
- * The match is therefore on the shape of a version rather than on a known
- * source version: any version qualifier in one of these two positions is
- * rewritten to the version this documentation publishes. A file already
- * carrying the target version is left unchanged, so the rewrite is idempotent.
- *
- * Only version-bearing identifiers are touched. Nothing else in the spec is
- * rewritten; this is not a general-purpose patcher.
- */
-const VERSION_QUALIFIER = 'v\\d+\\.\\d+(?:-[A-Za-z0-9]+)?'
-
-function upliftProtocolVersion(yaml, toVersion) {
-  return yaml
-    .replace(new RegExp(`(urn:openfinanceuae:[a-z-]+):${VERSION_QUALIFIER}\\b`, 'g'), `$1:${toVersion}`)
-    .replace(new RegExp(`/open-finance/([a-z][a-z-]*)/${VERSION_QUALIFIER}\\b`, 'g'), `/open-finance/$1/${toVersion}`)
-    .replace(new RegExp(`/open-finance/${VERSION_QUALIFIER}\\b`, 'g'), `/open-finance/${toVersion}`)
-}
-
 // ─── Categories & version-folder mapping ───────────────────────────────────────
 // Folder naming upstream is not uniform, either between categories or between
 // releases:
@@ -243,7 +190,7 @@ async function ghDownloadFile(remotePath) {
     }
     try {
       const res = await fetch(url, { headers })
-      if (res.ok) return res.text()
+      if (res.ok) return Buffer.from(await res.arrayBuffer())
       failure = res.status
     } catch (err) {
       failure = err.message
@@ -291,7 +238,7 @@ function writeSources(version, files) {
  * each file written, keyed by `{category}/{filename}`, or null when the
  * category was skipped and its existing manifest entries should be kept.
  */
-async function fetchCategory(version, chain, targetProtocol, category) {
+async function fetchCategory(version, chain, category) {
   // Output is keyed by the LOCAL version; the upstream folders it resolves from
   // may differ (see SPEC_FOLDER in src/data/versions.ts).
   const outDir = resolve(ROOT, 'public', 'openapi', version, category)
@@ -342,28 +289,22 @@ async function fetchCategory(version, chain, targetProtocol, category) {
     return {}
   }
 
-  // 3. Download all resolved files, uplifting the version strings of every one
-  //    to the version this documentation publishes. Borrowed files need it
-  //    because they carry an older release's strings; files from this release
-  //    need it when upstream republished them without bumping their own.
+  // 3. Download all resolved files and write them unchanged. A file borrowed
+  //    from an earlier release down the chain is served exactly as that
+  //    release published it, version strings included.
   mkdirSync(outDir, { recursive: true })
 
+  const ownRelease = releaseOf(chain[0])
   let borrowed = 0
-  let uplifted = 0
   const downloads = [...fileMap.entries()].map(async ([filename, { remotePath, sourceRelease }]) => {
-    const original = await ghDownloadFile(remotePath)
-    const content = upliftProtocolVersion(original, targetProtocol)
-    if (sourceRelease !== targetProtocol) borrowed++
-    if (content !== original) uplifted++
-    writeFileSync(resolve(outDir, filename), content, 'utf-8')
+    const content = await ghDownloadFile(remotePath)
+    if (sourceRelease !== ownRelease) borrowed++
+    writeFileSync(resolve(outDir, filename), content)
     return filename
   })
 
   const downloaded = await Promise.all(downloads)
-  const parts = []
-  if (borrowed > 0) parts.push(`${borrowed} borrowed`)
-  if (uplifted > 0) parts.push(`${uplifted} uplifted to ${targetProtocol}`)
-  const note = parts.length === 0 ? '' : ` (${parts.join(', ')})`
+  const note = borrowed > 0 ? ` (${borrowed} borrowed)` : ''
   console.log(`  ✓ ${category} — ${downloaded.length} file(s)${note}`)
 
   const sources = {}
@@ -379,14 +320,10 @@ async function fetchCategory(version, chain, targetProtocol, category) {
 async function main() {
   const versions = parseVersions()
   const specFolders = parseSpecFolders()
-  const protocolVersions = parseProtocolVersions()
   console.log(`Fetching OpenAPI specs for versions: ${versions.join(', ')}\n`)
 
   for (const version of versions) {
     const chain = specFolders[version] ?? [version]
-    // Files borrowed from an older release carry that release's version strings,
-    // so they are uplifted to the version this documentation publishes.
-    const targetProtocol = protocolVersions[version] ?? version
 
     const note = chain.length === 1 && chain[0] === version
       ? ''
@@ -394,7 +331,7 @@ async function main() {
     console.log(`${version}:${note}`)
     const sources = readSources(version)
     for (const category of CATEGORIES) {
-      const fetched = await fetchCategory(version, chain, targetProtocol, category)
+      const fetched = await fetchCategory(version, chain, category)
       if (fetched === null) continue
       for (const key of Object.keys(sources)) {
         if (key.startsWith(`${category}/`)) delete sources[key]

@@ -81326,8 +81326,8 @@
 		"status" : "AcceptedSettlementCompleted",
 		"band" : "0 – 100",
 		"bandmin" : 0,
-		"count" : 3,
-		"amount" : 210.64
+		"count" : 32,
+		"amount" : 2250.80
 	},
 	{
 		"date" : "2026-11-01",
@@ -81336,8 +81336,8 @@
 		"status" : "AcceptedSettlementCompleted",
 		"band" : ">100 – 1K",
 		"bandmin" : 100,
-		"count" : 11,
-		"amount" : 6476.25
+		"count" : 72,
+		"amount" : 41161.36
 	},
 	{
 		"date" : "2026-11-01",
@@ -81346,8 +81346,18 @@
 		"status" : "AcceptedSettlementCompleted",
 		"band" : ">1K – 5K",
 		"bandmin" : 1000,
-		"count" : 6,
-		"amount" : 15781.25
+		"count" : 38,
+		"amount" : 113849.35
+	},
+	{
+		"date" : "2026-11-01",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 2,
+		"amount" : 15000.00
 	},
 	{
 		"date" : "2026-11-01",
@@ -81356,8 +81366,8 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : "0 – 100",
 		"bandmin" : 0,
-		"count" : 9,
-		"amount" : 690.85
+		"count" : 22,
+		"amount" : 1610.85
 	},
 	{
 		"date" : "2026-11-01",
@@ -81366,8 +81376,8 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : ">100 – 1K",
 		"bandmin" : 100,
-		"count" : 14,
-		"amount" : 7563.29
+		"count" : 34,
+		"amount" : 17564.40
 	},
 	{
 		"date" : "2026-11-01",
@@ -81376,8 +81386,8 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : ">1K – 5K",
 		"bandmin" : 1000,
-		"count" : 7,
-		"amount" : 14156.64
+		"count" : 19,
+		"amount" : 43957.64
 	},
 	{
 		"date" : "2026-11-01",
@@ -81386,8 +81396,18 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : ">5K – 10K",
 		"bandmin" : 5000,
+		"count" : 2,
+		"amount" : 17667.90
+	},
+	{
+		"date" : "2026-11-01",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">10K – 50K",
+		"bandmin" : 10000,
 		"count" : 1,
-		"amount" : 8295.31
+		"amount" : 14504.77
 	},
 	{
 		"date" : "2026-11-01",
@@ -81396,8 +81416,8 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : "0 – 100",
 		"bandmin" : 0,
-		"count" : 1,
-		"amount" : 10.00
+		"count" : 2,
+		"amount" : 110.00
 	},
 	{
 		"date" : "2026-11-01",
@@ -81416,8 +81436,8 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : ">1K – 5K",
 		"bandmin" : 1000,
-		"count" : 3,
-		"amount" : 5810.50
+		"count" : 10,
+		"amount" : 30348.50
 	},
 	{
 		"date" : "2026-11-01",
@@ -81426,8 +81446,8 @@
 		"status" : "AcceptedCreditSettlementCompleted",
 		"band" : "0 – 100",
 		"bandmin" : 0,
-		"count" : 2,
-		"amount" : 200.00
+		"count" : 14,
+		"amount" : 1006.00
 	},
 	{
 		"date" : "2026-11-01",
@@ -81436,8 +81456,8 @@
 		"status" : "AcceptedCreditSettlementCompleted",
 		"band" : ">100 – 1K",
 		"bandmin" : 100,
-		"count" : 4,
-		"amount" : 1949.00
+		"count" : 25,
+		"amount" : 14623.00
 	},
 	{
 		"date" : "2026-11-01",
@@ -81446,8 +81466,8 @@
 		"status" : "AcceptedCreditSettlementCompleted",
 		"band" : ">1K – 5K",
 		"bandmin" : 1000,
-		"count" : 6,
-		"amount" : 14380.00
+		"count" : 18,
+		"amount" : 44455.00
 	},
 	{
 		"date" : "2026-11-01",
@@ -81456,8 +81476,8 @@
 		"status" : "AcceptedCreditSettlementCompleted",
 		"band" : ">5K – 10K",
 		"bandmin" : 5000,
-		"count" : 1,
-		"amount" : 7880.00
+		"count" : 2,
+		"amount" : 15880.00
 	},
 	{
 		"date" : "2026-11-01",
@@ -81466,8 +81486,8 @@
 		"status" : "AcceptedCreditSettlementCompleted",
 		"band" : ">10K – 50K",
 		"bandmin" : 10000,
-		"count" : 7,
-		"amount" : 103000.00
+		"count" : 13,
+		"amount" : 183051.00
 	},
 	{
 		"date" : "2026-11-01",
@@ -81476,8 +81496,8 @@
 		"status" : "AcceptedSettlementCompleted",
 		"band" : "0 – 100",
 		"bandmin" : 0,
-		"count" : 1,
-		"amount" : 10.00
+		"count" : 9,
+		"amount" : 670.00
 	},
 	{
 		"date" : "2026-11-01",
@@ -81486,8 +81506,8 @@
 		"status" : "AcceptedSettlementCompleted",
 		"band" : ">100 – 1K",
 		"bandmin" : 100,
-		"count" : 7,
-		"amount" : 4855.00
+		"count" : 20,
+		"amount" : 11973.29
 	},
 	{
 		"date" : "2026-11-01",
@@ -81496,8 +81516,8 @@
 		"status" : "AcceptedSettlementCompleted",
 		"band" : ">1K – 5K",
 		"bandmin" : 1000,
-		"count" : 3,
-		"amount" : 9100.00
+		"count" : 12,
+		"amount" : 36619.58
 	},
 	{
 		"date" : "2026-11-01",
@@ -81506,8 +81526,8 @@
 		"status" : "AcceptedSettlementCompleted",
 		"band" : ">5K – 10K",
 		"bandmin" : 5000,
-		"count" : 2,
-		"amount" : 15500.00
+		"count" : 7,
+		"amount" : 52034.25
 	},
 	{
 		"date" : "2026-11-01",
@@ -81516,8 +81536,8 @@
 		"status" : "AcceptedSettlementCompleted",
 		"band" : ">10K – 50K",
 		"bandmin" : 10000,
-		"count" : 1,
-		"amount" : 15000.00
+		"count" : 5,
+		"amount" : 65010.00
 	},
 	{
 		"date" : "2026-11-01",
@@ -81526,28 +81546,38 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : "0 – 100",
 		"bandmin" : 0,
-		"count" : 2,
+		"count" : 5,
+		"amount" : 290.00
+	},
+	{
+		"date" : "2026-11-01",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 3,
+		"amount" : 1373.50
+	},
+	{
+		"date" : "2026-11-01",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 3,
+		"amount" : 5316.79
+	},
+	{
+		"date" : "2026-11-01",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Pending",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 1,
 		"amount" : 100.00
-	},
-	{
-		"date" : "2026-11-01",
-		"lfinamekey" : "uae-fabretail",
-		"tppname" : "LEAN TECH",
-		"status" : "AcceptedWithoutPosting",
-		"band" : ">100 – 1K",
-		"bandmin" : 100,
-		"count" : 2,
-		"amount" : 1270.50
-	},
-	{
-		"date" : "2026-11-01",
-		"lfinamekey" : "uae-fabretail",
-		"tppname" : "LEAN TECH",
-		"status" : "AcceptedWithoutPosting",
-		"band" : ">1K – 5K",
-		"bandmin" : 1000,
-		"count" : 1,
-		"amount" : 3000.00
 	},
 	{
 		"date" : "2026-11-01",
@@ -81558,6 +81588,16 @@
 		"bandmin" : 5000,
 		"count" : 1,
 		"amount" : 9663.75
+	},
+	{
+		"date" : "2026-11-01",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Pending",
+		"band" : ">10K – 50K",
+		"bandmin" : 10000,
+		"count" : 1,
+		"amount" : 15000.00
 	},
 	{
 		"date" : "2026-11-01",
@@ -81596,8 +81636,8 @@
 		"status" : "AcceptedSettlementCompleted",
 		"band" : ">1K – 5K",
 		"bandmin" : 1000,
-		"count" : 4,
-		"amount" : 14070.75
+		"count" : 5,
+		"amount" : 16332.00
 	},
 	{
 		"date" : "2026-11-01",
@@ -81616,8 +81656,8 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : "0 – 100",
 		"bandmin" : 0,
-		"count" : 2,
-		"amount" : 110.00
+		"count" : 3,
+		"amount" : 160.00
 	},
 	{
 		"date" : "2026-11-01",
@@ -81626,8 +81666,8 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : ">100 – 1K",
 		"bandmin" : 100,
-		"count" : 5,
-		"amount" : 3300.00
+		"count" : 20,
+		"amount" : 8509.24
 	},
 	{
 		"date" : "2026-11-01",
@@ -81636,8 +81676,18 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : ">1K – 5K",
 		"bandmin" : 1000,
-		"count" : 1,
-		"amount" : 5000.00
+		"count" : 22,
+		"amount" : 55784.54
+	},
+	{
+		"date" : "2026-11-01",
+		"lfinamekey" : "uae-hsbcrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 7,
+		"amount" : 67505.00
 	},
 	{
 		"date" : "2026-11-01",
@@ -81656,8 +81706,8 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : "0 – 100",
 		"bandmin" : 0,
-		"count" : 30,
-		"amount" : 1434.92
+		"count" : 130,
+		"amount" : 8020.90
 	},
 	{
 		"date" : "2026-11-01",
@@ -81666,8 +81716,8 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : ">100 – 1K",
 		"bandmin" : 100,
-		"count" : 45,
-		"amount" : 22143.79
+		"count" : 161,
+		"amount" : 80356.86
 	},
 	{
 		"date" : "2026-11-01",
@@ -81676,8 +81726,8 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : ">1K – 5K",
 		"bandmin" : 1000,
-		"count" : 41,
-		"amount" : 109676.49
+		"count" : 115,
+		"amount" : 307903.91
 	},
 	{
 		"date" : "2026-11-01",
@@ -81686,8 +81736,8 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : ">5K – 10K",
 		"bandmin" : 5000,
-		"count" : 5,
-		"amount" : 40799.02
+		"count" : 22,
+		"amount" : 161216.63
 	},
 	{
 		"date" : "2026-11-01",
@@ -81696,8 +81746,28 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : ">10K – 50K",
 		"bandmin" : 10000,
-		"count" : 11,
-		"amount" : 336084.66
+		"count" : 34,
+		"amount" : 861048.85
+	},
+	{
+		"date" : "2026-11-01",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "Pending",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 1,
+		"amount" : 100.00
+	},
+	{
+		"date" : "2026-11-01",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "Pending",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 1,
+		"amount" : 400.00
 	},
 	{
 		"date" : "2026-11-01",
@@ -81716,8 +81786,8 @@
 		"status" : "Rejected",
 		"band" : "0 – 100",
 		"bandmin" : 0,
-		"count" : 1,
-		"amount" : 5.79
+		"count" : 4,
+		"amount" : 85.79
 	},
 	{
 		"date" : "2026-11-01",
@@ -81726,8 +81796,38 @@
 		"status" : "Rejected",
 		"band" : ">100 – 1K",
 		"bandmin" : 100,
-		"count" : 2,
-		"amount" : 1200.00
+		"count" : 4,
+		"amount" : 1744.50
+	},
+	{
+		"date" : "2026-11-01",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 6,
+		"amount" : 20637.42
+	},
+	{
+		"date" : "2026-11-01",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+		"status" : "AcceptedWithoutPosting",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 1,
+		"amount" : 5.00
+	},
+	{
+		"date" : "2026-11-01",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 1,
+		"amount" : 465.62
 	},
 	{
 		"date" : "2026-11-01",
@@ -81736,8 +81836,8 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : "0 – 100",
 		"bandmin" : 0,
-		"count" : 11,
-		"amount" : 612.15
+		"count" : 52,
+		"amount" : 2955.11
 	},
 	{
 		"date" : "2026-11-01",
@@ -81746,8 +81846,8 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : ">100 – 1K",
 		"bandmin" : 100,
-		"count" : 31,
-		"amount" : 16063.67
+		"count" : 113,
+		"amount" : 56733.24
 	},
 	{
 		"date" : "2026-11-01",
@@ -81756,8 +81856,8 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : ">1K – 5K",
 		"bandmin" : 1000,
-		"count" : 22,
-		"amount" : 58339.50
+		"count" : 103,
+		"amount" : 271961.31
 	},
 	{
 		"date" : "2026-11-01",
@@ -81766,8 +81866,8 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : ">5K – 10K",
 		"bandmin" : 5000,
-		"count" : 13,
-		"amount" : 91036.89
+		"count" : 37,
+		"amount" : 283702.15
 	},
 	{
 		"date" : "2026-11-01",
@@ -81776,8 +81876,28 @@
 		"status" : "AcceptedWithoutPosting",
 		"band" : ">10K – 50K",
 		"bandmin" : 10000,
-		"count" : 10,
-		"amount" : 260537.91
+		"count" : 38,
+		"amount" : 1087720.72
+	},
+	{
+		"date" : "2026-11-01",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Pending",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 2,
+		"amount" : 4631.50
+	},
+	{
+		"date" : "2026-11-01",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Pending",
+		"band" : ">10K – 50K",
+		"bandmin" : 10000,
+		"count" : 1,
+		"amount" : 11500.00
 	},
 	{
 		"date" : "2026-11-01",
@@ -81792,11 +81912,1251 @@
 	{
 		"date" : "2026-11-01",
 		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : ">10K – 50K",
+		"bandmin" : 10000,
+		"count" : 1,
+		"amount" : 20000.00
+	},
+	{
+		"date" : "2026-11-01",
+		"lfinamekey" : "uae-wioretail",
 		"tppname" : "PAY TEN PAYMENT SERVICES PROVIDER LLC",
 		"status" : "AcceptedWithoutPosting",
 		"band" : ">100 – 1K",
 		"bandmin" : 100,
 		"count" : 1,
 		"amount" : 420.00
+	},
+	{
+		"date" : "2026-11-01",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 1,
+		"amount" : 4609.94
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-adcbrt",
+		"tppname" : "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 1,
+		"amount" : 175.68
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 48,
+		"amount" : 2972.14
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 70,
+		"amount" : 34911.19
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 49,
+		"amount" : 136163.33
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 4,
+		"amount" : 26313.50
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : ">10K – 50K",
+		"bandmin" : 10000,
+		"count" : 1,
+		"amount" : 19670.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 17,
+		"amount" : 1020.03
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 32,
+		"amount" : 13413.97
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 18,
+		"amount" : 47257.22
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 3,
+		"amount" : 23754.13
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 2,
+		"amount" : 2000.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 1,
+		"amount" : 2000.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 1,
+		"amount" : 10.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-cbdrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 4,
+		"amount" : 115.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-cbdrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 6,
+		"amount" : 3899.94
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-cbdrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 10,
+		"amount" : 26831.03
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedCreditSettlementCompleted",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 15,
+		"amount" : 739.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedCreditSettlementCompleted",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 29,
+		"amount" : 15705.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedCreditSettlementCompleted",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 27,
+		"amount" : 72344.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedCreditSettlementCompleted",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 12,
+		"amount" : 104521.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedCreditSettlementCompleted",
+		"band" : ">10K – 50K",
+		"bandmin" : 10000,
+		"count" : 6,
+		"amount" : 90000.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 12,
+		"amount" : 599.16
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 13,
+		"amount" : 8099.10
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 31,
+		"amount" : 79507.10
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 11,
+		"amount" : 79318.75
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : ">10K – 50K",
+		"bandmin" : 10000,
+		"count" : 9,
+		"amount" : 125857.01
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 1,
+		"amount" : 50.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 1,
+		"amount" : 700.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 2,
+		"amount" : 5999.50
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Pending",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 2,
+		"amount" : 127.19
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Pending",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 1,
+		"amount" : 365.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Pending",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 1,
+		"amount" : 4000.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Pending",
+		"band" : ">10K – 50K",
+		"bandmin" : 10000,
+		"count" : 1,
+		"amount" : 15000.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 2,
+		"amount" : 1650.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 5,
+		"amount" : 14401.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 1,
+		"amount" : 7000.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : ">10K – 50K",
+		"bandmin" : 10000,
+		"count" : 2,
+		"amount" : 30000.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "MASHREQ BANK PSC",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 1,
+		"amount" : 10.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "MASHREQ BANK PSC",
+		"status" : "Pending",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 1,
+		"amount" : 10.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 1,
+		"amount" : 1.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 1,
+		"amount" : 500.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-hsbcrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 2,
+		"amount" : 5000.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-hsbcrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 1,
+		"amount" : 6000.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-hsbcrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 7,
+		"amount" : 598.21
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-hsbcrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 18,
+		"amount" : 11024.50
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-hsbcrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 17,
+		"amount" : 45252.52
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-hsbcrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 17,
+		"amount" : 154810.54
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-hsbcrt",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 2,
+		"amount" : 1000.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-hsbcrt",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 1,
+		"amount" : 3000.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-hsbcrt",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 3,
+		"amount" : 25500.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 114,
+		"amount" : 6213.04
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 209,
+		"amount" : 90353.96
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 179,
+		"amount" : 414917.54
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 39,
+		"amount" : 295998.42
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">10K – 50K",
+		"bandmin" : 10000,
+		"count" : 44,
+		"amount" : 1276962.24
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "Pending",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 2,
+		"amount" : 550.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "Pending",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 2,
+		"amount" : 3027.41
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 5,
+		"amount" : 253.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 1,
+		"amount" : 200.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 1,
+		"amount" : 3000.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+		"status" : "AcceptedWithoutPosting",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 2,
+		"amount" : 101.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+		"status" : "Rejected",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 1,
+		"amount" : 5000.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 60,
+		"amount" : 3416.90
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 117,
+		"amount" : 59616.53
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 152,
+		"amount" : 421690.87
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 43,
+		"amount" : 330623.43
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">10K – 50K",
+		"bandmin" : 10000,
+		"count" : 81,
+		"amount" : 2192039.31
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Pending",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 2,
+		"amount" : 4155.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Pending",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 1,
+		"amount" : 5811.44
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Pending",
+		"band" : ">10K – 50K",
+		"bandmin" : 10000,
+		"count" : 1,
+		"amount" : 14472.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 3,
+		"amount" : 117.86
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 4,
+		"amount" : 1216.00
+	},
+	{
+		"date" : "2026-11-02",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+		"status" : "AcceptedWithoutPosting",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 2,
+		"amount" : 110.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 7,
+		"amount" : 418.66
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 7,
+		"amount" : 5909.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 5,
+		"amount" : 15424.08
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 1,
+		"amount" : 10000.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 6,
+		"amount" : 354.75
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 9,
+		"amount" : 4604.47
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-adibrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 9,
+		"amount" : 29779.55
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-cbdrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 2,
+		"amount" : 140.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-cbdrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 2,
+		"amount" : 600.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-cbdrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 1,
+		"amount" : 3900.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-cbdrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 1,
+		"amount" : 7700.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedCreditSettlementCompleted",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 4,
+		"amount" : 260.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedCreditSettlementCompleted",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 1,
+		"amount" : 300.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedCreditSettlementCompleted",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 4,
+		"amount" : 17590.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedCreditSettlementCompleted",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 1,
+		"amount" : 10000.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedCreditSettlementCompleted",
+		"band" : ">10K – 50K",
+		"bandmin" : 10000,
+		"count" : 4,
+		"amount" : 60000.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 3,
+		"amount" : 188.75
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 3,
+		"amount" : 1203.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 7,
+		"amount" : 19515.29
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 2,
+		"amount" : 17000.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 3,
+		"amount" : 231.30
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 2,
+		"amount" : 4855.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 1,
+		"amount" : 7000.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">10K – 50K",
+		"bandmin" : 10000,
+		"count" : 1,
+		"amount" : 15000.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Pending",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 1,
+		"amount" : 50.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Pending",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 1,
+		"amount" : 1500.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+		"status" : "AcceptedSettlementCompleted",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 1,
+		"amount" : 100.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-fabretail",
+		"tppname" : "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 1,
+		"amount" : 2000.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-hsbcrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 2,
+		"amount" : 2.30
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-hsbcrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 9,
+		"amount" : 3451.95
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-hsbcrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 14,
+		"amount" : 45618.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-hsbcrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 7,
+		"amount" : 58642.07
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-hsbcrt",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 1,
+		"amount" : 3104.38
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-hsbcrt",
+		"tppname" : "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+		"status" : "Rejected",
+		"band" : ">10K – 50K",
+		"bandmin" : 10000,
+		"count" : 1,
+		"amount" : 10001.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 19,
+		"amount" : 1244.75
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 34,
+		"amount" : 16144.78
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 34,
+		"amount" : 91827.42
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 11,
+		"amount" : 96439.88
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">10K – 50K",
+		"bandmin" : 10000,
+		"count" : 20,
+		"amount" : 749851.31
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 1,
+		"amount" : 9.95
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 1,
+		"amount" : 1650.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-mashrt",
+		"tppname" : "MERCURY PAYMENTS SERVICES LLC",
+		"status" : "AcceptedWithoutPosting",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 1,
+		"amount" : 1.00
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 13,
+		"amount" : 825.38
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">100 – 1K",
+		"bandmin" : 100,
+		"count" : 28,
+		"amount" : 12976.80
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">1K – 5K",
+		"bandmin" : 1000,
+		"count" : 35,
+		"amount" : 95281.97
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">5K – 10K",
+		"bandmin" : 5000,
+		"count" : 11,
+		"amount" : 87279.08
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "AcceptedWithoutPosting",
+		"band" : ">10K – 50K",
+		"bandmin" : 10000,
+		"count" : 14,
+		"amount" : 211442.95
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "LEAN TECH",
+		"status" : "Rejected",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 1,
+		"amount" : 5.81
+	},
+	{
+		"date" : "2026-11-03",
+		"lfinamekey" : "uae-wioretail",
+		"tppname" : "PAY TEN PAYMENT SERVICES PROVIDER LLC",
+		"status" : "AcceptedWithoutPosting",
+		"band" : "0 – 100",
+		"bandmin" : 0,
+		"count" : 1,
+		"amount" : 10.00
 	}
 ]

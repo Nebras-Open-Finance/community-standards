@@ -1003,8 +1003,239 @@ export const VERSION_CHANGES: VersionChange[] = [
     changeId: 'v2.1-to-v2.2',
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
-    introducedIn: 'v2.2-rc1',
+    introducedIn: 'v2.2-rc2',
     number: 18,
+    category: 'Behaviour change',
+    title: 'A `504 Gateway Timeout` response is declared across the Standards, API Hub and Ozone Connect',
+    summary:
+      'The API Hub has a 30-second limit and returns a `504` when a request takes longer. v2.2 declares that response on every resource operation in the Standards and every Consent Manager operation except `GET /hello-mtls`, so the specifications reflect how the API behaves, and on every Ozone Connect operation, so an LFI can communicate a timeout itself. No response body is defined.',
+    description:
+      'The API Hub has a 30-second limit on every request. A request that takes longer — for example because an upstream dependency is slow to respond — ends with a `504 Gateway Timeout`. v2.1 declares no `504` on any operation, so the API descriptions did not reflect that behaviour. v2.2 declares it, so they now describe how the API actually responds.\n\n' +
+      '**From the API Hub.** v2.2 declares a `504` on every operation of the Account Information, Account Opening, ATM, Bank Initiation, Confirmation of Payee, FX Service Initiation, Insurance and Products & Leads descriptions — 97 operations in all. It means the request could not be completed within the API Hub\'s 30-second limit. The response body is not standardised and may change, so the status code is the whole signal: any `504` is to be treated as a transient timeout.\n\n' +
+      '**From the Consent Manager.** The Consent Manager API, which the LFI calls, declares the same `504` with the same meaning on every operation that declares an error response — every operation except `GET /hello-mtls`.\n\n' +
+      '**From Ozone Connect.** On the LFI surface the direction reverses. Every operation in all seven Ozone Connect descriptions — 97 in all — declares a `504`, which lets an LFI communicate a timeout itself rather than leave the API Hub to reach its own limit. An LFI MAY return it when it cannot complete processing within its internal time limit, and the API Hub treats it as a timeout. Only a description is given: the body is not standardised, so no schema or headers are defined for it.\n\n' +
+      'The change is published in the v2.2 release of each of these API descriptions in the api-specs repository, which is what the API references render.',
+    docsPaths: [
+      {
+        label: 'LFI guide — Bank Data Sharing common error responses',
+        path: `${DS_LFI}/api-guide`,
+      },
+      {
+        label: 'Ozone Connect Availability Policy',
+        path: '/policy/ozone-connect-availability',
+      },
+      {
+        label: 'TPP specification — look up a payment by idempotency key',
+        path: `${SI_TPP}/open-api/payments-idempotency`,
+      },
+    ],
+    audience: 'Both',
+    areas: ['Conventions', 'Data Sharing', 'Service Initiation', 'Insurance', 'Confirmation of Payee', 'Products & Leads', 'Consent Manager', 'Ozone Connect'],
+    specs: [
+      'uae-account-information-openapi',
+      'uae-atm-openapi',
+      'uae-bank-initiation-openapi',
+      'uae-confirmation-of-payee-openapi',
+      'uae-insurance-openapi',
+      'uae-product-openapi',
+      'uae-api-hub-consent-manager-openapi',
+      'uae-ozone-connect-bank-data-sharing-openapi',
+      'uae-ozone-connect-bank-open-data-openapi',
+      'uae-ozone-connect-bank-products-data-openapi',
+      'uae-ozone-connect-bank-service-initiation-openapi',
+      'uae-ozone-connect-caap-operations-openapi',
+      'uae-ozone-connect-consent-events-actions-openapi',
+      'uae-ozone-connect-insurance-openapi',
+    ],
+    affectedPaths: [
+      `${DS_LFI}/api-guide`,
+      `${LFI}/insurance/data-sharing/api-guide`,
+      `${LFI}/banking/atms/api-guide`,
+      `${COP}/api-guide`,
+      ...LFI_PAYMENT_GUIDES,
+      `${SI_LFI}/refunds/api-guide`,
+    ],
+  },
+  {
+    changeId: 'v2.1-to-v2.2',
+    fromVersion: 'v2.1',
+    toVersion: 'v2.2-rc2',
+    introducedIn: 'v2.2-rc2',
+    number: 19,
+    category: 'New capability',
+    title: 'Business identity claims carry `TradeLicenceExpiryDate`',
+    summary:
+      'An optional `TradeLicenceExpiryDate` (a date) is added to the Business identity claims returned by `GET /parties` and `GET /accounts/{AccountId}/parties`. Ozone Connect carries it as `tradeLicenceExpiryDate` on `CustomerCorporateClaims`, so the API Hub can return it to the TPP.',
+    description:
+      'v2.1 carries a business customer\'s Trade Licence number in its identity claims, but not the date the licence expires.\n\n' +
+      '**Standards.** v2.2 adds `TradeLicenceExpiryDate` to `CorporateClaims` in the Account Information API description — the Business claims (`IdentityType: Business`) carried in the verified claims of `GET /parties` and `GET /accounts/{AccountId}/parties`. It is a `string` in `date` format holding the expiry date of the business\'s Trade Licence, and it is optional.\n\n' +
+      '**Ozone Connect.** The LFI supplies it as `tradeLicenceExpiryDate` on `CustomerCorporateClaims`, returned by `GET /customer` and `GET /accounts/{accountId}/customer` in the Bank Data Sharing API description, with the same type and format and also optional. The API Hub returns it to the TPP as `TradeLicenceExpiryDate`.\n\n' +
+      'Nothing becomes required and nothing is removed, so a v2.1 payload still validates. An LFI that holds the expiry date populates it under the existing rule that every field an LFI holds, or can derive, is returned.\n\n' +
+      'The change is published in the v2.2 release of the Account Information API description and the v2.2 release of the Ozone Connect Bank Data Sharing API description in the api-specs repository, which is what the endpoint pages below render.',
+    docsPaths: [
+      {
+        label: 'TPP specification — parties',
+        path: `${DS_TPP}/open-api/parties`,
+      },
+      {
+        label: 'Ozone Connect specification — customer',
+        path: `${DS_LFI}/open-api/customer`,
+      },
+      {
+        label: 'LFI requirements — Bank Data Sharing',
+        path: `${DS_LFI}/requirements`,
+      },
+    ],
+    audience: 'Both',
+    areas: ['Data Sharing', 'Ozone Connect'],
+    specs: [
+      'uae-account-information-openapi',
+      'uae-ozone-connect-bank-data-sharing-openapi',
+    ],
+    endpoints: [
+      { label: 'GET /parties', path: `${DS_TPP}/open-api/parties` },
+      { label: 'GET /accounts/{AccountId}/parties', path: `${DS_TPP}/open-api/accounts-AccountId-parties` },
+      { label: 'GET /customer (Ozone Connect)', path: `${DS_LFI}/open-api/customer` },
+      { label: 'GET /accounts/{accountId}/customer (Ozone Connect)', path: `${DS_LFI}/open-api/accounts-AccountId-customer` },
+    ],
+    affectedPaths: [
+      `${DS_TPP}/open-api/parties`,
+      `${DS_TPP}/open-api/accounts-AccountId-parties`,
+      `${DS_LFI}/open-api/customer`,
+      `${DS_LFI}/open-api/accounts-AccountId-customer`,
+      `${DS_LFI}/requirements`,
+      `${DS_LFI}/api-guide`,
+    ],
+  },
+  {
+    changeId: 'v2.1-to-v2.2',
+    fromVersion: 'v2.1',
+    toVersion: 'v2.2-rc2',
+    introducedIn: 'v2.2-rc2',
+    number: 20,
+    category: 'New capability',
+    title: 'A `ReadPartyIdentity` permission gives access to identity claims only',
+    summary:
+      'Bank Data Sharing and Bank Service Initiation consents can carry a new permission, `ReadPartyIdentity`, which gives access to the User\'s identity claims only — name and Emirates ID for a Person, business name and trade licence for a Business — on `GET /parties` and `GET /accounts/{AccountId}/parties`.',
+    description:
+      'In v2.1 the only party permission that returns the Emirates ID is `ReadPartyUserIdentity`, which also returns date of birth, contact details, nationality, residential address and employer details. No party permission is available on a payment consent at all.\n\n' +
+      '**The permission.** v2.2 adds `ReadPartyIdentity` to the permission codes of both Bank Data Sharing and Bank Service Initiation consents. It is additive, and gives access to the User\'s identity claims only: for a Person `FullName`, `GivenName`, `MiddleName`, `Surname`, `EmiratesId` and `EmiratesIdExpiryDate`; for a Business `BusinessName`, `TradeLicenceNumber` and `TradeLicenceExpiryDate` (§19). It is listed against `GET /parties` and `GET /accounts/{AccountId}/parties` alongside `ReadParty`, `ReadPartyUser` and `ReadPartyUserIdentity`.\n\n' +
+      '**Where it is defined.** The code is added to the Bank Data Sharing and Bank Service Initiation permission enums in the Account Information, Bank Initiation, Authorization Endpoints and webhook template descriptions; to `AEAccountAccessConsentPermissionCodes`, `AEServiceInitiationConsentPermissionCodes` and `AEConsentPermissions` in the Consent Manager; and to the same three schemas in the Ozone Connect CAAP Operations and Consent Events and Actions descriptions, so it reaches the LFI on the consent it is asked to authorize.\n\n' +
+      '**What the User sees.** On a Bank Data Sharing consent it appears under Contact and Party Details as “Your name and Emirates ID (or, for a business, its registered name and trade licence)”. `ReadPartyUserIdentity` already includes those details, so it covers it; alongside `ReadPartyUser` both lines are shown; and it covers `ReadParty`, which gives only the account holder\'s name. On a payment consent, “identity details” is added to the sentence that lists what the TPP may access before making the payment.\n\n' +
+      '**Scope on a payment consent.** On a Bank Service Initiation consent, `ReadPartyIdentity` requires the `accounts payments openid` scope, as `ReadAccountsBasic`, `ReadAccountsDetail` and `ReadBalances` already do, because `GET /parties` and `GET /accounts/{AccountId}/parties` are served under the `accounts` scope.\n\n' +
+      'No existing permission changes meaning, and a consent that does not carry `ReadPartyIdentity` is unaffected.\n\n' +
+      'The change is published in the v2.2 release of each of these API descriptions in the api-specs repository, which is what the endpoint pages below render.',
+    docsPaths: [
+      {
+        label: 'TPP guide — Bank Data Sharing user experience',
+        path: `${DS_TPP}/user-journeys`,
+      },
+      {
+        label: 'TPP guide — Single Instant Payment user experience',
+        path: `${SI_TPP}/domestic-payments/single-instant-payment/user-journeys`,
+      },
+      {
+        label: 'TPP specification — parties',
+        path: `${DS_TPP}/open-api/parties`,
+      },
+    ],
+    audience: 'Both',
+    areas: ['Consent', 'Data Sharing', 'Service Initiation', 'Payments', 'Consent Manager', 'Ozone Connect'],
+    specs: [
+      'uae-account-information-openapi',
+      'uae-bank-initiation-openapi',
+      'uae-authorization-endpoints-openapi',
+      'uae-webhook-template-openapi',
+      'uae-api-hub-consent-manager-openapi',
+      'uae-ozone-connect-caap-operations-openapi',
+      'uae-ozone-connect-consent-events-actions-openapi',
+    ],
+    endpoints: [
+      { label: 'POST /par', path: `${CONSENT_TPP}/open-api/par` },
+      { label: 'GET /parties', path: `${DS_TPP}/open-api/parties` },
+      { label: 'GET /accounts/{AccountId}/parties', path: `${DS_TPP}/open-api/accounts-AccountId-parties` },
+    ],
+    affectedPaths: [
+      `${DS_TPP}/user-journeys`,
+      `${DS_LFI}/user-journeys`,
+      ...TPP_PAYMENT_GUIDES.map((p) => p.replace(/\/api-guide$/, '/user-journeys')),
+      ...LFI_PAYMENT_GUIDES.map((p) => p.replace(/\/api-guide$/, '/user-journeys')),
+      ...TPP_PAYMENT_GUIDES,
+      ...TPP_PAYMENT_GUIDES.map((p) => p.replace(/\/api-guide$/, '/requirements')),
+      `${DS_TPP}/requirements`,
+      `${DS_TPP}/api-guide`,
+      `${DS_TPP}/open-api/parties`,
+      `${DS_TPP}/open-api/accounts-AccountId-parties`,
+    ],
+  },
+  {
+    changeId: 'v2.1-to-v2.2',
+    fromVersion: 'v2.1',
+    toVersion: 'v2.2-rc2',
+    introducedIn: 'v2.2-rc2',
+    number: 21,
+    category: 'New capability',
+    title: 'Payment `Risk` carries the User\'s `EmiratesId`',
+    summary:
+      'An optional `EmiratesId` is added to `DebtorIndicators` in the payment `Risk` object. It holds the Emirates ID number of the User initiating the payment, so that for payments made under a long-lived consent the LFI can confirm each payment is being made for the same User who authorized the consent. For a retail User, the TPP MUST capture it and send it on every `POST /payments` under a long-lived consent.',
+    description:
+      'In v2.1, `Risk.DebtorIndicators` identifies the User initiating a payment only by name, in `UserName`. Under a long-lived consent, each later payment carries no identifier the LFI can compare with the User who authorized the consent.\n\n' +
+      '**The field.** v2.2 adds `EmiratesId` to `DebtorIndicators`: an optional string holding the Emirates ID number of the User initiating the payment, matching `^784-?[0-9]{4}-?[0-9]{7}-?[0-9]{1}$`, so the hyphens are optional. For payments made under a long-lived consent, the LFI can use it to confirm that each payment is being made for the same User who authorized the consent. It is defined on the consent-time `Risk` sent to `POST /par` (Authorization Endpoints) and on the payment-time `Risk` sent to `POST /payments` (Bank Initiation).\n\n' +
+      '**Consent Manager and Ozone Connect.** The Consent Manager carries it in both of its `DebtorIndicators` schemas. On Ozone Connect it is added to `AEDebtorIndicators` in the Bank Service Initiation description, which `POST /payments` receives, and to the corresponding schemas in the CAAP Operations and Consent Events and Actions descriptions.\n\n' +
+      '**The TPP requirement.** A long-lived consent is any payment consent other than Single Instant Payment: the six Fixed and Variable multi-payment types and Delegated SCA. For a retail User under such a consent, the TPP MUST capture the User\'s Emirates ID and, having it, MUST send it in `Risk.DebtorIndicators.EmiratesId` on every `POST /payments` — not only the first. The rule is in the Payment Initiation requirements of each of the seven types.\n\n' +
+      '**What the LFI can do with it.** On `POST /payments` the LFI can compare the value with the Emirates ID it holds for the retail PSU identified by `o3-psu-identifier`, and reject the payment with `400 Consent.BusinessRuleViolation` when it is missing or does not match. The Knowledge Base article below sets out the check and both error messages.\n\n' +
+      'The field remains optional in the schema, so a v2.1 payload still validates; the obligation to send it is a TPP requirement for long-lived consents.\n\n' +
+      'The change is published in the v2.2 release of each of these API descriptions in the api-specs repository, which is what the endpoint pages below render.',
+    docsPaths: [
+      {
+        label: 'Emirates ID on long-lived payments — what the TPP sends and how the LFI checks it',
+        path: '/knowledge-base/articles/emirates-id-long-lived-payments',
+      },
+      {
+        label: 'TPP guide — Risk',
+        path: `${SI_TPP}/personal-identifiable-information/risk`,
+      },
+      {
+        label: 'TPP specification — payment-time PII',
+        path: `${SI_TPP}/personal-identifiable-information/api-schema/pii-payments`,
+      },
+      {
+        label: 'Ozone Connect specification — payment-time PII',
+        path: `${SI_LFI}/personal-identifiable-information/api-schema/pii-payments`,
+      },
+    ],
+    audience: 'Both',
+    areas: ['Service Initiation', 'Payments', 'Consent Manager', 'Ozone Connect'],
+    specs: [
+      'uae-authorization-endpoints-openapi',
+      'uae-bank-initiation-openapi',
+      'uae-api-hub-consent-manager-openapi',
+      'uae-ozone-connect-bank-service-initiation-openapi',
+      'uae-ozone-connect-caap-operations-openapi',
+      'uae-ozone-connect-consent-events-actions-openapi',
+    ],
+    endpoints: [
+      { label: 'POST /par', path: `${CONSENT_TPP}/open-api/par` },
+      { label: 'POST /payments', path: `${SI_TPP}/open-api/payments` },
+      { label: 'POST /payments (Ozone Connect)', path: `${SI_LFI}/open-api/payments` },
+    ],
+    affectedPaths: [
+      `${SI_TPP}/personal-identifiable-information/risk`,
+      ...TPP_PAYMENT_GUIDES
+        .filter((p) => !p.includes('/single-instant-payment/'))
+        .map((p) => p.replace(/\/api-guide$/, '/requirements')),
+      `${SI_TPP}/personal-identifiable-information/api-schema/pii-par`,
+      `${SI_TPP}/personal-identifiable-information/api-schema/pii-payments`,
+      `${SI_LFI}/personal-identifiable-information/api-schema/pii-par`,
+      `${SI_LFI}/personal-identifiable-information/api-schema/pii-payments`,
+    ],
+  },
+  {
+    changeId: 'v2.1-to-v2.2',
+    fromVersion: 'v2.1',
+    toVersion: 'v2.2-rc2',
+    introducedIn: 'v2.2-rc1',
+    number: 22,
     category: 'New capability',
     title: 'Data deletion confirmation — attestations sub-resource',
     summary:
@@ -1064,7 +1295,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc1',
-    number: 19,
+    number: 23,
     category: 'New capability',
     title: 'Sharia-compliant product data — expected profit rates, finance rates, and Takaful',
     summary:
@@ -1077,7 +1308,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       '**`ShariaFinanceRates`** is the finance-rate parallel — `AEProductShariaFinanceRate1Types`, a `oneOf` discriminated on `RateType` across `FixedProfit`, `VariableProfit` and `HybridProfit`. The two new Sharia types compose the existing fixed and variable rate property sets and the existing finance-rate properties with a new `AEProductShariaProfitCalculationMethod1Properties`, whose calculation basis adds `UnusedCreditLine` and `UtilizedLimit` to the three conventional values. `HybridProfit` reuses the existing `AEProductHybridProfitRateProperties` unchanged.\n\n' +
       'Where the rates are account-scoped, `ShariaFinanceRates` may be sent in cleartext or as a JWE at the LFI\'s discretion — exactly the choice `FinanceRates` already offers, and for the same reason. The public products catalogue is answered without a customer and so has no JWE variant, again matching `FinanceRates`. `ExpectedProfitRates` is cleartext on every surface.\n\n' +
       '**`TakafulRequired`** (boolean) and **`TakafulDescription`** (up to 500 characters) complete the set. Takaful is the Sharia-compliant alternative to conventional insurance, and where a product requires cover a TPP needs to be able to say both that it is required and what it is for.\n\n' +
-      'Every field added here is optional. An LFI that offers no Islamic products sends nothing new and stays conformant; an LFI that has been approximating profit rates in the interest-based fields can move them across. Nothing is removed, no enum is narrowed, and a v2.1 product payload still validates unchanged — §20 covers the one place where the *meaning* of an existing field narrows.\n\n' +
+      'Every field added here is optional. An LFI that offers no Islamic products sends nothing new and stays conformant; an LFI that has been approximating profit rates in the interest-based fields can move them across. Nothing is removed, no enum is narrowed, and a v2.1 product payload still validates unchanged — §24 covers the one place where the *meaning* of an existing field narrows.\n\n' +
       'One internal refactor is visible in the documents but not on the wire: the inline `RateDetails` definition under `DepositRates` is extracted into a shared `AEProductRateDetails1Properties` so `ExpectedProfitRates` can reuse it. The extracted definition is identical to the inline one it replaces, so `DepositRates` is unchanged.\n\n' +
       'The change lands on four documents — `AEProduct` in Account Information, `ProductDetails` in Products & Leads, and their Ozone Connect counterparts `CbuaeProduct` in Bank Data Sharing and `ProductDetails` in Bank Products Data — which is what the endpoint pages below render.',
     docsPaths: [
@@ -1144,7 +1375,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc1',
-    number: 20,
+    number: 24,
     category: 'Behaviour change',
     title: 'Interest and profit calculation methods are separate fields',
     summary:
@@ -1155,7 +1386,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       'No enum changes, no field is removed, and neither field is required, so **a v2.1 payload still validates against v2.2 unchanged.** What changes is meaning, not constraint: an LFI that populated `InterestCalculationMethod` to convey the basis of an Islamic profit calculation is, from v2.2, sending a valid value in the wrong field. It should move to `ProfitCalculationMethod`.\n\n' +
       'Because nothing rejects the old placement, this will not surface as a validation failure on either surface — which is the reason to record it. An LFI that reads the change as cosmetic and leaves the value where it is stays conformant while publishing product data that now says something it does not mean.\n\n' +
       'The consequence for a TPP is the mirror of that. A TPP reading only `InterestCalculationMethod` will, as LFIs move their Islamic products across, silently lose the calculation basis for exactly those products — no error, just an absent field where a value used to be. Reading both fields and preferring whichever is populated is the safe form for as long as the two placements coexist.\n\n' +
-      'This is distinct from the calculation method on the new Sharia finance-rate types in §19. That one — `AEProductShariaProfitCalculationMethod1Properties` — carries five values, adding `UnusedCreditLine` and `UtilizedLimit`, and it is a new schema reached only through the new `ShariaFinanceRates` field. The conventional profit-rate structures continue to reference the shared three-value `AEProductInterestCalculationMethod`, which is itself unchanged.\n\n' +
+      'This is distinct from the calculation method on the new Sharia finance-rate types in §23. That one — `AEProductShariaProfitCalculationMethod1Properties` — carries five values, adding `UnusedCreditLine` and `UtilizedLimit`, and it is a new schema reached only through the new `ShariaFinanceRates` field. The conventional profit-rate structures continue to reference the shared three-value `AEProductInterestCalculationMethod`, which is itself unchanged.\n\n' +
       'The same four documents that carry the Sharia product fields carry this split, which is what the endpoint pages below render.',
     docsPaths: [
       {
@@ -1213,7 +1444,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc1',
-    number: 21,
+    number: 25,
     category: 'New capability',
     title: 'Balance components, transaction allocations and statement balances carry a Shari\'ah description',
     summary:
@@ -1223,7 +1454,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       'v2.2 adds `BalanceDescription` to `AEAmountWithCategorization` — free text, 1 to 500 characters, naming the specific Shari\'ah-compliant charge, payment or reward that the component represents. It supplements the category rather than replacing it: the enum still classifies the part, and the description says which part it is.\n\n' +
       'One field addition reaches three endpoints, because the schema is used in three places. On the TPP-facing side, `Components` on `AEBalance` is served by the balances endpoint, `Allocations` on `AETransaction` by the transactions endpoint, and `Components` on `AEBalanceWithCategorization` — the opening and closing balance of a statement — by the statements endpoint. Ozone Connect mirrors all three: `components` on `CbuaeBalance`, `allocations` on `CbuaeTransaction`, and `Components` on `AEBalanceWithCategorization` under `AEStatements`.\n\n' +
       'Statements are easy to miss here, because the field arrives on them through a schema neither the balances nor the transactions response references. An implementer scoping this change from the balance and transaction payloads alone will not see it.\n\n' +
-      'The field is optional and additive on both surfaces, and is required on neither. An LFI that offers no Islamic products has nothing to do, and a v2.1 payload validates unchanged. It is recorded separately from the Sharia product fields in §19 because it lands on the balances, transactions and statements endpoints rather than on product data, so it is a different piece of work for whoever implements it.\n\n' +
+      'The field is optional and additive on both surfaces, and is required on neither. An LFI that offers no Islamic products has nothing to do, and a v2.1 payload validates unchanged. It is recorded separately from the Sharia product fields in §23 because it lands on the balances, transactions and statements endpoints rather than on product data, so it is a different piece of work for whoever implements it.\n\n' +
       'Both the Account Information and the Ozone Connect Bank Data Sharing documents carry the field in their v2.2 release, which is what the endpoint pages below render.',
     docsPaths: [
       {
