@@ -18,13 +18,13 @@ interface MetaItem { label: string; value: string }
 const sections: Section[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'keys', label: 'Keys' },
-  { id: 'sign', label: 'LFI signs' },
+  { id: 'sign', label: 'LFI issues' },
   { id: 'encrypt', label: 'LFI encrypts' },
   { id: 'proxy', label: 'API Hub proxies' },
   { id: 'decrypt', label: 'BPIP decrypts' },
   { id: 'verify', label: 'BPIP verifies' },
   { id: 'return', label: 'BPIP sends back' },
-  { id: 'validate', label: 'LFI validates' },
+  { id: 'validate', label: 'LFI looks up' },
   { id: 'open-items', label: 'Open items' },
 ]
 
@@ -35,16 +35,18 @@ const meta: MetaItem[] = [
 ]
 
 // ── Overview ────────────────────────────────────────────────────────────────
-const nestedStructure = `JWE  — Data in the POST /instrument-lookup response, encrypted to the BPIP
-├─ protected header   { "alg": "RSA-OAEP-256", "enc": "A256GCM", "kid": "bpip-enc-1", "cty": "JWT" }
-└─ ciphertext — decrypts to:
+const lookupStructure = `Data in the POST /instrument-lookup response
+├─ PaymentToken        the payment token — 22 characters, not encrypted, sent back at payment
+└─ InstrumentDetails   JWE, encrypted to the BPIP
+   ├─ protected header   { "alg": "RSA-OAEP-256", "enc": "A256GCM", "kid": "bpip-enc-1", "cty": "JWT" }
+   └─ ciphertext — decrypts to:
 
-   JWS  — the payment token, signed by the LFI
-   ├─ protected header   { "alg": "PS256", "kid": "lfi-sign-1" }
-   ├─ payload            iss, azp, iat, exp, jti, uaeKycId, IcpToken, InstructedAmount,
-   │                     MerchantId, TerminalId, AcquirerId, MerchantName,
-   │                     InstrumentType, and DebtorAccount or CardDetails
-   └─ signature          PS256, with the LFI's payment token signing key`
+      JWS  — the instrument details, signed by the LFI
+      ├─ protected header   { "alg": "PS256", "kid": "lfi-sign-1" }
+      ├─ payload            iss, azp, iat, exp, PaymentToken, uaeKycId, IcpToken,
+      │                     InstructedAmount, MerchantId, TerminalId, AcquirerId,
+      │                     MerchantName, InstrumentType, and DebtorAccount or CardDetails
+      └─ signature          PS256, with the LFI's instrument details signing key`
 
 // ── Keys ────────────────────────────────────────────────────────────────────
 const lfiJwksTemplate = `Production: https://keystore.directory.openfinance.ae/{LFI OrganisationId}/application.jwks
@@ -53,13 +55,13 @@ Sandbox:    https://keystore.sandbox.directory.openfinance.ae/{LFI OrganisationI
 const bpipJwksTemplate = `Production: https://keystore.directory.openfinance.ae/{o3-caller-org-id}/{o3-caller-software-statement-id}/application.jwks
 Sandbox:    https://keystore.sandbox.directory.openfinance.ae/{o3-caller-org-id}/{o3-caller-software-statement-id}/application.jwks`
 
-// ── Step 1 — LFI signs ──────────────────────────────────────────────────────
+// ── Step 1 — LFI issues ─────────────────────────────────────────────────────
 const signTabs = [
   {
     label: 'Node.js (jose)',
     lang: 'typescript',
     code: `import { SignJWT, importPKCS8 } from 'jose'
-import { randomUUID } from 'node:crypto'
+import { randomBytes } from 'node:crypto'
 
 type Amount = { Amount: string; Currency: string }
 type LookupData = {
@@ -77,17 +79,20 @@ type Instrument =
 
 const PAYMENT_TOKEN_LIFETIME = 120 // seconds
 
-// The private key behind your payment token signing certificate. Never Sig2.
-const signingKey = await importPKCS8(myKeyStore.getPrivateKeyPem(paymentTokenKid), 'PS256')
+// The private key behind your instrument details signing certificate. Never Sig2.
+const signingKey = await importPKCS8(myKeyStore.getPrivateKeyPem(instrumentDetailsKid), 'PS256')
 
-async function signPaymentToken(
+async function issuePaymentToken(
   data: LookupData,       // Data from the lookup, after the ICP token is validated
   callerOrgId: string,    // o3-caller-org-id on the proxied lookup
   instrument: Instrument, // from your BioPay registration for data.uaeKycId
-): Promise<string> {
+): Promise<{ paymentToken: string; instrumentDetails: string }> {
   const now = Math.floor(Date.now() / 1000)
-  return new SignJWT({
+  const paymentToken = randomBytes(16).toString('base64url') // 128 bits, 22 characters
+
+  const issued = {
     azp: callerOrgId,
+    exp: now + PAYMENT_TOKEN_LIFETIME,
     uaeKycId: data.uaeKycId,
     IcpToken: data.IcpToken,                  // unchanged
     InstructedAmount: data.TransactionAmount, // unchanged
@@ -96,39 +101,44 @@ async function signPaymentToken(
     AcquirerId: data.AcquirerId,              // unchanged
     MerchantName: data.MerchantName,          // unchanged
     ...instrument,
-  })
-    .setProtectedHeader({ alg: 'PS256', kid: paymentTokenKid })
+  }
+
+  // Store what the payment token stands for before you return it. A unique
+  // key on paymentToken rejects the vanishingly unlikely collision.
+  await paymentTokens.insert({ paymentToken, ...issued, usedAt: null })
+
+  const instrumentDetails = await new SignJWT({ ...issued, PaymentToken: paymentToken })
+    .setProtectedHeader({ alg: 'PS256', kid: instrumentDetailsKid })
     .setIssuer(myOrganisationId)
     .setIssuedAt(now)
-    .setExpirationTime(now + PAYMENT_TOKEN_LIFETIME)
-    .setJti(\`pt-\${randomUUID()}\`)
     .sign(signingKey)
+
+  return { paymentToken, instrumentDetails }
 }`,
   },
   {
     label: 'Python (jwcrypto)',
     lang: 'python',
-    code: `import time, uuid
+    code: `import secrets, time
 from jwcrypto import jwk, jwt
 
 PAYMENT_TOKEN_LIFETIME = 120  # seconds
 
-# The private key behind your payment token signing certificate. Never Sig2.
-signing_key = jwk.JWK.from_pem(my_key_store.get_private_key_pem(payment_token_kid))
+# The private key behind your instrument details signing certificate. Never Sig2.
+signing_key = jwk.JWK.from_pem(my_key_store.get_private_key_pem(instrument_details_kid))
 
-def sign_payment_token(data: dict, caller_org_id: str, instrument: dict) -> str:
+def issue_payment_token(data: dict, caller_org_id: str, instrument: dict) -> tuple[str, str]:
     # data:          Data from the lookup, after the ICP token is validated
     # caller_org_id: o3-caller-org-id on the proxied lookup
     # instrument:    from your BioPay registration for data["uaeKycId"] —
     #                {"InstrumentType": "ACCOUNT", "DebtorAccount": {...}}
     #                or {"InstrumentType": "CARD", "CardDetails": {...}}
     now = int(time.time())
-    claims = {
-        "iss": my_organisation_id,
+    payment_token = secrets.token_urlsafe(16)  # 128 bits, 22 characters
+
+    issued = {
         "azp": caller_org_id,
-        "iat": now,
         "exp": now + PAYMENT_TOKEN_LIFETIME,
-        "jti": f"pt-{uuid.uuid4()}",
         "uaeKycId": data["uaeKycId"],
         "IcpToken": data["IcpToken"],                   # unchanged
         "InstructedAmount": data["TransactionAmount"],  # unchanged
@@ -138,20 +148,26 @@ def sign_payment_token(data: dict, caller_org_id: str, instrument: dict) -> str:
         "MerchantName": data["MerchantName"],           # unchanged
         **instrument,
     }
-    token = jwt.JWT(header={"alg": "PS256", "kid": payment_token_kid}, claims=claims)
+
+    # Store what the payment token stands for before you return it. A unique
+    # key on payment_token rejects the vanishingly unlikely collision.
+    payment_tokens.insert({"payment_token": payment_token, **issued, "used_at": None})
+
+    claims = {"iss": my_organisation_id, "iat": now, "PaymentToken": payment_token, **issued}
+    token = jwt.JWT(header={"alg": "PS256", "kid": instrument_details_kid}, claims=claims)
     token.make_signed_token(signing_key)
-    return token.serialize()`,
+    return payment_token, token.serialize()`,
   },
 ] as const
 
-const accountTokenClaims = `{
+const accountDetailsClaims = `{
   "iss": "[LFI_ORGANISATION_ID]",
   "azp": "[BPIP_ORGANISATION_ID]",
   "iat": 1792059303,
   "exp": 1792059423,
-  "jti": "pt-3c9a7e21-5b84-4f0d-9e62-1a7b8c9d0e1f",
+  "PaymentToken": "O0ctDv_PYRnrTqp9ijXB6g",
   "uaeKycId": "ICP-7c9e1f4a-2b60-4d3e-9a15-0f8c2d1b7e43",
-  "IcpToken": "eyJhbGciOiJQUzI1NiIsImtpZCI6ImljcC1zaWduLTEifQ...",
+  "IcpToken": "d95fdf39-c9d5-4762-ad8a-ce26f3167ecc",
   "InstructedAmount": { "Amount": "149.50", "Currency": "AED" },
   "MerchantId": "100000000000731",
   "TerminalId": "T0000042",
@@ -183,7 +199,7 @@ async function getJwks(jwksUri: string): Promise<JWK[]> {
 }
 
 async function encryptToBpip(
-  paymentToken: string,              // the JWS from Step 1
+  instrumentDetails: string,         // the JWS from Step 1
   callerOrgId: string,               // o3-caller-org-id on the proxied lookup
   callerSoftwareStatementId: string, // o3-caller-software-statement-id
 ): Promise<string> {
@@ -198,7 +214,7 @@ async function encryptToBpip(
 
   // 3. Encrypt the signed JWS into a compact JWE
   const encKey = await importJWK(encKeyJwk, 'RSA-OAEP-256')
-  return new CompactEncrypt(new TextEncoder().encode(paymentToken))
+  return new CompactEncrypt(new TextEncoder().encode(instrumentDetails))
     .setProtectedHeader({ alg: 'RSA-OAEP-256', enc: 'A256GCM', kid: encKeyJwk.kid, cty: 'JWT' })
     .encrypt(encKey)
 }`,
@@ -224,7 +240,7 @@ def get_jwks(jwks_uri: str) -> list:
     return keys
 
 def encrypt_to_bpip(
-    payment_token: str,                # the JWS from Step 1
+    instrument_details: str,           # the JWS from Step 1
     caller_org_id: str,                # o3-caller-org-id on the proxied lookup
     caller_software_statement_id: str, # o3-caller-software-statement-id
 ) -> str:
@@ -240,7 +256,7 @@ def encrypt_to_bpip(
 
     # 3. Encrypt the signed JWS into a compact JWE
     token = jwe.JWE(
-        payment_token.encode(),
+        instrument_details.encode(),
         protected=json.dumps(
             {"alg": "RSA-OAEP-256", "enc": "A256GCM", "kid": enc_key["kid"], "cty": "JWT"}
         ),
@@ -255,7 +271,10 @@ Content-Type: application/json
 x-fapi-interaction-id: 93bac548-d2de-4546-b106-880a5018460d
 
 {
-  "Data": "eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIiwia2lkIjoiYnBpcC1lbmMtMSIsImN0eSI6IkpXVCJ9..."
+  "Data": {
+    "PaymentToken": "O0ctDv_PYRnrTqp9ijXB6g",
+    "InstrumentDetails": "eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIiwia2lkIjoiYnBpcC1lbmMtMSIsImN0eSI6IkpXVCJ9..."
+  }
 }`
 
 // ── Step 4 — BPIP decrypts ──────────────────────────────────────────────────
@@ -269,8 +288,8 @@ const readKidTabs = [
   return header.kid
 }
 
-const encryptedToken = lookupResponse.Data
-const kid = getJweKid(encryptedToken)
+const encryptedDetails = lookupResponse.Data.InstrumentDetails
+const kid = getJweKid(encryptedDetails)
 const privateKeyPem = myKeyStore.getPrivateKeyPem(kid)`,
   },
   {
@@ -282,8 +301,8 @@ def get_jwe_kid(jwe_string: str) -> str:
     header_b64 = jwe_string.split(".")[0]
     return json.loads(base64.urlsafe_b64decode(header_b64 + "=="))["kid"]
 
-encrypted_token = lookup_response["Data"]
-kid = get_jwe_kid(encrypted_token)
+encrypted_details = lookup_response["Data"]["InstrumentDetails"]
+kid = get_jwe_kid(encrypted_details)
 private_key = my_key_store.get_private_key(kid)`,
   },
 ] as const
@@ -296,11 +315,11 @@ const decryptTabs = [
 
 const privateKey = await importPKCS8(privateKeyPem, 'RSA-OAEP-256')
 
-const { plaintext } = await compactDecrypt(encryptedToken, privateKey, {
+const { plaintext } = await compactDecrypt(encryptedDetails, privateKey, {
   keyManagementAlgorithms: ['RSA-OAEP-256'],
   contentEncryptionAlgorithms: ['A256GCM'],
 })
-const paymentToken = new TextDecoder().decode(plaintext) // the LFI's JWS`,
+const instrumentDetails = new TextDecoder().decode(plaintext) // the LFI's JWS`,
   },
   {
     label: 'Python (jwcrypto)',
@@ -308,8 +327,8 @@ const paymentToken = new TextDecoder().decode(plaintext) // the LFI's JWS`,
     code: `from jwcrypto import jwe
 
 token = jwe.JWE(algs=["RSA-OAEP-256", "A256GCM"])
-token.deserialize(encrypted_token, key=private_key)
-payment_token = token.payload.decode()  # the LFI's JWS`,
+token.deserialize(encrypted_details, key=private_key)
+instrument_details = token.payload.decode()  # the LFI's JWS`,
   },
 ] as const
 
@@ -327,7 +346,7 @@ const lfiResolvers = new Map<string, ReturnType<typeof createRemoteJWKSet>>()
 function lfiJwks(lfiOrganisationId: string) {
   let jwks = lfiResolvers.get(lfiOrganisationId)
   if (!jwks) {
-    // Built from the LFI you called, never from the iss in the token
+    // Built from the LFI you called, never from the iss in the JWS
     jwks = createRemoteJWKSet(
       new URL(\`https://keystore.directory.openfinance.ae/\${lfiOrganisationId}/application.jwks\`),
       { cacheMaxAge: 300_000, cooldownDuration: 60_000, timeoutDuration: 5_000 },
@@ -337,21 +356,25 @@ function lfiJwks(lfiOrganisationId: string) {
   return jwks
 }
 
-const { payload } = await jwtVerify(paymentToken, lfiJwks(lfiOrganisationId), {
+const { payload } = await jwtVerify(instrumentDetails, lfiJwks(lfiOrganisationId), {
   issuer: lfiOrganisationId,
   algorithms: ['PS256'],
 })
 
-// Check it was issued to you, for the ICP token and amount you sent on the lookup
+// Check they were issued to you, for the payment token returned alongside, and
+// for the ICP token and amount you sent on the lookup
 if (payload.azp !== myOrganisationId) {
-  throw new Error('Payment token was not issued to this BPIP')
+  throw new Error('Instrument details were not issued to this BPIP')
+}
+if (payload.PaymentToken !== lookupResponse.Data.PaymentToken) {
+  throw new Error('Instrument details are not for this payment token')
 }
 if (payload.IcpToken !== icpToken) {
-  throw new Error('Payment token was not issued for this ICP token')
+  throw new Error('Instrument details are not for this ICP token')
 }
 const amount = payload.InstructedAmount as { Amount: string; Currency: string } | undefined
 if (amount?.Amount !== transactionAmount.Amount || amount?.Currency !== transactionAmount.Currency) {
-  throw new Error('Payment token is not for the amount you sent')
+  throw new Error('Instrument details are not for the amount you sent')
 }`,
   },
   {
@@ -360,26 +383,29 @@ if (amount?.Amount !== transactionAmount.Amount || amount?.Currency !== transact
     code: `import json
 from jwcrypto import jwk, jwt
 
-# Built from the LFI you called, never from the iss in the token.
+# Built from the LFI you called, never from the iss in the JWS.
 # get_jwks is a cached keystore fetch, as in Step 2.
 lfi_jwks_uri = f"https://keystore.directory.openfinance.ae/{lfi_organisation_id}/application.jwks"
 lfi_keys = jwk.JWKSet.from_json(json.dumps({"keys": get_jwks(lfi_jwks_uri)}))
 
 verified = jwt.JWT(
     key=lfi_keys,
-    jwt=payment_token,
+    jwt=instrument_details,
     algs=["PS256"],
     check_claims={"iss": lfi_organisation_id, "exp": None},
 )
 claims = json.loads(verified.claims)
 
-# Check it was issued to you, for the ICP token and amount you sent on the lookup
+# Check they were issued to you, for the payment token returned alongside, and
+# for the ICP token and amount you sent on the lookup
 if claims["azp"] != my_organisation_id:
-    raise ValueError("Payment token was not issued to this BPIP")
+    raise ValueError("Instrument details were not issued to this BPIP")
+if claims["PaymentToken"] != lookup_response["Data"]["PaymentToken"]:
+    raise ValueError("Instrument details are not for this payment token")
 if claims["IcpToken"] != icp_token:
-    raise ValueError("Payment token was not issued for this ICP token")
+    raise ValueError("Instrument details are not for this ICP token")
 if claims["InstructedAmount"] != transaction_amount:
-    raise ValueError("Payment token is not for the amount you sent")`,
+    raise ValueError("Instrument details are not for the amount you sent")`,
   },
 ] as const
 
@@ -389,45 +415,48 @@ const fullBpipTabs = [
     lang: 'typescript',
     code: `import { compactDecrypt, importPKCS8, jwtVerify } from 'jose'
 
-async function openPaymentToken(
-  encryptedToken: string,    // Data from the lookup response
+async function openLookupResponse(
+  data: { PaymentToken: string; InstrumentDetails: string }, // Data from the lookup response
   lfiOrganisationId: string, // the LFI you called, from the Directory
   icpToken: string,          // Data.IcpToken you sent on the lookup
   transactionAmount: { Amount: string; Currency: string }, // Data.TransactionAmount you sent
 ) {
   // 1. Select your private key by the kid in the JWE header
-  const [headerB64] = encryptedToken.split('.')
+  const [headerB64] = data.InstrumentDetails.split('.')
   const { kid } = JSON.parse(Buffer.from(headerB64, 'base64url').toString())
   const privateKey = await importPKCS8(myKeyStore.getPrivateKeyPem(kid), 'RSA-OAEP-256')
 
-  // 2. Decrypt the JWE → the payment token, a JWS signed by the LFI
-  const { plaintext } = await compactDecrypt(encryptedToken, privateKey, {
+  // 2. Decrypt the JWE → the instrument details, a JWS signed by the LFI
+  const { plaintext } = await compactDecrypt(data.InstrumentDetails, privateKey, {
     keyManagementAlgorithms: ['RSA-OAEP-256'],
     contentEncryptionAlgorithms: ['A256GCM'],
   })
-  const paymentToken = new TextDecoder().decode(plaintext)
+  const instrumentDetails = new TextDecoder().decode(plaintext)
 
   // 3. Verify the LFI's signature, iss and exp (lfiJwks as in Step 5)
-  const { payload } = await jwtVerify(paymentToken, lfiJwks(lfiOrganisationId), {
+  const { payload } = await jwtVerify(instrumentDetails, lfiJwks(lfiOrganisationId), {
     issuer: lfiOrganisationId,
     algorithms: ['PS256'],
   })
 
-  // 4. Check it was issued to you, for the ICP token and amount you sent
+  // 4. Check they were issued to you, for this payment token, ICP token and amount
   if (payload.azp !== myOrganisationId) {
-    throw new Error('Payment token was not issued to this BPIP')
+    throw new Error('Instrument details were not issued to this BPIP')
+  }
+  if (payload.PaymentToken !== data.PaymentToken) {
+    throw new Error('Instrument details are not for this payment token')
   }
   if (payload.IcpToken !== icpToken) {
-    throw new Error('Payment token was not issued for this ICP token')
+    throw new Error('Instrument details are not for this ICP token')
   }
   const amount = payload.InstructedAmount as { Amount: string; Currency: string } | undefined
   if (amount?.Amount !== transactionAmount.Amount || amount?.Currency !== transactionAmount.Currency) {
-    throw new Error('Payment token is not for the amount you sent')
+    throw new Error('Instrument details are not for the amount you sent')
   }
 
-  // Keep the JWS to send back at the point of payment. Hold card details in
+  // Send data.PaymentToken back at the point of payment. Hold card details in
   // memory only. Never log or persist them.
-  return { paymentToken, claims: payload }
+  return { paymentToken: data.PaymentToken, claims: payload }
 }`,
   },
   {
@@ -436,48 +465,50 @@ async function openPaymentToken(
     code: `import base64, json
 from jwcrypto import jwe, jwk, jwt
 
-def open_payment_token(
-    encrypted_token: str,      # Data from the lookup response
+def open_lookup_response(
+    data: dict,                # Data from the lookup response
     lfi_organisation_id: str,  # the LFI you called, from the Directory
     icp_token: str,            # Data.IcpToken you sent on the lookup
     transaction_amount: dict,  # Data.TransactionAmount you sent on the lookup
 ) -> tuple[str, dict]:
     # 1. Select your private key by the kid in the JWE header
-    header_b64 = encrypted_token.split(".")[0]
+    header_b64 = data["InstrumentDetails"].split(".")[0]
     kid = json.loads(base64.urlsafe_b64decode(header_b64 + "=="))["kid"]
     private_key = my_key_store.get_private_key(kid)
 
-    # 2. Decrypt the JWE → the payment token, a JWS signed by the LFI
+    # 2. Decrypt the JWE → the instrument details, a JWS signed by the LFI
     token = jwe.JWE(algs=["RSA-OAEP-256", "A256GCM"])
-    token.deserialize(encrypted_token, key=private_key)
-    payment_token = token.payload.decode()
+    token.deserialize(data["InstrumentDetails"], key=private_key)
+    instrument_details = token.payload.decode()
 
     # 3. Verify the LFI's signature, iss and exp (get_jwks as in Step 2)
     lfi_jwks_uri = f"https://keystore.directory.openfinance.ae/{lfi_organisation_id}/application.jwks"
     lfi_keys = jwk.JWKSet.from_json(json.dumps({"keys": get_jwks(lfi_jwks_uri)}))
     verified = jwt.JWT(
         key=lfi_keys,
-        jwt=payment_token,
+        jwt=instrument_details,
         algs=["PS256"],
         check_claims={"iss": lfi_organisation_id, "exp": None},
     )
     claims = json.loads(verified.claims)
 
-    # 4. Check it was issued to you, for the ICP token and amount you sent
+    # 4. Check they were issued to you, for this payment token, ICP token and amount
     if claims["azp"] != my_organisation_id:
-        raise ValueError("Payment token was not issued to this BPIP")
+        raise ValueError("Instrument details were not issued to this BPIP")
+    if claims["PaymentToken"] != data["PaymentToken"]:
+        raise ValueError("Instrument details are not for this payment token")
     if claims["IcpToken"] != icp_token:
-        raise ValueError("Payment token was not issued for this ICP token")
+        raise ValueError("Instrument details are not for this ICP token")
     if claims["InstructedAmount"] != transaction_amount:
-        raise ValueError("Payment token is not for the amount you sent")
+        raise ValueError("Instrument details are not for the amount you sent")
 
-    # Keep the JWS to send back at the point of payment. Hold card details in
-    # memory only. Never log or persist them.
-    return payment_token, claims`,
+    # Send data["PaymentToken"] back at the point of payment. Hold card details
+    # in memory only. Never log or persist them.
+    return data["PaymentToken"], claims`,
   },
 ] as const
 
-// ── Step 6 — BPIP sends the JWS back ────────────────────────────────────────
+// ── Step 6 — BPIP sends the payment token back ──────────────────────────────
 const paymentRequest = `POST /open-finance/biometric-payments/v1/biometric-payments HTTP/1.1
 Host: rs1.[LFICODE].apihub.openfinance.ae
 Authorization: Bearer <access_token>
@@ -489,7 +520,7 @@ x-jws-signature: eyJhbGciOiJQUzI1NiIsImtpZCI6...
 
 {
   "Data": {
-    "PaymentToken": "eyJhbGciOiJQUzI1NiIsImtpZCI6ImxmaS1zaWduLTEifQ...",
+    "PaymentToken": "O0ctDv_PYRnrTqp9ijXB6g",
     "CreditorAccount": {
       "SchemeName": "IBAN",
       "Identification": "AE220331234567890876543"
@@ -499,118 +530,93 @@ x-jws-signature: eyJhbGciOiJQUzI1NiIsImtpZCI6...
   "Risk": {}
 }`
 
-// ── Step 7 — LFI validates ──────────────────────────────────────────────────
+// ── Step 7 — LFI looks up ───────────────────────────────────────────────────
 const validateTabs = [
   {
-    label: 'Node.js (jose)',
+    label: 'Node.js',
     lang: 'typescript',
-    code: `import { importSPKI, jwtVerify, type JWTPayload } from 'jose'
+    code: `class PaymentTokenRejected extends Error {} // its message is the ErrorCode
 
-class PaymentTokenRejected extends Error {} // its message is the ErrorCode
-
-// Your payment token signing keys, by kid: the current key, and a retired key
-// until every token it signed has expired. No other key in your organisation
-// JWKS, such as Sig2, can sign a payment token.
-async function ownKey(kid: string | undefined) {
-  const pem = kid ? myKeyStore.getPaymentTokenPublicKeyPem(kid) : undefined
-  if (!pem) throw new PaymentTokenRejected('PaymentToken.InvalidSignature')
-  return importSPKI(pem, 'PS256')
+interface PaymentTokenRecord {
+  azp: string
+  exp: number
+  uaeKycId: string
+  IcpToken: string
+  InstructedAmount: { Amount: string; Currency: string }
+  InstrumentType: 'ACCOUNT' | 'CARD'
+  DebtorAccount?: { SchemeName: 'IBAN'; Identification: string }
+  usedAt: Date | null
+  // … and the merchant fields and CardDetails, as stored in Step 1
 }
 
-async function validatePaymentToken(
+async function checkPaymentToken(
   paymentToken: string, // Data.PaymentToken, as proxied by the API Hub
   callerOrgId: string,  // o3-caller-org-id on the proxied payment
-): Promise<JWTPayload> {
-  // 1. Your own signature, iss and exp
-  let payload: JWTPayload
-  try {
-    ;({ payload } = await jwtVerify(paymentToken, (header) => ownKey(header.kid), {
-      issuer: myOrganisationId,
-      algorithms: ['PS256'],
-      clockTolerance: 10,
-    }))
-  } catch (e) {
-    if (e instanceof PaymentTokenRejected) throw e
-    const expired = (e as { code?: string }).code === 'ERR_JWT_EXPIRED'
-    throw new PaymentTokenRejected(expired ? 'PaymentToken.Expired' : 'PaymentToken.InvalidSignature')
-  }
+): Promise<PaymentTokenRecord> {
+  // 1. You issued it
+  const record: PaymentTokenRecord | null = await paymentTokens.get(paymentToken)
+  if (!record) throw new PaymentTokenRejected('PaymentToken.Invalid')
 
-  // 2. The instrument type, and the BPIP it was issued to
-  if (payload.InstrumentType !== 'ACCOUNT') {
+  // 2. It has not expired
+  if (Date.now() / 1000 > record.exp) throw new PaymentTokenRejected('PaymentToken.Expired')
+
+  // 3. The instrument type, and 4. the BPIP it was issued to
+  if (record.InstrumentType !== 'ACCOUNT') {
     throw new PaymentTokenRejected('PaymentToken.WrongInstrumentType')
   }
-  if (payload.azp !== callerOrgId) {
+  if (record.azp !== callerOrgId) {
     throw new PaymentTokenRejected('PaymentToken.BindingMismatch')
   }
 
-  // 3. Single use. The unique jti you record with the payment is the final guard.
-  if (await usedJtis.has(payload.jti!)) {
-    throw new PaymentTokenRejected('PaymentToken.AlreadyUsed')
-  }
+  // 5. Single use. Marking it used with the payment is the final guard.
+  if (record.usedAt) throw new PaymentTokenRejected('PaymentToken.AlreadyUsed')
 
-  // 4. The debtor account is still the one registered for BioPay
-  const registered = await registrations.debtorAccount(payload.uaeKycId as string)
-  const debtor = payload.DebtorAccount as { Identification: string }
-  if (registered?.Identification !== debtor.Identification) {
+  // 6. The debtor account is still the one registered for BioPay
+  const registered = await registrations.debtorAccount(record.uaeKycId)
+  if (registered?.Identification !== record.DebtorAccount?.Identification) {
     throw new PaymentTokenRejected('Account.DebtorAccountMismatch')
   }
 
-  return payload
+  return record
 }`,
   },
   {
-    label: 'Python (jwcrypto)',
+    label: 'Python',
     lang: 'python',
-    code: `import base64, json
-from jwcrypto import jwk, jwt
-from jwcrypto.jwt import JWTExpired
+    code: `import time
 
 class PaymentTokenRejected(Exception):
     """Its message is the ErrorCode."""
 
-def own_key(payment_token: str) -> jwk.JWK:
-    # Your payment token signing keys, by kid: the current key, and a retired key
-    # until every token it signed has expired. No other key in your organisation
-    # JWKS, such as Sig2, can sign a payment token.
-    header = json.loads(base64.urlsafe_b64decode(payment_token.split(".")[0] + "=="))
-    pem = my_key_store.get_payment_token_public_key_pem(header.get("kid"))
-    if pem is None:
-        raise PaymentTokenRejected("PaymentToken.InvalidSignature")
-    return jwk.JWK.from_pem(pem)
-
-def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
+def check_payment_token(payment_token: str, caller_org_id: str) -> dict:
     # payment_token: Data.PaymentToken, as proxied by the API Hub
     # caller_org_id: o3-caller-org-id on the proxied payment
 
-    # 1. Your own signature, iss and exp
-    token = jwt.JWT(algs=["PS256"], check_claims={"iss": my_organisation_id, "exp": None})
-    token.leeway = 10
-    try:
-        token.deserialize(payment_token, key=own_key(payment_token))
-    except PaymentTokenRejected:
-        raise
-    except JWTExpired:
-        raise PaymentTokenRejected("PaymentToken.Expired")
-    except Exception:
-        raise PaymentTokenRejected("PaymentToken.InvalidSignature")
-    claims = json.loads(token.claims)
+    # 1. You issued it
+    record = payment_tokens.get(payment_token)
+    if record is None:
+        raise PaymentTokenRejected("PaymentToken.Invalid")
 
-    # 2. The instrument type, and the BPIP it was issued to
-    if claims["InstrumentType"] != "ACCOUNT":
+    # 2. It has not expired
+    if time.time() > record["exp"]:
+        raise PaymentTokenRejected("PaymentToken.Expired")
+
+    # 3. The instrument type, and 4. the BPIP it was issued to
+    if record["InstrumentType"] != "ACCOUNT":
         raise PaymentTokenRejected("PaymentToken.WrongInstrumentType")
-    if claims["azp"] != caller_org_id:
+    if record["azp"] != caller_org_id:
         raise PaymentTokenRejected("PaymentToken.BindingMismatch")
 
-    # 3. Single use. The unique jti you record with the payment is the final guard.
-    if used_jtis.contains(claims["jti"]):
+    # 5. Single use. Marking it used with the payment is the final guard.
+    if record["used_at"] is not None:
         raise PaymentTokenRejected("PaymentToken.AlreadyUsed")
 
-    # 4. The debtor account is still the one registered for BioPay
-    registered = registrations.debtor_account(claims["uaeKycId"])
-    if registered is None or registered["Identification"] != claims["DebtorAccount"]["Identification"]:
+    # 6. The debtor account is still the one registered for BioPay
+    registered = registrations.debtor_account(record["uaeKycId"])
+    if registered is None or registered["Identification"] != record["DebtorAccount"]["Identification"]:
         raise PaymentTokenRejected("Account.DebtorAccountMismatch")
 
-    return claims`,
+    return record`,
   },
 ] as const
 </script>
@@ -624,7 +630,7 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
       eyebrow-color="var(--at-teal-deep)"
       title="Signing and Encryption"
       :meta="meta"
-      lede="How the payment token is protected from end to end. The LFI signs it and encrypts it to the BPIP. The API Hub proxies it unread. The BPIP decrypts it and verifies the LFI&rsquo;s signature, then sends it back. The LFI validates its own token before it pays. The pattern is the sign-then-encrypt Nested JWT that Open Finance uses for payment PII, with the roles reversed. <strong>Everything here is draft</strong> &mdash; keys, claims and checks are proposals for review."
+      lede="How the payment token is issued and the instrument details are protected. The LFI issues the payment token &mdash; an opaque reference &mdash; and signs the instrument details it stands for, encrypted to the BPIP. The API Hub proxies the details unread. The BPIP decrypts them and verifies the LFI&rsquo;s signature, then sends back only the payment token, which the LFI looks up before it pays. The instrument details use the sign-then-encrypt Nested JWT that Open Finance uses for payment PII, with the roles reversed. <strong>Everything here is draft</strong> &mdash; keys, claims and checks are proposals for review."
     />
 
     <EdInPageNav :sections="sections" />
@@ -635,35 +641,40 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
       num="01"
       color="var(--at-teal-deep)"
       eyebrow="Overview"
-      title="One token, signed then encrypted"
+      title="A reference to send back, and details signed then encrypted"
       tone="surface"
     >
       <EdProse>
         <p>
-          The payment token the LFI returns on
+          The LFI answers
           <RouterLink to="/biopay/payment/api-reference/instrument-lookup"><code>POST /instrument-lookup</code></RouterLink>
-          carries the customer&rsquo;s IBAN or card details, so it is protected twice:
+          with two things:
         </p>
       </EdProse>
       <EdBullets accent="var(--at-teal-deep)">
         <li>
-          <strong>Signed by the LFI (JWS).</strong> The signature proves the LFI issued the token
-          and that nobody has changed it. This is what lets the LFI rely on the token when it
-          comes back at the point of payment, and what lets the BPIP trust what it carries.
+          <strong>The payment token.</strong> An opaque, single-use, 22-character reference. It
+          carries no data: the LFI stores, against it, everything it issued it for. It is the only
+          thing the BPIP sends back at the point of payment, short enough to fit a card
+          authorisation, and the LFI looks it up to make the payment. It needs no signature or
+          encryption, because it means nothing to anyone but the LFI that stored it.
         </li>
         <li>
-          <strong>Encrypted to the BPIP (JWE).</strong> Only the BPIP can read the token, although
-          the response passes through the API Hub. The Hub never sees card data in the clear, which
-          keeps it out of PCI DSS scope.
+          <strong>The instrument details.</strong> What the payment token was issued for,
+          including the customer&rsquo;s IBAN or card details, so they are protected twice. They are
+          <strong>signed by the LFI (JWS)</strong>, which proves to the BPIP that the LFI issued
+          them and that nobody has changed them. They are <strong>encrypted to the BPIP
+          (JWE)</strong>, so only the BPIP can read them although the response passes through the
+          API Hub. The Hub never sees card data in the clear, which keeps it out of PCI DSS scope.
         </li>
       </EdBullets>
       <EdProse>
         <p>
-          The LFI signs first and then encrypts the signed token &mdash; a Nested JWT, with the JWS
-          inside the JWE:
+          For the instrument details, the LFI signs first and then encrypts the signed JWS &mdash; a
+          Nested JWT, with the JWS inside the JWE:
         </p>
       </EdProse>
-      <EdCode :code="nestedStructure" lang="text" filename="Structure of Data in the lookup response" />
+      <EdCode :code="lookupStructure" lang="text" filename="Structure of Data in the lookup response" />
 
       <h3 class="bp-sub">The same pattern as payment PII, reversed</h3>
       <EdProse>
@@ -678,15 +689,15 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
       <EdRefTable>
         <table>
           <thead>
-            <tr><th></th><th>Open Finance payment PII</th><th>BioPay payment token</th></tr>
+            <tr><th></th><th>Open Finance payment PII</th><th>BioPay instrument details</th></tr>
           </thead>
           <tbody>
-            <tr><td>Signed by</td><td>TPP, with its signing key (<code>PS256</code>)</td><td>LFI, with its payment token signing key (<code>PS256</code>)</td></tr>
+            <tr><td>Signed by</td><td>TPP, with its signing key (<code>PS256</code>)</td><td>LFI, with its instrument details signing key (<code>PS256</code>)</td></tr>
             <tr><td>Encrypted to</td><td>The LFI&rsquo;s Enc1 key</td><td>The BPIP&rsquo;s encryption key</td></tr>
             <tr><td>Algorithms</td><td><code>RSA-OAEP-256</code> / <code>A256GCM</code></td><td><code>RSA-OAEP-256</code> / <code>A256GCM</code></td></tr>
             <tr><td>Carried in</td><td>The <code>/par</code> request and <code>POST /payments</code></td><td>The <code>POST /instrument-lookup</code> response</td></tr>
             <tr><td>Decrypted by</td><td>LFI &mdash; see <RouterLink to="/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation/personal-identifiable-information/api-guide/decrypt-pii">How to Decrypt PII</RouterLink></td><td>BPIP &mdash; <a href="#decrypt">Step 4</a></td></tr>
-            <tr><td>Lifetime</td><td>As long as the consent</td><td>120 seconds, single use</td></tr>
+            <tr><td>Lifetime</td><td>As long as the consent</td><td>120 seconds, the life of the payment token</td></tr>
           </tbody>
         </table>
       </EdRefTable>
@@ -698,21 +709,22 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
             <tr><th>Step</th><th>Who</th><th>What</th><th>Key used</th></tr>
           </thead>
           <tbody>
-            <tr><td><a href="#sign">1</a></td><td>LFI</td><td>Builds the payment token and signs it as a JWS.</td><td>LFI payment token signing key (private)</td></tr>
-            <tr><td><a href="#encrypt">2</a></td><td>LFI</td><td>Encrypts the JWS as a JWE to the calling BPIP, and returns it in the lookup response.</td><td>BPIP encryption key (public)</td></tr>
-            <tr><td><a href="#proxy">3</a></td><td>API Hub</td><td>Proxies the JWE to the BPIP, unread.</td><td>&mdash;</td></tr>
+            <tr><td><a href="#sign">1</a></td><td>LFI</td><td>Issues the payment token, stores what it stands for, and signs the instrument details as a JWS.</td><td>LFI instrument details signing key (private)</td></tr>
+            <tr><td><a href="#encrypt">2</a></td><td>LFI</td><td>Encrypts the JWS as a JWE to the calling BPIP, and returns it with the payment token in the lookup response.</td><td>BPIP encryption key (public)</td></tr>
+            <tr><td><a href="#proxy">3</a></td><td>API Hub</td><td>Records the payment token against the lookup, and proxies the JWE to the BPIP unread.</td><td>&mdash;</td></tr>
             <tr><td><a href="#decrypt">4</a></td><td>BPIP</td><td>Decrypts the JWE to recover the JWS.</td><td>BPIP encryption key (private)</td></tr>
-            <tr><td><a href="#verify">5</a></td><td>BPIP</td><td>Verifies the LFI&rsquo;s signature and the claims.</td><td>LFI payment token signing key (public)</td></tr>
-            <tr><td><a href="#return">6</a></td><td>BPIP</td><td>Sends the JWS back: on <code>POST /biometric-payments</code> for an <code>ACCOUNT</code>, or in the card authorisation for a <code>CARD</code>.</td><td>BPIP signing key, for <code>x-jws-signature</code></td></tr>
-            <tr><td><a href="#validate">7</a></td><td>LFI</td><td>Verifies its own signature and the claims, and marks the token used.</td><td>LFI payment token signing key (public)</td></tr>
+            <tr><td><a href="#verify">5</a></td><td>BPIP</td><td>Verifies the LFI&rsquo;s signature and the claims.</td><td>LFI instrument details signing key (public)</td></tr>
+            <tr><td><a href="#return">6</a></td><td>BPIP</td><td>Sends the payment token back: on <code>POST /biometric-payments</code> for an <code>ACCOUNT</code>, or in the card authorisation for a <code>CARD</code>.</td><td>BPIP signing key, for <code>x-jws-signature</code></td></tr>
+            <tr><td><a href="#validate">7</a></td><td>LFI</td><td>Looks up the payment token, checks it, and marks it used.</td><td>&mdash;</td></tr>
           </tbody>
         </table>
       </EdRefTable>
       <EdNote type="info" title="What this page covers">
         <p>
-          LFIs implement Steps 1, 2 and 7. BPIPs implement Steps 4, 5 and 6. The other signed objects
-          in a BioPay payment follow existing patterns: the ICP token is signed by ICP and validated
-          by the LFI at ICP&rsquo;s token validation endpoint; the client assertion and
+          LFIs implement Steps 1, 2 and 7. BPIPs implement Steps 4, 5 and 6. The other tokens and
+          signed objects in a BioPay payment follow existing patterns: the ICP token is an opaque
+          identifier, validated by the LFI at ICP&rsquo;s token validation endpoint; the client
+          assertion and
           <code>x-jws-signature</code> are signed by the BPIP as in
           <RouterLink to="/tech/tpp-standards/security/fapi/message-signing">Message Signing</RouterLink>;
           and payment status events are signed by the API Hub and encrypted to the BPIP as in
@@ -737,10 +749,10 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
           </thead>
           <tbody>
             <tr>
-              <td><strong>Payment token signing key</strong> &mdash; a Server Signing certificate in the LFI&rsquo;s Trust Framework organisation</td>
+              <td><strong>Instrument details signing key</strong> &mdash; a Server Signing certificate in the LFI&rsquo;s Trust Framework organisation</td>
               <td>LFI</td>
               <td>The LFI&rsquo;s organisation JWKS: <code>&hellip;/{LFI OrganisationId}/application.jwks</code></td>
-              <td>Step 1 (sign), Step 5 (BPIP verifies), Step 7 (LFI verifies)</td>
+              <td>Step 1 (sign), Step 5 (BPIP verifies)</td>
             </tr>
             <tr>
               <td><strong>Encryption key</strong> &mdash; the Encryption certificate on the BPIP&rsquo;s application</td>
@@ -752,7 +764,7 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
         </table>
       </EdRefTable>
 
-      <h3 class="bp-sub">LFI &mdash; create the payment token signing certificate</h3>
+      <h3 class="bp-sub">LFI &mdash; create the instrument details signing certificate</h3>
       <EdProse>
         <p>
           <strong>LFI action:</strong> Generate a private key and CSR &rarr; navigate to Organisation
@@ -767,14 +779,14 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
       <EdCode :code="lfiJwksTemplate" lang="text" filename="LFI organisation JWKS" />
       <EdBullets accent="var(--at-gold)">
         <li>
-          The LFI MUST generate and hold the private key itself, and MUST NOT sign payment tokens
-          with <RouterLink to="/tech/lfi-api-hub/v2.2-rc2/api-hub/onboarding/environment-specific/#ozone-held-certs">Sig2</RouterLink>.
-          Sig2 is created from a CSR Ozone provides, so its private key is held for the API Hub. A
-          token signed with it would not prove that the LFI issued it.
+          The LFI MUST generate and hold the private key itself, and MUST NOT sign instrument
+          details with <RouterLink to="/tech/lfi-api-hub/v2.2-rc2/api-hub/onboarding/environment-specific/#ozone-held-certs">Sig2</RouterLink>.
+          Sig2 is created from a CSR Ozone provides, so its private key is held for the API Hub.
+          Instrument details signed with it would not prove that the LFI issued them.
         </li>
         <li>
-          The LFI SHOULD use a dedicated key for payment tokens, and not share it with Sig4 or any
-          other purpose.
+          The LFI SHOULD use a dedicated key for instrument details, and not share it with Sig4 or
+          any other purpose.
         </li>
         <li>
           After publishing a new key, the LFI MUST wait at least 10 minutes before signing with it.
@@ -782,9 +794,9 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
           <RouterLink to="/tech/lfi-api-hub/trust-framework/#keystore-caching">Keystore Caching</RouterLink>.
         </li>
         <li>
-          When you retire a key, keep its public key in the set you verify against in
-          <a href="#validate">Step 7</a> until every token it signed has expired &mdash; 120 seconds
-          plus clock skew.
+          When you retire a key, keep it in your organisation JWKS until all the instrument details
+          it signed have expired &mdash; 120 seconds plus clock skew &mdash; so that a BPIP can still
+          verify them in <a href="#verify">Step 5</a>.
         </li>
       </EdBullets>
 
@@ -816,26 +828,51 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
       num="03"
       color="var(--at-navy)"
       eyebrow="Step 1 — LFI"
-      title="Build and sign the payment token"
+      title="Issue the payment token and sign the instrument details"
       tone="surface"
     >
       <EdProse>
         <p>
-          Build the payment token only once the ICP token in the lookup is valid: ICP&rsquo;s token
-          validation endpoint has confirmed it, <code>azp</code> is the calling BPIP,
-          <code>sub</code> equals <code>Data.uaeKycId</code>, and <code>txn</code> equals the hash of
-          <code>Data.TransactionAmount</code>. Otherwise reject the lookup with the matching
-          <code>403</code> from the
+          Issue a payment token only once ICP&rsquo;s token validation endpoint has confirmed the
+          ICP token in the lookup: that ICP issued it to the calling BPIP for
+          <code>Data.uaeKycId</code>, and that it has not expired or been used. Otherwise reject the
+          lookup with the matching <code>403</code> from the
           <RouterLink to="/biopay/payment/api-guide/#lookup-errors">lookup errors</RouterLink>, and
-          issue no token.
+          issue nothing.
         </p>
       </EdProse>
 
-      <h3 class="bp-sub">Claims</h3>
+      <h3 class="bp-sub">Generate and store the payment token</h3>
+      <EdBullets accent="var(--at-navy)">
+        <li>
+          Generate it from 128 bits of a cryptographically secure random source, base64url-encoded
+          without padding: 22 characters. Do not derive it from anything else &mdash; an account
+          number, a counter or a timestamp &mdash; and do not put meaning in it.
+        </li>
+        <li>
+          Store against it, under a unique key, everything you issued it for: the calling BPIP
+          (<code>azp</code>), the expiry (<code>exp</code>), the <code>uaeKycId</code>, the ICP
+          token, the amount, the merchant, terminal and acquirer identifiers, the
+          <code>InstrumentType</code> and the <code>DebtorAccount</code> or
+          <code>CardDetails</code> &mdash; and that it is unused.
+        </li>
+        <li>
+          Write the record before you return the lookup response. If the write fails, return an
+          error and issue nothing: a payment token you cannot look up cannot be used.
+        </li>
+        <li>
+          Keep each record, used or not, until at least its expiry. After that, a payment token is
+          rejected whether or not you still hold it.
+        </li>
+      </EdBullets>
+
+      <h3 class="bp-sub">Instrument details claims</h3>
       <EdProse>
         <p>
-          The claims are <code>AEPaymentToken</code> in the draft specification &mdash; see
+          The claims of the instrument details are <code>AEInstrumentDetails</code> in the draft
+          specification &mdash; see
           <RouterLink to="/biopay/payment/api-reference/instrument-lookup"><code>POST /instrument-lookup</code></RouterLink>.
+          They are what you stored, with <code>iss</code>, <code>iat</code> and the payment token.
         </p>
       </EdProse>
       <EdRefTable>
@@ -847,8 +884,8 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
             <tr><td><code>iss</code></td><td>Your Directory organisation ID</td><td>&mdash;</td></tr>
             <tr><td><code>azp</code></td><td>The BPIP&rsquo;s Directory organisation ID</td><td><code>o3-caller-org-id</code> on the proxied lookup</td></tr>
             <tr><td><code>iat</code></td><td>The time of signing, in seconds since the epoch</td><td>&mdash;</td></tr>
-            <tr><td><code>exp</code></td><td><code>iat</code> + 120</td><td>&mdash;</td></tr>
-            <tr><td><code>jti</code></td><td>Unique per token, up to 40 characters &mdash; for example <code>pt-</code> followed by a UUID</td><td>&mdash;</td></tr>
+            <tr><td><code>exp</code></td><td><code>iat</code> + 120 &mdash; when the payment token expires</td><td>&mdash;</td></tr>
+            <tr><td><code>PaymentToken</code></td><td>The payment token, as returned in <code>Data.PaymentToken</code></td><td>&mdash;</td></tr>
             <tr><td><code>uaeKycId</code></td><td>The customer&rsquo;s identifier</td><td><code>Data.uaeKycId</code></td></tr>
             <tr><td><code>IcpToken</code></td><td>The ICP token, unchanged</td><td><code>Data.IcpToken</code></td></tr>
             <tr><td><code>InstructedAmount</code></td><td>The amount, unchanged</td><td><code>Data.TransactionAmount</code></td></tr>
@@ -871,18 +908,18 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
           </thead>
           <tbody>
             <tr><td><code>alg</code></td><td><code>PS256</code> &mdash; the only signing algorithm in the UAE Open Finance FAPI profile</td></tr>
-            <tr><td><code>kid</code></td><td>The KID of your payment token signing certificate. Identify the key by <code>kid</code> only &mdash; not <code>x5c</code>, <code>x5u</code> or <code>jku</code>.</td></tr>
+            <tr><td><code>kid</code></td><td>The KID of your instrument details signing certificate. Identify the key by <code>kid</code> only &mdash; not <code>x5c</code>, <code>x5u</code> or <code>jku</code>.</td></tr>
           </tbody>
         </table>
       </EdRefTable>
 
       <EdCodeGroup :tabs="signTabs" />
-      <EdCode :code="accountTokenClaims" lang="json" filename="Signed claims — ACCOUNT" />
-      <EdNote type="tip" title="No state at issue">
+      <EdCode :code="accountDetailsClaims" lang="json" filename="Signed claims — ACCOUNT" />
+      <EdNote type="tip" title="Your record, not your signature, is what you pay from">
         <p>
-          You do not need to store the token when you issue it &mdash; your signature is the record.
-          The only state the payment token needs is the set of <code>jti</code> values already used,
-          which you write in <a href="#validate">Step 7</a>.
+          The signature on the instrument details is for the BPIP: it proves to them that you issued
+          the details. You never see the JWS again. When the payment token comes back in
+          <a href="#validate">Step 7</a>, you pay from the record you stored here.
         </p>
       </EdNote>
     </EdSectionBand>
@@ -916,8 +953,8 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
       <EdBullets accent="var(--at-blue-deep)">
         <li>Select the key with <code>"use": "enc"</code>. Never encrypt with a signing key (<code>"use": "sig"</code>).</li>
         <li>
-          Encrypt only to the BPIP that called. The token carries the customer&rsquo;s IBAN or card
-          details; a JWE encrypted to any other key exposes them to whoever holds it.
+          Encrypt only to the BPIP that called. The instrument details carry the customer&rsquo;s
+          IBAN or card details; a JWE encrypted to any other key exposes them to whoever holds it.
         </li>
         <li>
           Cache the JWKS, keyed by its URL &mdash; see
@@ -943,7 +980,10 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
       </EdRefTable>
       <EdCodeGroup :tabs="encryptTabs" />
       <EdProse>
-        <p>Return the compact JWE as <code>Data</code>, and nothing else:</p>
+        <p>
+          Return the compact JWE as <code>Data.InstrumentDetails</code>, and the payment token,
+          unencrypted, as <code>Data.PaymentToken</code>:
+        </p>
       </EdProse>
       <EdCode :code="lookupResponse" lang="http" filename="200 OK" />
       <EdProse>
@@ -961,16 +1001,24 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
       num="05"
       color="var(--at-gold)"
       eyebrow="Step 3 — API Hub"
-      title="Proxy the response unread"
+      title="Record the payment token, proxy the details unread"
       tone="surface"
     >
       <EdProse>
         <p>
           The API Hub validates the lookup response against its schema and proxies it to the BPIP.
-          It does not hold the BPIP&rsquo;s private key, so it cannot decrypt <code>Data</code>, and
-          it does not verify the payment token. Errors from the LFI &mdash; the <code>403</code>
+          It does not hold the BPIP&rsquo;s private key, so it cannot decrypt
+          <code>Data.InstrumentDetails</code>. Errors from the LFI &mdash; the <code>403</code>
           <code>IcpToken.*</code> codes and <code>404</code> &mdash; are mapped to the standard as for
           any proxied request.
+        </p>
+        <p>
+          The Hub reads <code>Data.PaymentToken</code>, which is not encrypted, and records it with
+          the ICP token and <code>x-fapi-auth-date</code> of the lookup request. When an
+          <code>ACCOUNT</code> payment arrives with that payment token and the LFI creates it, the
+          Hub attaches the biometric assurance to the payment. The Hub does not check the payment
+          token, and does not reject a payment it cannot link to a lookup: only the LFI accepts or
+          rejects a payment token.
         </p>
       </EdProse>
       <EdNote type="info" title="Mediation is unchanged">
@@ -1005,7 +1053,7 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
       <EdProse>
         <p>
           Accept only <code>RSA-OAEP-256</code> and <code>A256GCM</code>, whatever the header
-          proposes. The result is the payment token: a compact JWS signed by the LFI.
+          proposes. The result is the instrument details: a compact JWS signed by the LFI.
         </p>
       </EdProse>
       <EdCodeGroup :tabs="decryptTabs" />
@@ -1034,7 +1082,7 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
         <p>
           <code>iss</code> is unverified until the signature is. Your encryption key is public, so
           anyone can build a JWE that decrypts cleanly for you. If you took the JWKS URL from
-          <code>iss</code>, a token could name its own signer, and it would verify against keys of
+          <code>iss</code>, a JWS could name its own signer, and it would verify against keys of
           its own choosing. Resolve the keys from the LFI you addressed, then check that
           <code>iss</code> matches.
         </p>
@@ -1045,11 +1093,11 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
           whatever the JWS header proposes.
         </li>
         <li>
-          The active JWKS is enough. The token is at most 120 seconds old, so the LFI cannot have
-          retired the signing key in between, as in Pattern A of
+          The active JWKS is enough. The instrument details are at most 120 seconds old, so the LFI
+          cannot have retired the signing key in between, as in Pattern A of
           <RouterLink to="/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation/personal-identifiable-information/api-guide/decrypt-pii#two-patterns">How
           to Decrypt PII</RouterLink>. If the <code>kid</code> is not in your cached copy, refetch at
-          most once a minute before rejecting the token.
+          most once a minute before rejecting them.
         </li>
       </EdBullets>
 
@@ -1063,6 +1111,7 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
             <tr><td><code>iss</code></td><td>Equals the organisation ID of the LFI you called.</td></tr>
             <tr><td><code>azp</code></td><td>Equals your own organisation ID.</td></tr>
             <tr><td><code>exp</code></td><td>Has not passed.</td></tr>
+            <tr><td><code>PaymentToken</code></td><td>Equals <code>Data.PaymentToken</code> in the same lookup response.</td></tr>
             <tr><td><code>IcpToken</code></td><td>Equals the ICP token you sent as <code>Data.IcpToken</code>.</td></tr>
             <tr><td><code>InstructedAmount</code></td><td>Equals the <code>Data.TransactionAmount</code> you sent.</td></tr>
             <tr><td><code>InstrumentType</code></td><td>Present. Route the payment on it &mdash; see <RouterLink to="/biopay/payment/api-guide/#payment-token">Route on the instrument type</RouterLink>.</td></tr>
@@ -1072,8 +1121,8 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
       <EdCodeGroup :tabs="verifyTabs" />
       <EdProse>
         <p>
-          If any check fails, do not present the token and do not make the payment. Offer another
-          payment method.
+          If any check fails, do not present the payment token and do not make the payment. Offer
+          another payment method.
         </p>
       </EdProse>
 
@@ -1087,19 +1136,19 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
       num="08"
       color="var(--at-blue-deep)"
       eyebrow="Step 6 — BPIP"
-      title="Send the JWS back to the LFI"
+      title="Send the payment token back to the LFI"
     >
       <EdProse>
         <p>
-          The payment token replaces the ICP token at the point of payment. Send the
-          <strong>JWS</strong> &mdash; what you decrypted in Step 4 &mdash; not the JWE: the JWE is
-          encrypted to you, so the LFI cannot read it. Send it unchanged, once, before it expires.
+          The payment token replaces the ICP token at the point of payment. Send
+          <code>Data.PaymentToken</code> from the lookup response &mdash; not the instrument details,
+          in either form: they stay with you. Send it unchanged, once, before it expires.
         </p>
       </EdProse>
       <EdRefTable>
         <table>
           <thead>
-            <tr><th><code>InstrumentType</code></th><th>Send the JWS in</th><th>Route to the LFI</th></tr>
+            <tr><th><code>InstrumentType</code></th><th>Send the payment token in</th><th>Route to the LFI</th></tr>
           </thead>
           <tbody>
             <tr>
@@ -1121,17 +1170,17 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
           Sign the request body with <code>x-jws-signature</code> using your signing key, as for every
           BioPay request &mdash; see
           <RouterLink to="/tech/tpp-standards/security/fapi/message-signing">Message Signing</RouterLink>.
-          This signature is yours and covers the whole body; the LFI&rsquo;s signature inside
-          <code>PaymentToken</code> is carried unchanged. The full request is described in
+          This signature is yours and covers the whole body, including <code>PaymentToken</code>.
+          The full request is described in
           <RouterLink to="/biopay/payment/api-guide/#payment">Make the account payment</RouterLink>.
         </p>
       </EdProse>
-      <EdNote type="info" title="The JWS is signed, not encrypted">
+      <EdNote type="info" title="Nothing on the way back to read">
         <p>
-          On the way back, the API Hub can read the payment token: it records the biometric assurance
-          from the ICP token embedded in it once the LFI accepts the payment. Only a
-          <code>CARD</code> token keeps its details away from the Hub, because a card payment does not
-          return through it.
+          The payment token carries no data, so neither the API Hub nor the card scheme learns the
+          customer&rsquo;s account or card from it. The Hub uses it only to find the lookup it
+          recorded in Step 3, and attaches that biometric assurance once the LFI accepts the
+          payment.
         </p>
       </EdNote>
     </EdSectionBand>
@@ -1142,14 +1191,15 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
       num="09"
       color="var(--at-teal-deep)"
       eyebrow="Step 7 — LFI"
-      title="Validate the payment token"
+      title="Look up the payment token"
       tone="surface"
     >
       <EdProse>
         <p>
           The API Hub proxies <code>POST /biometric-payments</code> to your Ozone Connect without
-          verifying the payment token. You MUST validate it before you create the payment, in this
-          order, and reject the request with the first check that fails:
+          checking the payment token. Look it up in the records you stored in
+          <a href="#sign">Step 1</a>, and check it before you create the payment, in this order,
+          rejecting the request with the first check that fails:
         </p>
       </EdProse>
       <EdRefTable>
@@ -1158,40 +1208,34 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
             <tr><th>#</th><th>Check</th><th>On failure (<code>403</code>)</th></tr>
           </thead>
           <tbody>
-            <tr><td>1</td><td>The JWS header has <code>alg: PS256</code> and the <code>kid</code> of one of <strong>your own payment token signing keys</strong>, and the signature verifies against it.</td><td><code>PaymentToken.InvalidSignature</code></td></tr>
-            <tr><td>2</td><td><code>iss</code> is your organisation ID.</td><td><code>PaymentToken.InvalidSignature</code></td></tr>
-            <tr><td>3</td><td><code>exp</code> has not passed, allowing no more than 10 seconds of clock skew.</td><td><code>PaymentToken.Expired</code></td></tr>
-            <tr><td>4</td><td><code>InstrumentType</code> is <code>ACCOUNT</code>.</td><td><code>PaymentToken.WrongInstrumentType</code></td></tr>
-            <tr><td>5</td><td><code>azp</code> equals <code>o3-caller-org-id</code> on the proxied payment.</td><td><code>PaymentToken.BindingMismatch</code></td></tr>
-            <tr><td>6</td><td><code>jti</code> has not been used.</td><td><code>PaymentToken.AlreadyUsed</code></td></tr>
-            <tr><td>7</td><td><code>DebtorAccount</code> is still the account registered for BioPay against <code>uaeKycId</code>.</td><td><code>Account.DebtorAccountMismatch</code></td></tr>
+            <tr><td>1</td><td>You hold a record for the payment token &mdash; you issued it.</td><td><code>PaymentToken.Invalid</code></td></tr>
+            <tr><td>2</td><td>Its <code>exp</code> has not passed.</td><td><code>PaymentToken.Expired</code></td></tr>
+            <tr><td>3</td><td>It was issued for an <code>ACCOUNT</code>.</td><td><code>PaymentToken.WrongInstrumentType</code></td></tr>
+            <tr><td>4</td><td>Its <code>azp</code> equals <code>o3-caller-org-id</code> on the proxied payment.</td><td><code>PaymentToken.BindingMismatch</code></td></tr>
+            <tr><td>5</td><td>It has not been used.</td><td><code>PaymentToken.AlreadyUsed</code></td></tr>
+            <tr><td>6</td><td>Its <code>DebtorAccount</code> is still the account registered for BioPay against its <code>uaeKycId</code>.</td><td><code>Account.DebtorAccountMismatch</code></td></tr>
           </tbody>
         </table>
       </EdRefTable>
-      <EdNote type="important" title="Verify against your own keys only">
+      <EdNote type="important" title="Look it up; never read it">
         <p>
-          You issued the token, so you need no keystore fetch: verify against the public keys of your
-          payment token signing certificates, held locally. Do not verify against your organisation
-          JWKS. It also contains Sig2, whose private key you do not hold, and a token signed with
-          Sig2 is not one you issued.
+          The payment token is only a key to your record. Match it exactly, and take nothing from its
+          value. Everything you pay from &mdash; the debtor account, the amount, the BPIP &mdash; comes
+          from the record, never from the request.
         </p>
       </EdNote>
       <EdCodeGroup :tabs="validateTabs" />
 
-      <h3 class="bp-sub">Mark the token used</h3>
+      <h3 class="bp-sub">Mark the payment token used</h3>
       <EdBullets accent="var(--at-teal-deep)">
         <li>
-          Record the <code>jti</code> in the same transaction that creates the payment, under a
-          uniqueness constraint. Two requests carrying the same token then cannot both create a
-          payment, even if both pass check 6 at the same moment.
+          Mark it used in the same transaction that creates the payment, with an update that
+          succeeds only while it is still unused. Two requests carrying the same payment token then
+          cannot both create a payment, even if both pass check 5 at the same moment.
         </li>
         <li>
-          If you return an error, no payment exists and the <code>jti</code> is not recorded: the
-          token stays usable until it expires.
-        </li>
-        <li>
-          Keep each used <code>jti</code> until at least its <code>exp</code> plus clock skew. After
-          that, check 3 rejects the token anyway.
+          If you return an error, no payment exists and the payment token is not marked: it stays
+          usable until it expires.
         </li>
         <li>
           A retry with the same <code>x-idempotency-key</code> and identical body is answered by the
@@ -1200,12 +1244,13 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
       </EdBullets>
       <EdProse>
         <p>
-          Then debit <code>DebtorAccount</code> for <code>InstructedAmount</code> &mdash; both from
-          the token, not from the request &mdash; and credit <code>Data.CreditorAccount</code>.
+          Then debit the stored <code>DebtorAccount</code> for the stored
+          <code>InstructedAmount</code> &mdash; both from the record, not from the request &mdash; and
+          credit <code>Data.CreditorAccount</code>.
         </p>
       </EdProse>
 
-      <h3 class="bp-sub">When the token arrives in a card authorisation</h3>
+      <h3 class="bp-sub">When the payment token arrives in a card authorisation</h3>
       <EdNote type="info" title="Coming soon — Jaywan specification">
         <p>
           How the payment token is carried in the card authorisation will come from the Jaywan
@@ -1214,14 +1259,14 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
       </EdNote>
       <EdProse>
         <p>
-          As issuer, run the same signature, <code>iss</code> and <code>exp</code> checks (1&ndash;3)
-          and the single-use check (6). In place of checks 4, 5 and 7, check that
-          <code>InstrumentType</code> is <code>CARD</code>; that the card and amount in the
-          authorisation match <code>CardDetails</code> and <code>InstructedAmount</code>; and that
-          the card acceptor identification code (DE42), card acceptor terminal identification (DE41)
-          and acquiring institution identification code (DE32) in the authorisation match
+          As issuer, look the payment token up and run the same record, expiry and single-use checks
+          (1, 2 and 5). In place of checks 3, 4 and 6, check that it was issued for a
+          <code>CARD</code>; that the card and amount in the authorisation match the stored
+          <code>CardDetails</code> and <code>InstructedAmount</code>; and that the card acceptor
+          identification code (DE42), card acceptor terminal identification (DE41) and acquiring
+          institution identification code (DE32) in the authorisation match the stored
           <code>MerchantId</code>, <code>TerminalId</code> and <code>AcquirerId</code>. Decline the
-          authorisation if any check fails. Mark the <code>jti</code> used when you approve.
+          authorisation if any check fails. Mark the payment token used when you approve.
         </p>
       </EdProse>
     </EdSectionBand>
@@ -1236,24 +1281,21 @@ def validate_payment_token(payment_token: str, caller_org_id: str) -> dict:
     >
       <EdNote type="warning" title="Open items">
         <p>
-          <strong>Distinguishing the payment token key from Sig2.</strong> The LFI&rsquo;s
-          organisation JWKS also carries Sig2. In Step 7 the LFI accepts only its own payment token
-          keys, so a token it did not sign is rejected there. In Step 5, the BPIP cannot tell the two
-          keys apart. How the BPIP should identify the LFI&rsquo;s payment token key is to be agreed
-          &mdash; for example, a <code>kid</code> each LFI declares.
-        </p>
-        <p>
-          <strong>The debtor account on the account payment.</strong> On <code>ACCOUNT</code>
-          payments, the JWS, including <code>DebtorAccount</code>, passes through the API Hub
-          readable, and
-          <RouterLink to="/biopay/payment/api-reference/biometric-payments-payment-id"><code>GET /biometric-payments/{PaymentId}</code></RouterLink>
-          returns it. This is to be reconciled with the
-          <RouterLink to="/biopay/payment/technical-architecture#who">API Sequence Flow</RouterLink>,
-          which says the Hub stores no account number.
+          <strong>Distinguishing the instrument details key from Sig2.</strong> The LFI&rsquo;s
+          organisation JWKS also carries Sig2, and in Step 5 the BPIP cannot tell the two keys
+          apart, so instrument details signed with Sig2 would verify. How the BPIP should identify
+          the LFI&rsquo;s instrument details key is to be agreed &mdash; for example, a
+          <code>kid</code> each LFI declares.
         </p>
         <p>
           <strong>Card carriage.</strong> Each card scheme must carry the payment token in its
-          authorisation message through to the issuing LFI. To be agreed with each scheme.
+          authorisation message through to the issuing LFI, and its 22-character base64url format
+          must be confirmed against the field it travels in. To be agreed with each scheme.
+        </p>
+        <p>
+          <strong>The ICP token.</strong> Its format; the interface of ICP&rsquo;s token validation
+          endpoint; and whether ICP binds the amount to the token, so that a change to the amount
+          after the biometric gesture needs a new gesture.
         </p>
       </EdNote>
     </EdSectionBand>

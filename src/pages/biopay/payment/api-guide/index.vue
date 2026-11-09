@@ -20,7 +20,7 @@ const sections: Section[] = [
   { id: 'resolve', label: 'ICP token' },
   { id: 'token', label: 'Access token' },
   { id: 'lookup', label: 'Instrument lookup' },
-  { id: 'decrypt', label: 'Payment token' },
+  { id: 'decrypt', label: 'Instrument details' },
   { id: 'payment', label: 'Account payment' },
   { id: 'status', label: 'Payment status' },
   { id: 'card', label: 'Card payment' },
@@ -54,7 +54,7 @@ x-jws-signature: eyJhbGciOiJQUzI1NiIsImtpZCI6...
 {
   "Data": {
     "uaeKycId": "ICP-7c9e1f4a-2b60-4d3e-9a15-0f8c2d1b7e43",
-    "IcpToken": "eyJhbGciOiJQUzI1NiIsImtpZCI6ImljcC1zaWduLTEifQ...",
+    "IcpToken": "d95fdf39-c9d5-4762-ad8a-ce26f3167ecc",
     "TransactionAmount": { "Amount": "149.50", "Currency": "AED" },
     "MerchantId": "100000000000731",
     "TerminalId": "T0000042",
@@ -68,18 +68,21 @@ Content-Type: application/json
 x-fapi-interaction-id: 93bac548-d2de-4546-b106-880a5018460d
 
 {
-  "Data": "eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIiwia2lkIjoiYnBpcC1lbmMtMSIsImN0eSI6IkpXVCJ9..."
+  "Data": {
+    "PaymentToken": "O0ctDv_PYRnrTqp9ijXB6g",
+    "InstrumentDetails": "eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIiwia2lkIjoiYnBpcC1lbmMtMSIsImN0eSI6IkpXVCJ9..."
+  }
 }`
 
-// ── Payment token ──────────────────────────────────────────────────────────
-const accountTokenClaims = `{
+// ── Instrument details ─────────────────────────────────────────────────────
+const accountDetailsClaims = `{
   "iss": "[LFI_ORGANISATION_ID]",
   "azp": "[BPIP_ORGANISATION_ID]",
   "iat": 1792059303,
   "exp": 1792059423,
-  "jti": "pt-3c9a7e21-5b84-4f0d-9e62-1a7b8c9d0e1f",
+  "PaymentToken": "O0ctDv_PYRnrTqp9ijXB6g",
   "uaeKycId": "ICP-7c9e1f4a-2b60-4d3e-9a15-0f8c2d1b7e43",
-  "IcpToken": "eyJhbGciOiJQUzI1NiIsImtpZCI6ImljcC1zaWduLTEifQ...",
+  "IcpToken": "d95fdf39-c9d5-4762-ad8a-ce26f3167ecc",
   "InstructedAmount": { "Amount": "149.50", "Currency": "AED" },
   "MerchantId": "100000000000731",
   "TerminalId": "T0000042",
@@ -89,14 +92,14 @@ const accountTokenClaims = `{
   "DebtorAccount": { "SchemeName": "IBAN", "Identification": "AE070331234567890123456" }
 }`
 
-const cardTokenClaims = `{
+const cardDetailsClaims = `{
   "iss": "[LFI_ORGANISATION_ID]",
   "azp": "[BPIP_ORGANISATION_ID]",
   "iat": 1792059303,
   "exp": 1792059423,
-  "jti": "pt-8d2f4b60-1e93-4c7a-b5d8-6f0e2a3c9b14",
+  "PaymentToken": "Lerj6oFvPLgHG7Q_K30e3Q",
   "uaeKycId": "ICP-7c9e1f4a-2b60-4d3e-9a15-0f8c2d1b7e43",
-  "IcpToken": "eyJhbGciOiJQUzI1NiIsImtpZCI6ImljcC1zaWduLTEifQ...",
+  "IcpToken": "d95fdf39-c9d5-4762-ad8a-ce26f3167ecc",
   "InstructedAmount": { "Amount": "149.50", "Currency": "AED" },
   "MerchantId": "100000000000731",
   "TerminalId": "T0000042",
@@ -118,7 +121,7 @@ x-jws-signature: eyJhbGciOiJQUzI1NiIsImtpZCI6...
 
 {
   "Data": {
-    "PaymentToken": "eyJhbGciOiJQUzI1NiIsImtpZCI6ImxmaS1zaWduLTEifQ...",
+    "PaymentToken": "O0ctDv_PYRnrTqp9ijXB6g",
     "CreditorAccount": {
       "SchemeName": "IBAN",
       "Identification": "AE220331234567890876543"
@@ -146,7 +149,7 @@ x-fapi-interaction-id: 1f0e9c2a-77d4-4b8e-a3f1-5d2c6b7e8a90
     "Status": "Pending",
     "CreationDateTime": "2026-10-15T10:15:03Z",
     "StatusUpdateDateTime": "2026-10-15T10:15:03Z",
-    "PaymentToken": "eyJhbGciOiJQUzI1NiIsImtpZCI6ImxmaS1zaWduLTEifQ...",
+    "PaymentToken": "O0ctDv_PYRnrTqp9ijXB6g",
     "CreditorAccount": {
       "SchemeName": "IBAN",
       "Identification": "AE220331234567890876543"
@@ -190,7 +193,7 @@ const eventPayload = `{
       "Status": "AcceptedWithoutPosting",
       "CreationDateTime": "2026-10-15T10:15:03Z",
       "StatusUpdateDateTime": "2026-10-15T10:15:05Z",
-      "PaymentToken": "eyJhbGciOiJQUzI1NiIsImtpZCI6ImxmaS1zaWduLTEifQ...",
+      "PaymentToken": "O0ctDv_PYRnrTqp9ijXB6g",
       "CreditorAccount": {
         "SchemeName": "IBAN",
         "Identification": "AE220331234567890876543"
@@ -225,7 +228,7 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
     "Status": "Rejected",
     "CreationDateTime": "2026-10-15T10:15:03Z",
     "StatusUpdateDateTime": "2026-10-15T10:15:04Z",
-    "PaymentToken": "eyJhbGciOiJQUzI1NiIsImtpZCI6ImxmaS1zaWduLTEifQ...",
+    "PaymentToken": "O0ctDv_PYRnrTqp9ijXB6g",
     "CreditorAccount": {
       "SchemeName": "IBAN",
       "Identification": "AE220331234567890876543"
@@ -264,7 +267,7 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
       eyebrow-color="var(--at-gold)"
       title="Payment API Guide"
       :meta="meta"
-      lede="How a BPIP takes a BioPay payment: resolving the customer with ICP, looking up their payment instrument through the API Hub, decrypting the payment token, initiating an account-to-account payment, and tracking its status. <strong>Everything here is draft</strong> &mdash; endpoints, fields and claims are proposals for review."
+      lede="How a BPIP takes a BioPay payment: resolving the customer with ICP, looking up their payment instrument through the API Hub, decrypting the instrument details, initiating an account-to-account payment, and tracking its status. <strong>Everything here is draft</strong> &mdash; endpoints, fields and claims are proposals for review."
     />
 
     <EdInPageNav :sections="sections" />
@@ -293,8 +296,7 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
           <RouterLink to="/biopay/directory">Directory</RouterLink>.
         </li>
         <li>
-          <strong>A transport certificate</strong> for mTLS on every call to the API Hub. The ICP
-          token is bound to it.
+          <strong>A transport certificate</strong> for mTLS on every call to the API Hub.
         </li>
         <li>
           <strong>A signing certificate</strong> for your client assertion and the
@@ -303,7 +305,7 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
         </li>
         <li>
           <strong>An encryption certificate</strong>, required for every BPIP. The LFI encrypts the
-          payment token in every lookup response to it, and the API Hub encrypts payment status
+          instrument details in every lookup response to it, and the API Hub encrypts payment status
           events to it.
         </li>
         <li>
@@ -349,7 +351,7 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
             </tr>
             <tr>
               <td>ICP token</td>
-              <td>Sends it unchanged as <code>Data.IcpToken</code> on the lookup, where the LFI validates it with ICP. Keeps it to check against the payment token the LFI returns.</td>
+              <td>An opaque, single-use identifier for the identification. Sends it unchanged as <code>Data.IcpToken</code> on the lookup, where the LFI validates it with ICP. Keeps it to check against the instrument details the LFI returns.</td>
             </tr>
           </tbody>
         </table>
@@ -371,7 +373,8 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
           <code>client_credentials</code> grant and the <code>biometric-payments</code> scope,
           authenticating with a <code>private_key_jwt</code> client assertion over mTLS. The token is
           not bound to a customer &mdash; the customer&rsquo;s authority for each payment is the ICP
-          token &mdash; so one token serves every payment until it expires.
+          token, and the payment token the LFI issues for it &mdash; so one access token serves every
+          payment until it expires.
         </p>
       </EdProse>
       <EdCode :code="tokenRequest" lang="http" filename="Token request" />
@@ -404,10 +407,10 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
       <EdNote type="info" title="The LFI validates the ICP token">
         <p>
           The API Hub checks your entitlement and the request schema, and proxies the lookup to the
-          LFI without reading the ICP token. The LFI validates <code>Data.IcpToken</code> by calling
-          ICP&rsquo;s token validation endpoint &mdash; that ICP issued it, that it has not expired
-          and that it has not been used &mdash; and checks that it was issued to your organisation
-          for the <code>uaeKycId</code> and amount in the request. The LFI answers
+          LFI without checking the ICP token. The LFI validates <code>Data.IcpToken</code> by calling
+          ICP&rsquo;s token validation endpoint, at which ICP confirms that it issued the token to
+          your organisation for the <code>uaeKycId</code> in the request, that it has not expired
+          and that it has not been used. The LFI answers
           <strong>only if the ICP token is valid</strong>. Otherwise the request is rejected with
           <code>403</code> &mdash; see <a href="#lookup-errors">Errors</a>.
         </p>
@@ -419,39 +422,43 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
             <tr><th>Field</th><th>Required</th><th>Description</th></tr>
           </thead>
           <tbody>
-            <tr><td><code>Data.uaeKycId</code></td><td>Yes</td><td>Know Your Customer identification reference, as ICP returned it. MUST equal the ICP token&rsquo;s <code>sub</code>.</td></tr>
+            <tr><td><code>Data.uaeKycId</code></td><td>Yes</td><td>Know Your Customer identification reference, as ICP returned it with the ICP token.</td></tr>
             <tr><td><code>Data.IcpToken</code></td><td>Yes</td><td>The ICP token, unchanged.</td></tr>
-            <tr><td><code>Data.TransactionAmount</code></td><td>Yes</td><td>The amount processed for the transaction (DE04), exactly as given to ICP. Returned as <code>InstructedAmount</code> in the payment token, and the amount the LFI debits.</td></tr>
-            <tr><td><code>Data.MerchantId</code></td><td>Yes</td><td>Unique identification code assigned to the merchant (DE42), up to 15 characters. Returned unchanged in the payment token.</td></tr>
-            <tr><td><code>Data.TerminalId</code></td><td>Yes</td><td>Unique identification code assigned to the terminal (DE41), up to 8 characters. Returned unchanged in the payment token.</td></tr>
-            <tr><td><code>Data.AcquirerId</code></td><td>Yes</td><td>Unique identification code assigned to the acquiring bank (DE32), up to 11 digits. Returned unchanged in the payment token.</td></tr>
-            <tr><td><code>Data.MerchantName</code></td><td>Yes</td><td>Name of the merchant (DE43), up to 40 characters. Returned unchanged in the payment token.</td></tr>
+            <tr><td><code>Data.TransactionAmount</code></td><td>Yes</td><td>The amount processed for the transaction (DE04). Returned as <code>InstructedAmount</code> in the instrument details, and the amount the LFI debits.</td></tr>
+            <tr><td><code>Data.MerchantId</code></td><td>Yes</td><td>Unique identification code assigned to the merchant (DE42), up to 15 characters. Returned unchanged in the instrument details.</td></tr>
+            <tr><td><code>Data.TerminalId</code></td><td>Yes</td><td>Unique identification code assigned to the terminal (DE41), up to 8 characters. Returned unchanged in the instrument details.</td></tr>
+            <tr><td><code>Data.AcquirerId</code></td><td>Yes</td><td>Unique identification code assigned to the acquiring bank (DE32), up to 11 digits. Returned unchanged in the instrument details.</td></tr>
+            <tr><td><code>Data.MerchantName</code></td><td>Yes</td><td>Name of the merchant (DE43), up to 40 characters. Returned unchanged in the instrument details.</td></tr>
           </tbody>
         </table>
       </EdRefTable>
       <EdProse>
         <p>
-          The ICP token&rsquo;s <code>txn</code> is a hash of <code>TransactionAmount</code>. Send
-          it exactly as you gave it to ICP, or the lookup fails with
-          <code>IcpToken.BindingMismatch</code>.
-        </p>
-        <p>
-          The merchant, terminal and acquirer are not in the ICP token, which is issued at the point
-          of customer identity verification. The LFI carries them in the payment token it signs. For
-          a card payment, send the same <code>MerchantId</code>, <code>TerminalId</code> and
-          <code>AcquirerId</code> in the card authorisation: the LFI declines it if they do not match
-          the payment token.
+          The ICP token is issued at the point of customer identity verification, and carries no
+          amount or merchant. The LFI stores the amount, merchant, terminal and acquirer you send
+          against the payment token it issues. For a card payment, send the same amount,
+          <code>MerchantId</code>, <code>TerminalId</code> and <code>AcquirerId</code> in the card
+          authorisation: the LFI declines it if they do not match.
         </p>
       </EdProse>
 
       <h3 class="bp-sub">Handle the response</h3>
       <EdProse>
         <p>
-          A successful lookup always returns the <strong>payment token</strong>, and nothing else.
-          <code>Data</code> is a JWE encrypted to you, which the API Hub cannot read. Decrypt it in
-          <a href="#decrypt">Step 4</a> before you route the payment.
+          A successful lookup always returns two things:
         </p>
       </EdProse>
+      <EdRefTable>
+        <table>
+          <thead>
+            <tr><th>Field</th><th>What it is</th><th>What you do with it</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>Data.PaymentToken</code></td><td>The <strong>payment token</strong>: an opaque, single-use, 22-character reference, valid for 120 seconds. The LFI has stored, against it, everything it issued it for.</td><td>Send it back, unchanged, at the point of payment &mdash; and nothing else from the lookup.</td></tr>
+            <tr><td><code>Data.InstrumentDetails</code></td><td>The <strong>instrument details</strong>: a JWS signed by the LFI, encrypted to you as a JWE that the API Hub cannot read.</td><td>Decrypt and verify it in <a href="#decrypt">Step 4</a>, and route the payment on it.</td></tr>
+          </tbody>
+        </table>
+      </EdRefTable>
       <EdCode :code="lookupResponse" lang="http" filename="200 OK" />
 
       <h3 id="lookup-errors" class="bp-sub">Errors</h3>
@@ -461,9 +468,9 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
             <tr><th>Status</th><th><code>ErrorCode</code></th><th>Meaning and what to do</th></tr>
           </thead>
           <tbody>
-            <tr><td><code>403</code></td><td><code>IcpToken.Invalid</code></td><td>ICP did not confirm it issued the ICP token, or the token was altered. Do not retry.</td></tr>
+            <tr><td><code>403</code></td><td><code>IcpToken.Invalid</code></td><td>ICP did not confirm it issued the ICP token. Do not retry.</td></tr>
             <tr><td><code>403</code></td><td><code>IcpToken.Expired</code></td><td>Take a new biometric.</td></tr>
-            <tr><td><code>403</code></td><td><code>IcpToken.BindingMismatch</code></td><td>The amount, <code>uaeKycId</code> or organisation differs from what ICP bound. Check you sent exactly the amount you gave ICP, from the same organisation.</td></tr>
+            <tr><td><code>403</code></td><td><code>IcpToken.BindingMismatch</code></td><td>ICP issued the token to another organisation or for another <code>uaeKycId</code>. Check you sent the <code>uaeKycId</code> ICP returned with the token, from the same organisation.</td></tr>
             <tr><td><code>403</code></td><td><code>IcpToken.AlreadyUsed</code></td><td>This ICP token was already used on a lookup. Take a new biometric.</td></tr>
             <tr><td><code>404</code></td><td>&mdash;</td><td>The LFI holds no live BioPay registration for the <code>uaeKycId</code>. Fall back to another payment method.</td></tr>
           </tbody>
@@ -477,38 +484,40 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
       num="05"
       color="var(--at-teal-deep)"
       eyebrow="Step 4"
-      title="Decrypt the payment token"
+      title="Decrypt the instrument details"
       tone="surface"
     >
       <EdProse>
         <p>
-          <code>Data</code> is a compact JWE (<code>RSA-OAEP-256</code>, <code>A256GCM</code>)
-          encrypted by the LFI to your public encryption key from the Directory. Inside is the
-          <strong>payment token</strong>: a JWS signed by the LFI (<code>PS256</code>). The API Hub
-          passes the JWE on without reading it, so the IBAN or card details in the lookup response
-          do not pass through the Hub in the clear. This is the same sign-then-encrypt pattern as
-          Open Finance PII and events &mdash; here the BPIP is the recipient.
+          <code>Data.InstrumentDetails</code> is a compact JWE (<code>RSA-OAEP-256</code>,
+          <code>A256GCM</code>) encrypted by the LFI to your public encryption key from the
+          Directory. Inside is a JWS signed by the LFI (<code>PS256</code>), telling you what the
+          payment token was issued for. The API Hub passes the JWE on without reading it, so the IBAN
+          or card details in the lookup response do not pass through the Hub in the clear. This is
+          the same sign-then-encrypt pattern as Open Finance PII and events &mdash; here the BPIP is
+          the recipient.
         </p>
       </EdProse>
       <EdBullets accent="var(--at-teal-deep)">
         <li><strong>Decrypt</strong> the JWE with the private key named by the <code>kid</code> in its header.</li>
-        <li><strong>Verify</strong> the LFI&rsquo;s signature against the JWKS of the LFI you called &mdash; never one taken from the token&rsquo;s <code>iss</code> &mdash; and pin <code>PS256</code>.</li>
-        <li><strong>Check</strong> that <code>iss</code> is that LFI, <code>azp</code> is your organisation, <code>exp</code> has not passed, and <code>IcpToken</code> and <code>InstructedAmount</code> are the ICP token and amount you sent on the lookup.</li>
+        <li><strong>Verify</strong> the LFI&rsquo;s signature against the JWKS of the LFI you called &mdash; never one taken from the JWS&rsquo;s <code>iss</code> &mdash; and pin <code>PS256</code>.</li>
+        <li><strong>Check</strong> that <code>iss</code> is that LFI, <code>azp</code> is your organisation, <code>exp</code> has not passed, <code>PaymentToken</code> equals <code>Data.PaymentToken</code>, and <code>IcpToken</code> and <code>InstructedAmount</code> are the ICP token and amount you sent on the lookup.</li>
       </EdBullets>
       <EdNote type="info" title="Step by step, with code">
         <p>
-          How to decrypt the JWE and verify the payment token, with Node.js and Python examples, is
-          on <RouterLink to="/biopay/payment/api-guide/signing-and-encryption#decrypt">Signing and
-          Encryption</RouterLink>. That page also shows how the LFI signs and encrypts the token,
-          and how it validates the token when you send it back.
+          How to decrypt the JWE and verify the instrument details, with Node.js and Python
+          examples, is on <RouterLink to="/biopay/payment/api-guide/signing-and-encryption#decrypt">Signing
+          and Encryption</RouterLink>. That page also shows how the LFI issues the payment token and
+          signs and encrypts the instrument details, and how it checks the payment token when you
+          send it back.
         </p>
       </EdNote>
 
       <h3 id="payment-token" class="bp-sub">Route on the instrument type</h3>
       <EdProse>
         <p>
-          The payment token carries the <code>uaeKycId</code>, the ICP token, the amount from your
-          lookup as <code>InstructedAmount</code>, the <code>MerchantId</code>,
+          The instrument details carry the payment token, the <code>uaeKycId</code>, the ICP token,
+          the amount from your lookup as <code>InstructedAmount</code>, the <code>MerchantId</code>,
           <code>TerminalId</code>, <code>AcquirerId</code> and <code>MerchantName</code> you sent,
           and what the customer&rsquo;s payment instrument needs. Route on
           <code>InstrumentType</code>:
@@ -517,7 +526,7 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
       <EdRefTable>
         <table>
           <thead>
-            <tr><th><code>InstrumentType</code></th><th>Token carries</th><th>Next step</th></tr>
+            <tr><th><code>InstrumentType</code></th><th>Instrument details carry</th><th>Next step</th></tr>
           </thead>
           <tbody>
             <tr>
@@ -533,21 +542,21 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
           </tbody>
         </table>
       </EdRefTable>
-      <EdCode :code="accountTokenClaims" lang="json" filename="Payment token claims — ACCOUNT" />
-      <EdCode :code="cardTokenClaims" lang="json" filename="Payment token claims — CARD" />
+      <EdCode :code="accountDetailsClaims" lang="json" filename="Instrument details claims — ACCOUNT" />
+      <EdCode :code="cardDetailsClaims" lang="json" filename="Instrument details claims — CARD" />
 
       <h3 class="bp-sub">Using the payment token</h3>
       <EdProse>
         <p>
-          The payment token <strong>replaces the ICP token at the point of payment</strong>. You pass
-          it back to the LFI, which verifies its own signature and relies on the token to make the
-          payment.
+          The payment token <strong>replaces the ICP token at the point of payment</strong>. It
+          carries no data: you pass it back to the LFI, which looks up what it stored against it and
+          makes the payment from that.
         </p>
       </EdProse>
       <EdRefTable>
         <table>
           <thead>
-            <tr><th><code>InstrumentType</code></th><th>Present it to</th><th>Who verifies it</th></tr>
+            <tr><th><code>InstrumentType</code></th><th>Present it to</th><th>Who checks it</th></tr>
           </thead>
           <tbody>
             <tr><td><code>ACCOUNT</code></td><td><code>POST /biometric-payments</code>, as <code>Data.PaymentToken</code></td><td>The LFI, after the API Hub proxies the payment</td></tr>
@@ -556,7 +565,7 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
         </table>
       </EdRefTable>
       <EdBullets accent="var(--at-teal-deep)">
-        <li>Send the <strong>JWS</strong> &mdash; the decrypted content of <code>Data</code> &mdash; not the JWE. The JWE is encrypted to you, so the LFI cannot read it.</li>
+        <li>Send <code>Data.PaymentToken</code> from the lookup response &mdash; not the instrument details, which stay with you.</li>
         <li>Send it unchanged, <strong>once</strong>, for this payment only. It is bound to your organisation.</li>
         <li>Use it before it expires &mdash; about two minutes after the lookup. If it expires, take a new biometric.</li>
         <li>Hold card details in memory only. Never log or persist them.</li>
@@ -577,18 +586,18 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
           <RouterLink to="/biopay/payment/api-reference/biometric-payments"><code>POST /biometric-payments</code></RouterLink>
           at the same API Hub resource server, with the
           <a href="#payment-token">payment token</a> the lookup returned and the IBAN to credit.
-          Nothing else is needed: the token already carries the <code>uaeKycId</code>, the
-          customer&rsquo;s account and the amount, and the LFI takes them from it. The API Hub
-          proxies the payment to the LFI, which verifies the token it issued &mdash; its own
-          signature, expiry, <code>InstrumentType: ACCOUNT</code>, that it was issued to your
-          organisation, and that it has not been used &mdash; and creates the payment only if it is
-          valid. The LFI marks the token used once it creates the payment.
+          Nothing else is needed: the LFI stored the <code>uaeKycId</code>, the customer&rsquo;s
+          account and the amount against the payment token, and takes them from there. The API Hub
+          proxies the payment to the LFI, which looks up the payment token &mdash; that it issued
+          it, that it has not expired, that it was issued for an <code>ACCOUNT</code> and to your
+          organisation, and that it has not been used &mdash; and creates the payment only if it
+          passes. The LFI marks the payment token used once it creates the payment.
         </p>
       </EdProse>
       <EdNote type="info" title="You are accountable for the creditor account">
         <p>
-          The account to credit is not in the payment token, and the customer&rsquo;s biometric
-          gesture is not bound to it. You supply it on the payment and are accountable for it, as
+          The LFI did not issue the payment token for an account to credit, and the
+          customer&rsquo;s biometric gesture is not bound to one. You supply it on the payment and are accountable for it, as
           an acquirer is for settling with its merchant in a card payment.
         </p>
       </EdNote>
@@ -600,7 +609,7 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
           </thead>
           <tbody>
             <tr><td><code>x-idempotency-key</code></td><td>Generated by you, unique per payment. Keep it until the payment reaches a final status &mdash; it is how you recover from a lost response.</td></tr>
-            <tr><td><code>Data.PaymentToken</code></td><td>The payment token &mdash; the JWS you decrypted from the lookup response, not the JWE &mdash; unchanged.</td></tr>
+            <tr><td><code>Data.PaymentToken</code></td><td>The payment token, unchanged from <code>Data.PaymentToken</code> of the lookup response.</td></tr>
             <tr><td><code>Data.CreditorAccount</code></td><td>The account to credit over AANI. <code>SchemeName</code> is always <code>IBAN</code>.</td></tr>
             <tr><td><code>Data.PaymentPurposeCode</code></td><td>Required. The category of goods or services the payment is for, from the published AANI payment purpose code list.</td></tr>
             <tr><td><code>Data.DebtorReference</code></td><td>Optional. A note for the customer, which may appear on their statement. Up to 35 characters.</td></tr>
@@ -612,8 +621,9 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
       </EdRefTable>
       <EdProse>
         <p>
-          You do not send any evidence of the biometric identification. The API Hub records it from
-          the ICP token embedded in the payment token, once the LFI has accepted the payment.
+          You do not send any evidence of the biometric identification. The API Hub recorded the ICP
+          token and <code>x-fapi-auth-date</code> against the payment token on the lookup, and
+          attaches them to the payment once the LFI has accepted it.
         </p>
       </EdProse>
       <EdCode :code="paymentResponse" lang="http" filename="201 Created" />
@@ -633,14 +643,14 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
             <tr><th>Status</th><th><code>ErrorCode</code></th><th>Meaning and what to do</th></tr>
           </thead>
           <tbody>
-            <tr><td><code>403</code></td><td><code>PaymentToken.InvalidSignature</code></td><td>The payment token was not signed by the LFI or was altered. Check you sent the JWS, not the JWE. Do not retry.</td></tr>
+            <tr><td><code>403</code></td><td><code>PaymentToken.Invalid</code></td><td>The LFI did not issue this payment token. Check you sent <code>Data.PaymentToken</code> from the lookup response, unchanged, to the LFI that issued it. Do not retry.</td></tr>
             <tr><td><code>403</code></td><td><code>PaymentToken.Expired</code></td><td>Take a new biometric and look up again.</td></tr>
-            <tr><td><code>403</code></td><td><code>PaymentToken.WrongInstrumentType</code></td><td>The token is for a <code>CARD</code>. Authorise through the card scheme instead.</td></tr>
-            <tr><td><code>403</code></td><td><code>PaymentToken.BindingMismatch</code></td><td>The token was issued to a different organisation. Present it from the organisation that made the lookup.</td></tr>
-            <tr><td><code>403</code></td><td><code>PaymentToken.AlreadyUsed</code></td><td>A payment already used this token. If you are retrying, use the same <code>x-idempotency-key</code> and body; otherwise take a new biometric.</td></tr>
+            <tr><td><code>403</code></td><td><code>PaymentToken.WrongInstrumentType</code></td><td>The payment token was issued for a <code>CARD</code>. Authorise through the card scheme instead.</td></tr>
+            <tr><td><code>403</code></td><td><code>PaymentToken.BindingMismatch</code></td><td>The payment token was issued to a different organisation. Present it from the organisation that made the lookup.</td></tr>
+            <tr><td><code>403</code></td><td><code>PaymentToken.AlreadyUsed</code></td><td>A payment already used this payment token. If you are retrying, use the same <code>x-idempotency-key</code> and body; otherwise take a new biometric.</td></tr>
             <tr><td><code>403</code></td><td><code>Account.TemporarilyBlocked</code></td><td>The customer&rsquo;s account is <code>Inactive</code>, <code>Dormant</code> or <code>Suspended</code>. Tell the customer to contact their bank, and offer another payment method.</td></tr>
             <tr><td><code>403</code></td><td><code>Account.PermanentAccessFailure</code></td><td>The customer&rsquo;s account is <code>Closed</code>, <code>Deceased</code> or <code>Unclaimed</code>. Do not retry. Offer another payment method.</td></tr>
-            <tr><td><code>403</code></td><td><code>Account.DebtorAccountMismatch</code></td><td>The payment token&rsquo;s <code>DebtorAccount</code> is no longer the account the customer has registered for BioPay &mdash; for example, they changed it after the lookup. Take a new biometric and start again from the lookup.</td></tr>
+            <tr><td><code>403</code></td><td><code>Account.DebtorAccountMismatch</code></td><td>The <code>DebtorAccount</code> the payment token was issued for is no longer the account the customer has registered for BioPay &mdash; for example, they changed it after the lookup. Take a new biometric and start again from the lookup.</td></tr>
             <tr><td><code>403</code></td><td><code>Account.TransientAccessFailure</code></td><td>The account is temporarily inaccessible. You MAY retry once while the payment token is still valid; otherwise offer another payment method.</td></tr>
             <tr><td><code>409</code></td><td>&mdash;</td><td>The <code>x-idempotency-key</code> was already used with a different body.</td></tr>
             <tr><td><code>500</code></td><td><code>GenericRecoverableError</code></td><td>A temporary failure at the API Hub or the LFI. Retry with the same <code>x-idempotency-key</code> and identical body while the payment token is still valid.</td></tr>
@@ -811,23 +821,22 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
       </EdNote>
       <EdProse>
         <p>
-          After Step 4 you hold the <a href="#payment-token">payment token</a> with
-          <code>InstrumentType: CARD</code>, carrying the customer&rsquo;s <code>CardDetails</code>.
-          As acquirer, you submit the authorisation to Jaywan &mdash; not through the API Hub. It
-          will carry:
+          After Step 4 you hold the <a href="#payment-token">instrument details</a> with
+          <code>InstrumentType: CARD</code>, carrying the customer&rsquo;s <code>CardDetails</code>,
+          and the payment token. As acquirer, you submit the authorisation to Jaywan &mdash; not
+          through the API Hub. It will carry:
         </p>
       </EdProse>
       <EdBullets accent="var(--at-navy)">
-        <li><code>CardNumber</code> and <code>ExpiryDate</code> from the payment token, and the same amount, <code>MerchantId</code>, <code>TerminalId</code>, <code>AcquirerId</code> and <code>MerchantName</code> you sent on the lookup.</li>
-        <li>The payment token, with cardholder verification coded as biometric, verified by ICP. Field mapping to be agreed with the scheme.</li>
+        <li><code>CardNumber</code> and <code>ExpiryDate</code> from the instrument details, and the same amount, <code>MerchantId</code>, <code>TerminalId</code>, <code>AcquirerId</code> and <code>MerchantName</code> you sent on the lookup.</li>
+        <li>The payment token &mdash; 22 characters &mdash; with cardholder verification coded as biometric, verified by ICP. Field mapping to be agreed with the scheme.</li>
       </EdBullets>
       <EdProse>
         <p>
-          The card scheme carries the payment token to the LFI as issuer. The LFI verifies the token
-          it issued &mdash; its own signature and expiry, that it is a <code>CARD</code> token, that
-          the card, amount, merchant, terminal and acquirer match the authorisation, and that it has
-          not been used
-          &mdash; marks it used, and approves or declines. The outcome comes back to you from the
+          The card scheme carries the payment token to the LFI as issuer. The LFI looks it up &mdash;
+          that it issued it, that it has not expired, that it was issued for a <code>CARD</code>,
+          that the card, amount, merchant, terminal and acquirer in the authorisation match what it
+          stored, and that it has not been used &mdash; marks it used, and approves or declines. The outcome comes back to you from the
           card scheme; there is no <code>PaymentId</code>, payment status event or polling for a card
           payment.
         </p>

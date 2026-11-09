@@ -197,14 +197,14 @@ const bpipCalls: Endpoint[] = [
         </li>
         <li>
           <strong>Encryption certificate &mdash; required.</strong> Every BPIP MUST register an
-          encryption certificate, because the payment token in every
+          encryption certificate, because the instrument details in every
           <RouterLink to="/biopay/payment/api-reference/instrument-lookup"><code>POST /instrument-lookup</code></RouterLink>
-          response is encrypted to it:
+          response are encrypted to it:
           <ul>
             <li>
-              <strong>Payment token.</strong> The LFI MUST sign the payment token &mdash; carrying
-              the customer&rsquo;s IBAN or card details &mdash; and encrypt it into a JWE using the
-              BPIP&rsquo;s public encryption key, taken from the Directory. The API Hub proxies the
+              <strong>Instrument details.</strong> The LFI MUST sign the instrument details
+              &mdash; carrying the customer&rsquo;s IBAN or card details &mdash; and encrypt them into
+              a JWE using the BPIP&rsquo;s public encryption key, taken from the Directory. The API Hub proxies the
               JWE unread, so card data never passes through it in the clear &mdash; keeping the API
               Hub out of PCI DSS scope. Only the BPIP, holding the private key, can decrypt it.
             </li>
