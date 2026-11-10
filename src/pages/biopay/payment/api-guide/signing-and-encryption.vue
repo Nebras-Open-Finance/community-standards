@@ -567,7 +567,8 @@ async function openInstrumentQueryResponse(
   // 4. Issued to you, for what you sent
   if (payload.azp !== myOrganisationId) throw new Error('Response was not issued to this BPIP')
   const data = (payload.message as { Data: Record<string, unknown> }).Data
-  for (const field of ['UaeKycId', 'IcpToken', 'MerchantId', 'TerminalId', 'AcquirerId', 'MerchantName'] as const) {
+  const echoed: (keyof InstrumentQueryData)[] = ['UaeKycId', 'IcpToken', 'MerchantId', 'TerminalId', 'AcquirerId', 'MerchantName']
+  for (const field of echoed) {
     if (data[field] !== sent[field]) throw new Error('Response is not for the ' + field + ' you sent')
   }
   const amount = data.InstructedAmount as Amount
