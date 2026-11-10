@@ -189,7 +189,6 @@ declare module 'vue' {
     SearchModal: typeof import('./components/chrome/SearchModal.vue')['default']
     ServiceInitiationPermissionText: typeof import('./components/common/permissions/ServiceInitiationPermissionText.vue')['default']
     SiteAnnouncementModal: typeof import('./components/chrome/SiteAnnouncementModal.vue')['default']
-    SoConfirmDialog: typeof import('./components/common/jira-forms/sandbox-onboarding/SoConfirmDialog.vue')['default']
     SoContactFields: typeof import('./components/common/jira-forms/sandbox-onboarding/SoContactFields.vue')['default']
     SoDocumentUpload: typeof import('./components/common/jira-forms/sandbox-onboarding/SoDocumentUpload.vue')['default']
     SoErrorSummary: typeof import('./components/common/jira-forms/sandbox-onboarding/SoErrorSummary.vue')['default']

@@ -1,0 +1,737 @@
+openapi: 3.0.0
+info:
+  title: UAE Biometric Payments API
+  description: '## UAE Open Finance Biometric Payments API Specification'
+  version: v2.2-rc2
+servers:
+  - url: /open-finance/biometric-payments/v2.2
+tags:
+  - name: Instruments
+    description: Instruments Resource
+paths:
+  /instrument-query:
+    post:
+      tags:
+        - Instruments
+      summary: Instrument Query
+      description: |
+        Query the instrument a User has designated at the LFI as their default instrument for a given service.
+
+        The only service supported is ICP Pay. The TPP resolves the User with ICP before calling this operation,
+        and receives the `UaeKycId` and an ICP token for the identification. The instrument is designated by the
+        User directly with the LFI, through a user experience of the LFI's own design.
+
+        The TPP must send the request as a signed message, encrypted as a JWE to the LFI's public encryption key with
+        the content type `application/jwt`, where the entire request body is encrypted. Sending the signed message
+        without encryption is prohibited. The signed message is described in the request schema for guidance only. The
+        request carries the `UaeKycId` and ICP token, the amount, and the merchant, terminal and acquirer the payment
+        is made at. The LFI must decrypt the request, verify the signature and validate the ICP token with ICP before
+        answering.
+
+        The LFI must return the response as a signed message, encrypted as a JWE with the content type
+        `application/jwt`, where the entire response body is encrypted. Returning the signed message without
+        encryption is prohibited. The signed message is described in the response schema for guidance only.
+
+        The response carries a single payment token, which the TPP passes back to the LFI at the point of payment,
+        with the values from the request it was issued for, and in `Data.Instruments` the instruments the LFI holds
+        for the User: each an `IBAN` or a `PAN`.
+
+        If the LFI cannot match an instrument based on the values in the request, the LFI must return a `400` response
+        with the error code `Query.UnmatchedInstrument`.
+
+        This operation is not carried out under a consent. The TPP must obtain an access token using the
+        Client Credentials grant type with the `biometric-payments` scope.
+
+        **Only a TPP with the Biometric Payment Initiation Provider (BPIP) role in the Trust Framework will be
+        granted the `biometric-payments` scope.** A TPP without the BPIP role cannot obtain an access token with
+        this scope, and so cannot call this operation.
+      operationId: InstrumentQuery
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/x-fapi-interaction-id'
+      requestBody:
+        description: Request Body
+        required: true
+        content:
+          application/jwt:
+            schema:
+              $ref: '#/components/schemas/AEInstrumentQueryRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/200InstrumentQuery'
+        '400':
+          $ref: '#/components/responses/400Error'
+        '401':
+          $ref: '#/components/responses/401Error'
+        '403':
+          $ref: '#/components/responses/403Error'
+        '405':
+          $ref: '#/components/responses/405Error'
+        '406':
+          $ref: '#/components/responses/406Error'
+        '415':
+          $ref: '#/components/responses/415Error'
+        '429':
+          $ref: '#/components/responses/429Error'
+        '500':
+          $ref: '#/components/responses/500Error'
+      security:
+        - TPPOAuth2Security:
+            - biometric-payments
+components:
+  headers:
+    x-fapi-interaction-id:
+      required: true
+      description: An RFC4122 UID used as a correlation id.
+      schema:
+        type: string
+      example: 49df2c2c-6b80-40ee-96a1-71910a248048
+  responses:
+    400Error:
+      description: Bad request
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+      content:
+        application/json; charset=utf-8:
+          schema:
+            $ref: '#/components/schemas/AEError400Response'
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AEError400Response'
+        application/jwt:
+          schema:
+            $ref: '#/components/schemas/AEError400ResponseSigned'
+    401Error:
+      description: Unauthorized
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    403Error:
+      description: Forbidden
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+      content:
+        application/json; charset=utf-8:
+          schema:
+            $ref: '#/components/schemas/AEError403Response'
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AEError403Response'
+        application/jwt:
+          schema:
+            $ref: '#/components/schemas/AEError403ResponseSigned'
+    405Error:
+      description: Method Not Allowed
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    406Error:
+      description: Not Acceptable
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    415Error:
+      description: Unsupported Media Type
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    429Error:
+      description: Too Many Requests
+      headers:
+        Retry-After:
+          description: Number in seconds to wait
+          schema:
+            type: integer
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+    500Error:
+      description: Internal Server Error
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+      content:
+        application/json; charset=utf-8:
+          schema:
+            $ref: '#/components/schemas/AEError500Response'
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AEError500Response'
+        application/jwt:
+          schema:
+            $ref: '#/components/schemas/AEError500ResponseSigned'
+    200InstrumentQuery:
+      description: Instrument Query
+      headers:
+        x-fapi-interaction-id:
+          $ref: '#/components/headers/x-fapi-interaction-id'
+      content:
+        application/jwt:
+          schema:
+            $ref: '#/components/schemas/AEInstrumentQueryResponse'
+  schemas:
+    AEJwt:
+      description: |
+        [https://www.rfc-editor.org/rfc/rfc7519](https://www.rfc-editor.org/rfc/rfc7519)
+      type: object
+      properties:
+        iss:
+          description: |
+            [https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1)
+          type: string
+        exp:
+          description: |
+            [https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4)
+          type: number
+        nbf:
+          description: |
+            [https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5)
+          type: number
+        aud:
+          description: |
+            [https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3)
+          type: array
+          items:
+            type: string
+        iat:
+          description: |
+            [https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6)
+          type: number
+      required:
+        - iss
+        - exp
+        - nbf
+    AEInstrumentQueryRequest:
+      description: >-
+        Instrument Query request. The TPP must send the request as a JWE, described by
+        `AEInstrumentQueryRequestEncrypted`. The signed message, described by `AEInstrumentQueryRequestSigned`, is the
+        payload that is encrypted and is provided for guidance only. Sending the signed message without encryption is
+        prohibited.
+      anyOf:
+        - $ref: '#/components/schemas/AEInstrumentQueryRequestSigned'
+        - $ref: '#/components/schemas/AEInstrumentQueryRequestEncrypted'
+    AEInstrumentQueryRequestSigned:
+      title: Signed Request Data
+      description: >-
+        Instrument Query Request Signed Schema. This is the signed message that the TPP encrypts as a JWE before it is
+        sent. **This is provided for guidance only. Sending the signed message without encryption is prohibited.**
+      allOf:
+        - $ref: '#/components/schemas/AEJwt'
+        - type: object
+          properties:
+            message:
+              $ref: '#/components/schemas/AEInstrumentQueryRequestMessage'
+          required:
+            - message
+    AEInstrumentQueryRequestEncrypted:
+      title: Encrypted Request Data
+      description: >-
+        Instrument Query request, provided as a JWE by the TPP and encrypted to the LFI's public encryption key. The
+        entire request body is encrypted, and the decrypted payload is the signed message described by
+        `AEInstrumentQueryRequestSigned`. Please refer to the business rules for a description of the approach to
+        signing and encrypting this data.
+      type: string
+      example: eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00ifQ....
+    AEInstrumentQueryRequestMessage:
+      description: >-
+        The payload of the signed request message. Carries the identifier and the ICP token ICP returned on
+        resolution of the customer, the amount, and the merchant, terminal and acquirer the payment is made at.
+      type: object
+      required:
+        - Data
+      properties:
+        Data:
+          type: object
+          description: Primary data for the resource
+          required:
+            - UaeKycId
+            - IcpToken
+            - InstructedAmount
+            - MerchantId
+            - TerminalId
+            - AcquirerId
+            - MerchantName
+          properties:
+            UaeKycId:
+              description: Know Your Customer identification reference, as ICP returned it with the ICP token.
+              allOf:
+                - $ref: '#/components/schemas/AEUaeKycId'
+            IcpToken:
+              description: The ICP token for this identification, unchanged.
+              allOf:
+                - $ref: '#/components/schemas/AEIcpToken'
+            InstructedAmount:
+              description: The amount processed for the transaction (DE04).
+              allOf:
+                - $ref: '#/components/schemas/AEAmount'
+            MerchantId:
+              $ref: '#/components/schemas/AEMerchantId'
+            TerminalId:
+              $ref: '#/components/schemas/AETerminalId'
+            AcquirerId:
+              $ref: '#/components/schemas/AEAcquirerId'
+            MerchantName:
+              $ref: '#/components/schemas/AEMerchantName'
+          additionalProperties: false
+      additionalProperties: false
+    AEUaeKycId:
+      description: >-
+        The identifier ICP issues for a verified identity, and the only identity-bearing value that crosses into Open
+        Finance in this journey. Format to be confirmed.
+      type: string
+      maxLength: 70
+      example: ICP-7c9e1f4a-2b60-4d3e-9a15-0f8c2d1b7e43
+    AEIcpToken:
+      description: >-
+        An opaque identifier ICP returns to the TPP through the ICP SDK when it identifies the customer: ICP's
+        reference for that identification, issued at the point of customer identity verification. Short-lived and
+        single-use. The LFI validates it by calling ICP's token validation endpoint, at which ICP confirms that it
+        issued the token to the calling TPP for the `UaeKycId`, that it has not expired and that it has not been used,
+        and marks it used.
+      type: string
+      maxLength: 40
+      example: d95fdf39-c9d5-4762-ad8a-ce26f3167ecc
+    AEAmount:
+      type: object
+      required:
+        - Amount
+        - Currency
+      properties:
+        Amount:
+          type: string
+          pattern: ^\d{1,13}\.\d{1,5}$
+          example: '149.50'
+        Currency:
+          type: string
+          pattern: ^[A-Z]{3}$
+          example: AED
+      additionalProperties: false
+    AEMerchantId:
+      description: Unique identification code assigned to the merchant (DE42).
+      type: string
+      minLength: 1
+      maxLength: 15
+      example: '100000000000731'
+    AETerminalId:
+      description: Unique identification code assigned to the terminal (DE41).
+      type: string
+      minLength: 1
+      maxLength: 8
+      example: T0000042
+    AEAcquirerId:
+      description: Unique identification code assigned to the acquiring bank (DE32).
+      type: string
+      pattern: ^\d{1,11}$
+      example: '123456'
+    AEMerchantName:
+      description: Name of the merchant (DE43).
+      type: string
+      minLength: 1
+      maxLength: 40
+      example: Example Grocers
+    AEInstrumentQueryResponse:
+      description: >-
+        Instrument Query response. The LFI must return the response as a JWE, described by
+        `AEInstrumentQueryResponseEncrypted`. The signed message, described by `AEInstrumentQueryResponseSigned`, is
+        the payload that is encrypted and is provided for guidance only. Returning the signed message without
+        encryption is prohibited.
+      anyOf:
+        - $ref: '#/components/schemas/AEInstrumentQueryResponseSigned'
+        - $ref: '#/components/schemas/AEInstrumentQueryResponseEncrypted'
+    AEInstrumentQueryResponseSigned:
+      title: Signed Response Data
+      description: >-
+        Instrument Query Response Signed Schema. This is the signed message that is encrypted as a JWE before it is
+        returned. **This is provided for guidance only. Returning the signed message without encryption is
+        prohibited.**
+      allOf:
+        - $ref: '#/components/schemas/AEJwt'
+        - type: object
+          properties:
+            azp:
+              description: >-
+                The TPP the response, and the payment token in it, were issued to: its Directory organisation
+                identifier. When a payment token is presented at the point of payment, the LFI checks it
+                against the TPP presenting it.
+              type: string
+            message:
+              $ref: '#/components/schemas/AEInstrumentQueryResponseMessage'
+          required:
+            - azp
+            - message
+    AEInstrumentQueryResponseEncrypted:
+      title: Encrypted Response Data
+      description: >-
+        Instrument Query response, provided as a JWE by the LFI. The entire response body is encrypted, and the
+        decrypted payload is the signed message described by `AEInstrumentQueryResponseSigned`. Please refer to the
+        business rules for a description of the approach to decrypting this data.
+      type: string
+      example: eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00ifQ....
+    AEInstrumentQueryResponseMessage:
+      description: >-
+        The payload of the signed response message. Carries the payment token the LFI issued, what it issued it for,
+        and the instruments the LFI holds for the customer.
+      type: object
+      required:
+        - Data
+      properties:
+        Data:
+          type: object
+          description: Primary data for the resource
+          required:
+            - UaeKycId
+            - IcpToken
+            - InstructedAmount
+            - MerchantId
+            - TerminalId
+            - AcquirerId
+            - MerchantName
+            - PaymentToken
+            - Instruments
+          properties:
+            UaeKycId:
+              $ref: '#/components/schemas/AEUaeKycId'
+            IcpToken:
+              description: The ICP token presented on the request, unchanged.
+              allOf:
+                - $ref: '#/components/schemas/AEIcpToken'
+            InstructedAmount:
+              description: The `InstructedAmount` from the request.
+              allOf:
+                - $ref: '#/components/schemas/AEAmount'
+            MerchantId:
+              description: The `MerchantId` from the request, unchanged.
+              allOf:
+                - $ref: '#/components/schemas/AEMerchantId'
+            TerminalId:
+              description: The `TerminalId` from the request, unchanged.
+              allOf:
+                - $ref: '#/components/schemas/AETerminalId'
+            AcquirerId:
+              description: The `AcquirerId` from the request, unchanged.
+              allOf:
+                - $ref: '#/components/schemas/AEAcquirerId'
+            MerchantName:
+              description: The `MerchantName` from the request, unchanged. Not matched at the point of payment.
+              allOf:
+                - $ref: '#/components/schemas/AEMerchantName'
+            PaymentToken:
+              $ref: '#/components/schemas/AEPaymentToken'
+            Instruments:
+              description: The instruments the LFI holds for the customer.
+              type: array
+              items:
+                $ref: '#/components/schemas/AEInstrumentDetails'
+          additionalProperties: false
+      additionalProperties: false
+    AEInstrumentDetails:
+      title: Instrument details
+      description: >-
+        A payment instrument the customer registered for ICP Pay, selected by `SchemeName`. The TPP routes the
+        payment on `SchemeName`: `IBAN` for an account-to-account payment, `PAN` for a card
+        payment through the card scheme (e.g. Jaywan).
+      oneOf:
+        - $ref: '#/components/schemas/AEInstrumentDetailsIban'
+        - $ref: '#/components/schemas/AEInstrumentDetailsPan'
+      discriminator:
+        propertyName: SchemeName
+        mapping:
+          IBAN: '#/components/schemas/AEInstrumentDetailsIban'
+          PAN: '#/components/schemas/AEInstrumentDetailsPan'
+    AEInstrumentDetailsIban:
+      title: IBAN
+      description: >-
+        An account, for an account-to-account payment. The TPP makes the payment with the payment token, and the LFI
+        debits the account identified by `Identification`.
+      type: object
+      required:
+        - SchemeName
+        - Identification
+      properties:
+        SchemeName:
+          description: Name of the identification scheme for the instrument.
+          type: string
+          enum:
+            - IBAN
+        Identification:
+          description: >-
+            The IBAN of the customer's account registered for ICP Pay, which the LFI debits when the payment is made
+            with the payment token.
+          type: string
+          maxLength: 70
+          example: AE070331234567890123456
+      additionalProperties: false
+    AEInstrumentDetailsPan:
+      title: PAN
+      description: >-
+        A card, for a card payment. The TPP submits the authorisation to the card scheme (e.g. Jaywan) as acquirer,
+        with the card details and the payment token. The LFI, as issuer, checks that the card, amount, `MerchantId`,
+        `TerminalId` and `AcquirerId` in the authorisation match what it stored against the payment token.
+      type: object
+      required:
+        - SchemeName
+        - Identification
+        - ExpiryDate
+      properties:
+        SchemeName:
+          description: Name of the identification scheme for the instrument.
+          type: string
+          enum:
+            - PAN
+        Identification:
+          description: >-
+            The number of the card the customer registered for ICP Pay. Whether this is the card number or a card
+            scheme token is an open item.
+          type: string
+          pattern: ^\d{16}$
+          example: '4895370012003478'
+        ExpiryDate:
+          description: The expiry date of the card, as `MM/YY`. Format to be confirmed.
+          type: string
+          pattern: ^(0[1-9]|1[0-2])\/\d{2}$
+          example: '08/29'
+      additionalProperties: false
+    AEPaymentToken:
+      title: Payment token
+      description: >-
+        An opaque, single-use reference the LFI issues in the response, and the only thing the TPP passes back to the
+        LFI at the point of payment: when initiating the payment for an `IBAN` instrument, or in the card
+        authorisation through the card scheme for a `PAN` instrument.
+
+
+        A UUID in its canonical 36-character form: 32 hexadecimal digits in five groups separated by hyphens
+        (8-4-4-4-12). The LFI should generate a version 4 (random) UUID.
+      type: string
+      minLength: 36
+      maxLength: 36
+      pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+      example: 3f2b8c1e-7a4d-4e9b-b6c2-5d1e0f9a8b7c
+    AEError400ResponseSigned:
+      description: |
+        Error Signed Schema
+      allOf:
+        - $ref: '#/components/schemas/AEJwt'
+        - type: object
+          properties:
+            message:
+              $ref: '#/components/schemas/AEError400Response'
+          required:
+            - message
+    AEError403ResponseSigned:
+      description: |
+        Error Signed Schema
+      allOf:
+        - $ref: '#/components/schemas/AEJwt'
+        - type: object
+          properties:
+            message:
+              $ref: '#/components/schemas/AEError403Response'
+          required:
+            - message
+    AEError500ResponseSigned:
+      description: |
+        Error Signed Schema
+      allOf:
+        - $ref: '#/components/schemas/AEJwt'
+        - type: object
+          properties:
+            message:
+              $ref: '#/components/schemas/AEError500Response'
+          required:
+            - message
+    AEError400Response:
+      description: An array of detail error codes, and messages, and URLs to documentation to help remediation.
+      type: object
+      properties:
+        Errors:
+          items:
+            $ref: '#/components/schemas/AEError400'
+          type: array
+          minItems: 1
+      required:
+        - Errors
+      additionalProperties: false
+    AEError403Response:
+      description: An array of detail error codes, and messages, and URLs to documentation to help remediation.
+      type: object
+      properties:
+        Errors:
+          items:
+            $ref: '#/components/schemas/AEError403'
+          type: array
+          minItems: 1
+      required:
+        - Errors
+      additionalProperties: false
+    AEError500Response:
+      description: An array of detail error codes, and messages, and URLs to documentation to help remediation.
+      type: object
+      properties:
+        Errors:
+          items:
+            $ref: '#/components/schemas/AEError500'
+          type: array
+          minItems: 1
+      required:
+        - Errors
+      additionalProperties: false
+    AEMessage:
+      type: string
+      minLength: 1
+      maxLength: 500
+      description: >-
+        A description of the error that occurred. e.g., 'A mandatory field isn't supplied' or
+        'RequestedExecutionDateTime must be in future'
+
+        This field is not standardised
+    AEError400:
+      description: Error
+      type: object
+      required:
+        - Code
+        - Message
+      additionalProperties: false
+      properties:
+        Code:
+          $ref: '#/components/schemas/AEError400Code'
+        Message:
+          $ref: '#/components/schemas/AEMessage'
+        Path:
+          description: >-
+            Recommended but optional reference to the JSON Path of the field with error, e.g.,
+            Data.Initiation.InstructedAmount.Currency
+          type: string
+          minLength: 1
+          maxLength: 500
+        Url:
+          description: URL to help remediate the problem, or provide more information, or to API Reference, or help etc
+          type: string
+    AEError400Code:
+      description: >-
+        Error Code. This may either be one of the prescribed Error Code(s) or a namespaced Error Code where the
+        namespace is the system or organisation that has responded with the error, and the code is the code specific to
+        the system or organisation.
+      type: string
+      anyOf:
+        - enum:
+            - Consent.Invalid
+            - Consent.BusinessRuleViolation
+            - Consent.FailsControlParameters
+            - Consent.InvalidUserIdentifier
+            - JWS.InvalidSignature
+            - JWS.Malformed
+            - JWS.InvalidClaim
+            - JWS.InvalidHeader
+            - JWE.DecryptionError
+            - JWE.InvalidHeader
+            - GenericRecoverableError
+            - GenericError
+            - Event.UnexpectedEvent
+            - Body.InvalidFormat
+            - Resource.InvalidFormat
+            - Query.UnmatchedInstrument
+        - pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+    AEError403:
+      description: Error
+      type: object
+      required:
+        - Code
+        - Message
+      additionalProperties: false
+      properties:
+        Code:
+          $ref: '#/components/schemas/AEError403Code'
+        Message:
+          $ref: '#/components/schemas/AEMessage'
+        Path:
+          description: >-
+            Recommended but optional reference to the JSON Path of the field with error, e.g.,
+            Data.Initiation.InstructedAmount.Currency
+          type: string
+          minLength: 1
+          maxLength: 500
+        Url:
+          description: URL to help remediate the problem, or provide more information, or to API Reference, or help etc
+          type: string
+    AEError403Code:
+      description: >-
+        Error Code. This may either be one of the prescribed Error Code(s) or a namespaced Error Code where the
+        namespace is the system or organisation that has responded with the error, and the code is the code specific to
+        the system or organisation.
+      type: string
+      anyOf:
+        - enum:
+            - AccessToken.InvalidScope
+            - Consent.TransientAccountAccessFailure
+            - Consent.AccountTemporarilyBlocked
+            - Consent.PermanentAccountAccessFailure
+            - GenericRecoverableError
+            - GenericError
+        - pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+    AEError500:
+      description: Error
+      type: object
+      required:
+        - Code
+        - Message
+      additionalProperties: false
+      properties:
+        Code:
+          $ref: '#/components/schemas/AEError500Code'
+        Message:
+          $ref: '#/components/schemas/AEMessage'
+        Path:
+          description: >-
+            Recommended but optional reference to the JSON Path of the field with error, e.g.,
+            Data.Initiation.InstructedAmount.Currency
+          type: string
+          minLength: 1
+          maxLength: 500
+        Url:
+          description: URL to help remediate the problem, or provide more information, or to API Reference, or help etc
+          type: string
+    AEError500Code:
+      description: >-
+        Error Code. This may either be one of the prescribed Error Code(s) or a namespaced Error Code where the
+        namespace is the system or organisation that has responded with the error, and the code is the code specific to
+        the system or organisation.
+      type: string
+      anyOf:
+        - enum:
+            - GenericRecoverableError
+            - GenericError
+        - pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+  parameters:
+    Authorization:
+      name: authorization
+      in: header
+      required: true
+      description: An authorization Token as per https://tools.ietf.org/html/rfc6750
+      schema:
+        type: string
+    x-fapi-interaction-id:
+      in: header
+      name: x-fapi-interaction-id
+      required: false
+      description: An RFC4122 UID used as a correlation id.
+      schema:
+        type: string
+  securitySchemes:
+    TPPOAuth2Security:
+      type: oauth2
+      description: >-
+        TPP confidential client authorization with the LFI to stage a consent. **Please refer to [OpenID FAPI Security
+        Profile 1.0 -Part 2
+        Advanced](https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server) - 5.2.2 point 14 -
+        shall authenticate the confidential client using one of the following methods private_key_jwt and [OpenID
+        Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) 9. Client
+        Authentication private_key_jwt**
+      flows:
+        clientCredentials:
+          tokenUrl: https://authserver.example/token
+          scopes:
+            openid: Activates OpenID Connect Support
+            biometric-payments: >-
+              Ability to query instruments for Biometric Payments. Only granted to a TPP with the Biometric Payment
+              Initiation Provider (BPIP) role in the Trust Framework.

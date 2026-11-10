@@ -11,20 +11,24 @@
 //   Registration — the LFI registers the customer with ICP directly through
 //     the ICP SDK. The API Hub plays no part.
 //   Payment — the BPIP resolves the customer with ICP through the ICP SDK,
-//     looks up the payment instrument at the LFI through the API Hub, then
-//     either pays account-to-account through the Hub (tracked by PaymentId)
-//     or submits a card authorisation to the card scheme.
+//     queries the payment instrument at the LFI through the API Hub
+//     (POST /instrument-query), then either pays account-to-account through
+//     the Hub (tracked by PaymentId) or submits a card authorisation to the
+//     card scheme.
 //
-// Everything here is Draft. No endpoint is published and the schemas are
-// proposals, not specifications.
+// Everything here is Draft. The API Reference renders the Standards and Ozone
+// Connect specs from api-specs PR #37, which is not merged (see biopay-spec.ts).
+// PR #37 specifies only the instrument query. The account payment, payment
+// status and payment log operations are still the earlier site-held proposal
+// in openapi-drafts/biopay-icp-schema.yaml.
 //
 // The /biopay password gate is not a real security boundary (see useSpaceAuth)
 // — it only keeps this area out of casual sight.
 
 import type { EdSidebarItemData } from '@/components/editorial/EdSidebarItem.vue'
 
-/** The draft OpenAPI document behind every page under an API Reference group. */
-export { BIOPAY_SPEC } from './biopay-spec'
+/** The OpenAPI documents behind the pages under the API Reference group. */
+export { BIOPAY_STANDARDS_SPEC, BIOPAY_OZONE_CONNECT_SPEC } from './biopay-spec'
 
 export type BiopayStatus = 'Draft' | 'In review' | 'Agreed'
 
@@ -109,6 +113,10 @@ export const biopaySidebar: EdSidebarItemData[] = [
             text: 'Signing and Encryption',
             link: '/biopay/payment/api-guide/signing-and-encryption',
           },
+          {
+            text: 'Payment Token',
+            link: '/biopay/payment/api-guide/payment-token',
+          },
         ],
       },
       {
@@ -116,24 +124,24 @@ export const biopaySidebar: EdSidebarItemData[] = [
         collapsed: false,
         items: [
           {
-            text: 'POST /biometric-payments',
-            link: '/biopay/payment/api-reference/biometric-payments',
+            text: 'Standards (BPIP → API Hub)',
+            collapsed: false,
+            items: [
+              {
+                text: 'POST /instrument-query',
+                link: '/biopay/payment/api-reference/standards/instrument-query',
+              },
+            ],
           },
           {
-            text: 'GET /biometric-payments/{PaymentId}',
-            link: '/biopay/payment/api-reference/biometric-payments-payment-id',
-          },
-          {
-            text: 'PATCH /biometrics-payment-log',
-            link: '/biopay/payment/api-reference/biometrics-payment-log',
-          },
-          {
-            text: 'POST /instrument-lookup',
-            link: '/biopay/payment/api-reference/instrument-lookup',
-          },
-          {
-            text: 'Payment status event',
-            link: '/biopay/payment/api-reference/payment-status-event',
+            text: 'Ozone Connect (API Hub → LFI)',
+            collapsed: false,
+            items: [
+              {
+                text: 'POST /customers/action/instrument-query',
+                link: '/biopay/payment/api-reference/ozone-connect/instrument-query',
+              },
+            ],
           },
         ],
       },

@@ -1,0 +1,743 @@
+openapi: 3.0.1
+info:
+  title: Ozone Connect - Biometric Payments APIs
+  contact:
+    name: Ozone Financial Technology Limited
+  description: >
+    This document provides an API description in [OpenAPI](https://spec.openapis.org/oas/v3.0.1.html)
+
+    for Biometric Payments APIs for Ozone Connect.
+
+
+    These APIs should be implemented by a financial institution to facilitate integration with the API Hub.
+
+
+    ### Versioning
+
+
+    The `version` property implements the following pattern
+    `{standards-major}.{standards-minor}.{ozone-connect-version}`, where:
+
+
+    * `standards-major` is the major version of the latest UAE standard that the API description implements.
+
+    * `standards-minor` is the minor version of the latest UAE standard that the API description implements.
+
+    * `ozone-connect-version` is the version of the Ozone Connect API description.
+
+
+    So, for example, `v2.0.1` indicates the first version of the Ozone Connect API description that implements the UAE
+    standard version 2.0.
+
+
+    ### v2.2.1
+
+
+    * Initial version, compatible with v2.2 of standards.
+
+    * Added `post /customers/action/instrument-query`, which returns the instrument a customer has designated as their
+      default instrument for ICP Pay payments. The request is a signed message encrypted by the TPP as a JWE to the
+      financial institution, sent as `application/jwt`, carrying the `UaeKycId` and ICP token, the amount, and the
+      merchant, terminal and acquirer the payment is made at. It is not carried out under a consent. The response
+      returns a payment token and the values from the request in `Data`, with `Data.Instruments` listing the
+      instruments, each either an `IBAN` or a `PAN`, signed with `azp` identifying the TPP. The
+      response must be returned as `application/jwt`, as a signed message with the entire body encrypted as a JWE.
+      Sending either the request or the response as a signed message without encryption is prohibited. A `400`
+      response with the new error code `Query.UnmatchedInstrument` is returned if an instrument cannot be
+      matched based on the values in the request.
+
+  version: v2.2.1
+servers:
+  - url: https://<your-ozone-connect-server>
+tags:
+  - name: instruments
+    description: Operations to support returning instrument data to TPPs
+security:
+  - {}
+  - OzoneConnectApiKey: []
+  - OzoneConnectClientCredentials:
+      - placeholder
+  - OzoneConnectJwtAuth: []
+paths:
+  /customers/action/instrument-query:
+    post:
+      tags:
+        - instruments
+      summary: Retrieve instruments based on an instrument query
+      description: >
+        The API is used by Ozone to find the instrument a customer has designated as their default instrument for a
+        given service.
+
+
+        The only service supported is ICP Pay. Ozone will send the request submitted by the TPP, unchanged, with the
+        content type `application/jwt`. The request is a signed message, encrypted as a JWE by the TPP to the public
+        encryption key of the financial institution, where the entire request body is encrypted. The signed message is
+        described in the request schema for guidance only. The request carries the `UaeKycId` and ICP token that ICP
+        returned when it resolved the customer, the amount, and the merchant, terminal and acquirer the payment is made
+        at. The financial institution must decrypt the request, verify the signature, validate the ICP token with ICP,
+        and return the instrument the customer has designated as their default instrument for ICP Pay payments.
+
+
+        The financial institution must return the response as a signed message, encrypted as a JWE with the content
+        type `application/jwt`, where the entire response body is encrypted. Returning the signed message without
+        encryption is prohibited. The signed message is described in the response schema for guidance only.
+
+
+        The response carries a single payment token, with the values from the request it was issued for, and in
+        `Data.Instruments` the instruments the financial institution holds for the customer: each an `IBAN` or a
+        `PAN`. The `azp` claim of the signed response message must be the value of the
+        `o3-caller-org-id` header.
+
+
+        If the financial institution cannot match an instrument based on the values in the request, the financial
+        institution must return a `400` response with the error code `Query.UnmatchedInstrument`.
+
+
+        Note that this operation is not carried out under a consent and the call will not have a `o3-consent-id`
+        header.
+      operationId: findInstrumentsForQuery
+      parameters:
+        - $ref: '#/components/parameters/providerId'
+        - $ref: '#/components/parameters/aspspId'
+        - $ref: '#/components/parameters/callerOrgId'
+        - $ref: '#/components/parameters/callerClientId'
+        - $ref: '#/components/parameters/callerSoftwareStatementId'
+        - $ref: '#/components/parameters/apiUri'
+        - $ref: '#/components/parameters/apiOperation'
+        - $ref: '#/components/parameters/callerInteractionId'
+        - $ref: '#/components/parameters/ozoneInteractionId'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/page-size'
+      requestBody:
+        required: true
+        content:
+          application/jwt:
+            schema:
+              $ref: '#/components/schemas/InstrumentQueryRequest'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/jwt:
+              schema:
+                $ref: '#/components/schemas/InstrumentQueryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        default:
+          $ref: '#/components/responses/Error'
+components:
+  responses:
+    BadRequestError:
+      description: Operation failed due to a invalid request parameter
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error400'
+    UnauthorizedError:
+      description: Operation failed due to an invalid credential or missing token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              errorCode:
+                description: >-
+                  Error code identifying the problem that occurred. Should be implemented based on guidance in standards
+                  and API Hub documentation, but custom error code lists maintained for backwards compatibility with
+                  v1.2.
+                type: string
+              errorMessage:
+                $ref: '#/components/schemas/ErrorMessage'
+    ForbiddenError:
+      description: Operation failed as access to the requested resource is forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error403'
+    InternalServerError:
+      description: Operation failed due to an internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error500'
+    Error:
+      description: Default error response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              errorCode:
+                description: >-
+                  Error code identifying the problem that occurred. Should be implemented based on guidance in standards
+                  and API Hub documentation, but custom error code lists maintained for backwards compatibility with
+                  v1.2.
+                type: string
+              errorMessage:
+                $ref: '#/components/schemas/ErrorMessage'
+  schemas:
+    AEJwt:
+      description: |
+        [https://www.rfc-editor.org/rfc/rfc7519](https://www.rfc-editor.org/rfc/rfc7519)
+      type: object
+      properties:
+        iss:
+          description: |
+            [https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1)
+          type: string
+        exp:
+          description: |
+            [https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4)
+          type: number
+        nbf:
+          description: |
+            [https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5)
+          type: number
+        aud:
+          description: |
+            [https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3)
+          type: array
+          items:
+            type: string
+        iat:
+          description: |
+            [https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6)
+          type: number
+      required:
+        - iss
+        - exp
+        - nbf
+    InstrumentQueryRequest:
+      description: >-
+        The instrument query request. The TPP must send the request as a JWE, described by
+        `InstrumentQueryRequestEncrypted`. The signed message, described by `InstrumentQueryRequestSigned`, is the
+        payload that is encrypted and is provided for guidance only. Sending the signed message without encryption is
+        prohibited.
+      anyOf:
+        - $ref: '#/components/schemas/InstrumentQueryRequestSigned'
+        - $ref: '#/components/schemas/InstrumentQueryRequestEncrypted'
+    InstrumentQueryRequestSigned:
+      title: Signed Request Data
+      description: >-
+        Instrument Query Request Signed Schema. This is the signed message that the TPP encrypts as a JWE before it is
+        sent. **This is provided for guidance only. Sending the signed message without encryption is prohibited.**
+      allOf:
+        - $ref: '#/components/schemas/AEJwt'
+        - type: object
+          properties:
+            message:
+              $ref: '#/components/schemas/InstrumentQueryRequestMessage'
+          required:
+            - message
+    InstrumentQueryRequestEncrypted:
+      title: Encrypted Request Data
+      description: >-
+        Instrument Query request, provided as a JWE by the TPP and encrypted to the financial institution's public
+        encryption key. The entire request body is encrypted, and the decrypted payload is the signed message described
+        by `InstrumentQueryRequestSigned`. Please refer to the business rules for a description of the approach to
+        signing and encrypting this data.
+      type: string
+      example: eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00ifQ....
+    InstrumentQueryRequestMessage:
+      description: >-
+        The payload of the signed request message. Carries the identifier and the ICP token ICP returned on
+        resolution of the customer, the amount, and the merchant, terminal and acquirer the payment is made at.
+      type: object
+      required:
+        - Data
+      properties:
+        Data:
+          type: object
+          description: Primary data for the resource
+          required:
+            - UaeKycId
+            - IcpToken
+            - InstructedAmount
+            - MerchantId
+            - TerminalId
+            - AcquirerId
+            - MerchantName
+          properties:
+            UaeKycId:
+              description: Know Your Customer identification reference, as ICP returned it with the ICP token.
+              allOf:
+                - $ref: '#/components/schemas/AEUaeKycId'
+            IcpToken:
+              description: The ICP token for this identification, unchanged.
+              allOf:
+                - $ref: '#/components/schemas/AEIcpToken'
+            InstructedAmount:
+              description: The amount processed for the transaction (DE04).
+              allOf:
+                - $ref: '#/components/schemas/AEAmount'
+            MerchantId:
+              $ref: '#/components/schemas/AEMerchantId'
+            TerminalId:
+              $ref: '#/components/schemas/AETerminalId'
+            AcquirerId:
+              $ref: '#/components/schemas/AEAcquirerId'
+            MerchantName:
+              $ref: '#/components/schemas/AEMerchantName'
+          additionalProperties: false
+      additionalProperties: false
+    AEUaeKycId:
+      description: >-
+        The identifier ICP issues for a verified identity, and the only identity-bearing value that crosses into Open
+        Finance in this journey. Format to be confirmed.
+      type: string
+      maxLength: 70
+      example: ICP-7c9e1f4a-2b60-4d3e-9a15-0f8c2d1b7e43
+    AEIcpToken:
+      description: >-
+        An opaque identifier ICP returns to the TPP through the ICP SDK when it identifies the customer: ICP's
+        reference for that identification, issued at the point of customer identity verification. Short-lived and
+        single-use. The LFI validates it by calling ICP's token validation endpoint, at which ICP confirms that it
+        issued the token to the calling TPP for the `UaeKycId`, that it has not expired and that it has not been used,
+        and marks it used.
+      type: string
+      maxLength: 40
+      example: d95fdf39-c9d5-4762-ad8a-ce26f3167ecc
+    AEAmount:
+      type: object
+      required:
+        - Amount
+        - Currency
+      properties:
+        Amount:
+          type: string
+          pattern: ^\d{1,13}\.\d{1,5}$
+          example: '149.50'
+        Currency:
+          type: string
+          pattern: ^[A-Z]{3}$
+          example: AED
+      additionalProperties: false
+    AEMerchantId:
+      description: Unique identification code assigned to the merchant (DE42).
+      type: string
+      minLength: 1
+      maxLength: 15
+      example: '100000000000731'
+    AETerminalId:
+      description: Unique identification code assigned to the terminal (DE41).
+      type: string
+      minLength: 1
+      maxLength: 8
+      example: T0000042
+    AEAcquirerId:
+      description: Unique identification code assigned to the acquiring bank (DE32).
+      type: string
+      pattern: ^\d{1,11}$
+      example: '123456'
+    AEMerchantName:
+      description: Name of the merchant (DE43).
+      type: string
+      minLength: 1
+      maxLength: 40
+      example: Example Grocers
+    InstrumentQueryResponse:
+      description: >-
+        The instrument query response. The financial institution must return the response as a JWE, described by
+        `InstrumentQueryResponseEncrypted`. The signed message, described by `InstrumentQueryResponseSigned`, is the
+        payload that is encrypted and is provided for guidance only. Returning the signed message without encryption
+        is prohibited.
+      anyOf:
+        - $ref: '#/components/schemas/InstrumentQueryResponseSigned'
+        - $ref: '#/components/schemas/InstrumentQueryResponseEncrypted'
+    InstrumentQueryResponseSigned:
+      title: Signed Response Data
+      description: >-
+        The signed instrument query response message, which is encrypted as a JWE before it is returned. **This is
+        provided for guidance only. Returning the signed message without encryption is prohibited.**
+      allOf:
+        - $ref: '#/components/schemas/AEJwt'
+        - type: object
+          properties:
+            azp:
+              description: >-
+                The TPP the response, and the payment token in it, were issued to: its Directory organisation
+                identifier. Taken from the `o3-caller-org-id` header. When a payment token is presented at the point of
+                payment, the LFI checks it against the TPP presenting it.
+              type: string
+            message:
+              $ref: '#/components/schemas/InstrumentQueryResponseMessage'
+          required:
+            - azp
+            - message
+    InstrumentQueryResponseEncrypted:
+      title: Encrypted Response Data
+      description: >-
+        The instrument query response, provided as a JWE by the financial institution. The entire response body is
+        encrypted, and the decrypted payload is the signed message described by `InstrumentQueryResponseSigned`.
+        Please refer to the business rules for a description of the approach to encrypting this data.
+      type: string
+      example: eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00ifQ....
+    InstrumentQueryResponseMessage:
+      description: >-
+        The payload of the signed response message. Carries the payment token the LFI issued, what it issued it for,
+        and the instruments the LFI holds for the customer.
+      type: object
+      required:
+        - Data
+      properties:
+        Data:
+          type: object
+          description: Primary data for the resource
+          required:
+            - UaeKycId
+            - IcpToken
+            - InstructedAmount
+            - MerchantId
+            - TerminalId
+            - AcquirerId
+            - MerchantName
+            - PaymentToken
+            - Instruments
+          properties:
+            UaeKycId:
+              $ref: '#/components/schemas/AEUaeKycId'
+            IcpToken:
+              description: The ICP token presented on the request, unchanged.
+              allOf:
+                - $ref: '#/components/schemas/AEIcpToken'
+            InstructedAmount:
+              description: The `InstructedAmount` from the request.
+              allOf:
+                - $ref: '#/components/schemas/AEAmount'
+            MerchantId:
+              description: The `MerchantId` from the request, unchanged.
+              allOf:
+                - $ref: '#/components/schemas/AEMerchantId'
+            TerminalId:
+              description: The `TerminalId` from the request, unchanged.
+              allOf:
+                - $ref: '#/components/schemas/AETerminalId'
+            AcquirerId:
+              description: The `AcquirerId` from the request, unchanged.
+              allOf:
+                - $ref: '#/components/schemas/AEAcquirerId'
+            MerchantName:
+              description: The `MerchantName` from the request, unchanged. Not matched at the point of payment.
+              allOf:
+                - $ref: '#/components/schemas/AEMerchantName'
+            PaymentToken:
+              $ref: '#/components/schemas/AEPaymentToken'
+            Instruments:
+              description: The instruments the LFI holds for the customer.
+              type: array
+              items:
+                $ref: '#/components/schemas/AEInstrumentDetails'
+          additionalProperties: false
+      additionalProperties: false
+    AEInstrumentDetails:
+      title: Instrument details
+      description: >-
+        A payment instrument the customer registered for ICP Pay, selected by `SchemeName`. The TPP routes the
+        payment on `SchemeName`: `IBAN` for an account-to-account payment, `PAN` for a card
+        payment through the card scheme (e.g. Jaywan).
+      oneOf:
+        - $ref: '#/components/schemas/AEInstrumentDetailsIban'
+        - $ref: '#/components/schemas/AEInstrumentDetailsPan'
+      discriminator:
+        propertyName: SchemeName
+        mapping:
+          IBAN: '#/components/schemas/AEInstrumentDetailsIban'
+          PAN: '#/components/schemas/AEInstrumentDetailsPan'
+    AEInstrumentDetailsIban:
+      title: IBAN
+      description: >-
+        An account, for an account-to-account payment. The TPP makes the payment with the payment token, and the LFI
+        debits the account identified by `Identification`.
+      type: object
+      required:
+        - SchemeName
+        - Identification
+      properties:
+        SchemeName:
+          description: Name of the identification scheme for the instrument.
+          type: string
+          enum:
+            - IBAN
+        Identification:
+          description: >-
+            The IBAN of the customer's account registered for ICP Pay, which the LFI debits when the payment is made
+            with the payment token.
+          type: string
+          maxLength: 70
+          example: AE070331234567890123456
+      additionalProperties: false
+    AEInstrumentDetailsPan:
+      title: PAN
+      description: >-
+        A card, for a card payment. The TPP submits the authorisation to the card scheme (e.g. Jaywan) as acquirer,
+        with the card details and the payment token. The LFI, as issuer, checks that the card, amount, `MerchantId`,
+        `TerminalId` and `AcquirerId` in the authorisation match what it stored against the payment token.
+      type: object
+      required:
+        - SchemeName
+        - Identification
+        - ExpiryDate
+      properties:
+        SchemeName:
+          description: Name of the identification scheme for the instrument.
+          type: string
+          enum:
+            - PAN
+        Identification:
+          description: >-
+            The number of the card the customer registered for ICP Pay. Whether this is the card number or a card
+            scheme token is an open item.
+          type: string
+          pattern: ^\d{16}$
+          example: '4895370012003478'
+        ExpiryDate:
+          description: The expiry date of the card, as `MM/YY`. Format to be confirmed.
+          type: string
+          pattern: ^(0[1-9]|1[0-2])\/\d{2}$
+          example: '08/29'
+      additionalProperties: false
+    AEPaymentToken:
+      title: Payment token
+      description: >-
+        An opaque, single-use reference the LFI issues in the response, and the only thing the TPP passes back to the
+        LFI at the point of payment: when initiating the payment for an `IBAN` instrument, or in the card
+        authorisation through the card scheme for a `PAN` instrument.
+
+
+        A UUID in its canonical 36-character form: 32 hexadecimal digits in five groups separated by hyphens
+        (8-4-4-4-12). The LFI should generate a version 4 (random) UUID.
+      type: string
+      minLength: 36
+      maxLength: 36
+      pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+      example: 3f2b8c1e-7a4d-4e9b-b6c2-5d1e0f9a8b7c
+    ErrorMessage:
+      description: Message describing the problem that has occurred.
+      type: string
+    Error400:
+      description: Default error response payload structure for Ozone Connect
+      type: object
+      required:
+        - errorCode
+        - errorMessage
+      properties:
+        errorCode:
+          description: >-
+            Error code identifying the problem that occurred. This may either be one of the prescribed Error Code(s) or
+            a namespaced Error Code where the namespace is the system or organisation that has responded with the error,
+            and the code is the code specific to the system or organisation. organisation or system.
+
+            LFIs should implement error codes based on the prescribed codes or guidance in the standards, with
+            non-specific codes maintained for backward compatibility with version 1.2.
+          anyOf:
+            - type: string
+              enum:
+                - Consent.Invalid
+                - Consent.BusinessRuleViolation
+                - Consent.FailsControlParameters
+                - Consent.InvalidUserIdentifier
+                - JWS.InvalidSignature
+                - JWS.Malformed
+                - JWS.InvalidClaim
+                - JWS.InvalidHeader
+                - JWE.DecryptionError
+                - JWE.InvalidHeader
+                - GenericRecoverableError
+                - GenericError
+                - Event.UnexpectedEvent
+                - Body.InvalidFormat
+                - Resource.InvalidFormat
+                - Query.UnmatchedInstrument
+            - type: string
+              pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+            - type: string
+        errorMessage:
+          $ref: '#/components/schemas/ErrorMessage'
+    Error403:
+      description: >-
+        Error code identifying the problem that occurred. The first part of the code is the namespace, which is the name
+        of the organisation or system that is rejecting the payment, and the second part is the specific rejection
+        reason code for the originating organisation or system.
+
+        LFIs should implement error codes based on the prescribed codes or guidance in the standards, with non-specific
+        codes maintained for backward compatibility with version 1.2.
+      type: object
+      required:
+        - errorCode
+        - errorMessage
+      properties:
+        errorCode:
+          description: >-
+            Error code identifying the problem that occurred. This may either be one of the prescribed Error Code(s) or
+            a namespaced Error Code where the namespace is the system or organisation that has responded with the error,
+            and the code is the code specific to the system or organisation.
+          anyOf:
+            - type: string
+              enum:
+                - AccessToken.InvalidScope
+                - Consent.TransientAccountAccessFailure
+                - Consent.AccountTemporarilyBlocked
+                - Consent.PermanentAccountAccessFailure
+                - GenericRecoverableError
+                - GenericError
+            - type: string
+              pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+            - type: string
+        errorMessage:
+          $ref: '#/components/schemas/ErrorMessage'
+    Error500:
+      description: >-
+        Error code identifying the problem that occurred. The first part of the code is the namespace, which is the name
+        of the organisation or system that is rejecting the payment, and the second part is the specific rejection
+        reason code for the originating organisation or system.
+
+        LFIs should implement error codes based on the prescribed codes or guidance in the standards, with non-specific
+        codes maintained for backward compatibility with version 1.2.
+      type: object
+      required:
+        - errorCode
+        - errorMessage
+      properties:
+        errorCode:
+          description: >-
+            Error code identifying the problem that occurred. This may either be one of the prescribed Error Code(s) or
+            a namespaced Error Code where the namespace is the system or organisation that has responded with the error,
+            and the code is the code specific to the system or organisation.
+          anyOf:
+            - type: string
+              enum:
+                - GenericRecoverableError
+                - GenericError
+            - type: string
+              pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$
+            - type: string
+        errorMessage:
+          $ref: '#/components/schemas/ErrorMessage'
+  parameters:
+    aspspId:
+      name: o3-aspsp-id
+      in: header
+      schema:
+        type: string
+      required: true
+      deprecated: true
+      description: >-
+        Identifier for the financial institution that the request is targetted to. This header is deprecated and will be
+        removed in a future version of Ozone Connect. Use `o3-provider-id` instead.
+    providerId:
+      name: o3-provider-id
+      in: header
+      schema:
+        type: string
+      required: true
+      description: Identifier for the financial institution that the request is targetted to
+    callerOrgId:
+      name: o3-caller-org-id
+      in: header
+      schema:
+        type: string
+      required: true
+      description: An identifier for the organization calling the API
+    callerClientId:
+      name: o3-caller-client-id
+      in: header
+      schema:
+        type: string
+      required: true
+      description: An identifier for the OIDC clientId calling the API
+    callerSoftwareStatementId:
+      name: o3-caller-software-statement-id
+      in: header
+      schema:
+        type: string
+      required: true
+      description: An identifier for the software statement calling the API
+    apiUri:
+      name: o3-api-uri
+      in: header
+      schema:
+        type: string
+      required: true
+      description: The parameterised URL of the API being called by the caller
+    apiOperation:
+      name: o3-api-operation
+      in: header
+      schema:
+        type: string
+      required: true
+      description: The API operation carried out by the caller (e.g. GET, POST, PUT, DELETE, PATCH)
+    callerInteractionId:
+      name: o3-caller-interaction-id
+      in: header
+      schema:
+        type: string
+      required: false
+      description: The interaction ID passed in by the caller, if any
+    ozoneInteractionId:
+      name: o3-ozone-interaction-id
+      in: header
+      schema:
+        type: string
+      required: true
+      description: >-
+        An interaction ID generated by Ozone if the caller did not send in one. If the callerInteractionId is specified,
+        this takes the same value.
+    page:
+      name: page
+      in: query
+      description: Page of results to request (standard pagination)
+      required: true
+      schema:
+        default: 1
+        type: integer
+      style: form
+    page-size:
+      name: page-size
+      in: query
+      description: Page size to request. Default is 100 to comply with the Operating Guidelines for the Open Finance Framework.
+      required: true
+      schema:
+        default: 100
+        type: integer
+      style: form
+  securitySchemes:
+    OzoneConnectApiKey:
+      description: >-
+        Communications between the API Hub and the LFI Ozone Connect implementation are secured using an API Key, which
+        is a secret shared between the API Hub and the LFI.
+      type: apiKey
+      in: header
+      name: Authorization
+    OzoneConnectClientCredentials:
+      type: oauth2
+      description: >
+        Communications between the API Hub and the LFI Ozone Connect implementation are secured using a Client
+        Credentials grant type.
+
+
+        LFIs must host an OAuth 2.0 Authorization Server to utilise this security pattern. Scope values are set during
+        the onboarding process, and represented by a placeholder in this API description.
+      flows:
+        clientCredentials:
+          tokenUrl: https://example.lfi.ae/token
+          scopes:
+            placeholder: Placeholder for scopes, which are set by the LFI during onboarding
+    OzoneConnectJwtAuth:
+      description: >
+        Communications between the API Hub and the LFI Ozone Connect implementation are secured using the "JWT Auth"
+        mechanism, where the Client presents a signed JSON Web Token as a credential.
+
+
+        The Server MUST verify the signature in order to authenticate the Client.
+
+
+        Please note that the value of the `scheme` parameter is not a registered HTTP Authentication Scheme, to indicate
+        it is specific to Ozone Connect. Please refer to API Hub documentation for further details.
+      type: http
+      scheme: Ozone-Connect-JWT-Auth
