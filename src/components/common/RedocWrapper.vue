@@ -3,6 +3,7 @@ import { CURRENT_VERSION, PROTOCOL_VERSION } from '@/data/versions'
 import { onThemeChange } from '@/composables/useChartTheme'
 import { registerPageSpec } from '@/composables/usePageSpecs'
 import { versionFromPath } from '@/composables/useSelectedVersion'
+import { dropUnrenderableDiscriminators } from '@/utils/redocCompat'
 
 const SPECS_REPO = 'https://github.com/Nebras-Open-Finance/api-specs/tree/main/dist'
 
@@ -198,6 +199,8 @@ async function renderRedoc(): Promise<void> {
         : fullSpec.paths,
     }
   }
+
+  dropUnrenderableDiscriminators(finalSpec.components?.schemas)
 
   if (props.patchSchemas && finalSpec.components?.schemas) {
     for (const [name, override] of Object.entries(props.patchSchemas)) {
