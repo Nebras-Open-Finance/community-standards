@@ -30,23 +30,12 @@ info:
     standard version 2.0.
 
 
-    ### v2.2.1
+    ### v2.2.1-alpha1
 
+    * Initial revision to provide support for BioPay POC only. Labelled alpha1 to indicate this is **NOT** for a 
+      platform standards release.
 
-    * Initial version, compatible with v2.2 of standards.
-
-    * Added `post /customers/action/instrument-query`, which returns the instrument a customer has designated as their
-      default instrument for ICP Pay payments. The request is a signed message encrypted by the TPP as a JWE to the
-      financial institution, sent as `application/jwt`, carrying the `UaeKycId` and ICP token, the amount, and the
-      merchant, terminal and acquirer the payment is made at. It is not carried out under a consent. The response
-      returns a payment token and the values from the request in `Data`, with `Data.Instruments` listing the
-      instruments, each either an `IBAN` or a `PAN`, signed with `azp` identifying the TPP. The
-      response must be returned as `application/jwt`, as a signed message with the entire body encrypted as a JWE.
-      Sending either the request or the response as a signed message without encryption is prohibited. A `400`
-      response with the new error code `Query.UnmatchedInstrument` is returned if an instrument cannot be
-      matched based on the values in the request.
-
-  version: v2.2.1
+  version: v2.2.1-alpha1
 servers:
   - url: https://<your-ozone-connect-server>
 tags:
@@ -508,15 +497,8 @@ components:
         An opaque, single-use reference the LFI issues in the response, and the only thing the TPP passes back to the
         LFI at the point of payment: when initiating the payment for an `IBAN` instrument, or in the card
         authorisation through the card scheme for a `PAN` instrument.
-
-
-        A UUID in its canonical 36-character form: 32 hexadecimal digits in five groups separated by hyphens
-        (8-4-4-4-12). The LFI should generate a version 4 (random) UUID.
       type: string
-      minLength: 36
-      maxLength: 36
-      pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
-      example: 3f2b8c1e-7a4d-4e9b-b6c2-5d1e0f9a8b7c
+      pattern: ^[A-Za-z0-9_-]{36}$
     ErrorMessage:
       description: Message describing the problem that has occurred.
       type: string

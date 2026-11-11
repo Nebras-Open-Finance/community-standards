@@ -24,7 +24,7 @@ const servers = [
   <EndpointPage
     eyebrow="BioPay · Standards · BPIP → API Hub"
     title="Query a customer's default instrument"
-    version="v2.2-rc2 · Draft"
+    version="v2.2-alpha1 · Draft"
     method="POST"
     path="/instrument-query"
     description="Called by the BPIP on the API Hub. Returns the instrument the customer designated at the LFI for ICP Pay, with a single-use payment token. The API Hub forwards the request to the LFI's Ozone Connect POST /customers/action/instrument-query."

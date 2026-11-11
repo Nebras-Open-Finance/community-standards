@@ -532,10 +532,11 @@ def check_payment_token_for_account_payment(payment_token: str, caller_org_id: s
     >
       <EdNote type="warning" title="Open items">
         <p>
-          <strong>Length in the specification.</strong> The specification in api-specs PR #37
-          defines <code>PaymentToken</code> as 32 characters (<code>^[A-Za-z0-9_-]{32}$</code>).
-          The copy rendered on this site has been changed to the 36-character UUID; the change is to
-          be raised on the PR.
+          <strong>UUID in the specification.</strong> The specification defines
+          <code>PaymentToken</code> as 36 characters from <code>A&ndash;Z</code>,
+          <code>a&ndash;z</code>, <code>0&ndash;9</code>, <code>_</code> and <code>-</code>
+          (<code>^[A-Za-z0-9_-]{36}$</code>). A UUID fits that pattern, but the specification does
+          not require one. Whether to tighten it to the UUID form of requirement 3 is to be agreed.
         </p>
         <p>
           <strong>Card carriage.</strong> Each card scheme must carry the 36-character payment token

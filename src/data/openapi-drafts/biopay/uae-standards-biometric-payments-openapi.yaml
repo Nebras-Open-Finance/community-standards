@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: UAE Biometric Payments API
   description: '## UAE Open Finance Biometric Payments API Specification'
-  version: v2.2-rc2
+  version: v2.2-alpha1
 servers:
   - url: /open-finance/biometric-payments/v2.2
 tags:
@@ -39,11 +39,11 @@ paths:
         If the LFI cannot match an instrument based on the values in the request, the LFI must return a `400` response
         with the error code `Query.UnmatchedInstrument`.
 
-        This operation is not carried out under a consent. The TPP must obtain an access token using the
+        This operation is not carried out under a consent. The TPP must obtain an Access Token using the
         Client Credentials grant type with the `biometric-payments` scope.
 
         **Only a TPP with the Biometric Payment Initiation Provider (BPIP) role in the Trust Framework will be
-        granted the `biometric-payments` scope.** A TPP without the BPIP role cannot obtain an access token with
+        granted the `biometric-payments` scope**. A TPP without the BPIP role cannot obtain an Access Token with
         this scope, and so cannot call this operation.
       operationId: InstrumentQuery
       parameters:
@@ -498,15 +498,8 @@ components:
         An opaque, single-use reference the LFI issues in the response, and the only thing the TPP passes back to the
         LFI at the point of payment: when initiating the payment for an `IBAN` instrument, or in the card
         authorisation through the card scheme for a `PAN` instrument.
-
-
-        A UUID in its canonical 36-character form: 32 hexadecimal digits in five groups separated by hyphens
-        (8-4-4-4-12). The LFI should generate a version 4 (random) UUID.
       type: string
-      minLength: 36
-      maxLength: 36
-      pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
-      example: 3f2b8c1e-7a4d-4e9b-b6c2-5d1e0f9a8b7c
+      pattern: ^[A-Za-z0-9_-]{36}$
     AEError400ResponseSigned:
       description: |
         Error Signed Schema

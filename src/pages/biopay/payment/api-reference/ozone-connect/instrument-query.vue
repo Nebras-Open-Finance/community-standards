@@ -20,7 +20,7 @@ const servers = [{ url: 'https://[Ozone_Connect_API]' }]
   <EndpointPage
     eyebrow="BioPay · Ozone Connect · API Hub → LFI"
     title="Retrieve instruments based on an instrument query"
-    version="v2.2.1 · Draft"
+    version="v2.2.1-alpha1 · Draft"
     method="POST"
     path="/customers/action/instrument-query"
     description="Called by the API Hub on the LFI's Ozone Connect. Carries the BPIP's encrypted POST /instrument-query request unchanged; the LFI validates the ICP token with ICP and returns the signed, encrypted response."
