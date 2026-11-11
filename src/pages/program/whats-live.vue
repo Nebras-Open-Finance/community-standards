@@ -774,7 +774,8 @@ function visibleInsuranceGroups(v: LfiVersion): InsuranceGroup[] {
 
 // Headline numbers count live participants only — the tab counts are the
 // unfiltered live totals per sector, the masthead count respects the active
-// filter.
+// filter. The homepage "Live" figures re-derive these unfiltered totals at
+// build time in scripts/build-metrics.mjs — keep the two rule sets in step.
 const lfiServerCount = computed<number>(
   () => visibleServers.value.filter((s) => s.isLive).length,
 )

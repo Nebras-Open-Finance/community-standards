@@ -84,7 +84,14 @@ export const buildTppSidebar = (version: Version): SidebarItem[] => [
       { text: 'Sandbox Quickstart', link: `${BASE}/${version}/getting-started/` },
       { text: 'Postman Guide', link: `${BASE}/${version}/getting-started/postman` },
       { text: 'Sandbox Model Bank', link: `${BASE}/sandbox/model-bank` },
-      { text: 'Sandbox Model Insurer', link: `${BASE}/sandbox/model-insurer` },
+      {
+        text: 'Sandbox Model Insurer',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/sandbox/model-insurer/` },
+          { text: 'Quotation', link: `${BASE}/sandbox/model-insurer/quotation` },
+        ],
+      },
     ],
   },
   {

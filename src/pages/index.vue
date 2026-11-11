@@ -37,7 +37,8 @@ const ACCENT = {
 // A glob rather than a plain import lets typecheck and tests run before the
 // file has been generated; the page then renders dashes.
 interface ParticipantCounts {
-  live: number
+  /** Null when the participants directory could not be fetched at build time. */
+  live: number | null
   production: number
   onboarded: number
 }
@@ -196,8 +197,10 @@ const tickerCells = computed<TickerCell[]>(() => {
   ]
 })
 
-// Participant counts are nested sets: live ⊆ production ⊆ onboarded.
-// "Live" is driven by the go-live date field, not by isProduction alone.
+// "Live" equals the headline counts on /program/whats-live (live LFI servers
+// from the directory's Commercial Go-Live Approvals; TPPs past their go-live
+// date with API traffic in the last 30 days) — see scripts/build-metrics.mjs.
+// Production and onboarded are trust-framework registration counts.
 interface ParticipantRow {
   label: string
   color: string

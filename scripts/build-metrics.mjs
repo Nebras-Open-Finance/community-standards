@@ -5,6 +5,8 @@
 //   api-log-index.json + its shards   ~380k rows, one per day/LFI/TPP/URL/code group
 //   payments-log.json, auth-log.json  homepage ticker and consent figures
 //   trust-framework.json              participant counts (fetched by fetch:orgs; optional)
+// and fetches the participants directory (data.directory.openfinance.ae) for
+// the live LFI count, so it matches /program/whats-live.
 //
 // Writes (gitignored, under src/data/generated/):
 //   home-stats.json                   every figure the homepage plots, a few KB.
@@ -190,13 +192,114 @@ for (const rows of [apiLog, paymentsLog, authLog]) {
   for (const r of rows) if (r.date && r.date > lastDate) lastDate = r.date
 }
 
-// Orgs are pre-filtered (active only) and pre-deduped (one entry per id) by
+// ── Live participants — mirrors /program/whats-live ───────────────────────
+// The homepage "Live" figures MUST equal the headline counts on
+// src/pages/program/whats-live.vue, so both are computed with that page's
+// rules. Change one, change the other.
+
+// Same list as FAMILY_KEYS in whats-live.vue.
+const DIRECTORY_FAMILIES = new Set([
+  'account-information', 'payment', 'confirmation', 'product', 'atm', 'insurance',
+])
+// The api-log names families by URL segment — `confirmation` is `confirmation-of-payee`.
+const LOG_FAMILIES = new Set([
+  'account-information', 'payment', 'confirmation-of-payee', 'product', 'atm', 'insurance',
+])
+const GO_LIVE_PROFILE_TYPE = 'Commercial Go-Live Approval'
+const LIVE_TPP_DAYS_WINDOW = 30
+const DAY_MS = 24 * 60 * 60 * 1000
+const buildMs = Date.now()
+
+const DIRECTORY_URL =
+  process.env.PARTICIPANTS_SOURCE_URL || 'https://data.directory.openfinance.ae/participants'
+
+async function fetchDirectory() {
+  try {
+    const res = await fetch(DIRECTORY_URL, { headers: { Accept: 'application/json' } })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const data = await res.json()
+    if (!Array.isArray(data)) throw new Error('expected a JSON array')
+    return data
+  } catch (err) {
+    console.warn(`[build-metrics] participants directory unavailable (${err.message}) — live LFI count will render as a dash`)
+    return null
+  }
+}
+
+// The directory serves certification dates as DD/MM/YYYY.
+function parseDirectoryDate(value) {
+  const m = String(value || '').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  return m ? Date.UTC(Number(m[3]), Number(m[2]) - 1, Number(m[1])) : null
+}
+
+// Live LFIs: one per AuthorisationServer that exposes an Open Finance family
+// and holds a certified, unexpired Commercial Go-Live Approval whose start
+// date has passed — one card per server, as on whats-live (so FAB Retail and
+// FAB SME count separately). A server in both the bank and insurer tabs
+// counts once.
+function liveLfiServers(directory) {
+  let live = 0
+  for (const org of directory) {
+    for (const server of org.AuthorisationServers || []) {
+      const exposes = (server.ApiResources || []).some((r) => DIRECTORY_FAMILIES.has(r.ApiFamilyType))
+      if (!exposes) continue
+      let earliest = null
+      for (const cert of server.AuthorisationServerCertifications || []) {
+        if (cert.ProfileType !== GO_LIVE_PROFILE_TYPE) continue
+        if ((cert.CertificationStatus || cert.Status || '') !== 'Certified') continue
+        const start = parseDirectoryDate(cert.CertificationStartDate)
+        if (start == null) continue
+        const expiry = parseDirectoryDate(cert.CertificationExpirationDate)
+        if (expiry != null && expiry < buildMs) continue
+        if (earliest == null || start < earliest) earliest = start
+      }
+      if (earliest != null && earliest <= buildMs) live++
+    }
+  }
+  return live
+}
+
+// Live TPPs: callers of an Open Finance family in the trailing 30 days of the
+// API log (anchored to its latest row) whose tppGoLiveDate has passed. The log
+// names a caller by legal or short name, so go-live dates are looked up under
+// both. Counted per distinct log name, as whats-live lists them.
+function liveTppCallers(orgs) {
+  const goLiveMs = new Map()
+  for (const o of orgs) {
+    const m = String(o.tppGoLiveDate || '').match(/^(\d{4})-(\d{2})-(\d{2})$/)
+    if (!m) continue
+    const ms = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+    for (const label of [o.legalName, o.name]) {
+      const key = String(label || '').trim().toUpperCase()
+      if (key) goLiveMs.set(key, ms)
+    }
+  }
+
+  const latestMs = apiLog.reduce((max, r) => {
+    const t = Date.parse(r.date || '')
+    return t > max ? t : max
+  }, 0)
+  const cutoffMs = latestMs - (LIVE_TPP_DAYS_WINDOW - 1) * DAY_MS
+
+  const live = new Set()
+  for (const r of apiLog) {
+    if (!r.tppname || !r.tppname.trim()) continue
+    if (Date.parse(r.date || '') < cutoffMs) continue
+    const parts = (r.url || '').split('/')
+    if (parts[0] !== 'open-finance' || !LOG_FAMILIES.has(parts[1] || '')) continue
+    const goLive = goLiveMs.get(r.tppname.trim().toUpperCase())
+    if (goLive != null && goLive <= buildMs) live.add(r.tppname)
+  }
+  return live.size
+}
+
+// Production and onboarded come from the trust framework — orgs there are
+// pre-filtered (active only) and pre-deduped (one entry per id) by
 // fetch-organisations.mjs. An LFI with a tppGoLiveDate counts as both an LFI
-// and a TPP. Live ⊆ production ⊆ onboarded; "live" is driven by the go-live
-// date, not by isProduction alone.
-function participantCounts(orgs, goLiveField) {
+// and a TPP.
+function participantCounts(orgs, live) {
   return {
-    live: orgs.filter((o) => !!o[goLiveField]).length,
+    live,
     production: orgs.filter((o) => o.isProduction === true).length,
     onboarded: orgs.length,
   }
@@ -205,6 +308,7 @@ function participantCounts(orgs, goLiveField) {
 const orgs = Array.isArray(trustFramework) ? trustFramework : null
 const lfiOrgs = orgs?.filter((o) => o.type === 'LFI') ?? null
 const tppOrgs = orgs?.filter((o) => o.type === 'TPP' || !!o.tppGoLiveDate) ?? null
+const directory = orgs ? await fetchDirectory() : null
 
 // Unique LFIs/TPPs that sent or received any API call in the trailing 30 days,
 // anchored to the latest date in the log (data may lag real time). The log's
@@ -262,7 +366,10 @@ const homeStats = {
     (r) => r.totalapicalls,
   ),
   participants: orgs
-    ? { lfi: participantCounts(lfiOrgs, 'lfiGoLiveDate'), tpp: participantCounts(tppOrgs, 'tppGoLiveDate') }
+    ? {
+        lfi: participantCounts(lfiOrgs, directory ? liveLfiServers(directory) : null),
+        tpp: participantCounts(tppOrgs, liveTppCallers(orgs)),
+      }
     : null,
   active30d: activeParticipants(),
 }
