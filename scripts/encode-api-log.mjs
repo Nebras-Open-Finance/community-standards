@@ -8,8 +8,9 @@
 // figure on /program/whats-live or the other log readers can shift.
 //
 // The deployed manifest then lists each shard as `<file>?v=<content hash>`, so
-// public/_headers can let browsers cache the shards indefinitely: a shard that
-// changes gets a new URL, and the manifest itself is always revalidated.
+// a shard that changes gets a new URL, and the manifest itself is always
+// revalidated. public/_headers deliberately keeps the shard cache short — see
+// the note there on deploy races.
 
 import { createHash } from 'node:crypto'
 import { readFile, writeFile, stat } from 'node:fs/promises'

@@ -1,14 +1,29 @@
 # Cloudflare Pages response headers. Anything not matched here gets the Pages
 # default (revalidate on every request via ETag).
+#
+# Do NOT use a long max-age or `immutable` on these paths, even though their
+# URLs are content-hashed. There is no top-level 404.html, so Pages runs in
+# single-page-application mode: a request for a file the serving deployment
+# does not have is answered with the home page HTML and a 200 — and these rules
+# are stamped on that response too. During a deploy, Pages briefly serves some
+# requests from the PREVIOUS deployment, so a browser that has just received
+# the new HTML can ask the old deployment for a new chunk (or a new ?v= shard),
+# get HTML or old data back, and cache it. With `immutable` that bad copy stuck
+# for a year in the Cloudflare edge cache and in every affected browser: on
+# 11 Nov 2026 it broke /program/whats-live (module script served as text/html,
+# page stuck on "Loading live data…") until the edge cache was purged.
+#
+# A short max-age keeps repeat loads within a visit off the network, while any
+# copy cached during a deploy race expires within minutes and is then
+# revalidated against the live deployment.
 
 # Vite fingerprints every file it emits under /assets/ — JS, CSS, and the
-# /metrics usage summaries from scripts/build-metrics.mjs — so a changed file
-# always gets a new URL and a cached copy can never go stale.
+# /metrics usage summaries from scripts/build-metrics.mjs.
 /assets/*
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=600
 
 # The API log shards are requested as /api/<shard>?v=<content hash>, from the
-# manifest scripts/encode-api-log.mjs writes, so they are safe to cache the
-# same way. The manifest (api-log-index.json) is not matched and revalidates.
+# manifest scripts/encode-api-log.mjs writes. The manifest (api-log-index.json)
+# is not matched and revalidates on every request.
 /api/api-log-q*
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=600
