@@ -1164,6 +1164,8 @@ const matchPiiTabs         = [{ label: 'Node.js', lang: 'typescript', code: matc
         </table>
       </EdRefTable>
 
+      <ApiGuideStepPaymentStatusFromLog version="v2.2-rc2" />
+
       <h3 class="ed-doc__subhead">Errors</h3>
       <EdRefTable>
         <table>

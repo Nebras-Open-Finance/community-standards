@@ -46,6 +46,7 @@ declare module 'vue' {
     ApiGuideStepPaymentEncryptPii: typeof import('./components/common/api-guide-steps/ApiGuideStepPaymentEncryptPii.vue')['default']
     ApiGuideStepPaymentEncryptPiiVariable: typeof import('./components/common/api-guide-steps/ApiGuideStepPaymentEncryptPiiVariable.vue')['default']
     ApiGuideStepPaymentResponse: typeof import('./components/common/api-guide-steps/ApiGuideStepPaymentResponse.vue')['default']
+    ApiGuideStepPaymentStatusFromLog: typeof import('./components/common/api-guide-steps/ApiGuideStepPaymentStatusFromLog.vue')['default']
     ApiGuideStepRedirectCode: typeof import('./components/common/api-guide-steps/ApiGuideStepRedirectCode.vue')['default']
     ApiGuideStepRequestJwtScopeNote: typeof import('./components/common/api-guide-steps/ApiGuideStepRequestJwtScopeNote.vue')['default']
     ApiGuideStepTokenExchange: typeof import('./components/common/api-guide-steps/ApiGuideStepTokenExchange.vue')['default']
