@@ -138,7 +138,9 @@ const { myVotes, setVote, submitVote, hydrate, loadOne, loadMe, metaById } = use
 const apiMeta = computed(() => metaById.value[meta.id])
 
 const closesIn = ref('')
-const status = ref<Status>('draft')
+// Voting has closed — the fallback matches, so the pre-rendered HTML opens on the
+// Outcome tab rather than briefly showing the "voting not yet open" cover.
+const status = ref<Status>('closed')
 const priority = ref<Priority>(meta.priority)
 const openedDisplay = ref(meta.opened)
 const closesDisplay = ref(meta.closes)
