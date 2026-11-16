@@ -15,6 +15,12 @@ function hasDataDeletionConfirmation(version: Version): boolean {
   return DATA_DELETION_CONFIRMATION_VERSIONS.includes(version)
 }
 
+const PAYMENT_TIMING_VERSIONS: readonly string[] = ['v2.2-rc2']
+
+function hasPaymentTiming(version: Version): boolean {
+  return PAYMENT_TIMING_VERSIONS.includes(version)
+}
+
 const ATTESTATION_CONSENTS = [
   ['/account-access-consents', 'account-access-consents'],
   ['/payment-consents', 'payment-consents'],
@@ -78,7 +84,14 @@ export const buildTppSidebar = (version: Version): SidebarItem[] => [
       { text: 'Sandbox Quickstart', link: `${BASE}/${version}/getting-started/` },
       { text: 'Postman Guide', link: `${BASE}/${version}/getting-started/postman` },
       { text: 'Sandbox Model Bank', link: `${BASE}/sandbox/model-bank` },
-      { text: 'Sandbox Model Insurer', link: `${BASE}/sandbox/model-insurer` },
+      {
+        text: 'Sandbox Model Insurer',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: `${BASE}/sandbox/model-insurer/` },
+          { text: 'Quotation', link: `${BASE}/sandbox/model-insurer/quotation` },
+        ],
+      },
     ],
   },
   {
@@ -343,6 +356,10 @@ export const buildTppSidebar = (version: Version): SidebarItem[] => [
                 collapsed: true,
                 items: [
                   { text: 'Payment Rails and Status', link: `${BASE}/${version}/banking/service-initiation/domestic-payments/overview/payment-status` },
+                  // Introduced in v2.2 — omitted from versions that predate it.
+                  ...(hasPaymentTiming(version)
+                    ? [{ text: 'Payment Timing', link: `${BASE}/${version}/banking/service-initiation/domestic-payments/overview/payment-timing` }]
+                    : []),
                 ],
               },
               {

@@ -275,8 +275,11 @@ export const ozoneConnectEndpoints: readonly Endpoint[] = [
     title: 'Create a Payment',
     redoc: {
       spec: SPEC_SERVICE_INITIATION,
-      filterSchema: 'AEPaymentRequest',
-      displayPath: '/payments',
+      filterPath: '/payments',
+      filterMethod: 'post',
+      patchSchemas: {
+        AEPaymentAndFilePaymentRequest: { $ref: '#/components/schemas/AEPaymentRequest' },
+      },
       overrideServers: OZONE_SERVERS,
     },
   }),

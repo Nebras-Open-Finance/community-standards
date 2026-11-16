@@ -14,8 +14,9 @@
 // (an unselected tab, a collapsed panel) is not compared.
 //
 // Auto-registered as <VersionDiff> via unplugin-vue-components.
-import { h, render, type Component } from 'vue'
+import { defineComponent, h, provide, render, type Component } from 'vue'
 import { DRAFT_VERSIONS, VERSIONS, type Version } from '@/data/versions'
+import { docsVersionOverrideKey, versionFromPath } from '@/composables/useSelectedVersion'
 import { diffBlocks, diffWords, extractBlocks, textParts, type BlockChange } from '@/utils/blockDiff'
 
 const route = useRoute()
@@ -95,7 +96,17 @@ async function renderPage(path: string, width: number): Promise<HTMLElement | nu
     width: `${width}px`, visibility: 'hidden', pointerEvents: 'none',
   })
   document.body.appendChild(container)
-  const vnode = h(component)
+  // The route is still the live page's, so components that read their version
+  // from it (useRouteVersion) would render the live version's content here.
+  // Hand them the version of the page actually being rendered.
+  const version = versionFromPath(path)
+  const scoped = defineComponent({
+    setup() {
+      if (version) provide(docsVersionOverrideKey, version)
+      return () => h(component)
+    },
+  })
+  const vnode = h(scoped)
   vnode.appContext = instance?.appContext ?? null
   render(vnode, container)
   await nextTick()

@@ -47,27 +47,19 @@ interface Endpoint { method?: string; path: string; link?: string; note: string 
 const bpipCalls: Endpoint[] = [
   {
     method: 'POST',
+    path: '/instrument-query',
+    link: '/biopay/payment/api-reference/standards/instrument-query',
+    note: 'Query the instrument the customer designated at the LFI for ICP Pay, and receive a payment token, before the BPIP chooses a rail. Signed by the BPIP and encrypted to the LFI.',
+  },
+  {
+    method: 'POST',
     path: '/biometric-payments',
-    link: '/biopay/payment/api-reference/biometric-payments',
     note: 'Initiate a biometric payment.',
   },
   {
     method: 'GET',
     path: '/biometric-payments/{PaymentId}',
-    link: '/biopay/payment/api-reference/biometric-payments-payment-id',
     note: 'Retrieve a payment by PaymentId.',
-  },
-  {
-    method: 'GET',
-    path: '/biometric-payments',
-    link: '/biopay/payment/api-reference/biometric-payments-by-idempotency-key',
-    note: 'Retrieve a payment by idempotency key.',
-  },
-  {
-    method: 'POST',
-    path: '/instrument-lookup',
-    link: '/biopay/payment/api-reference/instrument-lookup',
-    note: 'Look up the payment instrument the LFI holds for a uaeKycId, before the BPIP chooses a rail.',
   },
 ]
 </script>
@@ -81,7 +73,7 @@ const bpipCalls: Endpoint[] = [
       eyebrow-color="var(--at-blue-deep)"
       title="Directory"
       :meta="meta"
-      lede="BioPay introduces one new participant role: the <strong>Biometric Payment Initiation Provider (BPIP)</strong>. This page sets out what the role entitles its holder to, the endpoints it can reach, and the certificates it requires. ICP is not a Directory participant &mdash; BPIPs and LFIs reach it through the ICP SDK, outside the API Hub."
+      lede="BioPay introduces one new participant role: the <strong>Biometric Payment Initiation Provider (BPIP)</strong>. This page sets out what the role entitles its holder to, the endpoints it can reach, and the certificates it requires. ICP is not a Directory participant &mdash; BPIPs and LFIs reach it outside the API Hub, through the ICP SDK and, for LFIs validating an ICP token, ICP&rsquo;s token validation endpoint."
     />
 
     <EdInPageNav :sections="sections" />
@@ -128,7 +120,7 @@ const bpipCalls: Endpoint[] = [
         <p>
           ICP has no role in the Directory. It is not a client of the API Hub and the Hub does not
           call it: registration and customer resolution both run directly against ICP through the
-          ICP SDK.
+          ICP SDK, and the LFI validates the ICP token at ICP&rsquo;s token validation endpoint.
         </p>
       </EdProse>
 
@@ -163,16 +155,16 @@ const bpipCalls: Endpoint[] = [
         <li v-for="e in bpipCalls" :key="(e.method ?? '') + e.path">
           <template v-if="e.method"><code>{{ e.method }} </code></template>
           <RouterLink v-if="e.link" :to="e.link"><code>{{ e.path }}</code></RouterLink>
-          <strong v-else>{{ e.path }}</strong>
+          <code v-else>{{ e.path }}</code>
           &mdash; {{ e.note }}
         </li>
       </EdBullets>
 
       <EdProse>
         A BPIP client also <strong>receives</strong> the
-        <RouterLink to="/biopay/payment/api-reference/payment-status-event">payment status event</RouterLink>
+        payment status event
         from the API Hub, at the webhook URL it gives on each
-        <RouterLink to="/biopay/payment/api-reference/biometric-payments"><code>POST /biometric-payments</code></RouterLink>. The event is delivered to the BPIP; it is not an
+        <code>POST /biometric-payments</code>. The event is delivered to the BPIP; it is not an
         endpoint the BPIP calls.
       </EdProse>
     </EdSectionBand>
@@ -199,20 +191,24 @@ const bpipCalls: Endpoint[] = [
         </li>
         <li>
           <strong>Signing certificate &mdash; required.</strong> Signs the client assertion
-          used at the token endpoint, and the signed payloads the BioPay operations expect.
+          used at the token endpoint, every
+          <RouterLink to="/biopay/payment/api-reference/standards/instrument-query"><code>POST /instrument-query</code></RouterLink>
+          request before it is encrypted to the LFI, and the <code>x-jws-signature</code> on
+          <code>POST /biometric-payments</code>.
         </li>
         <li>
           <strong>Encryption certificate &mdash; required.</strong> Every BPIP MUST register an
-          encryption certificate, because the card credential in an
-          <RouterLink to="/biopay/payment/api-reference/instrument-lookup"><code>POST /instrument-lookup</code></RouterLink>
+          encryption certificate, because every
+          <code>POST /instrument-query</code>
           response is encrypted to it:
           <ul>
             <li>
-              <strong>Card credential.</strong> When the instrument is a card, the LFI MUST
-              encrypt the card scheme token, cryptogram and expiry into a JWE using the BPIP&rsquo;s
-              public encryption key, taken from the Directory. The API Hub proxies the JWE
-              unread, so card data never passes through it in the clear &mdash; keeping the API Hub
-              out of PCI DSS scope. Only the BPIP, holding the private key, can decrypt it.
+              <strong>Instrument query response.</strong> The LFI MUST sign the response
+              &mdash; carrying the payment token and the customer&rsquo;s IBAN or card details
+              &mdash; and encrypt it into a JWE using the BPIP&rsquo;s public encryption key, taken
+              from the Directory. The API Hub forwards the JWE unread, so card data never passes
+              through it in the clear &mdash; keeping the API Hub out of PCI DSS scope. Only the
+              BPIP, holding the private key, can decrypt it.
             </li>
             <li>
               <strong>Events.</strong> Payment status events are delivered as a JWE encrypted
@@ -221,6 +217,14 @@ const bpipCalls: Endpoint[] = [
           </ul>
         </li>
       </EdBullets>
+
+      <EdProse>
+        In the other direction, the BPIP encrypts each instrument query to the LFI&rsquo;s
+        encryption key (Enc1), taken from the LFI&rsquo;s organisation JWKS. That needs no
+        certificate of the BPIP&rsquo;s own. How each message is signed and encrypted is on
+        <RouterLink to="/biopay/payment/api-guide/signing-and-encryption">Signing and
+        Encryption</RouterLink>.
+      </EdProse>
     </EdSectionBand>
 
     <!-- 04 ─────────────────────────────────────────────────────────────── -->
@@ -244,9 +248,10 @@ const bpipCalls: Endpoint[] = [
           &mdash; a BPIP reaches an LFI only through it.
         </p>
         <p>
-          ICP sits outside this picture. LFIs call it through the ICP SDK at registration, and BPIPs
-          call it through the ICP SDK to resolve the customer at payment; neither call passes
-          through the API Hub.
+          ICP sits outside this picture. LFIs call it through the ICP SDK at registration, BPIPs
+          call it through the ICP SDK to resolve the customer at payment, and LFIs call its token
+          validation endpoint on every instrument query; none of these calls passes through the
+          API Hub.
         </p>
       </EdProse>
 

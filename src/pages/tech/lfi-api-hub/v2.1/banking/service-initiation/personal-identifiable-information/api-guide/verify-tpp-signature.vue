@@ -4,18 +4,36 @@ meta:
 </route>
 
 <script setup lang="ts">
-const jwksUriPlain = `https://keystore.directory.openfinance.ae/[software-statement-id]/application.jwks
-`
+const jwksUriPlain = `Production: https://keystore.directory.openfinance.ae/{o3-caller-org-id}/{o3-caller-software-statement-id}/application.jwks
+Sandbox:    https://keystore.sandbox.directory.openfinance.ae/{o3-caller-org-id}/{o3-caller-software-statement-id}/application.jwks`
 
 const verifyNode = `import { createRemoteJWKSet, jwtVerify } from 'jose'
 
+// One resolver per TPP, created once and reused. Each resolver caches the
+// TPP's JWKS and refetches it when it meets a kid it does not know.
+const resolvers = new Map<string, ReturnType<typeof createRemoteJWKSet>>()
+
+function tppJwks(orgId: string, softwareStatementId: string) {
+  const jwksUri = \`https://keystore.directory.openfinance.ae/\${orgId}/\${softwareStatementId}/application.jwks\`
+  let jwks = resolvers.get(jwksUri)
+  if (!jwks) {
+    jwks = createRemoteJWKSet(new URL(jwksUri), {
+      cacheMaxAge: 300_000,     // the keystore serves max-age=300
+      cooldownDuration: 60_000, // refetch for an unknown kid at most once a minute
+      timeoutDuration: 5_000,
+    })
+    resolvers.set(jwksUri, jwks)
+  }
+  return jwks
+}
+
 async function verifyTPPSignature(
   jwsString: string,
-  softwareStatementId: string
+  orgId: string,               // o3-caller-org-id
+  softwareStatementId: string  // o3-caller-software-statement-id
 ): Promise<Record<string, unknown>> {
-  // 1. Build a JWKS resolver for the TPP's published keys
-  const jwksUri = \`https://keystore.directory.openfinance.ae/\${softwareStatementId}/application.jwks\`
-  const jwks = createRemoteJWKSet(new URL(jwksUri))
+  // 1. Resolve the TPP's published keys (cached)
+  const jwks = tppJwks(orgId, softwareStatementId)
 
   // 2. Verify the signature and validate standard claims
   const { payload } = await jwtVerify(jwsString, jwks)
@@ -25,14 +43,27 @@ async function verifyTPPSignature(
 `
 
 const verifyPython = `import json
+import time
 import requests
 from jwcrypto import jwt, jwk
 
-def verify_tpp_signature(jws_string: str, software_statement_id: str) -> dict:
-    # 1. Fetch the TPP's published keys
-    jwks_uri = f"https://keystore.directory.openfinance.ae/{software_statement_id}/application.jwks"
-    response = requests.get(jwks_uri)
+JWKS_TTL_SECONDS = 300  # the keystore serves max-age=300
+_jwks_cache: dict[str, tuple[float, jwk.JWKSet]] = {}
+
+def tpp_jwks(org_id: str, software_statement_id: str) -> jwk.JWKSet:
+    jwks_uri = f"https://keystore.directory.openfinance.ae/{org_id}/{software_statement_id}/application.jwks"
+    cached = _jwks_cache.get(jwks_uri)
+    if cached and time.monotonic() - cached[0] < JWKS_TTL_SECONDS:
+        return cached[1]
+    response = requests.get(jwks_uri, timeout=5)
+    response.raise_for_status()
     keyset = jwk.JWKSet.from_json(response.text)
+    _jwks_cache[jwks_uri] = (time.monotonic(), keyset)
+    return keyset
+
+def verify_tpp_signature(jws_string: str, org_id: str, software_statement_id: str) -> dict:
+    # 1. Resolve the TPP's published keys (cached)
+    keyset = tpp_jwks(org_id, software_statement_id)
 
     # 2. Verify the signature
     verified = jwt.JWT(key=keyset, jwt=jws_string)
@@ -101,11 +132,23 @@ const verifyTabs = [{ label: 'Node.js (jose)', lang: 'typescript', code: verifyN
 
       <h3 class="ed-doc__subhead">Step 1 &mdash; Discover the TPP's JWKS</h3>
       <EdProse>
-        The TPP's public signing keys are published through the Trust Framework directory. You can
-        resolve the TPP's JWKS URI using the <code>o3-caller-software-statement-id</code> header
-        from the inbound request:
+        The TPP's public signing keys are published through the Trust Framework directory, under
+        the TPP's organisation and then its software statement. Both identifiers arrive on the
+        inbound request, in the <code>o3-caller-org-id</code> and
+        <code>o3-caller-software-statement-id</code> headers:
       </EdProse>
       <EdCode :code="jwksUriPlain" lang="text" filename="JWKS URI" />
+      <EdProse>
+        Both path segments are required. The software statement ID on its own is not a keystore
+        path and returns <code>404 NoSuchKey</code>. The organisation-level
+        <code>{o3-caller-org-id}/application.jwks</code> is a different key set and can be missing
+        keys issued to the software statement, so do not use it as a substitute.
+      </EdProse>
+      <EdProse>
+        Cache the JWKS rather than fetching it for every request &mdash; see
+        <a href="/tech/lfi-api-hub/trust-framework/#keystore-caching">Keystore Caching</a>. The
+        examples in Step 2 keep one cached key set per TPP.
+      </EdProse>
 
       <EdNote type="warning" title="This resolves active keys only">
         <p>

@@ -175,12 +175,12 @@ onUnmounted(() => resetFilters())
 
 <style scoped>
 .db-shell {
-  /* Cancel the global `html { zoom: 0.9 }` (src/styles/base.css) for this page
+  /* Cancel the global `html { zoom: 0.8 }` (src/styles/base.css) for this page
      only, so it renders at a true 100%. Chart.js maps mouse events in real CSS
      pixels but the browser reports a canvas's measured size and its event
      coordinates in different scales under CSS zoom — that mismatch drifts the
-     chart hover/tooltip across the x-axis. 1/0.9 ≈ 1.1111 restores 1:1. */
-  zoom: 1.1111111;
+     chart hover/tooltip across the x-axis. 1/0.8 = 1.25 restores 1:1. */
+  zoom: 1.25;
 
   /* Wider than the global --at-page-max (1280px) for this page only; the
      navbar and main content both key off this so they stay aligned. */

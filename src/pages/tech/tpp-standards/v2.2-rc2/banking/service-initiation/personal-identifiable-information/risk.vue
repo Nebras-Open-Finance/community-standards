@@ -147,6 +147,7 @@ const subscriptionExample = `{
       "Authentication": {
         "ChallengeOutcome": "NotPerformed"
       },
+      "EmiratesId": "784-1990-1234567-1",
       "AccountRiskIndicators": {
         "UserOnboardingDateTime": "2021-03-22T11:00:00Z",
         "SuspiciousActivity": "NoSuspiciousActivity",
@@ -190,6 +191,7 @@ const delegatedScaExample = `{
         "AuthenticationValue": "eyJhbGciOiJFUzI1NiJ9...",
         "ChallengeDateTime": "2025-06-19T09:55:44Z"
       },
+      "EmiratesId": "784-1985-7654321-2",
       "GeoLocation": {
         "Latitude": "25.1972",
         "Longitude": "55.2744"
@@ -342,6 +344,18 @@ const delegatedScaExample = `{
           <tbody>
             <tr><td><code>en</code></td><td>string</td><td>User's name in English</td></tr>
             <tr><td><code>ar</code></td><td>string</td><td>User's name in Arabic</td></tr>
+          </tbody>
+        </table>
+      </EdRefTable>
+
+      <h3>EmiratesId</h3>
+      <EdRefTable>
+        <table>
+          <thead>
+            <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>EmiratesId</code></td><td>string</td><td>The Emirates ID number of the User initiating the payment, matching <code>^784-?[0-9]{4}-?[0-9]{7}-?[0-9]{1}$</code>. For payments made under a long-lived consent, the LFI can use it to confirm that each payment is being made for the same User who authorized the consent. <strong>Required for a retail User on every <code>POST /payments</code> under a long-lived consent</strong> &mdash; any payment type other than Single Instant Payment. See <a href="/knowledge-base/articles/emirates-id-long-lived-payments">Emirates ID on Long-Lived Payments</a>.</td></tr>
           </tbody>
         </table>
       </EdRefTable>

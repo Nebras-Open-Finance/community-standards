@@ -92,7 +92,7 @@ const initialFormDataSIP = ref({
     "IsSingleAuthorization": true,
     "ExpirationDateTime": expirationDateTime,
     "BaseConsentId": "b9f42378-10ac-46a1-8d20-4e020484216d",
-    "Permissions": ["ReadAccountsBasic", "ReadAccountsDetail", "ReadBalances", "ReadRefundAccount"],
+    "Permissions": ["ReadAccountsBasic", "ReadAccountsDetail", "ReadBalances", "ReadRefundAccount", "ReadPartyIdentity"],
     "ControlParameters": {
       "ConsentSchedule": {
         "SinglePayment": {

@@ -208,6 +208,13 @@ const policyByIdJson = `{
         and outside the retention window). The Hub validates token, consent, and TPP role before the
         request reaches your endpoint; you do not re-validate any of those.
       </EdProse>
+      <EdProse>
+        Every endpoint MAY return <code>504</code> &mdash; Gateway Timeout &mdash; when your LFI cannot
+        complete processing within its internal time limit. The API Hub treats it as a timeout. The
+        body for this status is not standardised and no schema is defined for it. A <code>504</code>
+        is a <code>5xx</code> response, so it counts as a failed request under the
+        <a href="/policy/ozone-connect-availability">Ozone Connect Availability Policy</a>.
+      </EdProse>
     </EdSectionBand>
 
     <EdSectionBand

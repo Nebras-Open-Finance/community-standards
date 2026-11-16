@@ -4,6 +4,9 @@ meta:
 </route>
 
 <script setup lang="ts">
+const patchSchemas = {
+  AEPaymentAndFilePaymentRequest: { $ref: '#/components/schemas/AEPaymentRequest' },
+}
 </script>
 
 <template>
@@ -16,8 +19,9 @@ meta:
   >
     <RedocWrapper
       spec="/openapi/v2.2-rc2/ozone-connect/uae-ozone-connect-bank-service-initiation-openapi.yaml"
-      filterSchema="AEPaymentRequest"
-      displayPath="/payments"
+      filterPath="/payments"
+      filterMethod="post"
+      :patchSchemas="patchSchemas"
       :overrideServers="[{ url: 'https://[Ozone_Connect_API]'}]" />
   </EndpointPage>
 </template>
