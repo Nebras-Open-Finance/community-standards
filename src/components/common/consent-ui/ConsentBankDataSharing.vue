@@ -341,7 +341,7 @@
 
                         </div>
 
-                        <div v-if="consentData?.Permissions?.some(item => ['ReadPartyUser', 'ReadPartyUserIdentity', 'ReadParty'].includes(item))"
+                        <div v-if="consentData?.Permissions?.some(item => partyPermissions.includes(item))"
                             class="consent-page-dropdown-container">
                             <div class="consent-page-dropdown" @click="show_parties = !show_parties">
                                 <div class="consent-page-dropdown-text-section">
@@ -382,9 +382,7 @@
 
                             </div>
                             <div v-if="show_parties" class="consent-page-dropdown-subtext-section">
-                                <div v-if="consentData?.Permissions?.includes('ReadPartyUserIdentity')" class="consent-page-dropdown-subtext">{{ permissionDescriptions['ReadPartyUserIdentity'] }}</div>
-                                <div v-else-if="consentData?.Permissions?.includes('ReadPartyUser')" class="consent-page-dropdown-subtext">{{ permissionDescriptions['ReadPartyUser'] }}</div>
-                                <div v-else-if="consentData?.Permissions?.includes('ReadParty')" class="consent-page-dropdown-subtext">{{ permissionDescriptions['ReadParty'] }}</div>
+                                <div v-for="perm in partyPermissionLines(consentData?.Permissions)" :key="perm" class="consent-page-dropdown-subtext">{{ permissionDescriptions[perm] }}</div>
                             </div>
 
                         </div>
@@ -564,7 +562,7 @@ import { ref, computed } from 'vue'
 import { useSharedState } from '../composables/useSharedState.ts'
 import AuthThemeToggle from '../authorization-ui/AuthThemeToggle.vue'
 import { formatDateTime as formatDate } from '../composables/formatDate.ts'
-import { permissionDescriptions } from '../composables/permissionDescriptions.ts'
+import { permissionDescriptions, partyPermissions, partyPermissionLines } from '../composables/permissionDescriptions.ts'
 
 const { consentData } = useSharedState()
 

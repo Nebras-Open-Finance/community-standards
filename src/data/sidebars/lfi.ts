@@ -51,6 +51,16 @@ const PRODUCTS_LEADS_FIELD_MAP: readonly FieldMapEntry[] = [
 
 const ATMS_FIELD_MAP: readonly FieldMapEntry[] = [['GET', '/atm', 'atm']]
 
+// Pages that do not exist in every version. Keep this list in step with the
+// ONLY_IN allowlist in supporting/tests/version-dropdown-coverage.test.mjs —
+// a page listed there must also be gated here, or the sidebar offers a link
+// that only resolves on some versions.
+const PAYMENT_TIMING_VERSIONS: readonly string[] = ['v2.2-rc2']
+
+function hasPaymentTiming(version: Version): boolean {
+  return PAYMENT_TIMING_VERSIONS.includes(version)
+}
+
 function multiPaymentItems(base: string): SidebarItem[] {
   return [
     { text: 'Requirements', link: `${base}/requirements` },
@@ -395,6 +405,10 @@ export const buildLfiSidebar = (version: Version): SidebarItem[] => [
                 collapsed: true,
                 items: [
                   { text: 'Payment Rails and Status', link: `${BASE}/${version}/banking/service-initiation/domestic-payments/overview/payment-status` },
+                  // Introduced in v2.2 — omitted from versions that predate it.
+                  ...(hasPaymentTiming(version)
+                    ? [{ text: 'Payment Timing', link: `${BASE}/${version}/banking/service-initiation/domestic-payments/overview/payment-timing` }]
+                    : []),
                 ],
               },
               {

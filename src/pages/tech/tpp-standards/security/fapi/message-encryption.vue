@@ -38,6 +38,20 @@ interface JWK {
   [key: string]: unknown
 }
 
+const JWKS_TTL_MS = 300_000 // the keystore serves max-age=300
+const jwksCache = new Map<string, { keys: JWK[]; fetchedAt: number }>()
+
+async function getJwks(jwksUri: string): Promise<JWK[]> {
+  const cached = jwksCache.get(jwksUri)
+  if (cached && Date.now() - cached.fetchedAt < JWKS_TTL_MS) return cached.keys
+
+  const response = await fetch(jwksUri, { signal: AbortSignal.timeout(5_000) })
+  if (!response.ok) throw new Error(\`JWKS fetch failed: \${response.status}\`)
+  const { keys } = await response.json() as { keys: JWK[] }
+  jwksCache.set(jwksUri, { keys, fetchedAt: Date.now() })
+  return keys
+}
+
 /**
  * Encrypt a payment PII payload as a compact JWE using the LFI's public key.
  * @param pii      - The PII JSON (Initiation, RiskIndicators, etc.)
@@ -47,9 +61,8 @@ export async function encryptPii(
   pii: Record<string, unknown>,
   jwksUri: string,
 ): Promise<string> {
-  // 1. Fetch the LFI's public keys
-  const response = await fetch(jwksUri)
-  const { keys } = await response.json() as { keys: JWK[] }
+  // 1. Get the LFI's public keys (cached)
+  const keys = await getJwks(jwksUri)
 
   // 2. Find the encryption key
   const encKeyJwk = keys.find((k) => k.use === 'enc')
@@ -73,14 +86,27 @@ export async function encryptPii(
     label: 'Python (python-jose)',
     lang: 'python',
     code: `import json
+import time
 import requests
 from jose import jwe
 
+JWKS_TTL_SECONDS = 300  # the keystore serves max-age=300
+_jwks_cache: dict[str, tuple[float, list]] = {}
+
+def get_jwks(jwks_uri: str) -> list:
+    cached = _jwks_cache.get(jwks_uri)
+    if cached and time.monotonic() - cached[0] < JWKS_TTL_SECONDS:
+        return cached[1]
+    response = requests.get(jwks_uri, timeout=5)
+    response.raise_for_status()
+    keys = response.json()["keys"]
+    _jwks_cache[jwks_uri] = (time.monotonic(), keys)
+    return keys
+
 def encrypt_pii(pii: dict, jwks_uri: str) -> str:
     """Encrypt a payment PII payload as a compact JWE using the LFI's public key."""
-    # 1. Fetch the LFI's public keys
-    response = requests.get(jwks_uri)
-    keys = response.json()["keys"]
+    # 1. Get the LFI's public keys (cached)
+    keys = get_jwks(jwks_uri)
 
     # 2. Find the encryption key
     enc_key = next((k for k in keys if k.get("use") == "enc"), None)
@@ -297,6 +323,12 @@ request_jwt = build_request_jwt(
       <EdProse>
         Fetch the JWKS and find a key where <code>"use": "enc"</code>. This is the LFI's public key
         intended for encryption.
+      </EdProse>
+      <EdProse>
+        Cache the JWKS rather than fetching it for every payment &mdash; see
+        <a href="/tech/tpp-standards/trust-framework/#keystore-caching">Keystore Caching</a>. The
+        examples in the next section keep each LFI's keys for the 5-minute <code>max-age</code> the
+        keystore serves.
       </EdProse>
       <EdProse><strong>Example encryption key from a JWKS:</strong></EdProse>
       <EdCode :code="exampleEncKey" lang="json" filename="application.jwks (excerpt)" />

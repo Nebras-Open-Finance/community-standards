@@ -619,14 +619,14 @@ onMounted(() => {
 
           <div class="ed-tpp-grid">
             <RouterLink
-              to="/proposals/ofp-014/knowledge-base-article"
+              to="/knowledge-base/articles/date-time-handling"
               class="ed-tpp-card"
               :style="{ '--card-color': '#0043A6' }"
             >
               <span class="ed-tpp-card__top" :style="{ background: '#0043A6' }" />
 
               <div class="ed-tpp-card__meta">
-                <span class="ed-tpp-card__cat" :style="{ color: '#0043A6' }">Draft article</span>
+                <span class="ed-tpp-card__cat" :style="{ color: '#0043A6' }">Knowledge base</span>
               </div>
 
               <h3 class="ed-tpp-card__title">Date &amp; Time Handling Across the Standard</h3>

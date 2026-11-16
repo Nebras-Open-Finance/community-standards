@@ -24,7 +24,7 @@ const images1: CarouselImage[] = [
         </div>
         <h1 class="ed-doc__title">
           Trust Framework
-          <span class="ed-doc__read">2 min read</span>
+          <span class="ed-doc__read">4 min read</span>
         </h1>
         <p class="ed-doc__lede">
           The Trust Framework facilitates secure data sharing between Licensed Financial Institutions
@@ -88,12 +88,54 @@ const images1: CarouselImage[] = [
     </EdSectionBand>
 
     <EdSectionBand
-      id="organisations"
+      id="keystore-caching"
       num="03"
+      color="var(--at-navy)"
+      eyebrow="Keystore Caching"
+      title="How long to cache a JWKS fetched from the keystore"
+      tone="cream"
+    >
+      <EdProse>
+        Every participant's public keys are published as JWKS documents on the keystore &mdash;
+        <code>keystore.directory.openfinance.ae</code> in production and
+        <code>keystore.sandbox.directory.openfinance.ae</code> in sandbox &mdash; including
+        <code>application.jwks</code>, <code>transport.jwks</code> and their <code>inactive/</code>
+        counterparts. The keystore is served through a CDN and returns each JWKS with:
+      </EdProse>
+
+      <EdBullets>
+        <li><strong>Cache-Control header:</strong> <code>public, max-age=300</code></li>
+        <li><strong>Cache duration:</strong> 5 minutes</li>
+        <li><strong>Validators:</strong> <code>ETag</code> and <code>Last-Modified</code> &mdash; a conditional request for an unchanged JWKS returns <code>304 Not Modified</code> with no body</li>
+      </EdBullets>
+
+      <h3>Fetching a JWKS</h3>
+      <EdProse>A participant that verifies signatures or encrypts with another participant's keys:</EdProse>
+      <EdBullets>
+        <li>MUST cache each JWKS, keyed by its URL, and MUST NOT fetch it on every request.</li>
+        <li>SHOULD treat a cached JWKS as fresh for the <code>max-age</code> it was served with (currently 300 seconds), and MUST NOT treat it as fresh for longer than 10 minutes.</li>
+        <li>SHOULD refresh the cached JWKS before it expires, continuing to use the cached copy meanwhile, so that signature verification and encryption do not wait on a keystore request.</li>
+        <li>SHOULD revalidate using <code>If-None-Match</code> with the cached <code>ETag</code>.</li>
+        <li>SHOULD refetch the JWKS immediately when a JWS references a <code>kid</code> that is not in the cached copy, no more than once every 60 seconds per URL, before rejecting the JWS.</li>
+        <li>SHOULD NOT cache a <code>404 Not Found</code> for longer than 60 seconds. A newly registered organisation or software statement returns <code>404</code> until its keys are published.</li>
+        <li>SHOULD apply a timeout of 5 seconds to keystore requests and, when a refresh fails, continue to use the last JWKS it fetched successfully while retrying with backoff, for no longer than 1 hour.</li>
+      </EdBullets>
+
+      <h3>Publishing a key</h3>
+      <EdProse>A participant that adds or rotates a key in the Trust Framework:</EdProse>
+      <EdBullets>
+        <li>MUST wait at least 10 minutes after publishing a new key before signing with it. A JWKS can take around a minute to propagate through the CDN, and a consumer may hold the previous copy for a further 5 minutes.</li>
+        <li>SHOULD keep the private key of a retired encryption key available for decryption for at least 10 minutes after removing it, so that payloads encrypted against a cached copy of the JWKS can still be decrypted.</li>
+      </EdBullets>
+    </EdSectionBand>
+
+    <EdSectionBand
+      id="organisations"
+      num="04"
       color="var(--at-blue-deep, #1d4ed8)"
       eyebrow="Organisations"
       title="LFIs, TPPs, and how they coexist in the directory"
-      tone="cream"
+      tone="surface"
     >
       <EdProse>
         All organisations participating in Open Finance operate within the Trust Framework. Upon successful

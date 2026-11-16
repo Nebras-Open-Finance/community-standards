@@ -19,6 +19,6 @@ const SPEC = '/openapi/v2.2-rc2/api-hub/uae-api-hub-consent-manager-openapi.yaml
       :spec="SPEC"
       filterPath="/psu/{userId}/consents"
       filterMethod="get"
-      :overrideServers="[ { url: 'https://cm.[LFICODE].apihub.openfinance.ae' }, { url: 'https://cm.[LFICODE].preprod.apihub.openfinance.ae' }]" />
+      :overrideServers="[ { url: 'https://cm.[LFICODE].apihub.openfinance.ae/v2025.47' }, { url: 'https://cm.[LFICODE].preprod.apihub.openfinance.ae/v2025.47' }]" />
   </EndpointPage>
 </template>

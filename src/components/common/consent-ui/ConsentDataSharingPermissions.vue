@@ -1,7 +1,7 @@
 <script setup>
 import { ref, inject, computed } from 'vue'
 import { useSharedState } from '../composables/useSharedState.ts'
-import { permissionDescriptions } from '../composables/permissionDescriptions.ts'
+import { permissionDescriptions, partyPermissions, partyPermissionLines } from '../composables/permissionDescriptions.ts'
 
 const { sharedState } = useSharedState()
 
@@ -151,7 +151,7 @@ const show_finance_rates = ref(false)
                     </div>
 
                     <!-- Parties -->
-                    <div v-if="consent?.Permissions?.some(item => ['ReadPartyUser', 'ReadPartyUserIdentity', 'ReadParty'].includes(item))"
+                    <div v-if="consent?.Permissions?.some(item => partyPermissions.includes(item))"
                         class="consent-page-dropdown-container">
                         <div class="consent-page-dropdown" @click="show_parties = !show_parties">
                             <div class="consent-page-dropdown-text-section">
@@ -169,9 +169,7 @@ const show_finance_rates = ref(false)
                             </svg>
                         </div>
                         <div v-if="show_parties" class="consent-page-dropdown-subtext-section">
-                            <div v-if="consent?.Permissions?.includes('ReadPartyUserIdentity')" class="consent-page-dropdown-subtext">{{ permissionDescriptions['ReadPartyUserIdentity'] }}</div>
-                            <div v-else-if="consent?.Permissions?.includes('ReadPartyUser')" class="consent-page-dropdown-subtext">{{ permissionDescriptions['ReadPartyUser'] }}</div>
-                            <div v-else-if="consent?.Permissions?.includes('ReadParty')" class="consent-page-dropdown-subtext">{{ permissionDescriptions['ReadParty'] }}</div>
+                            <div v-for="perm in partyPermissionLines(consent?.Permissions)" :key="perm" class="consent-page-dropdown-subtext">{{ permissionDescriptions[perm] }}</div>
                         </div>
                     </div>
 
