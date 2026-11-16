@@ -219,7 +219,7 @@ const fieldYaml = `    AEConsentExpirationDateTime:
               required to change anything on a date. An LFI or TPP that reads the date and time components as
               local time should, however, expect that behaviour to fall outside V2.2, and can check its
               implementation against the equivalence example and the
-              <RouterLink to="/proposals/ofp-014/knowledge-base-article">Date &amp; Time Handling</RouterLink>
+              <RouterLink to="/knowledge-base/articles/date-time-handling">Date &amp; Time Handling</RouterLink>
               article in the meantime.
             </p>
           </div>
@@ -279,7 +279,7 @@ const fieldYaml = `    AEConsentExpirationDateTime:
                 </li>
                 <li>
                   <strong>Published alongside</strong> — the knowledge base article
-                  <RouterLink to="/proposals/ofp-014/knowledge-base-article">Date &amp; Time Handling Across the Standard</RouterLink>,
+                  <RouterLink to="/knowledge-base/articles/date-time-handling">Date &amp; Time Handling Across the Standard</RouterLink>,
                   which explains how to satisfy the rule.
                 </li>
               </ul>
