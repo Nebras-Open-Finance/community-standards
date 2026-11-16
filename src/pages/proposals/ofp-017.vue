@@ -39,7 +39,7 @@ const meta = {
   // Fallbacks shown until the API responds (and during the static build). The
   // live status/priority/dates are sourced from the API — see syncFromApi().
   opened: '22 Oct 2026',
-  closes: '5 Nov 2026',
+  closes: '9 Nov 2026',
   priority: 'medium' as Priority,
   version: 'V2.2',
 }
@@ -305,7 +305,7 @@ onMounted(() => {
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
           <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 01 &middot; Background</div>
-          <h2 class="ofp-band__title">A status list built for deposit accounts</h2>
+          <h2 class="ofp-band__title">A status list built for current and savings accounts</h2>
         </div>
         <div class="ofp-prose">
           <p>
@@ -321,7 +321,7 @@ onMounted(() => {
             <code>Closed</code>.
           </p>
           <p>
-            These values describe a deposit account: whether it is used, whether it has been left
+            These values describe a current or savings account: whether it is used, whether it has been left
             unclaimed, and whether it is open. None of them describes the state of a credit facility. The
             same enum is used for <code>CreditCard</code>, <code>Finance</code> and <code>Mortgage</code>
             accounts, so an LFI with a mortgage three months behind, or a card balance it has written off,

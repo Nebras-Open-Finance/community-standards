@@ -8,8 +8,8 @@ const HEIMDALL_SERVERS: OverrideServer[] = [
 ]
 
 const CONSENT_MANAGER_SERVERS: OverrideServer[] = [
-  { url: 'https://cm.[LFICODE].apihub.openfinance.ae' },
-  { url: 'https://cm.[LFICODE].preprod.apihub.openfinance.ae' },
+  { url: 'https://cm.[LFICODE].apihub.openfinance.ae/v2025.47' },
+  { url: 'https://cm.[LFICODE].preprod.apihub.openfinance.ae/v2025.47' },
 ]
 
 const SPEC_HEIMDALL = '/openapi/v2.1/api-hub/uae-api-hub-authorisation-server-openapi.yaml'

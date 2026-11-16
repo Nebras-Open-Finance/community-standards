@@ -49,7 +49,7 @@ meta:
         <li>Create an Application in your Trust Framework Organisation labelled <code>C3-hh-cm-client</code>.</li>
         <li>Create both the <strong>C3</strong> transport client certificate and <strong>Sig4</strong> signing certificate in this Application using the code snippets provided in the Trust Framework.</li>
         <li>The Trust Framework will create a unique <code>kid</code> and host the JWKS.</li>
-        <li>When publishing a new key, wait <strong>10 minutes</strong> before issuing a message signed with that key. This allows the receiver's JWKS cache to refresh.</li>
+        <li>When publishing a new key, wait <strong>10 minutes</strong> before issuing a message signed with that key. This allows the CDN in front of the keystore and the receiver's JWKS cache to refresh &mdash; see <a href="/tech/lfi-api-hub/trust-framework/#keystore-caching">Keystore Caching</a>.</li>
       </EdBullets>
     </EdSectionBand>
 

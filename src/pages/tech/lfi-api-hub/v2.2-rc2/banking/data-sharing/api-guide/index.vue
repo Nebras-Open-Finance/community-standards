@@ -320,9 +320,10 @@ const customerCorporateJson = `{
         {
           "verification": { "trustFramework": "UAE.FI" },
           "claims": {
-            "identityType": "Organisation",
+            "identityType": "Business",
             "businessName": "Al Mansouri Trading LLC",
             "tradeLicenceNumber": "DED-123456",
+            "tradeLicenceExpiryDate": "2027-02-09",
             "taxIdentificationNumber": "100123456700003",
             "dateOfIncorporation": "2015-02-10",
             "countryOfIncorporation": "AE",
@@ -651,7 +652,9 @@ const customerPsuJson = `{
         before returning data &mdash; if the account is not <code>Active</code>, the endpoint MUST
         respond with <code>403</code> instead of returning the resource.
         <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/accounts</code></span>
-        is the only exception: it lists every consented account regardless of status, with the
+        and
+        <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/accounts/{accountId}</code></span>
+        are the exceptions: they return consented accounts regardless of status, with the
         <code>Status</code> field populated so the TPP can observe the current state.
       </EdProse>
       <EdProse>All error bodies MUST include <code>errorCode</code> and <code>errorMessage</code>.</EdProse>
@@ -659,6 +662,8 @@ const customerPsuJson = `{
       <h4 class="ed-doc__subhead-minor"><code>403</code> &mdash; Forbidden</h4>
       <EdProse>
         Return <code>403</code> using the
+        <a href="/tech/lfi-api-hub/v2.2-rc2/banking/data-sharing/requirements#account-access-validation">Account Access Validation</a>
+        check and the
         <a href="/tech/lfi-api-hub/v2.2-rc2/banking/data-sharing/requirements#account-status-handling">Account Status Handling</a> mapping:
       </EdProse>
       <EdRefTable>
@@ -667,9 +672,8 @@ const customerPsuJson = `{
             <tr><th><code>errorCode</code></th><th><code>errorMessage</code></th><th>When to use</th></tr>
           </thead>
           <tbody>
-            <tr><td><code>Consent.AccountTemporarilyBlocked</code></td><td><code>The account is temporarily blocked.</code></td><td>Account status is <code>Suspended</code></td></tr>
-            <tr><td><code>Consent.PermanentAccountAccessFailure</code></td><td><code>The account is permanently inaccessible.</code></td><td>Account status is <code>Closed</code>, <code>Deceased</code>, or <code>Unclaimed</code></td></tr>
-            <tr><td><code>GenericError</code></td><td><code>The account is inaccessible.</code></td><td><code>{accountId}</code> does not belong to the customer identified by <code>o3-psu-identifier</code></td></tr>
+            <tr><td><code>Consent.AccountTemporarilyBlocked</code></td><td><code>The account is temporarily blocked.</code></td><td>Account status is <code>Inactive</code>, <code>Dormant</code>, or <code>Suspended</code></td></tr>
+            <tr><td><code>Consent.PermanentAccountAccessFailure</code></td><td><code>The account is permanently inaccessible.</code></td><td>Account status is <code>Closed</code>, <code>Deceased</code>, or <code>Unclaimed</code>; or <code>{accountId}</code> is not held by the customer identified by <code>o3-psu-identifier</code></td></tr>
           </tbody>
         </table>
       </EdRefTable>
@@ -691,6 +695,15 @@ const customerPsuJson = `{
           </tbody>
         </table>
       </EdRefTable>
+
+      <h4 class="ed-doc__subhead-minor"><code>504</code> &mdash; Gateway Timeout</h4>
+      <EdProse>
+        Every Ozone Connect Data Sharing endpoint MAY return <code>504</code> when your LFI cannot
+        complete processing within its internal time limit. The API Hub treats it as a timeout. The
+        body for this status is not standardised and no schema is defined for it. A <code>504</code>
+        is a <code>5xx</code> response, so it counts as a failed request under the
+        <a href="/policy/ozone-connect-availability">Ozone Connect Availability Policy</a>.
+      </EdProse>
 
       <h3 id="pagination" class="ed-doc__subhead">Pagination</h3>
       <EdProse>
@@ -815,7 +828,13 @@ const customerPsuJson = `{
       <h3 class="ed-doc__subhead">Response</h3>
       <EdProse><code>Content-Type: application/json</code></EdProse>
       <EdCode :code="accountByIdJson" lang="json" filename="GET /accounts/{accountId} response" />
-      <EdProse>Errors: see <a href="#common-error-responses">Common error responses</a>.</EdProse>
+      <EdProse>
+        <span class="endpoint"><span class="http-method http-method--get">GET</span><code>/accounts/{accountId}</code></span>
+        is exempt from the <a href="#common-error-responses">Common error responses</a> status mapping
+        &mdash; return the account regardless of status. The
+        <a href="/tech/lfi-api-hub/v2.2-rc2/banking/data-sharing/requirements#account-access-validation">Account Access Validation</a>
+        check still applies.
+      </EdProse>
       <EdProse>
         See the
         <a href="/tech/lfi-api-hub/v2.2-rc2/banking/data-sharing/open-api/accounts-AccountId">GET <code>/accounts/{accountId}</code> API Reference</a>

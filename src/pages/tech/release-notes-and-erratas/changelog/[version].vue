@@ -269,6 +269,7 @@ function labelWord(word: string): string {
 
 function shortLabel(path: string): string {
   const segs = path.split('/').filter(Boolean)
+  if (segs[0] === 'knowledge-base') return 'Knowledge Base'
   // Drop `tech`, the surface, and the version — what remains names the area.
   const rest = segs.slice(3)
   if (rest.length === 0) return segs[1] === 'tpp-standards' ? 'TPP Standards' : 'LFI Guide'

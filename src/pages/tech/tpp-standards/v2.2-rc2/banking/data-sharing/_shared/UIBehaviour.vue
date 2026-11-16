@@ -5,6 +5,16 @@
 
   <PermissionsReference />
 
+  <EdProse>
+    <strong>Contact and Party Details</strong> shows one line per kind of detail shared, not one per
+    permission. <code>ReadPartyUserIdentity</code> already includes the name and Emirates ID, so when
+    it is present only its line is shown. Otherwise <code>ReadPartyUser</code> and
+    <code>ReadPartyIdentity</code> each show their own line &mdash; contact details and identity
+    details respectively &mdash; and both are shown when both are granted. <code>ReadParty</code> is
+    shown only when neither is present, because each of them already includes the account holder's
+    name.
+  </EdProse>
+
   <h3>Account Sub Type Filtering</h3>
 
   <EdProse>The <code>AccountSubType</code> field in <code>authorization_details</code> acts as a filter, controlling which of the user's accounts are presented for selection on the LFI Authorisation Page.</EdProse>

@@ -31,9 +31,13 @@ export interface SandboxAuthState {
   name?: string | undefined
   email?: string | undefined
   orgs: SandboxOrg[]
+  // Nebras staff: an active member of a Nebras operator organisation, a super
+  // user, or allowlisted on the Worker. Decided by the Worker and reported on
+  // /me; false when absent. Gates staff-only tools — the API re-checks.
+  isAdmin?: boolean
 }
 
-const auth: Ref<SandboxAuthState> = ref({ loaded: false, authenticated: false, blocked: false, orgs: [] })
+const auth: Ref<SandboxAuthState> = ref({ loaded: false, authenticated: false, blocked: false, orgs: [], isAdmin: false })
 
 // Normalise the orgs field, which the Worker returns either as objects
 // ({ id, name }) or as bare strings depending on the endpoint.
@@ -51,7 +55,7 @@ async function loadMe(): Promise<void> {
   try {
     const res = await fetch(`${API_BASE}/me`, { credentials: 'include' })
     if (!res.ok) {
-      auth.value = { loaded: true, authenticated: false, blocked: false, orgs: [] }
+      auth.value = { loaded: true, authenticated: false, blocked: false, orgs: [], isAdmin: false }
       return
     }
     const d = (await res.json()) as {
@@ -60,6 +64,7 @@ async function loadMe(): Promise<void> {
       name?: string
       email?: string
       orgs?: unknown
+      isAdmin?: boolean
     }
     auth.value = {
       loaded: true,
@@ -68,9 +73,10 @@ async function loadMe(): Promise<void> {
       name: d.name,
       email: d.email,
       orgs: normaliseOrgs(d.orgs),
+      isAdmin: d.isAdmin === true,
     }
   } catch {
-    auth.value = { loaded: true, authenticated: false, blocked: false, orgs: [] }
+    auth.value = { loaded: true, authenticated: false, blocked: false, orgs: [], isAdmin: false }
   }
 }
 

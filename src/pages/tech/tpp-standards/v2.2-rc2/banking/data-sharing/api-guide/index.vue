@@ -955,7 +955,7 @@ const step10Tabs = [{ label: 'Node.js', lang: 'typescript', code: step10Node }, 
             <tr><td><code>/accounts/{AccountId}/standing-orders</code></td><td><code>ReadStandingOrdersBasic</code></td><td><a href="/tech/tpp-standards/v2.2-rc2/banking/data-sharing/open-api/accounts-AccountId-standing-orders">reference</a></td></tr>
             <tr><td><code>/accounts/{AccountId}/scheduled-payments</code></td><td><code>ReadScheduledPaymentsBasic</code></td><td><a href="/tech/tpp-standards/v2.2-rc2/banking/data-sharing/open-api/accounts-AccountId-scheduled-payments">reference</a></td></tr>
             <tr><td><code>/accounts/{AccountId}/statements</code></td><td><code>ReadStatements</code></td><td><a href="/tech/tpp-standards/v2.2-rc2/banking/data-sharing/open-api/accounts-AccountId-statements">reference</a></td></tr>
-            <tr><td><code>/accounts/{AccountId}/parties</code></td><td><code>ReadParty</code></td><td><a href="/tech/tpp-standards/v2.2-rc2/banking/data-sharing/open-api/accounts-AccountId-parties">reference</a></td></tr>
+            <tr><td><code>/accounts/{AccountId}/parties</code></td><td><code>ReadParty</code>, <code>ReadPartyUser</code>, <code>ReadPartyUserIdentity</code> or <code>ReadPartyIdentity</code></td><td><a href="/tech/tpp-standards/v2.2-rc2/banking/data-sharing/open-api/accounts-AccountId-parties">reference</a></td></tr>
           </tbody>
         </table>
       </EdRefTable>

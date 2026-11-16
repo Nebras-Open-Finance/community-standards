@@ -411,7 +411,7 @@
 
                         </div>
 
-                        <div v-if="consentData?.Permissions?.some(item => ['ReadPartyUser', 'ReadPartyUserIdentity', 'ReadParty'].includes(item))"
+                        <div v-if="consentData?.Permissions?.some(item => partyPermissions.includes(item))"
                             class="auth-page-dropdown-container">
                             <div class="auth-page-dropdown" @click="show_parties = !show_parties">
                                 <div class="auth-page-dropdown-text-section">
@@ -450,19 +450,9 @@
 
                             </div>
                             <div v-if="show_parties" class="auth-page-dropdown-subtext-section">
-                                <div v-if="consentData?.Permissions?.includes('ReadPartyUserIdentity')"
+                                <div v-for="perm in partyPermissionLines(consentData?.Permissions)" :key="perm"
                                     class="auth-page-dropdown-subtext">
-                                    Detailed personal identity details (name, date of birth, contact information,
-                                    Emirates ID, nationality, residential address, employer details)
-                                </div>
-                                <div v-else-if="consentData?.Permissions?.includes('ReadPartyUser')"
-                                    class="auth-page-dropdown-subtext">
-                                    Detailed personal details (name, date of birth, contact information, residential
-                                    address)
-                                </div>
-                                <div v-else-if="consentData?.Permissions?.includes('ReadParty')"
-                                    class="auth-page-dropdown-subtext">
-                                    Your legal or registered name as the account holder
+                                    {{ permissionDescriptions[perm] }}
                                 </div>
                             </div>
 
@@ -746,6 +736,7 @@ import { ref, computed, reactive } from 'vue'
 import { useSharedState } from '../composables/useSharedState.ts'
 import AuthThemeToggle from './AuthThemeToggle.vue'
 import { formatDateTime as formatDate } from '../composables/formatDate.ts'
+import { permissionDescriptions, partyPermissions, partyPermissionLines } from '../composables/permissionDescriptions.ts'
 import DirhamAmount from '../consent-ui/DirhamAmount.vue'
 
 // `dark` renders the dark-theme variant of the LFI authorisation page (styles

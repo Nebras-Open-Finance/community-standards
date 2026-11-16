@@ -19,7 +19,7 @@ interface MetaItem { label: string; value: string }
 
 const sections: Section[] = [
   { id: 'diagram', label: 'Architecture diagram' },
-  { id: 'lookup', label: 'Instrument lookup' },
+  { id: 'query', label: 'Instrument query' },
   { id: 'binding', label: 'Binding to ICP' },
   { id: 'who', label: 'Who does what' },
 ]
@@ -35,17 +35,17 @@ const meta: MetaItem[] = [
 const actors: BpActor[] = [
   {
     key: 'bpip',
-    name: 'BPIP',
-    sub: 'Biometric Payment Initiation Provider — the merchant’s acquirer',
+    name: 'Acquirer (BPIP)',
+    sub: 'Biometric Payment Initiation Provider',
     color: 'var(--at-teal)',
     responsibilities: [
       'Operate the acceptance point, and capture the biometric together with the amount and creditor details.',
-      'Resolve the customer directly with ICP through the ICP SDK, supplying the transaction hash and its transport certificate thumbprint, and receive a uaeKycId, the customer’s default LFI and the ICP authorisation. This call does not route through the API Hub.',
-      'Look up the customer’s payment instrument through the API Hub on every payment, presenting the ICP authorisation, and receive a payment token. Route the payment on the result.',
-      'For an account, build the payment request carrying the uaeKycId, the customer’s IBAN from the lookup and the payment token, and send it through the API Hub to the default LFI ICP returned.',
-      'Register an encryption certificate in the Directory. Decrypt the card credential JWE in the lookup response with its private key, and verify the LFI’s signature inside it.',
-      'For a card, submit the authorisation to the card scheme as acquirer, with the one-time credential and the payment token the lookup returned. No further call goes through the API Hub.',
-      'Generate and retain an idempotency key for every account payment, and recover with it rather than initiating again.',
+      'Resolve the customer directly with ICP through the ICP SDK, and receive a uaeKycId, the customer’s default LFI and the ICP token. This call does not route through the API Hub.',
+      'Query the customer’s payment instrument through the API Hub on every payment with POST /instrument-query, sending the UaeKycId, the ICP token, the amount and the merchant, terminal and acquirer identifiers. Sign the request with its signing key, then encrypt the signed request as a JWE to the LFI’s public encryption key from the Directory. Sending it signed but unencrypted is prohibited.',
+      'Register an encryption certificate in the Directory. Decrypt every instrument query response with its private key, verify the LFI’s signature inside it, and route the payment on the instrument’s SchemeName.',
+      'For an IBAN, send the payment token through the API Hub to the default LFI ICP returned, with the IBAN to credit. Nothing the LFI stored against the payment token is repeated in the request. The BPIP is accountable for the creditor account, as an acquirer is for settling with its merchant.',
+      'For a PAN, submit the authorisation to the card scheme as acquirer, with the card number and expiry date from the instrument query response, the same amount and merchant, terminal and acquirer identifiers sent on the query, and the payment token. No further call goes through the API Hub.',
+      'Generate and retain an idempotency key for every account payment, and recover from a lost response by retrying with it rather than initiating again.',
       'Implement a webhook endpoint, give its URL on each payment request, and acknowledge payment status events.',
       'Report the outcome back to the customer.',
     ],
@@ -58,45 +58,44 @@ const actors: BpActor[] = [
     responsibilities: [
       'Match the biometric and run liveness detection against the verified identity it holds.',
       'Return the uaeKycId and the customer’s default LFI, from the binding it has held since registration.',
-      'Sign the ICP authorisation: a short-lived, single-use JWS binding the uaeKycId to this transaction’s amount and merchant, to the BPIP and to the BPIP’s transport certificate.',
-      'Return no template and no match score — only the resolved identifier, default LFI and ICP authorisation.',
+      'Issue the ICP token: a short-lived, single-use, opaque identifier for the identification, issued to the BPIP for the uaeKycId.',
+      'Return no template and no match score — only the resolved identifier, default LFI and ICP token.',
+      'Expose a token validation endpoint to LFIs. On each call, confirm ICP issued the ICP token to the calling BPIP for the uaeKycId, that it has not expired and that it has not been used, and mark it used.',
     ],
   },
   {
     key: 'hub',
-    name: 'API Hub',
-    sub: 'Nebras — the control plane',
+    name: 'Nebras (API Hub)',
+    sub: 'The control plane',
     color: 'var(--at-blue-deep)',
     responsibilities: [
       'Enforce mutual TLS and application-layer authentication on every request, so each call is bound to a participant the Trust Framework has identified by certificate.',
-      'Issue access tokens under client_credentials. There is no authorisation journey in this flow, and no LFI issues anything.',
+      'Issue access tokens under client_credentials. There is no authorisation journey in this flow. Grant the biometric-payments scope only to a client whose organisation holds the BPIP role.',
       'Enforce role and scope entitlement before any request is proxied.',
-      'Verify the ICP authorisation on every lookup, and allow each one to be exchanged for one payment token only.',
-      'Mint the payment token after the LFI answers the lookup: a short-lived, single-use JWS that embeds the ICP authorisation and states whether the payment is by account or card.',
-      'Verify the payment token on every account payment, and mark it used once the LFI creates the payment.',
-      'Validate every request against its schema.',
-      'Act as the gateway between the BPIP and the LFI. The BPIP never communicates with the LFI directly — the Hub proxies the instrument lookup and the payment to the Ozone Connect endpoints of the default LFI ICP returned. Identity resolution with ICP does not pass through the Hub.',
-      'Enforce idempotency, and serve retrieval by payment identifier or by idempotency key.',
+      'Validate every request it can read against its schema. The instrument query body is encrypted to the LFI, so the Hub forwards it without reading it.',
+      'Act as the gateway between the BPIP and the LFI. The BPIP never communicates with the LFI directly — the Hub forwards the instrument query to the Ozone Connect POST /customers/action/instrument-query of the default LFI ICP returned, and proxies the payment, identifying the BPIP to the LFI in o3-caller-org-id. Identity resolution with ICP does not pass through the Hub.',
+      'Forward the payment token to the LFI without checking it. The LFI validates the ICP token with ICP, and looks up the payment token it issued.',
+      'Enforce idempotency, and serve retrieval by payment identifier.',
       'Record every transaction that passes through, for reconciliation, dispute handling and supervision.',
       'Normalise status, map LFI errors to the standard, and deliver payment status events to the BPIP.',
-      'Record the biometric assurance on each payment from the ICP authorisation embedded in the payment token, not from anything the BPIP asserts.',
-      'Publish the signing keys the card scheme uses to verify payment tokens.',
-      'Proxy the card credential JWE unread. The Hub never sees card data in the clear, keeping it out of PCI DSS scope.',
+      'Forward the instrument query request and response unread. The Hub never sees the instrument or card data in the clear, keeping it out of PCI DSS scope.',
       'Store no biometric, no template, no account number and no card credential.',
     ],
   },
   {
     key: 'lfi',
-    name: 'LFI',
+    name: 'Issuer (Ozone Connect)',
     sub: 'Licensed Financial Institution — the execution layer',
     color: 'var(--at-navy)',
     responsibilities: [
-      'Implement the instrument lookup and biometric payment endpoints on Ozone Connect.',
-      'Resolve the uaeKycId to the customer record and the instrument selected at registration.',
-      'Verify the ICP authorisation on the lookup.',
-      'On lookup, return the IBAN for an account; for a card, generate a one-time card scheme token and cryptogram bound to the amount, merchant and ICP jti, sign them, and encrypt them as a JWE to the BPIP’s public encryption key from the Directory.',
-      'Execute the account-to-account payment via AANI/IPP, and patch payment status to the API Hub once it reaches a terminal state.',
-      'As issuer, when the card authorisation arrives from the card scheme, validate the cryptogram and approve or decline.',
+      'Implement POST /customers/action/instrument-query and the biometric payment endpoint on Ozone Connect.',
+      'Decrypt every instrument query with its private encryption key, and verify the BPIP’s signature on the request inside it.',
+      'Validate the ICP token on every instrument query by calling ICP’s token validation endpoint, which confirms it was issued to the calling BPIP for this UaeKycId.',
+      'Resolve the UaeKycId to the instrument the customer designated with the LFI as their default for ICP Pay. Return 400 with Query.UnmatchedInstrument if no instrument can be matched from the request.',
+      'Answer every matched query with a payment token: a single-use, 36-character UUID, valid for 30 seconds, against which it stores the BPIP, the UaeKycId, the ICP token, the amount, the merchant, terminal and acquirer identifiers and the instrument. Return it with the request values and the customer’s instruments — each an IBAN or a PAN — as a response it signs, with azp set to the o3-caller-org-id of the request, and encrypts as a JWE.',
+      'Look up the payment token it issued when it comes back — on the AANI payment through the API Hub, or in the card authorisation through the card scheme — check it against what it stored, and mark it used when it accepts the payment.',
+      'Execute the account-to-account payment via AANI/IPP — debiting the IBAN stored against the payment token for its amount, and crediting the IBAN the BPIP sent — or book it on its own ledger where it also holds the creditor account. Patch the payment rail (AANI or LFI) and status to the API Hub, as on the v2.2 payment log, until it reaches a terminal state.',
+      'As issuer, when the card authorisation arrives from the card scheme, approve or decline.',
     ],
   },
   {
@@ -106,8 +105,8 @@ const actors: BpActor[] = [
     color: 'var(--at-mute)',
     responsibilities: [
       'Provision card scheme tokens for BioPay, and code transactions for biometric cardholder verification.',
-      'Verify the payment token in the BPIP’s authorisation against the API Hub’s signing keys — a Card token for this scheme, amount and merchant, not expired and not used — and mark it used.',
-      'Detokenise and route the BPIP’s authorisation to the issuing LFI, and return the response.',
+      'Carry the payment token in the BPIP’s authorisation through to the issuing LFI.',
+      'Route the BPIP’s authorisation to the issuing LFI, and return the response.',
       'Clear and settle the card payment, as for any card payment.',
     ],
   },
@@ -123,7 +122,7 @@ const actors: BpActor[] = [
       eyebrow-color="var(--at-navy)"
       title="Payment API Sequence Flow"
       :meta="meta"
-      lede="How a BioPay payment is put together &mdash; resolution with ICP, the instrument lookup that decides the route, and the account-to-account payment via AANI/IPP &mdash; and which party is accountable for each part of it. <strong>Everything here is draft</strong> &mdash; the flow and the split of responsibilities are proposals for review."
+      lede="How a BioPay payment is put together &mdash; resolution with ICP, the instrument query that decides the route, and the account-to-account payment via AANI/IPP &mdash; and which party is accountable for each part of it. <strong>Everything here is draft</strong> &mdash; the flow and the split of responsibilities are proposals for review."
     />
 
     <EdInPageNav :sections="sections" />
@@ -142,38 +141,44 @@ const actors: BpActor[] = [
           The BPIP captures the biometric at the acceptance point and sends a resolution request
           directly to ICP through the ICP SDK &mdash; this call does not route through the API Hub.
           ICP matches the customer and returns their <code>uaeKycId</code>, their default LFI and an
-          <strong>ICP authorisation</strong> bound to this transaction &mdash; see
+          <strong>ICP token</strong> for this identification &mdash; see
           <a href="#binding">Binding to ICP</a>.
         </p>
         <p>
           The BPIP then asks that LFI, through the API Hub, which payment instrument the customer
           pays with, using
-          <RouterLink to="/biopay/payment/api-reference/instrument-lookup"><code>POST /instrument-lookup</code></RouterLink>.
-          The API Hub exchanges the ICP authorisation for a <strong>payment token</strong>, and
-          the BPIP routes the payment on the result:
+          <RouterLink to="/biopay/payment/api-reference/standards/instrument-query"><code>POST /instrument-query</code></RouterLink>.
+          The BPIP signs the request, then encrypts the signed request as a JWE to the LFI&rsquo;s
+          public encryption key, so only the LFI can read it. The API Hub forwards it unchanged to
+          the LFI&rsquo;s Ozone Connect
+          <RouterLink to="/biopay/payment/api-reference/ozone-connect/instrument-query"><code>POST /customers/action/instrument-query</code></RouterLink>.
+          The LFI, as issuer, decrypts it, verifies the BPIP&rsquo;s signature, validates the ICP
+          token with ICP&rsquo;s token validation endpoint, and answers with a signed, encrypted
+          response carrying a <strong>payment token</strong> &mdash; a single-use, opaque reference
+          to what it stored &mdash; and the customer&rsquo;s instruments. The BPIP routes the payment
+          on the instrument&rsquo;s <code>SchemeName</code>:
         </p>
         <ul>
           <li>
-            <strong>Account (AANI/IPP).</strong> The BPIP sends the payment request, carrying the
-            payment token, through the API Hub, under <code>client_credentials</code> over mTLS. The
-            Hub verifies the token and proxies the request to the LFI.
+            <strong>IBAN (via AANI/IPP).</strong> The BPIP sends the payment request,
+            carrying the payment token and the IBAN to credit, through the API Hub, under
+            <code>client_credentials</code> over mTLS. The Hub proxies the request to the LFI, which looks up the payment token it issued.
             The LFI executes on the rail and patches status back, which the Hub delivers to the BPIP.
           </li>
           <li>
-            <strong>Card (card scheme, e.g. Jaywan).</strong> The BPIP, as acquirer, submits the
-            authorisation to the card scheme with the one-time credential the lookup returned
-            &mdash; a JWE encrypted to the BPIP, which the API Hub cannot read &mdash; and the
-            payment token, which the card scheme verifies. The payment does not return to the API
-            Hub.
+            <strong>PAN (via the card scheme, e.g. Jaywan).</strong> The BPIP, as acquirer, submits the authorisation to the
+            card scheme with the card number and expiry date from the response and the payment
+            token, which the card scheme carries to the LFI to look up. The payment does not return
+            to the API Hub.
           </li>
         </ul>
       </EdProse>
-      <EdNote type="info" title="The BPIP never communicates with the LFI directly">
+      <EdNote type="info" title="The Acquirer never communicates with the Issuer directly">
         <p>
-          Every BPIP call reaches the LFI through an intermediary. Account payments, and the
-          instrument lookup, go through the API Hub, operated by Nebras. Card payments go through the
-          card scheme (e.g. Jaywan), as they do today. The BPIP has no connection to the LFI&rsquo;s
-          systems.
+          Every call from the Acquirer reaches the Issuer through an intermediary. Account payments,
+          and the instrument query, go through the API Hub, operated by Nebras. Card payments go
+          through the card scheme (e.g. Jaywan), as they do today. The Acquirer has no connection to
+          the Issuer&rsquo;s systems.
         </p>
       </EdNote>
       <APIFlowViewer
@@ -186,48 +191,81 @@ const actors: BpActor[] = [
 
     <!-- 02 ─────────────────────────────────────────────────────────────── -->
     <EdSectionBand
-      id="lookup"
+      id="query"
       num="02"
       color="var(--at-gold)"
-      eyebrow="Instrument lookup"
-      title="Every payment starts with a lookup"
+      eyebrow="Instrument query"
+      title="Every payment starts with an instrument query"
       tone="surface"
-      lede="Only the LFI knows whether a uaeKycId pays by account or by card, and the BPIP cannot route the payment until it knows."
+      lede="Only the LFI knows whether a customer pays by account or by card, and the BPIP cannot route the payment until it knows."
     >
       <EdProse>
         <p>
           The BPIP MUST call
-          <RouterLink to="/biopay/payment/api-reference/instrument-lookup"><code>POST /instrument-lookup</code></RouterLink>
-          on every payment, after resolution with ICP and before it builds the payment. The API Hub
-          proxies the lookup to the LFI&rsquo;s Ozone Connect, and the LFI answers from its own
-          registration store of <code>uaeKycId</code> &rarr; payment instrument. The API Hub adds a
-          payment token to every successful response, and the response carries what the BPIP needs
-          for that rail:
+          <RouterLink to="/biopay/payment/api-reference/standards/instrument-query"><code>POST /instrument-query</code></RouterLink>
+          on every payment, after resolution with ICP and before it builds the payment, with an
+          access token obtained under <code>client_credentials</code> with the
+          <code>biometric-payments</code> scope. The request carries the <code>UaeKycId</code> and
+          ICP token, the <code>InstructedAmount</code>, and the <code>MerchantId</code>,
+          <code>TerminalId</code>, <code>AcquirerId</code> and <code>MerchantName</code> of the
+          acceptance point. It is not made under a consent.
+        </p>
+        <p>
+          The API Hub forwards the request, unchanged, to the LFI&rsquo;s Ozone Connect
+          <RouterLink to="/biopay/payment/api-reference/ozone-connect/instrument-query"><code>POST /customers/action/instrument-query</code></RouterLink>,
+          identifying the BPIP in <code>o3-caller-org-id</code>. No <code>o3-consent-id</code> is
+          sent. The LFI decrypts the request, verifies the BPIP&rsquo;s signature, validates the ICP
+          token with ICP&rsquo;s token validation endpoint, and looks up the instrument the customer
+          designated with it as their default for ICP Pay. If it cannot match an instrument from the
+          values in the request, it returns <code>400</code> with
+          <code>Query.UnmatchedInstrument</code>.
+        </p>
+        <p>
+          Otherwise the response always carries a <strong>payment token</strong>: a single-use,
+          36-character UUID, valid for 30 seconds &mdash; see
+          <RouterLink to="/biopay/payment/api-guide/payment-token">Payment Token</RouterLink>. The
+          LFI stores against it what it issued it for
+          &mdash; the BPIP, the <code>UaeKycId</code>, the ICP token, the amount, and the
+          <code>MerchantId</code>, <code>TerminalId</code>, <code>AcquirerId</code> and
+          <code>MerchantName</code> from the request. The response repeats those request values, and
+          lists in <code>Data.Instruments</code> the customer&rsquo;s instruments, each selected by
+          <code>SchemeName</code>:
         </p>
         <ul>
           <li>
-            <strong>Account (AANI)</strong> &mdash; <code>PaymentInstrument: AANI</code> and the
-            customer&rsquo;s IBAN. The BPIP sends the IBAN back as <code>DebtorAccount</code> in
-            <RouterLink to="/biopay/payment/api-reference/biometric-payments"><code>POST /biometric-payments</code></RouterLink>.
-            The registered account can change between the lookup and the payment, so the payment
-            request can still fail on a mismatch (<code>Account.DebtorAccountMismatch</code>).
+            <strong><code>SchemeName: IBAN</code></strong> &mdash; <code>Identification</code> is
+            the IBAN of the customer&rsquo;s account registered for ICP Pay. The BPIP does not send
+            it back: it sends the payment token in
+            <code>POST /biometric-payments</code>
+            with only the IBAN to credit alongside, and the LFI debits the account it stored
+            against the payment token. The registered account can change between the query and the
+            payment, so the payment can still fail (<code>Account.DebtorAccountMismatch</code>).
           </li>
           <li>
-            <strong>Card</strong> &mdash; the <code>PaymentInstrument</code> and a one-time card
-            scheme token and cryptogram, generated by the LFI for the amount and card acceptor in
-            the request. The response never carries a card number (PAN).
+            <strong><code>SchemeName: PAN</code></strong> &mdash; <code>Identification</code>, the
+            card number, and <code>ExpiryDate</code>.
           </li>
         </ul>
       </EdProse>
-      <EdNote type="info" title="The card credential is encrypted to the BPIP">
+      <EdNote type="info" title="Signed by the sender, encrypted to the recipient">
         <p>
-          The LFI MUST sign the card scheme token, cryptogram and expiry as a JWS, and encrypt that
-          JWS into a JWE using the BPIP&rsquo;s public encryption key, taken from the
-          <RouterLink to="/biopay/directory">Directory</RouterLink>. The API Hub proxies the JWE
-          unread, so card data never passes through it in the clear &mdash; keeping the API Hub out
-          of PCI DSS scope. Only the BPIP can decrypt it, with its private key, and the LFI&rsquo;s
-          signature inside proves where it came from. Every BPIP MUST therefore register an
-          encryption certificate.
+          The BPIP MUST sign the request with its signing key, then encrypt the signed request into
+          a JWE using the LFI&rsquo;s public encryption key, taken from the
+          <RouterLink to="/biopay/directory">Directory</RouterLink>. Sending the request signed but
+          unencrypted is prohibited. The LFI decrypts it with its private key, and the BPIP&rsquo;s
+          signature inside proves where it came from.
+        </p>
+        <p>
+          The LFI MUST answer the same way: it signs the response, with <code>azp</code> set to the
+          BPIP&rsquo;s Directory organisation identifier from <code>o3-caller-org-id</code>, and
+          returns it encrypted as a JWE. Returning the response unencrypted is prohibited. The BPIP
+          decrypts it with its private key, so every BPIP MUST register an encryption certificate.
+        </p>
+        <p>
+          The API Hub forwards both the request and the response unread, so neither the
+          <code>UaeKycId</code> nor card data passes through it in the clear &mdash; keeping the API
+          Hub out of PCI DSS scope. The payment token is inside the encrypted response, and means
+          nothing to anyone but the LFI that stored it.
         </p>
       </EdNote>
       <EdNote type="info" title="Who creates the card credential today">
@@ -236,8 +274,8 @@ const actors: BpActor[] = [
           The cryptogram is generated by the card&rsquo;s chip, by the phone in a wallet payment, or
           &mdash; for card-on-file and online payments &mdash; by the scheme&rsquo;s token service
           at the token requestor&rsquo;s request. The issuer validates the cryptogram when the
-          authorisation arrives. The card branch of the lookup therefore depends on how the card
-          credential is obtained.
+          authorisation arrives. The <code>PAN</code> branch of the instrument query therefore
+          depends on how the card credential is obtained.
         </p>
       </EdNote>
     </EdSectionBand>
@@ -249,28 +287,33 @@ const actors: BpActor[] = [
       color="var(--at-teal)"
       eyebrow="Binding to ICP"
       title="One biometric identification, one payment"
-      lede="The ICP authorisation is exchanged once, at the lookup, for a payment token that embeds it. The payment token replaces it at the point of payment, and can be used once."
+      lede="The ICP token is validated once, by the LFI on the instrument query, which then issues a payment token against it. The payment token replaces it at the point of payment, and can be used once."
     >
       <EdProse>
         <p>
-          Before the biometric is captured, the BPIP already knows the amount and the merchant. It
-          sends ICP a hash of them (<code>txn</code>) and the thumbprint of its transport
-          certificate with the biometric capture. ICP returns a short-lived JWS &mdash; the
-          <strong>ICP authorisation</strong> &mdash; that binds the <code>uaeKycId</code>
-          (<code>sub</code>) to that transaction, to the BPIP (<code>azp</code>) and to the
-          BPIP&rsquo;s mTLS key (<code>cnf</code>). Its <code>jti</code> is ICP&rsquo;s identifier
-          for the identification and is single-use. The customer&rsquo;s gesture therefore
-          authorises this amount at this merchant, in the way dynamic linking does under PSD2 strong
-          customer authentication.
+          When ICP identifies the customer, it returns the <strong>ICP token</strong>: an opaque,
+          short-lived, single-use identifier for that identification, issued at the point of
+          customer identity verification to the BPIP that called for the <code>uaeKycId</code> it
+          resolved. ICP holds what it issued the token for, and confirms it to the LFI on
+          validation.
         </p>
         <p>
-          On the lookup, the API Hub verifies the ICP authorisation and, once the LFI has answered,
-          returns a <strong>payment token</strong>: a short-lived, single-use JWS signed by the API
-          Hub. It embeds the ICP authorisation unchanged, states the <code>PaymentType</code>
-          (<code>Account</code> or <code>Card</code>) and the instrument, and binds the customer, the
-          amount, the merchant, the BPIP&rsquo;s client and certificate and, for an account, the IBAN.
-          The payment token &mdash; not the ICP authorisation &mdash; is what the BPIP presents to
-          make the payment.
+          Unlike dynamic linking under PSD2 strong customer authentication, the payee is not bound
+          to the gesture. The BPIP sends the amount and the merchant, terminal and acquirer
+          identifiers on the instrument query, and the LFI stores them against the payment token.
+          It supplies the account to credit at the point of payment, and is accountable for it, as
+          an acquirer is for settling with its merchant in a card payment.
+        </p>
+        <p>
+          On the instrument query, the ICP token travels inside the request the BPIP encrypted to
+          the LFI, so the API Hub forwards it without reading it. The LFI validates it by calling
+          ICP&rsquo;s token validation endpoint, and answers with a <strong>payment token</strong>:
+          a single-use, opaque reference against which it stores the customer, the ICP token, the
+          amount, the BPIP, the merchant, terminal and acquirer, and the instrument &mdash; an IBAN
+          or a PAN. It returns the same to the BPIP, signed and encrypted. The BPIP passes the
+          payment token back to the LFI to make the payment, and the LFI pays from what it stored.
+          The payment token &mdash; not the ICP token &mdash; is what the BPIP presents at the point
+          of payment.
         </p>
       </EdProse>
       <EdRefTable>
@@ -280,31 +323,35 @@ const actors: BpActor[] = [
           </thead>
           <tbody>
             <tr>
-              <td><RouterLink to="/biopay/payment/api-reference/instrument-lookup"><code>POST /instrument-lookup</code></RouterLink></td>
-              <td>API Hub, then LFI</td>
-              <td>The <strong>ICP authorisation</strong>: ICP signature and expiry; <code>cnf</code> matches the mTLS certificate; <code>azp</code> is the calling BPIP; <code>sub</code> and <code>txn</code> match the request; <code>jti</code> not used before. The Hub marks it used and returns the payment token.</td>
+              <td><RouterLink to="/biopay/payment/api-reference/standards/instrument-query"><code>POST /instrument-query</code></RouterLink></td>
+              <td>LFI, with ICP&rsquo;s token validation endpoint</td>
+              <td>The <strong>BPIP&rsquo;s signature</strong> on the decrypted request, then the <strong>ICP token</strong>: ICP confirms it issued the token to the calling BPIP, as the API Hub identifies it, for the <code>UaeKycId</code> in the request, that it has not expired and that it has not been used, and marks it used. The LFI then issues the payment token.</td>
             </tr>
             <tr>
-              <td><RouterLink to="/biopay/payment/api-reference/biometric-payments"><code>POST /biometric-payments</code></RouterLink></td>
-              <td>API Hub</td>
-              <td>The <strong>payment token</strong>: API Hub signature and expiry; <code>PaymentType: Account</code>; <code>cnf</code> and <code>azp</code>; the <code>uaeKycId</code>, IBAN and amount match the request; not used before. The Hub marks it used when the LFI creates the payment, and records the biometric assurance from the embedded ICP authorisation.</td>
+              <td><code>POST /biometric-payments</code></td>
+              <td>LFI</td>
+              <td>The <strong>payment token</strong>, looked up in what the LFI stored: issued by this LFI and not expired; issued for an <code>IBAN</code>; issued to the calling BPIP; not used before; its IBAN is still the account registered for ICP Pay against its <code>UaeKycId</code>. The LFI marks it used when it creates the payment.</td>
             </tr>
             <tr>
               <td>Card authorisation through the card scheme</td>
-              <td>Card scheme, then LFI</td>
-              <td>The card scheme checks the <strong>payment token</strong> against the API Hub&rsquo;s published signing keys: <code>PaymentType: Card</code> for this scheme; the amount and merchant match the authorisation; not expired and not used. It marks it used. The LFI, as issuer, validates the cryptogram, which it bound to the amount, merchant and ICP <code>jti</code> at lookup.</td>
+              <td>LFI, as issuer</td>
+              <td>The <strong>payment token</strong>, carried by the card scheme in the authorisation and looked up in what the LFI stored: issued by this LFI and not expired; issued for a <code>PAN</code>; the card, amount, <code>MerchantId</code>, <code>TerminalId</code> and <code>AcquirerId</code> in the authorisation match; not used before. The LFI marks it used when it approves.</td>
             </tr>
           </tbody>
         </table>
       </EdRefTable>
       <EdNote type="warning" title="Open items">
         <p>
-          The ICP SDK must accept the transaction hash and certificate thumbprint and return a
-          signed authorisation. ICP&rsquo;s signing keys must be distributed to the API Hub and the
-          LFIs, although ICP is not a Directory participant. Each card scheme must carry the payment
-          token in its authorisation message, and must trust and use the API Hub&rsquo;s signing keys
-          to verify it &mdash; to be agreed with each scheme. A change of amount after the gesture
-          &mdash; a tip, a changed basket &mdash; needs a new gesture.
+          The ICP token&rsquo;s format, and the interface of ICP&rsquo;s token validation endpoint,
+          are to be agreed with ICP &mdash; as is whether ICP binds the amount to the token, so that
+          a change of amount after the gesture &mdash; a tip, a changed basket &mdash; needs a new
+          gesture. Whether a <code>PAN</code> instrument&rsquo;s <code>Identification</code> is the
+          card number or a card scheme token, and the <code>MM/YY</code> format of
+          <code>ExpiryDate</code>, are open in the specification. Each card scheme must carry the
+          36-character payment token in its authorisation message through to the issuing LFI
+          &mdash; to be agreed with each scheme. The contents of <code>Risk</code> on
+          <code>POST /biometric-payments</code>
+          are to be defined.
         </p>
       </EdNote>
     </EdSectionBand>
