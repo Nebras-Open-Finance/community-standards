@@ -40,6 +40,8 @@ meta:
           <li>Test registration with real (sandbox) software statements</li>
           <li>Validate certificate-based authentication and mutual TLS setups</li>
           <li>Simulate consent flows and retrieve insurance policy data across sectors</li>
+          <li>Create and accept insurance quotes and issue policies &mdash; see
+            <a href="/tech/tpp-standards/sandbox/model-insurer/quotation">Quotation</a></li>
         </ul>
       </div>
     </section>
@@ -289,6 +291,11 @@ meta:
   color: var(--at-mute-2);
 }
 .ed-doc__bullets li { margin: 0.3rem 0; }
+.ed-doc__bullets a {
+  color: var(--at-teal-deep);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
 .ed-doc__bullets code {
   font-family: var(--at-mono);
   font-size: 0.86em;

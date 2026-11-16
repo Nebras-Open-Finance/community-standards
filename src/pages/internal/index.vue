@@ -91,8 +91,8 @@ function formatDate(ts: number): string {
         <span class="int-card__chevron" aria-hidden="true" />
       </summary>
       <p class="int-card__hint">
-        API Hub operations against the Trust Framework directory: reports, and
-        certificate rotation for LFIs. Some require you to sign in at the directory.
+        API Hub operations: Trust Framework reports, certificate rotation for LFIs,
+        LFI functional testing and its test results. Some require you to sign in at the directory.
       </p>
       <ul class="int-list">
         <li v-for="s in opsTools" :key="s" class="int-list__item">

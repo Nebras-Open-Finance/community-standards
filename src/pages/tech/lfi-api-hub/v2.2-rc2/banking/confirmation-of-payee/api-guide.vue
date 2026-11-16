@@ -174,8 +174,9 @@ const exampleNotFoundResponse = `{
           <code>birthDate</code> and <code>salary</code> &mdash; is removed and MUST NOT be sent.
         </p>
         <p>
-          Headers, query parameters, status codes and error codes are unchanged, so this is a rewrite
-          of your request parser and response builder rather than a new integration.
+          Headers, query parameters and error codes are unchanged, and the only new status code is
+          <code>504</code> (see Error responses below), so this is a rewrite of your request parser
+          and response builder rather than a new integration.
         </p>
       </EdNote>
 
@@ -310,6 +311,15 @@ const exampleNotFoundResponse = `{
           </tbody>
         </table>
       </EdRefTable>
+
+      <h5 class="ed-doc__subhead ed-doc__subhead--xs"><code>504</code> &mdash; Gateway Timeout</h5>
+      <EdProse>
+        You MAY return <code>504</code> when you cannot complete processing within your internal time
+        limit. The API Hub treats it as a timeout. The body for this status is not standardised and no
+        schema is defined for it. A <code>504</code> is a <code>5xx</code> response, so it counts as a
+        failed request under the
+        <a href="/policy/ozone-connect-availability">Ozone Connect Availability Policy</a>.
+      </EdProse>
     </EdSectionBand>
   </div>
 </template>

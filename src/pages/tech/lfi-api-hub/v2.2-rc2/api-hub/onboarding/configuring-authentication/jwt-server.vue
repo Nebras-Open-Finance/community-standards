@@ -58,7 +58,7 @@ Production: https://keystore.directory.openfinance.ae/\${OU}/\${CN}/application.
       <EdCode lang="text" code="https://keystore.sandbox.directory.openfinance.ae/XYZ/ABC/application.jwks" />
 
       <EdBullets>
-        <li>The JWKS MAY be cached for up to <strong>10 minutes</strong>.</li>
+        <li>Cache the JWKS for the <code>max-age</code> it is served with (currently <strong>5 minutes</strong>) and never for longer than <strong>10 minutes</strong>. If the JWT references a <code>kid</code> that is not in your cached copy, refetch the JWKS (no more than once a minute) before rejecting the request. See <a href="/tech/lfi-api-hub/trust-framework/#keystore-caching">Keystore Caching</a>.</li>
         <li>Verify each claim in the JWT against the expected values specified in the <a href="#claims-reference">Claims Reference</a> below.</li>
       </EdBullets>
     </EdSectionBand>

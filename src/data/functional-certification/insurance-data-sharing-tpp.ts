@@ -54,7 +54,7 @@ export const insuranceDataSharingTppArea: FcArea = {
   tppBaseUrlTemplate:
     'https://rs1.altareq2.sandbox.apihub.openfinance.ae/open-finance/insurance/{VERSION}',
   // Insurance has no customer segmentation — omit segments.
-  sandboxEvidenceHref: '/tech/tpp-standards/sandbox/model-insurer',
+  sandboxEvidenceHref: '/tech/tpp-standards/sandbox/model-insurer/',
   sandboxName: 'AlTareq Model Insurer',
   wellKnownUrl: 'https://auth1.altareq2.sandbox.apihub.openfinance.ae/.well-known/openid-configuration',
   endpoints: insuranceDataSharingEndpoints,

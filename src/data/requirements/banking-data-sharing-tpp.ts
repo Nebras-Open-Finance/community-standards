@@ -287,12 +287,12 @@ export const data: RequirementsPageData = {
       table: {
         headers: ['Status', 'Response'],
         rows: [
-          { cells: ['<code>Active</code>, <code>Inactive</code>, <code>Dormant</code>', 'Data is returned normally.'] },
-          { cells: ['<code>Suspended</code>', '<code>403</code> with <code>errorCode</code>: <code>Consent.AccountTemporarilyBlocked</code> and <code>errorMessage</code>: <code>The account is temporarily blocked.</code>'] },
+          { cells: ['<code>Active</code>', 'Data is returned normally.'] },
+          { cells: ['<code>Inactive</code>, <code>Dormant</code>, <code>Suspended</code>', '<code>403</code> with <code>errorCode</code>: <code>Consent.AccountTemporarilyBlocked</code> and <code>errorMessage</code>: <code>The account is temporarily blocked.</code>'] },
           { cells: ['<code>Unclaimed</code>, <code>Deceased</code>, <code>Closed</code>', '<code>403</code> with <code>errorCode</code>: <code>Consent.PermanentAccountAccessFailure</code> and <code>errorMessage</code>: <code>The account is permanently inaccessible.</code>'] },
         ],
       },
-      aside: '<code>GET /accounts</code> is exempt from this mapping — it returns all consented accounts regardless of status, with the <code>Status</code> field populated on each account. TPPs should observe <code>Status</code> from <code>GET /accounts</code> before making subsequent calls.',
+      aside: '<code>GET /accounts</code> and <code>GET /accounts/{AccountId}</code> are exempt from this mapping — they return consented accounts regardless of status, with the <code>Status</code> field populated on each account. TPPs should observe <code>Status</code> from <code>GET /accounts</code> or <code>GET /accounts/{AccountId}</code> before making subsequent calls.',
     },
   ],
 }

@@ -217,7 +217,7 @@ const copOrgExample = `{
           <thead><tr><th><code>identityType</code></th><th>Used for</th><th>Key claims</th></tr></thead>
           <tbody>
             <tr><td><code>Person</code></td><td>Retail customers</td><td><code>fullName</code>, <code>givenName</code>, <code>familyName</code>, <code>emiratesId</code>, <code>emiratesIdExpiryDate</code>, <code>birthDate</code>, <code>nationality</code>, <code>mobileNumber</code>, <code>email</code>, <code>residentialAddress</code></td></tr>
-            <tr><td><code>Organisation</code></td><td>SME / Corporate customers</td><td><code>businessName</code>, <code>tradeLicenceNumber</code>, <code>taxIdentificationNumber</code>, <code>dateOfIncorporation</code>, <code>countryOfIncorporation</code>, <code>corporateAddress</code></td></tr>
+            <tr><td><code>Business</code></td><td>SME / Corporate customers</td><td><code>businessName</code>, <code>tradeLicenceNumber</code>, <code>taxIdentificationNumber</code>, <code>dateOfIncorporation</code>, <code>countryOfIncorporation</code>, <code>corporateAddress</code></td></tr>
           </tbody>
         </table>
       </EdRefTable>
@@ -279,7 +279,7 @@ const copOrgExample = `{
           <tbody>
             <tr><td>Response envelope</td><td><code>verifiedClaims[]</code> &rarr; <code>verification</code> + <code>claims</code> (or <code>organisationClaims</code> for CoP businesses)</td></tr>
             <tr><td>Trust framework</td><td><code>UAE.FI</code> for UAE Open Finance</td></tr>
-            <tr><td>Person vs. organisation</td><td>Discriminated by <code>identityType</code> (<code>Person</code> / <code>Organisation</code>)</td></tr>
+            <tr><td>Person vs. organisation</td><td>Discriminated by <code>identityType</code> (<code>Person</code> / <code>Business</code>)</td></tr>
             <tr><td>Field population</td><td>Every claim the LFI holds or can derive <strong>MUST</strong> be populated</td></tr>
             <tr><td>Source specification</td><td><a href="https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html">OpenID Connect for Identity Assurance 1.0</a></td></tr>
           </tbody>

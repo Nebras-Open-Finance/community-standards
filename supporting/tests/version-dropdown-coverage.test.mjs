@@ -51,6 +51,16 @@ const ONLY_IN = [
     prefix: true,
     versions: ['v2.2-rc2'],
   },
+  {
+    pattern: '/tech/tpp-standards/{v}/banking/service-initiation/domestic-payments/overview/payment-timing',
+    prefix: false,
+    versions: ['v2.2-rc2'],
+  },
+  {
+    pattern: '/tech/lfi-api-hub/{v}/banking/service-initiation/domestic-payments/overview/payment-timing',
+    prefix: false,
+    versions: ['v2.2-rc2'],
+  },
 ]
 
 function allowedMissing(routePath, targetVersion) {
