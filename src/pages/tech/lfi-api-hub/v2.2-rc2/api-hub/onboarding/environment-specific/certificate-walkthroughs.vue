@@ -37,6 +37,7 @@ const opensslCmd = `openssl req -new -newkey rsa:2048 -nodes \\
   -keyout s4.key \\
   -out s4.csr \\
   -subj "/C=AE/O=<LegalName>/OU=<OrganisationId>/CN=<OrganisationId>" \\
+  -addext "subjectAltName=DNS:<OzoneConnectHostname>" \\
   -sha256`
 
 const jwksUrlTemplate = `Sandbox:    https://keystore.sandbox.directory.openfinance.ae/{OrganisationId}/transport.jwks
@@ -188,8 +189,9 @@ Production: https://keystore.directory.openfinance.ae/{OrganisationId}/transport
 
       <h3>Step 1 &mdash; Generate the private key and CSR</h3>
       <EdProse>
-        Generate a 2048-bit RSA private key and a SHA-256 signed CSR. The CSR subject fields MUST match
-        your Trust Framework organisation details:
+        Generate a 2048-bit RSA private key and a SHA-256 signed CSR that includes a Subject
+        Alternative Name (SAN) for your Ozone Connect hostname. The CSR subject fields MUST match your
+        Trust Framework organisation details:
       </EdProse>
 
       <EdCode lang="bash" :code="opensslCmd" />
@@ -198,7 +200,18 @@ Production: https://keystore.directory.openfinance.ae/{OrganisationId}/transport
       <EdBullets>
         <li><code>&lt;LegalName&gt;</code> with your organisation's legal name as it appears in the Trust Framework</li>
         <li><code>&lt;OrganisationId&gt;</code> with your organisation's ID from the Trust Framework</li>
+        <li><code>&lt;OzoneConnectHostname&gt;</code> with the DNS hostname of your Ozone Connect server. For more than one hostname, separate the entries with commas (e.g. <code>DNS:a.example.com,DNS:b.example.com</code>).</li>
       </EdBullets>
+
+      <EdNote type="info" title="SAN required, CN optional">
+        <p>
+          The SAN is REQUIRED on server transport certificates, including S4. The
+          <code>CN</code> is OPTIONAL and depends on your Ozone Connect setup; if you do not need it,
+          remove <code>/CN=&lt;OrganisationId&gt;</code> from <code>-subj</code>. The
+          <code>-addext</code> option requires OpenSSL 1.1.1 or newer. See
+          <a href="/tech/lfi-api-hub/trust-framework/certificates-san/">Certificates with a SAN</a>.
+        </p>
+      </EdNote>
 
       <EdNote type="warning" title="Production environments">
         <p>

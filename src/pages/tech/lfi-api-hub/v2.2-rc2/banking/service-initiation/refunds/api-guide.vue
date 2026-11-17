@@ -13,7 +13,8 @@ const exampleResponse = `{
       "name": {
         "en": "Ibrahim Al Suwaidi"
       }
-    }
+    },
+    "accountStatus": "Active"
   },
   "meta": {}
 }
@@ -105,10 +106,31 @@ const exampleResponse = `{
 
       <h4 class="ed-doc__subhead ed-doc__subhead--small"><code>200</code> &mdash; Refund account found</h4>
       <EdProse>
-        Return the debtor's account details under <code>data.refundAccount</code>. The
-        <code>refundAccount</code> object is required and must contain the debtor's IBAN and name.
+        Return the debtor's account details under <code>data.refundAccount</code>, and the status of
+        that account under <code>data.accountStatus</code>. Both are required. The
+        <code>refundAccount</code> object must contain the debtor's IBAN and name.
+      </EdProse>
+      <EdProse>
+        Return the refund account <strong>regardless of its status</strong>, as
+        <code>GET /accounts</code> does. An account that is <code>Inactive</code>,
+        <code>Dormant</code>, <code>Suspended</code>, <code>Unclaimed</code>, <code>Deceased</code> or
+        <code>Closed</code> is still answered with <code>200</code>, and <code>accountStatus</code>
+        carries its state so the TPP can observe it. Do <strong>not</strong> return <code>403</code>
+        because the account is blocked from receiving payments &mdash; v2.1 did, v2.2 does not.
       </EdProse>
       <EdCode :code="exampleResponse" lang="json" filename="200 OK" />
+
+      <h5 class="ed-doc__subhead ed-doc__subhead--xs"><code>data</code></h5>
+      <EdRefTable>
+        <table>
+          <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>consentId</code></td><td>string</td><td>No</td><td>The consent ID of the original payment consent</td></tr>
+            <tr><td><code>refundAccount</code></td><td>object</td><td>Yes</td><td>The debtor's account &mdash; see below</td></tr>
+            <tr><td><code>accountStatus</code></td><td>string</td><td>Yes</td><td>The status of the account in <code>refundAccount</code>, using the statuses that apply to current and savings accounts: <code>Active</code>, <code>Inactive</code>, <code>Dormant</code>, <code>Unclaimed</code>, <code>Deceased</code>, <code>Suspended</code> or <code>Closed</code>. The Hub returns it to the TPP as <code>AccountStatus</code></td></tr>
+          </tbody>
+        </table>
+      </EdRefTable>
 
       <h5 class="ed-doc__subhead ed-doc__subhead--xs"><code>data.refundAccount</code></h5>
       <EdRefTable>
@@ -126,17 +148,10 @@ const exampleResponse = `{
 
       <h4 class="ed-doc__subhead ed-doc__subhead--small">Error responses</h4>
       <EdProse>All error bodies must include <code>errorCode</code> and <code>errorMessage</code>.</EdProse>
-
-      <h5 class="ed-doc__subhead ed-doc__subhead--xs"><code>403</code> &mdash; Forbidden</h5>
-      <EdRefTable>
-        <table>
-          <thead><tr><th><code>errorCode</code></th><th><code>errorMessage</code></th><th>When to use</th></tr></thead>
-          <tbody>
-            <tr><td><code>Consent.AccountTemporarilyBlocked</code></td><td><code>The debtor account is blocked from receiving payments.</code></td><td>The account is blocked from receiving payments for a temporary reason &mdash; e.g. account status is <code>Suspended</code>, or the account is otherwise unable to receive a credit transaction refund on a transient basis</td></tr>
-            <tr><td><code>Consent.PermanentAccountAccessFailure</code></td><td><code>The debtor account is blocked from receiving payments.</code></td><td>The account is blocked from receiving payments permanently &mdash; e.g. account status is <code>Closed</code>, <code>Deceased</code>, or <code>Unclaimed</code></td></tr>
-          </tbody>
-        </table>
-      </EdRefTable>
+      <EdProse>
+        An account that is blocked from receiving payments is not an error. Return <code>200</code> with
+        its <code>accountStatus</code>, as described under <strong>Refund account found</strong> above.
+      </EdProse>
 
       <h5 class="ed-doc__subhead ed-doc__subhead--xs"><code>504</code> &mdash; Gateway Timeout</h5>
       <EdProse>

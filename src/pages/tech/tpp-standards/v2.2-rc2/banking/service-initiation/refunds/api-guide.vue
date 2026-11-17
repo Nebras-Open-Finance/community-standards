@@ -90,7 +90,7 @@ const responseJwt    = await refundResponse.text()
 const [, payloadB64] = responseJwt.split('.')
 const result         = JSON.parse(Buffer.from(payloadB64, 'base64url').toString())
 
-const { ConsentId, RefundAccount } = result.message.Data
+const { ConsentId, RefundAccount, AccountStatus } = result.message.Data
 `
 
 const step3Python = `import httpx, base64, json
@@ -115,6 +115,7 @@ result       = json.loads(base64.urlsafe_b64decode(payload_b64 + "=="))
 
 consent_id     = result["message"]["Data"]["ConsentId"]
 refund_account = result["message"]["Data"]["RefundAccount"]
+account_status = result["message"]["Data"]["AccountStatus"]
 `
 
 const exampleResponse = `{
@@ -131,7 +132,8 @@ const exampleResponse = `{
         "Name": {
           "en": "Ibrahim Al Suwaidi"
         }
-      }
+      },
+      "AccountStatus": "Active"
     },
     "Links": {
       "Self": "https://rs1.altareq1.sandbox.apihub.openfinance.ae/open-finance/bank-service-initiation/v2.2/payment-consents/con-7f4a9b2c-1d3e-4f5a-b6c7-8d9e0f1a2b3c/refund"
@@ -326,6 +328,7 @@ const decodeJwsTabs   = [{ label: 'Node.js', lang: 'typescript', code: decodeJws
             <tr><td><code>Data.RefundAccount.SchemeName</code></td><td>enum</td><td>Account identifier type &mdash; always <code>IBAN</code></td></tr>
             <tr><td><code>Data.RefundAccount.Identification</code></td><td>string</td><td>The debtor's IBAN</td></tr>
             <tr><td><code>Data.RefundAccount.Name</code></td><td>object</td><td>The debtor's account name</td></tr>
+            <tr><td><code>Data.AccountStatus</code></td><td>enum</td><td>Always present, whatever the account&rsquo;s status. The status of the refund account at the LFI, using the statuses that apply to current and savings accounts: <code>Active</code>, <code>Inactive</code>, <code>Dormant</code>, <code>Unclaimed</code>, <code>Deceased</code>, <code>Suspended</code> or <code>Closed</code>. An account blocked from receiving payments is reported here, not as a <code>403</code></td></tr>
           </tbody>
         </table>
       </EdRefTable>

@@ -95,8 +95,9 @@ meta:
     >
       <EdProse>
         Before onboarding to the production Trust Framework, the LFI MUST have both of the following
-        certifications accepted by Nebras. Each maps to a <strong>Certification Type</strong> in the
-        Service Desk evidence ticket.
+        certifications accepted by Nebras. Functional evidence maps to a
+        <strong>Certification Type</strong> in the Service Desk evidence ticket; CX evidence has its own
+        <strong>CX Certification</strong> request.
       </EdProse>
 
       <div class="ed-doc__contents-grid">
@@ -132,8 +133,8 @@ meta:
             user experience requirements.
           </p>
           <div class="ed-link-card__cert">
-            <span class="ed-link-card__cert-label">Certification Type</span>
-            <span class="ed-link-card__cert-value">LFI CX Certification Evidence</span>
+            <span class="ed-link-card__cert-label">Service Desk request</span>
+            <span class="ed-link-card__cert-value">CX Certification</span>
           </div>
           <div class="ed-link-card__foot">
             <span class="ed-link-card__cta">Open requirements</span>
@@ -280,9 +281,16 @@ meta:
       <EdProse>
         Certification evidence is submitted to Nebras through the <strong>Service Desk</strong>, using
         the dedicated <em>Providing certification evidence</em> request type. The link is the same for
-        every area, but each area is its own ticket: raise one for Functional, one for User Experience,
-        one for Performance, and one for Security &mdash; and pick the matching
-        <strong>Certification Type</strong> from the dropdown on each.
+        every area, but each area is its own ticket: raise one for Functional, one for Performance, and
+        one for Security &mdash; and pick the matching <strong>Certification Type</strong> from the
+        dropdown on each.
+      </EdProse>
+
+      <EdProse>
+        User Experience evidence is the exception. It is raised through its own
+        <strong>CX Certification</strong> request, one ticket per brand or segment, carrying the
+        completed CX certification template &mdash; see
+        <a href="/tech/lfi-api-hub/production/testing-certification/user-experience">User Experience Evidence</a>.
       </EdProse>
 
       <EdProse>

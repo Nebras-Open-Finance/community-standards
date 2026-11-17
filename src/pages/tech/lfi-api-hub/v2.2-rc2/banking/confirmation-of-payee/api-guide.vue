@@ -174,9 +174,12 @@ const exampleNotFoundResponse = `{
           <code>birthDate</code> and <code>salary</code> &mdash; is removed and MUST NOT be sent.
         </p>
         <p>
-          Headers, query parameters and error codes are unchanged, and the only new status code is
-          <code>504</code> (see Error responses below), so this is a rewrite of your request parser
-          and response builder rather than a new integration.
+          Return a blocked account with <code>200</code> and its <code>accountStatus</code>, rather
+          than the <code>403</code> (<code>Consent.AccountTemporarilyBlocked</code> or
+          <code>Consent.PermanentAccountAccessFailure</code>) v2.1 used. Headers and query parameters
+          are unchanged, and the only new status code is <code>504</code> (see Error responses below),
+          so this is a rewrite of your request parser and response builder rather than a new
+          integration.
         </p>
       </EdNote>
 
@@ -247,11 +250,20 @@ const exampleNotFoundResponse = `{
         members of an entry.
       </EdProse>
       <EdProse>
-        <code>accountStatus</code> uses the same code set as <code>status</code> on the account
-        resource returned by <code>GET /accounts/{accountId}</code>: <code>Active</code>,
-        <code>Inactive</code>, <code>Dormant</code>, <code>Unclaimed</code>, <code>Deceased</code>,
-        <code>Suspended</code> or <code>Closed</code>. A joint account MUST return the same value on
-        every entry. The Hub returns it to the TPP as <code>AccountStatus</code>.
+        <code>accountStatus</code> uses the statuses that apply to current and savings accounts, with
+        the same meanings as <code>status</code> on the account resource returned by
+        <code>GET /accounts/{accountId}</code>: <code>Active</code>, <code>Inactive</code>,
+        <code>Dormant</code>, <code>Unclaimed</code>, <code>Deceased</code>, <code>Suspended</code> or
+        <code>Closed</code>. A joint account MUST return the same value on every entry. The Hub returns
+        it to the TPP as <code>AccountStatus</code>.
+      </EdProse>
+      <EdProse>
+        Return the holders <strong>regardless of the account's status</strong>, as
+        <code>GET /accounts</code> does. An account that is <code>Inactive</code>,
+        <code>Dormant</code>, <code>Suspended</code>, <code>Unclaimed</code>, <code>Deceased</code> or
+        <code>Closed</code> is still answered with <code>200</code>, and <code>accountStatus</code>
+        carries its state so the TPP can observe it. Do <strong>not</strong> return <code>403</code>
+        because the account is blocked from receiving payments &mdash; v2.1 did, v2.2 does not.
       </EdProse>
 
       <h5 class="ed-doc__subhead ed-doc__subhead--xs">Personal account</h5>
@@ -300,17 +312,10 @@ const exampleNotFoundResponse = `{
 
       <h4 class="ed-doc__subhead ed-doc__subhead--small">Error responses</h4>
       <EdProse>All error bodies must include <code>errorCode</code> and <code>errorMessage</code>.</EdProse>
-
-      <h5 class="ed-doc__subhead ed-doc__subhead--xs"><code>403</code> &mdash; Forbidden</h5>
-      <EdRefTable>
-        <table>
-          <thead><tr><th><code>errorCode</code></th><th><code>errorMessage</code></th><th>When to use</th></tr></thead>
-          <tbody>
-            <tr><td><code>Consent.AccountTemporarilyBlocked</code></td><td><code>The account is blocked from receiving payments.</code></td><td>The account is blocked from receiving payments for a temporary reason &mdash; e.g. account status is <code>Suspended</code></td></tr>
-            <tr><td><code>Consent.PermanentAccountAccessFailure</code></td><td><code>The account is blocked from receiving payments.</code></td><td>The account is blocked from receiving payments permanently &mdash; e.g. account status is <code>Closed</code>, <code>Deceased</code>, or <code>Unclaimed</code></td></tr>
-          </tbody>
-        </table>
-      </EdRefTable>
+      <EdProse>
+        An account that is blocked from receiving payments is not an error. Return <code>200</code> with
+        its <code>accountStatus</code>, as described under <strong>Account found</strong> above.
+      </EdProse>
 
       <h5 class="ed-doc__subhead ed-doc__subhead--xs"><code>504</code> &mdash; Gateway Timeout</h5>
       <EdProse>

@@ -448,13 +448,15 @@ export const VERSION_CHANGES: VersionChange[] = [
       'So does the wider customer data. The v2.1 `ConfirmationOfPayeePersonClaims` schema carries 23 fields, among them `salary`, `employerName`, `maritalStatus`, `residentialAddress`, `emiratesId`, `birthDate` and `nationality`. None of it is needed to compare two names, and Confirmation of Payee runs **without a consent**. The optional `number` field is dropped for the same reason. `id` is retained: it is pseudonymous by definition and is the only handle for investigating a disputed result.\n\n' +
       'Structured name fields are retained as **optional** members, so the Hub\'s matching algorithm can be improved without a second breaking change to this contract. A person name may carry `givenName`, `middleName`, `familyName` and `alsoKnownAs`; a business name may carry `alsoKnownAs`. Only `fullName` and `businessName` are matched today, and a response carrying nothing but `fullName` is fully conformant.\n\n' +
       'The structured fields take the names `CustomerPersonClaims` uses on `GET /customer` — `givenName` and `familyName` — so an LFI describes the same holder with the same field names on both operations. v2.1 used `givenName`/`familyName` in this response and `firstName`/`lastName` on the request; with the name gone from the request, the response names are the ones kept. The v2.1 schema had recorded `givenName` and `familyName` as withdrawn ("removed as of v1.2.1"); v2.2 reinstates them as optional members. Neither schema carries an Arabic-script name field.\n\n' +
-      '**The response gains the account status.** Each entry in `data` carries a required `accountStatus`, drawn from the same code set as `status` on the account resource returned by `GET /accounts/{accountId}`: `Active`, `Inactive`, `Dormant`, `Unclaimed`, `Deceased`, `Suspended` or `Closed`. A joint account MUST return the same value on every entry. The API Hub returns it to the TPP as `AccountStatus` — see §13. It is the one item beyond the name that the operation carries, and the specification\'s data-minimisation rule now reads accordingly: the response MUST carry only the name data and account status the question requires.\n\n' +
+      '**The response gains the account status.** Each entry in `data` carries a required `accountStatus`, using the statuses that apply to current and savings accounts, with the same meanings as `status` on the account resource returned by `GET /accounts/{accountId}`: `Active`, `Inactive`, `Dormant`, `Unclaimed`, `Deceased`, `Suspended` or `Closed`. A joint account MUST return the same value on every entry. The API Hub returns it to the TPP as `AccountStatus` — see §13. It is the one item beyond the name that the operation carries, and the specification\'s data-minimisation rule now reads accordingly: the response MUST carry only the name data and account status the question requires.\n\n' +
+      '**A blocked account is answered, not refused.** In v2.1 an LFI answered for an account blocked from receiving payments with `403` — `Consent.AccountTemporarilyBlocked` for a temporary block such as `Suspended`, `Consent.PermanentAccountAccessFailure` for a permanent one such as `Closed`, `Deceased` or `Unclaimed`. In v2.2 it returns the holders with `200` regardless of the account\'s status, as `GET /accounts` does, and `accountStatus` carries the state. An LFI MUST NOT return `403` for this reason.\n\n' +
       'Three semantics that were previously implicit are now stated in the specification rather than only in the guide. The LFI performs no matching, and MUST NOT filter, rank or omit holders on any basis — the API Hub owns the rules. A joint account MUST return one entry per holder, and the API Hub evaluates every entry in `data` rather than stopping at the first. Not found is `200` with an empty `data` array, never `204`, `404`, `201` or `202`; account-not-found, account-barred and customer-opted-out are deliberately indistinguishable so a CoP query cannot be used to probe for the existence of an account.\n\n' +
       'Removing the submitted name also resolves a v2.1 limitation. Claim-block selection previously followed the TPP\'s request type rather than the data the LFI holds, so a business name submitted against an account held as a personal name was answered as a protocol error rather than as a no-match. With no name in the request there is nothing to select on: the LFI returns what it holds, and the Hub decides.\n\n' +
-      'This is a breaking change and requires action from every LFI. It is confined to the two bodies of this one operation — headers, query parameters, status codes and error codes are unchanged, so the work is a rewrite of the request parser and response builder rather than a new integration. The response builder now also needs the account\'s status, which an LFI already serving `GET /accounts/{accountId}` holds. On the TPP-facing side the TPP still submits a name to `/confirmation`, and the API Hub normalises between the two surfaces; the one consequence a TPP sees is `AccountStatus` on the confirmation response (§13).\n\n' +
+      'This is a breaking change and requires action from every LFI. It is confined to the two bodies of this one operation and how a blocked account is answered — headers and query parameters are unchanged, so the work is a rewrite of the request parser and response builder rather than a new integration. The response builder now also needs the account\'s status, which an LFI already serving `GET /accounts/{accountId}` holds. On the TPP-facing side the TPP still submits a name to `/confirmation`, and the API Hub normalises between the two surfaces; the one consequence a TPP sees is `AccountStatus` on the confirmation response (§13).\n\n' +
       'The reshaped schemas are published in the v2.2.4 release of the Ozone Connect Bank Data Sharing specification in the api-specs repository, which is what the endpoint page below renders.',
     docsPaths: [
       { label: 'Full specification', path: `${COP}/api-guide` },
+      { label: 'LFI requirements — Confirmation of Payee', path: `${COP}/requirements` },
       { label: 'OpenAPI reference', path: `${COP}/open-api/cop-query` },
     ],
     audience: 'LFI',
@@ -757,19 +759,23 @@ export const VERSION_CHANGES: VersionChange[] = [
     category: 'New capability',
     title: 'Confirmation of Payee — the confirmation response carries the account status',
     summary:
-      '`POST /confirmation` returns a required `AccountStatus` alongside `NameMatchIndicator`, using the code set the account resource already uses — so a TPP learns that a matched account is closed, dormant or suspended before a payment is initiated to it.',
+      '`POST /confirmation` returns a required `AccountStatus` alongside `NameMatchIndicator`, using the statuses that apply to current and savings accounts — so a TPP learns that a matched account is closed, dormant or suspended before a payment is initiated to it. An account blocked from receiving payments is now reported through `AccountStatus` rather than the `403` v2.1 returned.',
     description:
       'In v2.1 `POST /confirmation` answers one question — does the name match — through `NameMatchIndicator` and, where there is a match to show, `MaskedName`. It says nothing about the state of the account. A TPP can confirm that a payee name belongs to an IBAN and go on to initiate a payment to an account that is closed, dormant or suspended, learning so only when the payment is rejected.\n\n' +
-      'v2.2 adds `AccountStatus` to `Data` in the confirmation response. It is **required**, and takes its values from the new `AEAccountStatusCode` schema — the same code set as `Status` on the account resource in the Account Information API description: `Active`, `Inactive`, `Dormant`, `Unclaimed`, `Deceased`, `Suspended` and `Closed`. `Inactive`, `Dormant` and `Unclaimed` are defined by reference to the CBUAE Dormant Accounts Regulation.\n\n' +
+      'v2.2 adds `AccountStatus` to `Data` in the confirmation response. It is **required**, and takes its values from the new `AEAccountStatusCode` schema — the statuses that apply to current and savings accounts, with the same meanings as `Status` on the account resource in the Account Information API description: `Active`, `Inactive`, `Dormant`, `Unclaimed`, `Deceased`, `Suspended` and `Closed`. `Inactive`, `Dormant` and `Unclaimed` are defined by reference to the CBUAE Dormant Accounts Regulation. The credit statuses added in §22 are not part of this code set.\n\n' +
+      '**A blocked account is no longer an error.** In v2.1 a confirmation for an account blocked from receiving payments returned `403`: `Consent.AccountTemporarilyBlocked` for a temporary block such as `Suspended`, and `Consent.PermanentAccountAccessFailure` for a permanent one such as `Closed`, `Deceased` or `Unclaimed`. In v2.2 the LFI answers regardless of the account\'s status, as `GET /accounts` does, and the TPP receives the confirmation response with the state in `AccountStatus`. A TPP that handled those `403` responses must read `AccountStatus` instead.\n\n' +
       'The value is supplied by the LFI. The Ozone Connect `cop-query` response carries `accountStatus` on each holder entry, and the API Hub returns it to the TPP as `AccountStatus` — see §7. The LFI MUST return the same value on every entry of a joint account, so a single value describes the account the TPP asked about.\n\n' +
       'The specification defines the value; it does not prescribe how a TPP acts on it.\n\n' +
       'For a TPP whose client tolerates unrecognised members this is additive. `Data` is `additionalProperties: false`, however, so a client that validates the response strictly against the v2.1 schema will reject a v2.2 response until it is regenerated.\n\n' +
       'The field is published in the v2.2-rc2 release of the Confirmation of Payee OpenAPI document in the api-specs repository, which is what the endpoint page below renders.',
     docsPaths: [
       { label: 'Full specification', path: `${COP_TPP}/api-guide` },
+      { label: 'TPP requirements — Confirmation of Payee', path: `${COP_TPP}/requirements` },
+      { label: 'LFI guide — Confirmation of Payee', path: `${COP}/api-guide` },
+      { label: 'LFI requirements — Confirmation of Payee', path: `${COP}/requirements` },
       { label: 'OpenAPI reference', path: `${COP_TPP}/open-api/confirmation` },
     ],
-    audience: 'TPP',
+    audience: 'Both',
     areas: ['Confirmation of Payee', 'Payments'],
     specs: ['uae-confirmation-of-payee-openapi'],
     endpoints: [
@@ -783,6 +789,8 @@ export const VERSION_CHANGES: VersionChange[] = [
       `${COP_TPP}/api-guide`,
       `${COP_TPP}/requirements`,
       `${COP_TPP}/open-api/confirmation`,
+      `${COP}/api-guide`,
+      `${COP}/requirements`,
     ],
   },
   {
@@ -896,15 +904,15 @@ export const VERSION_CHANGES: VersionChange[] = [
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc2',
     number: 16,
-    category: 'No change',
+    category: 'Behaviour change',
     title: 'Specification tidy-up',
     summary:
-      'Five documentation corrections across the v2.2-rc2 specifications. None changes how the API Hub behaves.',
+      'Five corrections across the v2.2-rc2 specifications. Items 1–3 and 5 document what the API Hub already does; item 4 sets one format for five Data Sharing fields on both surfaces, per OFP-021.',
     description:
       '1. `GET /consent-groups/{consentGroupId}/consents` now documents its return order: newest first by `CreationDateTime` across all pages, with the base consent last. A `consentGroupId` that is not a base consent returns an empty array.\n\n' +
       '2. Every signed message in the v2.2-rc2 Standards now defines `aud` as a single string, not an array, matching what the API Hub already sends: the API Hub authorisation server issuer identifier on requests, and the TPP `client_id` on responses and Event Notifications.\n\n' +
       '3. Confirmation of Payee `POST /discovery` now documents a `204` with no body for when the Creditor Account IBAN cannot be matched to an LFI that offers Confirmation of Payee.\n\n' +
-      '4. Ozone Connect Bank Data Sharing v2.2.6 changes `salary` and `exchangeRate` from string to number to match the Standards Account Information API, and restricts `BillerID`, `merchantId` and `TerminalId` to digits while keeping them strings so leading zeros are kept.\n\n' +
+      '4. Five Data Sharing fields take one format each, the same in the Standards Account Information API and in Ozone Connect Bank Data Sharing, per OFP-021. `MerchantId`, `TerminalId` and `BillerId` (`merchantId`, `TerminalId` and `BillerID` on Ozone Connect) become strings of letters and digits of at most 15, 16 and 35 characters, which the LFI MUST send as it holds them, including any leading zeros. `ExchangeRate` becomes a decimal string with at most 10 decimal places. `Salary` becomes an object of a required `Amount` and `Currency` and an optional `Frequency` (`Weekly`, `Fortnightly`, `Monthly` or `Annual`). In v2.1 the Standards defined all five as numbers, so the API Hub returned `null` to the TPP for any value that was not a number, and a numeric identifier lost its leading zeros. A TPP that reads these fields must change its parsing. Ozone Connect v2.2.9 replaces the v2.2.6 change, which made `salary` and `exchangeRate` numbers and restricted the identifiers to digits; an LFI that built to v2.2.6 must change these fields again.\n\n' +
       '5. Every consent identifier now carries `format: uuid`: `ConsentId` and `BaseConsentId` wherever they appear, the `ConsentId` and `consentId` path and query parameters, and the `o3-consent-id` header on every Ozone Connect operation. This applies across the Standards, the API Hub Consent Manager (v2.2.3) and Ozone Connect. The TPP creates every ConsentId in the Pushed Authorization Request (`POST /par`), where it was already defined as `format: uuid`, so this documents a format every ConsentId already has.',
     audience: 'Both',
     areas: ['Consent', 'Consent Manager', 'Conventions', 'Confirmation of Payee', 'Data Sharing', 'Service Initiation', 'Insurance', 'Webhooks', 'Ozone Connect'],
@@ -932,6 +940,18 @@ export const VERSION_CHANGES: VersionChange[] = [
         path: `${COP_TPP}/open-api/discovery`,
       },
       {
+        label: 'GET /accounts/{AccountId}/transactions',
+        path: `${DS_TPP}/open-api/accounts-AccountId-transactions`,
+      },
+      {
+        label: 'GET /parties',
+        path: `${DS_TPP}/open-api/parties`,
+      },
+      {
+        label: 'GET /accounts/{AccountId}/parties',
+        path: `${DS_TPP}/open-api/accounts-AccountId-parties`,
+      },
+      {
         label: 'GET /customer (Ozone Connect)',
         path: `${DS_LFI}/open-api/customer`,
       },
@@ -947,6 +967,9 @@ export const VERSION_CHANGES: VersionChange[] = [
     affectedPaths: [
       `${CM}/open-api/consent-groups-consentGroupId-consents`,
       `${COP_TPP}/open-api/discovery`,
+      `${DS_TPP}/open-api/accounts-AccountId-transactions`,
+      `${DS_TPP}/open-api/parties`,
+      `${DS_TPP}/open-api/accounts-AccountId-parties`,
       `${DS_LFI}/open-api/customer`,
       `${DS_LFI}/open-api/accounts-AccountId-customer`,
       `${DS_LFI}/open-api/accounts-AccountId-transactions`,
@@ -1234,8 +1257,108 @@ export const VERSION_CHANGES: VersionChange[] = [
     changeId: 'v2.1-to-v2.2',
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
-    introducedIn: 'v2.2-rc1',
+    introducedIn: 'v2.2-rc2',
     number: 22,
+    category: 'Behaviour change',
+    title: 'Credit accounts report arrears, default and write-off — `InArrears`, `Defaulted` and `WrittenOff`',
+    summary:
+      'Three values are added to the account `Status` on `GET /accounts` and `GET /accounts/{AccountId}`. Each is defined in the standard, and an LFI MUST return one of them, in place of `Active`, when its definition applies.',
+    description:
+      'In v2.1 the account `Status` (`AEAccountStatusCode`) has seven values: `Active`, `Inactive`, `Dormant`, `Unclaimed`, `Deceased`, `Suspended` and `Closed`. They describe a current or savings account, and none describes the state of a credit facility. The same enum is used for `CreditCard`, `Finance` and `Mortgage` accounts, so an LFI with a mortgage in arrears, or a card balance it has written off, has to report it as `Active`, `Suspended` or `Closed`, and LFIs choose differently.\n\n' +
+      'v2.2 adds three values, each defined in the enum description:\n\n' +
+      '**`InArrears`** — an amount due under the account\'s terms (a scheduled repayment, a minimum payment, or an amount above an agreed limit) is past due and unpaid, and the account has not been classified as `Defaulted` or `WrittenOff`.\n\n' +
+      '**`Defaulted`** — the LFI has classified the account as in default. This MUST apply no later than the point at which an amount has been past due for more than 90 days, and MAY apply earlier where the LFI\'s credit-risk classification does so.\n\n' +
+      '**`WrittenOff`** — the LFI has written off all or part of the outstanding balance, and the account is not yet closed. Recovery may continue while the account has this status.\n\n' +
+      'The values exist for `CreditCard`, `Finance` and `Mortgage` accounts, and MAY be used for any other account whose state matches a definition. An LFI MUST return one of them, in place of `Active`, when its definition applies. Only one status applies at a time: `Closed` and `Deceased` take precedence over all three, `WrittenOff` takes precedence over `Defaulted`, and `Defaulted` takes precedence over `InArrears`.\n\n' +
+      'The LFI supplies the value as `status` on `CbuaeAccount`, returned by `GET /accounts` and `GET /accounts/{accountId}` in the Ozone Connect Bank Data Sharing and CAAP Operations API descriptions, which carry the same three values and definitions. The API Hub returns it to the TPP as `Status` without mapping.\n\n' +
+      'Confirmation of Payee is unchanged. Its `AccountStatus` keeps the seven existing values, and the Ozone Connect `cop-query` description now states that it uses only the statuses that apply to current and savings accounts.\n\n' +
+      'This requires action from every LFI that offers credit cards, finance or mortgages through Open Finance: arrears, default and write-off states must be sourced, often from collections or credit-risk systems, and returned on these accounts. A TPP that validates `Status` strictly, or treats any value other than `Active` as an error, must accept the new values when it moves to v2.2.\n\n' +
+      'The change is recorded against OFP-017 and is published in the v2.2-rc2 release of the Account Information API description, the v2.2.9 release of the Ozone Connect Bank Data Sharing API description and the v2.2.5 release of the Ozone Connect CAAP Operations API description in the api-specs repository, which is what the endpoint pages below render.',
+    docsPaths: [
+      { label: 'TPP specification — accounts', path: `${DS_TPP}/open-api/accounts` },
+      { label: 'Ozone Connect specification — accounts', path: `${DS_LFI}/open-api/accounts` },
+      { label: 'Proposal — OFP-017', path: '/proposals/ofp-017' },
+    ],
+    audience: 'Both',
+    areas: ['Data Sharing', 'Ozone Connect'],
+    specs: [
+      'uae-account-information-openapi',
+      'uae-ozone-connect-bank-data-sharing-openapi',
+      'uae-ozone-connect-caap-operations-openapi',
+    ],
+    endpoints: [
+      { label: 'GET /accounts', path: `${DS_TPP}/open-api/accounts` },
+      { label: 'GET /accounts/{AccountId}', path: `${DS_TPP}/open-api/accounts-AccountId` },
+      { label: 'GET /accounts (Ozone Connect)', path: `${DS_LFI}/open-api/accounts` },
+      { label: 'GET /accounts/{accountId} (Ozone Connect)', path: `${DS_LFI}/open-api/accounts-AccountId` },
+      { label: 'GET /accounts (CAAP Operations)', path: `${LFI}/caap/open-api/accounts` },
+      { label: 'GET /accounts/{accountId} (CAAP Operations)', path: `${LFI}/caap/open-api/accounts-accountId` },
+    ],
+    affectedPaths: [
+      `${DS_TPP}/open-api/accounts`,
+      `${DS_TPP}/open-api/accounts-AccountId`,
+      `${DS_LFI}/open-api/accounts`,
+      `${DS_LFI}/open-api/accounts-AccountId`,
+      `${LFI}/caap/open-api/accounts`,
+      `${LFI}/caap/open-api/accounts-accountId`,
+    ],
+  },
+  {
+    changeId: 'v2.1-to-v2.2',
+    fromVersion: 'v2.1',
+    toVersion: 'v2.2-rc2',
+    introducedIn: 'v2.2-rc2',
+    number: 23,
+    category: 'New capability',
+    title: 'Refund account details carry the account status',
+    summary:
+      '`GET /payment-consents/{ConsentId}/refund` returns a required `AccountStatus` alongside `RefundAccount`, using the statuses that apply to current and savings accounts — the same code set as the Confirmation of Payee `AccountStatus` (§13). An account blocked from receiving payments is now reported through `AccountStatus` rather than the `403` v2.1 returned.',
+    description:
+      'In v2.1 `GET /payment-consents/{ConsentId}/refund` returns the consent identifiers and `RefundAccount`, the payer\'s account to which a refund is sent. It says nothing about the state of that account.\n\n' +
+      'v2.2 adds `AccountStatus` to `Data` in the refund response. It is **required**, and takes its values from a new `AEAccountStatusCode` schema in the Bank Initiation API description: `Active`, `Inactive`, `Dormant`, `Unclaimed`, `Deceased`, `Suspended` and `Closed` — the statuses that apply to current and savings accounts, as on the Confirmation of Payee confirmation response (§13). `Inactive`, `Dormant` and `Unclaimed` are defined by reference to the CBUAE Dormant Accounts Regulation. The credit statuses added in §22 are not part of this code set.\n\n' +
+      'The value is supplied by the LFI. The Ozone Connect `GET /payment-consents/{consentId}/refund` response carries a required `accountStatus` alongside `refundAccount`, and the API Hub returns it to the TPP as `AccountStatus`.\n\n' +
+      '**A blocked account is no longer an error.** In v2.1 a refund request for a debtor account blocked from receiving payments returned `403`: `Consent.AccountTemporarilyBlocked` for a temporary block such as `Suspended`, and `Consent.PermanentAccountAccessFailure` for a permanent one such as `Closed`, `Deceased` or `Unclaimed`. In v2.2 the LFI returns the refund account regardless of its status, as `GET /accounts` does, and MUST NOT return `403` for this reason. The TPP receives the refund account with the state in `AccountStatus`, and a TPP that handled those `403` responses must read `AccountStatus` instead.\n\n' +
+      'This requires action from every LFI: `accountStatus` must be returned on every refund response. For a TPP whose client tolerates unrecognised members this is additive. `Data` is `additionalProperties: false`, however, so a client that validates the response strictly against the v2.1 schema will reject a v2.2 response until it is regenerated.\n\n' +
+      'The field is published in the v2.2-rc2 release of the Bank Initiation API description and the v2.2.6 release of the Ozone Connect Bank Service Initiation API description in the api-specs repository, which is what the endpoint pages below render.',
+    docsPaths: [
+      { label: 'TPP guide — Payment Refunds', path: `${SI_TPP}/refunds/api-guide` },
+      { label: 'TPP requirements — Payment Refunds', path: `${SI_TPP}/refunds/requirements` },
+      { label: 'LFI guide — Payment Refunds', path: `${SI_LFI}/refunds/api-guide` },
+      { label: 'LFI requirements — Payment Refunds', path: `${SI_LFI}/refunds/requirements` },
+      { label: 'TPP specification', path: `${SI_TPP}/open-api/payment-consents-ConsentId-refund` },
+      { label: 'Ozone Connect specification', path: `${SI_LFI}/open-api/payment-consents-ConsentId-refund` },
+    ],
+    audience: 'Both',
+    areas: ['Service Initiation', 'Payments', 'Ozone Connect'],
+    specs: [
+      'uae-bank-initiation-openapi',
+      'uae-ozone-connect-bank-service-initiation-openapi',
+    ],
+    endpoints: [
+      {
+        label: 'GET /payment-consents/{ConsentId}/refund',
+        path: `${SI_TPP}/open-api/payment-consents-ConsentId-refund`,
+      },
+      {
+        label: 'GET /payment-consents/{consentId}/refund (Ozone Connect)',
+        path: `${SI_LFI}/open-api/payment-consents-ConsentId-refund`,
+      },
+    ],
+    affectedPaths: [
+      `${SI_TPP}/refunds/api-guide`,
+      `${SI_TPP}/refunds/requirements`,
+      `${SI_LFI}/refunds/api-guide`,
+      `${SI_LFI}/refunds/requirements`,
+      `${SI_TPP}/open-api/payment-consents-ConsentId-refund`,
+      `${SI_LFI}/open-api/payment-consents-ConsentId-refund`,
+    ],
+  },
+  {
+    changeId: 'v2.1-to-v2.2',
+    fromVersion: 'v2.1',
+    toVersion: 'v2.2-rc2',
+    introducedIn: 'v2.2-rc1',
+    number: 24,
     category: 'New capability',
     title: 'Data deletion confirmation — attestations sub-resource',
     summary:
@@ -1295,7 +1418,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc1',
-    number: 23,
+    number: 25,
     category: 'New capability',
     title: 'Sharia-compliant product data — expected profit rates, finance rates, and Takaful',
     summary:
@@ -1308,7 +1431,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       '**`ShariaFinanceRates`** is the finance-rate parallel — `AEProductShariaFinanceRate1Types`, a `oneOf` discriminated on `RateType` across `FixedProfit`, `VariableProfit` and `HybridProfit`. The two new Sharia types compose the existing fixed and variable rate property sets and the existing finance-rate properties with a new `AEProductShariaProfitCalculationMethod1Properties`, whose calculation basis adds `UnusedCreditLine` and `UtilizedLimit` to the three conventional values. `HybridProfit` reuses the existing `AEProductHybridProfitRateProperties` unchanged.\n\n' +
       'Where the rates are account-scoped, `ShariaFinanceRates` may be sent in cleartext or as a JWE at the LFI\'s discretion — exactly the choice `FinanceRates` already offers, and for the same reason. The public products catalogue is answered without a customer and so has no JWE variant, again matching `FinanceRates`. `ExpectedProfitRates` is cleartext on every surface.\n\n' +
       '**`TakafulRequired`** (boolean) and **`TakafulDescription`** (up to 500 characters) complete the set. Takaful is the Sharia-compliant alternative to conventional insurance, and where a product requires cover a TPP needs to be able to say both that it is required and what it is for.\n\n' +
-      'Every field added here is optional. An LFI that offers no Islamic products sends nothing new and stays conformant; an LFI that has been approximating profit rates in the interest-based fields can move them across. Nothing is removed, no enum is narrowed, and a v2.1 product payload still validates unchanged — §24 covers the one place where the *meaning* of an existing field narrows.\n\n' +
+      'Every field added here is optional. An LFI that offers no Islamic products sends nothing new and stays conformant; an LFI that has been approximating profit rates in the interest-based fields can move them across. Nothing is removed, no enum is narrowed, and a v2.1 product payload still validates unchanged — §26 covers the one place where the *meaning* of an existing field narrows.\n\n' +
       'One internal refactor is visible in the documents but not on the wire: the inline `RateDetails` definition under `DepositRates` is extracted into a shared `AEProductRateDetails1Properties` so `ExpectedProfitRates` can reuse it. The extracted definition is identical to the inline one it replaces, so `DepositRates` is unchanged.\n\n' +
       'The change lands on four documents — `AEProduct` in Account Information, `ProductDetails` in Products & Leads, and their Ozone Connect counterparts `CbuaeProduct` in Bank Data Sharing and `ProductDetails` in Bank Products Data — which is what the endpoint pages below render.',
     docsPaths: [
@@ -1375,7 +1498,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc1',
-    number: 24,
+    number: 26,
     category: 'Behaviour change',
     title: 'Interest and profit calculation methods are separate fields',
     summary:
@@ -1386,7 +1509,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       'No enum changes, no field is removed, and neither field is required, so **a v2.1 payload still validates against v2.2 unchanged.** What changes is meaning, not constraint: an LFI that populated `InterestCalculationMethod` to convey the basis of an Islamic profit calculation is, from v2.2, sending a valid value in the wrong field. It should move to `ProfitCalculationMethod`.\n\n' +
       'Because nothing rejects the old placement, this will not surface as a validation failure on either surface — which is the reason to record it. An LFI that reads the change as cosmetic and leaves the value where it is stays conformant while publishing product data that now says something it does not mean.\n\n' +
       'The consequence for a TPP is the mirror of that. A TPP reading only `InterestCalculationMethod` will, as LFIs move their Islamic products across, silently lose the calculation basis for exactly those products — no error, just an absent field where a value used to be. Reading both fields and preferring whichever is populated is the safe form for as long as the two placements coexist.\n\n' +
-      'This is distinct from the calculation method on the new Sharia finance-rate types in §23. That one — `AEProductShariaProfitCalculationMethod1Properties` — carries five values, adding `UnusedCreditLine` and `UtilizedLimit`, and it is a new schema reached only through the new `ShariaFinanceRates` field. The conventional profit-rate structures continue to reference the shared three-value `AEProductInterestCalculationMethod`, which is itself unchanged.\n\n' +
+      'This is distinct from the calculation method on the new Sharia finance-rate types in §25. That one — `AEProductShariaProfitCalculationMethod1Properties` — carries five values, adding `UnusedCreditLine` and `UtilizedLimit`, and it is a new schema reached only through the new `ShariaFinanceRates` field. The conventional profit-rate structures continue to reference the shared three-value `AEProductInterestCalculationMethod`, which is itself unchanged.\n\n' +
       'The same four documents that carry the Sharia product fields carry this split, which is what the endpoint pages below render.',
     docsPaths: [
       {
@@ -1444,7 +1567,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc1',
-    number: 25,
+    number: 27,
     category: 'New capability',
     title: 'Balance components, transaction allocations and statement balances carry a Shari\'ah description',
     summary:
@@ -1454,7 +1577,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       'v2.2 adds `BalanceDescription` to `AEAmountWithCategorization` — free text, 1 to 500 characters, naming the specific Shari\'ah-compliant charge, payment or reward that the component represents. It supplements the category rather than replacing it: the enum still classifies the part, and the description says which part it is.\n\n' +
       'One field addition reaches three endpoints, because the schema is used in three places. On the TPP-facing side, `Components` on `AEBalance` is served by the balances endpoint, `Allocations` on `AETransaction` by the transactions endpoint, and `Components` on `AEBalanceWithCategorization` — the opening and closing balance of a statement — by the statements endpoint. Ozone Connect mirrors all three: `components` on `CbuaeBalance`, `allocations` on `CbuaeTransaction`, and `Components` on `AEBalanceWithCategorization` under `AEStatements`.\n\n' +
       'Statements are easy to miss here, because the field arrives on them through a schema neither the balances nor the transactions response references. An implementer scoping this change from the balance and transaction payloads alone will not see it.\n\n' +
-      'The field is optional and additive on both surfaces, and is required on neither. An LFI that offers no Islamic products has nothing to do, and a v2.1 payload validates unchanged. It is recorded separately from the Sharia product fields in §23 because it lands on the balances, transactions and statements endpoints rather than on product data, so it is a different piece of work for whoever implements it.\n\n' +
+      'The field is optional and additive on both surfaces, and is required on neither. An LFI that offers no Islamic products has nothing to do, and a v2.1 payload validates unchanged. It is recorded separately from the Sharia product fields in §25 because it lands on the balances, transactions and statements endpoints rather than on product data, so it is a different piece of work for whoever implements it.\n\n' +
       'Both the Account Information and the Ozone Connect Bank Data Sharing documents carry the field in their v2.2 release, which is what the endpoint pages below render.',
     docsPaths: [
       {

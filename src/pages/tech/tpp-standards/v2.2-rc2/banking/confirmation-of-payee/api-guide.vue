@@ -766,7 +766,7 @@ const decodeJwsTabs = [{ label: 'Node.js', lang: 'typescript', code: decodeJwsNo
             <tr>
               <td><code>Data.AccountStatus</code></td>
               <td>string</td>
-              <td>Always present. The status of the account held at the LFI, using the same code set as <code>Status</code> on the account resource: <code>Active</code>, <code>Inactive</code>, <code>Dormant</code>, <code>Unclaimed</code>, <code>Deceased</code>, <code>Suspended</code> or <code>Closed</code></td>
+              <td>Always present, whatever the account&rsquo;s status. The status of the account held at the LFI, using the statuses that apply to current and savings accounts: <code>Active</code>, <code>Inactive</code>, <code>Dormant</code>, <code>Unclaimed</code>, <code>Deceased</code>, <code>Suspended</code> or <code>Closed</code>. An account blocked from receiving payments is reported here, not as a <code>403</code></td>
             </tr>
             <tr>
               <td><code>Data.MaskedName</code></td>

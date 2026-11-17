@@ -27,14 +27,14 @@ const opensslSan = `openssl req -new -newkey rsa:2048 -nodes \\
         </h1>
         <p class="ed-doc__lede">
           The Subject Alternative Name (SAN) extension is required on server-side certificates &mdash;
-          specifically the transport certificates LFIs present at their API Hub endpoints.
+          specifically the server transport certificates LFIs present on their Ozone Connect endpoints.
         </p>
 
         <EdNote type="info" title="This page applies to LFI server certificates">
           <p>
             The Subject Alternative Name (SAN) extension is required on <strong>server-side</strong>
-            certificates &mdash; specifically the transport certificates LFIs present at their API Hub
-            endpoints. TPPs generating client certificates (transport, signing, or encryption) do
+            certificates &mdash; specifically the server transport certificates LFIs present on their
+            Ozone Connect endpoints. TPPs generating client certificates (transport, signing, or encryption) do
             <strong>not</strong> add a SAN; they set the <code>CN</code> to their application's Client ID
             instead. See <a href="/tech/tpp-standards/trust-framework/certificates/">Keys and Certificates</a>
             for client certificate requirements.
@@ -55,7 +55,7 @@ const opensslSan = `openssl req -new -newkey rsa:2048 -nodes \\
         Modern browsers and certificate authorities no longer rely on the Common Name (CN) field for
         hostname validation on server certificates. Instead, they require the Subject Alternative Name
         (SAN) extension specifying the DNS hostnames the certificate is valid for &mdash; in this context,
-        the API Hub instance the LFI operates.
+        the hostname of the LFI's Ozone Connect server.
       </EdProse>
 
       <EdProse>
@@ -89,7 +89,11 @@ const opensslSan = `openssl req -new -newkey rsa:2048 -nodes \\
         <li><strong>Multiple hostnames</strong> &mdash; SAN supports multiple DNS names (and IP addresses), whereas CN supports only one.</li>
       </EdBullets>
 
-      <EdProse>For server certificates, modern CSRs omit CN and rely solely on SAN.</EdProse>
+      <EdProse>
+        For server certificates, hostname validation relies solely on the SAN. Including a
+        <code>CN</code> is optional and depends on the LFI's setup; when present, it is not used for
+        hostname validation.
+      </EdProse>
     </EdSectionBand>
 
     <EdSectionBand
