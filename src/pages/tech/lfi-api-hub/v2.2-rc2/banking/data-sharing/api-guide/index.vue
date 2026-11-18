@@ -680,10 +680,10 @@ const customerPsuJson = `{
 
       <h4 class="ed-doc__subhead-minor"><code>400</code> &mdash; Bad Request</h4>
       <EdProse>
-        Return <code>400</code> only for a request that is genuinely malformed &mdash; not for a
-        well-formed request that simply matches no data. The API Hub enforces the OpenAPI schema
-        before proxying, so most format errors are rejected upstream and rarely reach your Ozone
-        Connect endpoints.
+        Return <code>400</code> for a request that is genuinely malformed, or for a request to an
+        endpoint that is not available for the account subtype &mdash; not for a well-formed request
+        that simply matches no data. The API Hub enforces the OpenAPI schema before proxying, so most
+        format errors are rejected upstream and rarely reach your Ozone Connect endpoints.
       </EdProse>
       <EdRefTable>
         <table>
@@ -692,6 +692,7 @@ const customerPsuJson = `{
           </thead>
           <tbody>
             <tr><td><code>Resource.InvalidFormat</code></td><td><code>A query parameter has an invalid format.</code></td><td>A date-range query parameter cannot be parsed, a contradictory range is supplied (<code>fromBookingDateTime</code> after <code>toBookingDateTime</code>), or <code>toBookingDateTime</code> is in the future. The API Hub enforces these checks before proxying, so an LFI does not normally return this itself</td></tr>
+            <tr><td><code>Consent.BusinessRuleViolation</code></td><td>Set per endpoint and subtype, e.g. <code>Beneficiaries are not available for Credit Card accounts.</code></td><td><code>/beneficiaries</code>, <code>/direct-debits</code>, <code>/scheduled-payments</code>, or <code>/standing-orders</code> is called for a <code>CreditCard</code>, <code>Finance</code>, or <code>Mortgage</code> account. Apply after the Account Access Validation check and before Account Status Handling. See <a href="/tech/lfi-api-hub/v2.2-rc2/banking/data-sharing/requirements#unsupported-account-subtype">Unsupported Account Subtype</a> for the <code>errorMessage</code> per endpoint</td></tr>
           </tbody>
         </table>
       </EdRefTable>
@@ -1150,7 +1151,10 @@ const customerPsuJson = `{
       <EdProse>
         Returns the beneficiaries linked to the account. Only supported for <code>CurrentAccount</code>
         and <code>Savings</code> &mdash; not available for <code>CreditCard</code>,
-        <code>Finance</code>, or <code>Mortgage</code> accounts.
+        <code>Finance</code>, or <code>Mortgage</code> accounts. For an unsupported subtype, return
+        <code>400</code> with <code>errorCode</code> <code>Consent.BusinessRuleViolation</code> and
+        <code>errorMessage</code> <code>Beneficiaries are not available for {subtype} accounts.</code>
+        See <a href="/tech/lfi-api-hub/v2.2-rc2/banking/data-sharing/requirements#unsupported-account-subtype">Unsupported Account Subtype</a>.
       </EdProse>
 
       <h3 class="ed-doc__subhead">Request headers</h3>
@@ -1215,7 +1219,11 @@ const customerPsuJson = `{
       </EdProse>
       <EdProse>
         Returns the direct debits linked to the account. Only supported for <code>CurrentAccount</code>
-        and <code>Savings</code>.
+        and <code>Savings</code> &mdash; not available for <code>CreditCard</code>,
+        <code>Finance</code>, or <code>Mortgage</code> accounts. For an unsupported subtype, return
+        <code>400</code> with <code>errorCode</code> <code>Consent.BusinessRuleViolation</code> and
+        <code>errorMessage</code> <code>Direct debits are not available for {subtype} accounts.</code>
+        See <a href="/tech/lfi-api-hub/v2.2-rc2/banking/data-sharing/requirements#unsupported-account-subtype">Unsupported Account Subtype</a>.
       </EdProse>
 
       <h3 class="ed-doc__subhead">Request headers</h3>
@@ -1280,7 +1288,11 @@ const customerPsuJson = `{
       </EdProse>
       <EdProse>
         Returns one-off scheduled payments linked to the account. Only supported for
-        <code>CurrentAccount</code> and <code>Savings</code>.
+        <code>CurrentAccount</code> and <code>Savings</code> &mdash; not available for <code>CreditCard</code>,
+        <code>Finance</code>, or <code>Mortgage</code> accounts. For an unsupported subtype, return
+        <code>400</code> with <code>errorCode</code> <code>Consent.BusinessRuleViolation</code> and
+        <code>errorMessage</code> <code>Scheduled payments are not available for {subtype} accounts.</code>
+        See <a href="/tech/lfi-api-hub/v2.2-rc2/banking/data-sharing/requirements#unsupported-account-subtype">Unsupported Account Subtype</a>.
       </EdProse>
 
       <h3 class="ed-doc__subhead">Request headers</h3>
@@ -1341,7 +1353,11 @@ const customerPsuJson = `{
       </EdProse>
       <EdProse>
         Returns standing orders linked to the account. Only supported for <code>CurrentAccount</code>
-        and <code>Savings</code>.
+        and <code>Savings</code> &mdash; not available for <code>CreditCard</code>,
+        <code>Finance</code>, or <code>Mortgage</code> accounts. For an unsupported subtype, return
+        <code>400</code> with <code>errorCode</code> <code>Consent.BusinessRuleViolation</code> and
+        <code>errorMessage</code> <code>Standing orders are not available for {subtype} accounts.</code>
+        See <a href="/tech/lfi-api-hub/v2.2-rc2/banking/data-sharing/requirements#unsupported-account-subtype">Unsupported Account Subtype</a>.
       </EdProse>
 
       <h3 class="ed-doc__subhead">Request headers</h3>

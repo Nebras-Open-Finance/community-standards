@@ -612,6 +612,10 @@ const step9Tabs = [{ label: 'Node.js', lang: 'typescript', code: step9Node }, { 
         payment, also send <code>x-fapi-customer-ip-address</code>,
         <code>x-customer-user-agent</code> and <code>x-fapi-auth-date</code>. See
         <a href="/tech/tpp-standards/security/request-headers">Request Headers</a>.
+        Generate a new <code>x-idempotency-key</code> for each payment and store it with the
+        instruction before you send it. If you receive no response or an error, look the payment up
+        by key before you retry, and retry only with the same key and the same instruction &mdash;
+        see <a href="/knowledge-base/articles/payment-idempotency">Payment Idempotency</a>.
       </EdProse>
 
       <EdProse>

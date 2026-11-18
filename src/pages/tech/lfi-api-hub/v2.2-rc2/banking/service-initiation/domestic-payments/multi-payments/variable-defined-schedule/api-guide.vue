@@ -720,6 +720,8 @@ const matchPiiTabs         = [{ label: 'Node.js', lang: 'typescript', code: matc
           Schedule, Fixed Periodic Schedule, Variable Defined Schedule, Variable Periodic Schedule)
           do <strong>not</strong> require <code>x-fapi-customer-ip-address</code> &mdash; the customer is
           not present when the TPP triggers a scheduled payment.
+          Use <code>x-idempotency-key</code> to recognise a TPP retry &mdash; see
+          <a href="#repeated-idempotency-key">Repeated idempotency keys</a>.
         </p>
       </EdNote>
 
@@ -833,6 +835,9 @@ const matchPiiTabs         = [{ label: 'Node.js', lang: 'typescript', code: matc
         payment. Choose Pattern A unless persistence is not an option for your LFI.
       </EdProse>
 
+      <h3 id="repeated-idempotency-key" class="ed-doc__subhead">Repeated idempotency keys</h3>
+      <ApiGuideStepLfiIdempotency :rule="6" />
+
       <h3 class="ed-doc__subhead">Response</h3>
       <EdProse>
         <code>Content-Type: application/json</code>. Return <code>201</code> on successful payment
@@ -864,10 +869,11 @@ const matchPiiTabs         = [{ label: 'Node.js', lang: 'typescript', code: matc
       <h3 class="ed-doc__subhead">Error responses</h3>
       <EdProse>
         Only return an error when the request is invalid or a server condition prevents you from
-        responding. All error bodies MUST include <code>errorCode</code> and <code>errorMessage</code>.
+        responding. Do not return an error for a payment you have already submitted for processing
+        &mdash; see <a href="#repeated-idempotency-key">Repeated idempotency keys</a>. All error bodies MUST include <code>errorCode</code> and <code>errorMessage</code>.
         The <code>errorCode</code> values are drawn from the
         <a href="/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation/open-api/payments">POST <code>/payments</code> OpenAPI schema</a>
-        <code>Error400</code> / <code>Error403</code> enums.
+        <code>Error400</code> / <code>Error403</code> / <code>Error409</code> enums.
       </EdProse>
 
       <h4 class="ed-doc__subhead-minor"><code>400</code> &mdash; Bad request</h4>
@@ -903,6 +909,16 @@ const matchPiiTabs         = [{ label: 'Node.js', lang: 'typescript', code: matc
             <tr><td><code>Consent.PermanentAccountAccessFailure</code></td><td>Debtor account is <code>Closed</code>, <code>Deceased</code>, or <code>Unclaimed</code></td></tr>
             <tr><td><code>Consent.TransientAccountAccessFailure</code></td><td>Debtor account temporarily inaccessible &mdash; Hub may retry after a delay</td></tr>
             <tr><td><code>GenericRecoverableError</code> / <code>GenericError</code></td><td>Other forbidden conditions</td></tr>
+          </tbody>
+        </table>
+      </EdRefTable>
+
+      <h4 class="ed-doc__subhead-minor"><code>409</code> &mdash; Conflict</h4>
+      <EdRefTable>
+        <table>
+          <thead><tr><th><code>errorCode</code></th><th>When to use</th></tr></thead>
+          <tbody>
+            <tr><td><code>GenericRecoverableError</code></td><td>The <code>x-idempotency-key</code> matches a payment you have already created for this TPP and consent, but the payment details differ. Use <code>errorMessage</code>: <code>Idempotency key mismatch: Request parameters differ from original.</code> &mdash; see <a href="#repeated-idempotency-key">Repeated idempotency keys</a></td></tr>
           </tbody>
         </table>
       </EdRefTable>

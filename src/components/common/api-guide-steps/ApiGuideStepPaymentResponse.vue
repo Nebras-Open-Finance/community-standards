@@ -55,6 +55,17 @@ const examplePayload = computed(() => `{
       </table>
     </EdRefTable>
 
+    <EdNote type="info" title="A 201 can be the answer to a retry">
+      <p>
+        If you resend a request with the same <code>x-idempotency-key</code> after the payment was
+        created, the <code>201</code> carries the original <code>PaymentId</code> and the payment's
+        current <code>Status</code>, which may already be past <code>Pending</code>. Read
+        <code>PaymentId</code> and <code>Status</code> from the response body; do not depend on the
+        <code>Location</code> header. See
+        <a href="/knowledge-base/articles/payment-idempotency">Payment Idempotency</a>.
+      </p>
+    </EdNote>
+
     <h4 class="ag-step__subhead ag-step__subhead--small">Response body — <code>Data</code></h4>
     <EdRefTable>
       <table>

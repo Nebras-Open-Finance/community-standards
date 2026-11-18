@@ -249,7 +249,7 @@ const paymentResponse = await fetch(\`\${LFI_API_BASE}/open-finance/payment/v2.1
   headers: {
     'Authorization':               \`Bearer \${access_token}\`,
     'Content-Type':                'application/jwt',
-    'x-idempotency-key':           idempotencyKey,       // stable per payment attempt; reuse on retry
+    'x-idempotency-key':           idempotencyKey,       // one key per payment instruction; reuse it on every retry
     'x-fapi-interaction-id':       crypto.randomUUID(),
     'x-fapi-auth-date':            lastCustomerAuthDate,
     'x-fapi-customer-ip-address':  customerIpAddress,
@@ -311,7 +311,7 @@ payment_response = httpx.post(
     headers={
         "Authorization":               f"Bearer {access_token}",
         "Content-Type":                "application/jwt",
-        "x-idempotency-key":           idempotency_key,   # stable per payment attempt; reuse on retry
+        "x-idempotency-key":           idempotency_key,   # one key per payment instruction; reuse it on every retry
         "x-fapi-interaction-id":       str(uuid.uuid4()),
         "x-fapi-auth-date":            last_customer_auth_date,
         "x-fapi-customer-ip-address":  customer_ip_address,
@@ -710,6 +710,10 @@ const step10Tabs = [{ label: 'Node.js', lang: 'typescript', code: step10Node }, 
         is present at this point in the flow, also send <code>x-fapi-customer-ip-address</code>,
         <code>x-customer-user-agent</code> and <code>x-fapi-auth-date</code> if the customer has been
         authenticated. See <a href="/tech/tpp-standards/security/request-headers">Request Headers</a>.
+        Generate a new <code>x-idempotency-key</code> for each payment and store it with the
+        instruction before you send it. If you receive no response or an error, look the payment up
+        by key before you retry, and retry only with the same key and the same instruction &mdash;
+        see <a href="/knowledge-base/articles/payment-idempotency">Payment Idempotency</a>.
       </EdProse>
 
       <EdProse>

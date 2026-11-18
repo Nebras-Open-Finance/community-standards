@@ -144,7 +144,12 @@ const eventTerminal = `{
           network error or a timeout &mdash; do not submit a new payment with a new
           <code>x-idempotency-key</code>. Look the payment up with
           <a href="/tech/tpp-standards/v2.2-rc2/banking/service-initiation/open-api/payments-idempotency" class="endpoint"><span class="http-method http-method--get">GET</span><code>/payments</code></a>
-          and the same <code>x-idempotency-key</code>. If a payment was created, the response points to it.
+          and the same <code>x-idempotency-key</code>, using a client-credentials token (scope
+          <code>openid payments</code>) &mdash; the consent's access token is refused. If a payment was
+          created, the <code>200</code> response points to it in <code>Links.Self</code>. An error means
+          no successful payment is recorded for the key: retry <code>POST /payments</code> with the same
+          key and the same instruction. See
+          <a href="/knowledge-base/articles/payment-idempotency">Payment Idempotency</a>.
         </p>
       </EdNote>
     </EdSectionBand>

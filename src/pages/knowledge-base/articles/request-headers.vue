@@ -4,7 +4,7 @@ meta:
   description: "What the FAPI and Open Finance request headers are for, why x-fapi-interaction-id is the most important one to get right, and a one-line guide to each of the others."
   category: Security
   readTime: "7 min"
-  updated: "2026-04-21"
+  updated: "2026-11-18"
   tags:
     - FAPI
     - Headers
@@ -23,7 +23,7 @@ const sections: Section[] = [
 const meta: MetaItem[] = [
   { label: 'Category', value: 'Security' },
   { label: 'Read',     value: '7 min' },
-  { label: 'Updated',  value: '21 Apr 2026' },
+  { label: 'Updated',  value: '18 Nov 2026' },
 ]
 
 const tags: readonly string[] = ['FAPI', 'Headers', 'Traceability']
@@ -115,12 +115,19 @@ interaction_id = str(uuid.uuid4())
       <EdProse>The user-agent string of the customer's browser or app; send it when the customer is accessing your service through a browser or native application, as it supports API Hub device fingerprinting and fraud detection.</EdProse>
 
       <h3><code>x-idempotency-key</code></h3>
-      <EdProse>A stable, unique key you attach to every <code>POST /payments</code> request; if the API Hub has already processed a request with the same key for the same consent, it returns the original response without re-processing &mdash; always reuse the same key on retries, never generate a fresh one, or you risk creating a duplicate payment.</EdProse>
+      <EdProse>A key you attach to every <code>POST /payments</code> request to identify one payment instruction. If the API Hub has already recorded a successful payment for that key from your TPP, it returns that payment (same <code>PaymentId</code>, current status) and does not forward the request to the LFI. Reuse the key on every retry of the same instruction, use a new key for every new instruction, and never reuse a key on another consent. See <a href="/knowledge-base/articles/payment-idempotency">Payment Idempotency</a>.</EdProse>
 
       <EdProse>See the <a href="/tech/tpp-standards/security/request-headers">Request Headers reference</a> for format rules, exact conditions, and validation requirements.</EdProse>
     </EdSectionBand>
 
     <EdRelatedCards eyebrow="Related articles" title="Read alongside">
+      <EdRelatedCard
+        href="/knowledge-base/articles/payment-idempotency"
+        category="Payments"
+        category-color="var(--at-gold)"
+        title="Payment Idempotency"
+        desc="What the API Hub does with x-idempotency-key, and how TPPs and LFIs handle retries of POST /payments."
+      />
       <EdRelatedCard
         href="/knowledge-base/articles/jwt-claims"
         category="Security"

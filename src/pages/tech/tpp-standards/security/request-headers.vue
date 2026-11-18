@@ -203,30 +203,36 @@ interaction_id = str(uuid.uuid4())
       num="06"
       color="var(--at-gold)"
       eyebrow="x-idempotency-key"
-      title="Exactly-once processing for payment initiation"
+      title="Safe retries for payment initiation"
       tone="surface"
     >
-      <EdProse>A unique key that guarantees exactly-once processing of payment initiation requests.</EdProse>
+      <EdProse>
+        A key that identifies one payment instruction, so that a retry returns the payment already
+        created instead of creating another.
+      </EdProse>
 
       <EdBullets>
-        <li><strong>Format:</strong> String, maximum 40 characters, no whitespace &mdash; pattern <code>^(\S*)$</code></li>
+        <li><strong>Format:</strong> String, maximum 40 characters, no whitespace &mdash; pattern <code>^(\S*)$</code>. A UUID v4 is recommended.</li>
         <li><strong>Level:</strong> Required on all <span class="endpoint"><span class="http-method http-method--post">POST</span><code>/payments</code></span> requests.</li>
-        <li><strong>Scope:</strong> Unique per consent. The same key must not be reused across different consents.</li>
+        <li><strong>Scope:</strong> The API Hub matches keys per TPP, across all of that TPP's consents; the specification sets a window of 24 hours from the first request. A key MUST identify exactly one payment instruction and MUST NOT be reused for another instruction, under this or any other consent, at any time.</li>
       </EdBullets>
 
       <h3>Rules</h3>
       <EdBullets>
-        <li>If the API Hub receives a <span class="endpoint"><span class="http-method http-method--post">POST</span><code>/payments</code></span> request with an <code>x-idempotency-key</code> it has already processed for the same consent, it must return the original response without re-processing the payment.</li>
-        <li>TPPs must not change the request body when replaying a request with the same idempotency key.</li>
-        <li>TPPs must preserve the idempotency key when retrying after a network failure or timeout. Do not generate a new key for a retry &mdash; this would create a duplicate payment.</li>
-        <li>The API Hub echoes the <code>x-idempotency-key</code> in the response header.</li>
+        <li>If the API Hub has recorded a successful payment for the key from the same TPP, it returns <code>201</code> with that payment's <code>PaymentId</code> and current <code>Status</code>, and does not forward the request to the LFI. The API Hub records a key only when the LFI created the payment: after a failed attempt nothing is recorded, so a retry is forwarded to the LFI, which recognises the repeated key itself.</li>
+        <li>TPPs MUST NOT change the payment instruction while using the same key. A re-signed request (new <code>iat</code> and <code>jti</code>, re-encrypted PII) carrying the same instruction is a valid retry. A changed instruction is rejected with <code>409</code> <code>GenericRecoverableError</code> and is not executed.</li>
+        <li>TPPs MUST preserve the key when retrying after a network failure, a timeout, or an error. Do not generate a new key for a retry &mdash; this could create a duplicate payment.</li>
+        <li>Before retrying, a TPP SHOULD look the payment up with <a href="/tech/tpp-standards/v2.1/banking/service-initiation/open-api/payments-idempotency" class="endpoint"><span class="http-method http-method--get">GET</span><code>/payments</code></a> and the same key, using a client-credentials token (scope <code>openid payments</code>). A retry is checked against the consent before its key, so once a payment has used up its consent &mdash; for example a Single Instant Payment &mdash; a retry is refused even though the payment exists.</li>
+        <li>While another <span class="endpoint"><span class="http-method http-method--post">POST</span><code>/payments</code></span> request under the same consent is still being processed, a new request is rejected with <code>403</code> <code>Consent.BusinessRuleViolation</code>. Wait for the earlier request to complete, then retry with the same key.</li>
+        <li>On a <code>201</code> the API Hub echoes the <code>x-idempotency-key</code> in the response header.</li>
       </EdBullets>
 
       <EdNote type="warning">
         <p>
           If a TPP generates a new <code>x-idempotency-key</code> on retry after a timeout, it risks
-          creating a duplicate payment. The correct behaviour on retry is to resend the original key with
-          the original request body.
+          creating a duplicate payment. Look the payment up by key first; if none is recorded, resend the
+          same instruction with the original key. See
+          <a href="/knowledge-base/articles/payment-idempotency">Payment Idempotency</a>.
         </p>
       </EdNote>
     </EdSectionBand>

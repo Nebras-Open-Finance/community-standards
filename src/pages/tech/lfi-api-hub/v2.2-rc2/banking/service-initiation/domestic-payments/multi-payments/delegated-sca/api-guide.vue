@@ -1067,6 +1067,8 @@ const dupCheckTabs             = [{ label: 'Node.js', lang: 'typescript', code: 
           SCA at the TPP) and <code>x-fapi-customer-ip-address</code> (the customer's IP address at the
           time of authentication) &mdash; the customer is present at the TPP for every payment. If either
           header is missing, reject with <code>400 Body.InvalidFormat</code>.
+          Use <code>x-idempotency-key</code> to recognise a TPP retry &mdash; see
+          <a href="#repeated-idempotency-key">Repeated idempotency keys</a>.
         </p>
       </EdNote>
 
@@ -1234,20 +1236,26 @@ const dupCheckTabs             = [{ label: 'Node.js', lang: 'typescript', code: 
       </EdProse>
       <EdCodeGroup :tabs="openBeneficiaryTabs" />
 
+      <h3 id="repeated-idempotency-key" class="ed-doc__subhead">Repeated idempotency keys</h3>
+      <ApiGuideStepLfiIdempotency :rule="10" duplicate-in-flight />
+
       <h3 id="duplicate-in-flight" class="ed-doc__subhead">Duplicate-in-flight check</h3>
       <EdProse>
         Per
         <a href="./requirements#post-payments-payment-execution">POST <code>/payments</code> Requirements</a>
-        rule 6, Delegated SCA payments are subject to a duplicate-in-flight check that on-demand
+        rule 9, Delegated SCA payments are subject to a duplicate-in-flight check that on-demand
         consent types carry but one-off and scheduled payments do not. Before the payment record is
         created, your LFI MUST check whether another payment under the same consent, with the same
         creditor and the same instructed amount, is currently in <code>Pending</code> status. If so,
         reject the new request with <code>409 Payment.DuplicateInFlight</code>.
       </EdProse>
       <EdProse>
-        This is distinct from <code>x-idempotency-key</code> handling: the idempotency key catches
-        TPP retries of the same HTTP request, while this rule catches genuinely separate payment
-        intents that happen to duplicate a still-in-flight one.
+        This check applies only when the <code>x-idempotency-key</code> does not match a payment
+        you have already created &mdash; a matching request is a retry, handled by
+        <a href="#repeated-idempotency-key">Repeated idempotency keys</a>. It is also separate from the API Hub's own check, which rejects a
+        <code>POST /payments</code> that arrives while another request under the same consent is
+        still being processed. This rule covers the later period: after your <code>201</code>, while
+        the earlier payment is still <code>Pending</code>.
       </EdProse>
       <EdCodeGroup :tabs="dupCheckTabs" />
       <EdProse>
@@ -1288,7 +1296,8 @@ const dupCheckTabs             = [{ label: 'Node.js', lang: 'typescript', code: 
       <h3 class="ed-doc__subhead">Error responses</h3>
       <EdProse>
         Only return an error when the request is invalid or a server condition prevents you from
-        responding. All error bodies MUST include <code>errorCode</code> and <code>errorMessage</code>.
+        responding. Do not return an error for a payment you have already submitted for processing
+        &mdash; see <a href="#repeated-idempotency-key">Repeated idempotency keys</a>. All error bodies MUST include <code>errorCode</code> and <code>errorMessage</code>.
         The <code>errorCode</code> values are drawn from the
         <a href="/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation/open-api/payments">POST <code>/payments</code> OpenAPI schema</a>
         <code>Error400</code> / <code>Error403</code> / <code>Error409</code> enums.
@@ -1339,6 +1348,7 @@ const dupCheckTabs             = [{ label: 'Node.js', lang: 'typescript', code: 
           </thead>
           <tbody>
             <tr><td><code>Payment.DuplicateInFlight</code></td><td>Another payment with the same creditor and amount under the same consent is still <code>Pending</code> &mdash; see <a href="#duplicate-in-flight">Duplicate-in-flight check</a></td></tr>
+            <tr><td><code>GenericRecoverableError</code></td><td>The <code>x-idempotency-key</code> matches a payment you have already created for this TPP and consent, but the payment details differ. Use <code>errorMessage</code>: <code>Idempotency key mismatch: Request parameters differ from original.</code> &mdash; see <a href="#repeated-idempotency-key">Repeated idempotency keys</a></td></tr>
           </tbody>
         </table>
       </EdRefTable>

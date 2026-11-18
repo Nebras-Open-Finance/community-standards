@@ -723,6 +723,8 @@ const duplicateInFlightTabs = [
           Single Instant Payment, Fixed On Demand does <strong>not</strong> require
           <code>x-fapi-customer-ip-address</code> &mdash; the customer may not be present at the time the
           TPP submits an on-demand payment.
+          Use <code>x-idempotency-key</code> to recognise a TPP retry &mdash; see
+          <a href="#repeated-idempotency-key">Repeated idempotency keys</a>.
         </p>
       </EdNote>
 
@@ -800,7 +802,10 @@ const duplicateInFlightTabs = [
         <code>isExactMatch</code> comparison against <code>Initiation.Creditor[0]</code>.
       </p>
 
-      <h3 class="ed-doc__subhead">Duplicate-in-flight check</h3>
+      <h3 id="repeated-idempotency-key" class="ed-doc__subhead">Repeated idempotency keys</h3>
+      <ApiGuideStepLfiIdempotency :rule="7" duplicate-in-flight />
+
+      <h3 id="duplicate-in-flight" class="ed-doc__subhead">Duplicate-in-flight check</h3>
       <EdProse>
         Per <a href="./requirements#post-payments-payment-execution">POST <code>/payments</code>
         Requirements</a> rule 6, Fixed On Demand payments are subject to a duplicate-in-flight check
@@ -812,9 +817,12 @@ const duplicateInFlightTabs = [
       </EdProse>
 
       <EdProse>
-        This is distinct from <code>x-idempotency-key</code> handling: the idempotency key catches
-        TPP retries of the same HTTP request, while this rule catches genuinely separate payment
-        intents that happen to duplicate a still-in-flight one.
+        This check applies only when the <code>x-idempotency-key</code> does not match a payment
+        you have already created &mdash; a matching request is a retry, handled by
+        <a href="#repeated-idempotency-key">Repeated idempotency keys</a>. It is also separate from the API Hub's own check, which rejects a
+        <code>POST /payments</code> that arrives while another request under the same consent is
+        still being processed. This rule covers the later period: after your <code>201</code>, while
+        the earlier payment is still <code>Pending</code>.
       </EdProse>
 
       <EdCodeGroup :tabs="duplicateInFlightTabs" />
@@ -852,7 +860,8 @@ const duplicateInFlightTabs = [
 
       <h3 class="ed-doc__subhead">Error responses</h3>
       <EdProse>
-        Only return an error when the request is invalid. The <code>errorCode</code> values are
+        Only return an error when the request is invalid. Do not return an error for a payment you have already submitted for processing
+        &mdash; see <a href="#repeated-idempotency-key">Repeated idempotency keys</a>. The <code>errorCode</code> values are
         drawn from the
         <a href="/tech/lfi-api-hub/v2.1/banking/service-initiation/open-api/payments">POST
         <code>/payments</code> OpenAPI schema</a> <code>Error400</code> / <code>Error403</code> /
@@ -896,6 +905,7 @@ const duplicateInFlightTabs = [
           <thead><tr><th><code>errorCode</code></th><th>When to use</th></tr></thead>
           <tbody>
             <tr><td><code>Payment.DuplicateInFlight</code></td><td>Another payment with the same creditor and amount under the same consent is still <code>Pending</code></td></tr>
+            <tr><td><code>GenericRecoverableError</code></td><td>The <code>x-idempotency-key</code> matches a payment you have already created for this TPP and consent, but the payment details differ. Use <code>errorMessage</code>: <code>Idempotency key mismatch: Request parameters differ from original.</code> &mdash; see <a href="#repeated-idempotency-key">Repeated idempotency keys</a></td></tr>
           </tbody>
         </table>
       </EdRefTable>

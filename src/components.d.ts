@@ -42,6 +42,7 @@ declare module 'vue' {
     ApiGuideStepClientAssertion: typeof import('./components/common/api-guide-steps/ApiGuideStepClientAssertion.vue')['default']
     ApiGuideStepEncryptPii: typeof import('./components/common/api-guide-steps/ApiGuideStepEncryptPii.vue')['default']
     ApiGuideStepEncryptPiiVariable: typeof import('./components/common/api-guide-steps/ApiGuideStepEncryptPiiVariable.vue')['default']
+    ApiGuideStepLfiIdempotency: typeof import('./components/common/api-guide-steps/ApiGuideStepLfiIdempotency.vue')['default']
     ApiGuideStepParRequest: typeof import('./components/common/api-guide-steps/ApiGuideStepParRequest.vue')['default']
     ApiGuideStepPaymentEncryptPii: typeof import('./components/common/api-guide-steps/ApiGuideStepPaymentEncryptPii.vue')['default']
     ApiGuideStepPaymentEncryptPiiVariable: typeof import('./components/common/api-guide-steps/ApiGuideStepPaymentEncryptPiiVariable.vue')['default']
