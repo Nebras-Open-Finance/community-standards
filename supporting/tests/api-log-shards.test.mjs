@@ -1,7 +1,8 @@
-// Guards the quarterly sharding + dictionary codec for the API usage log.
+// Guards the monthly sharding + dictionary codec for the API usage log.
 //
 // The log used to be a single public/api/api-log.json. It is now a set of
-// quarterly shards listed by api-log-index.json, and the deployed copies are
+// monthly shards listed by api-log-index.json (quarterly until a quarter
+// outgrew GitHub's per-file limit), and the deployed copies are
 // dictionary-coded to stay under Cloudflare Pages' 25 MiB per-file limit.
 // Both transforms are supposed to be presentation-only: every figure on
 // /metrics, the homepage and /program/whats-live must be computed from exactly
@@ -14,7 +15,7 @@
 //      encoder in scripts/api-log-codec.mjs
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, existsSync, statSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { resolve, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -30,8 +31,13 @@ const BASELINE = join(__dirname, 'fixtures', 'api-log-baseline.json')
 // Cloudflare Pages rejects any single file above this.
 const PAGES_MAX_BYTES = 25 * 1024 * 1024
 
+// GitHub rejects pushes containing a file over 100 MiB. Fail with room left
+// for at least one more weekly merge (~15 MiB at current volumes), so the
+// warning arrives before a push is blocked.
+const GITHUB_HEADROOM_BYTES = 85 * 1024 * 1024
+
 const readJson = (path) => JSON.parse(readFileSync(path, 'utf8'))
-const quarterOf = (date) => `q${Math.floor((Number(date.slice(5, 7)) - 1) / 3) + 1}-${date.slice(2, 4)}`
+const monthOf = (date) => date.slice(0, 7)
 
 const manifest = readJson(MANIFEST)
 const shardFiles = manifest.shards
@@ -49,28 +55,31 @@ describe('API log shards', () => {
     // Pages limit and silently double-count every row.
     assert.ok(!existsSync(join(API_DIR, 'api-log.json')), 'the pre-split api-log.json still exists')
 
-    const sortKey = (f) => {
-      const q = f.slice('api-log-'.length, -'.json'.length)
-      return `${q.slice(3)}-${q.slice(1, 2)}`
-    }
-    assert.deepEqual(
-      shardFiles,
-      [...shardFiles].sort((a, b) => (sortKey(a) < sortKey(b) ? -1 : 1)),
-      'manifest shards are not in chronological order',
-    )
+    // `api-log-YYYY-MM.json` sorts chronologically as a plain string.
+    assert.deepEqual(shardFiles, [...shardFiles].sort(), 'manifest shards are not in chronological order')
   })
 
-  it('each shard holds only its own quarter, and the quarters do not overlap', () => {
+  it('each shard holds only its own month, and the months do not overlap', () => {
     const seen = new Map()
     for (const { file, rows } of shards) {
       assert.ok(rows.length > 0, `${file} is empty`)
       const expected = file.slice('api-log-'.length, -'.json'.length)
       for (const row of rows) {
-        assert.equal(quarterOf(row.date), expected, `${file} contains a ${row.date} record`)
+        assert.equal(monthOf(row.date), expected, `${file} contains a ${row.date} record`)
         const owner = seen.get(row.date)
         assert.ok(owner === undefined || owner === file, `${row.date} appears in ${owner} and ${file}`)
         seen.set(row.date, file)
       }
+    }
+  })
+
+  it('every committed shard stays well under GitHub\'s 100 MiB file limit', () => {
+    for (const file of shardFiles) {
+      const size = statSync(join(API_DIR, file)).size
+      assert.ok(
+        size < GITHUB_HEADROOM_BYTES,
+        `${file} is ${(size / 1024 / 1024).toFixed(1)} MiB — shard the API log more finely before the next merge`,
+      )
     }
   })
 

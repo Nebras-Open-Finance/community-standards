@@ -38,3 +38,11 @@ https://www.nebras-open-finance.com/* https://nebras-open-finance.com/:splat 301
 /openapi/v2.2-rc1/*                               /openapi/v2.2-rc2/:splat                               301
 /tech/release-notes-and-erratas/changelog/v2.2-rc1   /tech/release-notes-and-erratas/changelog/v2.2-rc2  301
 /tech/release-notes-and-erratas/changelog/v2.2-rc1/  /tech/release-notes-and-erratas/changelog/v2.2-rc2  301
+
+# The LFI "Health Check" section was renamed "Connectivity Check" (Nov 2026).
+# The upstream spec keeps its name (uae-ozone-connect-health-check-openapi.yaml)
+# and so does the /tech/api-specs/.../ozone-connect/health-check route.
+/tech/lfi-api-hub/v2.1/health-check/*             /tech/lfi-api-hub/v2.1/connectivity-check/:splat             301
+/tech/lfi-api-hub/v2.1/health-check               /tech/lfi-api-hub/v2.1/connectivity-check/                   301
+/tech/lfi-api-hub/v2.2-rc2/health-check/*         /tech/lfi-api-hub/v2.2-rc2/connectivity-check/:splat         301
+/tech/lfi-api-hub/v2.2-rc2/health-check           /tech/lfi-api-hub/v2.2-rc2/connectivity-check/               301

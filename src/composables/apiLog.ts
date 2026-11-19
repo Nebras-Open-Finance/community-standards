@@ -1,6 +1,6 @@
 // Single entry point for reading the API usage log.
 //
-// The log is sharded by quarter under `public/api/` — `api-log-index.json`
+// The log is sharded by month under `public/api/` — `api-log-index.json`
 // lists the shards, oldest first. The committed shards are pretty-printed
 // arrays of row objects (the shape fresh dashboard exports arrive in, so
 // merging stays a textual splice); the deployed copies are dictionary-coded by

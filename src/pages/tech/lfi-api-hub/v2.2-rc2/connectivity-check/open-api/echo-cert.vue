@@ -8,7 +8,7 @@ meta:
 
 <template>
   <EndpointPage
-    eyebrow="LFI · Health Check"
+    eyebrow="LFI · Connectivity Check"
     title="Echo Cert"
     version="v2.2-rc2"
     method="GET"

@@ -8,14 +8,14 @@ meta:
 
 <template>
   <EndpointPage
-    eyebrow="LFI · Health Check"
+    eyebrow="LFI · Connectivity Check"
     title="Hello MTLS"
-    version="v2.1"
+    version="v2.2-rc2"
     method="GET"
     path="/hello-mtls"
   >
     <RedocWrapper
-      spec="/openapi/v2.1/ozone-connect/uae-ozone-connect-health-check-openapi.yaml"
+      spec="/openapi/v2.2-rc2/ozone-connect/uae-ozone-connect-health-check-openapi.yaml"
       filterPath="/hello-mtls"
       filterMethod="get"
       :overrideServers="[{ url: 'https://[Ozone_Connect_API]' }]" />

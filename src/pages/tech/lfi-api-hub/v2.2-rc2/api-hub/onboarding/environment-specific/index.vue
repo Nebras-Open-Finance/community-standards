@@ -197,7 +197,7 @@ const exampleForwardedUrl = 'https://openapi.example.com/retail/data/accounts'
         </table>
       </EdRefTable>
 
-      <h3>Optional API family base paths</h3>
+      <h3 id="optional-api-family-base-paths">Optional API family base paths</h3>
       <EdProse>
         The onboarding form includes optional base path fields for each API family. If provided, the path
         is inserted between your
@@ -237,7 +237,7 @@ const exampleForwardedUrl = 'https://openapi.example.com/retail/data/accounts'
               <td><code>OzoneConnectURL/&lt;path&gt;/event-notifications</code></td>
             </tr>
             <tr>
-              <td><strong><a href="/tech/lfi-api-hub/v2.2-rc2/health-check/">Health Check</a></strong></td>
+              <td><strong><a href="/tech/lfi-api-hub/v2.2-rc2/connectivity-check/">Connectivity Check</a></strong></td>
               <td><code>/hello</code>, <code>/hello-mtls</code>, <code>/echo-cert</code></td>
               <td><code>OzoneConnectURL/&lt;path&gt;/echo-cert</code></td>
             </tr>
@@ -609,7 +609,7 @@ const exampleForwardedUrl = 'https://openapi.example.com/retail/data/accounts'
         <li>
           <strong>API Hub to LFI</strong> &mdash; The API Hub will make requests to your Ozone Connect
           endpoints (e.g. the
-          <a href="/tech/lfi-api-hub/v2.2-rc2/health-check/">health check endpoints</a>
+          <a href="/tech/lfi-api-hub/v2.2-rc2/connectivity-check/">connectivity check endpoints</a>
           <code>/hello</code>, <code>/hello-mtls</code>, <code>/echo-cert</code>) to verify that
           transport certificates, network routing, and application layer authentication are correctly
           configured.

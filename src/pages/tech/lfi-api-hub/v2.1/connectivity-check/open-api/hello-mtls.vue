@@ -1,6 +1,6 @@
 <route lang="yaml">
 meta:
-  title: Echo Cert
+  title: Hello MTLS
 </route>
 
 <script setup lang="ts">
@@ -8,15 +8,15 @@ meta:
 
 <template>
   <EndpointPage
-    eyebrow="LFI · Health Check"
-    title="Echo Cert"
+    eyebrow="LFI · Connectivity Check"
+    title="Hello MTLS"
     version="v2.1"
     method="GET"
-    path="/echo-cert"
+    path="/hello-mtls"
   >
     <RedocWrapper
       spec="/openapi/v2.1/ozone-connect/uae-ozone-connect-health-check-openapi.yaml"
-      filterPath="/echo-cert"
+      filterPath="/hello-mtls"
       filterMethod="get"
       :overrideServers="[{ url: 'https://[Ozone_Connect_API]' }]" />
   </EndpointPage>

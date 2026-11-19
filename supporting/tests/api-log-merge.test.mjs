@@ -1,5 +1,5 @@
 // Exercises scripts/merge-api-log.mjs — the weekly "drop a fresh export in and
-// merge it" workflow for the quarterly API log shards.
+// merge it" workflow for the monthly API log shards.
 //
 // Each case runs against a throwaway copy of public/api/ so the real shards are
 // never touched. Exports are synthesised by slicing record text straight out of
@@ -13,7 +13,7 @@ import { tmpdir } from 'node:os'
 import { resolve, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { mergeApiLog, quarterOf } from '../../scripts/merge-api-log.mjs'
+import { mergeApiLog, monthOf } from '../../scripts/merge-api-log.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..', '..')
@@ -40,20 +40,39 @@ function scratchApiDir() {
   return dir
 }
 
-// Slice the records dated >= `fromDate` out of a shard, preserving its bytes,
-// and write them out as a standalone export file.
-function exportFrom(dir, shardFile, fromDate, exportPath, rewriteDates) {
-  const raw = readFileSync(join(dir, shardFile), 'utf8')
-  const at = raw.indexOf(`"date" : "${fromDate}"`)
-  assert.notEqual(at, -1, `${shardFile} has no ${fromDate} records`)
-  const start = raw.lastIndexOf('\t{\n', at)
-  let inner = raw.slice(start, raw.lastIndexOf('\n]'))
+// Slice the records dated >= `fromDate` out of the shards, preserving their
+// bytes, and write them out as a standalone export file. Reads across shards,
+// so `fromDate` may sit in an earlier month than the log's last day.
+function exportFrom(dir, fromDate, exportPath, rewriteDates) {
+  const parts = []
+  for (const file of manifestOf(dir).shards) {
+    const month = file.slice('api-log-'.length, -'.json'.length)
+    if (month < monthOf(fromDate)) continue
+    const raw = readFileSync(join(dir, file), 'utf8')
+    let start = raw.indexOf('\t{\n')
+    if (month === monthOf(fromDate)) {
+      const at = raw.indexOf(`"date" : "${fromDate}"`)
+      assert.notEqual(at, -1, `${file} has no ${fromDate} records`)
+      start = raw.lastIndexOf('\t{\n', at)
+    }
+    parts.push(raw.slice(start, raw.lastIndexOf('\n]')))
+  }
+  let inner = parts.join(',\n')
   if (rewriteDates) {
     inner = inner.replace(/"date" : "(\d{4}-\d{2}-\d{2})"/g, (_m, d) => `"date" : "${rewriteDates(d)}"`)
   }
   const text = `[\n${inner}\n]\n`
   writeFileSync(exportPath, text)
   return JSON.parse(text)
+}
+
+// Drop every record dated >= `date` from a shard, keeping the bytes before it.
+function truncateFrom(dir, shardFile, date) {
+  const path = join(dir, shardFile)
+  const raw = readFileSync(path, 'utf8')
+  const at = raw.indexOf(`"date" : "${date}"`)
+  assert.notEqual(at, -1, `${shardFile} has no ${date} records`)
+  writeFileSync(path, `${raw.slice(0, raw.lastIndexOf('\t{\n', at)).replace(/,\n$/, '')}\n]\n`)
 }
 
 const scratches = []
@@ -85,7 +104,7 @@ describe('API log merge', () => {
     // An export covering the last day already present — the usual overlap case,
     // just with identical content.
     const exportPath = join(dir, 'export.json')
-    exportFrom(dir, latestShard, latestDate, exportPath)
+    exportFrom(dir, latestDate, exportPath)
     mergeApiLog({ apiDir: dir, exportPath })
 
     const after = manifestOf(dir).shards.map((f) => readFileSync(join(dir, f), 'utf8'))
@@ -121,26 +140,27 @@ describe('API log merge', () => {
     )
   })
 
-  it('opens a new shard and manifest entry when the export crosses a quarter', () => {
+  it('opens a new shard and manifest entry when the export crosses a month', () => {
     const dir = newScratch()
     const baseline = rowsOf(dir)
     const beforeShards = manifestOf(dir).shards
 
     // Re-date the last two days of the log to straddle the end of its latest
-    // quarter, so the export always rolls over into a quarter with no shard yet.
+    // month, so the export always rolls over into a month with no shard yet.
     const distinct = [...new Set(baseline.map((r) => r.date))].sort()
     const [penultimate, last] = distinct.slice(-2)
-    const quarterEnd = new Date(Date.UTC(
+    // Day 0 of the next month (1-based month as a 0-based index) is this month's last day.
+    const monthEnd = new Date(Date.UTC(
       Number(last.slice(0, 4)),
-      Math.ceil(Number(last.slice(5, 7)) / 3) * 3,
+      Number(last.slice(5, 7)),
       0,
     )).toISOString().slice(0, 10)
-    const quarterStart = nextDay(quarterEnd)
-    const newShard = `api-log-${quarterOf(quarterStart)}.json`
-    const remap = { [penultimate]: quarterEnd, [last]: quarterStart }
+    const monthStart = nextDay(monthEnd)
+    const newShard = `api-log-${monthOf(monthStart)}.json`
+    const remap = { [penultimate]: monthEnd, [last]: monthStart }
 
     const exportPath = join(dir, 'export.json')
-    exportFrom(dir, latestShard, penultimate, exportPath, (d) => remap[d] ?? d)
+    exportFrom(dir, penultimate, exportPath, (d) => remap[d] ?? d)
 
     const { shards } = mergeApiLog({ apiDir: dir, exportPath })
 
@@ -157,13 +177,13 @@ describe('API log merge', () => {
     for (const file of shards) {
       const expected = file.slice('api-log-'.length, -'.json'.length)
       for (const row of readJson(join(dir, file))) {
-        assert.equal(quarterOf(row.date), expected, `${file} holds a ${row.date} record`)
+        assert.equal(monthOf(row.date), expected, `${file} holds a ${row.date} record`)
       }
     }
 
     const merged = rowsOf(dir)
-    assert.ok(merged.some((r) => r.date === quarterEnd), 'old-quarter side of the boundary is missing')
-    assert.ok(merged.some((r) => r.date === quarterStart), 'new-quarter side of the boundary is missing')
+    assert.ok(merged.some((r) => r.date === monthEnd), 'old-month side of the boundary is missing')
+    assert.ok(merged.some((r) => r.date === monthStart), 'new-month side of the boundary is missing')
     assert.deepEqual(
       merged.filter((r) => r.date < penultimate),
       baseline.filter((r) => r.date < penultimate),
@@ -173,21 +193,28 @@ describe('API log merge', () => {
 
   it('appends cleanly when the export does not overlap at all', () => {
     const dir = newScratch()
+
+    // The append case must stay inside one month — see the rollover test for
+    // the other path. If the log happens to end on a month's last day, drop
+    // that day from the scratch copy so the day after its end is still in the
+    // same month.
+    let end = latestDate
+    if (monthOf(nextDay(end)) !== monthOf(end)) {
+      truncateFrom(dir, latestShard, end)
+      const rows = readJson(join(dir, latestShard))
+      end = rows[rows.length - 1].date
+    }
     const baseline = rowsOf(dir)
 
     // One day past the log's end, so every exported record is genuinely new.
     // Derived rather than fixed: a hard-coded date stops being "past the end"
     // as soon as the log grows into it, which silently turns this into the
     // overlap case it is meant to contrast with.
-    const afterEnd = nextDay(latestDate)
-    assert.equal(
-      quarterOf(afterEnd),
-      quarterOf(latestDate),
-      'the append case must stay inside one quarter — see the rollover test for the other path',
-    )
+    const afterEnd = nextDay(end)
+    assert.equal(monthOf(afterEnd), monthOf(end), 'the append case left the latest month')
 
     const exportPath = join(dir, 'export.json')
-    exportFrom(dir, latestShard, latestDate, exportPath, () => afterEnd)
+    exportFrom(dir, end, exportPath, () => afterEnd)
     mergeApiLog({ apiDir: dir, exportPath })
 
     const merged = rowsOf(dir)

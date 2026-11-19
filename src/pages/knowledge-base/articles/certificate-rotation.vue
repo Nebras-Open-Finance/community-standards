@@ -238,7 +238,7 @@ const opensslCommand = `openssl req -new -newkey rsa:2048 -nodes \\
         </li>
         <li>
           Re-run connectivity validation. After transport certificates are rotated, the Hub re-verifies
-          connectivity using the <a href="/tech/lfi-api-hub/v2.1/health-check/">Health Check</a> endpoints
+          connectivity using the <a href="/tech/lfi-api-hub/v2.1/connectivity-check/">Connectivity Check</a> endpoints
           (<code>/hello-mtls</code>, <code>/echo-cert</code>). Confirm these pass on the new certificate
           before retiring the old one.
         </li>
@@ -311,7 +311,7 @@ const opensslCommand = `openssl req -new -newkey rsa:2048 -nodes \\
         <li>The new certificate was issued <strong>before</strong> the old one's expiry date.</li>
         <li>The new key and CSR were generated inside your HSM / secure key management for production.</li>
         <li>The new <code>kid</code> is published to your JWKS and resolvable.</li>
-        <li><strong>Transport:</strong> Health Check connectivity validation passes on the new certificate.</li>
+        <li><strong>Transport:</strong> Connectivity Check validation passes on the new certificate.</li>
         <li><strong>Signing:</strong> new JWTs are signed with the new key and carry the matching <code>kid</code>.</li>
         <li>The old certificate is retired and the old private key destroyed per your key-management policy.</li>
         <li>The certificate description records who holds the private key.</li>

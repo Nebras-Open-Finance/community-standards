@@ -1,12 +1,15 @@
-// Merge a fresh api-log export into the quarterly shards under public/api/.
+// Merge a fresh api-log export into the monthly shards under public/api/.
 //
 //   node scripts/merge-api-log.mjs "public/api/api-log (8).json"
 //
 // Exports overlap the log's last (partial) day and extend forward, so the rule
 // is replace-and-extend: drop every record at or after the export's first date,
-// then append the export's records. An export that straddles a quarter boundary
+// then append the export's records. An export that straddles a month boundary
 // is split across the shards it touches, creating a new shard and manifest
-// entry when a quarter rolls over.
+// entry when a month rolls over.
+//
+// Shards are monthly (`api-log-2026-11.json`) because quarterly shards outgrew
+// GitHub's 100 MiB per-file push limit.
 //
 // Everything is a textual splice. The export's bytes already match the shard
 // format (tabs, `"key" : value`, `.0` floats, escaped `\/`), so no record is
@@ -20,13 +23,11 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 export const DEFAULT_API_DIR = join(ROOT, 'public', 'api')
 const MANIFEST_FILE = 'api-log-index.json'
 
-export const quarterOf = (date) =>
-  `q${Math.floor((Number(date.slice(5, 7)) - 1) / 3) + 1}-${date.slice(2, 4)}`
+// `2026-11-16` -> `2026-11`. YYYY-MM sorts chronologically as a plain string,
+// so shard file names need no custom sort key.
+export const monthOf = (date) => date.slice(0, 7)
 
-// Chronological sort key: year first, then quarter (`q3-26` -> `26-3`).
-const sortKey = (quarter) => `${quarter.slice(3)}-${quarter.slice(1, 2)}`
-const shardFile = (quarter) => `api-log-${quarter}.json`
-const quarterOfFile = (file) => file.slice('api-log-'.length, -'.json'.length)
+const shardFile = (month) => `api-log-${month}.json`
 
 // Byte offset of the record containing the first occurrence of `date`.
 function recordStartAt(raw, date) {
@@ -37,26 +38,26 @@ function recordStartAt(raw, date) {
   return start
 }
 
-// Split a pretty-printed log file into per-quarter blocks of record text.
-export function quarterBlocks(raw, rows) {
+// Split a pretty-printed log file into per-month blocks of record text.
+export function monthBlocks(raw, rows) {
   for (let i = 1; i < rows.length; i++) {
     if (rows[i].date < rows[i - 1].date) throw new Error(`not date-sorted at row ${i}`)
   }
   const order = []
   const firstDate = new Map()
   for (const row of rows) {
-    const q = quarterOf(row.date)
-    if (order[order.length - 1] !== q) {
-      if (order.includes(q)) throw new Error(`quarter ${q} is not contiguous`)
-      order.push(q)
-      firstDate.set(q, row.date)
+    const m = monthOf(row.date)
+    if (order[order.length - 1] !== m) {
+      if (order.includes(m)) throw new Error(`month ${m} is not contiguous`)
+      order.push(m)
+      firstDate.set(m, row.date)
     }
   }
-  const cuts = order.map((q) => recordStartAt(raw, firstDate.get(q)))
+  const cuts = order.map((m) => recordStartAt(raw, firstDate.get(m)))
   const end = raw.lastIndexOf('\n]')
-  return order.map((q, i) => ({
-    quarter: q,
-    firstDate: firstDate.get(q),
+  return order.map((m, i) => ({
+    month: m,
+    firstDate: firstDate.get(m),
     // Slices ending at the next record start trail a `,\n` separator.
     inner: raw.slice(cuts[i], i + 1 < cuts.length ? cuts[i + 1] : end).replace(/,\n$/, ''),
   }))
@@ -72,15 +73,15 @@ export function mergeApiLog({ apiDir = DEFAULT_API_DIR, exportPath }) {
   const shards = new Set(manifest.shards)
   const summary = []
 
-  for (const block of quarterBlocks(expRaw, expRows)) {
-    const file = shardFile(block.quarter)
+  for (const block of monthBlocks(expRaw, expRows)) {
+    const file = shardFile(block.month)
     const shardPath = join(apiDir, file)
     let text
 
     if (!shards.has(file) || !existsSync(shardPath)) {
       text = `[\n${block.inner}\n]\n`
       shards.add(file)
-      summary.push(`${file}  NEW quarter, ${JSON.parse(text).length} record(s)`)
+      summary.push(`${file}  NEW month, ${JSON.parse(text).length} record(s)`)
     } else {
       const shardRaw = readFileSync(shardPath, 'utf8')
       const cut = recordStartAt(shardRaw, block.firstDate)
@@ -99,9 +100,7 @@ export function mergeApiLog({ apiDir = DEFAULT_API_DIR, exportPath }) {
     writeFileSync(shardPath, text)
   }
 
-  const ordered = [...shards].sort((a, b) =>
-    sortKey(quarterOfFile(a)) < sortKey(quarterOfFile(b)) ? -1 : 1,
-  )
+  const ordered = [...shards].sort()
   writeFileSync(manifestPath, `${JSON.stringify({ shards: ordered }, null, 2)}\n`)
 
   const rows = ordered.flatMap((f) => JSON.parse(readFileSync(join(apiDir, f), 'utf8')))

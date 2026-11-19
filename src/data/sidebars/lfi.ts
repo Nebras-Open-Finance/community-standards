@@ -249,7 +249,7 @@ export const buildLfiSidebar = (version: Version): SidebarItem[] => [
             collapsed: true,
             items: [
               {
-                text: 'Health Check',
+                text: 'Connectivity Check',
                 items: [
                   apiRef('GET', '/hello-mtls', `${BASE}/${version}/api-hub/headless-heimdall/open-api/hello-mtls`),
                 ],
@@ -276,7 +276,7 @@ export const buildLfiSidebar = (version: Version): SidebarItem[] => [
             collapsed: true,
             items: [
               {
-                text: 'Health Check',
+                text: 'Connectivity Check',
                 items: [
                   apiRef('GET', '/hello-mtls', `${BASE}/${version}/api-hub/consent-manager/open-api/hello-mtls`),
                 ],
@@ -316,17 +316,17 @@ export const buildLfiSidebar = (version: Version): SidebarItem[] => [
   },
 
   {
-    text: 'Ozone Connect | Health Check',
+    text: 'Ozone Connect | Connectivity Check',
     collapsed: true,
     items: [
-      { text: 'Overview', link: `${BASE}/${version}/health-check/` },
+      { text: 'Overview', link: `${BASE}/${version}/connectivity-check/` },
       {
         text: 'API Reference',
         collapsed: true,
         items: [
-          apiRef('GET', '/hello', `${BASE}/${version}/health-check/open-api/hello`),
-          apiRef('GET', '/hello-mtls', `${BASE}/${version}/health-check/open-api/hello-mtls`),
-          apiRef('GET', '/echo-cert', `${BASE}/${version}/health-check/open-api/echo-cert`),
+          apiRef('GET', '/hello', `${BASE}/${version}/connectivity-check/open-api/hello`),
+          apiRef('GET', '/hello-mtls', `${BASE}/${version}/connectivity-check/open-api/hello-mtls`),
+          apiRef('GET', '/echo-cert', `${BASE}/${version}/connectivity-check/open-api/echo-cert`),
         ],
       },
     ],

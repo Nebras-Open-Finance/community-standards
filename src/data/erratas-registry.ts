@@ -391,7 +391,7 @@ export const ERRATA_SECTIONS: ErrataSection[] = [
     ],
     affectedPaths: [
       '/tech/api-specs/v2.1/ozone-connect/health-check/echo-cert',
-      '/tech/lfi-api-hub/v2.1/health-check/open-api/echo-cert',
+      '/tech/lfi-api-hub/v2.1/connectivity-check/open-api/echo-cert',
     ],
   },
   {

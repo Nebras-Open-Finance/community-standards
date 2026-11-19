@@ -1,9 +1,17 @@
 {
   "shards": [
-    "api-log-q4-25.json",
-    "api-log-q1-26.json",
-    "api-log-q2-26.json",
-    "api-log-q3-26.json",
-    "api-log-q4-26.json"
+    "api-log-2025-11.json",
+    "api-log-2025-12.json",
+    "api-log-2026-01.json",
+    "api-log-2026-02.json",
+    "api-log-2026-03.json",
+    "api-log-2026-04.json",
+    "api-log-2026-05.json",
+    "api-log-2026-06.json",
+    "api-log-2026-07.json",
+    "api-log-2026-08.json",
+    "api-log-2026-09.json",
+    "api-log-2026-10.json",
+    "api-log-2026-11.json"
   ]
 }

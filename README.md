@@ -42,7 +42,7 @@ Version-agnostic sections:
 Per-version sections (currently **v2.1**, under [`src/pages/tech/lfi-api-hub/v2.1/`](src/pages/tech/lfi-api-hub/v2.1/)):
 
 - **API Hub** — APIs the Hub exposes **to** the LFI (consent manager, Headless Heimdall)
-- **Ozone Connect** — APIs the LFI **must implement** for the Hub to call: banking (data sharing, confirmation of payee, service initiation, products & leads, ATMs), consent events, and health check
+- **Ozone Connect** — APIs the LFI **must implement** for the Hub to call: banking (data sharing, confirmation of payee, service initiation, products & leads, ATMs), consent events, and connectivity check
 - **Consent journey** — how the end user is authenticated and authorises consent at the LFI
 - **Consent management interface** — the UI LFIs must expose to customers to view and revoke consents
 
@@ -52,7 +52,7 @@ The canonical OpenAPI specifications for the ecosystem, grouped by audience unde
 
 - **TPP** — APIs the API Hub exposes to TPPs (data sharing, service initiation, confirmation of payee, products & leads, ATMs, consent, token, registration, trust framework, webhooks)
 - **API Hub** — APIs the API Hub exposes to LFIs (consent manager, Headless Heimdall)
-- **Ozone Connect** — APIs that LFIs implement for the API Hub to consume (banking endpoints, consent events, health check)
+- **Ozone Connect** — APIs that LFIs implement for the API Hub to consume (banking endpoints, consent events, connectivity check)
 
 Specs are **not** stored in this repo. They are fetched at build time by [`scripts/fetch-openapi-specs.mjs`](scripts/fetch-openapi-specs.mjs) from the canonical source — [Nebras-Open-Finance/api-specs](https://github.com/Nebras-Open-Finance/api-specs) — into [`public/openapi/`](public/openapi/) and gitignored. Versions available to the site are declared in [`src/data/versions.ts`](src/data/versions.ts); adding a new version there causes the fetch script to pick it up automatically, including the highest matching errata release.
 
@@ -106,13 +106,13 @@ You can run any of these on their own via `npm run fetch:specs`, `npm run fetch:
 
 `public/api/payments-log.json`, `auth-log.json` and the `api-log-*.json` shards are committed, append-only daily aggregates exported from the API Hub dashboard — they are not fetched at build time. A fresh export overlaps the log's last (partial) day and extends forward, so merging is always *replace and extend*: drop the overlapping day, then append.
 
-The API log is large enough to need splitting. It is sharded by quarter, listed in `api-log-index.json`, and merged with:
+The API log is large enough to need splitting. It is sharded by month (`api-log-2026-11.json`; quarterly shards outgrew GitHub's 100 MiB per-file limit), listed in `api-log-index.json`, and merged with:
 
 ```bash
 node scripts/merge-api-log.mjs "public/api/api-log (8).json"
 ```
 
-That routes the export's records to the right shards, opens a new shard and manifest entry when a quarter rolls over, and rewrites only the tail of the files it touches. Read it via [`loadApiLog()`](src/composables/apiLog.ts) rather than fetching a URL — never assume a single `api-log.json`.
+That routes the export's records to the right shards, opens a new shard and manifest entry when a month rolls over, and rewrites only the tail of the files it touches. Read it via [`loadApiLog()`](src/composables/apiLog.ts) rather than fetching a URL — never assume a single `api-log.json`.
 
 The committed shards stay pretty-printed so merges remain a readable textual splice. At build time [`encode-api-log.mjs`](scripts/encode-api-log.mjs) rewrites the `dist/` copies into a dictionary-coded form (~34 MiB → ~2.8 MiB), because Cloudflare Pages rejects any single file over 25 MiB. `loadApiLog()` decodes both shapes, so `npm run dev` serves the committed files directly. `api-log-shards.test.mjs` and `api-log-merge.test.mjs` assert the whole path is lossless.
 

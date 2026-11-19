@@ -22,8 +22,9 @@
 /assets/*
   Cache-Control: public, max-age=600
 
-# The API log shards are requested as /api/<shard>?v=<content hash>, from the
-# manifest scripts/encode-api-log.mjs writes. The manifest (api-log-index.json)
-# is not matched and revalidates on every request.
-/api/api-log-q*
+# The API log shards (api-log-YYYY-MM.json) are requested as
+# /api/<shard>?v=<content hash>, from the manifest scripts/encode-api-log.mjs
+# writes. The `20` prefix keeps the manifest (api-log-index.json) unmatched, so
+# it revalidates on every request.
+/api/api-log-20*
   Cache-Control: public, max-age=600

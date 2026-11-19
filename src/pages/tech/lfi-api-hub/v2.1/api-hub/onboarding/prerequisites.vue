@@ -214,15 +214,15 @@ meta:
     </EdSectionBand>
 
     <EdSectionBand
-      id="health-check"
+      id="connectivity-check"
       num="07"
       color="var(--at-gold)"
-      eyebrow="Health Check Endpoints"
+      eyebrow="Connectivity Check Endpoints"
       title="Three mandatory endpoints"
       tone="surface"
     >
       <EdProse>
-        The following health check endpoints are <strong>mandatory</strong> for all LFI implementations:
+        The following connectivity check endpoints are <strong>mandatory</strong> for all LFI implementations:
       </EdProse>
 
       <EdRefTable>
@@ -235,15 +235,15 @@ meta:
           </thead>
           <tbody>
             <tr>
-              <td><a href="/tech/lfi-api-hub/v2.1/health-check/open-api/hello" class="endpoint"><span class="http-method http-method--get">GET</span><code>/hello</code></a></td>
+              <td><a href="/tech/lfi-api-hub/v2.1/connectivity-check/open-api/hello" class="endpoint"><span class="http-method http-method--get">GET</span><code>/hello</code></a></td>
               <td>Basic connectivity check.</td>
             </tr>
             <tr>
-              <td><a href="/tech/lfi-api-hub/v2.1/health-check/open-api/hello-mtls" class="endpoint"><span class="http-method http-method--get">GET</span><code>/hello-mtls</code></a></td>
+              <td><a href="/tech/lfi-api-hub/v2.1/connectivity-check/open-api/hello-mtls" class="endpoint"><span class="http-method http-method--get">GET</span><code>/hello-mtls</code></a></td>
               <td>Verifies mutual TLS is correctly configured.</td>
             </tr>
             <tr>
-              <td><a href="/tech/lfi-api-hub/v2.1/health-check/open-api/echo-cert" class="endpoint"><span class="http-method http-method--get">GET</span><code>/echo-cert</code></a></td>
+              <td><a href="/tech/lfi-api-hub/v2.1/connectivity-check/open-api/echo-cert" class="endpoint"><span class="http-method http-method--get">GET</span><code>/echo-cert</code></a></td>
               <td>Returns the client certificate details received by your server, used to verify certificate propagation.</td>
             </tr>
           </tbody>
@@ -253,7 +253,7 @@ meta:
       <EdProse>
         These endpoints MUST be implemented and reachable before your integration can proceed to testing.
         See
-        <a href="/tech/lfi-api-hub/v2.1/health-check/">Ozone Connect &mdash; Health Check</a>
+        <a href="/tech/lfi-api-hub/v2.1/connectivity-check/">Ozone Connect &mdash; Connectivity Check</a>
         for full API reference and usage.
       </EdProse>
     </EdSectionBand>

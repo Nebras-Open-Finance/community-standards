@@ -69,7 +69,7 @@ const CATEGORY_RULES = [
   { prefix: '/tech/lfi-api-hub/v2.1/consent-events', category: 'LFI Integration', section: 'Consent Events' },
   { prefix: '/tech/lfi-api-hub/v2.1/consent-management-interface', category: 'LFI Integration', section: 'CMI' },
   { prefix: '/tech/lfi-api-hub/v2.1/api-hub',       category: 'LFI Integration', section: 'API Hub' },
-  { prefix: '/tech/lfi-api-hub/v2.1/health-check',  category: 'LFI Integration', section: 'Health Check' },
+  { prefix: '/tech/lfi-api-hub/v2.1/connectivity-check', category: 'LFI Integration', section: 'Connectivity Check' },
   { prefix: '/tech/lfi-api-hub/production',         category: 'LFI Integration', section: 'Production' },
   { prefix: '/tech/lfi-api-hub/trust-framework',    category: 'LFI Integration', section: 'Trust Framework' },
   { prefix: '/tech/lfi-api-hub',                    category: 'LFI Integration', section: 'Overview' },
