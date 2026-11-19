@@ -45,7 +45,7 @@ grant_type=client_credentials
 // ── Instrument query ────────────────────────────────────────────────────────
 const queryClaims = `{
   "iss": "[CLIENT_ID]",
-  "aud": "https://auth1.[LFICODE].apihub.openfinance.ae",
+  "aud": ["https://auth1.[LFICODE].apihub.openfinance.ae"],
   "iat": 1792059302,
   "nbf": 1792059292,
   "exp": 1792059602,
@@ -63,7 +63,7 @@ const queryClaims = `{
   }
 }`
 
-const queryRequest = `POST /open-finance/biometric-payments/v2.2/instrument-query HTTP/1.1
+const queryRequest = `POST /open-finance/biometric-payments/v2.1/instrument-query HTTP/1.1
 Host: rs1.[LFICODE].apihub.openfinance.ae
 Authorization: Bearer <access_token>
 Content-Type: application/jwt
@@ -81,6 +81,7 @@ eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIiwia2lkIjoiYnBpcC1lbmMtMSIsImN0
 // ── Response ────────────────────────────────────────────────────────────────
 const ibanResponseClaims = `{
   "iss": "[LFI_ORGANISATION_ID]",
+  "aud": ["[CLIENT_ID]"],
   "azp": "[BPIP_ORGANISATION_ID]",
   "iat": 1792059303,
   "nbf": 1792059303,
@@ -104,6 +105,7 @@ const ibanResponseClaims = `{
 
 const panResponseClaims = `{
   "iss": "[LFI_ORGANISATION_ID]",
+  "aud": ["[CLIENT_ID]"],
   "azp": "[BPIP_ORGANISATION_ID]",
   "iat": 1792059303,
   "nbf": 1792059303,
@@ -126,7 +128,7 @@ const panResponseClaims = `{
 }`
 
 // ── Account payment ─────────────────────────────────────────────────────────
-const paymentRequest = `POST /open-finance/biometric-payments/v1/biometric-payments HTTP/1.1
+const paymentRequest = `POST /open-finance/biometric-payments/v2.1/biometric-payments HTTP/1.1
 Host: rs1.[LFICODE].apihub.openfinance.ae
 Authorization: Bearer <access_token>
 Content-Type: application/json
@@ -181,7 +183,7 @@ x-fapi-interaction-id: 1f0e9c2a-77d4-4b8e-a3f1-5d2c6b7e8a90
     }
   },
   "Links": {
-    "Self": "https://rs1.[LFICODE].apihub.openfinance.ae/open-finance/biometric-payments/v1/biometric-payments/7130812d-4d81-4c68-8187-6358cfbce521"
+    "Self": "https://rs1.[LFICODE].apihub.openfinance.ae/open-finance/biometric-payments/v2.1/biometric-payments/7130812d-4d81-4c68-8187-6358cfbce521"
   },
   "Meta": {}
 }`
@@ -229,7 +231,7 @@ const eventPayload = `{
   }
 }`
 
-const pollById = `GET /open-finance/biometric-payments/v1/biometric-payments/7130812d-4d81-4c68-8187-6358cfbce521 HTTP/1.1
+const pollById = `GET /open-finance/biometric-payments/v2.1/biometric-payments/7130812d-4d81-4c68-8187-6358cfbce521 HTTP/1.1
 Host: rs1.[LFICODE].apihub.openfinance.ae
 Authorization: Bearer <access_token>
 x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c`
@@ -268,7 +270,7 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
     }
   },
   "Links": {
-    "Self": "https://rs1.[LFICODE].apihub.openfinance.ae/open-finance/biometric-payments/v1/biometric-payments/7130812d-4d81-4c68-8187-6358cfbce521"
+    "Self": "https://rs1.[LFICODE].apihub.openfinance.ae/open-finance/biometric-payments/v2.1/biometric-payments/7130812d-4d81-4c68-8187-6358cfbce521"
   },
   "Meta": {}
 }`
@@ -480,8 +482,9 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
           The claims around <code>message</code> follow the
           <RouterLink to="/tech/tpp-standards/v2.2-rc2/banking/confirmation-of-payee/api-guide">Confirmation
           of Payee</RouterLink> signed request: <code>iss</code> is your client ID, <code>aud</code>
-          is the LFI&rsquo;s authorisation server issuer, and <code>jti</code> is unique. The
-          specification requires <code>iss</code>, <code>exp</code> and <code>nbf</code>. How to
+          contains the LFI&rsquo;s authorisation server issuer, and <code>jti</code> is unique. The
+          specification requires <code>iss</code>, <code>aud</code>, <code>exp</code> and
+          <code>nbf</code>. How to
           sign, find the LFI&rsquo;s key and encrypt, with code, is on
           <RouterLink to="/biopay/payment/api-guide/signing-and-encryption#request-sign">Signing and
           Encryption</RouterLink>.
@@ -558,7 +561,7 @@ x-fapi-interaction-id: 4c2e8a1f-6b3d-4f7e-9a0c-1d2e3f4a5b6c
       <EdBullets accent="var(--at-teal-deep)">
         <li><strong>Decrypt</strong> the JWE with the private key named by the <code>kid</code> in its header.</li>
         <li><strong>Verify</strong> the LFI&rsquo;s signature against the JWKS of the LFI you called &mdash; never one taken from the JWS&rsquo;s <code>iss</code> &mdash; and pin <code>PS256</code>.</li>
-        <li><strong>Check</strong> that <code>iss</code> is that LFI, <code>azp</code> is your organisation ID, <code>exp</code> has not passed, and <code>message.Data</code> repeats the <code>UaeKycId</code>, <code>IcpToken</code>, <code>InstructedAmount</code>, <code>MerchantId</code>, <code>TerminalId</code>, <code>AcquirerId</code> and <code>MerchantName</code> you sent.</li>
+        <li><strong>Check</strong> that <code>iss</code> is that LFI, <code>aud</code> contains your client ID, <code>azp</code> is your organisation ID, <code>exp</code> has not passed, and <code>message.Data</code> repeats the <code>UaeKycId</code>, <code>IcpToken</code>, <code>InstructedAmount</code>, <code>MerchantId</code>, <code>TerminalId</code>, <code>AcquirerId</code> and <code>MerchantName</code> you sent.</li>
       </EdBullets>
       <EdNote type="info" title="Step by step, with code">
         <p>

@@ -62,7 +62,7 @@ sequenceDiagram
             Hub-->>BPIP: 400 {Errors: [{Code: Query.UnmatchedInstrument}]}
             BPIP-->>PSU: BioPay unavailable — fall back
         else Instrument matched
-            LFI->>LFI: Issue PaymentToken (UUID, 36 chars, single-use, 30s)<br/>Store against it: BPIP, UaeKycId, IcpToken, InstructedAmount,<br/>MerchantId, TerminalId, AcquirerId, MerchantName, instrument<br/>Sign response (azp = o3-caller-org-id), encrypt as JWE
+            LFI->>LFI: Issue PaymentToken (UUID, 36 chars, single-use, 30s)<br/>Store against it: BPIP, UaeKycId, IcpToken, InstructedAmount,<br/>MerchantId, TerminalId, AcquirerId, MerchantName, instrument<br/>Sign response (aud = o3-caller-client-id, azp = o3-caller-org-id), encrypt as JWE
             LFI-->>Hub: 200 (application/jwt) JWE
             Note over Hub: Forwards the JWE unread — no instrument<br/>or card data in the clear, out of PCI DSS scope
             Hub-->>BPIP: 200 (application/jwt) JWE<br/>{PaymentToken, request values,<br/>Instruments: [IBAN | PAN]}

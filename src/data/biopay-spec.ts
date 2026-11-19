@@ -2,7 +2,7 @@
 // group, imported raw and handed to RedocWrapper via `specText`, which skips
 // the fetch and renders the in-memory document.
 //
-// Both come from api-specs PR #37 (feat/cs-2200, head a41ed77), copied
+// Both come from api-specs PR #37 (feat/cs-2200, head 79a2232), copied
 // byte-for-byte from its `dist/` tree — do not edit them:
 //   - Standards (v2.2-alpha1) — the BPIP-facing operation the API Hub serves
 //     (dist/standards/v2.2-alpha1/uae-standards-biometric-payments-openapi.yaml)

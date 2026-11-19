@@ -220,9 +220,19 @@ components:
         - $ref: '#/components/schemas/AEJwt'
         - type: object
           properties:
+            aud:
+              description: >-
+                Must contain the issuer identifier of the LFI's Authorization Server, as published in the `issuer`
+                value of its OpenID Provider configuration. The LFI must reject the request if `aud` does not contain
+                its issuer identifier.
+              type: array
+              items:
+                type: string
+              minItems: 1
             message:
               $ref: '#/components/schemas/AEInstrumentQueryRequestMessage'
           required:
+            - aud
             - message
     AEInstrumentQueryRequestEncrypted:
       title: Encrypted Request Data
@@ -349,6 +359,14 @@ components:
         - $ref: '#/components/schemas/AEJwt'
         - type: object
           properties:
+            aud:
+              description: >-
+                Must contain the client identifier of the TPP the response is issued to. The TPP must reject
+                the response if `aud` does not contain its client identifier.
+              type: array
+              items:
+                type: string
+              minItems: 1
             azp:
               description: >-
                 The TPP the response, and the payment token in it, were issued to: its Directory organisation
@@ -358,6 +376,7 @@ components:
             message:
               $ref: '#/components/schemas/AEInstrumentQueryResponseMessage'
           required:
+            - aud
             - azp
             - message
     AEInstrumentQueryResponseEncrypted:
@@ -608,10 +627,6 @@ components:
       type: string
       anyOf:
         - enum:
-            - Consent.Invalid
-            - Consent.BusinessRuleViolation
-            - Consent.FailsControlParameters
-            - Consent.InvalidUserIdentifier
             - JWS.InvalidSignature
             - JWS.Malformed
             - JWS.InvalidClaim
@@ -656,9 +671,6 @@ components:
       anyOf:
         - enum:
             - AccessToken.InvalidScope
-            - Consent.TransientAccountAccessFailure
-            - Consent.AccountTemporarilyBlocked
-            - Consent.PermanentAccountAccessFailure
             - GenericRecoverableError
             - GenericError
         - pattern: ^[A-Za-z]+\.[A-Za-z0-9]+$

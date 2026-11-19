@@ -54,7 +54,7 @@ const structure = `POST /instrument-query — request body (application/jwt)
 
       JWS  — signed by the LFI
       ├─ protected header   { "alg": "PS256", "kid": "lfi-sign-1" }
-      ├─ payload            iss, azp, iat, nbf, exp,
+      ├─ payload            iss, aud, azp, iat, nbf, exp,
       │                     message.Data: the request values, PaymentToken, Instruments
       └─ signature          PS256, with the LFI's response signing key`
 
@@ -90,7 +90,7 @@ async function signInstrumentQuery(
 ): Promise<string> {
   return signJWT({
     iss: CLIENT_ID,
-    aud: issuer,
+    aud: [issuer],
     jti: crypto.randomUUID(),
     message: { Data: data },
   })
@@ -107,7 +107,7 @@ def sign_instrument_query(data: dict, issuer: str) -> str:
     # issuer: the LFI's authorisation server issuer, from its .well-known
     return sign_jwt({
         "iss": CLIENT_ID,
-        "aud": issuer,
+        "aud": [issuer],
         "jti": str(uuid.uuid4()),
         "message": {"Data": data},
     })`,
@@ -116,7 +116,7 @@ def sign_instrument_query(data: dict, issuer: str) -> str:
 
 const requestClaims = `{
   "iss": "[CLIENT_ID]",
-  "aud": "https://auth1.[LFICODE].apihub.openfinance.ae",
+  "aud": ["https://auth1.[LFICODE].apihub.openfinance.ae"],
   "iat": 1792059302,
   "nbf": 1792059292,
   "exp": 1792059602,
@@ -163,7 +163,7 @@ async function encryptToLfi(signedRequest: string, lfiOrganisationId: string): P
 // 4. Send the JWE as the whole request body
 const body = await encryptToLfi(await signInstrumentQuery(data, issuer), lfiOrganisationId)
 const response = await fetch(
-  \`\${resourceServerUrl}/open-finance/biometric-payments/v2.2/instrument-query\`,
+  \`\${resourceServerUrl}/open-finance/biometric-payments/v2.1/instrument-query\`,
   {
     method: 'POST',
     headers: {
@@ -207,7 +207,7 @@ def encrypt_to_lfi(signed_request: str, lfi_organisation_id: str) -> str:
 # 4. Send the JWE as the whole request body
 body = encrypt_to_lfi(sign_instrument_query(data, issuer), lfi_organisation_id)
 response = requests.post(
-    f"{resource_server_url}/open-finance/biometric-payments/v2.2/instrument-query",
+    f"{resource_server_url}/open-finance/biometric-payments/v2.1/instrument-query",
     headers={
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/jwt",
@@ -220,7 +220,7 @@ response = requests.post(
   },
 ] as const
 
-const queryRequest = `POST /open-finance/biometric-payments/v2.2/instrument-query HTTP/1.1
+const queryRequest = `POST /open-finance/biometric-payments/v2.1/instrument-query HTTP/1.1
 Host: rs1.[LFICODE].apihub.openfinance.ae
 Authorization: Bearer <access_token>
 Content-Type: application/jwt
@@ -377,6 +377,7 @@ async function signInstrumentQueryResponse(
   exp: number,               // the payment token's expiry: 30 seconds after issue
   instruments: Instrument[], // the customer's instruments for ICP Pay
   callerOrgId: string,       // o3-caller-org-id on the proxied instrument query
+  callerClientId: string,    // o3-caller-client-id on the proxied instrument query
 ): Promise<string> {
   const now = Math.floor(Date.now() / 1000)
   return new SignJWT({
@@ -387,6 +388,7 @@ async function signInstrumentQueryResponse(
   })
     .setProtectedHeader({ alg: 'PS256', kid: responseSigningKid })
     .setIssuer(myOrganisationId)
+    .setAudience([callerClientId])
     .setIssuedAt(now)
     .setNotBefore(now)
     .setExpirationTime(exp)
@@ -408,10 +410,12 @@ def sign_instrument_query_response(
     exp: int,            # the payment token's expiry: 30 seconds after issue
     instruments: list,   # the customer's instruments for ICP Pay
     caller_org_id: str,  # o3-caller-org-id on the proxied instrument query
+    caller_client_id: str,  # o3-caller-client-id on the proxied instrument query
 ) -> str:
     now = int(time.time())
     claims = {
         "iss": my_organisation_id,
+        "aud": [caller_client_id],
         "azp": caller_org_id,
         "iat": now,
         "nbf": now,
@@ -428,6 +432,7 @@ def sign_instrument_query_response(
 
 const responseClaims = `{
   "iss": "[LFI_ORGANISATION_ID]",
+  "aud": ["[CLIENT_ID]"],
   "azp": "[BPIP_ORGANISATION_ID]",
   "iat": 1792059303,
   "nbf": 1792059303,
@@ -557,9 +562,10 @@ async function openInstrumentQueryResponse(
     contentEncryptionAlgorithms: ['A256GCM'],
   })
 
-  // 3. Verify the LFI's signature, iss, exp and nbf
+  // 3. Verify the LFI's signature, iss, aud, exp and nbf
   const { payload } = await jwtVerify(new TextDecoder().decode(plaintext), lfiJwks(lfiOrganisationId), {
     issuer: lfiOrganisationId,
+    audience: CLIENT_ID, // aud must contain your client ID
     algorithms: ['PS256'],
     requiredClaims: ['exp', 'nbf'],
   })
@@ -600,7 +606,7 @@ def open_instrument_query_response(body: str, lfi_organisation_id: str, sent: di
     token = jwe.JWE(algs=["RSA-OAEP-256", "A256GCM"])
     token.deserialize(body, key=private_key)
 
-    # 3. Verify the LFI's signature, iss, exp and nbf, against the JWKS of the
+    # 3. Verify the LFI's signature, iss, aud, exp and nbf, against the JWKS of the
     #    LFI you called — never one taken from the iss in the JWS
     lfi_keys = jwk.JWKSet.from_json(json.dumps({"keys": get_jwks(
         f"https://keystore.directory.openfinance.ae/{lfi_organisation_id}/application.jwks"
@@ -609,7 +615,7 @@ def open_instrument_query_response(body: str, lfi_organisation_id: str, sent: di
         key=lfi_keys,
         jwt=token.payload.decode(),
         algs=["PS256"],
-        check_claims={"iss": lfi_organisation_id, "exp": None, "nbf": None},
+        check_claims={"iss": lfi_organisation_id, "aud": CLIENT_ID, "exp": None, "nbf": None},
     )
     claims = json.loads(verified.claims)
 
@@ -858,7 +864,7 @@ def open_instrument_query_response(body: str, lfi_organisation_id: str, sent: di
           your signing key. The claims around <code>message</code> follow the
           <RouterLink to="/tech/tpp-standards/v2.2-rc2/banking/confirmation-of-payee/api-guide">Confirmation
           of Payee</RouterLink> signed request. The specification requires <code>iss</code>,
-          <code>exp</code> and <code>nbf</code>.
+          <code>aud</code>, <code>exp</code> and <code>nbf</code>.
         </p>
       </EdProse>
       <EdRefTable>
@@ -868,7 +874,7 @@ def open_instrument_query_response(body: str, lfi_organisation_id: str, sent: di
           </thead>
           <tbody>
             <tr><td><code>iss</code></td><td>Your client ID. The LFI checks it against <code>o3-caller-client-id</code>.</td></tr>
-            <tr><td><code>aud</code></td><td>The LFI&rsquo;s authorisation server issuer, from its <code>.well-known</code> &mdash; e.g. <code>https://auth1.[LFICODE].apihub.openfinance.ae</code>.</td></tr>
+            <tr><td><code>aud</code></td><td>An array containing the LFI&rsquo;s authorisation server issuer, from its <code>.well-known</code> &mdash; e.g. <code>["https://auth1.[LFICODE].apihub.openfinance.ae"]</code>. The LFI rejects the request if <code>aud</code> does not contain its issuer.</td></tr>
             <tr><td><code>iat</code></td><td>The time of signing, in seconds since the epoch.</td></tr>
             <tr><td><code>nbf</code></td><td>Slightly before <code>iat</code>, for clock skew &mdash; e.g. <code>iat - 10</code>.</td></tr>
             <tr><td><code>exp</code></td><td>Short-lived &mdash; <code>iat + 300</code>.</td></tr>
@@ -982,7 +988,7 @@ def open_instrument_query_response(body: str, lfi_organisation_id: str, sent: di
           <tbody>
             <tr><td><code>o3-caller-org-id</code></td><td>The BPIP&rsquo;s Directory organisation ID</td><td>The BPIP&rsquo;s JWKS URL (Steps 4 and 6), and <code>azp</code> on the response (Step 5)</td></tr>
             <tr><td><code>o3-caller-software-statement-id</code></td><td>The BPIP&rsquo;s software statement ID</td><td>The BPIP&rsquo;s JWKS URL (Steps 4 and 6)</td></tr>
-            <tr><td><code>o3-caller-client-id</code></td><td>The BPIP&rsquo;s client ID</td><td>Checking <code>iss</code> on the request (Step 4)</td></tr>
+            <tr><td><code>o3-caller-client-id</code></td><td>The BPIP&rsquo;s client ID</td><td>Checking <code>iss</code> on the request (Step 4), and <code>aud</code> on the response (Step 5)</td></tr>
           </tbody>
         </table>
       </EdRefTable>
@@ -1028,7 +1034,7 @@ def open_instrument_query_response(body: str, lfi_organisation_id: str, sent: di
             <tr><td>2</td><td>The JWE decrypts with that private key.</td><td><code>JWE.DecryptionError</code></td></tr>
             <tr><td>3</td><td>The decrypted content is a compact JWS with a <code>PS256</code> header and a <code>kid</code>.</td><td><code>JWS.Malformed</code>, <code>JWS.InvalidHeader</code></td></tr>
             <tr><td>4</td><td>The signature verifies against the BPIP&rsquo;s application JWKS, built from <code>o3-caller-org-id</code> and <code>o3-caller-software-statement-id</code>.</td><td><code>JWS.InvalidSignature</code></td></tr>
-            <tr><td>5</td><td><code>iss</code> equals <code>o3-caller-client-id</code>; <code>aud</code> is your authorisation server issuer; <code>exp</code> has not passed; <code>nbf</code> has.</td><td><code>JWS.InvalidClaim</code></td></tr>
+            <tr><td>5</td><td><code>iss</code> equals <code>o3-caller-client-id</code>; <code>aud</code> contains your authorisation server issuer; <code>exp</code> has not passed; <code>nbf</code> has.</td><td><code>JWS.InvalidClaim</code></td></tr>
             <tr><td>6</td><td><code>message.Data</code> matches the schema.</td><td><code>Body.InvalidFormat</code></td></tr>
           </tbody>
         </table>
@@ -1078,6 +1084,7 @@ def open_instrument_query_response(body: str, lfi_organisation_id: str, sent: di
           </thead>
           <tbody>
             <tr><td><code>iss</code></td><td>Your Directory organisation ID</td><td>&mdash;</td></tr>
+            <tr><td><code>aud</code></td><td>An array containing the BPIP&rsquo;s client ID. Required.</td><td><code>o3-caller-client-id</code></td></tr>
             <tr><td><code>azp</code></td><td>The BPIP&rsquo;s Directory organisation ID. Required.</td><td><code>o3-caller-org-id</code></td></tr>
             <tr><td><code>iat</code>, <code>nbf</code></td><td>The time of signing, in seconds since the epoch</td><td>&mdash;</td></tr>
             <tr><td><code>exp</code></td><td>The payment token&rsquo;s expiry: <code>iat + 30</code></td><td>Your payment token register</td></tr>
@@ -1202,6 +1209,7 @@ def open_instrument_query_response(body: str, lfi_organisation_id: str, sent: di
           </thead>
           <tbody>
             <tr><td><code>iss</code></td><td>Equals the organisation ID of the LFI you called.</td></tr>
+            <tr><td><code>aud</code></td><td>Contains your client ID.</td></tr>
             <tr><td><code>azp</code></td><td>Equals your own organisation ID.</td></tr>
             <tr><td><code>exp</code>, <code>nbf</code></td><td><code>exp</code> has not passed &mdash; it is also when the payment token expires &mdash; and <code>nbf</code> has.</td></tr>
             <tr><td><code>message.Data</code> request values</td><td><code>UaeKycId</code>, <code>IcpToken</code>, <code>InstructedAmount</code>, <code>MerchantId</code>, <code>TerminalId</code>, <code>AcquirerId</code> and <code>MerchantName</code> equal what you sent.</td></tr>
@@ -1236,8 +1244,9 @@ def open_instrument_query_response(body: str, lfi_organisation_id: str, sent: di
         </p>
         <p>
           <strong>Request claims.</strong> The specification requires <code>iss</code>,
-          <code>exp</code> and <code>nbf</code>. The values of <code>iss</code>, <code>aud</code>
-          and <code>jti</code> here follow the Confirmation of Payee signed request, and are to be
+          <code>aud</code>, <code>exp</code> and <code>nbf</code>, and defines <code>aud</code> as
+          the LFI&rsquo;s authorisation server issuer. The values of <code>iss</code> and
+          <code>jti</code> here follow the Confirmation of Payee signed request, and are to be
           confirmed.
         </p>
         <p>
