@@ -97,6 +97,7 @@ const LFI = '/tech/lfi-api-hub/v2.2-rc2'
 const DDC = `${TPP}/consent/data-deletion-confirmation`
 const CONSENT_TPP = `${TPP}/consent`
 const CM = `${LFI}/api-hub/consent-manager`
+const HH = `${LFI}/api-hub/headless-heimdall`
 
 // Confirmation of Payee runs on both surfaces: the TPP calls `/discovery` and
 // `/confirmation` on the API Hub, and the Hub calls `cop-query` on the LFI.
@@ -907,17 +908,19 @@ export const VERSION_CHANGES: VersionChange[] = [
     category: 'Behaviour change',
     title: 'Specification tidy-up',
     summary:
-      'Five corrections across the v2.2-rc2 specifications. Items 1–3 and 5 document what the API Hub already does; item 4 sets one format for five Data Sharing fields on both surfaces, per OFP-021.',
+      'Six corrections across the v2.2-rc2 specifications. Items 1–3, 5 and 6 document what the API Hub already does; item 4 sets one format for five Data Sharing fields on both surfaces, per OFP-021.',
     description:
       '1. `GET /consent-groups/{consentGroupId}/consents` now documents its return order: newest first by `CreationDateTime` across all pages, with the base consent last. A `consentGroupId` that is not a base consent returns an empty array.\n\n' +
       '2. Every signed message in the v2.2-rc2 Standards now defines `aud` as a single string, not an array, matching what the API Hub already sends: the API Hub authorisation server issuer identifier on requests, and the TPP `client_id` on responses and Event Notifications.\n\n' +
       '3. Confirmation of Payee `POST /discovery` now documents a `204` with no body for when the Creditor Account IBAN cannot be matched to an LFI that offers Confirmation of Payee.\n\n' +
       '4. Five Data Sharing fields take one format each, the same in the Standards Account Information API and in Ozone Connect Bank Data Sharing, per OFP-021. `MerchantId`, `TerminalId` and `BillerId` (`merchantId`, `TerminalId` and `BillerID` on Ozone Connect) become strings of letters and digits of at most 15, 16 and 35 characters, which the LFI MUST send as it holds them, including any leading zeros. `ExchangeRate` becomes a decimal string with at most 10 decimal places. `Salary` becomes an object of a required `Amount` and `Currency` and an optional `Frequency` (`Weekly`, `Fortnightly`, `Monthly` or `Annual`). In v2.1 the Standards defined all five as numbers, so the API Hub returned `null` to the TPP for any value that was not a number, and a numeric identifier lost its leading zeros. A TPP that reads these fields must change its parsing. Ozone Connect v2.2.9 replaces the v2.2.6 change, which made `salary` and `exchangeRate` numbers and restricted the identifiers to digits; an LFI that built to v2.2.6 must change these fields again.\n\n' +
-      '5. Every consent identifier now carries `format: uuid`: `ConsentId` and `BaseConsentId` wherever they appear, the `ConsentId` and `consentId` path and query parameters, and the `o3-consent-id` header on every Ozone Connect operation. This applies across the Standards, the API Hub Consent Manager (v2.2.3) and Ozone Connect. The TPP creates every ConsentId in the Pushed Authorization Request (`POST /par`), where it was already defined as `format: uuid`, so this documents a format every ConsentId already has.',
+      '5. Every consent identifier now carries `format: uuid`: `ConsentId` and `BaseConsentId` wherever they appear, the `ConsentId` and `consentId` path and query parameters, and the `o3-consent-id` header on every Ozone Connect operation. This applies across the Standards, the API Hub Consent Manager (v2.2.3) and Ozone Connect. The TPP creates every ConsentId in the Pushed Authorization Request (`POST /par`), where it was already defined as `format: uuid`, so this documents a format every ConsentId already has.\n\n' +
+      '6. Headless Heimdall `POST /auth/{interactionId}/doConfirm` and `POST /auth/{interactionId}/doFail` now document every response they return. The change is in v2.2.1 of the API Hub Authorisation Server description, its first v2.2 release; v2.2-rc2 previously rendered v2.1.2, which declared only a `303` and said it could carry an `error` for an internal error. Both operations now declare a `400` with no redirect URI when no interaction exists with the given `interactionId` (`error_description` starting `invalid_interaction_id`): the LFI MUST NOT redirect the User to the TPP, and should render an error page. `doConfirm` also returns a `400` (`consent_patch_failed`) when the consent was not PATCHed through the Consent Manager before `doConfirm` was called; no authorization code is issued and the interaction is closed, and the LFI can call `doFail` to obtain a redirect URI. Both operations declare a `504`, with the meaning given in §18. The `303` now states that an interaction that is no longer `started`, because `doConfirm` or `doFail` was already called for it, carries `error=invalid_interaction_status` in `Location`, so the LFI should inspect the `error` parameter before redirecting. After a `504` from `doConfirm`, the LFI MUST NOT call `doConfirm` again, because a second call revokes the authorization code issued by the first; it should call `doFail` instead. Retrying `doFail` is safe.',
     audience: 'Both',
-    areas: ['Consent', 'Consent Manager', 'Conventions', 'Confirmation of Payee', 'Data Sharing', 'Service Initiation', 'Insurance', 'Webhooks', 'Ozone Connect'],
+    areas: ['Consent', 'Consent Manager', 'Headless Heimdall', 'Conventions', 'Confirmation of Payee', 'Data Sharing', 'Service Initiation', 'Insurance', 'Webhooks', 'Ozone Connect'],
     specs: [
       'uae-api-hub-consent-manager-openapi',
+      'uae-api-hub-authorisation-server-openapi',
       'uae-authorization-endpoints-openapi',
       'uae-account-information-openapi',
       'uae-bank-initiation-openapi',
@@ -934,6 +937,14 @@ export const VERSION_CHANGES: VersionChange[] = [
       {
         label: 'GET /consent-groups/{consentGroupId}/consents',
         path: `${CM}/open-api/consent-groups-consentGroupId-consents`,
+      },
+      {
+        label: 'POST /auth/{interactionId}/doConfirm',
+        path: `${HH}/open-api/auth-interactionId-doConfirm`,
+      },
+      {
+        label: 'POST /auth/{interactionId}/doFail',
+        path: `${HH}/open-api/auth-interactionId-doFail`,
       },
       {
         label: 'POST /discovery',
@@ -966,6 +977,8 @@ export const VERSION_CHANGES: VersionChange[] = [
     ],
     affectedPaths: [
       `${CM}/open-api/consent-groups-consentGroupId-consents`,
+      `${HH}/open-api/auth-interactionId-doConfirm`,
+      `${HH}/open-api/auth-interactionId-doFail`,
       `${COP_TPP}/open-api/discovery`,
       `${DS_TPP}/open-api/accounts-AccountId-transactions`,
       `${DS_TPP}/open-api/parties`,
@@ -1198,21 +1211,21 @@ export const VERSION_CHANGES: VersionChange[] = [
     introducedIn: 'v2.2-rc2',
     number: 21,
     category: 'New capability',
-    title: 'Payment `Risk` carries the User\'s `EmiratesId`',
+    title: 'Payment `Risk` carries `EmiratesId` (Retail) or `TradeLicenceNumber` (SME and Corporate)',
     summary:
-      'An optional `EmiratesId` is added to `DebtorIndicators` in the payment `Risk` object. It holds the Emirates ID number of the User initiating the payment, so that for payments made under a long-lived consent the LFI can confirm each payment is being made for the same User who authorized the consent. For a retail User, the TPP MUST capture it and send it on every `POST /payments` under a long-lived consent.',
+      'Two optional fields are added to `DebtorIndicators` in the payment `Risk` object. `EmiratesId` holds the Emirates ID number of a Retail User initiating the payment. `TradeLicenceNumber` holds the Trade Licence number of the business on whose behalf an SME or Corporate User is initiating the payment. For payments made under a long-lived consent, the LFI can use them to confirm that each payment is being made for the same User who authorized the consent, or for the same business on whose behalf it was authorized. Under a long-lived consent, the TPP MUST capture the Emirates ID of a Retail User, or the Trade Licence number of the business for an SME or Corporate User, and send it on every `POST /payments`.',
     description:
-      'In v2.1, `Risk.DebtorIndicators` identifies the User initiating a payment only by name, in `UserName`. Under a long-lived consent, each later payment carries no identifier the LFI can compare with the User who authorized the consent.\n\n' +
-      '**The field.** v2.2 adds `EmiratesId` to `DebtorIndicators`: an optional string holding the Emirates ID number of the User initiating the payment, matching `^784-?[0-9]{4}-?[0-9]{7}-?[0-9]{1}$`, so the hyphens are optional. For payments made under a long-lived consent, the LFI can use it to confirm that each payment is being made for the same User who authorized the consent. It is defined on the consent-time `Risk` sent to `POST /par` (Authorization Endpoints) and on the payment-time `Risk` sent to `POST /payments` (Bank Initiation).\n\n' +
-      '**Consent Manager and Ozone Connect.** The Consent Manager carries it in both of its `DebtorIndicators` schemas. On Ozone Connect it is added to `AEDebtorIndicators` in the Bank Service Initiation description, which `POST /payments` receives, and to the corresponding schemas in the CAAP Operations and Consent Events and Actions descriptions.\n\n' +
-      '**The TPP requirement.** A long-lived consent is any payment consent other than Single Instant Payment: the six Fixed and Variable multi-payment types and Delegated SCA. For a retail User under such a consent, the TPP MUST capture the User\'s Emirates ID and, having it, MUST send it in `Risk.DebtorIndicators.EmiratesId` on every `POST /payments` — not only the first. The rule is in the Payment Initiation requirements of each of the seven types.\n\n' +
-      '**What the LFI can do with it.** On `POST /payments` the LFI can compare the value with the Emirates ID it holds for the retail PSU identified by `o3-psu-identifier`, and reject the payment with `400 Consent.BusinessRuleViolation` when it is missing or does not match. The Knowledge Base article below sets out the check and both error messages.\n\n' +
-      'The field remains optional in the schema, so a v2.1 payload still validates; the obligation to send it is a TPP requirement for long-lived consents.\n\n' +
+      'In v2.1, `Risk.DebtorIndicators` identifies the User initiating a payment only by name, in `UserName`. Under a long-lived consent, each later payment carries no identifier the LFI can compare with the User, or the business, for whom the consent was authorized.\n\n' +
+      '**The fields.** v2.2 adds two optional strings to `DebtorIndicators`. `EmiratesId` holds the Emirates ID number of the User initiating the payment, where the User is a Retail customer, matching `^784-?[0-9]{4}-?[0-9]{7}-?[0-9]{1}$`, so the hyphens are optional. `TradeLicenceNumber` holds the Trade Licence number of the business on whose behalf the User is initiating the payment, where the User is an SME or Corporate customer. It has no pattern, as the format varies by issuing authority. For payments made under a long-lived consent, the LFI can use them to confirm that each payment is being made for the same User who authorized the consent, or for the same business on whose behalf it was authorized. Both are defined on the consent-time `Risk` sent to `POST /par` (Authorization Endpoints) and on the payment-time `Risk` sent to `POST /payments` (Bank Initiation).\n\n' +
+      '**Consent Manager and Ozone Connect.** The Consent Manager carries both fields in both of its `DebtorIndicators` schemas. On Ozone Connect they are added to `AEDebtorIndicators` in the Bank Service Initiation description, which `POST /payments` receives, and to the corresponding schemas in the CAAP Operations and Consent Events and Actions descriptions. `TradeLicenceNumber` is in v2.2.5 of the Consent Manager and, on Ozone Connect, in v2.2.7 of Bank Service Initiation, v2.2.6 of CAAP Operations and v2.2.4 of Consent Events and Actions. `AEDebtorIndicators` does not allow additional properties, so an LFI that validates against an earlier v2.2 release of Bank Service Initiation will reject a payment that carries `TradeLicenceNumber` until it updates to v2.2.7.\n\n' +
+      '**The TPP requirement.** A long-lived consent is any payment consent other than Single Instant Payment: the six Fixed and Variable multi-payment types and Delegated SCA. Under such a consent, the TPP MUST capture the identifier that applies to the User and, having it, MUST send it on every `POST /payments` — not only the first. For a Retail User, this is the User\'s Emirates ID, in `Risk.DebtorIndicators.EmiratesId`. For an SME or Corporate User, it is the Trade Licence number of the business on whose behalf the User is initiating the payment, in `Risk.DebtorIndicators.TradeLicenceNumber`. The rule is in the Payment Initiation requirements of each of the seven types.\n\n' +
+      '**What the LFI can do with them.** On `POST /payments` the LFI can compare `EmiratesId` with the Emirates ID it holds for the Retail PSU identified by `o3-psu-identifier`, and `TradeLicenceNumber` with the Trade Licence number it holds for the business on whose behalf the consent was authorized. It can reject the payment with `400 Consent.BusinessRuleViolation` when the value is missing or does not match. The Knowledge Base article below sets out both checks and their error messages.\n\n' +
+      'Both fields remain optional in the schema, so a v2.1 payload still validates; the obligation to send them is a TPP requirement for long-lived consents.\n\n' +
       'The change is published in the v2.2 release of each of these API descriptions in the api-specs repository, which is what the endpoint pages below render.',
     docsPaths: [
       {
-        label: 'Emirates ID on long-lived payments — what the TPP sends and how the LFI checks it',
-        path: '/knowledge-base/articles/emirates-id-long-lived-payments',
+        label: 'Emirates ID and Trade Licence Number on long-lived payments — what the TPP sends and how the LFI checks it',
+        path: '/knowledge-base/articles/emirates-id-trade-licence-long-lived-payments',
       },
       {
         label: 'TPP guide — Risk',

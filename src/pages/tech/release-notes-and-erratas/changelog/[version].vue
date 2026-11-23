@@ -231,21 +231,33 @@ function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
+// Titles and summaries carry `backticked` identifiers. Splitting on code spans
+// first keeps each <mark> inside a single text run, so highlighting never
+// straddles a <code> boundary.
 function highlight(text: string): string {
-  const safe = escapeHtml(text)
   const q = query.value.trim()
-  if (!q) return safe
-  return safe.replace(new RegExp(`(${escapeRegExp(escapeHtml(q))})`, 'gi'), '<mark>$1</mark>')
+  const re = q ? new RegExp(`(${escapeRegExp(escapeHtml(q))})`, 'gi') : null
+  const mark = (s: string) => (re ? s.replace(re, '<mark>$1</mark>') : s)
+  return escapeHtml(text)
+    .split(/`([^`]+)`/)
+    .map((part, i) => (i % 2 ? `<code>${mark(part)}</code>` : mark(part)))
+    .join('')
 }
 
-// Description and rationale are authored with \n\n paragraph breaks and
-// `backticked` identifiers.
+// Description and rationale are authored with \n\n paragraph breaks,
+// `backticked` identifiers and **bold** lead-ins.
 function toParagraphs(text: string): string[] {
   return text.split('\n\n').map((p) => p.trim()).filter(Boolean)
 }
 
+// Code spans are set aside before bold is applied, so `**` inside a pattern
+// is left alone, while a bold lead-in may still contain a code span.
 function renderProse(text: string): string {
-  return escapeHtml(text).replace(/`([^`]+)`/g, '<code>$1</code>')
+  const codes: string[] = []
+  return escapeHtml(text)
+    .replace(/`([^`]+)`/g, (_, code: string) => `\u0000${codes.push(code) - 1}\u0000`)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\u0000(\d+)\u0000/g, (_, i: string) => `<code>${codes[Number(i)]}</code>`)
 }
 
 // Path segments are kebab-case, so title-casing each word is right for most of
@@ -1096,6 +1108,8 @@ function shortLabel(path: string): string {
   margin: 0 0 0.6rem;
 }
 
+.ed-cl-row__title :deep(code),
+.ed-cl-row__summary :deep(code),
 .ed-cl-row__prose :deep(code) {
   font-family: var(--at-mono);
   font-size: 0.85em;

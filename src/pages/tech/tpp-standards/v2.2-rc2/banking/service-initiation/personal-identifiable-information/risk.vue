@@ -355,7 +355,19 @@ const delegatedScaExample = `{
             <tr><th>Field</th><th>Type</th><th>Description</th></tr>
           </thead>
           <tbody>
-            <tr><td><code>EmiratesId</code></td><td>string</td><td>The Emirates ID number of the User initiating the payment, matching <code>^784-?[0-9]{4}-?[0-9]{7}-?[0-9]{1}$</code>. For payments made under a long-lived consent, the LFI can use it to confirm that each payment is being made for the same User who authorized the consent. <strong>Required for a retail User on every <code>POST /payments</code> under a long-lived consent</strong> &mdash; any payment type other than Single Instant Payment. See <a href="/knowledge-base/articles/emirates-id-long-lived-payments">Emirates ID on Long-Lived Payments</a>.</td></tr>
+            <tr><td><code>EmiratesId</code></td><td>string</td><td>The Emirates ID number of the User initiating the payment, where the User is a Retail customer, matching <code>^784-?[0-9]{4}-?[0-9]{7}-?[0-9]{1}$</code>. For payments made under a long-lived consent, the LFI can use it to confirm that each payment is being made for the same User who authorized the consent. <strong>Required for a Retail User on every <code>POST /payments</code> under a long-lived consent</strong> &mdash; any payment type other than Single Instant Payment. See <a href="/knowledge-base/articles/emirates-id-trade-licence-long-lived-payments">Emirates ID and Trade Licence Number on Long-Lived Payments</a>.</td></tr>
+          </tbody>
+        </table>
+      </EdRefTable>
+
+      <h3>TradeLicenceNumber</h3>
+      <EdRefTable>
+        <table>
+          <thead>
+            <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>TradeLicenceNumber</code></td><td>string</td><td>The Trade Licence number of the business on whose behalf the User is initiating the payment, where the User is an SME or Corporate customer. No pattern is set, as the format varies by issuing authority. For payments made under a long-lived consent, the LFI can use it to confirm that each payment is being made for the same business on whose behalf the consent was authorized. <strong>Required for an SME or Corporate User on every <code>POST /payments</code> under a long-lived consent</strong> &mdash; any payment type other than Single Instant Payment. It is the SME and Corporate counterpart of <code>EmiratesId</code>: send whichever of the two applies to the User. See <a href="/knowledge-base/articles/emirates-id-trade-licence-long-lived-payments">Emirates ID and Trade Licence Number on Long-Lived Payments</a>.</td></tr>
           </tbody>
         </table>
       </EdRefTable>

@@ -46,3 +46,8 @@ https://www.nebras-open-finance.com/* https://nebras-open-finance.com/:splat 301
 /tech/lfi-api-hub/v2.1/health-check               /tech/lfi-api-hub/v2.1/connectivity-check/                   301
 /tech/lfi-api-hub/v2.2-rc2/health-check/*         /tech/lfi-api-hub/v2.2-rc2/connectivity-check/:splat         301
 /tech/lfi-api-hub/v2.2-rc2/health-check           /tech/lfi-api-hub/v2.2-rc2/connectivity-check/               301
+
+# The Emirates ID long-lived payments article now also covers the Trade Licence
+# number that SME and Corporate Users send (Nov 2026), and was renamed to match.
+/knowledge-base/articles/emirates-id-long-lived-payments   /knowledge-base/articles/emirates-id-trade-licence-long-lived-payments  301
+/knowledge-base/articles/emirates-id-long-lived-payments/  /knowledge-base/articles/emirates-id-trade-licence-long-lived-payments  301
