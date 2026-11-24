@@ -27,6 +27,11 @@ https://www.nebras-open-finance.com/* https://nebras-open-finance.com/:splat 301
 /proposals/ofp-005/attestation-schema     /internal/proposals/ofp-005/attestation-schema   301
 /proposals/ofp-008                        /internal/proposals/ofp-008               301
 
+# OFP-022 was published (Nov 2026); its internal review link now goes to the
+# public page.
+/internal/proposals/ofp-022               /proposals/ofp-022                        301
+/internal/proposals/ofp-022/              /proposals/ofp-022                        301
+
 # v2.2-rc1 was superseded by v2.2-rc2 (Sep 2026). The documentation route
 # segment moved wholesale, so every rc1 path has an rc2 counterpart at the same
 # sub-path — including the changelog, which now records both candidates on one

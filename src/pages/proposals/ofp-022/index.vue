@@ -1,6 +1,5 @@
 <route lang="yaml">
 meta:
-  layout: internal
   title: 'OFP-022 · Send the Debtor’s Emirates ID or Trade Licence Number to the LFI on long-lived payments'
 </route>
 
@@ -10,8 +9,7 @@ meta:
 // sections follow the "E-ID in Open Finance" standards-review deck: the position
 // as we stand, where the debtor's identity is mandated today, SIP, the Risk
 // block, the operating model, the V2.1 conclusion, then the V2.2 recommendation,
-// Technical changes, Questions, Pros and Cons. Internal review only: it sits
-// behind the /internal gate and is marked noindex.
+// Technical changes, Questions, Pros and Cons.
 //
 // Scope is the debtor identifier that V2.2 already adds to Risk.DebtorIndicators
 // (v2.1 → v2.2 changelog §21): EmiratesId for a Retail User, TradeLicenceNumber
@@ -28,6 +26,8 @@ import PvProposalTabs from '@/components/proposals/PvProposalTabs.vue'
 
 // Per-page link-preview override: a tailored title + description so a shared
 // link to this proposal reads as the proposal itself, not the site default.
+// (og:image is inherited from the branded site default in App.vue.) Later meta
+// of the same property/name wins under Unhead's dedupe.
 const OG_TITLE = 'OFP-022 · Send the Debtor’s Emirates ID or Trade Licence Number to the LFI on long-lived payments'
 const OG_DESCRIPTION =
   'V2.1 asks the TPP for the Debtor’s Emirates ID in login_hint when a long-lived payment consent is established, and nothing carries it again when a payment is made under that consent. This proposal uses the Risk block, as extended in V2.2: on every POST /payments under a long-lived consent, the TPP sends the Emirates ID of a Retail User, or the Trade Licence number of the business for an SME or Corporate User, and the LFI may reject a payment when it is missing or does not match.'
@@ -37,21 +37,17 @@ useHead({
     { property: 'og:title', content: `${OG_TITLE} | UAE Open Finance` },
     { property: 'og:description', content: OG_DESCRIPTION },
     { name: 'twitter:description', content: OG_DESCRIPTION },
-    // Unlinked, internal-only page — keep it out of search indexes.
-    { name: 'robots', content: 'noindex, nofollow' },
   ],
 })
 
 const meta = {
   id: 'OFP-022',
   proposedBy: 'Nebras',
-  author: 'Thomas Catchpole',
+  author: 'Jonathan Holman',
   // Fallbacks shown until the API responds (and during the static build). The
   // live status/priority/dates are sourced from the API — see syncFromApi().
   opened: '19 Nov 2026',
   closes: '3 Dec 2026',
-  // Extended from Retail-only to SME and Corporate customers (TradeLicenceNumber).
-  revised: '23 Nov 2026',
   priority: 'medium' as Priority,
   version: 'V2.2',
 }
@@ -392,8 +388,8 @@ onMounted(() => {
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ofp-hero">
       <div class="ofp-hero__inner">
-        <RouterLink to="/internal/proposals/" class="ofp__back">
-          <span class="ofp__back-arrow">&larr;</span> Internal proposals
+        <RouterLink to="/proposals/" class="ofp__back">
+          <span class="ofp__back-arrow">&larr;</span> All proposals
         </RouterLink>
 
         <div class="ofp__meta-row">
@@ -434,10 +430,6 @@ onMounted(() => {
           <div class="ofp__strip-item">
             <div class="ofp__strip-key">Closes</div>
             <div class="ofp__strip-val">{{ closesDisplay }}</div>
-          </div>
-          <div class="ofp__strip-item">
-            <div class="ofp__strip-key">Revised</div>
-            <div class="ofp__strip-val">{{ meta.revised }} &middot; SME and Corporate added</div>
           </div>
         </div>
       </div>
