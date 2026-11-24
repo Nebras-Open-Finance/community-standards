@@ -1,21 +1,19 @@
 <route lang="yaml">
 meta:
-  title: 'OFP-022 · Send the Debtor’s Emirates ID or Trade Licence Number to the LFI on long-lived payments'
+  title: 'OFP-022 · Send the Debtor’s Emirates ID or Trade Licence Number on any payment above AED 50,000, tied to a multi-payment consent'
 </route>
 
 <script setup lang="ts">
 // Bespoke detail page for OFP-022. Hand-authored (not rendered from the
-// proposals data array) so the content can be laid out in named sections. The
-// sections follow the "E-ID in Open Finance" standards-review deck: the position
-// as we stand, where the debtor's identity is mandated today, SIP, the Risk
-// block, the operating model, the V2.1 conclusion, then the V2.2 recommendation,
-// Technical changes, Questions, Pros and Cons.
+// proposals data array) so the content can be laid out in named sections: a
+// short Background, one section for each of the proposal's four points —
+// login_hint, the Risk block fields, payments above AED 50,000 tied to a
+// multi-payment consent, and Data Sharing — then Technical changes, Questions,
+// Pros and Cons.
 //
-// Scope is the debtor identifier that V2.2 already adds to Risk.DebtorIndicators
+// Scope is the Debtor identifier that V2.2 already adds to Risk.DebtorIndicators
 // (v2.1 → v2.2 changelog §21): EmiratesId for a Retail User, TradeLicenceNumber
-// for the business of an SME or Corporate User. It formalises the TPP obligation
-// to send it on every POST /payments under a long-lived consent, and permits the
-// LFI to enforce it at its Ozone Connect POST /payments endpoint.
+// for the business of an SME or Corporate User.
 import { ref, computed, onMounted, watch, type Component } from 'vue'
 import { useHead } from '@unhead/vue'
 import { type Proposal, type Stance, type Status, type Priority, deriveStatus, PRIORITY } from '@/data/proposals'
@@ -28,9 +26,9 @@ import PvProposalTabs from '@/components/proposals/PvProposalTabs.vue'
 // link to this proposal reads as the proposal itself, not the site default.
 // (og:image is inherited from the branded site default in App.vue.) Later meta
 // of the same property/name wins under Unhead's dedupe.
-const OG_TITLE = 'OFP-022 · Send the Debtor’s Emirates ID or Trade Licence Number to the LFI on long-lived payments'
+const OG_TITLE = 'OFP-022 · Send the Debtor’s Emirates ID or Trade Licence Number on any payment above AED 50,000, tied to a multi-payment consent'
 const OG_DESCRIPTION =
-  'V2.1 asks the TPP for the Debtor’s Emirates ID in login_hint when a long-lived payment consent is established, and nothing carries it again when a payment is made under that consent. This proposal uses the Risk block, as extended in V2.2: on every POST /payments under a long-lived consent, the TPP sends the Emirates ID of a Retail User, or the Trade Licence number of the business for an SME or Corporate User, and the LFI may reject a payment when it is missing or does not match.'
+  'The TPP MUST send the Debtor’s Emirates ID (Retail) or Trade Licence number (SME and Corporate) in the V2.2 Risk block on any payment above AED 50,000, tied to a multi-payment consent, and the LFI may reject the payment when it is missing or does not match. It is not required in login_hint, which stays optional as OpenID Connect and FAPI define it, or for Data Sharing.'
 useHead({
   title: OG_TITLE,
   meta: [
@@ -46,21 +44,51 @@ const meta = {
   author: 'Jonathan Holman',
   // Fallbacks shown until the API responds (and during the static build). The
   // live status/priority/dates are sourced from the API — see syncFromApi().
-  opened: '19 Nov 2026',
-  closes: '3 Dec 2026',
+  opened: '24 Nov 2026',
+  closes: '30 Dec 2026',
   priority: 'medium' as Priority,
   version: 'V2.2',
 }
 
 const LFI_SI = '/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation'
 const TPP_SI = '/tech/tpp-standards/v2.2-rc2/banking/service-initiation'
+const TPP_DS = '/tech/tpp-standards/v2.2-rc2/banking/data-sharing'
 const KB_ARTICLE = '/knowledge-base/articles/emirates-id-trade-licence-long-lived-payments'
+const KB_LOGIN_HINT = '/knowledge-base/articles/login-hint-emirates-id'
 const CHANGE_21 = '/tech/release-notes-and-erratas/changelog/v2.2-rc2/#v2.1-to-v2.2-change-21'
 
-// The seven long-lived payment types — every payment consent other than Single
-// Instant Payment. Each links to its LFI requirements page, where the LFI check
-// proposed here would be listed.
-const longLivedTypes = [
+// The V2.2 OpenAPI documents that define the two Risk fields, as served from
+// public/openapi/ (fetched from api-specs at build time).
+const SPECS = [
+  {
+    surface: 'Standards',
+    file: 'uae-authorization-endpoints-openapi.yaml',
+    href: '/openapi/v2.2-rc2/standards/uae-authorization-endpoints-openapi.yaml',
+    schema: 'The consent-time <code>Risk.DebtorIndicators</code>, at <code>POST /par</code>',
+  },
+  {
+    surface: 'Standards',
+    file: 'uae-bank-initiation-openapi.yaml',
+    href: '/openapi/v2.2-rc2/standards/uae-bank-initiation-openapi.yaml',
+    schema: 'The payment-time <code>Risk.DebtorIndicators</code>, in the payment PII, at <code>POST /payments</code>',
+  },
+  {
+    surface: 'API Hub',
+    file: 'uae-api-hub-consent-manager-openapi.yaml',
+    href: '/openapi/v2.2-rc2/api-hub/uae-api-hub-consent-manager-openapi.yaml',
+    schema: 'Both <code>DebtorIndicators</code> schemas',
+  },
+  {
+    surface: 'Ozone Connect',
+    file: 'uae-ozone-connect-bank-service-initiation-openapi.yaml',
+    href: '/openapi/v2.2-rc2/ozone-connect/uae-ozone-connect-bank-service-initiation-openapi.yaml',
+    schema: '<code>AEDebtorIndicators</code>, received by the LFI&rsquo;s <code>POST /payments</code>; <code>TradeLicenceNumber</code> from v2.2.7',
+  },
+]
+
+// The seven multi-payment consent types — every payment consent other than
+// Single Instant Payment. Each links to its TPP requirements page.
+const multiPaymentTypes = [
   { name: 'Fixed Defined Schedule', slug: 'fixed-defined-schedule' },
   { name: 'Fixed On Demand', slug: 'fixed-on-demand' },
   { name: 'Fixed Periodic Schedule', slug: 'fixed-periodic-schedule' },
@@ -70,103 +98,46 @@ const longLivedTypes = [
   { name: 'Delegated SCA', slug: 'delegated-sca' },
 ]
 
-// 05 · Operating model — the two flows. Strings are static and authored here,
-// so they are rendered with v-html for the inline <code>.
-const creditorFlow = [
-  { title: 'TPP executes the payment', text: 'Includes the creditor’s identifier in <code>Risk.CreditorIndicators</code> if it holds it.' },
-  { title: 'LFI processes the request', text: 'Does not reject the payment solely because the optional creditor identifier is missing.' },
-  { title: 'Standards observation', text: 'The LFI records the omission, or any other <code>Risk</code> issue, as a conformance concern.' },
-  { title: 'Escalate to Nebras', text: 'Nebras addresses standards compliance with the TPP in question.' },
-]
-
-const debtorFlow = [
-  { title: 'TPP sends the identifier', text: '<code>EmiratesId</code> or <code>TradeLicenceNumber</code> in <code>Risk.DebtorIndicators</code>, on every <code>POST /payments</code> under the consent.' },
-  { title: 'LFI identifies the customer', text: 'From <code>o3-psu-identifier</code>. Whether the customer is Retail, or SME or Corporate, decides which field is checked.' },
-  { title: 'LFI compares', text: 'With the Emirates ID it holds for the customer, or the Trade Licence number it holds for the business.' },
-  { title: 'LFI MAY reject', text: '<code>400 Consent.BusinessRuleViolation</code> when the value is missing or does not match.' },
-]
-
-// 06 · The V2.1 position per scenario, and what this proposal changes in V2.2.
-const scenarios = [
+// 01 · Where the Debtor's identifier is required, with this proposal. Strings
+// are static and authored here, so they are rendered with v-html.
+const atAGlance = [
   {
-    scenario: 'Transactional-data consent set-up',
-    subject: 'Debtor',
-    where: '<code>login_hint</code>, at <code>POST /par</code>',
-    stance: 'The TPP is asked to send it, but the specification says a request should not be rejected if <code>login_hint</code> is not provided.',
-    v22: 'Unchanged',
-    changed: false,
+    where: '<code>login_hint</code>, for any consent',
+    tpp: 'Not required. MAY send it.',
+    lfi: 'MUST NOT reject because it is absent.',
+    required: false,
   },
   {
-    scenario: 'Transactional-data <code>GET</code> request',
-    subject: 'Debtor',
-    where: 'No field in the specification',
-    stance: 'Do not expect or validate.',
-    v22: 'Unchanged &mdash; out of scope',
-    changed: false,
+    where: 'Any payment above AED 50,000, tied to a multi-payment consent',
+    tpp: '<strong>MUST send it</strong> in <code>Risk.DebtorIndicators</code>.',
+    lfi: 'MAY reject when it is absent or does not match.',
+    required: true,
   },
   {
-    scenario: 'Long-lived payment consent set-up',
-    subject: 'Debtor',
-    where: '<code>login_hint</code>, at <code>POST /par</code>',
-    stance: 'The TPP is asked to send it, but the specification says a request should not be rejected if <code>login_hint</code> is not provided.',
-    v22: 'Unchanged',
-    changed: false,
+    where: 'A payment of AED 50,000 or less, tied to a multi-payment consent',
+    tpp: 'Not required. MAY send it.',
+    lfi: 'MUST NOT reject because it is absent.',
+    required: false,
   },
   {
-    scenario: 'Payment under a long-lived consent',
-    subject: 'Debtor',
-    where: 'No field, and no obligation to send it again',
-    stance: 'Do not expect or validate.',
-    v22: '<strong>Changed.</strong> <code>EmiratesId</code> (Retail) or <code>TradeLicenceNumber</code> (SME or Corporate) in <code>Risk.DebtorIndicators</code>, on every <code>POST /payments</code>. The LFI MAY reject when it is missing or does not match.',
-    changed: true,
+    where: 'Single Instant Payment',
+    tpp: 'Not required. MAY send it.',
+    lfi: 'MUST NOT reject because it is absent.',
+    required: false,
   },
   {
-    scenario: 'Single Instant Payment consent and payment',
-    subject: 'Debtor',
-    where: 'The <code>login_hint</code> rule does not apply',
-    stance: 'Do not apply the long-lived consent check.',
-    v22: 'Unchanged &mdash; out of scope',
-    changed: false,
-  },
-  {
-    scenario: 'Payment <code>Risk</code> block',
-    subject: 'Creditor',
-    where: 'Optional <code>CreditorIndicators.AdditionalAccountHolderIdentifiers</code>, if the TPP holds it',
-    stance: 'Do not block; report conformance gaps.',
-    v22: 'Unchanged',
-    changed: false,
+    where: 'Data Sharing, including transactional data',
+    tpp: 'Not required.',
+    lfi: 'MUST NOT reject because it is absent.',
+    required: false,
   },
 ]
 
-// 07 · The V2.2 design questions put to LFIs and TPPs, with this proposal's answer.
-const designQuestions = [
-  {
-    q: 'At what stage should the debtor’s identity be supplied for long-lived payments and transactional-data requests?',
-    a: 'For long-lived payments, on <strong>every</strong> <code>POST /payments</code>, in the payment-time <code>Risk</code> block, as well as in <code>login_hint</code> when the consent is established. This proposal does not address transactional-data requests.',
-  },
-  {
-    q: 'Which risks are material, and which mitigants are effective enough to justify implementation?',
-    a: 'A payment under a long-lived consent reaches the LFI with no authentication of its own. Comparing an identifier the LFI already holds for its customer confirms that the payment is for the User, or the business, behind the consent, for the cost of one field and one comparison.',
-  },
-  {
-    q: 'What solution will both TPPs and LFIs implement consistently in live use, not only in documentation?',
-    a: 'One field for each type of customer, already in every V2.2 specification, on an endpoint both sides already implement. No new endpoint, header or consent field, and no change at the API Hub.',
-  },
-  {
-    q: 'Should creditor extended information continue to be carried through the Risk block?',
-    a: 'This proposal does not change it. <code>CreditorIndicators.AdditionalAccountHolderIdentifiers</code> stays optional, and the TPP sends it if it holds it.',
-  },
-  {
-    q: 'What ecosystem guidance is required for validation, including when to reject, warn or report?',
-    a: 'For the debtor’s identifier under a long-lived consent, the LFI MAY reject with <code>400 Consent.BusinessRuleViolation</code>, using the four error messages below. Whether that should become a MUST is the question attached to the vote. For the creditor’s identifier: report, do not block.',
-  },
-]
-
-// 07 · The four rejections the LFI may return.
+// 04 · The four rejections the LFI may return for a payment above the threshold.
 const rejections = [
-  { condition: 'Retail: <code>EmiratesId</code> is absent', message: 'Validation failed for AEPaymentPII: risk.debtorIndicators.emiratesID is required for a long-lived payment consent' },
+  { condition: 'Retail: <code>EmiratesId</code> is absent', message: 'Validation failed for AEPaymentPII: risk.debtorIndicators.emiratesID is required for a payment above AED 50,000 tied to a multi-payment consent' },
   { condition: 'Retail: <code>EmiratesId</code> does not match the PSU', message: 'Validation failed for AEPaymentPII: risk.debtorIndicators.emiratesID does not match the PSU ID' },
-  { condition: 'SME or Corporate: <code>TradeLicenceNumber</code> is absent', message: 'Validation failed for AEPaymentPII: risk.debtorIndicators.tradeLicenceNumber is required for a long-lived payment consent' },
+  { condition: 'SME or Corporate: <code>TradeLicenceNumber</code> is absent', message: 'Validation failed for AEPaymentPII: risk.debtorIndicators.tradeLicenceNumber is required for a payment above AED 50,000 tied to a multi-payment consent' },
   { condition: 'SME or Corporate: <code>TradeLicenceNumber</code> does not match the business', message: 'Validation failed for AEPaymentPII: risk.debtorIndicators.tradeLicenceNumber does not match the business Trade Licence' },
 ]
 
@@ -177,72 +148,30 @@ const rejections = [
 const questions = [
   {
     who: 'Enforcement',
-    q: 'Should the LFI check stay permitted but optional, as proposed, or should every LFI be required to reject a payment under a long-lived consent when the Emirates ID or Trade Licence number is missing or does not match?',
+    q: 'Should the LFI check stay permitted but optional, as proposed, or should every LFI be required to reject a payment above AED 50,000, tied to a multi-payment consent, when the Emirates ID or Trade Licence number is missing or does not match?',
     why: 'An optional check lets each LFI adopt it when it is ready, but a TPP then sees a missing identifier rejected by one LFI and accepted by another.',
   },
 ]
 
 const pros = [
-  'The Debtor’s identity reaches the LFI with every payment under a long-lived consent, not only once in login_hint when the consent is established.',
-  'The LFI can confirm that each payment is made for the User, or the business, for whom the consent was authorized, including payments made when the User is not present.',
-  'Retail, SME and Corporate customers are all covered: one field for each, chosen by the type of customer.',
-  'Both fields are already in the V2.2 specifications: Standards, Consent Manager and Ozone Connect. No endpoint, header or consent field is added.',
-  'The API orchestration does not change. The identifier arrives on the same POST /payments request, and the LFI already retrieves the consent for every payment request.',
-  'The identifier travels inside the encrypted PII. The API Hub passes it through without decrypting it, so it is never held centrally.',
-  'It follows the existing rule that a TPP populates every Risk field it knows. It adds no new kind of obligation.',
+  'It aligns with OpenID Connect and FAPI: login_hint stays optional, and no authorization request is rejected for lacking it.',
+  'The check sits on the payment itself, where the LFI can compare the identifier, not in a hint delivered once during authorization.',
+  'It concentrates the check on high-value payments, and asks TPPs for less personal data everywhere else.',
+  'Both fields are already in the V2.2 specifications. No endpoint, header or consent field is added.',
+  'The identifier travels inside the encrypted PII, so the API Hub never holds it.',
   'Each LFI decides when to enforce, so an LFI that is not ready keeps accepting payments as it does today.',
-  'The creditor side is unchanged: the optional creditor identifier is still sent if held, and a missing one is reported, not blocked.',
 ]
 
 const cons = [
-  'Enforcement is optional, so the same payment can be rejected by one LFI and accepted by another. A TPP has to send the field correctly everywhere to be safe.',
-  'A TPP that has not been capturing the identifier must collect it from existing Users, or for their businesses, before their next payment, or see those payments rejected by LFIs that enforce.',
-  'A wrong value in the TPP’s or the LFI’s records fails every payment under the consent until it is corrected.',
-  'TradeLicenceNumber has no pattern, as the format varies by issuing authority, so its format cannot be checked and the LFI must normalise both values before comparing them.',
-  'The TPP must know whether the User is a Retail customer or is paying for a business. If it sends the wrong field, an LFI that enforces rejects the payment.',
-  'The API Hub cannot enforce the rule. The field sits inside encrypted PII, so a missing value is caught only by an LFI that checks.',
-  'V2.1 has no field for either identifier, so payments made through V2.1 endpoints cannot carry it and cannot be checked.',
+  'Payments of AED 50,000 or less need not carry the identifier, and a larger sum split into smaller payments is never checked.',
+  'It drops the V2.1 login_hint expectation, agreed with the UBF group as a fraud control, though it was rarely implemented.',
+  'Under a variable consent the TPP may not know whether a payment above AED 50,000 will come, so it may have to collect the identifier anyway.',
+  'Enforcement is optional, so the same payment can be rejected by one LFI and accepted by another.',
+  'A wrong value in the TPP’s or the LFI’s records fails every payment above the threshold until corrected, and TradeLicenceNumber has no pattern, so the LFI must normalise both values before comparing them.',
+  'The API Hub cannot enforce the rule, as the field sits inside encrypted PII, and V2.1 endpoints cannot carry it.',
 ]
 
-// The payment-time PII for each type of customer, and a rejection — rendered in
-// the Recommendation section.
-const payloadExample = `# POST /payments - payment-time PII, as decrypted by the LFI (excerpt)
-
-# Retail User
-{
-  "Initiation": { ... },
-  "Risk": {
-    "DebtorIndicators": {
-      "UserName": { "en": "...", "ar": "..." },
-      "EmiratesId": "784-1990-1234567-1",   # required under a long-lived consent
-      ...
-    },
-    "TransactionIndicators": { ... },
-    "CreditorIndicators": { ... }
-  }
-}
-
-# SME or Corporate User
-{
-  "Initiation": { ... },
-  "Risk": {
-    "DebtorIndicators": {
-      "UserName": { "en": "...", "ar": "..." },
-      "TradeLicenceNumber": "CN-1234567",   # required under a long-lived consent
-      ...
-    },
-    "TransactionIndicators": { ... },
-    "CreditorIndicators": { ... }
-  }
-}
-
-# LFI rejects the payment - 400, TradeLicenceNumber absent
-{
-  "errorCode": "Consent.BusinessRuleViolation",
-  "errorMessage": "Validation failed for AEPaymentPII: risk.debtorIndicators.tradeLicenceNumber is required for a long-lived payment consent"
-}`
-
-// The V2.2 definition — rendered in the Technical changes section.
+// The V2.2 definition, as published — rendered in the Point 2 section.
 const schemaExample = `# Standards - uae-authorization-endpoints-openapi.yaml (consent-time Risk, POST /par)
 # Standards - uae-bank-initiation-openapi.yaml       (payment-time Risk, POST /payments)
 DebtorIndicators:
@@ -250,18 +179,11 @@ DebtorIndicators:
     type: string
     pattern: ^784-?[0-9]{4}-?[0-9]{7}-?[0-9]{1}$
     description: The Emirates ID number of the User initiating the Payment, where the User
-      is a Retail customer. For payments made under a long-lived consent, the LFI can use
-      it to confirm that each payment is being made for the same User who authorized the
-      consent.
+      is a Retail customer. ...
   TradeLicenceNumber:
     type: string
     description: The Trade Licence number of the business on whose behalf the User is
-      initiating the Payment, where the User is an SME or Corporate customer. For payments
-      made under a long-lived consent, the LFI can use it to confirm that each payment is
-      being made for the same business on whose behalf the consent was authorized.
-
-# Ozone Connect - uae-ozone-connect-bank-service-initiation-openapi.yaml (v2.2.7)
-# The same definitions on AEDebtorIndicators, received by POST /payments.`
+      initiating the Payment, where the User is an SME or Corporate customer. ...`
 
 // ─── Voting ─────────────────────────────────────────────────────────────────
 // Live tally + vote submission are backed by the proposals API (D1) via
@@ -301,7 +223,7 @@ const showTabs = computed(() => isClosed.value && !!OutcomePartial)
 
 const proposal = computed<Proposal>(() => ({
   id: meta.id,
-  title: 'Send the Debtor’s Emirates ID or Trade Licence Number to the LFI on long-lived payments',
+  title: 'Send the Debtor’s Emirates ID or Trade Licence Number on any payment above AED 50,000, tied to a multi-payment consent',
   summary: '',
   category: '',
   priority: priority.value,
@@ -399,15 +321,14 @@ onMounted(() => {
           <span class="ofp__tag ofp__tag--priority">{{ priorityLabel }}</span>
         </div>
 
-        <h1 class="ofp__title">Send the Debtor&rsquo;s Emirates ID or Trade Licence Number to the LFI on long-lived payments</h1>
+        <h1 class="ofp__title">Send the Debtor&rsquo;s Emirates ID or Trade Licence Number on any payment above AED 50,000, tied to a multi-payment consent</h1>
         <p class="ofp__summary">
-          V2.1 asks the TPP for the Debtor&rsquo;s Emirates ID in <code>login_hint</code> when a long-lived
-          payment consent is established, and nothing carries it again when a payment is made under that
-          consent. This proposal uses the <code>Risk</code> block, as already extended in V2.2. On
-          <strong>every payment</strong> under a long-lived consent, the TPP sends the
-          <strong>Emirates ID</strong> of a Retail User, or the <strong>Trade Licence number</strong> of the
-          business for an SME or Corporate User, on the same <code>POST /payments</code>. The LFI
-          <strong>may reject the payment</strong> when it is missing or does not match.
+          The TPP <strong>MUST</strong> send the Debtor&rsquo;s <strong>Emirates ID</strong> (Retail) or
+          <strong>Trade Licence number</strong> (SME and Corporate) in the V2.2 <code>Risk</code> block on
+          <strong>any payment above AED 50,000, tied to a multi-payment consent</strong>, and the LFI
+          <strong>may reject</strong> the payment when it is missing or does not match. It is <strong>not
+          required</strong> in <code>login_hint</code>, which stays optional as OpenID Connect and FAPI define it,
+          or for Data Sharing.
         </p>
 
         <div class="ofp__strip">
@@ -457,7 +378,7 @@ onMounted(() => {
             Sign in with the Trust Framework to vote &mdash; For, Against, or Abstain &mdash; recorded in
             the open with your reasoning. Your organisation and name come from your directory profile, and
             each person may vote once. <strong>One question is attached to this vote</strong> &mdash;
-            set out in section 09 below. It asks whether the LFI check should stay optional.
+            set out in section 07 below. It asks whether the LFI check should stay optional.
           </p>
         </div>
         <PvVotePanel :proposal="proposal" :my-vote="myVote" @vote="onVote" @submit="onSubmit" />
@@ -481,447 +402,162 @@ onMounted(() => {
 
       <template #proposal>
     <!-- ═══════════════════════════════════════════════════════════════════
-         01 · THE POSITION AS WE STAND
+         01 · BACKGROUND
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ofp-band ofp-band--cream ofp-band--seam">
       <span class="ofp-seam-label">The proposal</span>
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 01 &middot; The position as we stand</div>
-          <h2 class="ofp-band__title">Three identities, and where each one travels</h2>
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 01 &middot; Background</div>
+          <h2 class="ofp-band__title">Where the Debtor&rsquo;s identity is required</h2>
           <p class="ofp-band__lede">
-            The key distinction is between the debtor&rsquo;s identity when a consent is established, the
-            debtor&rsquo;s identity when a payment is made under it, and the creditor&rsquo;s identity in the
-            payment <code>Risk</code> block.
-          </p>
-        </div>
-
-        <div class="ofp-cards">
-          <div class="ofp-card">
-            <div class="ofp-card__num">01</div>
-            <div class="ofp-card__title">Current mandate</div>
-            <p>
-              The Debtor&rsquo;s Emirates ID is asked for in <code>login_hint</code> when a TPP establishes a
-              consent for transactional data or a long-lived payment.
-            </p>
-            <p>
-              It is not supplied again when data is pulled or a payment is initiated under that consent.
-            </p>
-          </div>
-          <div class="ofp-card">
-            <div class="ofp-card__num">02</div>
-            <div class="ofp-card__title">SIP and the <code>Risk</code> block</div>
-            <p>Single Instant Payment is not governed by the <code>login_hint</code> rule.</p>
-            <p>
-              At payment, the V2.1 <code>Risk</code> block has an optional identifier for the
-              <strong>creditor</strong>, which the TPP sends if it holds it. It has none for the debtor.
-            </p>
-          </div>
-          <div class="ofp-card">
-            <div class="ofp-card__num">03</div>
-            <div class="ofp-card__title">Validation approach</div>
-            <p>
-              An LFI should not fail a payment because the optional creditor identifier is absent. It cannot
-              reliably tell whether the TPP holds it.
-            </p>
-            <p>Gaps are reported to Nebras, not blocked.</p>
-          </div>
-        </div>
-
-        <div class="ofp-callout">
-          <div class="ofp-callout__title">V2.2 objective</div>
-          <div class="ofp-callout__text">
-            Agree an ecosystem-wide control that LFIs and TPPs will actually implement and use. For long-lived
-            payments, this proposal is that control: the TPP sends the Debtor&rsquo;s identifier on every
-            <code>POST /payments</code>, and the LFI may check it.
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══════════════════════════════════════════════════════════════════
-         02 · WHERE THE DEBTOR'S IDENTITY IS MANDATED TODAY
-    ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ofp-band ofp-band--white">
-      <div class="ofp-band__inner">
-        <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 02 &middot; Where it is mandated today</div>
-          <h2 class="ofp-band__title">At consent establishment, not when the consent is used</h2>
-          <p class="ofp-band__lede">
-            V2.1 places the obligation at the start of the consent. Nothing carries the Debtor&rsquo;s identity
-            when the consent is used.
-          </p>
-        </div>
-
-        <ol class="ofp-steps ofp-steps--3">
-          <li class="ofp-step">
-            <div class="ofp-step__num">1</div>
-            <div class="ofp-step__title">Establish the consent</div>
-            <p>
-              The TPP supplies the Debtor&rsquo;s Emirates ID in <code>login_hint</code> for a transactional-data
-              consent or a long-lived payment consent, at
-              <RouterLink to="/tech/tpp-standards/v2.2-rc2/consent/open-api/par"><code>POST /par</code></RouterLink>.
-            </p>
-          </li>
-          <li class="ofp-step">
-            <div class="ofp-step__num">2</div>
-            <div class="ofp-step__title">Use the consent</div>
-            <p>
-              On a transactional-data <code>GET</code> request, or a payment under a long-lived consent, V2.1 has
-              no obligation, and no field, to send it again.
-            </p>
-          </li>
-          <li class="ofp-step">
-            <div class="ofp-step__num">3</div>
-            <div class="ofp-step__title">The relevant identity</div>
-            <p>
-              The value asked for is the Debtor&rsquo;s &mdash; the account owner&rsquo;s &mdash; Emirates ID, not
-              the creditor&rsquo;s.
-            </p>
-          </li>
-        </ol>
-
-        <div class="ofp-compare">
-          <div class="ofp-compare__col">
-            <div class="ofp-compare__head">Original rationale</div>
-            <p>The Emirates ID point was agreed with the UBF group as part of fraud controls.</p>
-          </div>
-          <div class="ofp-compare__col">
-            <div class="ofp-compare__head">Implementation reality</div>
-            <p>
-              Existing LFI implementations are generally not validating it, and TPPs are generally not
-              supplying it.
-            </p>
-          </div>
-        </div>
-
-        <div class="ofp-prose">
-          <div class="ofp-rules">
-            <div class="ofp-rules__label">Why <code>login_hint</code> cannot carry it to the payment</div>
-            <ul class="ofp-rules__list">
-              <li>
-                <strong>It is a FAPI authorization request parameter, and in the redirect flow it is only a
-                hint.</strong> It helps the LFI with authentication, and nothing more. The Authorization
-                Endpoints specification follows OpenID Connect Core: <code>login_hint</code> &ldquo;MUST NOT be
-                used to bypass authentication of the User, nor should a request be rejected if
-                <code>login_hint</code> is not provided.&rdquo;
-              </li>
-              <li>
-                <strong>It reaches the LFI once, during authorization.</strong> It is delivered only in the
-                <RouterLink to="/tech/lfi-api-hub/v2.2-rc2/api-hub/headless-heimdall/open-api/auth"><code>GET /auth</code></RouterLink>
-                response and is never written onto the consent, so it is not available when a payment arrives at
-                <code>POST /payments</code>.
-              </li>
-              <li>
-                <strong>It identifies who is expected to authenticate, not who makes each payment.</strong>
-                Under a long-lived consent, each payment after the first is made after the authorization journey
-                has ended.
-              </li>
-            </ul>
-          </div>
-          <p>
-            This proposal does not change <code>login_hint</code>. It remains available for its intended
-            purpose: helping the LFI identify the customer before authentication. See
-            <RouterLink to="/knowledge-base/articles/login-hint-emirates-id">Emirates ID in login_hint</RouterLink>.
-          </p>
-        </div>
-
-        <div class="ofp-callout">
-          <div class="ofp-callout__title">Implication</div>
-          <div class="ofp-callout__text">
-            Revise the design in V2.2 rather than enforce a control with low adoption: carry the Debtor&rsquo;s
-            identifier where the payment is made and can be checked.
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══════════════════════════════════════════════════════════════════
-         03 · SINGLE INSTANT PAYMENT IS OUT OF SCOPE
-    ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ofp-band ofp-band--cream">
-      <div class="ofp-band__inner">
-        <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 03 &middot; Single Instant Payment</div>
-          <h2 class="ofp-band__title">Only long-lived consents are in scope</h2>
-          <p class="ofp-band__lede">
-            A Single Instant Payment consent is not long-lived, so neither the <code>login_hint</code> rule nor
-            this proposal&rsquo;s check applies to it.
-          </p>
-        </div>
-
-        <div class="ofp-compare">
-          <div class="ofp-compare__col">
-            <div class="ofp-compare__head">Long-lived payment consent <span class="ofp-badge ofp-badge--in">In scope</span></div>
-            <ul class="ofp-compare__list">
-              <li>Authorized at the LFI once, then used for weeks or months, often with the User not present.</li>
-              <li>Each later payment reaches the LFI with no authentication of its own, only the consent it was made under.</li>
-              <li>V2.1: the Debtor&rsquo;s identity is supplied in <code>login_hint</code> when the consent is established.</li>
-              <li>V2.2, with this proposal: and on every <code>POST /payments</code> under the consent.</li>
-            </ul>
-          </div>
-          <div class="ofp-compare__col">
-            <div class="ofp-compare__head">Single Instant Payment <span class="ofp-badge ofp-badge--out">Out of scope</span></div>
-            <ul class="ofp-compare__list">
-              <li>Authorized and used once.</li>
-              <li>Not governed by the <code>login_hint</code> rule.</li>
-              <li>No check of the Debtor&rsquo;s identifier, at consent or at payment.</li>
-              <li>The TPP still populates every <code>Risk</code> field it holds.</li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="ofp-prose">
-          <div class="ofp-table-wrap">
-            <table class="ofp-table">
-              <thead>
-                <tr><th>Consent</th><th>Payment types</th><th>In scope</th></tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <th>Long-lived</th>
-                  <td>
-                    <template v-for="(t, i) in longLivedTypes" :key="t.slug">
-                      <RouterLink :to="`${LFI_SI}/domestic-payments/multi-payments/${t.slug}/requirements`">{{ t.name }}</RouterLink><template v-if="i < longLivedTypes.length - 1">, </template>
-                    </template>
-                  </td>
-                  <td>Yes</td>
-                </tr>
-                <tr>
-                  <th>Single-use</th>
-                  <td>Single Instant Payment</td>
-                  <td>No</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══════════════════════════════════════════════════════════════════
-         04 · THE RISK BLOCK
-    ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ofp-band ofp-band--white">
-      <div class="ofp-band__inner">
-        <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 04 &middot; The <code>Risk</code> block</div>
-          <h2 class="ofp-band__title">The debtor&rsquo;s identifier is new in V2.2; the creditor&rsquo;s stays optional</h2>
-          <p class="ofp-band__lede">
-            <RouterLink :to="`${TPP_SI}/personal-identifiable-information/risk`"><code>Risk</code></RouterLink>
-            is where the LFI receives what the TPP knows about a payment. It is part of the payment PII, which
-            the TPP signs and encrypts to the LFI.
-          </p>
-        </div>
-
-        <div class="ofp-cards">
-          <div class="ofp-card">
-            <div class="ofp-card__title">Debtor <span class="ofp-badge ofp-badge--new">New in V2.2</span></div>
-            <p>V2.1 has no identifier for the debtor in <code>Risk.DebtorIndicators</code>.</p>
-            <p>
-              V2.2 adds <code>EmiratesId</code> for a Retail User and <code>TradeLicenceNumber</code> for the
-              business of an SME or Corporate User
-              (<RouterLink :to="CHANGE_21">changelog &sect;21</RouterLink>). This proposal concerns these fields.
-            </p>
-          </div>
-          <div class="ofp-card">
-            <div class="ofp-card__title">Payment <code>Risk</code> block <span class="ofp-badge ofp-badge--neutral">Encrypted PII</span></div>
-            <p>
-              The TPP MUST populate every <code>Risk</code> field that is known or derivable from its system.
-            </p>
-            <p>The API Hub passes it to the LFI without decrypting it, so it is never held centrally.</p>
-          </div>
-          <div class="ofp-card">
-            <div class="ofp-card__title">Creditor <span class="ofp-badge ofp-badge--held">Send if held</span></div>
-            <p>
-              <code>CreditorIndicators.AdditionalAccountHolderIdentifiers</code> carries an optional
-              <code>EmiratesID</code> or <code>TradeLicenceNumber</code> for the creditor, in V2.1 and V2.2.
-            </p>
-            <p>The TPP sends it if it holds it. This proposal does not change it.</p>
-          </div>
-        </div>
-
-        <div class="ofp-callout">
-          <div class="ofp-callout__title">Optional does not mean irrelevant</div>
-          <div class="ofp-callout__text">
-            For the creditor, optional means availability depends on the TPP&rsquo;s real-world context. The
-            Debtor&rsquo;s identifier is different: under a long-lived consent the TPP is required to capture it.
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══════════════════════════════════════════════════════════════════
-         05 · OPERATING MODEL
-    ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ofp-band ofp-band--cream">
-      <div class="ofp-band__inner">
-        <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 05 &middot; Operating model</div>
-          <h2 class="ofp-band__title">Report a missing creditor identifier; check the debtor&rsquo;s</h2>
-          <p class="ofp-band__lede">
-            An LFI cannot tell whether a TPP should hold the creditor&rsquo;s identifier, so it reports a gap
-            rather than blocking the payment. Under a long-lived consent the TPP is required to hold the
-            Debtor&rsquo;s identifier, so the LFI can check it.
-          </p>
-        </div>
-
-        <div class="ofp-flow-label">Creditor identifier &mdash; report, do not block</div>
-        <ol class="ofp-steps ofp-steps--4">
-          <li v-for="(s, i) in creditorFlow" :key="s.title" class="ofp-step">
-            <div class="ofp-step__num">{{ i + 1 }}</div>
-            <div class="ofp-step__title">{{ s.title }}</div>
-            <p v-html="s.text" />
-          </li>
-        </ol>
-
-        <div class="ofp-flow-label">Debtor identifier under a long-lived consent &mdash; check</div>
-        <ol class="ofp-steps ofp-steps--4">
-          <li v-for="(s, i) in debtorFlow" :key="s.title" class="ofp-step">
-            <div class="ofp-step__num">{{ i + 1 }}</div>
-            <div class="ofp-step__title">{{ s.title }}</div>
-            <p v-html="s.text" />
-          </li>
-        </ol>
-
-        <div class="ofp-callout">
-          <div class="ofp-callout__title">Why the two differ</div>
-          <div class="ofp-callout__text">
-            Real-world circumstances are too varied to encode as conditional rules for when a TPP holds the
-            creditor&rsquo;s identifier, and the LFI does not know the TPP&rsquo;s data holdings. This applies in
-            testing and in live production. The Debtor&rsquo;s identifier has no such uncertainty: under a
-            long-lived consent the TPP MUST capture it, so its absence is a failure the LFI can act on.
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══════════════════════════════════════════════════════════════════
-         06 · V2.1 POSITION, AND WHAT V2.2 CHANGES
-    ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ofp-band ofp-band--white">
-      <div class="ofp-band__inner">
-        <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 06 &middot; The V2.1 position</div>
-          <h2 class="ofp-band__title">One scenario changes in V2.2</h2>
-          <p class="ofp-band__lede">
-            Apply the V2.1 mandate narrowly, and do not validate what the specification cannot reliably
-            support. This proposal changes only the payment under a long-lived consent.
+            V2.1 asks for the Debtor&rsquo;s Emirates ID in <code>login_hint</code>, an optional hint that TPPs
+            rarely send and LFIs rarely check. The current V2.2 requirements ask for it on every payment under a
+            long-lived consent. This proposal replaces both.
           </p>
         </div>
 
         <div class="ofp-table-wrap ofp-table-wrap--wide">
           <table class="ofp-table">
             <thead>
-              <tr>
-                <th>Scenario</th>
-                <th>Identity of</th>
-                <th>Where it is supplied (V2.1)</th>
-                <th>LFI stance (V2.1)</th>
-                <th>V2.2, with this proposal</th>
-              </tr>
+              <tr><th>Where</th><th>TPP</th><th>LFI</th></tr>
             </thead>
             <tbody>
-              <tr v-for="row in scenarios" :key="row.scenario" :class="{ 'is-changed': row.changed }">
-                <th v-html="row.scenario" />
-                <td>{{ row.subject }}</td>
-                <td v-html="row.where" />
-                <td v-html="row.stance" />
-                <td v-html="row.v22" />
+              <tr v-for="row in atAGlance" :key="row.where" :class="{ 'is-changed': row.required }">
+                <th v-html="row.where" />
+                <td v-html="row.tpp" />
+                <td v-html="row.lfi" />
               </tr>
             </tbody>
           </table>
         </div>
+      </div>
+    </section>
 
-        <div class="ofp-callout">
-          <div class="ofp-callout__title">Practical preference</div>
-          <div class="ofp-callout__text">
-            Do not begin strict <code>login_hint</code> enforcement. Adoption is low, the specification says a
-            request should not be rejected for its absence, and it is not available when a payment is made, so
-            it adds little fraud-control value at the point the API is used.
+    <!-- ═══════════════════════════════════════════════════════════════════
+         02 · POINT 1 · login_hint
+    ═══════════════════════════════════════════════════════════════════ -->
+    <section class="ofp-band ofp-band--white">
+      <div class="ofp-band__inner">
+        <div class="ofp-band__head">
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 02 &middot; Point 1 &middot; <code>login_hint</code></div>
+          <h2 class="ofp-band__title">Not required in <code>login_hint</code></h2>
+          <p class="ofp-band__lede">
+            OpenID Connect Core defines <code>login_hint</code> as OPTIONAL, and the FAPI 2.0 Security Profile does
+            not require it. The UAE
+            <a href="/openapi/v2.2-rc2/standards/uae-authorization-endpoints-openapi.yaml">Authorization Endpoints specification</a>
+            already says a request should not be rejected if it is not provided. This point keeps the UAE profile
+            aligned with both.
+          </p>
+        </div>
+
+        <div class="ofp-prose">
+          <div class="ofp-rules">
+            <div class="ofp-rules__label">Proposed rules</div>
+            <ul class="ofp-rules__list">
+              <li>
+                <strong>The TPP is not required to send <code>login_hint</code></strong>, for any consent. It MAY
+                still send the User&rsquo;s Emirates ID or Trade Licence Number in it, encrypted to the LFI.
+              </li>
+              <li>
+                <strong>The LFI MUST NOT reject the request, or fail the journey, because it is absent.</strong>
+                Where it is present, the LFI MAY use it to identify the customer before authentication, and MUST
+                NOT use it to bypass authentication.
+              </li>
+              <li>
+                <strong>Why it cannot carry the check.</strong> It reaches the LFI once, in the
+                <RouterLink to="/tech/lfi-api-hub/v2.2-rc2/api-hub/headless-heimdall/open-api/auth"><code>GET /auth</code></RouterLink>
+                response, and is never stored on the consent, so it is not available when a payment is made. See
+                <RouterLink :to="KB_LOGIN_HINT">Emirates ID in login_hint</RouterLink>.
+              </li>
+            </ul>
           </div>
         </div>
       </div>
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         07 · RECOMMENDATION (V2.2)
+         03 · POINT 2 · THE RISK BLOCK
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ofp-band ofp-band--cream">
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 07 &middot; Recommendation for V2.2</div>
-          <h2 class="ofp-band__title">Carry it in the <code>Risk</code> block, on the same <code>POST /payments</code></h2>
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 03 &middot; Point 2 &middot; The <code>Risk</code> block</div>
+          <h2 class="ofp-band__title">Already in the V2.2 <code>Risk</code> block</h2>
           <p class="ofp-band__lede">
-            Use the fields V2.2 already adds. The TPP sends the Debtor&rsquo;s identifier on every payment under a
-            long-lived consent, and the LFI may reject a payment that lacks it or carries one that does not
-            match.
+            V2.2 adds <code>EmiratesId</code> (Retail) and <code>TradeLicenceNumber</code> (SME and Corporate) to
+            <RouterLink :to="`${TPP_SI}/personal-identifiable-information/risk`"><code>Risk.DebtorIndicators</code></RouterLink>
+            (<RouterLink :to="CHANGE_21">changelog &sect;21</RouterLink>). This proposal uses them as published.
           </p>
         </div>
 
         <div class="ofp-prose">
-          <div class="ofp-qa">
-            <div class="ofp-qa__label">The V2.2 design questions, and this proposal&rsquo;s answers</div>
-            <div v-for="(item, i) in designQuestions" :key="i" class="ofp-qa__item">
-              <div class="ofp-qa__q"><span class="ofp-qa__n">{{ String(i + 1).padStart(2, '0') }}</span>{{ item.q }}</div>
-              <p class="ofp-qa__a" v-html="item.a" />
-            </div>
+          <div class="ofp-table-wrap ofp-table-wrap--wide">
+            <table class="ofp-table">
+              <thead>
+                <tr><th>Specification</th><th>Where the fields are defined</th></tr>
+              </thead>
+              <tbody>
+                <tr v-for="s in SPECS" :key="s.file">
+                  <th>{{ s.surface }} &middot; <a :href="s.href"><code>{{ s.file }}</code></a></th>
+                  <td v-html="s.schema" />
+                </tr>
+              </tbody>
+            </table>
           </div>
 
+          <div class="ofp-code">
+            <div class="ofp-code__label">The V2.2 definition (excerpt)</div>
+            <pre class="ofp-code__pre">{{ schemaExample }}</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         04 · POINT 3 · PAYMENTS ABOVE AED 50,000
+    ═══════════════════════════════════════════════════════════════════ -->
+    <section class="ofp-band ofp-band--white">
+      <div class="ofp-band__inner">
+        <div class="ofp-band__head">
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 04 &middot; Point 3 &middot; Payments above AED 50,000</div>
+          <h2 class="ofp-band__title">Required on any payment above AED 50,000, tied to a multi-payment consent</h2>
+        </div>
+
+        <div class="ofp-prose">
           <div class="ofp-rules">
             <div class="ofp-rules__label">Proposed rules</div>
             <ul class="ofp-rules__list">
               <li>
-                <strong>The fields.</strong> <code>Risk.DebtorIndicators.EmiratesId</code> is an optional string
-                matching <code>^784-?[0-9]{4}-?[0-9]{7}-?[0-9]{1}$</code>: the 15 digits of the Emirates ID, with
-                or without hyphens. <code>Risk.DebtorIndicators.TradeLicenceNumber</code> is an optional string
-                with no pattern, as the format varies by issuing authority. Both are defined on the consent-time
-                <code>Risk</code> sent to <code>POST /par</code> and on the payment-time <code>Risk</code> sent to
-                <code>POST /payments</code>.
-              </li>
-              <li>
-                <strong>TPPs populate what they hold.</strong> The TPP MUST populate every <code>Risk</code> field
-                that is known or derivable from its system, for the debtor, the transaction and the creditor. A
-                TPP that holds the Debtor&rsquo;s identifier therefore sends it wherever <code>Risk</code> is sent.
-              </li>
-              <li>
-                <strong>Long-lived consents.</strong> Under a long-lived consent, the TPP MUST capture the
-                identifier that applies to the User and MUST send it on <strong>every</strong>
+                <strong>The threshold.</strong> The TPP MUST send the identifier on any
                 <RouterLink :to="`${TPP_SI}/open-api/payments`"><code>POST /payments</code></RouterLink>
-                under that consent, not only the first. For a Retail User, this is the User&rsquo;s Emirates ID, in
-                <code>EmiratesId</code>. For an SME or Corporate User, it is the Trade Licence number of the
-                business on whose behalf the User is initiating the payment, in <code>TradeLicenceNumber</code>.
+                where <code>Data.Instruction.Amount.Amount</code> is greater than <code>50000.00</code> (always
+                AED), tied to a consent of any of the seven multi-payment types:
+                <template v-for="(t, i) in multiPaymentTypes" :key="t.slug">
+                  <RouterLink :to="`${TPP_SI}/domestic-payments/multi-payments/${t.slug}/requirements`">{{ t.name }}</RouterLink><template v-if="i < multiPaymentTypes.length - 1">, </template>
+                </template>.
+                Each payment is judged on its own amount, not on the consent&rsquo;s limits. Single Instant
+                Payment is out of scope.
               </li>
               <li>
-                <strong>The LFI MAY enforce it at <code>POST /payments</code>.</strong> When its Ozone Connect
+                <strong>Which identifier.</strong> <code>EmiratesId</code> for a Retail User;
+                <code>TradeLicenceNumber</code>, of the business on whose behalf the User pays, for an SME or
+                Corporate User.
+              </li>
+              <li>
+                <strong>AED 50,000 or less.</strong> Not required, and the TPP MAY send it. This is an exception to
+                the rule that the TPP populates every <code>Risk</code> field it holds.
+              </li>
+              <li>
+                <strong>The LFI MAY reject above the threshold.</strong> At its Ozone Connect
                 <RouterLink :to="`${LFI_SI}/open-api/payments`"><code>POST /payments</code></RouterLink>
-                endpoint receives a payment under a long-lived consent, the LFI MAY compare the identifier with
-                what it holds for the customer identified by <code>o3-psu-identifier</code>: for a Retail customer,
-                <code>EmiratesId</code> with the customer&rsquo;s Emirates ID, ignoring hyphens; for an SME or
-                Corporate customer, <code>TradeLicenceNumber</code> with the business&rsquo;s Trade Licence
-                number, using only letters and digits and ignoring case. If the value is absent or does not
-                match, the LFI MAY reject the payment with <code>400</code> and
-                <code>Consent.BusinessRuleViolation</code>. It checks only the field for the customer&rsquo;s type.
-              </li>
-              <li>
-                <strong>Out of scope.</strong> Single Instant Payment consents; transactional-data requests; and
-                the creditor&rsquo;s identifier, which stays optional &mdash; sent if held, reported rather than
-                blocked when missing.
+                endpoint, the LFI MAY compare the identifier with what it holds for the customer identified by
+                <code>o3-psu-identifier</code> (Emirates ID ignoring hyphens; Trade Licence number on letters and
+                digits only, ignoring case), and reject with <code>400 Consent.BusinessRuleViolation</code> when it
+                is absent or does not match. At or below the threshold it MUST NOT reject because the identifier is
+                absent, and MAY reject a value that is sent and does not match.
               </li>
             </ul>
-          </div>
-
-          <p>
-            The identifier arrives on the <code>POST /payments</code> request itself, so the LFI compares it with
-            what it holds for its customer. The API orchestration does not change: the LFI already calls the
-            Consent Manager
-            <RouterLink to="/tech/lfi-api-hub/v2.2-rc2/api-hub/consent-manager/open-api/consents-consentId"><code>GET /consents/{consentId}</code></RouterLink>
-            for payment requests, or stores the consent locally.
-          </p>
-
-          <div class="ofp-code">
-            <div class="ofp-code__label">The payment-time PII for each type of customer, and a rejection</div>
-            <pre class="ofp-code__pre">{{ payloadExample }}</pre>
           </div>
 
           <div class="ofp-table-wrap ofp-table-wrap--wide">
@@ -937,110 +573,80 @@ onMounted(() => {
               </tbody>
             </table>
           </div>
-
-          <div class="ofp-callout">
-            <div class="ofp-callout__title">How the TPP sends it, and how the LFI checks it</div>
-            <div class="ofp-callout__text">
-              The Knowledge Base article
-              <RouterLink :to="KB_ARTICLE">Emirates ID and Trade Licence Number on Long-Lived Payments</RouterLink>
-              sets out what the TPP sends for each type of customer, the LFI&rsquo;s check step by step with sample
-              code in Node.js and Python, and the four error responses.
-            </div>
-          </div>
-
-          <div class="ofp-callout">
-            <div class="ofp-callout__title">Read alongside <code>ReadPartyIdentity</code></div>
-            <div class="ofp-callout__text">
-              TPPs should read this proposal alongside the V2.2 change to the permission model, which adds
-              <code>ReadPartyIdentity</code> to Bank Data Sharing and Bank Service Initiation consents
-              (<RouterLink to="/tech/release-notes-and-erratas/changelog/v2.2-rc2/#v2.1-to-v2.2-change-20">v2.1 &rarr; v2.2 changelog, &sect;20</RouterLink>).
-            </div>
-          </div>
         </div>
       </div>
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         08 · TECHNICAL CHANGES
-    ═══════════════════════════════════════════════════════════════════ -->
-    <section class="ofp-band ofp-band--white">
-      <div class="ofp-band__inner">
-        <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 08 &middot; Technical changes</div>
-          <h2 class="ofp-band__title">What changes</h2>
-          <p class="ofp-band__lede">
-            The specification stays the same: no endpoint is added or removed, and the identifier travels on the
-            existing <code>POST /payments</code>. The fields and the TPP requirement are already in V2.2. The new
-            part is the LFI&rsquo;s permission to enforce.
-          </p>
-        </div>
-
-        <div class="ofp-changes">
-          <div class="ofp-change">
-            <div class="ofp-change__label">01 &middot; Standards &mdash; <code>uae-authorization-endpoints-openapi.yaml</code>, <code>uae-bank-initiation-openapi.yaml</code></div>
-            <p>
-              <code>DebtorIndicators.EmiratesId</code> and <code>DebtorIndicators.TradeLicenceNumber</code> on the
-              consent-time and payment-time <code>Risk</code>. <strong>Already in V2.2.</strong>
-            </p>
-          </div>
-
-          <div class="ofp-change">
-            <div class="ofp-change__label">02 &middot; API Hub Consent Manager &mdash; <code>uae-api-hub-consent-manager-openapi.yaml</code></div>
-            <p>
-              Both fields in both <code>DebtorIndicators</code> schemas; <code>TradeLicenceNumber</code> from
-              v2.2.5. <strong>Already in V2.2.</strong>
-            </p>
-          </div>
-
-          <div class="ofp-change">
-            <div class="ofp-change__label">03 &middot; Ozone Connect &mdash; <code>uae-ozone-connect-bank-service-initiation-openapi.yaml</code></div>
-            <p>
-              Both fields on <code>AEDebtorIndicators</code>, which the LFI&rsquo;s Ozone Connect
-              <code>POST /payments</code> endpoint receives, and on the corresponding schemas in the CAAP
-              Operations and Consent Events and Actions descriptions. <code>TradeLicenceNumber</code> is in v2.2.7
-              of Bank Service Initiation, v2.2.6 of CAAP Operations and v2.2.4 of Consent Events and Actions.
-              <strong>Already in V2.2.</strong>
-            </p>
-            <p>
-              <code>AEDebtorIndicators</code> does not allow additional properties, so an LFI that validates
-              against an earlier v2.2 release rejects a payment that carries <code>TradeLicenceNumber</code> until
-              it updates to v2.2.7.
-            </p>
-          </div>
-
-          <div class="ofp-change">
-            <div class="ofp-change__label">04 &middot; TPP requirements</div>
-            <p>
-              <code>EmiratesId</code> required for a Retail User, and <code>TradeLicenceNumber</code> for an SME or
-              Corporate User, on every <code>POST /payments</code>, in the Payment Initiation requirements of each
-              of the seven long-lived payment types. <strong>Already in V2.2.</strong>
-            </p>
-          </div>
-
-          <div class="ofp-change">
-            <div class="ofp-change__label">05 &middot; LFI requirements &mdash; new</div>
-            <p>
-              Add the check as a MAY, with its four error responses, to the LFI requirements and API guides of
-              the seven long-lived payment types. Today it is described only in the Knowledge Base article
-              <RouterLink :to="KB_ARTICLE">Emirates ID and Trade Licence Number on Long-Lived Payments</RouterLink>.
-            </p>
-          </div>
-        </div>
-
-        <div class="ofp-code">
-          <div class="ofp-code__label">The V2.2 definition</div>
-          <pre class="ofp-code__pre">{{ schemaExample }}</pre>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══════════════════════════════════════════════════════════════════
-         09 · QUESTIONS ATTACHED TO THIS VOTE
+         05 · POINT 4 · DATA SHARING
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ofp-band ofp-band--cream">
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 09 &middot; Questions</div>
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 05 &middot; Point 4 &middot; Data Sharing</div>
+          <h2 class="ofp-band__title">Not required for Data Sharing</h2>
+          <p class="ofp-band__lede">
+            Under a Data Sharing consent, including one for transactional data, the TPP is not required to send
+            the Debtor&rsquo;s identifier &mdash; not in <code>login_hint</code> (point 1), and not on any request:
+            no Data Sharing request, such as
+            <RouterLink :to="`${TPP_DS}/open-api/accounts-AccountId-transactions`"><code>GET /accounts/{AccountId}/transactions</code></RouterLink>,
+            has a field for it. The PSU authenticates at the LFI, and the API Hub validates the consent on every
+            request. The LFI MUST NOT reject an authorization or a request because the identifier is absent.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         06 · TECHNICAL CHANGES
+    ═══════════════════════════════════════════════════════════════════ -->
+    <section class="ofp-band ofp-band--white">
+      <div class="ofp-band__inner">
+        <div class="ofp-band__head">
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 06 &middot; Technical changes</div>
+          <h2 class="ofp-band__title">What changes</h2>
+        </div>
+
+        <div class="ofp-changes">
+          <div class="ofp-change">
+            <div class="ofp-change__label">01 &middot; Specifications &mdash; no change</div>
+            <p>
+              The Standards, API Hub Consent Manager and Ozone Connect specifications already carry both fields,
+              and <code>login_hint</code> is already optional.
+            </p>
+          </div>
+
+          <div class="ofp-change">
+            <div class="ofp-change__label">02 &middot; TPP requirements &mdash; changed</div>
+            <p>
+              The seven multi-payment requirements pages and the
+              <RouterLink :to="`${TPP_SI}/personal-identifiable-information/risk`"><code>Risk</code></RouterLink>
+              page move from &ldquo;every <code>POST /payments</code> under a long-lived consent&rdquo; to
+              &ldquo;any payment above AED 50,000, tied to a multi-payment consent&rdquo;. The guidance states that
+              the identifier is not required in <code>login_hint</code> or for Data Sharing.
+            </p>
+          </div>
+
+          <div class="ofp-change">
+            <div class="ofp-change__label">03 &middot; LFI requirements and Knowledge Base &mdash; new and updated</div>
+            <p>
+              The LFI requirements of the seven multi-payment types gain the check above AED 50,000, its four error
+              responses, and the MUST NOT rules. The articles
+              <RouterLink :to="KB_ARTICLE">Emirates ID and Trade Licence Number on Long-Lived Payments</RouterLink>
+              and <RouterLink :to="KB_LOGIN_HINT">Emirates ID in login_hint</RouterLink> are updated to match.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         07 · QUESTIONS ATTACHED TO THIS VOTE
+    ═══════════════════════════════════════════════════════════════════ -->
+    <section class="ofp-band ofp-band--cream">
+      <div class="ofp-band__inner">
+        <div class="ofp-band__head">
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 07 &middot; Questions</div>
           <h2 class="ofp-band__title">One question, asked with the vote</h2>
           <p class="ofp-band__lede">
             It appears as an optional box when you confirm your vote.
@@ -1059,12 +665,12 @@ onMounted(() => {
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         10 · PROS
+         08 · PROS
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ofp-band ofp-band--white">
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 10 &middot; Pros</div>
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 08 &middot; Pros</div>
           <h2 class="ofp-band__title">What it gives</h2>
         </div>
         <ul class="ofp-pros">
@@ -1077,12 +683,12 @@ onMounted(() => {
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         11 · CONS
+         09 · CONS
     ═══════════════════════════════════════════════════════════════════ -->
     <section class="ofp-band ofp-band--cream">
       <div class="ofp-band__inner">
         <div class="ofp-band__head">
-          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 11 &middot; Cons</div>
+          <div class="ofp-band__eyebrow"><span class="ofp-band__eyebrow-dash" /> 09 &middot; Cons</div>
           <h2 class="ofp-band__title">What it costs</h2>
         </div>
         <ul class="ofp-cons">
@@ -1671,190 +1277,9 @@ onMounted(() => {
   margin-top: 1px;
 }
 
-/* ─── Position cards (01) and Risk block columns (04) ───────────────────── */
-.ofp-cards {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  max-width: 64rem;
-}
-
-.ofp-card {
-  border: 1px solid var(--at-grid-line);
-  border-top: 2px solid var(--at-teal);
-  background: var(--at-surface);
-  padding: 20px 22px;
-}
-
-.ofp-band--white .ofp-card,
-.ofp-band--white .ofp-step,
-.ofp-band--white .ofp-compare__col { background: var(--at-bg-cream); }
-
-.ofp-card__num {
-  font-family: var(--at-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  font-weight: 600;
-  color: var(--at-teal);
-  margin-bottom: 8px;
-}
-
-.ofp-card__title {
-  font-family: var(--at-serif);
-  font-size: 1.25rem;
-  font-weight: 500;
-  line-height: 1.25;
-  color: var(--at-navy-deep);
-  margin-bottom: 12px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 10px;
-}
-
-.ofp-card p,
-.ofp-step p,
-.ofp-compare__col p {
-  font-size: 15px;
-  line-height: 1.62;
-  color: var(--at-navy);
-  margin: 0;
-  text-wrap: pretty;
-}
-
-.ofp-card p + p,
-.ofp-compare__col p + p { margin-top: 10px; }
-
-/* ─── Badges (scope and field status) ───────────────────────────────────── */
-.ofp-badge {
-  font-family: var(--at-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  font-weight: 700;
-  padding: 3px 8px;
-  white-space: nowrap;
-}
-
-.ofp-badge--in { background: rgba(0, 194, 169, 0.14); color: var(--at-teal-deep, #008b78); }
-.ofp-badge--new { background: rgba(0, 194, 169, 0.14); color: var(--at-teal-deep, #008b78); }
-.ofp-badge--held { background: color-mix(in srgb, var(--at-gold) 16%, transparent); color: var(--at-gold); }
-.ofp-badge--out { background: rgba(166, 57, 31, 0.12); color: #a6391f; }
-.ofp-badge--neutral { background: var(--at-bg-paper); color: var(--at-mute-2); border: 1px solid var(--at-grid-line); }
-
-/* ─── Numbered steps (02, 05) ───────────────────────────────────────────── */
-.ofp-flow-label {
-  font-family: var(--at-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  font-weight: 600;
-  color: var(--at-teal);
-  margin: 0 0 12px;
-}
-
-.ofp-steps {
-  list-style: none;
-  margin: 0 0 2rem;
-  padding: 0;
-  display: grid;
-  gap: 16px;
-  max-width: 64rem;
-}
-
-.ofp-steps--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.ofp-steps--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-
-.ofp-step {
-  border: 1px solid var(--at-grid-line);
-  background: var(--at-surface);
-  padding: 18px 20px;
-}
-
-.ofp-step__num {
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--at-teal);
-  color: var(--at-teal);
-  font-family: var(--at-mono);
-  font-size: 12px;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
-
-.ofp-step__title {
-  font-weight: 600;
-  font-size: 15.5px;
-  color: var(--at-navy-deep);
-  margin-bottom: 6px;
-}
-
-/* ─── Two-column comparison (02, 03) ────────────────────────────────────── */
-.ofp-compare {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  max-width: 64rem;
-  margin: 0 0 2rem;
-}
-
-.ofp-compare__col {
-  border: 1px solid var(--at-grid-line);
-  background: var(--at-surface);
-  padding: 20px 22px;
-}
-
-.ofp-compare__head {
-  font-family: var(--at-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-weight: 600;
-  color: var(--at-navy-deep);
-  margin-bottom: 12px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 10px;
-}
-
-.ofp-compare__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.ofp-compare__list li {
-  position: relative;
-  padding-left: 1.1rem;
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--at-navy);
-  margin-bottom: 8px;
-}
-
-.ofp-compare__list li:last-child { margin-bottom: 0; }
-
-.ofp-compare__list li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0.62em;
-  width: 6px;
-  height: 6px;
-  background: var(--at-navy);
-  opacity: 0.5;
-}
-
-/* Inline code in the new blocks, matching the prose treatment. Steps, table
-   cells and answers are rendered with v-html, which scoped styles do not reach
-   without :deep(). */
-.ofp-card code,
-.ofp-step :deep(code),
-.ofp-compare code,
-.ofp-qa :deep(code),
+/* ─── Inline code in table cells (01, 03, 04) ───────────────────────────── */
+/* Cells are rendered with v-html, which scoped styles do not reach without
+   :deep(). */
 .ofp-table td :deep(code),
 .ofp-table th :deep(code) {
   font-family: var(--at-mono);
@@ -1865,26 +1290,9 @@ onMounted(() => {
   color: var(--at-navy-deep);
 }
 
-.ofp-card__title code { font-size: 0.8em; }
+.ofp-table :deep(strong) { color: var(--at-navy-deep); font-weight: 600; }
 
-/* Long schema paths (CreditorIndicators.AdditionalAccountHolderIdentifiers)
-   must break inside narrow cards and table cells rather than widen them. */
-.ofp-card p code,
-.ofp-step :deep(code),
-.ofp-compare__list code,
-.ofp-qa__a :deep(code) { overflow-wrap: anywhere; }
-
-.ofp-table :deep(strong),
-.ofp-qa__a :deep(strong) { color: var(--at-navy-deep); font-weight: 600; }
-
-.ofp-card a,
-.ofp-step a {
-  color: var(--at-teal-deep, #008b78);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-/* ─── V2.1 position table (06) ──────────────────────────────────────────── */
+/* ─── Wide tables (01, 03, 04) ──────────────────────────────────────────── */
 .ofp-table-wrap--wide { max-width: 72rem; }
 .ofp-table-wrap--wide .ofp-table tbody th { white-space: normal; min-width: 11rem; }
 .ofp-table tr.is-changed th,
@@ -1898,54 +1306,6 @@ onMounted(() => {
   border: none;
   padding: 0;
   color: inherit;
-}
-
-/* ─── Design questions and answers (07) ─────────────────────────────────── */
-.ofp-qa {
-  max-width: 52rem;
-  margin: 0 0 24px;
-  border: 1px solid var(--at-grid-line);
-  border-top: 2px solid var(--at-teal);
-  background: var(--at-surface);
-}
-
-.ofp-qa__label {
-  font-family: var(--at-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  font-weight: 600;
-  color: var(--at-teal);
-  padding: 18px 24px 0;
-}
-
-.ofp-qa__item {
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--at-grid-line);
-}
-
-.ofp-qa__item:last-child { border-bottom: none; }
-
-.ofp-qa__q {
-  font-weight: 600;
-  font-size: 15.5px;
-  line-height: 1.5;
-  color: var(--at-navy-deep);
-  margin-bottom: 6px;
-}
-
-.ofp-qa__n {
-  font-family: var(--at-mono);
-  font-size: 11px;
-  color: var(--at-teal);
-  margin-right: 10px;
-}
-
-.ofp-prose .ofp-qa__a,
-.ofp-qa__a {
-  font-size: 15px;
-  line-height: 1.62;
-  color: var(--at-navy);
-  margin: 0;
 }
 
 /* ─── Vote cover (shown when voting is not open) ─────────────────────────── */
@@ -2008,20 +1368,12 @@ onMounted(() => {
 }
 
 /* ─── Responsive ────────────────────────────────────────────────────────── */
-@media (max-width: 1100px) {
-  .ofp-steps--4 { grid-template-columns: repeat(2, 1fr); }
-}
-
 @media (max-width: 920px) {
   .ofp-hero__inner { padding: 2rem 1.25rem 2.25rem; }
   .ofp-band { padding: 2.5rem 0 3rem; }
   .ofp-band__inner { padding: 0 1.25rem; }
   .ofp-pros { grid-template-columns: 1fr; }
   .ofp-cons { grid-template-columns: 1fr; }
-  .ofp-cards,
-  .ofp-steps--3,
-  .ofp-steps--4,
-  .ofp-compare { grid-template-columns: 1fr; }
 }
 
 /* ─── Inline code and links in the callout and eyebrow (OFP-022) ────────── */
