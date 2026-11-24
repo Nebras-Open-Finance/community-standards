@@ -5,11 +5,32 @@
 // On wide viewports a teal connector node sits between them, with dashed
 // rails extending left (purple = TPP-side) and right (teal = LFI-side) to
 // signal the cross-party authentication hop.
+//
+// An optional `before` slot adds a second TPP panel to the left of the
+// consent page — for a TPP screen the User passes through first, such as the
+// Bulk/Batch Upload screen. The layout then has three columns, and the
+// authentication hop stays between the consent and authorisation panels.
+// `beforeTitle` labels that panel. Without the slot nothing changes.
+import { computed, useSlots } from 'vue'
+
+defineProps<{ beforeTitle?: string }>()
+const slots = useSlots()
+const hasBefore = computed(() => !!slots.before)
 </script>
 
 <template>
-  <div class="cal">
+  <div class="cal" :class="{ 'cal--three': hasBefore }">
     <div class="cal__layout">
+      <div v-if="hasBefore" class="cal__panel">
+        <div class="cal__label cal__label--tpp">
+          <span class="cal__label-eyebrow">TPP</span>
+          <span class="cal__label-title">{{ beforeTitle ?? 'Upload page' }}</span>
+        </div>
+        <div class="cal__slot">
+          <slot name="before" />
+        </div>
+      </div>
+
       <div class="cal__panel">
         <div class="cal__label cal__label--tpp">
           <span class="cal__label-eyebrow">TPP</span>
@@ -222,6 +243,28 @@
     text-transform: uppercase;
     font-weight: 600;
     color: var(--at-mute-2);
+  }
+}
+/* Three panels (the `before` slot is filled): two TPP panels, then the LFI.
+   Columns are 30% wide with 5% gaps, so the gap between the consent and
+   authorisation panels is centred at 67.5% — where the TPP rail ends, the
+   LFI rail starts and the hop node sits. The slots are zoomed less than the
+   two-panel 1.5 so three windows fit across the page, and the node is drawn
+   unscaled so it fits in the narrower gap. */
+@media (min-width: 769px) {
+  .cal--three .cal__layout {
+    grid-template-columns: repeat(3, 30%);
+    justify-content: space-between;
+    gap: 0;
+  }
+  .cal--three .cal__slot {
+    zoom: 1.2;
+  }
+  .cal--three::before { right: 32.5%; }
+  .cal--three::after { left: 67.5%; }
+  .cal--three .cal__hop {
+    left: 67.5%;
+    transform: translate(-50%, -50%);
   }
 }
 </style>

@@ -324,6 +324,47 @@ export function paymentConsentScenarios(
 }
 
 /**
+ * Bulk/Batch Payment consent scenarios (v2.2 onwards): the page's payroll run,
+ * and the same run with `OnBehalfOf`, which adds the "on-behalf of" party to
+ * the Authorisation Page.
+ *
+ * A Bulk/Batch consent carries no `Permissions`, `DebtorReference` or
+ * `CreditorReference`, so the variants of `paymentConsentScenarios` do not apply.
+ *
+ * @param base The page's payroll-run `authorization_details` body, without
+ *   `OnBehalfOf`.
+ */
+export function bulkBatchConsentScenarios(
+  base: Record<string, unknown>,
+  consentKey: 'consent' | 'Data' = 'consent',
+): JsonScenario[] {
+  const derive = (
+    mutate: (consent: Record<string, any>) => void,
+  ): Record<string, unknown> => {
+    const next = JSON.parse(JSON.stringify(base)) as Record<string, any>
+    mutate(next[consentKey])
+    return next
+  }
+
+  return [
+    {
+      id: 'payroll-run',
+      label: 'Payroll run',
+      description: 'A monthly salary batch of 3 payments',
+      data: derive(() => {}),
+    },
+    {
+      id: 'with-on-behalf-of',
+      label: 'OnBehalfOf provided',
+      description: 'OnBehalfOf names the party the TPP initiates the batch for',
+      data: derive((consent) => {
+        consent.OnBehalfOf = { ...PAYMENT_ON_BEHALF_OF }
+      }),
+    },
+  ]
+}
+
+/**
  * Reduces a `MultiPayment` block to the controls the payment type requires,
  * dropping every optional cap.
  *

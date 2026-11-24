@@ -89,6 +89,21 @@ function draftEntry(input: EntryInput): Endpoint {
   }
 }
 
+const SPEC_BANK_INITIATION_DRAFT = '/openapi/v2.2-rc2/standards/uae-bank-initiation-openapi.yaml'
+
+const DRAFT_PAYMENT_SERVERS: OverrideServer[] = [
+  { url: 'https://rs1.[LFICODE].apihub.openfinance.ae/open-finance/payment/v2.2' },
+  { url: 'https://rs1.[LFICODE].preprod.apihub.openfinance.ae/open-finance/payment/v2.2' },
+  { url: 'https://rs1.altareq1.sandbox.apihub.openfinance.ae/open-finance/payment/v2.2' },
+]
+
+const BULK_BATCH_OPERATIONS = [
+  ['POST', '/bulk-payments', 'bulk-payments', 'Create a Bulk/Batch Payment'],
+  ['GET', '/bulk-payments/{BulkPaymentId}', 'bulk-payments-BulkPaymentId', 'Get a Bulk/Batch Payment'],
+  ['GET', '/bulk-payments/{BulkPaymentId}/payments/{PaymentId}', 'bulk-payments-BulkPaymentId-payments-PaymentId', 'Get a Payment within a Bulk/Batch Payment'],
+  ['GET', '/bulk-payments', 'bulk-payments-idempotency', 'Get a Bulk/Batch PaymentId from Idempotency Key'],
+] as const
+
 // Each consent family carries the attestations sub-resource in its own standards
 // document, so the spec is per family rather than one shared constant. These
 // entries are authored at v2.2-rc2 rather than cloned from v2.1 (see
@@ -441,6 +456,25 @@ export const standardsEndpoints: readonly Endpoint[] = [
       overrideServers: PAYMENT_SERVERS,
     },
   }),
+
+  // Bank Service Initiation · Bulk and Batch (v2.2-rc2 only) — OFP-001. The
+  // /bulk-payments operations replace v2.1's unbuilt /file-payments, so they
+  // are authored at v2.2-rc2 rather than cloned (see cloneForVersion).
+  ...BULK_BATCH_OPERATIONS.map(([method, path, slug, title]) => draftEntry({
+    section: 'Bank Service Initiation',
+    sectionSlug: 'service-initiation',
+    subsection: 'Bulk and Batch',
+    slug,
+    method,
+    path,
+    title,
+    redoc: {
+      spec: SPEC_BANK_INITIATION_DRAFT,
+      filterPath: path,
+      filterMethod: method,
+      overrideServers: DRAFT_PAYMENT_SERVERS,
+    },
+  })),
 
   // Confirmation of Payee
   entry({

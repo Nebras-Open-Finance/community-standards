@@ -106,11 +106,12 @@ const patchRejectedExample = `{
 
       <EdNote type="info" title="Received status">
         <p>
-          The Open Finance enum also includes a sixth value, <code>Received</code> (ISO 20022
-          <code>RCVD</code>), used only for bulk and batch payments where the Hub acknowledges receipt
-          of a file of instructions before processing individual payments. Bulk and batch payments are
-          not yet documented in v2.2 &mdash; for the domestic single and multi-payments covered by this
-          page, you can ignore <code>Received</code>.
+          The Ozone Connect enum also includes a sixth value, <code>Received</code> (ISO 20022
+          <code>RCVD</code>). It is not used for the domestic single and multi-payments covered by this
+          page, so you can ignore it there. In a
+          <a href="/tech/lfi-api-hub/v2.2-rc2/banking/service-initiation/domestic-payments/bulk-batch-payments/">Bulk
+          and Batch Payment</a>, each payment carries the statuses above; the batch has no status of its
+          own.
         </p>
       </EdNote>
 

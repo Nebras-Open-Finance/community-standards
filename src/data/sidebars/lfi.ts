@@ -69,6 +69,31 @@ function multiPaymentItems(base: string): SidebarItem[] {
   ]
 }
 
+// Bulk/Batch Payments as a JSON Instructions array (OFP-001), v2.2 only. The
+// Ozone Connect /bulk-payments operations serve only Bulk/Batch, so their API
+// Reference sits inside the section.
+const BULK_BATCH_VERSIONS: readonly string[] = ['v2.2-rc2']
+
+function hasBulkBatchPayments(version: Version): boolean {
+  return BULK_BATCH_VERSIONS.includes(version)
+}
+
+function bulkBatchItems(base: string): SidebarItem[] {
+  return [
+    { text: 'Overview', link: `${base}/` },
+    ...multiPaymentItems(base),
+    {
+      text: 'API Reference',
+      collapsed: true,
+      items: [
+        apiRef('POST', '/bulk-payments', `${base}/open-api/bulk-payments`),
+        apiRef('GET', '/bulk-payments/{bulkPaymentId}', `${base}/open-api/bulk-payments-bulkPaymentId`),
+        apiRef('GET', '/bulk-payments/{bulkPaymentId}/payments/{paymentId}', `${base}/open-api/bulk-payments-bulkPaymentId-payments-paymentId`),
+      ],
+    },
+  ]
+}
+
 const INSURANCE_TYPES = [
   ['Employment', 'employment'],
   ['Health',     'health'],
@@ -436,6 +461,14 @@ export const buildLfiSidebar = (version: Version): SidebarItem[] => [
                   { text: 'Delegated SCA', collapsed: true, items: multiPaymentItems(`${BASE}/${version}/banking/service-initiation/domestic-payments/multi-payments/delegated-sca`) },
                 ],
               },
+              // Introduced in v2.2 — omitted from versions that predate it.
+              ...(hasBulkBatchPayments(version)
+                ? [{
+                    text: 'Bulk and Batch Payments',
+                    collapsed: true,
+                    items: bulkBatchItems(`${BASE}/${version}/banking/service-initiation/domestic-payments/bulk-batch-payments`),
+                  }]
+                : []),
             ],
           },
           {

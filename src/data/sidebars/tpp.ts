@@ -21,6 +21,14 @@ function hasPaymentTiming(version: Version): boolean {
   return PAYMENT_TIMING_VERSIONS.includes(version)
 }
 
+// Bulk/Batch Payments as a JSON Instructions array (OFP-001). v2.1 still
+// defines the unbuilt file-upload model, which these pages do not document.
+const BULK_BATCH_VERSIONS: readonly string[] = ['v2.2-rc2']
+
+function hasBulkBatchPayments(version: Version): boolean {
+  return BULK_BATCH_VERSIONS.includes(version)
+}
+
 const ATTESTATION_CONSENTS = [
   ['/account-access-consents', 'account-access-consents'],
   ['/payment-consents', 'payment-consents'],
@@ -39,6 +47,25 @@ function multiPaymentItems(base: string): SidebarItem[] {
     { text: 'Requirements', link: `${base}/requirements` },
     { text: 'User Experience', link: `${base}/user-journeys` },
     { text: 'API Guide', link: `${base}/api-guide` },
+  ]
+}
+
+// The /bulk-payments operations serve only Bulk/Batch Payments, so their API
+// Reference sits inside the section rather than under Service Initiation.
+function bulkBatchItems(base: string): SidebarItem[] {
+  return [
+    { text: 'Overview', link: `${base}/` },
+    ...multiPaymentItems(base),
+    {
+      text: 'API Reference',
+      collapsed: true,
+      items: [
+        apiRef('POST', '/bulk-payments', `${base}/open-api/bulk-payments`),
+        apiRef('GET', '/bulk-payments/{BulkPaymentId}', `${base}/open-api/bulk-payments-BulkPaymentId`),
+        apiRef('GET', '/bulk-payments/{BulkPaymentId}/payments/{PaymentId}', `${base}/open-api/bulk-payments-BulkPaymentId-payments-PaymentId`),
+        apiRef('GET', '/bulk-payments', `${base}/open-api/bulk-payments-idempotency`),
+      ],
+    },
   ]
 }
 
@@ -380,6 +407,14 @@ export const buildTppSidebar = (version: Version): SidebarItem[] => [
                    { text: 'Delegated SCA', collapsed: true, items: multiPaymentItems(`${BASE}/${version}/banking/service-initiation/domestic-payments/multi-payments/delegated-sca`) },
                 ],
               },
+              // Introduced in v2.2 — omitted from versions that predate it.
+              ...(hasBulkBatchPayments(version)
+                ? [{
+                    text: 'Bulk and Batch Payments',
+                    collapsed: true,
+                    items: bulkBatchItems(`${BASE}/${version}/banking/service-initiation/domestic-payments/bulk-batch-payments`),
+                  }]
+                : []),
             ],
           },
           {

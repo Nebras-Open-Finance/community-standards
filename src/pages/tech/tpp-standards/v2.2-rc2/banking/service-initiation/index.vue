@@ -100,6 +100,17 @@ const cards: CapCard[] = [
     subs: paymentSubs('multi-payments/delegated-sca'),
   },
   {
+    tone: 'gold',
+    category: 'Domestic payment · Bulk/Batch',
+    title: 'Bulk and Batch Payments',
+    desc: 'Many payments under a single consent and authorization, sent as one JSON array and tracked payment by payment. For SME and Corporate customers; optional for LFIs in v2.2.',
+    url: null,
+    subs: [
+      { title: 'Overview', hint: 'What the capability allows and who it is for', url: `${SI_BASE}/domestic-payments/bulk-batch-payments/` },
+      ...paymentSubs('bulk-batch-payments'),
+    ],
+  },
+  {
     tone: 'teal',
     category: 'Repayment',
     title: 'Refunds',

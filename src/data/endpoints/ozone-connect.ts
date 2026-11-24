@@ -14,6 +14,7 @@ const SPEC_PRODUCTS = '/openapi/v2.1/ozone-connect/uae-ozone-connect-bank-produc
 const SPEC_OPEN_DATA = '/openapi/v2.1/ozone-connect/uae-ozone-connect-bank-open-data-openapi.yaml'
 const SPEC_INSURANCE = '/openapi/v2.1/ozone-connect/uae-ozone-connect-insurance-openapi.yaml'
 const SPEC_CAAP = '/openapi/v2.1/ozone-connect/uae-ozone-connect-caap-operations-openapi.yaml'
+const SPEC_SERVICE_INITIATION_DRAFT = '/openapi/v2.2-rc2/ozone-connect/uae-ozone-connect-bank-service-initiation-openapi.yaml'
 
 interface EntryInput {
   section: string
@@ -30,6 +31,15 @@ function entry(input: EntryInput): Endpoint {
   return {
     surface: 'ozone-connect',
     version: VERSION,
+    ...input,
+  }
+}
+
+// Endpoints that exist only from v2.2 onwards.
+function draftEntry(input: EntryInput): Endpoint {
+  return {
+    surface: 'ozone-connect',
+    version: 'v2.2-rc2',
     ...input,
   }
 }
@@ -308,6 +318,55 @@ export const ozoneConnectEndpoints: readonly Endpoint[] = [
       spec: SPEC_SERVICE_INITIATION,
       filterPath: '/payment-consents/{consentId}/refund',
       filterMethod: 'GET',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+
+  // Bank Service Initiation · Bulk and Batch (v2.2-rc2 only) — OFP-001. The
+  // Ozone Connect counterparts of the Standards /bulk-payments operations, as
+  // /payments mirrors /payments; v2.1 has no equivalent.
+  draftEntry({
+    section: 'Bank Service Initiation',
+    sectionSlug: 'service-initiation',
+    subsection: 'Bulk and Batch',
+    slug: 'bulk-payments',
+    method: 'POST',
+    path: '/bulk-payments',
+    title: 'Create a Bulk/Batch Payment',
+    redoc: {
+      spec: SPEC_SERVICE_INITIATION_DRAFT,
+      filterPath: '/bulk-payments',
+      filterMethod: 'post',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  draftEntry({
+    section: 'Bank Service Initiation',
+    sectionSlug: 'service-initiation',
+    subsection: 'Bulk and Batch',
+    slug: 'bulk-payments-bulkPaymentId',
+    method: 'GET',
+    path: '/bulk-payments/{bulkPaymentId}',
+    title: 'Get a Bulk/Batch Payment',
+    redoc: {
+      spec: SPEC_SERVICE_INITIATION_DRAFT,
+      filterPath: '/bulk-payments/{bulkPaymentId}',
+      filterMethod: 'get',
+      overrideServers: OZONE_SERVERS,
+    },
+  }),
+  draftEntry({
+    section: 'Bank Service Initiation',
+    sectionSlug: 'service-initiation',
+    subsection: 'Bulk and Batch',
+    slug: 'bulk-payments-bulkPaymentId-payments-paymentId',
+    method: 'GET',
+    path: '/bulk-payments/{bulkPaymentId}/payments/{paymentId}',
+    title: 'Get a Payment within a Bulk/Batch Payment',
+    redoc: {
+      spec: SPEC_SERVICE_INITIATION_DRAFT,
+      filterPath: '/bulk-payments/{bulkPaymentId}/payments/{paymentId}',
+      filterMethod: 'get',
       overrideServers: OZONE_SERVERS,
     },
   }),

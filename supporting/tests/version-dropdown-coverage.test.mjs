@@ -61,6 +61,18 @@ const ONLY_IN = [
     prefix: false,
     versions: ['v2.2-rc2'],
   },
+  {
+    // Overview, Requirements, User Experience, API Guide and the /bulk-payments API Reference
+    pattern: '/tech/tpp-standards/{v}/banking/service-initiation/domestic-payments/bulk-batch-payments/',
+    prefix: true,
+    versions: ['v2.2-rc2'],
+  },
+  {
+    // Overview, Requirements, User Experience, API Guide and the POST /payments (bulk body) API Reference
+    pattern: '/tech/lfi-api-hub/{v}/banking/service-initiation/domestic-payments/bulk-batch-payments/',
+    prefix: true,
+    versions: ['v2.2-rc2'],
+  },
 ]
 
 function allowedMissing(routePath, targetVersion) {

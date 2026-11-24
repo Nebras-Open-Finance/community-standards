@@ -160,12 +160,11 @@ meta:
         </table>
       </EdRefTable>
 
-      <EdNote type="info" title="Received status">
+      <EdNote type="info" title="Bulk and Batch Payments">
         <p>
-          The Open Finance enum also includes <code>Received</code> (ISO 20022 <code>RCVD</code>), used
-          only for bulk and batch payments where the Hub acknowledges receipt of a file of instructions.
-          Bulk and batch payments are not yet documented in v2.2 &mdash; for the domestic single and
-          multi-payments covered by this page, you can ignore <code>Received</code>.
+          Each payment in a
+          <a href="/tech/tpp-standards/v2.2-rc2/banking/service-initiation/domestic-payments/bulk-batch-payments/">Bulk
+          and Batch Payment</a> carries these same statuses. The batch itself has no status of its own.
         </p>
       </EdNote>
 

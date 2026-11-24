@@ -1370,8 +1370,52 @@ export const VERSION_CHANGES: VersionChange[] = [
     changeId: 'v2.1-to-v2.2',
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
-    introducedIn: 'v2.2-rc1',
+    introducedIn: 'v2.2-rc2',
     number: 24,
+    category: 'New capability',
+    title: 'Bulk and Batch Payments — sent as a JSON array, optional for LFIs',
+    summary:
+      'A TPP sends every payment in a batch as a JSON `Instructions` array on `POST /bulk-payments`, in place of the v2.1 file upload, which no LFI built. Delivering Bulk and Batch Payments is optional for LFIs in v2.2.',
+    description:
+      'v2.1 defined Bulk/Batch Payments as File Payments: the TPP uploaded a payment file in an LFI-specific format to `POST /payment-consents/{ConsentId}/file`, referenced it on the consent by hash, and created the batch with `POST /file-payments`. No LFI implemented it, and the model left the encryption of the file, malware scanning and the supported file formats unspecified. v2.2 replaces it, per OFP-001 (decision record DR-2026-001).\n\n' +
+      '**The payments are sent as a JSON array.** The consent describes the batch, not the payments: `ControlParameters.ConsentSchedule.BulkBatchPayment` carries the reason for the batch (`Description`, shown to the User at authorization), the number of payments (`NumberOfTransactions`, at most 500) and their total (`TotalValueOfPayments`, in `AED`). Once the User has authorized the batch at the LFI, the TPP sends every payment in one signed request to `POST /bulk-payments` — one element of `Instructions` per payment, each with its own amount, purpose code, encrypted Debtor Account and creditor, and references. A TPP that collects the payments as a file, such as a spreadsheet, converts it to the array itself; nothing is uploaded. The API Hub rejects the request unless the number of payments, their currency and their total match the consent.\n\n' +
+      '**Each payment stands on its own.** Each payment has its own `PaymentId` and is validated, screened and settled on its own rail. A payment that fails its checks is `Rejected` on its own, and the rest of the batch proceeds. The batch has no status of its own: the TPP reads every payment with `GET /bulk-payments/{BulkPaymentId}`, or one with `GET /bulk-payments/{BulkPaymentId}/payments/{PaymentId}` or `GET /payments/{PaymentId}`.\n\n' +
+      'A Bulk and Batch consent is its own consent shape, identified by `BulkBatchPayment`. It carries no `Permissions`, `CurrencyRequest`, `PaymentPurposeCode`, `DebtorReference` or `CreditorReference`, and its PII carries only a Bulk and Batch `Risk` block describing the submission as a whole. The User authorizes the batch once, with no account selection, as the payments in one batch may be made from different accounts. Bulk and Batch Payments are for SME and Corporate customers, not Retail.\n\n' +
+      'On the LFI side, Ozone Connect gains `POST /bulk-payments`, `GET /bulk-payments/{bulkPaymentId}` and `GET /bulk-payments/{bulkPaymentId}/payments/{paymentId}`, the Bulk and Batch counterparts of the payment operations. The v2.1 file endpoints and the execution report are removed.\n\n' +
+      '**Optional for LFIs.** In v2.2, delivering Bulk and Batch Payments is optional for LFIs. An LFI that offers them implements the LFI requirements linked below. As no LFI built the v2.1 file model, there is no live integration to migrate.',
+    docsPaths: [
+      {
+        label: 'TPP specification',
+        path: `${SI_TPP}/domestic-payments/bulk-batch-payments/`,
+      },
+      {
+        label: 'LFI specification',
+        path: `${SI_LFI}/domestic-payments/bulk-batch-payments/`,
+      },
+    ],
+    audience: 'Both',
+    areas: ['Service Initiation', 'Payments', 'Ozone Connect'],
+    specs: ['uae-bank-initiation-openapi', 'uae-ozone-connect-bank-service-initiation-openapi'],
+    endpoints: [
+      {
+        label: 'POST /bulk-payments',
+        path: `${SI_TPP}/domestic-payments/bulk-batch-payments/open-api/bulk-payments`,
+      },
+      {
+        label: 'POST /bulk-payments (Ozone Connect)',
+        path: `${SI_LFI}/domestic-payments/bulk-batch-payments/open-api/bulk-payments`,
+      },
+    ],
+    // The Bulk and Batch pages exist only from v2.2, so there is no v2.1 page to
+    // compare them with; the entry links to them through docsPaths instead.
+    affectedPaths: [],
+  },
+  {
+    changeId: 'v2.1-to-v2.2',
+    fromVersion: 'v2.1',
+    toVersion: 'v2.2-rc2',
+    introducedIn: 'v2.2-rc1',
+    number: 25,
     category: 'New capability',
     title: 'Data deletion confirmation — attestations sub-resource',
     summary:
@@ -1431,7 +1475,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc1',
-    number: 25,
+    number: 26,
     category: 'New capability',
     title: 'Sharia-compliant product data — expected profit rates, finance rates, and Takaful',
     summary:
@@ -1511,7 +1555,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc1',
-    number: 26,
+    number: 27,
     category: 'Behaviour change',
     title: 'Interest and profit calculation methods are separate fields',
     summary:
@@ -1580,7 +1624,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc1',
-    number: 27,
+    number: 28,
     category: 'New capability',
     title: 'Balance components, transaction allocations and statement balances carry a Shari\'ah description',
     summary:

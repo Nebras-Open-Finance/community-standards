@@ -166,44 +166,104 @@ function fullResolveSchema(schema: Schema | undefined): Schema {
 
 function removeProperties(schema: Schema, paths: string[]) {
   paths.forEach((pathStr) => {
-    const parts = pathStr.split('.')
-    let current: Schema = schema
-    for (let i = 0; i < parts.length - 1; i++) {
-      if (current.type !== 'object' || !current.properties) {
-        addError(`Cannot traverse non-object at ${parts.slice(0, i + 1).join('.')}`)
-        return
-      }
-      const next = current.properties[parts[i]!]
-      if (!next) return
-      current = next
-    }
-    if (current.type !== 'object' || !current.properties) {
-      addError(`Cannot remove from non-object at ${pathStr}`)
-      return
-    }
-    const last = parts[parts.length - 1]!
-    delete current.properties[last]
-    if (current.required) current.required = current.required.filter((r) => r !== last)
+    const err = removeAtPath(schema, pathStr.split('.'), pathStr)
+    if (err) addError(err)
   })
 }
 
-function initFormValue(schema: Schema): unknown {
+// Removes the field at `parts` below `node`, returning an error message or null.
+// A path that crosses a `oneOf`/`anyOf` is removed from every variant that can
+// hold it — from v2.2 the payment consent is a `oneOf` of a Bulk/Batch and a
+// Domestic or International shape, and an excluded field such as
+// `consent.PersonalIdentifiableInformation` must leave both. It is an error only
+// when no variant can.
+function removeAtPath(node: Schema, parts: string[], pathStr: string): string | null {
+  const variants = node.oneOf || node.anyOf
+  if (variants) {
+    const errs = variants.map((v) => removeAtPath(v, parts, pathStr))
+    return errs.every(Boolean) ? errs[0] ?? null : null
+  }
+  if (node.type !== 'object' || !node.properties) return `Cannot remove from non-object at ${pathStr}`
+  const [head, ...rest] = parts
+  if (rest.length === 0) {
+    delete node.properties[head!]
+    if (node.required) node.required = node.required.filter((r) => r !== head)
+    return null
+  }
+  const next = node.properties[head!]
+  if (!next) return null
+  return removeAtPath(next, rest, pathStr)
+}
+
+// How far into the value a validation error got, from the path it names.
+function errorDepth(message: string): number {
+  const at = message.lastIndexOf(' at ')
+  const path = at < 0 ? '' : message.slice(at + 4)
+  return path ? path.split(/[.[]/).length : 0
+}
+
+// How much of `value` a schema describes: the number of object keys, at any
+// depth, that it declares. A value matching no variant of a `oneOf` was meant
+// for the variant that recognises most of it.
+function schemaFit(value: unknown, schema: Schema): number {
+  const variants = schema.oneOf || schema.anyOf || schema.allOf
+  if (variants) return Math.max(0, ...variants.map((v) => schemaFit(value, v)))
+  if (Array.isArray(value)) {
+    return schema.items ? value.reduce((n: number, v) => n + schemaFit(v, schema.items!), 0) : 0
+  }
+  if (typeof value !== 'object' || value === null) return 0
+  const properties = schema.properties || {}
+  let n = 0
+  for (const [key, val] of Object.entries(value)) {
+    const sub = properties[key]
+    if (sub) n += 1 + schemaFit(val, sub)
+  }
+  return n
+}
+
+// The variant of a `oneOf`/`anyOf` that `value` belongs to: the first it
+// validates against, otherwise the one that recognises most of the value
+// (deepest first error breaks a tie). A Bulk/Batch consent with one stray field
+// is still read as Bulk/Batch, and its error names that field.
+function closestVariant(value: unknown, variants: Schema[], path = ''): { variant: Schema, error: string | null } | null {
+  let best: { variant: Schema, error: string | null, fit: number } | null = null
+  for (const variant of variants) {
+    const error = validateAgainstSchema(value, variant, path)
+    if (!error) return { variant, error: null }
+    const fit = schemaFit(value, variant)
+    if (!best || fit > best.fit || (fit === best.fit && errorDepth(error) > errorDepth(best.error!))) {
+      best = { variant, error, fit }
+    }
+  }
+  return best
+}
+
+// `hint` is the data the defaults will be merged with. Where the schema is a
+// `oneOf`/`anyOf`, the defaults come from the variant that data belongs to, so a
+// Single Instant Payment consent is not padded with the required fields of the
+// Bulk/Batch consent shape.
+function initFormValue(schema: Schema, hint?: unknown): unknown {
   const resolved = schema
   if (resolved.allOf) {
     const merged: Record<string, unknown> = {}
-    resolved.allOf.forEach((sub) => Object.assign(merged, initFormValue(sub) as object))
+    resolved.allOf.forEach((sub) => Object.assign(merged, initFormValue(sub, hint) as object))
     return merged
   }
   if (resolved.anyOf || resolved.oneOf) {
     const variants = resolved.anyOf || resolved.oneOf || []
-    return variants.length > 0 ? initFormValue(variants[0]!) : null
+    if (variants.length === 0) return null
+    const chosen = hint === undefined ? variants[0]! : closestVariant(hint, variants)!.variant
+    return initFormValue(chosen, hint)
   }
   if (resolved.type === 'object') {
     const obj: Record<string, unknown> = {}
     const properties = resolved.properties || {}
     const required = new Set(resolved.required || [])
+    const hintObj = typeof hint === 'object' && hint !== null && !Array.isArray(hint)
+      ? hint as Record<string, unknown>
+      : undefined
     for (const [key, sub] of Object.entries(properties)) {
-      if (required.has(key)) obj[key] = initFormValue(sub)
+      if (required.has(key)) obj[key] = initFormValue(sub, hintObj?.[key])
     }
     return obj
   }
@@ -242,9 +302,12 @@ function validateAgainstSchema(value: unknown, schema: Schema, path = ''): strin
   if (resolved.oneOf) {
     let matches = 0
     for (const sub of resolved.oneOf) if (!validateAgainstSchema(value, sub, path)) matches++
-    if (matches === 0) return `Doesn't match any schema at ${path}`
     if (matches > 1) return `Matches more than one schema at ${path}`
-    return null
+    if (matches === 1) return null
+    if (resolved.oneOf.length === 0) return `Doesn't match any schema at ${path}`
+    // No variant matches: report the error from the variant the value is
+    // closest to, which names the field to fix, rather than a bare mismatch.
+    return closestVariant(value, resolved.oneOf, path)?.error ?? `Doesn't match any schema at ${path}`
   }
   if (resolved.type === 'object') {
     if (typeof value !== 'object' || value === null || Array.isArray(value)) return `Expected object at ${path}`
@@ -334,7 +397,7 @@ async function loadSpec() {
     }
     rootSchema.value = fullResolveSchema(maybeSchema)
     removeProperties(rootSchema.value, props.excludedFields)
-    const defaults = initFormValue(rootSchema.value)
+    const defaults = initFormValue(rootSchema.value, props.initialData)
     schemaDefaults.value = defaults
     const merged = deepMerge(defaults, props.initialData)
     const validationError = validateAgainstSchema(merged, rootSchema.value)

@@ -226,47 +226,88 @@ function fullResolveSchema(schema, spec) {
 
 function removeProperties(schema, paths, warnings) {
   for (const pathStr of paths) {
-    const parts = pathStr.split('.')
-    let current = schema
-    let ok = true
-    for (let i = 0; i < parts.length - 1; i++) {
-      if (current.type !== 'object' || !current.properties) {
-        warnings.push(`Cannot traverse non-object at ${parts.slice(0, i + 1).join('.')}`)
-        ok = false
-        break
-      }
-      const next = current.properties[parts[i]]
-      if (!next) { ok = false; break }
-      current = next
-    }
-    if (!ok) continue
-    if (current.type !== 'object' || !current.properties) {
-      warnings.push(`Cannot remove from non-object at ${pathStr}`)
-      continue
-    }
-    const last = parts[parts.length - 1]
-    delete current.properties[last]
-    if (current.required) current.required = current.required.filter(r => r !== last)
+    const err = removeAtPath(schema, pathStr.split('.'), pathStr)
+    if (err) warnings.push(err)
   }
 }
 
-function initFormValue(schema) {
+// A path crossing a oneOf/anyOf is removed from every variant that can hold it;
+// it is an error only when no variant can.
+function removeAtPath(node, parts, pathStr) {
+  const variants = node.oneOf || node.anyOf
+  if (variants) {
+    const errs = variants.map(v => removeAtPath(v, parts, pathStr))
+    return errs.every(Boolean) ? errs[0] ?? null : null
+  }
+  if (node.type !== 'object' || !node.properties) return `Cannot remove from non-object at ${pathStr}`
+  const [head, ...rest] = parts
+  if (rest.length === 0) {
+    delete node.properties[head]
+    if (node.required) node.required = node.required.filter(r => r !== head)
+    return null
+  }
+  const next = node.properties[head]
+  if (!next) return null
+  return removeAtPath(next, rest, pathStr)
+}
+
+function errorDepth(message) {
+  const at = message.lastIndexOf(' at ')
+  const path = at < 0 ? '' : message.slice(at + 4)
+  return path ? path.split(/[.[]/).length : 0
+}
+
+// The number of object keys in `value`, at any depth, that the schema declares.
+function schemaFit(value, schema) {
+  const variants = schema.oneOf || schema.anyOf || schema.allOf
+  if (variants) return Math.max(0, ...variants.map(v => schemaFit(value, v)))
+  if (Array.isArray(value)) return schema.items ? value.reduce((n, v) => n + schemaFit(v, schema.items), 0) : 0
+  if (typeof value !== 'object' || value === null) return 0
+  const properties = schema.properties || {}
+  let n = 0
+  for (const [key, val] of Object.entries(value)) {
+    if (properties[key]) n += 1 + schemaFit(val, properties[key])
+  }
+  return n
+}
+
+// The variant `value` validates against, else the one that recognises most of
+// it (deepest first error breaks a tie).
+function closestVariant(value, variants, path = '') {
+  let best = null
+  for (const variant of variants) {
+    const error = validateAgainstSchema(value, variant, path)
+    if (!error) return { variant, error: null }
+    const fit = schemaFit(value, variant)
+    if (!best || fit > best.fit || (fit === best.fit && errorDepth(error) > errorDepth(best.error))) {
+      best = { variant, error, fit }
+    }
+  }
+  return best
+}
+
+// `hint` is the data the defaults will be merged with; a oneOf/anyOf takes its
+// defaults from the variant that data belongs to.
+function initFormValue(schema, hint) {
   const r = schema
   if (r.allOf) {
     const merged = {}
-    for (const sub of r.allOf) Object.assign(merged, initFormValue(sub) ?? {})
+    for (const sub of r.allOf) Object.assign(merged, initFormValue(sub, hint) ?? {})
     return merged
   }
   if (r.anyOf || r.oneOf) {
     const variants = r.anyOf || r.oneOf || []
-    return variants.length ? initFormValue(variants[0]) : null
+    if (!variants.length) return null
+    const chosen = hint === undefined ? variants[0] : closestVariant(hint, variants).variant
+    return initFormValue(chosen, hint)
   }
   if (r.type === 'object') {
     const obj = {}
     const properties = r.properties || {}
     const required = new Set(r.required || [])
+    const hintObj = typeof hint === 'object' && hint !== null && !Array.isArray(hint) ? hint : undefined
     for (const [key, sub] of Object.entries(properties)) {
-      if (required.has(key)) obj[key] = initFormValue(sub)
+      if (required.has(key)) obj[key] = initFormValue(sub, hintObj?.[key])
     }
     return obj
   }
@@ -306,9 +347,10 @@ function validateAgainstSchema(value, schema, path = '') {
   if (r.oneOf) {
     let matches = 0
     for (const sub of r.oneOf) if (!validateAgainstSchema(value, sub, path)) matches++
-    if (matches === 0) return `Doesn't match any schema at ${path}`
     if (matches > 1) return `Matches more than one schema at ${path}`
-    return null
+    if (matches === 1) return null
+    if (r.oneOf.length === 0) return `Doesn't match any schema at ${path}`
+    return closestVariant(value, r.oneOf, path)?.error ?? `Doesn't match any schema at ${path}`
   }
   if (r.type === 'object') {
     if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -465,7 +507,7 @@ describe('User-journey forms — initialData satisfies schema', () => {
             errors.push(`${rel} → ${inv.initialDataExpr} excluded-fields: ${w}`)
           }
 
-          const defaults = initFormValue(resolved)
+          const defaults = initFormValue(resolved, initialData)
           const merged = deepMerge(defaults, initialData)
           const error = validateAgainstSchema(merged, resolved)
           if (error) errors.push(`${rel} → ${inv.initialDataExpr}: ${error}`)
