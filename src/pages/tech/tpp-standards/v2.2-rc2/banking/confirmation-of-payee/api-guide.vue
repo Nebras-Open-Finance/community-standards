@@ -79,6 +79,7 @@ const discoveryRequest = await signJWT({
     Data: {
       SchemeName:     'IBAN',
       Identification: 'AE070331234567890123456',   // IBAN to check
+      AccountType:    'Retail',                    // optional: omit if you do not know the account type
     },
   },
 })
@@ -94,6 +95,7 @@ discovery_request = sign_jwt({
         "Data": {
             "SchemeName":     "IBAN",
             "Identification": "AE070331234567890123456",   # IBAN to check
+            "AccountType":    "Retail",                    # optional: omit if you do not know the account type
         }
     },
 })
@@ -117,12 +119,18 @@ const discoveryResponse = await fetch(
   }
 )
 
+// 204: no LFI offers CoP for this IBAN (or for the AccountType supplied)
+if (discoveryResponse.status === 204) {
+  throw new Error('Confirmation of Payee is not available for this IBAN')
+}
+
 // Response is a signed JWT — decode the payload to read the result
 const discoveryJwt     = await discoveryResponse.text()
 const [, discoveryB64] = discoveryJwt.split('.')
 const { message }      = JSON.parse(Buffer.from(discoveryB64, 'base64url').toString())
 
-const { DiscoveryEndpointUrl, ResourceServerUrl } = message.Data
+// One or more sources, in the order to try them
+const sources = message.Data.ConfirmationSource
 `
 
 const step5Python = `import httpx, base64, json, os
@@ -142,21 +150,33 @@ discovery_response = httpx.post(
     # cert=("transport.crt", "transport.key"),
 )
 
+# 204: no LFI offers CoP for this IBAN (or for the AccountType supplied)
+if discovery_response.status_code == 204:
+    raise RuntimeError("Confirmation of Payee is not available for this IBAN")
+
 # Response is a signed JWT — decode the payload to read the result
 discovery_jwt = discovery_response.text
 payload_b64   = discovery_jwt.split(".")[1]
 message       = json.loads(base64.urlsafe_b64decode(payload_b64 + "=="))["message"]
 
-discovery_endpoint_url = message["Data"]["DiscoveryEndpointUrl"]
-resource_server_url    = message["Data"]["ResourceServerUrl"]
+# One or more sources, in the order to try them
+sources = message["Data"]["ConfirmationSource"]
 `
 
-const step6Node = `const oidcConfig    = await fetch(DiscoveryEndpointUrl).then(r => r.json())
+const step6Node = `// The source being tried, starting with the first
+const { DiscoveryEndpointUrl, ResourceServerUrl } = sources[0]
+
+const oidcConfig    = await fetch(DiscoveryEndpointUrl).then(r => r.json())
 const tokenEndpoint = oidcConfig.token_endpoint   // used in Step 8
 const issuer        = oidcConfig.issuer           // used in Step 7
 `
 
-const step6Python = `oidc_config    = httpx.get(discovery_endpoint_url).json()
+const step6Python = `# The source being tried, starting with the first
+source                 = sources[0]
+discovery_endpoint_url = source["DiscoveryEndpointUrl"]
+resource_server_url    = source["ResourceServerUrl"]
+
+oidc_config    = httpx.get(discovery_endpoint_url).json()
 token_endpoint = oidc_config["token_endpoint"]   # used in Step 8
 issuer         = oidc_config["issuer"]           # used in Step 7
 `
@@ -281,7 +301,7 @@ signed_request = sign_jwt({
 })
 `
 
-const step10Node = `// ResourceServerUrl resolved from discovery in Step 5
+const step10Node = `// ResourceServerUrl of the source being tried, from Step 6
 
 const copResponse = await fetch(
   \`\${ResourceServerUrl}/open-finance/confirmation-of-payee/v2.2/confirmation\`,
@@ -298,7 +318,8 @@ const copResponse = await fetch(
   }
 )
 
-// Response is a signed JWT — decode the payload to read the result
+// 204: this source does not hold the account — try the next source
+// 200: the response is a signed JWT — decode the payload to read the result
 const responseJwt   = await copResponse.text()
 const [, payloadB64] = responseJwt.split('.')
 const result = JSON.parse(Buffer.from(payloadB64, 'base64url').toString())
@@ -306,7 +327,7 @@ const result = JSON.parse(Buffer.from(payloadB64, 'base64url').toString())
 
 const step10Python = `import httpx, base64, json
 
-# resource_server_url resolved from discovery in Step 5
+# resource_server_url of the source being tried, from Step 6
 
 cop_response = httpx.post(
     f"{resource_server_url}/open-finance/confirmation-of-payee/v2.2/confirmation",
@@ -320,7 +341,8 @@ cop_response = httpx.post(
     # cert=("transport.crt", "transport.key"),
 )
 
-# Response is a signed JWT — decode the payload to read the result
+# 204: this source does not hold the account — try the next source
+# 200: the response is a signed JWT — decode the payload to read the result
 response_jwt  = cop_response.text
 payload_b64   = response_jwt.split(".")[1]
 result        = json.loads(base64.urlsafe_b64decode(payload_b64 + "=="))
@@ -382,6 +404,46 @@ const consentEmbedJson = `{
 }
 `
 
+const sourceLoopNode = `// sources from Step 5, in the order discovery returned them. Each source is a
+// separate API Hub tenant with its own issuer and token endpoint, so Steps 6–10
+// run again for each one.
+let result = null
+
+for (const { DiscoveryEndpointUrl, ResourceServerUrl } of sources) {
+  const { issuer, token_endpoint } = await fetch(DiscoveryEndpointUrl).then(r => r.json()) // Step 6
+  const accessToken   = await getAccessToken(token_endpoint, issuer)                          // Steps 7–8
+  const signedRequest = await buildConfirmationRequest(issuer)                                // Step 9
+  const copResponse   = await postConfirmation(ResourceServerUrl, accessToken, signedRequest) // Step 10
+
+  if (copResponse.status === 204) continue   // this source does not hold the account
+
+  result = await copResponse.text()          // signed JWT carrying the match result
+  break
+}
+
+// result is null when no source holds the account
+`
+
+const sourceLoopPython = `# sources from Step 5, in the order discovery returned them. Each source is a
+# separate API Hub tenant with its own issuer and token endpoint, so Steps 6–10
+# run again for each one.
+result = None
+
+for source in sources:
+    oidc_config    = httpx.get(source["DiscoveryEndpointUrl"]).json()                            # Step 6
+    access_token   = get_access_token(oidc_config["token_endpoint"], oidc_config["issuer"])      # Steps 7–8
+    signed_request = build_confirmation_request(oidc_config["issuer"])                           # Step 9
+    cop_response   = post_confirmation(source["ResourceServerUrl"], access_token, signed_request) # Step 10
+
+    if cop_response.status_code == 204:
+        continue   # this source does not hold the account
+
+    result = cop_response.text   # signed JWT carrying the match result
+    break
+
+# result is None when no source holds the account
+`
+
 const step2Tabs  = [{ label: 'Node.js', lang: 'typescript', code: step2Node },  { label: 'Python', lang: 'python', code: step2Python }] as const
 const step3Tabs  = [{ label: 'Node.js', lang: 'typescript', code: step3Node },  { label: 'Python', lang: 'python', code: step3Python }] as const
 const step4Tabs  = [{ label: 'Node.js', lang: 'typescript', code: step4Node },  { label: 'Python', lang: 'python', code: step4Python }] as const
@@ -392,6 +454,7 @@ const step8Tabs  = [{ label: 'Node.js', lang: 'typescript', code: step8Node },  
 const step9Tabs  = [{ label: 'Node.js', lang: 'typescript', code: step9Node },  { label: 'Python', lang: 'python', code: step9Python }] as const
 const step10Tabs    = [{ label: 'Node.js', lang: 'typescript', code: step10Node }, { label: 'Python', lang: 'python', code: step10Python }] as const
 const decodeJwsTabs = [{ label: 'Node.js', lang: 'typescript', code: decodeJwsNode }, { label: 'Python', lang: 'python', code: decodeJwsPython }] as const
+const sourceLoopTabs = [{ label: 'Node.js', lang: 'typescript', code: sourceLoopNode }, { label: 'Python', lang: 'python', code: sourceLoopPython }] as const
 </script>
 
 <template>
@@ -413,9 +476,10 @@ const decodeJwsTabs = [{ label: 'Node.js', lang: 'typescript', code: decodeJwsNo
           LFI responds with a match result in seconds.
         </p>
         <p class="ed-doc__lede">
-          CoP is served by each participating LFI independently. Before calling an LFI directly, the TPP
-          first calls the API Hub's <strong>discovery</strong> endpoint to identify which LFI holds the
-          destination account and retrieve its endpoint URLs.
+          CoP is served through the API Hub tenant of the LFI that holds the destination account. The TPP
+          first calls the API Hub's <strong>discovery</strong> endpoint, which returns one or more
+          confirmation sources for the IBAN, each carrying the endpoint URLs of one API Hub tenant of that
+          LFI.
         </p>
       </div>
     </section>
@@ -478,12 +542,14 @@ const decodeJwsTabs = [{ label: 'Node.js', lang: 'typescript', code: decodeJwsNo
       num="03"
       color="var(--at-blue-deep, #1d4ed8)"
       eyebrow="Step 1 — Discover the LFI"
-      title="Resolve the IBAN to a specific LFI"
+      title="Resolve the IBAN to the LFI's confirmation sources"
       tone="cream"
     >
       <EdProse>
-        CoP is served by individual LFIs &mdash; the <code>/discovery</code> endpoint resolves a payee IBAN
-        to the correct LFI and returns two URLs you will need for the rest of the flow:
+        The <code>/discovery</code> endpoint resolves a payee IBAN to the LFI that services it, using the
+        bank code in the IBAN. It returns <code>Data.ConfirmationSource</code>: an array of one or more
+        confirmation sources, in the order you should try them. Each source is one API Hub tenant of that
+        LFI and carries the two URLs you need for the rest of the flow:
       </EdProse>
 
       <EdRefTable>
@@ -493,16 +559,52 @@ const decodeJwsTabs = [{ label: 'Node.js', lang: 'typescript', code: decodeJwsNo
           </thead>
           <tbody>
             <tr>
-              <td><code>DiscoveryEndpointUrl</code></td>
-              <td>The <code>.well-known</code> endpoint for the LFI's Authorisation Server. Fetch this to obtain the <code>token_endpoint</code> and <code>issuer</code> used in later steps.</td>
+              <td><code>ConfirmationSource[].DiscoveryEndpointUrl</code></td>
+              <td>The <code>.well-known</code> endpoint for the tenant's Authorisation Server. Fetch this to obtain the <code>token_endpoint</code> and <code>issuer</code> used in later steps.</td>
             </tr>
             <tr>
-              <td><code>ResourceServerUrl</code></td>
-              <td>The base URL of the LFI's API Hub resource server. Use this as the base URL when calling <code>/confirmation</code>.</td>
+              <td><code>ConfirmationSource[].ResourceServerUrl</code></td>
+              <td>The base URL of the tenant's API Hub resource server. Use this as the base URL when calling <code>/confirmation</code>.</td>
             </tr>
           </tbody>
         </table>
       </EdRefTable>
+
+      <h3 class="ed-doc__subhead">One source or several</h3>
+      <EdProse>
+        Some LFIs expose one confirmation endpoint that covers all their segments (Retail, SME and
+        Corporate). Others expose confirmation segment by segment, on a separate API Hub tenant for each
+        segment, and each of those tenants can return a CoP result only for accounts in its own segment.
+        The IBAN identifies the LFI but not the segment, so discovery returns every API Hub tenant of the
+        LFI that offers CoP.
+      </EdProse>
+
+      <EdBullets>
+        <li>
+          <strong>You know the account type</strong> &mdash; supply the optional <code>AccountType</code>
+          (<code>Retail</code>, <code>SME</code> or <code>Corporate</code>) in the discovery request. Only
+          the sources for that account type are returned, so you need a token only from the relevant
+          tenant.
+        </li>
+        <li>
+          <strong>You do not know the account type</strong> &mdash; omit <code>AccountType</code>, and call
+          <code>/confirmation</code> against each source in the order returned until one responds with
+          <code>200</code>. A source that does not hold the account responds with <code>204</code>. See
+          <a href="#trying-each-source">Trying each source</a>.
+        </li>
+      </EdBullets>
+
+      <EdProse>
+        <a href="/tech/tpp-standards/trust-framework/api-discovery">Participants discovery</a> is how a TPP
+        determines which LFIs expose confirmation for all their segments and which expose it segment by
+        segment.
+      </EdProse>
+
+      <EdProse>
+        Discovery responds with <code>204</code> and no body when the IBAN cannot be paired with an LFI that
+        offers CoP or, where you supplied <code>AccountType</code>, when the LFI offers no CoP source for
+        that account type.
+      </EdProse>
 
       <EdProse>
         Before calling <code>/discovery</code> you must obtain an access token from any LFI you are
@@ -560,7 +662,8 @@ const decodeJwsTabs = [{ label: 'Node.js', lang: 'typescript', code: decodeJwsNo
       tone="surface"
     >
       <EdProse>
-        The request body is a signed JWT containing the IBAN, signed with your signing key:
+        The request body is a signed JWT containing the IBAN and, where you know it, the account type,
+        signed with your signing key:
       </EdProse>
 
       <EdCodeGroup :tabs="step4Tabs" />
@@ -587,6 +690,12 @@ const decodeJwsTabs = [{ label: 'Node.js', lang: 'typescript', code: decodeJwsNo
       <EdCodeGroup :tabs="step5Tabs" />
 
       <EdProse>
+        <code>sources</code> holds one or more entries. Steps 6&ndash;10 are performed for one source at a
+        time: start with the first, and move to the next only if <code>/confirmation</code> responds with
+        <code>204</code>. See <a href="#trying-each-source">Trying each source</a>.
+      </EdProse>
+
+      <EdProse>
         See the <a href="./open-api/discovery">POST /discovery</a> API reference for the full request and
         response schema.
       </EdProse>
@@ -601,8 +710,9 @@ const decodeJwsTabs = [{ label: 'Node.js', lang: 'typescript', code: decodeJwsNo
       tone="surface"
     >
       <EdProse>
-        Fetch the <code>DiscoveryEndpointUrl</code> directly to read the LFI's OpenID configuration. This
-        gives you the <code>token_endpoint</code> and <code>issuer</code> needed for the next steps:
+        Fetch the <code>DiscoveryEndpointUrl</code> of the source you are trying to read that tenant's
+        OpenID configuration. This gives you the <code>token_endpoint</code> and <code>issuer</code> needed
+        for the next steps:
       </EdProse>
 
       <EdCodeGroup :tabs="step6Tabs" />
@@ -741,8 +851,10 @@ const decodeJwsTabs = [{ label: 'Node.js', lang: 'typescript', code: decodeJwsNo
       tone="surface"
     >
       <EdProse>
-        Send the signed JWT to the LFI's CoP endpoint using the <code>ResourceServerUrl</code> resolved in
-        Step 5. Both the request body and the response are JWTs. Include
+        Send the signed JWT to the CoP endpoint using the <code>ResourceServerUrl</code> of the source you
+        are trying. A <code>204</code> with no body means this source does not hold the account: try the
+        next source. A <code>200</code> carries the match result. Both the request body and the response
+        are JWTs. Include
         <code>x-fapi-interaction-id</code> on every request. See
         <a href="/tech/tpp-standards/security/request-headers">Request Headers</a>.
       </EdProse>
@@ -827,8 +939,32 @@ const decodeJwsTabs = [{ label: 'Node.js', lang: 'typescript', code: decodeJwsNo
     </EdSectionBand>
 
     <EdSectionBand
-      id="cop-in-payment-consent"
+      id="trying-each-source"
       num="13"
+      color="var(--at-teal-deep)"
+      eyebrow="Trying each source"
+      title="Where discovery returns more than one source"
+      tone="surface"
+    >
+      <EdProse>
+        Repeat Steps 6&ndash;10 for each source, in the order discovery returned them, and stop at the
+        first <code>200</code>. Each source is a separate API Hub tenant with its own issuer and token
+        endpoint, so each needs its own client assertion, access token and signed request. Only the
+        tenant that holds the IBAN returns a result; every other tenant responds with <code>204</code>.
+      </EdProse>
+
+      <EdCodeGroup :tabs="sourceLoopTabs" />
+
+      <EdProse>
+        If every source responds with <code>204</code>, none of the LFI's tenants holds the account: treat
+        the IBAN as not recognised. Supplying <code>AccountType</code> in the discovery request, where you
+        know it, avoids calling tenants that cannot hold the account.
+      </EdProse>
+    </EdSectionBand>
+
+    <EdSectionBand
+      id="cop-in-payment-consent"
+      num="14"
       color="var(--at-blue-deep, #1d4ed8)"
       eyebrow="Embedding the result"
       title="Using the CoP Response in a Payment Consent"

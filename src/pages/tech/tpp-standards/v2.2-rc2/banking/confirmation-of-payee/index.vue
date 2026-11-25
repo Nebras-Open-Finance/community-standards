@@ -65,8 +65,8 @@ const sectionEndpoints = computed(() =>
           </div>
         </div>
         <p class="ed-landing__role-body" style="margin-bottom: 1rem;">CoP is a two-call flow: discovery, then confirmation.</p>
-    <p class="ed-landing__role-body" style="margin-bottom: 0.85rem;"><strong>Discovery</strong> is called against the API Hub. The TPP submits the destination IBAN; the Hub resolves which LFI holds the account and returns that LFI's discovery endpoint URL and resource server URL.</p>
-    <p class="ed-landing__role-body" style="margin-bottom: 1rem;"><strong>Confirmation</strong> is called directly against the resolved LFI. The TPP authenticates using a client credentials grant (no user redirect), sends a signed request containing the IBAN and account holder name, and receives a signed response with the match result.</p>
+    <p class="ed-landing__role-body" style="margin-bottom: 0.85rem;"><strong>Discovery</strong> is called against the API Hub. The TPP submits the destination IBAN and, where it knows it, the account type. The Hub resolves the LFI from the bank code in the IBAN and returns one or more confirmation sources, one for each API Hub tenant of that LFI that offers CoP, each with a discovery endpoint URL and a resource server URL. An LFI that exposes confirmation segment by segment has a tenant per segment; <a href="/tech/tpp-standards/trust-framework/api-discovery">participants discovery</a> is how a TPP determines which LFIs do.</p>
+    <p class="ed-landing__role-body" style="margin-bottom: 1rem;"><strong>Confirmation</strong> is called against the resource server of a source returned by discovery. Where more than one source is returned, the TPP tries each in order until one responds with <code>200</code>; a source that does not hold the account responds with <code>204</code>. The TPP authenticates using a client credentials grant (no user redirect), sends a signed request containing the IBAN and account holder name, and receives a signed response with the match result.</p>
     <div class="ed-cov" role="table" style="grid-template-columns: minmax(7rem, 10rem) 1fr minmax(8rem, 12rem);">
       <div class="ed-cov__row ed-cov__row--head" role="row">
         <div class="ed-cov__cell ed-cov__cell--label">Step</div>
@@ -81,10 +81,10 @@ const sectionEndpoints = computed(() =>
       <div class="ed-cov__row" role="row">
         <div class="ed-cov__cell ed-cov__cell--label">Confirmation</div>
         <div class="ed-cov__cell ed-cov__cell--label"><span class="endpoint"><span class="http-method http-method--post">POST</span><code>/open-finance/confirmation-of-payee/v1.2/confirmation</code></span></div>
-        <div class="ed-cov__cell">Resolved LFI</div>
+        <div class="ed-cov__cell">Source from discovery</div>
       </div>
     </div>
-    <p class="ed-landing__role-body" style="margin-top: 1rem;">Both request and response bodies are compact JWS strings (<code>Content-Type: application/jwt</code>). The Hub discovery response carries <code>DiscoveryEndpointUrl</code> and <code>ResourceServerUrl</code>. The LFI confirmation response carries <code>NameMatchIndicator</code> and, on non-Yes results, a <code>MaskedName</code>.</p>
+    <p class="ed-landing__role-body" style="margin-top: 1rem;">Both request and response bodies are compact JWS strings (<code>Content-Type: application/jwt</code>). The Hub discovery response carries <code>Data.ConfirmationSource</code>, each entry with a <code>DiscoveryEndpointUrl</code> and a <code>ResourceServerUrl</code>. The LFI confirmation response carries <code>NameMatchIndicator</code> and, on non-Yes results, a <code>MaskedName</code>.</p>
       </div>
     </section>
     <section class="ed-landing__coverage">

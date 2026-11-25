@@ -23,6 +23,24 @@ const confirmationLegs = flattened
     Hub->>+LFI: POST /customers/action/cop-query (routed by IBAN prefix)
     LFI-->>-Hub: { verifiedClaims.claims.fullName }`
 
+// From v2.2 discovery returns an array of confirmation sources, one per API Hub
+// tenant of the LFI, and the TPP tries each in turn until one answers 200 — see
+// changelog v2.1-to-v2.2 §25. v2.1 returns a single source.
+const discoveryLeg = flattened
+  ? `    Note over TPP: Sign /discovery request as JWT<br/>(AccountType optional)
+    TPP->>+Hub: POST /discovery (application/jwt)
+    Hub-->>-TPP: 200 { ConfirmationSource[] } (application/jwt)`
+  : `    Note over TPP: Sign /discovery request as JWT
+    TPP->>+Hub: POST /discovery (application/jwt)
+    Hub-->>-TPP: 200 { DiscoveryEndpointUrl, ResourceServerUrl  } (application/jwt)`
+
+const confirmationSteps = `    Note over TPP: Create Client Assertion
+    TPP->>+Hub: POST /token (client_credentials, scope=confirmation-of-payee)
+    Hub-->>-TPP: {access_token}
+
+    Note over TPP: Sign /confirmation request as JWT
+${confirmationLegs}`
+
 const mermaidDefinition = `
 sequenceDiagram
     participant TPP as TPP
@@ -33,17 +51,15 @@ sequenceDiagram
     TPP->>+Hub: POST /token (client_credentials, scope=confirmation-of-payee)
     Hub-->>-TPP: {access_token}
 
-    Note over TPP: Sign /discovery request as JWT
-    TPP->>+Hub: POST /discovery (application/jwt)
-    Hub-->>-TPP: 200 { DiscoveryEndpointUrl, ResourceServerUrl  } (application/jwt)
+${discoveryLeg}
 
-    Note over TPP: Create Client Assertion
-    TPP->>+Hub: POST /token (client_credentials, scope=confirmation-of-payee)
-    Hub-->>-TPP: {access_token}
-
-    Note over TPP: Sign /confirmation request as JWT
-${confirmationLegs}
-    Hub-->>-TPP: 200 { NameMatchIndicator } (application/jwt)
+${flattened
+  ? `    loop Each ConfirmationSource, in order, until a 200
+${confirmationSteps}
+    Hub-->>-TPP: 200 { NameMatchIndicator }, or 204 where this source does not hold the account
+    end`
+  : `${confirmationSteps}
+    Hub-->>-TPP: 200 { NameMatchIndicator } (application/jwt)`}
 `
 
 // Version in the id prefix so two versions rendered in one session cannot

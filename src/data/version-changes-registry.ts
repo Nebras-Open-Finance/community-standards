@@ -1414,8 +1414,50 @@ export const VERSION_CHANGES: VersionChange[] = [
     changeId: 'v2.1-to-v2.2',
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
-    introducedIn: 'v2.2-rc1',
+    introducedIn: 'v2.2-rc2',
     number: 25,
+    category: 'Behaviour change',
+    title: 'Confirmation of Payee — discovery returns every API Hub tenant of the LFI, filterable by `AccountType`',
+    summary:
+      '`POST /discovery` returns `Data.ConfirmationSource`, an array of one or more confirmation sources, in place of a single `DiscoveryEndpointUrl` and `ResourceServerUrl`. Some LFIs expose Confirmation of Payee segment by segment, and the IBAN does not identify the segment, so the API Hub returns every API Hub tenant of the LFI. A TPP that knows the account type supplies the new optional `AccountType` to receive only the tenant for that type.',
+    description:
+      'In v2.1 `POST /discovery` returns exactly one confirmation source: `Data` carries one `DiscoveryEndpointUrl` and one `ResourceServerUrl`.\n\n' +
+      'LFIs do not all expose Confirmation of Payee in the same way. Some expose one `/confirmation` endpoint that covers all their segments: Retail, SME and Corporate. Others expose it segment by segment, each segment on its own API Hub tenant, and each of those tenants can return a Confirmation of Payee result only for accounts in its own segment. The API Hub resolves the LFI from the bank code in the IBAN, but nothing in the IBAN identifies the segment. With room for only one source, the API Hub had to choose one of the LFI\'s tenants. A check on an account in another segment was then sent to a tenant that could not answer it, and the TPP had no other tenant to try.\n\n' +
+      '**Discovery returns every tenant.** In v2.2 `Data` becomes an object carrying `ConfirmationSource`, a required array of at least one entry. Using the bank code in the IBAN, the API Hub returns every API Hub tenant of that LFI that offers Confirmation of Payee, in the order the TPP should try them. Each entry is the unchanged `AEConfirmationSourceProperties` schema: `DiscoveryEndpointUrl` and `ResourceServerUrl` keep their types, lengths and meanings.\n\n' +
+      '**`AccountType` narrows the result.** The discovery request gains an optional `AccountType`: `Retail`, `SME` or `Corporate`, a single value, from the same enum as on `/par`. A TPP that knows the account type supplies it and receives only the sources for that account type, so it needs a token only from the relevant API Hub tenant. When `AccountType` is omitted, every source is returned.\n\n' +
+      '**A TPP that does not know the account type tries each source.** It calls `POST /confirmation` against each source in the order returned until one responds with `200`. A tenant that does not hold the account responds with `204`, so only the tenant that holds the IBAN returns a result.\n\n' +
+      'Discovery responds with `204` and no body when the IBAN cannot be paired with an LFI that offers Confirmation of Payee (§16, item 3) or, where `AccountType` is supplied, when the LFI offers no Confirmation of Payee source for that account type. A `200` therefore always carries at least one source.\n\n' +
+      'Participants discovery (`GET /participants`) is how a TPP determines which LFIs expose Confirmation of Payee for all their segments and which expose it segment by segment.\n\n' +
+      'This is a breaking change for TPPs. A TPP must read the discovery result from `Data.ConfirmationSource[]` instead of `Data`, and must be prepared for more than one source. Nothing changes for LFIs: the API Hub answers discovery without calling the LFI.\n\n' +
+      'The change is published in the v2.2-rc2 release of the Confirmation of Payee OpenAPI document in the api-specs repository, which is what the endpoint page below renders.',
+    docsPaths: [
+      { label: 'Full specification', path: `${COP_TPP}/api-guide` },
+      { label: 'TPP requirements — Confirmation of Payee', path: `${COP_TPP}/requirements` },
+      { label: 'OpenAPI reference', path: `${COP_TPP}/open-api/discovery` },
+      { label: 'Participants discovery', path: '/tech/tpp-standards/trust-framework/api-discovery' },
+    ],
+    audience: 'TPP',
+    areas: ['Confirmation of Payee', 'Payments'],
+    specs: ['uae-confirmation-of-payee-openapi'],
+    endpoints: [
+      {
+        label: 'POST /discovery',
+        path: `${COP_TPP}/open-api/discovery`,
+      },
+    ],
+    affectedPaths: [
+      `${COP_TPP}/`,
+      `${COP_TPP}/api-guide`,
+      `${COP_TPP}/requirements`,
+      `${COP_TPP}/open-api/discovery`,
+    ],
+  },
+  {
+    changeId: 'v2.1-to-v2.2',
+    fromVersion: 'v2.1',
+    toVersion: 'v2.2-rc2',
+    introducedIn: 'v2.2-rc1',
+    number: 26,
     category: 'New capability',
     title: 'Data deletion confirmation — attestations sub-resource',
     summary:
@@ -1475,7 +1517,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc1',
-    number: 26,
+    number: 27,
     category: 'New capability',
     title: 'Sharia-compliant product data — expected profit rates, finance rates, and Takaful',
     summary:
@@ -1488,7 +1530,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       '**`ShariaFinanceRates`** is the finance-rate parallel — `AEProductShariaFinanceRate1Types`, a `oneOf` discriminated on `RateType` across `FixedProfit`, `VariableProfit` and `HybridProfit`. The two new Sharia types compose the existing fixed and variable rate property sets and the existing finance-rate properties with a new `AEProductShariaProfitCalculationMethod1Properties`, whose calculation basis adds `UnusedCreditLine` and `UtilizedLimit` to the three conventional values. `HybridProfit` reuses the existing `AEProductHybridProfitRateProperties` unchanged.\n\n' +
       'Where the rates are account-scoped, `ShariaFinanceRates` may be sent in cleartext or as a JWE at the LFI\'s discretion — exactly the choice `FinanceRates` already offers, and for the same reason. The public products catalogue is answered without a customer and so has no JWE variant, again matching `FinanceRates`. `ExpectedProfitRates` is cleartext on every surface.\n\n' +
       '**`TakafulRequired`** (boolean) and **`TakafulDescription`** (up to 500 characters) complete the set. Takaful is the Sharia-compliant alternative to conventional insurance, and where a product requires cover a TPP needs to be able to say both that it is required and what it is for.\n\n' +
-      'Every field added here is optional. An LFI that offers no Islamic products sends nothing new and stays conformant; an LFI that has been approximating profit rates in the interest-based fields can move them across. Nothing is removed, no enum is narrowed, and a v2.1 product payload still validates unchanged — §26 covers the one place where the *meaning* of an existing field narrows.\n\n' +
+      'Every field added here is optional. An LFI that offers no Islamic products sends nothing new and stays conformant; an LFI that has been approximating profit rates in the interest-based fields can move them across. Nothing is removed, no enum is narrowed, and a v2.1 product payload still validates unchanged — §28 covers the one place where the *meaning* of an existing field narrows.\n\n' +
       'One internal refactor is visible in the documents but not on the wire: the inline `RateDetails` definition under `DepositRates` is extracted into a shared `AEProductRateDetails1Properties` so `ExpectedProfitRates` can reuse it. The extracted definition is identical to the inline one it replaces, so `DepositRates` is unchanged.\n\n' +
       'The change lands on four documents — `AEProduct` in Account Information, `ProductDetails` in Products & Leads, and their Ozone Connect counterparts `CbuaeProduct` in Bank Data Sharing and `ProductDetails` in Bank Products Data — which is what the endpoint pages below render.',
     docsPaths: [
@@ -1555,7 +1597,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc1',
-    number: 27,
+    number: 28,
     category: 'Behaviour change',
     title: 'Interest and profit calculation methods are separate fields',
     summary:
@@ -1566,7 +1608,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       'No enum changes, no field is removed, and neither field is required, so **a v2.1 payload still validates against v2.2 unchanged.** What changes is meaning, not constraint: an LFI that populated `InterestCalculationMethod` to convey the basis of an Islamic profit calculation is, from v2.2, sending a valid value in the wrong field. It should move to `ProfitCalculationMethod`.\n\n' +
       'Because nothing rejects the old placement, this will not surface as a validation failure on either surface — which is the reason to record it. An LFI that reads the change as cosmetic and leaves the value where it is stays conformant while publishing product data that now says something it does not mean.\n\n' +
       'The consequence for a TPP is the mirror of that. A TPP reading only `InterestCalculationMethod` will, as LFIs move their Islamic products across, silently lose the calculation basis for exactly those products — no error, just an absent field where a value used to be. Reading both fields and preferring whichever is populated is the safe form for as long as the two placements coexist.\n\n' +
-      'This is distinct from the calculation method on the new Sharia finance-rate types in §25. That one — `AEProductShariaProfitCalculationMethod1Properties` — carries five values, adding `UnusedCreditLine` and `UtilizedLimit`, and it is a new schema reached only through the new `ShariaFinanceRates` field. The conventional profit-rate structures continue to reference the shared three-value `AEProductInterestCalculationMethod`, which is itself unchanged.\n\n' +
+      'This is distinct from the calculation method on the new Sharia finance-rate types in §27. That one — `AEProductShariaProfitCalculationMethod1Properties` — carries five values, adding `UnusedCreditLine` and `UtilizedLimit`, and it is a new schema reached only through the new `ShariaFinanceRates` field. The conventional profit-rate structures continue to reference the shared three-value `AEProductInterestCalculationMethod`, which is itself unchanged.\n\n' +
       'The same four documents that carry the Sharia product fields carry this split, which is what the endpoint pages below render.',
     docsPaths: [
       {
@@ -1624,7 +1666,7 @@ export const VERSION_CHANGES: VersionChange[] = [
     fromVersion: 'v2.1',
     toVersion: 'v2.2-rc2',
     introducedIn: 'v2.2-rc1',
-    number: 28,
+    number: 29,
     category: 'New capability',
     title: 'Balance components, transaction allocations and statement balances carry a Shari\'ah description',
     summary:
@@ -1634,7 +1676,7 @@ export const VERSION_CHANGES: VersionChange[] = [
       'v2.2 adds `BalanceDescription` to `AEAmountWithCategorization` — free text, 1 to 500 characters, naming the specific Shari\'ah-compliant charge, payment or reward that the component represents. It supplements the category rather than replacing it: the enum still classifies the part, and the description says which part it is.\n\n' +
       'One field addition reaches three endpoints, because the schema is used in three places. On the TPP-facing side, `Components` on `AEBalance` is served by the balances endpoint, `Allocations` on `AETransaction` by the transactions endpoint, and `Components` on `AEBalanceWithCategorization` — the opening and closing balance of a statement — by the statements endpoint. Ozone Connect mirrors all three: `components` on `CbuaeBalance`, `allocations` on `CbuaeTransaction`, and `Components` on `AEBalanceWithCategorization` under `AEStatements`.\n\n' +
       'Statements are easy to miss here, because the field arrives on them through a schema neither the balances nor the transactions response references. An implementer scoping this change from the balance and transaction payloads alone will not see it.\n\n' +
-      'The field is optional and additive on both surfaces, and is required on neither. An LFI that offers no Islamic products has nothing to do, and a v2.1 payload validates unchanged. It is recorded separately from the Sharia product fields in §25 because it lands on the balances, transactions and statements endpoints rather than on product data, so it is a different piece of work for whoever implements it.\n\n' +
+      'The field is optional and additive on both surfaces, and is required on neither. An LFI that offers no Islamic products has nothing to do, and a v2.1 payload validates unchanged. It is recorded separately from the Sharia product fields in §27 because it lands on the balances, transactions and statements endpoints rather than on product data, so it is a different piece of work for whoever implements it.\n\n' +
       'Both the Account Information and the Ozone Connect Bank Data Sharing documents carry the field in their v2.2 release, which is what the endpoint pages below render.',
     docsPaths: [
       {
