@@ -5,8 +5,8 @@ import { useMermaidDiagram } from '@/composables/useMermaidDiagram'
 // specs define: the Hub validates Instructions[] against the consent before
 // calling Ozone Connect POST /bulk-payments, and serves the TPP's reads from
 // Ozone Connect GET /bulk-payments/{bulkPaymentId} and
-// GET /bulk-payments/{bulkPaymentId}/payments/{paymentId}. (GET /payments/{paymentId}
-// also serves a payment from a batch, in the single-payment shape; not drawn.)
+// GET /bulk-payments/{bulkPaymentId}/payments/{paymentId}. GET /payments/{paymentId}
+// is never called for a payment from a batch: Bulk/Batch is kept separate.
 // The payment-log PATCH and Event Notification sequence for each payment in a
 // batch is not yet specified, so it is not drawn.
 const mermaidDefinition = `

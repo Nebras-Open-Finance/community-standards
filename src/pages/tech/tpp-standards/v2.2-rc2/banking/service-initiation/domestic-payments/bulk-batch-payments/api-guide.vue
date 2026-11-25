@@ -1002,24 +1002,15 @@ const step12Tabs = [{ label: 'Node.js', lang: 'typescript', code: step12Node }, 
 
       <EdCodeGroup :tabs="step12Tabs" />
 
-      <h3 class="ed-doc__subhead">In the single-payment shape</h3>
-      <EdProse>
-        The same <code>PaymentId</code> can also be read with
-        <a :href="`${SI}/open-api/payments-PaymentId`">GET <code>/payments/{PaymentId}</code></a>, exactly as
-        for a single payment. It is returned in the single-payment shape (<code>AEPaymentIdResponse</code>),
-        with these differences for a payment within a batch:
-      </EdProse>
-
-      <EdRefTable>
-        <table>
-          <thead><tr><th>Field</th><th>For a payment within a Bulk/Batch Payment</th></tr></thead>
-          <tbody>
-            <tr><td><code>ConsentId</code></td><td>The Bulk/Batch Payment's consent</td></tr>
-            <tr><td><code>Instruction.Amount</code>, <code>PaymentPurposeCode</code>, <code>DebtorReference</code></td><td>Those of that payment</td></tr>
-            <tr><td><code>OpenFinanceBilling</code></td><td>Absent &mdash; a Bulk/Batch Payment carries none</td></tr>
-          </tbody>
-        </table>
-      </EdRefTable>
+      <EdNote type="info" title="Not on GET /payments/{PaymentId}">
+        <p>
+          Bulk/Batch Payments are kept separate from single payments. A payment within a batch is read only
+          with <code>GET /bulk-payments/{BulkPaymentId}/payments/{PaymentId}</code>.
+          <a :href="`${SI}/open-api/payments-PaymentId`">GET <code>/payments/{PaymentId}</code></a> returns
+          only payments made on <code>POST /payments</code>, and a batch payment's <code>PaymentId</code>
+          returns <code>404</code> there.
+        </p>
+      </EdNote>
 
       <EdProse>
         Use <code>GET /bulk-payments/{BulkPaymentId}</code> (<a href="#step-11-payment-status">Step 11</a>)

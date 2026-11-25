@@ -610,7 +610,7 @@ const processBatchTabs = [
         <table>
           <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
           <tbody>
-            <tr><td><code>paymentId</code></td><td>string</td><td>Yes</td><td>The LFI-assigned <code>PaymentId</code> of this payment. MUST be unique; it can also be used with <code>GET /bulk-payments/{bulkPaymentId}/payments/{paymentId}</code> and <code>GET /payments/{paymentId}</code></td></tr>
+            <tr><td><code>paymentId</code></td><td>string</td><td>Yes</td><td>The LFI-assigned <code>PaymentId</code> of this payment. MUST be unique; it is used with <code>GET /bulk-payments/{bulkPaymentId}/payments/{paymentId}</code>, not with <code>GET /payments/{paymentId}</code></td></tr>
             <tr><td><code>status</code></td><td>string</td><td>Yes</td><td>This payment's status, as for a single payment: <code>Pending</code>, <code>AcceptedSettlementCompleted</code>, <code>AcceptedCreditSettlementCompleted</code>, <code>AcceptedWithoutPosting</code> or <code>Rejected</code></td></tr>
             <tr><td><code>statusUpdateDateTime</code></td><td>string</td><td>Yes</td><td>ISO 8601 timestamp of this payment's last status update</td></tr>
             <tr><td><code>amount</code></td><td>object</td><td>Yes</td><td>This payment's amount and currency</td></tr>
@@ -701,42 +701,14 @@ const processBatchTabs = [
         <a href="./requirements#payment-status-retrieval">Requirements &mdash; Payment Status
         Retrieval</a>.
       </EdProse>
-    </EdSectionBand>
-
-    <EdSectionBand
-      id="get-payments-paymentId"
-      num="08"
-      color="var(--at-navy)"
-      eyebrow="GET /payments/:paymentId"
-      title="Serve one payment from a batch in the single-payment shape"
-      tone="surface"
-    >
-      <div class="ed-doc__endpoint">
-        <span class="http-badge http-get">GET</span>
-        <code class="ed-doc__endpoint-path">/payments/{paymentId}</code>
-      </div>
 
       <EdProse>
-        The TPP can also read a single payment from a batch by its <code>PaymentId</code> alone. The API
-        Hub then calls your
+        This is the only way to read a single payment from a batch. Bulk/Batch Payments are kept separate
+        from single payments: the API Hub does not call your
         <a :href="`${SI}/open-api/payments-PaymentId`" class="endpoint"><span class="http-method http-method--get">GET</span><code>/payments/{paymentId}</code></a>
-        &mdash; the same endpoint as for a single payment &mdash; with the <code>paymentId</code> you
-        assigned to that payment in the <code>POST /bulk-payments</code> response. Return it in the
-        single-payment shape (<code>AEPaymentIdResponse</code>):
+        for a payment within a batch, and that endpoint serves only payments made on
+        <code>POST /payments</code>.
       </EdProse>
-
-      <EdRefTable>
-        <table>
-          <thead><tr><th>Field</th><th>For a payment within a batch</th></tr></thead>
-          <tbody>
-            <tr><td><code>data.id</code></td><td>That payment's <code>paymentId</code></td></tr>
-            <tr><td><code>data.consentId</code></td><td>The Bulk and Batch consent</td></tr>
-            <tr><td><code>data.instruction</code>, <code>data.paymentPurposeCode</code>, <code>data.debtorReference</code></td><td>Those of that payment</td></tr>
-            <tr><td><code>data.status</code>, <code>data.statusUpdateDateTime</code>, <code>data.paymentTransactionId</code></td><td>The same as on that payment's element of <code>GET /bulk-payments/{bulkPaymentId}</code></td></tr>
-            <tr><td><code>data.openFinanceBilling</code>, <code>data.currencyRequest</code>, <code>data.exchangeRate</code></td><td>Absent &mdash; a Bulk/Batch Payment carries none</td></tr>
-          </tbody>
-        </table>
-      </EdRefTable>
     </EdSectionBand>
   </div>
 </template>
